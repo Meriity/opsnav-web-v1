@@ -1,3 +1,5 @@
-@import 'base';
-@import 'variables';
-/* Add other SCSS imports here */
+/* Add your global styles here */
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
