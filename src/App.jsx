@@ -4,24 +4,26 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import ManageUsers from "./components/layout/ManageUsers";
 import ViewClients from "./components/layout/ViewClients";
 import ArchivedClients from "./components/layout/ArchivedClients";
+import AdminLogin from "./components/auth/AdminLogin";
+import ClientLogin from "./components/auth/ClientLogin";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/admin" element={<AppLayout />}>
-          <Route path="dashboard" element={<Dashboard/>} />
-          <Route path="manage-users" element={<ManageUsers />} />
-          <Route path="view-clients" element={<ViewClients />} />
-          <Route path="archived-clients" element={<ArchivedClients />} />
-        </Route>
-        <Route path="/user" element={<AppLayout />}>
-          <Route path="dashboard" element={<Dashboard/>} />
-          <Route path="view-clients" element={<ViewClients />} />
-          <Route path="archived-clients" element={<ArchivedClients />} />
-        </Route>
-      </Routes>
-    </Router>
+<Routes>
+  <Route path="/admin/login" element={<AdminLogin />} /> 
+  <Route path="/admin" element={<AppLayout />}>
+    <Route path="dashboard" element={<Dashboard />} />
+    <Route path="manage-users" element={<ManageUsers />} />
+    <Route path="view-clients" element={<ViewClients />} />
+    <Route path="archived-clients" element={<ArchivedClients />} />
+  </Route>
+   <Route path="/user/login" element={<ClientLogin />} />
+  <Route path="/user" element={<AppLayout />}>
+    <Route path="dashboard" element={<Dashboard />} />
+    <Route path="view-clients" element={<ViewClients />} />
+    <Route path="archived-clients" element={<ArchivedClients />} />
+  </Route>
+</Routes>
   );
 }
 

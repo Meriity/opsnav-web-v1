@@ -23,7 +23,7 @@ function LoginForm({ onSubmit, error }) {
 
         {/* Right Section - Login Box */}
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
-          <h2 className="text-xl font-semibold text-center mb-6">SIGN IN</h2>
+          <h2 className="text-xl font-semibold text-center mb-6">CLIENT LOG-IN</h2>
 
           {error && (
             <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
