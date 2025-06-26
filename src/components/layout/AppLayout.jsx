@@ -7,7 +7,7 @@ const DashboardLayout = () => {
       <div className="w-64 flex-shrink-0 h-full">
         <Sidebar />
       </div>
-      <main className="flex-grow h-full overflow-y-auto p-6">
+      <main className="flex-grow h-full p-6">
         <Outlet />
       </main>
     </div>

@@ -54,7 +54,7 @@ function Dashboard () {
               type="text"
               placeholder="Search by Matter Number, Client Name"
               className="outline-none text-sm bg-transparent"
-              style={{ width: "400px", height: "25px" }}
+              style={{ width: "250px", height: "25px" }}
             />
           </div>
         </div>
