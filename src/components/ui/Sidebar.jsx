@@ -41,7 +41,7 @@ export default function Sidebar() {
                 onClick={() => navigate(to)}
                 className={`flex items-center px-4 py-2 rounded-md transition-colors w-full text-left ${
                   isActive
-                    ? "bg-sky-500 text-white"
+                    ? "bg-[#00AEEF] text-white"
                     : "hover:bg-gray-100 text-gray-800"
                 }`}
               >
