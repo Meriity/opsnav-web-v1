@@ -1,4 +1,5 @@
 import Sidebar from "../../components/ui/Sidebar";
+import Plus from "../../icons/Button icons/🔹Icon-Color.png"
 import {
   BarChart,
   Bar,
@@ -9,7 +10,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import { User, Users, Archive, Search, Plus } from "lucide-react";
+import { User, Users, Archive, Search} from "lucide-react";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
@@ -44,7 +45,7 @@ function Dashboard () {
   return (
     <div className="flex w-full h-full bg-gray-100">
       {/* Main Content */}
-      <main className="flex-grow h-full px-4 space-y-4">
+      <main className="flex-grow h-full space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Hello Vinu</h2>
@@ -60,13 +61,14 @@ function Dashboard () {
         </div>
 
         {/* Welcome Card */}
-        <div className="bg-sky-200 p-6 rounded-md border border-sky-400">
-          <h1 className="text-xl font-bold">Welcome to VK LAWYERS</h1>
-          <p className="text-sm mt-1 text-gray-800 max-w-5xl">
+        <div className="bg-[#A6E7FF] p-6 rounded-md h-[190px]">
+          <h1 className="text-xl font-bold mt-3 font-poppins">Welcome to VK LAWYERS</h1>
+          <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
             We are a client-focused law firm committed to delivering expert legal solutions with integrity, professionalism, and personalized care.
           </p>
-          <button className="mt-4 px-4 py-2 bg-white text-sky-600 border border-sky-400 rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Add New Client
+          <button className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2">
+            <img src={Plus} alt="" className="w-5" /> 
+            <p>Add New Client</p>
           </button>
         </div>
 

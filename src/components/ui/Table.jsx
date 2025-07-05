@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
+import Eye from "../../icons/Button icons/Frame 362.png"
 
 const Table = ({
   data,
   columns,
   onEdit,
   onDelete,
+  OnEye,
   showActions = true,
   hoverEffect = true,
   tableClass = '',
@@ -102,6 +104,18 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
+                        <div className="flex items-center space-x-3">
+                        {OnEye && (
+                          <button
+                            onClick={() => onEdit(item.id)}
+                            className="flex flex-col items-center space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            title="Edit"
+                          >
+                           <img src={Eye} alt="" className='h-[20px]' />
+                            
+                          </button>
+                        )}
+                      </div>
                       </div>
                     </td>
                   )}
@@ -113,7 +127,7 @@ const Table = ({
       </div>
 
       {/* Pagination Controls */}
-      <div className="absolute right-10 bottom-8">
+      <div className="absolute bottom-5 right-5 mt-4">
         <nav aria-label="Table pagination">
           <ul className="inline-flex text-sm">
             <li className="mx-1">

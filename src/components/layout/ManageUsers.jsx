@@ -86,7 +86,7 @@ const ManageUsers = () => {
 
   return (
 <div className="min-h-screen w-full bg-gray-100">
-  <main className="w-full max-w-7xl mx-auto px-4 space-y-6">
+  <main className="w-full max-w-7xl mx-auto space-y-6">
     {/* Header */}
     <div className="flex justify-between items-center mb-[15]">
       <h2 className="text-xl font-semibold">Hello Vinu</h2>

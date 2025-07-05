@@ -3,8 +3,11 @@ import DashboardIcon from "../../icons/Sidebar icons/Dashboard.svg";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
+import { useDropdown } from "../../hooks/dropdown";
+import { ChevronsUpDown,LogOut,CircleUserRound } from "lucide-react";
 
 export default function Sidebar() {
+  const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -15,7 +18,7 @@ export default function Sidebar() {
       ? [{ label: "Manage Users", icon: ManageUsersIcon, to: "/admin/manage-users" }]
       : []),
     { label: "View Clients", icon: ViewClientsIcon, to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients" },
-    { label: "Archived Chats", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
+    { label: "Archived Clients", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
   ];
 
   return (
@@ -60,17 +63,35 @@ export default function Sidebar() {
       </div>
 
       {/* User Footer */}
-      <div className="flex items-center px-4 mt-10">
-        <img
-          className="object-cover rounded-full w-10 h-10"
-          src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-          alt="avatar"
-        />
-        <div className="ml-3">
-          <p className="text-sm font-medium text-gray-800">Vinu</p>
-          <p className="text-xs text-gray-500">{isAdminRoute ? "Super Admin" : "User"}</p>
+     {/* User Dropdown Footer */}
+ <div className="relative">
+      <button
+        ref={buttonRef}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="px-4 py-2 flex text-black rounded w-55 items-center justify-between bg-sky-100 rounded-2xl"
+      >
+        <div className="flex gap-2">
+          <CircleUserRound />
+          Vinu Kumar
         </div>
-      </div>
+         <ChevronsUpDown className="w-5" /> 
+      </button>
+
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
+        >
+          
+          <button
+        className="px-4 flex text-black rounded w-50 items-center justify-between"
+      >
+        Logout <LogOut className="w-4"/>
+      </button>
+        </div>
+      )}
+        </div>
     </aside>
   );
 }
+

@@ -1,17 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@font-face {
+  font-family: "Poppins";
+  src: url("/src/assets/fonts/Poppins-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
 
 @tailwind utilities;
 
-/* Apply globally */
-@theme {
-  --font-roboto: "Poppins", sans-serif; 
-}
 
 :root {
-  font-family: 'Poppins';
   line-height: 1.5;
   font-weight: 400;
-
+  --font-poppins: 'Poppins', sans-serif;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
@@ -32,6 +32,7 @@ a:hover {
 }
 
 body {
+  font-family: "Poppins", sans-serif;
   margin: 0;
   display: flex;
   place-items: center;
