@@ -10,17 +10,20 @@ const Button = ({
   Icon2,
   height = "h-[40px]",
   width = "w-[195px]",
+  disabled = false,
 }) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={clsx(
         "flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white",
         bg,
         bghover,
         bgactive,
         height,
-        width
+        width,
+        disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       {Icon1 && <span className="w-5"><img src={Icon1} alt="" /></span>}

@@ -1,6 +1,7 @@
 import { useEffect, useState,useRef } from 'react';
 import { Edit, Share2 } from 'lucide-react';
 import report from "../../icons/Button icons/Group 318.png";
+import { useLocation,useNavigate } from "react-router-dom";
 
 const ViewClientsTable = ({
   data,
@@ -21,6 +22,7 @@ const ViewClientsTable = ({
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = data.slice(startIndex, startIndex + itemsPerPage);
+    const navigate = useNavigate();
 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -161,7 +163,7 @@ useEffect(() => {
                       <div className="flex items-center space-x-1">
                         {onEdit && (
                           <button
-                            onClick={() => onEdit(item.id)}
+                            onClick={() => navigate(`/admin/client/${item.matternumber}/stages`)}
                             className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="Edit"
                           >

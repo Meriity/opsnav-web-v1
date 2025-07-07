@@ -7,6 +7,7 @@ import ArchivedClients from "./components/layout/ArchivedClients";
 import AdminLogin from "./components/auth/AdminLogin";
 import ClientLogin from "./components/auth/ClientLogin";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
+import StagesLayout from "./pages/admin/stages/StagesLayout"
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
     <Route path="manage-users" element={<ManageUsers />} />
     <Route path="view-clients" element={<ViewClients />} />
     <Route path="archived-clients" element={<ArchivedClients />} />
+     <Route path="client/:clientId/stages" element={<StagesLayout />} />
   </Route>
    <Route path="/client/login" element={<ClientLogin />} />
     <Route path="/client/dashboard" element={<ClientDashboard />} />
@@ -25,6 +27,7 @@ function App() {
     <Route path="dashboard" element={<Dashboard />} />
     <Route path="view-clients" element={<ViewClients />} />
     <Route path="archived-clients" element={<ArchivedClients />} />
+     <Route path="client/:clientId/stages" element={<StagesLayout />} />
   </Route>
 </Routes>
   );

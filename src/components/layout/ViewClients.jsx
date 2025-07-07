@@ -7,11 +7,13 @@ import ViewClientsTable from "../ui/ViewClientsTable";
 import { useState } from "react";
 
 
+
 const ViewClients = () => {
   const [createuser,setcreateuser]=useState(false);
   const[outstandingTask,setOutstandingTask]=useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 const [shareDetails, setShareDetails] = useState({ matterNumber: '', reshareEmail: '' });
+
 const [email,setemail]=useState("");
 
       const Clients = [
