@@ -86,7 +86,8 @@ const Table = ({
                       <div className="flex items-center space-x-3">
                         {onEdit && (
                           <button
-                            onClick={() => onEdit(item.id)}
+                            onClick={() => { onEdit(item) 
+                              console.log(item)}}
                             className="flex flex-col items-center space-y-1 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="Edit"
                           >

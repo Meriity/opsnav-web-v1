@@ -72,7 +72,7 @@ export default function Sidebar() {
       >
         <div className="flex gap-2">
           <CircleUserRound />
-          Vinu Kumar
+          {localStorage.getItem("user")}
         </div>
          <ChevronsUpDown className="w-5" /> 
       </button>

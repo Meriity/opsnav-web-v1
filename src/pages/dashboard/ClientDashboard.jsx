@@ -2,187 +2,241 @@ import Button from "../../components/ui/Button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Stages from "../../components/clients/ClientStages";
 import { AnimatePresence,motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ClientAPI from "../../api/clientAPI";
+import { useParams } from "react-router-dom";
 
 export default function ClientDashboard() {
+  const navigate = useNavigate();
+  const api = new ClientAPI();
+  
   const [details,setdetails]=useState(false);
-    const matterdetails = {
-    matter_date:"27-04-2024",
-    matter_number:"2345768",
-    Clientname:"Warren Getten",
-    address:"XXXXXXXXXXXXXXXXX",
-    state:"VIC",
-    type:"Buyer",
-    settlement_date:"27-04-2024",
-  }
+  const [stagedetails,setStagedetails]=useState([]);
+  const [matterdetails, setMatterDetails] = useState({
+  matter_date: "",
+  matter_number: "",
+  Clientname: "",
+  address: "",
+  state: "",
+  type: "",
+  settlement_date: "",
+});
+
+function formatMatterDetails(apiResponse) {
+  console.log(apiResponse);
+  return {
+    matter_date: new Date(apiResponse.matterDate).toLocaleDateString("en-GB"),  
+    matter_number: apiResponse.matterNumber.toString(),
+    Clientname: apiResponse.clientName,
+    address: apiResponse.propertyAddress,
+    state: apiResponse.state,
+    type: apiResponse.clientType.charAt(0).toUpperCase() + apiResponse.clientType.slice(1), 
+    settlement_date: new Date(apiResponse.settlementDate).toLocaleDateString("en-GB"),
+  };
+}
+const { matterNumber } = useParams();
 
 
+function splitNoteParts(note) {
+  if (!note) return { beforeHyphen: "", afterHyphen: "" };
+  const [before, ...after] = note.split("-");
+  return {
+    beforeHyphen: before?.trim() || "",
+    afterHyphen: after.join("-").trim() || ""
+  };
+}
 
-  const stageData = [
-  {
+function mapStagesFromDB(response) {
+  const stages = [];
+
+  // Stage 1
+  const note1 = splitNoteParts(response.stage1?.noteForClient);
+  stages.push({
     stageName: "Stage 1",
     data: {
       sections: [
-        { title: "Retainer", status: "Not Completed" },
-        { title: "Declaration", status: "Completed" }
+        { title: "Retainer", status: response.stage1?.retainer },
+        { title: "Declaration Form", status: response.stage1?.declarationForm }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note1.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "In progress"},
-            { title: "Deposit", status: "Completed" }
+            { title: "Tenants", status: response.stage1?.tenants },
+            { title: "Contract Review", status: response.stage1?.contractReview }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
-        {
-          sections: [
-            { title: "Declaration", status: "In progress"},
-            { title: "Declaration", status: "Not Completed" }
-          ],
-         
+          noteText: note1.afterHyphen
         }
       ]
     }
-  },
-  {
+  });
+
+  // Stage 2A
+  const note2a = splitNoteParts(response.stage2?.noteForClientA);
+  stages.push({
     stageName: "Stage 2A",
-    data: { sections: [
-        { title: "Retainer", status: "In progress" },
-        { title: "Declaration", status: "Completed"}
+    data: {
+      sections: [
+        { title: "VOI", status: response.stage2?.voi },
+        { title: "CAF", status: response.stage2?.caf }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note2a.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "In progress" },
-            { title: "Declaration", status: "Completed" }
+            { title: "Signed Contract", status: response.stage2?.signedContract },
+            { title: "Deposit Receipt", status: response.stage2?.depositReceipt }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
-        {
-          sections: [
-            { title: "Declaration", status: "Completed" },
-            { title: "Declaration", status: "Completed" }
-          ],
-          noteTitle: "System Note for Client",
-          noteText: "Another note for the second row with the same layout."
+          noteText: note2a.afterHyphen
         }
-      ] } 
-  },
-  {
+      ]
+    }
+  });
+
+  // Stage 2B
+  const note2b = splitNoteParts(response.stage2?.noteForClientB);
+  stages.push({
     stageName: "Stage 2B",
-    data: { sections: [
-        { title: "Retainer", status: "In progress"},
-        { title: "Declaration", status: "Completed" }
+    data: {
+      sections: [
+        { title: "Building & Pest", status: response.stage2?.buildingAndPest },
+        { title: "Finance Approval", status: response.stage2?.financeApproval }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note2b.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "In progress"},
-            { title: "Declaration", status: "Completed" }
+            { title: "Obtain DA Seller", status: response.stage2?.obtainDaSeller },
+            { title: "CT Controller", status: response.stage2?.checkCtController }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
-        {
-          sections: [
-            { title: "Declaration", status: "Completed" },
-            { title: "Declaration", status: "In progress"}
-          ],
-          noteTitle: "System Note for Client",
-          noteText: "Another note for the second row with the same layout."
+          noteText: note2b.afterHyphen
         }
-      ] }
-  },
-  {
+      ]
+    }
+  });
+
+  // Stage 3
+  const note3 = splitNoteParts(response.stage3?.noteForClient);
+  stages.push({
     stageName: "Stage 3",
-    data: { sections: [
-        { title: "Retainer", status: "In progress"},
-        { title: "Declaration", status: "Completed" }
+    data: {
+      sections: [
+        { title: "Instrument", status: response.stage3?.instrument },
+        { title: "Title Search", status: response.stage3?.titleSearch }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note3.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "In progress" },
-            { title: "Declaration", status: "Completed"}
+            { title: "Invite Bank", status: response.stage3?.inviteBank },
+            { title: "Rates", status: response.stage3?.rates }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
-        {
-          sections: [
-            { title: "Declaration", status: "Completed" },
-            { title: "Declaration", status: "In progress" }
-          ],
-          noteTitle: "System Note for Client",
-          noteText: "Another note for the second row with the same layout."
+          noteText: note3.afterHyphen
         }
-      ] }
-  },
-  {
+      ]
+    }
+  });
+
+  // Stage 4
+  const note4 = splitNoteParts(response.stage4?.noteForClient);
+  stages.push({
     stageName: "Stage 4",
-    data: { sections: [
-        { title: "Retainer", status: "In progress" },
-        { title: "Declaration", status: "Completed" }
+    data: {
+      sections: [
+        { title: "DTS", status: response.stage4?.dts },
+        { title: "SOA", status: response.stage4?.soa }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note4.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "Not Completed" },
-            { title: "Declaration", status: "Completed" }
+            { title: "Duty Online", status: response.stage4?.dutyOnline },
+            { title: "FRCGW", status: response.stage4?.frcgw }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
-        {
-          sections: [
-            { title: "Declaration", status: "In progress" },
-            { title: "Declaration", status: "Completed" }
-          ],
-          noteTitle: "System Note for Client",
-          noteText: "Another note for the second row with the same layout."
+          noteText: note4.afterHyphen
         }
-      ]  }
-  },
-  {
+      ]
+    }
+  });
+
+  // Stage 5
+  const note5 = splitNoteParts(response.stage5?.noteForClient);
+  stages.push({
     stageName: "Stage 5",
-    data: { sections: [
-        { title: "Retainer", status: "In progress"},
-        { title: "Declaration", status: "Completed" }
+    data: {
+      sections: [
+        { title: "Council", status: response.stage5?.council },
+        { title: "GST Withholding", status: response.stage5?.gstWithholding }
       ],
       noteTitle: "System Note for Client",
-      noteText: "Yorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      noteText: note5.beforeHyphen,
       rows: [
         {
           sections: [
-            { title: "Retainer", status: "In progress"},
-            { title: "Declaration", status: "Completed" }
+            { title: "Notify SOA", status: response.stage5?.notifySoaToClient },
+            { title: "Settlement Notification", status: response.stage5?.settlementNotification }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Lorem ipsum dolor sit, amet consectetur adipisicing elit."
-        },
+          noteText: note5.afterHyphen
+        }
+      ]
+    }
+  });
+
+  // Stage 6
+  const note6 = splitNoteParts(response.stage6?.noteForClient);
+  stages.push({
+    stageName: "Stage 6",
+    data: {
+      sections: [
+        { title: "Invoiced", status: response.stage6?.invoiced },
+        { title: "NOA to Council/Water", status: response.stage6?.noaToCouncilWater }
+      ],
+      noteTitle: "System Note for Client",
+      noteText: note6.beforeHyphen,
+      rows: [
         {
           sections: [
-            { title: "Declaration", status: "Not Completed" },
-            { title: "Declaration", status: "Not Completed"}
+            { title: "Duty Paid", status: response.stage6?.dutyPaid },
+            { title: "Final Letter to Agent", status: response.stage6?.finalLetterToAgent }
           ],
-          noteTitle: "System Note for Client",
-          noteText: "Another note for the second row with the same layout."
+          noteText: note6.afterHyphen
         }
-      ] }
+      ]
+    }
+  });
+  console.log(stages);
+  return stages;
+}
+
+useEffect(() => {
+  async function fetchMatter() {
+    console.log(matterNumber);
+    const response = await api.getClientDetails(matterNumber); 
+    console.log(response);
+    const formatted = formatMatterDetails(response);
+    console.log(formatted);
+    setMatterDetails(formatted);
+    const stagedetails = await api.getAllStages(matterNumber); 
+    console.log(stagedetails);
+    const data = stagedetails;
+    const stageformatted = mapStagesFromDB(data);
+    setStagedetails(stageformatted);
+
   }
-];
+
+  fetchMatter();
+}, []);
+
+
+
+
+
 
   return (
     <div className="pt-[36px] px-[100px] bg-[#F3F4FB] ">
@@ -191,7 +245,7 @@ export default function ClientDashboard() {
           <img
             className="w-[90px] h-[75px]"
             src="/Logo.png"
-            alt="Logo"npm 
+            alt="Logo"
           />
         </div>
         <div>
@@ -202,6 +256,7 @@ export default function ClientDashboard() {
             width="w-[120px]"
             bghover="hover:bg-red-600"
             bgactive="active:bg-red-900"
+            onClick={()=>navigate("/client/login")}
           />
         </div>
       </div>
@@ -316,20 +371,20 @@ export default function ClientDashboard() {
       
 
 
-      <div className="flex justify-between items-center w-[1720] h-[71] bg-[#00AEEF] rounded-xl" style={{marginTop:"64px"}}>
+      <div className="flex justify-between items-center w-[1720] h-[71] bg-[#00AEEF] rounded-xl" style={{marginTop:"44px"}}>
         <p className="text-24 text-white font-bold" style={{padding: "17.5px 20px"}}>Matter Status</p>
       </div>
       <div>
       <div>
         
-  {stageData.map((stage, idx) => (
+  {stagedetails.map((stage, idx) => (
     <Stages key={idx} stageName={stage.stageName} data={stage.data} />
   ))}
 </div>
 
       </div>
-          <div className="text-sm text-center w-full text-gray-700 font-semibold">
-        Powered By Opsnav™
+          <div className="text-sm text-center w-full text-gray-700 font-semibold mt-5 mb-5 ">
+       <p>Powered By Opsnav™</p> 
       </div>
 </div>
 </div>
