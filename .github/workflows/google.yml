@@ -42,4 +42,4 @@ jobs:
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
-            --port 3000
+            --port 80

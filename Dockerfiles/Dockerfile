@@ -1,21 +1,16 @@
-# Use Node.js 18 Alpine image
-FROM node:18-alpine
-
-# Set working directory
-WORKDIR /usr/src/app
-
-# Install dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-# Copy only necessary files (exclude local dev files and .env)
+# Step 1: Build the Vite app
+FROM node:18-alpine AS builder
+WORKDIR /app
 COPY . .
+RUN npm ci
+RUN npm run build
 
-# If using a .env file, copy it here (optional)
-COPY .env .env
+# Step 2: Serve with Nginx
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose the app port used in Cloud Run
-EXPOSE 3000
+# Optional: custom nginx config (if needed)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Run the application
-CMD ["npm", "run", "start"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
