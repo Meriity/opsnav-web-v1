@@ -1,0 +1,45 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_JSON_PROD }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: melodic-keyword-461611-s9
+
+      - name: Authenticate Docker with Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Docker Image
+        run: |
+          docker build -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest -f Dockerfiles/Dockerfile .
+
+      - name: Push Docker Image to Artifact Registry
+        run: |
+          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy opsnav-web-service \
+            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 3000
