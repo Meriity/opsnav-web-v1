@@ -97,7 +97,7 @@ const Table = ({
                         )}
                         {onDelete && (
                           <button
-                            onClick={() => onDelete(item.id)}
+                            onClick={() => onDelete(item)}
                             className="flex flex-col items-center space-y-1 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                             title="Delete"
                           >

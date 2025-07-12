@@ -19,7 +19,7 @@ function App() {
     <Route path="manage-users" element={<ManageUsers />} />
     <Route path="view-clients" element={<ViewClients />} />
     <Route path="archived-clients" element={<ArchivedClients />} />
-     <Route path="client/:clientId/stages" element={<StagesLayout />} />
+<Route path="/admin/client/stages/:matterNumber" element={<StagesLayout />} />
   </Route>
   <Route path="/admin/forgotPassword" element={<ForgotPassword/>} />
    <Route path="/client/login" element={<ClientLogin />} />

@@ -36,7 +36,7 @@ class ClientAPI {
   // Update client data
   async updateClientData(matterNumber, data) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/${matterNumber}`, {
+      const response = await fetch(`${this.baseUrl}/clients/${matterNumber}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
@@ -162,11 +162,29 @@ class ClientAPI {
       throw error;
     }
   }
+ // get clients
+ async getClients() {
+    try {
+      const response = await fetch("https://opsnav-app-service-871399330172.us-central1.run.app/user/clients/active", {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      console.log(response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting cost:', error);
+      throw error;
+    }
+  }
+
 
   // Get Cost data
   async getCost(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/costs/${matterNumber}`, {
+      const response = await fetch(`${this.baseUrl}/clients/costs/${matterNumber}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
