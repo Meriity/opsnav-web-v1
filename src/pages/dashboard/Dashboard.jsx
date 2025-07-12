@@ -14,11 +14,22 @@ import { User, Users, Archive, Search} from "lucide-react";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+import ClientAPI from "../../api/userAPI";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard () {
+  const [totalusers,setTotalusers]=useState();
+  const [totalarchived,setTotalarchived]=useState();
+  const [totalactive,setTotalactive]=useState();
   const [createuser,setcreateuser]=useState(false);
-
+  const[lastrecord,setlastrecord]=useState();
+  const [chart,setchart]=useState();
+  const api = new ClientAPI();
+  const navigate = useNavigate();
   const StatCard = ({ icon,label, value }) => (
   <div className="flex items-center p-4 bg-white rounded-md shadow-sm w-full space-between">
    <img src={icon} alt={label} className="h-10 w-30" />
@@ -30,18 +41,73 @@ function Dashboard () {
   </div>
 );
 
-  const chartData = [
-  { name: "jan", value: 450 },
-  { name: "feb", value: 460 },
-  { name: "mar", value: 520 },
-  { name: "apr", value: 530 },
-  { name: "may", value: 540 },
-  { name: "jun", value: 500 },
-  { name: "jul", value: 580 },
-  { name: "aug", value: 510 },
-  { name: "sep", value: 570 },
-  { name: "oct", value: 650 },
-];
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        const res = await api.getDashboardData(); // Added await
+        console.log(res); 
+        
+        
+        console.log("Lifetime totals:", res.lifetimeTotals);
+        console.log("Monthly stats:", res.last10MonthsStats);
+        // setlastrecord(res.last10MonthsStats[length(res.last10MonthsStats)-1].closedMatters);
+        setTotalusers(res.lifetimeTotals.totalUsers);
+        setTotalactive(res.lifetimeTotals.totalActiveClients);
+        setTotalarchived(res.lifetimeTotals.totalArchivedClients);
+        setchart(res.last10MonthsStats.map(item => ({
+        name: item.month,  
+        value: item.closedMatters  
+          })));
+        setlastrecord(res.last10MonthsStats[res.last10MonthsStats.length - 2].closedMatters);
+
+      } catch (e) {
+        console.log("Error", e);
+      }
+    }
+    
+    fetchDashboard(); // Fixed typo (was 'fe' instead of 'fetchDashboard')
+  }, []);
+
+
+
+    const [formData, setFormData] = useState({
+    matterNumber: "",
+    clientName: "",
+    state: "",
+    clientType: "",
+    propertyAddress: "",
+    matterDate: "",
+    settlementDate: "",
+    dataEntryBy: localStorage.getItem("user")
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  async function handleSubmit() {
+    const matterNumber=formData.matterNumber;
+    try{
+    await api.createClient(formData);
+      toast.success("User created successfully!", {
+      position: "bottom-center",
+    });
+      setcreateuser(false);
+      navigate(`/admin/client/stages/${matterNumber}`);
+
+    }
+    catch(e){
+      console.log("Error",e);
+      toast.error("User not created",{
+      position:"bottom-center",
+      });
+    }
+    console.log("Submitted Client Data:", formData);
+  };
+
+
+
 
 
   return (
@@ -74,25 +140,26 @@ function Dashboard () {
   className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2" 
   onClick={() => { 
     setcreateuser(true); 
+    
   }}
 >
   <img src={Plus} alt="" className="w-5" /> 
-  <p>Add New Client</p>
+  <p>Add New Client </p>
 </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard icon={ManageUsersIcon} label="Total Users" value="20" />
-          <StatCard icon={ViewClientsIcon} label="Total Clients" value="232" />
-          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value="502" />
+          <StatCard icon={ManageUsersIcon} label="Total Users" value={totalusers} />
+          <StatCard icon={ViewClientsIcon} label="Total Clients" value={totalactive} />
+          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value={totalarchived} />
         </div>
 
         {/* Chart */}
         <div className="bg-white p-6 rounded-md shadow-sm">
           <h2 className="text-base font-medium mb-4">Pending Matters</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData}>
+            <BarChart data={chart}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -104,7 +171,7 @@ function Dashboard () {
 
         {/* Footer Summary */}
         <p className="text-lg font-semibold mt-2">
-          243 Matters Solved In Last Month
+          {lastrecord} Matters Solved In Last Month
         </p>
       </main>
         <Dialog open={createuser} onClose={() => setcreateuser(false)} className="relative z-10">
@@ -127,99 +194,131 @@ function Dashboard () {
                 {/* Title */}
                 <h2 className="text-2xl font-bold mb-6 text-center">Create Client</h2>
       
-                <form className="space-y-5">
-                  {/* Matter Number & Client Name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block mb-1 font-medium">Matter Number</label>
+                <form className="space-y-5"   onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                        }}>
+            {/* Matter Number & Client Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium">Matter Number</label>
+                <input
+                  type="text"
+                  name="matterNumber"
+                  value={formData.matterNumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Client Name</label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                />
+              </div>
+            </div>
+
+            {/* State & Client Type */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium">State</label>
+                <div className="flex gap-4 flex-wrap">
+                  {["VIC", "NSW", "QLD", "SA"].map((stateOption) => (
+                    <label key={stateOption} className="inline-flex items-center gap-1">
                       <input
-                        type="text"
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white focus:ring-2 focus:ring-blue-400"
+                        type="radio"
+                        name="state"
+                        value={stateOption}
+                        checked={formData.state === stateOption}
+                        onChange={handleChange}
+                        className="w-4 h-4"
                       />
-                    </div>
-                    <div>
-                      <label className="block mb-1 font-medium">Client Name</label>
+                      <span>{stateOption}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Client Type</label>
+                <div className="flex gap-4 flex-wrap">
+                  {["Buyer", "Seller", "Transfer"].map((type) => (
+                    <label key={type} className="inline-flex items-center gap-1">
                       <input
-                        type="text"
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white focus:ring-2 focus:ring-blue-400"
+                        type="radio"
+                        name="clientType"
+                        value={type}
+                        checked={formData.clientType === type}
+                        onChange={handleChange}
+                        className="w-4 h-4"
                       />
-                    </div>
-                  </div>
-      
-                  {/* State & Client Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block mb-1 font-medium">State:</label>
-                      <div className="flex gap-4 flex-wrap">
-                        {['VIC', 'NSW', 'QLD', 'SA'].map((state) => (
-                          <label key={state} className="inline-flex items-center gap-1">
-                            <input type="checkbox" className="border-gray-300 w-4 h-4" />
-                            <span>{state}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block mb-1 font-medium">Client Type:</label>
-                      <div className="flex gap-4 flex-wrap">
-                        {['Buyer', 'Seller', 'Transfer'].map((type) => (
-                          <label key={type} className="inline-flex items-center gap-1">
-                            <input type="checkbox" className="border-gray-300 w-4 h-4" />
-                            <span>{type}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-      
-                  {/* Property Address */}
-                  <div>
-                    <label className="block mb-1 font-medium">Property Address</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-      
-                  {/* Matter Date & Settlement Date */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block mb-1 font-medium">Matter Date</label>
-                      <input
-                        type="date"
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500 focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-1 font-medium">Settlement Date</label>
-                      <input
-                        type="date"
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500 focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                  </div>
-      
-                  {/* Data Entry By */}
-                  <div>
-                    <label className="block mb-1 font-medium">Data Entry By</label>
-                    <input
-                      type="text"
-                      value="Super Admin"
-                      readOnly
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
-                    />
-                  </div>
-      
-                  {/* Add Client Button */}
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition"
-                    >
-                      Add New Client
-                    </button>
-                  </div>
-                </form>
+                      <span>{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Property Address */}
+            <div>
+              <label className="block mb-1 font-medium">Property Address</label>
+              <input
+                type="text"
+                name="propertyAddress"
+                value={formData.propertyAddress}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+              />
+            </div>
+
+            {/* Matter Date & Settlement Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium">Matter Date</label>
+                <input
+                  type="date"
+                  name="matterDate"
+                  value={formData.matterDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Settlement Date</label>
+                <input
+                  type="date"
+                  name="settlementDate"
+                  value={formData.settlementDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                />
+              </div>
+            </div>
+
+            {/* Data Entry By */}
+            <div>
+              <label className="block mb-1 font-medium">Data Entry By</label>
+              <input
+                type="text"
+                value={formData.dataEntryBy}
+                readOnly
+                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600"
+              >
+                Add New Client
+              </button>
+            </div>
+          </form>
               </DialogPanel>
             </div>
           </Dialog>

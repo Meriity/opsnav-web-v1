@@ -13,7 +13,8 @@ const Table = ({
   tableClass = '',
   rowSpacing = 'py-3',
   headerBgColor = 'bg-[#D7F4FF]',
-  itemsPerPage = 5
+  itemsPerPage = 5,
+  pagination="absolute bottom-5 right-5 mt-4"
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -128,7 +129,7 @@ const Table = ({
       </div>
 
       {/* Pagination Controls */}
-      <div className="absolute bottom-5 right-5 mt-4">
+      <div className={pagination}>
         <nav aria-label="Table pagination">
           <ul className="inline-flex text-sm">
             <li className="mx-1">
