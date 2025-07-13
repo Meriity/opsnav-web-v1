@@ -7,6 +7,7 @@ import { create } from "zustand";
 import dropdownicon from "../../icons/Button icons/Group 320.png";
 import ClientAPI from "../../api/userAPI";
 import * as XLSX from "xlsx-js-style";
+import Header from "../../components/layout/Header";
 
 
 // Zustand Store for Archived Clients
@@ -180,19 +181,7 @@ export default function ArchivedClients(){
     <div className="min-h-screen w-full bg-gray-100">
       <main className="w-full max-w-7xl mx-auto space-y-6">
         {/* Top Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Hello {localStorage.getItem("user")}</h2>
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">
-            <Search className="w-4 h-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by Matter Number, Client Name"
-              className="outline-none text-sm bg-transparent"
-              style={{ width: "250px", height: "25px" }}
-            />
-          </div>
-        </div>
-
+        <Header/>
         {/* Archive Header */}
         <div className="flex justify-between items-center w-full mb-4">
           <h2 className="text-2xl font-semibold">Archived Clients</h2>

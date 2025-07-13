@@ -7,6 +7,7 @@ class AuthAPI {
 
   // Set initial password for new users
   async setPassword(token, password) {
+    console.log(JSON.stringify({token,password}));
     try {
       const response = await fetch(`${this.baseUrl}/set-password`, {
         method: 'POST',
@@ -15,8 +16,7 @@ class AuthAPI {
         },
         body: JSON.stringify({
           token,
-          password
-        })
+          password})
       });
       
       if (!response.ok) {

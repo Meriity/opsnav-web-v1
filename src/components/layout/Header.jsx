@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import useDebounce from "../../hooks/useDebounce";
 import { Search } from "lucide-react";
-import { ToastContainer } from "react-toastify";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from 'react-router-dom';
 
@@ -45,7 +44,6 @@ export default function Header() {
 
     return (
         <>
-            <ToastContainer />
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Hello {localStorage.getItem("user")}</h2>
                 <div className="relative w-fit">

@@ -9,12 +9,45 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
+import { Search } from "lucide-react";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+import ClientAPI from "../../api/userAPI";
+import { useNavigate } from "react-router-dom";
+import { create } from 'zustand';
 import Header from "../../components/layout/Header";
+
+// Zustand store
+const useDashboardStore = create((set) => ({
+  totalusers: null,
+  totalarchived: null,
+  totalactive: null,
+  lastrecord: null,
+  chart: null,
+  loading: true,
+  isFetched: false,
+  
+  setDashboardData: (data) => set({
+    totalusers: data.lifetimeTotals.totalUsers,
+    totalactive: data.lifetimeTotals.totalActiveClients,
+    totalarchived: data.lifetimeTotals.totalArchivedClients,
+    chart: data.last10MonthsStats.map(item => ({
+      name: item.month,
+      value: item.closedMatters
+    })),
+    lastrecord: data.last10MonthsStats[data.last10MonthsStats.length - 2].closedMatters,
+    loading: false,
+    isFetched: true
+  }),
+  
+  setLoading: (isLoading) => set({ loading: isLoading }),
+}));
 
 function Dashboard() {
   const [createuser, setcreateuser] = useState(false);
@@ -45,14 +78,39 @@ function Dashboard() {
 
 
 
+  async function handleSubmit() {
+    const matterNumber = formData.matterNumber;
+    try {
+      const api = new ClientAPI();
+      await api.createClient(formData);
+      toast.success("User created successfully!", {
+        position: "bottom-center",
+      });
+      setcreateuser(false);
+      navigate(`/admin/client/stages/${matterNumber}`);
+    } catch(e) {
+      console.log("Error", e);
+      toast.error("User not created", {
+        position: "bottom-center",
+      });
+    }
+    console.log("Submitted Client Data:", formData);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48 mt-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
+        <div className="ml-5 text-[#00AEEF]">Loading Please wait!</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex w-full h-full bg-gray-100">
-      {/* Main Content */}
-      <main className="flex-grow h-full space-y-4">
+    <div className="min-h-screen w-full bg-gray-100">
+      <main className="w-full max-w-7xl mx-auto space-y-4">
         {/* Header */}
-
-        <Header />
+        <Header/>
 
         {/* Welcome Card */}
         <div className="bg-[#A6E7FF] p-6 rounded-md h-[190px]">
@@ -67,23 +125,23 @@ function Dashboard() {
               setcreateuser(true);
             }}
           >
-            <img src={Plus} alt="" className="w-5" />
+            <img src={Plus} alt="" className="w-5" /> 
             <p>Add New Client</p>
           </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard icon={ManageUsersIcon} label="Total Users" value="20" />
-          <StatCard icon={ViewClientsIcon} label="Total Clients" value="232" />
-          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value="502" />
+          <StatCard icon={ManageUsersIcon} label="Total Users" value={totalusers} />
+          <StatCard icon={ViewClientsIcon} label="Total Clients" value={totalactive} />
+          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value={totalarchived} />
         </div>
 
         {/* Chart */}
         <div className="bg-white p-6 rounded-md shadow-sm">
           <h2 className="text-base font-medium mb-4">Pending Matters</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData}>
+            <BarChart data={chart}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -95,7 +153,7 @@ function Dashboard() {
 
         {/* Footer Summary */}
         <p className="text-lg font-semibold mt-2">
-          243 Matters Solved In Last Month
+          {lastrecord} Matters Solved In Last Month
         </p>
       </main>
       <Dialog open={createuser} onClose={() => setcreateuser(false)} className="relative z-10">
