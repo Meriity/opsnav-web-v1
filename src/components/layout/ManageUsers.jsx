@@ -5,6 +5,7 @@ import Button from "../ui/Button";
 import Table from "../ui/Table";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import AdminApi from "../../api/adminAPI";
+import Header from "./Header";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -99,18 +100,7 @@ export default function ManageUsers() {
     <div className="min-h-screen w-full bg-gray-100">
       <main className="w-full max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-[15px]">
-          <h2 className="text-xl font-semibold">Hello {localStorage.getItem("user")}</h2>
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">
-            <Search className="w-4 h-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by Matter Number, Client Name"
-              className="outline-none text-sm bg-transparent"
-              style={{ width: "250px", height: "25px" }}
-            />
-          </div>
-        </div>
+        <Header/>
 
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">

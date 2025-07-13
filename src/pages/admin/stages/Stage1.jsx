@@ -1,12 +1,12 @@
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigger }) {
+export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrigger }) {
   const stage = 1;
   const api = new ClientAPI();
-  const {matterNumber}= useParams();
+  const { matterNumber } = useParams();
   const getStatus = (value) => {
     if (typeof value !== "string") return "In progress";
     const val = value.toLowerCase();
@@ -18,7 +18,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
   function bgcolor(status) {
     switch (status) {
       case "In progress":
-        return "bg-[#FFEECF]";  
+        return "bg-[#FFEECF]";
       case "Completed":
         return "bg-[#00A506]";
       case "Not Completed":
@@ -57,7 +57,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
   const [statusDeclaration, setStatusDeclaration] = useState("In progress");
   const [statusQuoteType, setStatusQuoteType] = useState("In progress");
   const [statusTenants, setStatusTenants] = useState("In progress");
-    const originalData = useRef({});
+  const originalData = useRef({});
 
   useEffect(() => {
     if (!data) return;
@@ -74,7 +74,6 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
       systemNote,
       clientComment,
     };
-    console.log(fetchedData);
 
     setReferral(fetchedData.referral);
     setRetainer(fetchedData.retainer);
@@ -90,7 +89,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
     setStatusQuoteType(getStatus(fetchedData.quoteType));
     setStatusTenants(getStatus(fetchedData.tenants));
     originalData.current = fetchedData;
-  }, [data,reloadTrigger]);
+  }, [data, reloadTrigger]);
 
   // ✅ Custom checker function
   function checkFormStatus() {
@@ -113,7 +112,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
     }
   }
 
-   function isChanged() {
+  function isChanged() {
     const current = {
       referral,
       retainer,
@@ -130,7 +129,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
   }
 
   async function handleNextClick() {
-      const updateNoteForClient = (retainer_value, declaration_form_value) => {
+    const updateNoteForClient = (retainer_value, declaration_form_value) => {
 
       const greenValues = ["Yes", "yes", "NR", "nr", "NA", "na"];
 
@@ -140,7 +139,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
       if (!isRetainerGreen && !isDeclarationGreen) {
         return 'Retainer and Declaration not received';
       } else if (!isRetainerGreen) {
-        return 'Retainer not received' ;
+        return 'Retainer not received';
       } else if (!isDeclarationGreen) {
         return 'Declaration not received ';
       } else {
@@ -148,33 +147,32 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
       }
 
     }
-  try {
-    if (isChanged()) {
-      const payload = {
-        matterNumber,
-        referral,
-        retainer,
-        declarationForm,
-        quoteType,
-        quoteAmount,
-        tenants,
-        noteForClient: `${updateNoteForClient(retainer,declarationForm)} - ${clientComment}`,
-      };
-      console.log(JSON.stringify(payload));
+    try {
+      if (isChanged()) {
+        const payload = {
+          matterNumber,
+          referral,
+          retainer,
+          declarationForm,
+          quoteType,
+          quoteAmount,
+          tenants,
+          noteForClient: `${updateNoteForClient(retainer, declarationForm)} - ${clientComment}`,
+        };
 
-      await api.upsertStageOne(payload);
-      console.log("Stage 1 updated successfully!");
+        await api.upsertStageOne(payload);
+        console.log("Stage 1 updated successfully!");
 
-      // ✅ Update originalData to reflect saved state
-      originalData.current = { ...payload, systemNote, clientComment };
-      setReloadTrigger(prev => !prev); 
+        // ✅ Update originalData to reflect saved state
+        originalData.current = { ...payload, systemNote, clientComment };
+        setReloadTrigger(prev => !prev);
+      }
+
+      changeStage(stage + 1);
+    } catch (error) {
+      console.error("Failed to update stage 1:", error);
     }
-
-    changeStage(stage + 1);
-  } catch (error) {
-    console.error("Failed to update stage 1:", error);
   }
-}
 
 
   return (
@@ -196,9 +194,8 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
           <div className="flex justify-between mb-3">
             <label className="block mb-1 text-base font-bold">Retainer</label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusRetainer)} ${
-                statusRetainer === "In progress" ? "text-[#FF9500]" : "text-white"
-              } flex items-center justify-center rounded-4xl`}
+              className={`w-[90px] h-[18px] ${bgcolor(statusRetainer)} ${statusRetainer === "In progress" ? "text-[#FF9500]" : "text-white"
+                } flex items-center justify-center rounded-4xl`}
             >
               <p className="text-[12px] whitespace-nowrap">{statusRetainer}</p>
             </div>
@@ -227,11 +224,10 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
           <div className="flex justify-between mb-3">
             <label className="block mb-1 text-base font-bold">Declaration form</label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusDeclaration)} ${
-                statusDeclaration === "In progress"
-                  ? "text-[#FF9500]"
-                  : "text-white"
-              } flex items-center justify-center rounded-4xl`}
+              className={`w-[90px] h-[18px] ${bgcolor(statusDeclaration)} ${statusDeclaration === "In progress"
+                ? "text-[#FF9500]"
+                : "text-white"
+                } flex items-center justify-center rounded-4xl`}
             >
               <p className="text-[12px] whitespace-nowrap">{statusDeclaration}</p>
             </div>
@@ -258,7 +254,7 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
         {/* Quote Type */}
         <div className="mt-5">
           <div className="flex justify-between mb-3">
-            <label className="block mb-1 text-base font-bold">Quote Type</label>  
+            <label className="block mb-1 text-base font-bold">Quote Type</label>
           </div>
           <div className="flex gap-4 flex-wrap">
             {["Variable", "Fixed"].map((val) => (
@@ -297,9 +293,8 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
           <div className="flex justify-between mb-3">
             <label className="block mb-1 text-base font-bold">Tenants</label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusTenants)} ${
-                statusTenants === "In progress" ? "text-[#FF9500]" : "text-white"
-              } flex items-center justify-center rounded-4xl`}
+              className={`w-[90px] h-[18px] ${bgcolor(statusTenants)} ${statusTenants === "In progress" ? "text-[#FF9500]" : "text-white"
+                } flex items-center justify-center rounded-4xl`}
             >
               <p className="text-[12px] whitespace-nowrap">{statusTenants}</p>
             </div>
@@ -357,12 +352,11 @@ export default function Stage1({ changeStage, data,reloadTrigger,setReloadTrigge
             onClick={() => changeStage(stage - 1)}
             disabled={stage === 1}
           />
-     <Button
-  label="Next"
-  width="w-[100px]"
-  onClick={handleNextClick
-}
-/>
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={handleNextClick}
+          />
         </div>
       </div>
     </div>

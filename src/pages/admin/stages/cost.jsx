@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/userAPI";
 import { useParams } from "react-router-dom";
 
-export default function CostComponent({ changeStage }) {
+export default function CostComponent({ changeStage, reloadTrigger, setReloadTrigger }) {
   const stage = 7;
   const api = new ClientAPI();
   const { matterNumber } = useParams();

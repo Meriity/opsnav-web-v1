@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage2({ changeStage, data }) {
+export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrigger }) {
   const stage = 2;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -111,7 +111,7 @@ export default function Stage2({ changeStage, data }) {
       noteForClientA: data.noteForClientA || "",
       noteForClientB: data.noteForClientB || ""
     };
-  }, [data]);
+  }, [data, reloadTrigger]);
 
   function checkFormStatus() {
     const radios = [signedContract, keyDates, voi, caf, depositReceipt, buildingPest, financeApproval, ct];
@@ -149,7 +149,7 @@ export default function Stage2({ changeStage, data }) {
   }
 
   async function handleNextClick() {
-        const updateNoteAForClient = (voi_value, caf_value, deposit_value) => {
+    const updateNoteAForClient = (voi_value, caf_value, deposit_value) => {
 
       const greenValues = ["Yes", "yes", "NR", "nr", "na", "NA"];
 
@@ -175,7 +175,7 @@ export default function Stage2({ changeStage, data }) {
         return 'Tasks completed ';
       }
     }
-        const updateNoteBForClient = (building_and_pest_value, finance_approval_value) => {
+    const updateNoteBForClient = (building_and_pest_value, finance_approval_value) => {
 
       const greenValues = ["Yes", "yes", "NR", "nr", "na", "NA"];
 
@@ -207,13 +207,14 @@ export default function Stage2({ changeStage, data }) {
           depositReceiptDate: depositDate,
           buildingAndPestDate: buildingDate,
           financeApprovalDate: financeDate,
-          noteForClientA: `${updateNoteAForClient(voi,caf,depositReceipt)} - ${clientNote1}`,
-          noteForClientB: `${updateNoteBForClient(buildingPest,financeApproval)} - ${clientNote2}`,
+          noteForClientA: `${updateNoteAForClient(voi, caf, depositReceipt)} - ${clientNote1}`,
+          noteForClientB: `${updateNoteBForClient(buildingPest, financeApproval)} - ${clientNote2}`,
         };
 
-        await api.upsertStageTwo(matterNumber,checkFormStatus(),payload);
+        await api.upsertStageTwo(matterNumber, checkFormStatus(), payload);
         originalData.current = payload;
         console.log("Stage 2 updated!");
+        setReloadTrigger(prev => !prev);
       }
 
       changeStage(stage + 1);
@@ -222,7 +223,7 @@ export default function Stage2({ changeStage, data }) {
     }
   }
 
-  const renderRadioGroup = (label, name, value, setValue, status, setStatus, showDate = false, dateValue = "", setDateValue = () => {}) => (
+  const renderRadioGroup = (label, name, value, setValue, status, setStatus, showDate = false, dateValue = "", setDateValue = () => { }) => (
     <div className="py-2">
       <div className="flex justify-between mb-2">
         <label className="block mb-1 text-base font-bold">{label}</label>

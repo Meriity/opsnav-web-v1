@@ -391,7 +391,7 @@ async getDashboardData() {
   // Resend link to client
   async resendLinkToClient(email, matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client-view/resend-link`, {
+      const response = await fetch('https://opsnav-app-service-871399330172.us-central1.run.app/client-view/send-link', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
@@ -433,12 +433,24 @@ async getDashboardData() {
     }
   }
 
-  
-
-  
+  // Get All Outstanding Task Report
+  async getAllOutstandingTasks() {
+    try {
+      const response = await fetch(`${this.baseUrl}/user/tasks/outstanding`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting stage one:', error);
+      throw error;
+    }
+  }
 }
-
-
-
 
 export default ClientAPI;
