@@ -16,6 +16,7 @@ import ClientLogin from "./components/auth/ClientLogin";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
 import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
+import SetPassword from "./pages/auth/SetPassword";
 
 // ✅ Auth Wrapper inside this file
 function RequireAuth({ children }) {
@@ -35,6 +36,7 @@ function App() {
       {/* 🔓 Public Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
+      <Route path="/set-password" element={<SetPassword />} />
       <Route path="/client/login" element={<ClientLogin />} />
       <Route path="/client/forgotPassword" element={<ForgotPassword />} />
 
