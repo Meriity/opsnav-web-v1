@@ -118,6 +118,7 @@ function Dashboard() {
   async function handleSubmit() {
     const matterNumber = formData.matterNumber;
     try {
+      const api = new ClientAPI();
       await api.createClient(formData);
       toast.success("User created successfully!", {
         position: "bottom-center",
