@@ -17,7 +17,7 @@ class ClientAPI {
   // Get client details by matter number
   async getClientDetails(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client?matterNumber=${matterNumber}`, {
+      const response = await fetch(`${this.baseUrl}/clients?matterNumber=${matterNumber}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -36,7 +36,7 @@ class ClientAPI {
   // Update client data
   async updateClientData(matterNumber, data) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/${matterNumber}`, {
+      const response = await fetch(`${this.baseUrl}/clients/${matterNumber}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
@@ -162,11 +162,29 @@ class ClientAPI {
       throw error;
     }
   }
+ // get clients
+ async getClients() {
+    try {
+      const response = await fetch("https://opsnav-app-service-871399330172.us-central1.run.app/user/clients/active", {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      console.log(response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting cost:', error);
+      throw error;
+    }
+  }
+
 
   // Get Cost data
   async getCost(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/costs/${matterNumber}`, {
+      const response = await fetch(`${this.baseUrl}/clients/costs/${matterNumber}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -261,6 +279,91 @@ class ClientAPI {
       throw error;
     }
   }
+async createClient(clientData) {
+  try {
+    const response = await fetch(`${this.baseUrl}/user/clients`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(clientData)
+    });
+    console.log(JSON.stringify(clientData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating client:', error);
+    throw error;
+  }
+}
+
+ // get clients
+ async getArchivedClients() {
+    try {
+      const response = await fetch("https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled", {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      const data=await response.json();
+  
+      console.log(data);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+          return data;
+   
+    } catch (error) {
+      console.error('Error getting cost:', error);
+      throw error;
+    }
+  }
+
+   async getArchivedClientsDate(from,to) {
+    try {
+      const response = await fetch(`https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled?from=${from}&to=${to}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      console.log(response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting cost:', error);
+      throw error;
+    }
+  }
+
+async getDashboardData() {
+  try {
+    const response = await fetch('https://opsnav-app-service-871399330172.us-central1.run.app/dashboard', {
+      method: 'GET',
+      headers: this.getHeaders()
+    });
+    
+    console.log('Raw response:', response);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Parsed JSON data:', data);
+    
+    return {
+      lifetimeTotals: data.lifetimeTotals,
+      last10MonthsStats: data.last10MonthsStats
+    };
+    
+  } catch (error) {
+    console.error('Error getting dashboard data:', error);
+    throw error;
+  }
+}
+
 
   // Remove client access
   async removeClientAccess(email, matterNumber) {
@@ -329,6 +432,13 @@ class ClientAPI {
       throw error;
     }
   }
+
+  
+
+  
 }
+
+
+
 
 export default ClientAPI;

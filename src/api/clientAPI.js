@@ -45,7 +45,6 @@ class ClientAPI {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
       return await response.json();
     } catch (error) {
       console.error('Error updating client data:', error);
@@ -54,30 +53,49 @@ class ClientAPI {
   }
 
   // Insert/Update Stage One
-  async upsertStageOne(matterNumber, colorStatus, additionalData = {}) {
-    try {
-      const response = await fetch(`${this.baseUrl}/clients/stage-one`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          matterNumber,
-          color_status: colorStatus,
-          ...additionalData
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating stage one:', error);
-      throw error;
-    }
-  }
+  async upsertStageOne(additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-one`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData) 
+    });
 
-  // Get Stage One data
+    console.log(`${this.baseUrl}/clients/stage-one`);
+    console.log(JSON.stringify(additionalData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating stage one:', error);
+    throw error;
+  }
+}
+
+async upsertStage(stage, additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-${stage}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error updating stage ${stage}:`, error);
+    throw error;
+  }
+}
+
+
+  // Get All Stages data
   async getAllStages(matterNumber) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/stages/${matterNumber}`, {
@@ -99,7 +117,7 @@ class ClientAPI {
   // Insert/Update Stage Two
   async upsertStageTwo(matterNumber, colorStatus, additionalData = {}) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/stage-two`, {
+      const response = await fetch(`${this.baseUrl}/clients/stage-two`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
@@ -138,6 +156,90 @@ class ClientAPI {
       throw error;
     }
   }
+   async upsertStageThree(additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-three`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData) 
+    });
+
+    console.log(JSON.stringify(additionalData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating stage one:', error);
+    throw error;
+  }
+}
+
+  async upsertStageFour(additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-four`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData) 
+    });
+
+    console.log(JSON.stringify(additionalData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating stage one:', error);
+    throw error;
+  }
+}
+
+  async upsertStageFive(additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-five`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData) 
+    });
+
+    console.log(JSON.stringify(additionalData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating stage one:', error);
+    throw error;
+  }
+}
+
+  async upsertStageSix(additionalData = {}) {
+  try {
+    const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(additionalData) 
+    });
+
+    console.log(JSON.stringify(additionalData));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating stage one:', error);
+    throw error;
+  }
+}
+
 
   // Insert/Update Cost
   async upsertCost(matterNumber, cost, additionalData = {}) {

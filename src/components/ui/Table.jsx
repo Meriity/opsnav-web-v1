@@ -13,7 +13,8 @@ const Table = ({
   tableClass = '',
   rowSpacing = 'py-3',
   headerBgColor = 'bg-[#D7F4FF]',
-  itemsPerPage = 5
+  itemsPerPage = 5,
+  pagination="absolute bottom-5 right-5 mt-4"
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -97,7 +98,7 @@ const Table = ({
                         )}
                         {onDelete && (
                           <button
-                            onClick={() => onDelete(item.id)}
+                            onClick={() => onDelete(item)}
                             className="flex flex-col items-center space-y-1 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                             title="Delete"
                           >
@@ -128,7 +129,7 @@ const Table = ({
       </div>
 
       {/* Pagination Controls */}
-      <div className="absolute bottom-5 right-5 mt-4">
+      <div className={pagination}>
         <nav aria-label="Table pagination">
           <ul className="inline-flex text-sm">
             <li className="mx-1">

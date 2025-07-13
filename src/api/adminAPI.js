@@ -61,7 +61,7 @@ class AdminAPI {
   async deleteUser(userId) {
     console.log(userId);
     try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId}`, {
+      const response = await fetch(`${this.baseUrl}/admin/users/${userId.id}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -85,7 +85,7 @@ class AdminAPI {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify({
-          display_name: user.displayName,
+          displayName: user.displayName,
           role:user.role
         })
       });

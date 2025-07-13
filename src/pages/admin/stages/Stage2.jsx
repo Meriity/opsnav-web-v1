@@ -1,11 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
+import ClientAPI from "../../../api/clientAPI";
+import { useParams } from "react-router-dom";
 
-export default function Stage2({ changeStage }) {
+export default function Stage2({ changeStage, data }) {
   const stage = 2;
+  const api = new ClientAPI();
+  const { matterNumber } = useParams();
+  const originalData = useRef({});
+
   const getStatus = (value) => {
-    if (value === "Yes") return "Completed";
-    if (value === "No") return "Not Completed";
+    if (!value) return "In progress";
+    const val = value.toLowerCase();
+    if (val === "yes") return "Completed";
+    if (val === "no") return "Not Completed";
     return "In progress";
   };
 
@@ -22,22 +30,29 @@ export default function Stage2({ changeStage }) {
     }
   }
 
+  const extractNotes = (note = "") => {
+    let [systemNote = "", clientComment = ""] = (note || "").split(" - ").map(str => str.trim());
+    return { systemNote, clientComment };
+  };
+
+  // State declarations
   const [signedContract, setSignedContract] = useState("");
-  const [keyDates, setkeyDates] = useState("");
+  const [keyDates, setKeyDates] = useState("");
   const [voi, setVoi] = useState("");
   const [caf, setCaf] = useState("");
-  const [depositReceipt, setdepositReceipt] = useState("");
-  const [buildingPest, setbuildingPest] = useState("");
-  const [obtainDA, setObtainDA] = useState("");
+  const [depositReceipt, setDepositReceipt] = useState("");
+  const [buildingPest, setBuildingPest] = useState("");
+  const [financeApproval, setFinanceApproval] = useState("");
   const [ct, setCt] = useState("");
-  const [system1_note1, setSystem1_note2] = useState("");
-  const [system2_note1, setSystem2_note2] = useState("");
-  const [client1_note1, setClient1_note2] = useState("");
-  const [client2_note1, setClient2_note2] = useState("");
 
   const [depositDate, setDepositDate] = useState("");
   const [buildingDate, setBuildingDate] = useState("");
   const [financeDate, setFinanceDate] = useState("");
+
+  const [systemNote1, setSystemNote1] = useState("");
+  const [clientNote1, setClientNote1] = useState("");
+  const [systemNote2, setSystemNote2] = useState("");
+  const [clientNote2, setClientNote2] = useState("");
 
   const [statusSignedContract, setStatusSignedContract] = useState("In progress");
   const [statusKeyDates, setStatusKeyDates] = useState("In progress");
@@ -45,76 +60,184 @@ export default function Stage2({ changeStage }) {
   const [statusCaf, setStatusCaf] = useState("In progress");
   const [statusDepositReceipt, setStatusDepositReceipt] = useState("In progress");
   const [statusBuildingPest, setStatusBuildingPest] = useState("In progress");
-  const [statusObtainDA, setStatusObtainDA] = useState("In progress");
+  const [statusFinanceApproval, setStatusFinanceApproval] = useState("In progress");
   const [statusCt, setStatusCt] = useState("In progress");
-  const [statusSystem1, setStatusSystem1] = useState("In progress");
-  const [statusSystem2, setStatusSystem2] = useState("In progress");
-  const [statusClient1, setStatusClient1] = useState("In progress");
-  const [statusClient2, setStatusClient2] = useState("In progress");
 
   useEffect(() => {
-    const mockData = {
-      signedContract: "Yes",
-      keyDates: "No",
-      voi: "Yes",
-      caf: "No",
-      depositReceipt: "Processing",
-      buildingPest: "Yes",
-      obtainDA: "No",
-      ct: "Yes",
-      system1: "Need VOI update",
-      system2: "CAF done",
-      client1: "Please confirm",
-      client2: "Need final approval"
+    if (!data) return;
+
+    const noteA = extractNotes(data.noteForClientA);
+    const noteB = extractNotes(data.noteForClientB);
+
+    setSignedContract(data.signedContract || "");
+    setKeyDates(data.sendKeyDates || "");
+    setVoi(data.voi || "");
+    setCaf(data.caf || "");
+    setDepositReceipt(data.depositReceipt || "");
+    setBuildingPest(data.buildingAndPest || "");
+    setFinanceApproval(data.financeApproval || "");
+    setCt(data.checkCtController || "");
+
+    setDepositDate(data.depositReceiptDate || "");
+    setBuildingDate(data.buildingAndPestDate || "");
+    setFinanceDate(data.financeApprovalDate || "");
+
+    setSystemNote1(noteA.systemNote);
+    setClientNote1(noteA.clientComment);
+    setSystemNote2(noteB.systemNote);
+    setClientNote2(noteB.clientComment);
+
+    setStatusSignedContract(getStatus(data.signedContract));
+    setStatusKeyDates(getStatus(data.sendKeyDates));
+    setStatusVoi(getStatus(data.voi));
+    setStatusCaf(getStatus(data.caf));
+    setStatusDepositReceipt(getStatus(data.depositReceipt));
+    setStatusBuildingPest(getStatus(data.buildingAndPest));
+    setStatusFinanceApproval(getStatus(data.financeApproval));
+    setStatusCt(getStatus(data.checkCtController));
+
+    originalData.current = {
+      signedContract: data.signedContract || "",
+      sendKeyDates: data.sendKeyDates || "",
+      voi: data.voi || "",
+      caf: data.caf || "",
+      depositReceipt: data.depositReceipt || "",
+      buildingAndPest: data.buildingAndPest || "",
+      financeApproval: data.financeApproval || "",
+      checkCtController: data.checkCtController || "",
+      depositReceiptDate: data.depositReceiptDate || "",
+      buildingAndPestDate: data.buildingAndPestDate || "",
+      financeApprovalDate: data.financeApprovalDate || "",
+      noteForClientA: data.noteForClientA || "",
+      noteForClientB: data.noteForClientB || ""
+    };
+  }, [data]);
+
+  function checkFormStatus() {
+    const radios = [signedContract, keyDates, voi, caf, depositReceipt, buildingPest, financeApproval, ct];
+    const inputs = [systemNote1, clientNote1, systemNote2, clientNote2];
+
+    const allYes = radios.every((val) => val.toLowerCase() === "yes");
+    const allNo = radios.every((val) => val.toLowerCase() === "no");
+    const anyFilled = radios.some((val) => val) || inputs.some((val) => val.trim() !== "");
+
+    if (allYes) return "green";
+    if (allNo) return "red";
+    if (anyFilled) return "amber";
+    return "red";
+  }
+
+  function isChanged() {
+    const current = {
+      signedContract,
+      sendKeyDates: keyDates,
+      voi,
+      caf,
+      depositReceipt,
+      buildingAndPest: buildingPest,
+      financeApproval,
+      checkCtController: ct,
+      depositReceiptDate: depositDate,
+      buildingAndPestDate: buildingDate,
+      financeApprovalDate: financeDate,
+      noteForClientA: `${systemNote1} - ${clientNote1}`,
+      noteForClientB: `${systemNote2} - ${clientNote2}`,
     };
 
-    setSignedContract(mockData.signedContract);
-    setkeyDates(mockData.keyDates);
-    setVoi(mockData.voi);
-    setCaf(mockData.caf);
-    setdepositReceipt(mockData.depositReceipt);
-    setbuildingPest(mockData.buildingPest);
-    setObtainDA(mockData.obtainDA);
-    setCt(mockData.ct);
-    setSystem1_note2(mockData.system1);
-    setSystem2_note2(mockData.system2);
-    setClient1_note2(mockData.client1);
-    setClient2_note2(mockData.client2);
+    const original = originalData.current;
+    return Object.keys(current).some((key) => current[key] !== original[key]);
+  }
 
-    setStatusSignedContract(getStatus(mockData.signedContract));
-    setStatusKeyDates(getStatus(mockData.keyDates));
-    setStatusVoi(getStatus(mockData.voi));
-    setStatusCaf(getStatus(mockData.caf));
-    setStatusDepositReceipt(getStatus(mockData.depositReceipt));
-    setStatusBuildingPest(getStatus(mockData.buildingPest));
-    setStatusObtainDA(getStatus(mockData.obtainDA));
-    setStatusCt(getStatus(mockData.ct));
-    setStatusSystem1(getStatus(mockData.system1));
-    setStatusSystem2(getStatus(mockData.system2));
-    setStatusClient1(getStatus(mockData.client1));
-    setStatusClient2(getStatus(mockData.client2));
-  }, []);
+  async function handleNextClick() {
+        const updateNoteAForClient = (voi_value, caf_value, deposit_value) => {
+
+      const greenValues = ["Yes", "yes", "NR", "nr", "na", "NA"];
+
+      const isVoiGreen = greenValues.includes(voi_value)
+      const isCafGreen = greenValues.includes(caf_value);
+      const isDepositGreen = greenValues.includes(deposit_value);
+
+      if (!isVoiGreen && !isCafGreen && !isDepositGreen) {
+        return 'VOI /CAF and Deposit receipt not received';
+      } else if (!isVoiGreen && !isCafGreen) {
+        return 'VOI and CAF not received';
+      } else if (!isCafGreen && !isDepositGreen) {
+        return 'CAF and Deposit receipt not received';
+      } else if (!isVoiGreen && !isDepositGreen) {
+        return 'VOI and Deposit not received';
+      } else if (!isDepositGreen) {
+        return 'Deposit receipt not received';
+      } else if (!isCafGreen) {
+        return 'CAF not received ';
+      } else if (!isVoiGreen) {
+        return 'VOI not received ';
+      } else {
+        return 'Tasks completed ';
+      }
+    }
+        const updateNoteBForClient = (building_and_pest_value, finance_approval_value) => {
+
+      const greenValues = ["Yes", "yes", "NR", "nr", "na", "NA"];
+
+      const isBandPGreen = greenValues.includes(building_and_pest_value)
+      const isFinanceGreen = greenValues.includes(finance_approval_value);
+
+      if (!isBandPGreen && !isFinanceGreen) {
+        return 'Building and Pest and Finance Approval not received';
+      } else if (!isBandPGreen) {
+        return 'Building and Pest not received';
+      } else if (!isFinanceGreen) {
+        return 'Finance Approval not received';
+      } else {
+        return 'Tasks completed';
+      }
+
+    }
+    try {
+      if (isChanged()) {
+        const payload = {
+          signedContract,
+          sendKeyDates: keyDates,
+          voi,
+          caf,
+          depositReceipt,
+          buildingAndPest: buildingPest,
+          financeApproval,
+          checkCtController: ct,
+          depositReceiptDate: depositDate,
+          buildingAndPestDate: buildingDate,
+          financeApprovalDate: financeDate,
+          noteForClientA: `${updateNoteAForClient(voi,caf,depositReceipt)} - ${clientNote1}`,
+          noteForClientB: `${updateNoteBForClient(buildingPest,financeApproval)} - ${clientNote2}`,
+        };
+
+        await api.upsertStageTwo(matterNumber,checkFormStatus(),payload);
+        originalData.current = payload;
+        console.log("Stage 2 updated!");
+      }
+
+      changeStage(stage + 1);
+    } catch (error) {
+      console.error("Failed to update stage 2:", error);
+    }
+  }
 
   const renderRadioGroup = (label, name, value, setValue, status, setStatus, showDate = false, dateValue = "", setDateValue = () => {}) => (
-    <div className=" py-2">
-      <div className="flex justify-between mb-3">
+    <div className="py-2">
+      <div className="flex justify-between mb-2">
         <label className="block mb-1 text-base font-bold">{label}</label>
-        <div
-          className={`w-[90px] h-[18px] ${bgcolor(status)} ${
-            status === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
-        >
+        <div className={`w-[90px] h-[18px] ${bgcolor(status)} ${status === "In progress" ? "text-[#FF9500]" : "text-white"} flex items-center justify-center rounded-4xl`}>
           <p className="text-[12px] whitespace-nowrap">{status}</p>
         </div>
       </div>
-      <div className={`flex justify-between ${showDate ? "gap-2" : "gap-4"} flex-wrap items-center`}>
-        {"Yes,No,Processing,N/R".split(",").map((val) => (
-          <label key={val} className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-4">
+        {["Yes", "No", "Processing", "N/R"].map((val) => (
+          <label key={val} className="flex items-center gap-2">
             <input
               type="radio"
               name={name}
               value={val}
-              checked={value === val}
+              checked={value.toLowerCase() === val.toLowerCase()}
               onChange={() => {
                 setValue(val);
                 setStatus(getStatus(val));
@@ -135,71 +258,37 @@ export default function Stage2({ changeStage }) {
     </div>
   );
 
-  const renderTextInput = (label, value, setValue, status, setStatus) => (
-    <div className="mt-5">
-      <div className="flex justify-between mb-3">
-        <label className="block mb-1 text-base font-bold">{label}</label>
-        <div
-          className={`w-[90px] h-[18px] ${bgcolor(status)} ${
-            status === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
-        >
-          <p className="text-[12px] whitespace-nowrap">{status}</p>
-        </div>
-      </div>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setStatus(getStatus(e.target.value));
-        }}
-        className="w-full rounded p-2 bg-gray-100"
-      />
-    </div>
-  );
-
-  const renderTextarea = (label, value, setValue, status, setStatus) => (
-    <div className="mt-5">
-      <div className="flex justify-between mb-3">
-        <label className="block mb-1 text-base font-bold">{label}</label>
-        <div
-          className={`w-[90px] h-[18px] ${bgcolor(status)} ${
-            status === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
-        >
-          <p className="text-[12px] whitespace-nowrap">{status}</p>
-        </div>
-      </div>
-      <textarea
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setStatus(getStatus(e.target.value));
-        }}
-        className="w-full rounded p-2 bg-gray-100"
-      />
-    </div>
-  );
-
   return (
     <div className="overflow-y-auto">
       {renderRadioGroup("Signed Contract", "signedContract", signedContract, setSignedContract, statusSignedContract, setStatusSignedContract)}
-      {renderRadioGroup("Send Key Dates", "keyDates", keyDates, setkeyDates, statusKeyDates, setStatusKeyDates)}
+      {renderRadioGroup("Send Key Dates", "keyDates", keyDates, setKeyDates, statusKeyDates, setStatusKeyDates)}
       {renderRadioGroup("VOI", "voi", voi, setVoi, statusVoi, setStatusVoi)}
       {renderRadioGroup("CAF", "caf", caf, setCaf, statusCaf, setStatusCaf)}
-      {renderRadioGroup("Deposit Receipt", "depositReceipt", depositReceipt, setdepositReceipt, statusDepositReceipt, setStatusDepositReceipt, true, depositDate, setDepositDate)}
-      {renderRadioGroup("Building and Pest", "buildingPest", buildingPest, setbuildingPest, statusBuildingPest, setStatusBuildingPest, true, buildingDate, setBuildingDate)}
-      {renderRadioGroup("Finance Approval", "obtainDA", obtainDA, setObtainDA, statusObtainDA, setStatusObtainDA, true, financeDate, setFinanceDate)}
+      {renderRadioGroup("Deposit Receipt", "depositReceipt", depositReceipt, setDepositReceipt, statusDepositReceipt, setStatusDepositReceipt, true, depositDate, setDepositDate)}
+      {renderRadioGroup("Building and Pest", "buildingPest", buildingPest, setBuildingPest, statusBuildingPest, setStatusBuildingPest, true, buildingDate, setBuildingDate)}
+      {renderRadioGroup("Finance Approval", "financeApproval", financeApproval, setFinanceApproval, statusFinanceApproval, setStatusFinanceApproval, true, financeDate, setFinanceDate)}
       {renderRadioGroup("Check CT Controller", "ct", ct, setCt, statusCt, setStatusCt)}
-      {renderTextInput("System note for client (VOI / CAF / Deposit)", system1_note1, setSystem1_note2, statusSystem1, setStatusSystem1)}
-      {renderTextarea("Comment for client (VOI / CAF / Deposit)", client1_note1, setClient1_note2, statusClient1, setStatusClient1)}
-      {renderTextInput("System note for client (B&P / Finance)", system2_note1, setSystem2_note2, statusSystem2, setStatusSystem2)}
-      {renderTextarea("Comment for client (B&P / Finance)", client2_note1, setClient2_note2, statusClient2, setStatusClient2)}
+
+      <div className="mt-5">
+        <label className="font-bold text-base mb-1 block">System Note (VOI / CAF / Deposit)</label>
+        <input className="w-full rounded p-2 bg-gray-100" value={systemNote1} onChange={(e) => setSystemNote1(e.target.value)} />
+      </div>
+      <div className="mt-5">
+        <label className="font-bold text-base mb-1 block">Client Comment (VOI / CAF / Deposit)</label>
+        <textarea className="w-full rounded p-2 bg-gray-100" value={clientNote1} onChange={(e) => setClientNote1(e.target.value)} />
+      </div>
+      <div className="mt-5">
+        <label className="font-bold text-base mb-1 block">System Note (B&P / Finance)</label>
+        <input className="w-full rounded p-2 bg-gray-100" value={systemNote2} onChange={(e) => setSystemNote2(e.target.value)} />
+      </div>
+      <div className="mt-5">
+        <label className="font-bold text-base mb-1 block">Client Comment (B&P / Finance)</label>
+        <textarea className="w-full rounded p-2 bg-gray-100" value={clientNote2} onChange={(e) => setClientNote2(e.target.value)} />
+      </div>
 
       <div className="flex mt-10 justify-between">
         <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
-        <Button label="Next" width="w-[100px]" onClick={() => changeStage(stage + 1)} />
+        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
       </div>
     </div>
   );

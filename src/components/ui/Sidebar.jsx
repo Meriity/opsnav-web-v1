@@ -21,6 +21,13 @@ export default function Sidebar() {
     { label: "Archived Clients", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("client-storage");
+    navigate("/admin/login");
+  }
+
   return (
     <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
       {/* Logo */}
@@ -83,7 +90,7 @@ export default function Sidebar() {
           className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
         >
           
-          <button
+          <button onClick={handleLogout}
         className="px-4 flex text-black rounded w-50 items-center justify-between"
       >
         Logout <LogOut className="w-4"/>
