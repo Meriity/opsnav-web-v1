@@ -3,7 +3,6 @@ import { Search, Plus } from "lucide-react";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
 import Button from "../ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
-import remove from "../../icons/Button icons/remove.png"
 import dropdownicon from "../../icons/Button icons/Group 320.png";
 import ViewClientsTable from "../ui/ViewClientsTable";
 import { useEffect, useState } from "react";
@@ -13,6 +12,8 @@ import { persist } from "zustand/middleware";
 import Header from "../layout/Header"
 import { toast } from 'react-toastify';
 import DatePicker from "react-datepicker";
+import { ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
@@ -85,6 +86,43 @@ const ViewClients = () => {
   const [openDatePicker, setOpenDatePicker] = useState(false);
   const [clientList, setClientList] = useState(null)
 
+  const [formData, setFormData] = useState({
+    matterNumber: "",
+    clientName: "",
+    state: "",
+    clientType: "",
+    propertyAddress: "",
+    matterDate: "",
+    settlementDate: "",
+    dataEntryBy: localStorage.getItem("user")
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  async function handleSubmit() {
+    const matterNumber = formData.matterNumber;
+    try {
+      await api.createClient(formData);
+      toast.success("User created successfully!", {
+        position: "bottom-center",
+      });
+      setcreateuser(false);
+      navigate(`/admin/client/stages/${matterNumber}`);
+
+    }
+    catch (e) {
+      console.log("Error", e);
+      toast.error("User not created", {
+        position: "bottom-center",
+      });
+      setcreateuser(false);
+
+    }
+    console.log("Submitted Client Data:", formData);
+  };
 
   // Zustand Store
   const {
@@ -110,7 +148,7 @@ const ViewClients = () => {
 
     const filtered = Clients.filter(client => {
       console.log('hi', client?.settlement_date, settlementDate, client?.settlement_date?.toString() == formatDate(settlementDate))
-      if(client?.settlement_date?.toString() == formatDate(settlementDate)) return client
+      if (client?.settlement_date?.toString() == formatDate(settlementDate)) return client
     });
 
     setClientList(filtered);
@@ -289,7 +327,6 @@ const ViewClients = () => {
 
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-
             {/* Close button */}
             <button
               onClick={() => setShowShareDialog(false)}
@@ -304,15 +341,15 @@ const ViewClients = () => {
             {/* Description */}
             <p className="text-sm text-center text-gray-700 mb-4">
               Please enter the client email for matter No. :{" "}
-              <span className="text-blue-500 underline cursor-pointer">{shareDetails?.matterNumber}</span>
-            </p>
+              <span className="text-blue-500 underline cursor-pointer">{shareDetails?.matternumber}</span>
+            </p >
 
             {/* Email input with icon */}
-            <div className="relative mb-4">
+            < div className="relative mb-4" >
               <input
                 type="email"
                 placeholder="Enter email address"
-                value={shareDetails?.reshareEmail}
+                value={email}
                 onChange={(e) => setemail(e.target.value)}
                 className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
               />
@@ -326,7 +363,7 @@ const ViewClients = () => {
                   <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
                 </svg>
               </span>
-            </div>
+            </div >
 
             {/* Reshare notice */}
             {/* <p className="text-center text-sm text-gray-600 mb-4">
@@ -354,9 +391,9 @@ const ViewClients = () => {
             >
               Manage Access
             </button>
-          </DialogPanel>
-        </div>
-      </Dialog>
+          </DialogPanel >
+        </div >
+      </Dialog >
 
       <Dialog open={createuser} onClose={() => setcreateuser(false)} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
@@ -520,8 +557,8 @@ const ViewClients = () => {
                   />
                 )}
               </div>
-            </div>
-          </div>
+            </div >
+          </div >
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -529,31 +566,33 @@ const ViewClients = () => {
             </div>
           )}
 
-          {loading || !clientList ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-lg">Loading clients...</div>
-            </div>
-          ) : clientList?.length == 0 ? (<div className="flex justify-center items-center py-8">
-            <div className="text-lg">Data not found</div>
-          </div>) : (
-            <div className="w-full">
-              <ViewClientsTable
-                data={clientList}
-                columns={columns}
-                onEdit={() => console.log("Edit hits")}
-                onDelete={() => console.log("Delete hits")}
-                itemsPerPage={5}
-                onShare={
-                  (matterNumber, reshareEmail) => {
-                    setShareDetails({ matterNumber, reshareEmail });
-                    setShowShareDialog(true);
+          {
+            loading || !clientList ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-lg">Loading clients...</div>
+              </div>
+            ) : clientList?.length == 0 ? (<div className="flex justify-center items-center py-8">
+              <div className="text-lg">Data not found</div>
+            </div>) : (
+              <div className="w-full">
+                <ViewClientsTable
+                  data={clientList}
+                  columns={columns}
+                  onEdit={() => console.log("Edit hits")}
+                  onDelete={() => console.log("Delete hits")}
+                  itemsPerPage={5}
+                  onShare={
+                    (matterNumber, reshareEmail) => {
+                      setShareDetails({ matterNumber, reshareEmail });
+                      setShowShareDialog(true);
+                    }
                   }
-                }
-                status={true}
-                ot={true}
-              />
-            </div>
-          )}
+                  status={true}
+                  ot={true}
+                />
+              </div>
+            )
+          }
         </main >
       </div >
     </>

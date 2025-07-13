@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 function LoginForm() {
   const api = new AuthAPI();
@@ -19,15 +21,21 @@ function LoginForm() {
       if (response.token) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user",response.user.displayName);
+        toast.success("Authentication successfull! Logging in...", {
+      position: "bottom-center",
+    });
       }
 
       // Redirect based on role
-      if (response.role === "superadmin") {
+      if (response.role === "admin") {
         navigate("/admin/dashboard");
       } else {
-        navigate(response.redirectUrl || "/");
+        navigate("/user/dashboard");
       }
     } catch (err) {
+             toast.error("Authentication failed! plaese check password and try again.", {
+      position: "bottom-center",
+    });
       setError("Login failed. Check email/password.",err);
       console.log(err);
     }
@@ -35,12 +43,13 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
+      
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO VK LAWYERS</h1>
           <p className="text-gray-600 mt-2 font-poppins">
-            Yorem Ipsum Dolor Sit Amet, Consectetur Adipisicing Elit. Nun
+            Secure. Simple. Seamless conveyancing.
           </p>
         </div>
 

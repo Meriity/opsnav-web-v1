@@ -152,7 +152,7 @@ export default function ManageUsers() {
                 <label><input type="checkbox" name="user" /> User</label>
                 <label><input type="checkbox" name="admin" /> Admin</label>
               </div>
-              <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Create</button>
+              <button type="submit" className="w-full bg-[#00AEEF] text-white py-2 rounded hover:bg-blue-600">Create</button>
             </form>
           </div>
         </div>

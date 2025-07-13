@@ -4,7 +4,7 @@ import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
 import { useDropdown } from "../../hooks/dropdown";
-import { ChevronsUpDown,LogOut,CircleUserRound } from "lucide-react";
+import { ChevronsUpDown, LogOut, CircleUserRound } from "lucide-react";
 
 export default function Sidebar() {
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
@@ -13,13 +13,20 @@ export default function Sidebar() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   const menuItems = [
-    { label: "Dashboard", icon: DashboardIcon, to:isAdminRoute ? "/admin/dashboard" : "/user/dashboard" },
+    { label: "Dashboard", icon: DashboardIcon, to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard" },
     ...(isAdminRoute
       ? [{ label: "Manage Users", icon: ManageUsersIcon, to: "/admin/manage-users" }]
       : []),
     { label: "View Clients", icon: ViewClientsIcon, to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients" },
     { label: "Archived Clients", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("client-storage");
+    navigate("/admin/login");
+  }
 
   return (
     <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
@@ -42,18 +49,16 @@ export default function Sidebar() {
               <button
                 key={to}
                 onClick={() => navigate(to)}
-                className={`flex items-center px-4 py-2 rounded-md transition-colors w-full text-left ${
-                  isActive
+                className={`flex items-center px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
                     ? "bg-[#00AEEF] text-white"
                     : "hover:bg-gray-100 text-gray-800"
-                }`}
+                  }`}
               >
                 <img
                   src={icon}
                   alt={label}
-                  className={`w-[30px] h-[30px] ${
-                    isActive ? "filter brightness-0 invert" : ""
-                  }`}
+                  className={`w-[30px] h-[30px] ${isActive ? "filter brightness-0 invert" : ""
+                    }`}
                 />
                 <span className="ml-4 font-medium">{label}</span>
               </button>
@@ -63,34 +68,34 @@ export default function Sidebar() {
       </div>
 
       {/* User Footer */}
-     {/* User Dropdown Footer */}
- <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="px-4 py-2 flex text-black rounded w-55 items-center justify-between bg-sky-100 rounded-2xl"
-      >
-        <div className="flex gap-2">
-          <CircleUserRound />
-          {localStorage.getItem("user")}
-        </div>
-         <ChevronsUpDown className="w-5" /> 
-      </button>
-
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
+      {/* User Dropdown Footer */}
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="px-4 py-2 flex text-black rounded w-55 items-center justify-between bg-sky-100 rounded-2xl"
         >
-          
-          <button
-        className="px-4 flex text-black rounded w-50 items-center justify-between"
-      >
-        Logout <LogOut className="w-4"/>
-      </button>
-        </div>
-      )}
-        </div>
+          <div className="flex gap-2">
+            <CircleUserRound />
+            {localStorage.getItem("user")}
+          </div>
+          <ChevronsUpDown className="w-5" />
+        </button>
+
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
+          >
+
+            <button onClick={handleLogout}
+              className="px-4 flex text-black rounded w-50 items-center justify-between"
+            >
+              Logout <LogOut className="w-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

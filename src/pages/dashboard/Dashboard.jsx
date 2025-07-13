@@ -10,7 +10,6 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { User, Users, Archive, Search } from "lucide-react";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
@@ -48,14 +47,13 @@ function Dashboard() {
 
 
   return (
-
     <div className="flex w-full h-full bg-gray-100">
       {/* Main Content */}
       <main className="flex-grow h-full space-y-4">
         {/* Header */}
 
         <Header />
-        
+
         {/* Welcome Card */}
         <div className="bg-[#A6E7FF] p-6 rounded-md h-[190px]">
           <h1 className="text-xl font-bold mt-3 font-poppins">Welcome to VK LAWYERS</h1>

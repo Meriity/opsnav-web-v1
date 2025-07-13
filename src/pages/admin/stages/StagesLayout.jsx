@@ -84,60 +84,60 @@ export default function StagesLayout() {
         );
       case 2:
         return (
-          <Stage2 
-            data={clientData?.stage2} 
-            changeStage={RenderStage} 
+          <Stage2
+            data={clientData?.stage2}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
-            setReloadTrigger={setReloadStage} 
-        />);
+            setReloadTrigger={setReloadStage}
+          />);
       case 3:
         return (
-          <Stage3 
-            data={clientData?.stage3} 
-            changeStage={RenderStage} 
+          <Stage3
+            data={clientData?.stage3}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
           />);
       case 4:
         return (
-          <Stage4 
-            data={clientData?.stage4} 
-            changeStage={RenderStage} 
+          <Stage4
+            data={clientData?.stage4}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
-            setReloadTrigger={setReloadStage} 
+            setReloadTrigger={setReloadStage}
           />);
       case 5:
         return (
-          <Stage5 
-            data={clientData?.stage5} 
-            changeStage={RenderStage} 
+          <Stage5
+            data={clientData?.stage5}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
-            setReloadTrigger={setReloadStage} 
+            setReloadTrigger={setReloadStage}
           />);
       case 6:
         return (
-          <Stage6 
-            data={clientData?.stage6} 
-            changeStage={RenderStage} 
+          <Stage6
+            data={clientData?.stage6}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
-            setReloadTrigger={setReloadStage} 
+            setReloadTrigger={setReloadStage}
           />);
       case 7:
         return (
-            <Cost 
-              data={clientData?.costData} 
-              changeStage={RenderStage} 
-              reloadTrigger={reloadStage}
-              setReloadTrigger={setReloadStage}
-            />
-          );
+          <Cost
+            data={clientData?.costData}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />
+        );
       default:
         return (
-          <Stage1 
-            data={clientData?.stage1} 
-            changeStage={RenderStage} 
+          <Stage1
+            data={clientData?.stage1}
+            changeStage={RenderStage}
             reloadTrigger={reloadStage}
-            setReloadTrigger={setReloadStage} 
+            setReloadTrigger={setReloadStage}
           />);
     }
   }
@@ -280,8 +280,8 @@ export default function StagesLayout() {
                       </p>
                       <div
                         className={`w-[90px] h-[18px] ${bgcolor(stageStatus)} ${stageStatus === "In progress"
-                            ? "text-[#FF9500]"
-                            : "text-white"
+                          ? "text-[#FF9500]"
+                          : "text-white"
                           } flex items-center justify-center rounded-4xl`}
                       >
                         <p className="text-[12px] whitespace-nowrap">

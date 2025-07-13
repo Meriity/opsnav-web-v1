@@ -244,8 +244,8 @@ const ViewClientsTable = ({
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === 1
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-100'
                   }`}
               >
                 {'<'}
