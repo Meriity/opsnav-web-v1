@@ -1,31 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Edit, Share2 } from 'lucide-react';
 import report from "../../icons/Button icons/Group 318.png";
-import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-// Stage color fetch hook
-const useStageColors = (matterNumber) => {
-  const [colors, setColors] = useState({});
-  if (!matterNumber) return;
-
-  useEffect(() => {
-    const fetchColors = async () => {
-      try {
-        const response = await axios.get(
-          `https://opsnav-app-service-871399330172.us-central1.run.app/clients/stage-colors?matterNumber=${matterNumber}`
-        );
-        setColors(response.data || {});
-      } catch (error) {
-        console.error("Error fetching stage colors for matter:", matterNumber, error);
-        setColors({}); // fallback
-      }
-    };
-    fetchColors();
-  }, [matterNumber]);
-
-  return colors;
-};
+import { useNavigate } from "react-router-dom";
 
 const ViewClientsTable = ({
   data,
@@ -47,6 +23,15 @@ const ViewClientsTable = ({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = data.slice(startIndex, startIndex + itemsPerPage);
   const navigate = useNavigate();
+
+  const stageColorMap = {
+    green: 'green',
+    red: 'red',
+    amber: '#f59e0b',
+    yellow: '#facc15',
+    blue: '#3b82f6',
+    default: "red"
+  }
 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -71,6 +56,30 @@ const ViewClientsTable = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (currentPage > Math.ceil(data.length / itemsPerPage)) {
+      setCurrentPage(1);
+    }
+  }, [data]);
+
+  const renderPageNumbers = () => {
+    const pagesToShow = [1, 2, 3];
+    const result = [];
+
+    pagesToShow.forEach((page) => {
+      if (page <= totalPages) {
+        result.push(page);
+      }
+    });
+
+    if (currentPage > 3 && currentPage <= totalPages && !result.includes(currentPage)) {
+      result.push('...');
+      result.push(currentPage);
+    }
+
+    return result;
+  };
 
   return (
     <div className="max-w-[1228px] w-full">
@@ -127,7 +136,6 @@ const ViewClientsTable = ({
 
             <tbody>
               {currentData.map((item) => {
-                const stageColors = useStageColors(item.matternumber); // Get colors for each row
                 return (
                   <tr key={item.id} className={`bg-white transition-all rounded-2xl ${hoverEffect ? 'hover:bg-sky-50' : ''}`}>
                     {columns.map((column, colIndex) => (
@@ -164,32 +172,20 @@ const ViewClientsTable = ({
                     {status && (
                       <td className={`px-1 ${rowSpacing}`} style={{ width: '150px' }}>
                         <div className="flex flex-wrap gap-1 w-[80px]">
-                          {['s1', 's2', 's3', 's4', 's5'].map((stageKey) => {
-                            // Normalize color mapping
-                            const rawColor = stageColors[stageKey];
-                            const fallbackColor = 'red';
-                            const colorMap = {
-                              green: 'green',
-                              red: 'red',
-                              amber: '#f59e0b',
-                              yellow: '#facc15',
-                              blue: '#3b82f6',
-                              default: fallbackColor
-                            };
-
-                            const color = colorMap[rawColor] || fallbackColor;
-
-                            return (
-                              <button
-                                key={stageKey}
-                                className="px-1 py-1 text-white rounded text-xs shrink-0"
-                                style={{ backgroundColor: color }}
-                                title={`Stage ${stageKey.toUpperCase()} - ${rawColor || 'missing'}`}
-                              >
-                                {stageKey.toUpperCase()}
-                              </button>
-                            );
-                          })}
+                          {
+                            Object.keys(item?.stages[0])?.map((keyName) => {
+                              return (
+                                <button
+                                  key={keyName}
+                                  className="px-1 py-1 text-white rounded text-xs shrink-0"
+                                  style={{ backgroundColor: stageColorMap[item?.stages[0][keyName]] || stageColorMap['default'] }}
+                                  title={`Stage ${keyName} - ${stageColorMap[item?.stages[0][keyName]] || 'missing'}`}
+                                >
+                                  {keyName.toUpperCase()}
+                                </button>
+                              )
+                            })
+                          }
                         </div>
                       </td>
                     )}
@@ -248,33 +244,39 @@ const ViewClientsTable = ({
                   : 'bg-white text-black border-gray-300 hover:bg-gray-100'
                   }`}
               >
-                {'<'}
+                {'<'} Prev
               </button>
             </li>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <li key={page} className="mx-1">
-                <button
-                  onClick={() => handlePageChange(page)}
-                  className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === page
+
+            {renderPageNumbers().map((page, index) => (
+              <li key={index} className="mx-1">
+                {page === '...' ? (
+                  <span className="px-3 h-8 flex items-center justify-center text-gray-500">...</span>
+                ) : (
+                  <button
+                    onClick={() => handlePageChange(page)}
+                    className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === page
                       ? 'bg-sky-500 text-white border-sky-500'
                       : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                    }`}
-                  aria-current={currentPage === page ? 'page' : undefined}
-                >
-                  {page}
-                </button>
+                      }`}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                )}
               </li>
             ))}
+
             <li className="mx-1">
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === totalPages
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-black border-gray-300 hover:bg-gray-100'
                   }`}
               >
-                {'>'}
+                Next {'>'}
               </button>
             </li>
           </ul>
