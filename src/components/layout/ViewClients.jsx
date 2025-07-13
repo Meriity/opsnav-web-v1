@@ -3,7 +3,7 @@ import { Search, Plus } from "lucide-react";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
 import Button from "../ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
-import dropdownicon from "../../icons/Button icons/Group 320.png";
+import remove from "../../icons/Button icons/remove.png";
 import ViewClientsTable from "../ui/ViewClientsTable";
 import { useEffect, useState } from "react";
 import ClientAPI from "../../api/userAPI";
@@ -12,8 +12,6 @@ import { persist } from "zustand/middleware";
 import Header from "../layout/Header"
 import { toast } from 'react-toastify';
 import DatePicker from "react-datepicker";
-import { ToastContainer } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
@@ -208,8 +206,7 @@ const ViewClients = () => {
       setIsClicked((prev) => !prev)
       await api.resendLinkToClient(email, shareDetails?.matterNumber);
       toast.success('Email send successfully.');
-      setIsClicked((prev) => !prev)
-      setShowShareDialog((prev) => !prev)
+      handelShareEmailModalClose()
     } catch (error) {
       toast.error(error.message);
     }
@@ -223,7 +220,15 @@ const ViewClients = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  console.log('clientList', clientList, Clients)
+  const handelShareEmailModalClose = () => {
+    setShowShareDialog(false)
+    setIsClicked(false)
+    setemail("")
+    setShareDetails({
+      matterNumber: "",
+      reshareEmail: "",
+    })
+  }
 
   return (
     <>
@@ -322,14 +327,14 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
-      <Dialog open={showShareDialog} onClose={() => setShowShareDialog(false)} className="relative z-10">
+      <Dialog open={showShareDialog} onClose={() => handelShareEmailModalClose()} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
 
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
             {/* Close button */}
             <button
-              onClick={() => setShowShareDialog(false)}
+              onClick={() => handelShareEmailModalClose()}
               className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
             >
               &times;
@@ -341,7 +346,7 @@ const ViewClients = () => {
             {/* Description */}
             <p className="text-sm text-center text-gray-700 mb-4">
               Please enter the client email for matter No. :{" "}
-              <span className="text-blue-500 underline cursor-pointer">{shareDetails?.matternumber}</span>
+              <span className="text-blue-500 underline cursor-pointer">{shareDetails?.matterNumber}</span>
             </p >
 
             {/* Email input with icon */}
