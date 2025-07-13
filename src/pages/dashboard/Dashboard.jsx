@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import { Search } from "lucide-react";
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
@@ -22,6 +21,7 @@ import { toast } from "react-toastify";
 import ClientAPI from "../../api/userAPI";
 import { useNavigate } from "react-router-dom";
 import { create } from 'zustand';
+import Header from "../../components/layout/Header";
 
 // Zustand store
 const useDashboardStore = create((set) => ({
@@ -145,10 +145,8 @@ function Dashboard() {
   return (
     <div className="min-h-screen w-full bg-gray-100">
       <main className="w-full max-w-7xl mx-auto space-y-4">
-
         {/* Header */}
-
-        <Header />
+        <Header/>
 
         {/* Welcome Card */}
         <div className="bg-[#A6E7FF] p-6 rounded-md h-[190px]">
@@ -162,23 +160,22 @@ function Dashboard() {
             onClick={() => setcreateuser(true)}
           >
             <img src={Plus} alt="" className="w-5" /> 
-
             <p>Add New Client</p>
           </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard icon={ManageUsersIcon} label="Total Users" value="20" />
-          <StatCard icon={ViewClientsIcon} label="Total Clients" value="232" />
-          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value="502" />
+          <StatCard icon={ManageUsersIcon} label="Total Users" value={totalusers} />
+          <StatCard icon={ViewClientsIcon} label="Total Clients" value={totalactive} />
+          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value={totalarchived} />
         </div>
 
         {/* Chart */}
         <div className="bg-white p-6 rounded-md shadow-sm">
           <h2 className="text-base font-medium mb-4">Closed Matters</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData}>
+            <BarChart data={chart}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -190,7 +187,7 @@ function Dashboard() {
 
         {/* Footer Summary */}
         <p className="text-lg font-semibold mt-2">
-          243 Matters Solved In Last Month
+          {lastrecord} Matters Solved In Last Month
         </p>
 
         {/* Dialog for creating new user */}
