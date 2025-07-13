@@ -431,6 +431,25 @@ async upsertStage(stage, additionalData = {}) {
       throw error;
     }
   }
+
+  // Send notification to client
+  async getSearchResult(query) {
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/search?keywords=${query}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending notification to client:', error);
+      throw error;
+    }
+  }
 }
 
 export default ClientAPI;

@@ -14,7 +14,7 @@ export default function StagesLayout() {
   const { matterNumber } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
-  const [reloadStage1, setReloadStage1] = useState(false);
+  const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(1);
   const [clientData, setClientData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -78,24 +78,67 @@ export default function StagesLayout() {
           <Stage1
             data={clientData?.stage1}
             changeStage={RenderStage}
-            reloadTrigger={reloadStage1}
-            setReloadTrigger={setReloadStage1}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
           />
         );
       case 2:
-        return <Stage2 data={clientData?.stage2} changeStage={RenderStage} />;
+        return (
+          <Stage2
+            data={clientData?.stage2}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
       case 3:
-        return <Stage3 data={clientData?.stage3} changeStage={RenderStage} />;
+        return (
+          <Stage3
+            data={clientData?.stage3}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
       case 4:
-        return <Stage4 data={clientData?.stage4} changeStage={RenderStage} />;
+        return (
+          <Stage4
+            data={clientData?.stage4}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
       case 5:
-        return <Stage5 data={clientData?.stage5} changeStage={RenderStage} />;
+        return (
+          <Stage5
+            data={clientData?.stage5}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
       case 6:
-        return <Stage6 data={clientData?.stage6} changeStage={RenderStage} />;
+        return (
+          <Stage6
+            data={clientData?.stage6}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
       case 7:
-        return <Cost data={clientData?.costData} changeStage={RenderStage} />;
+        return (
+          <Cost
+            data={clientData?.costData}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />
+        );
       default:
-        return <Stage1 data={clientData?.stage1} changeStage={RenderStage} />;
+        return (
+          <Stage1
+            data={clientData?.stage1}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+          />);
     }
   }
 
@@ -171,23 +214,23 @@ export default function StagesLayout() {
     if (matterNumber) {
       fetchDetails();
     }
-  }, [matterNumber]);
+  }, [matterNumber, reloadStage]);
 
- async function handleupdate(){
-  event.preventDefault();
+  async function handleupdate() {
+    event.preventDefault();
     try {
-    const payload = {
-      settlementDate: clientData.settlementDate,
-      notes: clientData.notes
-    };
+      const payload = {
+        settlementDate: clientData.settlementDate,
+        notes: clientData.notes
+      };
 
-    await api.updateClientData(matterNumber, payload);
-    alert("Updated successfully!");
-  } catch (err) {
-    console.error("Error updating matter details:", err);
-    alert("Failed to update. Please try again.");
+      await api.updateClientData(matterNumber, payload);
+      alert("Updated successfully!");
+    } catch (err) {
+      console.error("Error updating matter details:", err);
+      alert("Failed to update. Please try again.");
+    }
   }
- }
 
   return (
     <div className="flex w-full h-full bg-gray-100">
@@ -228,20 +271,18 @@ export default function StagesLayout() {
                   <div
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${
-                      selectedStage === stage.id ? "bg-white" : "bg-[#F3F7FF]"
-                    }`}
+                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-white" : "bg-[#F3F7FF]"
+                      }`}
                   >
                     <div className="flex justify-between">
                       <p className="font-bold font-poppins">
                         Stage {index + 1}
                       </p>
                       <div
-                        className={`w-[90px] h-[18px] ${bgcolor(stageStatus)} ${
-                          stageStatus === "In progress"
-                            ? "text-[#FF9500]"
-                            : "text-white"
-                        } flex items-center justify-center rounded-4xl`}
+                        className={`w-[90px] h-[18px] ${bgcolor(stageStatus)} ${stageStatus === "In progress"
+                          ? "text-[#FF9500]"
+                          : "text-white"
+                          } flex items-center justify-center rounded-4xl`}
                       >
                         <p className="text-[12px] whitespace-nowrap">
                           {stageStatus}
