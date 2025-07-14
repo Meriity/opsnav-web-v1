@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import Eye from "../../icons/Button icons/Frame 362.png"
+import Pagination from './Pagination';
 
 const Table = ({
   data,
@@ -11,21 +12,12 @@ const Table = ({
   showActions = true,
   hoverEffect = true,
   tableClass = '',
-  rowSpacing = 'py-3',
+  rowSpacing = 'py-1',
   headerBgColor = 'bg-[#D7F4FF]',
   itemsPerPage = 5,
   pagination = "absolute bottom-5 right-5 mt-4"
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = data.slice(startIndex, startIndex + itemsPerPage);
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
+  const [currentData, setCurrentData] = useState([])
 
   // 👇 Arrow key navigation support
   useEffect(() => {
@@ -43,7 +35,7 @@ const Table = ({
 
   return (
     <div>
-      <div className="font-bold w-full">
+      <div className="font-bold w-full h-[70vh]">
         <div className="overflow-x-auto overflow-y-hidden w-full">
           <table className={`w-full ${tableClass} border-separate border-spacing-y-2`}>
             <thead>
@@ -51,14 +43,14 @@ const Table = ({
                 {columns.map((column, colIndex) => (
                   <th
                     key={column.key}
-                    className={`px-6 py-4 text-left text-sm font-bold text-black ${colIndex === 0 ? 'rounded-l-2xl' : ''
+                    className={`px-3 py-4 text-left text-sm font-bold text-black ${colIndex === 0 ? 'rounded-l-2xl' : ''
                       } ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
                   >
                     {column.title}
                   </th>
                 ))}
                 {showActions && (
-                  <th className="px-6 py-2 text-left text-sm font-bold text-black rounded-r-2xl">
+                  <th className="px-3 py-2 text-left text-sm font-bold text-black rounded-r-2xl">
                     Actions
                   </th>
                 )}
@@ -68,20 +60,20 @@ const Table = ({
               {currentData.map((item) => (
                 <tr
                   key={item.id}
-                  className={`border transition-all ${hoverEffect ? 'hover:bg-sky-50' : ''}`}
+                  className={`border shadow-2xs transition-all ${hoverEffect ? 'hover:bg-sky-50' : ''}`}
                   style={{ backgroundColor: 'white' }}
                 >
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-6 ${rowSpacing} text-sm text-black align-middle ${colIndex === 0 ? 'rounded-l-2xl' : ''
+                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${colIndex === 0 ? 'rounded-l-2xl' : ''
                         } ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
                     >
                       {item[column.key]}
                     </td>
                   ))}
                   {showActions && (
-                    <td className={`px-6 ${rowSpacing} rounded-r-2xl`}>
+                    <td className={`px-3 ${rowSpacing} rounded-r-2xl`}>
                       <div className="flex items-center space-x-3">
                         {onEdit && (
                           <button
@@ -129,52 +121,7 @@ const Table = ({
       </div>
 
       {/* Pagination Controls */}
-      <div className={pagination}>
-        <nav aria-label="Table pagination">
-          <ul className="inline-flex text-sm">
-            <li className="mx-1">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === 1
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                  }`}
-              >
-                {'<'}
-              </button>
-            </li>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <li key={page} className="mx-1">
-                <button
-                  onClick={() => handlePageChange(page)}
-                  className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === page
-                      ? 'bg-sky-500 text-white border-sky-500'
-                      : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                    }`}
-                  aria-current={currentPage === page ? 'page' : undefined}
-                >
-                  {page}
-                </button>
-              </li>
-            ))}
-
-            <li className="mx-1">
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`flex items-center justify-center px-3 h-8 rounded-lg border ${currentPage === totalPages
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                  }`}
-              >
-                {'>'}
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <Pagination data={data} itemsPerPage={itemsPerPage} setCurrentData={setCurrentData} />
     </div>
   );
 };

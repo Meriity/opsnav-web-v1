@@ -44,7 +44,7 @@ export default function Header() {
 
     return (
         <>
-            <div className="flex justify-between items-center">
+            <div className="flex sticky justify-between items-center bg-white p-2 mb-2">
                 <h2 className="text-xl font-semibold">Hello {localStorage.getItem("user")}</h2>
                 <div className="relative w-fit">
                     <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">

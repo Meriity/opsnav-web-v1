@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import ClientAPI from "../../api/userAPI";
 import { formatDate } from '../../utils/formatters';
 import Loader from './Loader';
 
-export default function OutstandingTasksModal({ open, onClose }) {
+export default function OutstandingTasksModal({ open, onClose, activeMatter = null }) {
     const api = new ClientAPI();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -15,14 +15,18 @@ export default function OutstandingTasksModal({ open, onClose }) {
         if (open) {
             fetchData(currentPage);
         }
-    }, [open, currentPage]);
+    }, [open, currentPage, activeMatter]);
 
     const fetchData = async (page) => {
         setLoading(true);
         try {
-            const response = await api.getAllOutstandingTasks();
-            setData(response.results || []);
-            setTotalPages(response.totalPages || 1);
+            const response = await api.getAllOutstandingTasks(page, activeMatter);
+            if (activeMatter) {
+                setData([response]);
+            } else {
+                setData(response.results || []);
+                setTotalPages(response.totalPages || 1);
+            }
         } catch (error) {
             console.error('Failed to fetch data:', error);
             setData([]);
@@ -103,6 +107,7 @@ export default function OutstandingTasksModal({ open, onClose }) {
                         )}
                     </div>
 
+                    {/* Pagination Start  */}
                     <div className="mt-4 flex justify-between items-center">
                         <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
                         <div className="space-x-2">

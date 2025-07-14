@@ -6,6 +6,7 @@ import Table from "../ui/Table";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import AdminApi from "../../api/adminAPI";
 import Header from "./Header";
+import Loader from "../ui/Loader";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -70,7 +71,7 @@ export default function ManageUsers() {
     try {
       await api.createUser(email, role, name);
       setOpenUser(false);
-      setIsFetched(false); 
+      setIsFetched(false);
     } catch (err) {
       console.error("Create Error:", err);
     }
@@ -97,11 +98,9 @@ export default function ManageUsers() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100">
-      <main className="w-full max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <Header/>
-
+    <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
+      <main className="w-full max-w-8xl mx-auto">
+        <Header />
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">Manage Users</h2>
@@ -110,10 +109,7 @@ export default function ManageUsers() {
 
         {/* Table or Loader */}
         {loading ? (
-          <div className="flex justify-center items-center h-48 mt-40">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
-            <div className="ml-5 text-[#00AEEF]">Loading Please wait!</div>
-          </div>
+          <Loader />
         ) : (
           <Table
             data={users}

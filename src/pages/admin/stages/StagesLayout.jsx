@@ -9,6 +9,7 @@ import Stage5 from "./Stage5";
 import Stage6 from "./Stage6";
 import Cost from "./cost";
 import ClientAPI from "../../../api/clientAPI";
+import Loader from "../../../components/ui/Loader";
 
 export default function StagesLayout() {
   const { matterNumber } = useParams();
@@ -256,12 +257,7 @@ export default function StagesLayout() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center min-h-[60vh] mt-25">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
-            <span className="ml-4 text-lg font-medium text-[#00AEEF]">
-              Loading stage details...
-            </span>
-          </div>
+          <Loader />
         ) : (
           <>
             <div className="flex px-4 py-3 bg-[#F2FBFF] gap-[10px] rounded flex-wrap">
@@ -298,7 +294,7 @@ export default function StagesLayout() {
             </div>
 
             <div className="flex gap-[22px]">
-              <div className="w-[923px] h-[540px] p-[40px] bg-white overflow-y-auto">
+              <div className="w-full p-6 rounded-md max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] xl:max-h-[80vh] bg-white overflow-y-auto">
                 {clientData && Showstage(selectedStage)}
               </div>
 

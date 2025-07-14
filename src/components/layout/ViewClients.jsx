@@ -12,6 +12,7 @@ import Header from "../layout/Header"
 import { toast } from 'react-toastify';
 import OutstandingTasksModal from "../ui/OutstandingTasksModal";
 import { useNavigate } from "react-router-dom";
+import Loader from "../ui/Loader";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
@@ -72,7 +73,7 @@ const ViewClients = () => {
   // Dialogs and states
   const api = new ClientAPI();
   const [createuser, setcreateuser] = useState(false);
-  const [outstandingTask, setOutstandingTask] = useState(false);
+  const [showOutstandingTask, setShowOutstandingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareDetails, setShareDetails] = useState({
     matterNumber: "",
@@ -80,8 +81,9 @@ const ViewClients = () => {
   });
   const [email, setemail] = useState("");
   const [isClicked, setIsClicked] = useState(false) // especially for send mail.
-  const [settlementDate, setSettlementDate] = useState(null);
+  const [settlementDate, setSettlementDate] = useState("");
   const [clientList, setClientList] = useState(null)
+  const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null)
   const navigate = useNavigate();
 
 
@@ -138,7 +140,7 @@ const ViewClients = () => {
   }, [Clients])
 
   useEffect(() => {
-    if (!settlementDate) {
+    if (settlementDate=="") {
       setClientList(Clients);
       return;
     }
@@ -186,7 +188,7 @@ const ViewClients = () => {
 
   return (
     <>
-      <OutstandingTasksModal open={outstandingTask} onClose={setOutstandingTask} />
+      <OutstandingTasksModal open={showOutstandingTask} onClose={(prev) => setShowOutstandingTask(!prev)} activeMatter={otActiveMatterNumber} />
 
       <Dialog open={showShareDialog} onClose={() => handelShareEmailModalClose()} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
@@ -411,12 +413,11 @@ const ViewClients = () => {
 
       {/* View Clients Layout */}
       <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
-        <main className="w-full max-w-7xl mx-auto space-y-6">
+        <main className="w-full max-w-8xl mx-auto">
 
-          {/* Header */}
           <Header />
 
-          <div className="flex justify-between items-center w-full mb-[15]">
+          <div className="flex justify-between items-center w-full mb-[15] p-2">
             <div className="flex items-center gap-4">
               <h2 className="text-2xl font-semibold">View Clients</h2>
             </div>
@@ -429,7 +430,7 @@ const ViewClients = () => {
                 Icon1={userplus}
                 onClick={() => setcreateuser(true)}
               />
-              <Button label="Outstanding Tasks" onClick={() => setOutstandingTask(true)} />
+              <Button label="Outstanding Tasks" onClick={() => setShowOutstandingTask(true)} />
 
               <input
                 type="date"
@@ -448,9 +449,7 @@ const ViewClients = () => {
 
           {
             loading || !clientList ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="text-lg">Loading clients...</div>
-              </div>
+              <Loader />
             ) : clientList?.length == 0 ? (<div className="flex justify-center items-center py-8">
               <div className="text-lg">Data not found</div>
             </div>) : (
@@ -469,6 +468,8 @@ const ViewClients = () => {
                   }
                   status={true}
                   ot={true}
+                  handelOTOpen={()=>setShowOutstandingTask(true)}
+                  handelOT={setOTActiveMatterNumber}
                 />
               </div>
             )

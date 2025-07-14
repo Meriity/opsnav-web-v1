@@ -179,11 +179,11 @@ export default function ArchivedClients(){
 
   return (
     <div className="min-h-screen w-full bg-gray-100">
-      <main className="w-full max-w-7xl mx-auto space-y-6">
+      <main className="w-full max-w-8xl mx-auto">
         {/* Top Header */}
         <Header/>
         {/* Archive Header */}
-        <div className="flex justify-between items-center w-full mb-4">
+        <div className="flex justify-between items-center w-full mb-[15] p-2">
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
           <div className="flex gap-5">
             <Button label="Export to Excel" onClick={() => setOpenExcel(true)} />

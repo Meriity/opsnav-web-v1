@@ -1,8 +1,52 @@
-export default function Pagination() {
-    
-    //Not implemented any where, need to work and make as reusable component.
+import { useEffect, useState, useRef } from 'react';
+
+export default function Pagination({ data, itemsPerPage, setCurrentData }) {
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(data.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const pageRef = useRef(currentPage);
+
+    useEffect(() => {
+        const currentData = data.slice(startIndex, startIndex + itemsPerPage);
+        setCurrentData(currentData)
+    }, [startIndex, itemsPerPage])
+
+    const handlePageChange = (page) => {
+        if (page < 1 || page > totalPages) return;
+        setCurrentPage(page);
+    };
+
+    useEffect(() => {
+        pageRef.current = currentPage;
+    }, [currentPage]);
+
+    useEffect(() => {
+        if (currentPage > Math.ceil(data.length / itemsPerPage)) {
+            setCurrentPage(1);
+        }
+    }, [data]);
+
+    const renderPageNumbers = () => {
+        const pagesToShow = [1, 2, 3];
+        const result = [];
+
+        pagesToShow.forEach((page) => {
+            if (page <= totalPages) {
+                result.push(page);
+            }
+        });
+
+        if (currentPage > 3 && currentPage <= totalPages && !result.includes(currentPage)) {
+            result.push('...');
+            result.push(currentPage);
+        }
+
+        return result;
+    };
+
     return (
-        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 mt-4 ml-28">
+        <div className="mt-4 flex justify-between items-center p-2">
+            <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
             <nav aria-label="Table pagination">
                 <ul className="inline-flex text-sm">
                     <li className="mx-1">
