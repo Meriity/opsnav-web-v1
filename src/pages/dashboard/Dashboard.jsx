@@ -13,7 +13,6 @@ import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
 import { useEffect, useState } from "react";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import ClientAPI from "../../api/userAPI";
@@ -334,8 +333,6 @@ function Dashboard() {
             </DialogPanel>
           </div>
         </Dialog>
-
-        <ToastContainer />
       </main>
     </div>
   );

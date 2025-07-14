@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
-import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import Footer from "../../components/layout/Footer";
 
 
 function SetPassword() {
@@ -18,43 +18,40 @@ function SetPassword() {
 
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (!password) {
-    setError("Please enter the password");
-    toast.error("Please enter the password");
-    return;
-  }
-
-  if (password !== confirmpassword) {
-    setError("Both Password and Confirm Password must be the same");
-    toast.error("Check both the passwords are same");
-    return;
-  }
-
-  console.log(JSON.stringify({ password, token }));
-
-  try {
-    const response = await api.setPassword(token, password);
-    if (response.ok) {
-      toast.success("Password Set Success!");
-      navigate("/admin/login");
-    } else {
-      throw new Error("Response not OK");
+    if (!password) {
+      setError("Please enter the password");
+      toast.error("Please enter the password");
+      return;
     }
-  } catch (err) {
-    console.error("Error setting password:", err);
-    toast.error("Password Set Failed!");
-    setError("Password Set failed!");
-  }
-};
+
+    if (password !== confirmpassword) {
+      setError("Both Password and Confirm Password must be the same");
+      toast.error("Check both the passwords are same");
+      return;
+    }
+
+    console.log(JSON.stringify({ password, token }));
+
+    try {
+      const response = await api.setPassword(token, password);
+      if (response) {
+        toast.success("Password Set Success!");
+        navigate("/admin/login");
+      }
+    } catch (err) {
+      console.error("Error setting password:", err);
+      toast.error("Password Set Failed!");
+    }
+  };
 
 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
-      
+
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
@@ -67,7 +64,7 @@ function SetPassword() {
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
           <h2 className="text-xl font-semibold text-center mb-6">SET PASSWORD</h2>
 
-          
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -97,10 +94,10 @@ function SetPassword() {
               Set Password
             </button>
             {error && (
-            <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm mt-2">
-              {error}
-            </div>
-          )}
+              <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm mt-2">
+                {error}
+              </div>
+            )}
           </form>
         </div>
       </div>
@@ -108,6 +105,7 @@ function SetPassword() {
       <div className="absolute bottom-4 text-sm text-center w-full text-gray-700 font-semibold">
         Powered By Opsnav™
       </div>
+      <Footer />
     </div>
   );
 }

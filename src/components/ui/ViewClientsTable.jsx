@@ -32,21 +32,6 @@ const ViewClientsTable = ({
     default: "red"
   }
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      setCurrentPage(prev => {
-        if (e.key === 'ArrowRight') {
-          return Math.min(prev + 1, totalPages);
-        } else if (e.key === 'ArrowLeft') {
-          return Math.max(prev - 1, 1);
-        }
-        return prev;
-      });
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   return (
     <div className="w-full">
       <div className="font-bold w-full h-[70vh]">

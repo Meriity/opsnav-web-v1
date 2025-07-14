@@ -19,20 +19,6 @@ const Table = ({
 }) => {
   const [currentData, setCurrentData] = useState([])
 
-  // 👇 Arrow key navigation support
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight') {
-        handlePageChange(currentPage + 1);
-      } else if (e.key === 'ArrowLeft') {
-        handlePageChange(currentPage - 1);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  },);
-
   return (
     <div>
       <div className="font-bold w-full h-[70vh]">

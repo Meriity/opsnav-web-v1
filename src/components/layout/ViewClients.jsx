@@ -140,7 +140,7 @@ const ViewClients = () => {
   }, [Clients])
 
   useEffect(() => {
-    if (settlementDate=="") {
+    if (settlementDate == "") {
       setClientList(Clients);
       return;
     }
@@ -170,9 +170,10 @@ const ViewClients = () => {
       setIsClicked((prev) => !prev)
       await api.resendLinkToClient(email, shareDetails?.matterNumber);
       toast.success('Email send successfully.');
-      handelShareEmailModalClose()
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      handelShareEmailModalClose()
     }
   }
 
@@ -468,7 +469,7 @@ const ViewClients = () => {
                   }
                   status={true}
                   ot={true}
-                  handelOTOpen={()=>setShowOutstandingTask(true)}
+                  handelOTOpen={() => setShowOutstandingTask(true)}
                   handelOT={setOTActiveMatterNumber}
                 />
               </div>
