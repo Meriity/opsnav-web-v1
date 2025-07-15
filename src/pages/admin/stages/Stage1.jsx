@@ -4,9 +4,26 @@ import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
 export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrigger }) {
+  const [referral, setReferral] = useState("");
+  const [retainer, setRetainer] = useState("");
+  const [declarationForm, setDeclarationForm] = useState("");
+  const [contractReview, setContractReview] = useState("");
+  const [quoteType, setQuoteType] = useState("");
+  const [quoteAmount, setQuoteAmount] = useState("");
+  const [tenants, setTenants] = useState("");
+  const [systemNote, setSystemNote] = useState("");
+  const [clientComment, setClientComment] = useState("");
+  const [statusRetainer, setStatusRetainer] = useState("In progress");
+  const [statusDeclaration, setStatusDeclaration] = useState("In progress");
+  const [statusContract, setStatusContract] = useState("In progress");
+  const [statusQuoteType, setStatusQuoteType] = useState("In progress");
+  const [statusTenants, setStatusTenants] = useState("In progress");
+  const originalData = useRef({});
+
   const stage = 1;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
+
   const getStatus = (value) => {
     if (typeof value !== "string") return "In progress";
     const val = value.toLowerCase();
@@ -44,30 +61,15 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
     };
   }
 
-  const [referral, setReferral] = useState("");
-  const [retainer, setRetainer] = useState("");
-  const [declarationForm, setDeclarationForm] = useState("");
-  const [quoteType, setQuoteType] = useState("");
-  const [quoteAmount, setQuoteAmount] = useState("");
-  const [tenants, setTenants] = useState("");
-  const [systemNote, setSystemNote] = useState("");
-  const [clientComment, setClientComment] = useState("");
-
-  const [statusRetainer, setStatusRetainer] = useState("In progress");
-  const [statusDeclaration, setStatusDeclaration] = useState("In progress");
-  const [statusQuoteType, setStatusQuoteType] = useState("In progress");
-  const [statusTenants, setStatusTenants] = useState("In progress");
-  const originalData = useRef({});
-
   useEffect(() => {
     if (!data) return;
 
     const { systemNote, clientComment } = extractNotes(data.noteForClient);
-
     const fetchedData = {
       referral: data.referral || "",
       retainer: data.retainer || "",
       declarationForm: data.declarationForm || "",
+      contractReview: data.contractReview || "",
       quoteType: data.quoteType || "",
       quoteAmount: data.quoteAmount || "",
       tenants: data.tenants || "",
@@ -78,6 +80,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
     setReferral(fetchedData.referral);
     setRetainer(fetchedData.retainer);
     setDeclarationForm(fetchedData.declarationForm);
+    setContractReview(fetchedData.contractReview)
     setQuoteType(fetchedData.quoteType);
     setQuoteAmount(fetchedData.quoteAmount);
     setTenants(fetchedData.tenants);
@@ -86,6 +89,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
     setStatusRetainer(getStatus(fetchedData.retainer));
     setStatusDeclaration(getStatus(fetchedData.declarationForm));
+    setStatusContract(getStatus(fetchedData?.contractReview))
     setStatusQuoteType(getStatus(fetchedData.quoteType));
     setStatusTenants(getStatus(fetchedData.tenants));
     originalData.current = fetchedData;
@@ -122,6 +126,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
       tenants,
       systemNote,
       clientComment,
+      contractReview,
     };
 
     const original = originalData.current;
@@ -129,19 +134,22 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
   }
 
   async function handleNextClick() {
-    const updateNoteForClient = (retainer_value, declaration_form_value) => {
+    const updateNoteForClient = (retainer_value, declaration_form_value, contract_review_form_value) => {
 
       const greenValues = ["Yes", "yes", "NR", "nr", "NA", "na"];
 
       const isRetainerGreen = greenValues.includes(retainer_value)
       const isDeclarationGreen = greenValues.includes(declaration_form_value);
+      const isContractGreen = greenValues.includes(contract_review_form_value);
 
-      if (!isRetainerGreen && !isDeclarationGreen) {
-        return 'Retainer and Declaration not received';
+      if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
+        return 'Retainer, Declaration and Contract Review not received';
       } else if (!isRetainerGreen) {
         return 'Retainer not received';
       } else if (!isDeclarationGreen) {
         return 'Declaration not received ';
+      } else if (!isContractGreen) {
+        return 'Contract review not received ';
       } else {
         return 'Tasks completed ';
       }
@@ -157,7 +165,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           quoteType,
           quoteAmount,
           tenants,
-          noteForClient: `${updateNoteForClient(retainer, declarationForm)} - ${clientComment}`,
+          noteForClient: `${updateNoteForClient(retainer, declarationForm, contractReview)} - ${clientComment}`,
         };
 
         await api.upsertStageOne(payload);
@@ -243,6 +251,38 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
                   onChange={() => {
                     setDeclarationForm(val);
                     setStatusDeclaration(getStatus(val));
+                  }}
+                />
+                {val}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Declaration Form */}
+        <div className="mt-5">
+          <div className="flex justify-between mb-3">
+            <label className="block mb-1 text-base font-bold">Contract Review</label>
+            <div
+              className={`w-[90px] h-[18px] ${bgcolor(statusContract)} ${statusContract === "In progress"
+                ? "text-[#FF9500]"
+                : "text-white"
+                } flex items-center justify-center rounded-4xl`}
+            >
+              <p className="text-[12px] whitespace-nowrap">{statusContract}</p>
+            </div>
+          </div>
+          <div className="flex justify-between gap-4 flex-wrap">
+            {["Yes", "No", "Processing", "N/R"].map((val) => (
+              <label key={val} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="contractReview"
+                  value={val}
+                  checked={contractReview.toLowerCase() === val.toLowerCase()}
+                  onChange={() => {
+                    setContractReview(val);
+                    setStatusContract(getStatus(val));
                   }}
                 />
                 {val}

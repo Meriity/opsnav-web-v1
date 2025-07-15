@@ -44,6 +44,7 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
   const [buildingPest, setBuildingPest] = useState("");
   const [financeApproval, setFinanceApproval] = useState("");
   const [ct, setCt] = useState("");
+  const [da, setDA] = useState("")
 
   const [depositDate, setDepositDate] = useState("");
   const [buildingDate, setBuildingDate] = useState("");
@@ -62,13 +63,14 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
   const [statusBuildingPest, setStatusBuildingPest] = useState("In progress");
   const [statusFinanceApproval, setStatusFinanceApproval] = useState("In progress");
   const [statusCt, setStatusCt] = useState("In progress");
+  const [statusDA, setStatusDA] = useState("In progress");
 
   useEffect(() => {
     if (!data) return;
 
     const noteA = extractNotes(data.noteForClientA);
     const noteB = extractNotes(data.noteForClientB);
-
+    console.log('data',data)
     setSignedContract(data.signedContract || "");
     setKeyDates(data.sendKeyDates || "");
     setVoi(data.voi || "");
@@ -77,6 +79,7 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
     setBuildingPest(data.buildingAndPest || "");
     setFinanceApproval(data.financeApproval || "");
     setCt(data.checkCtController || "");
+    setCt(data.obtainDaSeller || "");
 
     setDepositDate(data.depositReceiptDate || "");
     setBuildingDate(data.buildingAndPestDate || "");
@@ -95,6 +98,7 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
     setStatusBuildingPest(getStatus(data.buildingAndPest));
     setStatusFinanceApproval(getStatus(data.financeApproval));
     setStatusCt(getStatus(data.checkCtController));
+    setStatusDA(getStatus(data.obtainDaSeller));
 
     originalData.current = {
       signedContract: data.signedContract || "",
@@ -109,12 +113,13 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
       buildingAndPestDate: data.buildingAndPestDate || "",
       financeApprovalDate: data.financeApprovalDate || "",
       noteForClientA: data.noteForClientA || "",
-      noteForClientB: data.noteForClientB || ""
+      noteForClientB: data.noteForClientB || "",
+      obtainDaSeller: data.obtainDaSeller || ""
     };
   }, [data, reloadTrigger]);
 
   function checkFormStatus() {
-    const radios = [signedContract, keyDates, voi, caf, depositReceipt, buildingPest, financeApproval, ct];
+    const radios = [signedContract, keyDates, voi, caf, depositReceipt, buildingPest, financeApproval, ct, da];
     const inputs = [systemNote1, clientNote1, systemNote2, clientNote2];
 
     const allYes = radios.every((val) => val.toLowerCase() === "yes");
@@ -137,6 +142,7 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
       buildingAndPest: buildingPest,
       financeApproval,
       checkCtController: ct,
+      obtainDaSeller: da,
       depositReceiptDate: depositDate,
       buildingAndPestDate: buildingDate,
       financeApprovalDate: financeDate,
@@ -149,16 +155,17 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
   }
 
   async function handleNextClick() {
-    const updateNoteAForClient = (voi_value, caf_value, deposit_value) => {
+    const updateNoteAForClient = (voi_value, caf_value, deposit_value, obtain_da_seller) => {
 
       const greenValues = ["Yes", "yes", "NR", "nr", "na", "NA"];
 
       const isVoiGreen = greenValues.includes(voi_value)
       const isCafGreen = greenValues.includes(caf_value);
       const isDepositGreen = greenValues.includes(deposit_value);
+      const isObtainDA = greenValues.includes(obtain_da_seller);
 
-      if (!isVoiGreen && !isCafGreen && !isDepositGreen) {
-        return 'VOI /CAF and Deposit receipt not received';
+      if (!isVoiGreen && !isCafGreen && !isDepositGreen && !isObtainDA) {
+        return 'VOI /CAF /Deposit and Obtain DA Seller receipt not received';
       } else if (!isVoiGreen && !isCafGreen) {
         return 'VOI and CAF not received';
       } else if (!isCafGreen && !isDepositGreen) {
@@ -171,6 +178,8 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
         return 'CAF not received ';
       } else if (!isVoiGreen) {
         return 'VOI not received ';
+      } else if (!isObtainDA) {
+        return 'Obtain DA Seller not received ';
       } else {
         return 'Tasks completed ';
       }
@@ -204,10 +213,11 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
           buildingAndPest: buildingPest,
           financeApproval,
           checkCtController: ct,
+          obtainDaSeller: da,
           depositReceiptDate: depositDate,
           buildingAndPestDate: buildingDate,
           financeApprovalDate: financeDate,
-          noteForClientA: `${updateNoteAForClient(voi, caf, depositReceipt)} - ${clientNote1}`,
+          noteForClientA: `${updateNoteAForClient(voi, caf, depositReceipt, da)} - ${clientNote1}`,
           noteForClientB: `${updateNoteBForClient(buildingPest, financeApproval)} - ${clientNote2}`,
         };
 
@@ -269,6 +279,7 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
       {renderRadioGroup("Building and Pest", "buildingPest", buildingPest, setBuildingPest, statusBuildingPest, setStatusBuildingPest, true, buildingDate, setBuildingDate)}
       {renderRadioGroup("Finance Approval", "financeApproval", financeApproval, setFinanceApproval, statusFinanceApproval, setStatusFinanceApproval, true, financeDate, setFinanceDate)}
       {renderRadioGroup("Check CT Controller", "ct", ct, setCt, statusCt, setStatusCt)}
+      {renderRadioGroup("Obtain DA(Seller)", "da", da, setDA, statusDA, setStatusDA)}
 
       <div className="mt-5">
         <label className="font-bold text-base mb-1 block">System Note (VOI / CAF / Deposit)</label>

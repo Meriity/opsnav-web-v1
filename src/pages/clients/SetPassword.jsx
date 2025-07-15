@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import AuthAPI from "../../api/authAPI";
+import AuthAPI from "../../api/clientAPI";
 import { toast } from "react-toastify";
 import Footer from "../../components/layout/Footer";
 
@@ -38,7 +38,7 @@ function SetPassword() {
       const response = await api.setPassword(token, password);
       if (response) {
         toast.success("Password Set Success!");
-        navigate("/admin/login");
+        navigate("/client/login");
       }
     } catch (err) {
       toast.error("Password Set Failed!");
@@ -116,7 +116,7 @@ function SetPassword() {
         Powered By Opsnav™
       </div>
       <Footer />
-    </div>
+    </div >
   );
 }
 

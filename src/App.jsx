@@ -8,15 +8,16 @@ import {
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
-import ManageUsers from "./components/layout/ManageUsers";
-import ViewClients from "./components/layout/ViewClients";
-import ArchivedClients from "./components/layout/ArchivedClients";
+import ManageUsers from "./pages/admin/ManageUsers";
+import ViewClients from "./pages/admin/ViewClients";
+import ArchivedClients from "./pages/admin/ArchivedClients";
 import AdminLogin from "./components/auth/AdminLogin";
 import ClientLogin from "./components/auth/ClientLogin";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
 import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
 import SetPassword from "./pages/auth/SetPassword";
+import SetClientPassword from "./pages/clients/SetPassword";
 
 // ✅ Auth Wrapper inside this file
 function RequireAuth({ children }) {
@@ -37,6 +38,7 @@ function App() {
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
       <Route path="/set-password" element={<SetPassword />} />
+      <Route path="/client/set-password" element={<SetClientPassword />} />
       <Route path="/client/login" element={<ClientLogin />} />
       <Route path="/client/forgotPassword" element={<ForgotPassword />} />
 

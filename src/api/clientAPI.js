@@ -1,4 +1,4 @@
-const BASE_URL = 'https://opsnav-app-service-871399330172.us-central1.run.app';
+const BASE_URL = "https://opsnav-app-service-871399330172.us-central1.run.app";
 
 class ClientAPI {
   constructor() {
@@ -7,28 +7,31 @@ class ClientAPI {
 
   // Get authorization headers
   getHeaders() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
   // Get client details by matter number
   async getClientDetails(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/clients?matterNumber=${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/clients?matterNumber=${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting client details:', error);
+      console.error("Error getting client details:", error);
       throw error;
     }
   }
@@ -37,79 +40,81 @@ class ClientAPI {
   async updateClientData(matterNumber, data) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/${matterNumber}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: this.getHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error updating client data:', error);
+      console.error("Error updating client data:", error);
       throw error;
     }
   }
 
   // Insert/Update Stage One
   async upsertStageOne(additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-one`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData) 
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-one`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    console.log(`${this.baseUrl}/clients/stage-one`);
-    console.log(JSON.stringify(additionalData));
+      console.log(`${this.baseUrl}/clients/stage-one`);
+      console.log(JSON.stringify(additionalData));
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating stage one:', error);
-    throw error;
   }
-}
 
-async upsertStage(stage, additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-${stage}`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData)
-    });
+  async upsertStage(stage, additionalData = {}) {
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-${stage}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error updating stage ${stage}:`, error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Error updating stage ${stage}:`, error);
-    throw error;
   }
-}
-
 
   // Get All Stages data
   async getAllStages(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/clients/stages/${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/clients/stages/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting stage one:', error);
+      console.error("Error getting stage one:", error);
       throw error;
     }
   }
@@ -118,22 +123,22 @@ async upsertStage(stage, additionalData = {}) {
   async upsertStageTwo(matterNumber, colorStatus, additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/stage-two`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
           matterNumber,
           color_status: colorStatus,
-          ...additionalData
-        })
+          ...additionalData,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error updating stage two:', error);
+      console.error("Error updating stage two:", error);
       throw error;
     }
   }
@@ -141,126 +146,128 @@ async upsertStage(stage, additionalData = {}) {
   // Get Stage Two data
   async getStageTwo(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/stage-two/${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client/stage-two/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting stage two:', error);
+      console.error("Error getting stage two:", error);
       throw error;
     }
   }
-   async upsertStageThree(additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-three`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData) 
-    });
+  async upsertStageThree(additionalData = {}) {
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-three`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    console.log(JSON.stringify(additionalData));
+      console.log(JSON.stringify(additionalData));
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating stage one:', error);
-    throw error;
   }
-}
 
   async upsertStageFour(additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-four`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData) 
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-four`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    console.log(JSON.stringify(additionalData));
+      console.log(JSON.stringify(additionalData));
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating stage one:', error);
-    throw error;
   }
-}
 
   async upsertStageFive(additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-five`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData) 
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-five`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    console.log(JSON.stringify(additionalData));
+      console.log(JSON.stringify(additionalData));
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating stage one:', error);
-    throw error;
   }
-}
 
   async upsertStageSix(additionalData = {}) {
-  try {
-    const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(additionalData) 
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
 
-    console.log(JSON.stringify(additionalData));
+      console.log(JSON.stringify(additionalData));
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating stage one:', error);
-    throw error;
   }
-}
-
 
   // Insert/Update Cost
   async upsertCost(matterNumber, cost, additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/client/costs`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
           matterNumber,
           cost,
-          ...additionalData
-        })
+          ...additionalData,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error updating cost:', error);
+      console.error("Error updating cost:", error);
       throw error;
     }
   }
@@ -268,18 +275,21 @@ async upsertStage(stage, additionalData = {}) {
   // Get Cost data
   async getCost(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/costs/${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client/costs/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting cost:', error);
+      console.error("Error getting cost:", error);
       throw error;
     }
   }
@@ -287,18 +297,21 @@ async upsertStage(stage, additionalData = {}) {
   // Check if client exists
   async checkClientExists(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/check/${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client/check/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error checking client existence:', error);
+      console.error("Error checking client existence:", error);
       throw error;
     }
   }
@@ -306,18 +319,21 @@ async upsertStage(stage, additionalData = {}) {
   // Get stage colors for client
   async getStageColors(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/stage-colors?matterNumber=${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client/stage-colors?matterNumber=${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting stage colors:', error);
+      console.error("Error getting stage colors:", error);
       throw error;
     }
   }
@@ -326,21 +342,21 @@ async upsertStage(stage, additionalData = {}) {
   async sendLinkToClient(email, matterNumber) {
     try {
       const response = await fetch(`${this.baseUrl}/client-view/send-link`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
           email,
-          matterNumber
-        })
+          matterNumber,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error sending link to client:', error);
+      console.error("Error sending link to client:", error);
       throw error;
     }
   }
@@ -348,18 +364,21 @@ async upsertStage(stage, additionalData = {}) {
   // Get client emails
   async getClientEmails(matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client-view/emails?matterNumber=${matterNumber}`, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client-view/emails?matterNumber=${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error getting client emails:', error);
+      console.error("Error getting client emails:", error);
       throw error;
     }
   }
@@ -367,22 +386,25 @@ async upsertStage(stage, additionalData = {}) {
   // Remove client access
   async removeClientAccess(email, matterNumber) {
     try {
-      const response = await fetch(`${this.baseUrl}/client-view/remove-access`, {
-        method: 'DELETE',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          email,
-          matterNumber
-        })
-      });
-      
+      const response = await fetch(
+        `${this.baseUrl}/client-view/remove-access`,
+        {
+          method: "DELETE",
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            email,
+            matterNumber,
+          }),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error removing client access:', error);
+      console.error("Error removing client access:", error);
       throw error;
     }
   }
@@ -391,21 +413,21 @@ async upsertStage(stage, additionalData = {}) {
   async resendLinkToClient(email, matterNumber) {
     try {
       const response = await fetch(`${this.baseUrl}/client-view/resend-link`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
           email,
-          matterNumber
-        })
+          matterNumber,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error resending link to client:', error);
+      console.error("Error resending link to client:", error);
       throw error;
     }
   }
@@ -414,20 +436,20 @@ async upsertStage(stage, additionalData = {}) {
   async sendNotificationToClient(matterNumber) {
     try {
       const response = await fetch(`${this.baseUrl}/client-view/notify`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
-          matterNumber
-        })
+          matterNumber,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error sending notification to client:', error);
+      console.error("Error sending notification to client:", error);
       throw error;
     }
   }
@@ -435,9 +457,36 @@ async upsertStage(stage, additionalData = {}) {
   // Send notification to client
   async getSearchResult(query) {
     try {
-      const response = await fetch(`${this.baseUrl}/clients/search?keywords=${query}`, {
-        method: 'GET',
-        headers: this.getHeaders(),
+      const response = await fetch(
+        `${this.baseUrl}/clients/search?keywords=${query}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error sending notification to client:", error);
+      throw error;
+    }
+  }
+
+  // Set initial password for new users
+  async setPassword(token, password) {
+    try {
+      const response = await fetch(`${this.baseUrl}/client-view/set-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          password})
       });
       
       if (!response.ok) {
@@ -446,7 +495,7 @@ async upsertStage(stage, additionalData = {}) {
       
       return await response.json();
     } catch (error) {
-      console.error('Error sending notification to client:', error);
+      console.error('Error setting password:', error);
       throw error;
     }
   }

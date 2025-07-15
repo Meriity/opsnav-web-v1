@@ -12,19 +12,20 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
+  let managerUser = { label: "Manage Users", icon: ManageUsersIcon, to: "/admin/manage-users" };
   const menuItems = [
     { label: "Dashboard", icon: DashboardIcon, to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard" },
-    ...(isAdminRoute
-      ? [{ label: "Manage Users", icon: ManageUsersIcon, to: "/admin/manage-users" }]
-      : []),
     { label: "View Clients", icon: ViewClientsIcon, to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients" },
     { label: "Archived Clients", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
   ];
+
+  isAdminRoute && menuItems.splice(1, 0, managerUser);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");
     localStorage.removeItem("client-storage");
+    localStorage.removeItem("matterNumber");
     navigate("/admin/login");
   }
 
@@ -50,8 +51,8 @@ export default function Sidebar() {
                 key={to}
                 onClick={() => navigate(to)}
                 className={`flex items-center px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
-                    ? "bg-[#00AEEF] text-white"
-                    : "hover:bg-gray-100 text-gray-800"
+                  ? "bg-[#00AEEF] text-white"
+                  : "hover:bg-gray-100 text-gray-800"
                   }`}
               >
                 <img

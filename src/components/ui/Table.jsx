@@ -15,7 +15,6 @@ const Table = ({
   rowSpacing = 'py-1',
   headerBgColor = 'bg-[#D7F4FF]',
   itemsPerPage = 5,
-  pagination = "absolute bottom-5 right-5 mt-4"
 }) => {
   const [currentData, setCurrentData] = useState([])
 

@@ -10,20 +10,20 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+    setIsLoading(true)
     try {
-      const response = await api.signIn(email,password);
-      console.log(response);
+      const response = await api.signIn(email, password);
       if (response.token) {
         localStorage.setItem("authToken", response.token);
-        localStorage.setItem("user",response.user.displayName);
-        toast.success("Authentication successfull! Logging in...", {
-      position: "bottom-center",
-    });
+        localStorage.setItem("user", response.user.displayName);
+        toast.success("Authentication successful! Logging in...", {
+          position: "bottom-center",
+        });
       }
 
       // Redirect based on role
@@ -33,17 +33,17 @@ function LoginForm() {
         navigate("/user/dashboard");
       }
     } catch (err) {
-             toast.error("Authentication failed! plaese check password and try again.", {
-      position: "bottom-center",
-    });
-      setError("Login failed. Check email/password.",err);
-      console.log(err);
+      toast.error("Authentication failed! Please check password and try again.", {
+        position: "bottom-center",
+      });
+    } finally {
+      setIsLoading(true)
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
-      
+
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
@@ -56,7 +56,7 @@ function LoginForm() {
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
           <h2 className="text-xl font-semibold text-center mb-6">SIGN IN</h2>
 
-          
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -79,17 +79,27 @@ function LoginForm() {
                 className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-            <button
-              type="submit"
-              className="w-full bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition"
-            >
-              Login
-            </button>
+            {
+              isLoading ? (<button
+                type="button"
+                disabled={true}
+                className="w-full bg-sky-600 text-white py-2 rounded-md"
+              >
+                Sending...
+              </button>) : (
+                <button
+                  type="submit"
+                  className="w-full bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition"
+                >
+                  Login
+                </button>
+              )
+            }
             {error && (
-            <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
-              {error}
-            </div>
-          )}
+              <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
+                {error}
+              </div>
+            )}
           </form>
         </div>
       </div>
