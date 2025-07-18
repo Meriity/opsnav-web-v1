@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import Eye from "../../icons/Button icons/Frame 362.png"
+import { Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import Eye from "../../icons/Button icons/Frame 362.png";
 import Pagination from './Pagination';
 
 const Table = ({
@@ -16,7 +16,41 @@ const Table = ({
   headerBgColor = 'bg-[#D7F4FF]',
   itemsPerPage = 5,
 }) => {
-  const [currentData, setCurrentData] = useState([])
+  const [currentData, setCurrentData] = useState([]);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  // Handle sorting
+  const handleSort = (columnKey) => {
+    let direction = 'asc';
+    if (sortedColumn === columnKey && sortDirection === 'asc') {
+      direction = 'desc';
+    }
+
+    const sorted = [...data].sort((a, b) => {
+      const aVal = a[columnKey];
+      const bVal = b[columnKey];
+
+      if (typeof aVal === 'string') {
+        return direction === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      } else if (typeof aVal === 'number' || aVal instanceof Date) {
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
+
+    setSortedColumn(columnKey);
+    setSortDirection(direction);
+    setCurrentData(sorted.slice(0, itemsPerPage));
+  };
+
+  // Initial Pagination
+  useEffect(() => {
+    setCurrentData(data.slice(0, itemsPerPage));
+  }, [data, itemsPerPage]);
 
   return (
     <div>
@@ -25,15 +59,23 @@ const Table = ({
           <table className={`w-full ${tableClass} border-separate border-spacing-y-2`}>
             <thead>
               <tr className={`${headerBgColor}`}>
-                {columns.map((column, colIndex) => (
-                  <th
-                    key={column.key}
-                    className={`px-3 py-4 text-left text-sm font-bold text-black ${colIndex === 0 ? 'rounded-l-2xl' : ''
-                      } ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
-                  >
-                    {column.title}
-                  </th>
-                ))}
+                {columns.map((column, colIndex) => {
+                  const isSorted = sortedColumn === column.key;
+                  return (
+                    <th
+                      key={column.key}
+                      onClick={() => handleSort(column.key)}
+                      className={`px-3 py-4 text-left text-sm font-bold text-black cursor-pointer select-none ${colIndex === 0 ? 'rounded-l-2xl' : ''} ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>{column.title}</span>
+                        {isSorted && (
+                          sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
                 {showActions && (
                   <th className="px-3 py-2 text-left text-sm font-bold text-black rounded-r-2xl">
                     Actions
@@ -41,6 +83,7 @@ const Table = ({
                 )}
               </tr>
             </thead>
+
             <tbody>
               {currentData.map((item) => (
                 <tr
@@ -51,21 +94,18 @@ const Table = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${colIndex === 0 ? 'rounded-l-2xl' : ''
-                        } ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
+                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${colIndex === 0 ? 'rounded-l-2xl' : ''} ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
                     >
                       {item[column.key]}
                     </td>
                   ))}
+
                   {showActions && (
                     <td className={`px-3 ${rowSpacing} rounded-r-2xl`}>
                       <div className="flex items-center space-x-3">
                         {onEdit && (
                           <button
-                            onClick={() => {
-                              onEdit(item)
-                              console.log(item)
-                            }}
+                            onClick={() => onEdit(item)}
                             className="flex flex-col items-center space-y-1 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="Edit"
                           >
@@ -83,18 +123,15 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
-                        <div className="flex items-center space-x-3">
-                          {OnEye && (
-                            <button
-                              onClick={() => onEdit(item.id)}
-                              className="flex flex-col items-center space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                              title="Edit"
-                            >
-                              <img src={Eye} alt="" className='h-[20px]' />
-
-                            </button>
-                          )}
-                        </div>
+                        {OnEye && (
+                          <button
+                            onClick={() => onEdit(item.id)}
+                            className="flex flex-col items-center space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            title="View"
+                          >
+                            <img src={Eye} alt="View" className='h-[20px]' />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}
@@ -106,7 +143,22 @@ const Table = ({
       </div>
 
       {/* Pagination Controls */}
-      <Pagination data={data} itemsPerPage={itemsPerPage} setCurrentData={setCurrentData} />
+      <Pagination
+        data={sortedColumn ? [...data].sort((a, b) => {
+          const aVal = a[sortedColumn];
+          const bVal = b[sortedColumn];
+          if (typeof aVal === 'string') {
+            return sortDirection === 'asc'
+              ? aVal.localeCompare(bVal)
+              : bVal.localeCompare(aVal);
+          } else if (typeof aVal === 'number' || aVal instanceof Date) {
+            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+          }
+          return 0;
+        }) : data}
+        itemsPerPage={itemsPerPage}
+        setCurrentData={setCurrentData}
+      />
     </div>
   );
 };

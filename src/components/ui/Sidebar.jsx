@@ -50,7 +50,7 @@ export default function Sidebar() {
               <button
                 key={to}
                 onClick={() => navigate(to)}
-                className={`flex items-center px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
+                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
                   ? "bg-[#00AEEF] text-white"
                   : "hover:bg-gray-100 text-gray-800"
                   }`}

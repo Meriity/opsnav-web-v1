@@ -17,7 +17,7 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white",
+        "flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white cursor-pointer",
         bg,
         bghover,
         bgactive,

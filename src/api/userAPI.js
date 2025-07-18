@@ -436,7 +436,8 @@ class ClientAPI {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json(); 
+        throw new Error(errorData.message);
       }
 
       return await response.json();
@@ -469,9 +470,9 @@ class ClientAPI {
   }
 
   // Get All Outstanding Task Report
-  async getAllOutstandingTasks(page, activeMatter) {
+  async getAllOutstandingTasks(page, activeMatter, matterFilter) {
     try {
-      let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}`;
+      let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}&filter=${matterFilter}`;
       if (activeMatter) {
         url = `${url}&matterNumber=${activeMatter}`;
       }

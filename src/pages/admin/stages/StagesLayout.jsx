@@ -12,11 +12,11 @@ import ClientAPI from "../../../api/clientAPI";
 import Loader from "../../../components/ui/Loader";
 
 export default function StagesLayout() {
-  const { matterNumber } = useParams();
+  const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
   const [reloadStage, setReloadStage] = useState(false);
-  const [selectedStage, setSelectedStage] = useState(1);
+  const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [stageStatuses, setStageStatuses] = useState({
@@ -267,7 +267,7 @@ export default function StagesLayout() {
                   <div
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-white" : "bg-[#F3F7FF]"
+                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#0080005e]" : "bg-[#F3F7FF]"
                       }`}
                   >
                     <div className="flex justify-between">

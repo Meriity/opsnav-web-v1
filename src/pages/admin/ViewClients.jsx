@@ -12,7 +12,8 @@ import { toast } from 'react-toastify';
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
 import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
-import useDebounce from "../../hooks/useDebounce";
+import DatePicker from "react-datepicker";
+import moment from "moment";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
@@ -81,10 +82,10 @@ const ViewClients = () => {
   });
   const [email, setemail] = useState("");
   const [isClicked, setIsClicked] = useState(false) // especially for send mail.
-  const [settlementDate, setSettlementDate] = useState("");
   const [clientList, setClientList] = useState(null)
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null)
-  const debouncedSettlementDate = useDebounce(settlementDate, 1000);
+  const [settlementDate, setSettlementDate] = useState([null, null]);
+  const [startDate, endDate] = settlementDate;
 
   // Zustand Store
   const {
@@ -103,16 +104,17 @@ const ViewClients = () => {
   }, [Clients])
 
   useEffect(() => {
-    if (debouncedSettlementDate === '') {
+    if (startDate === null && endDate === null) {
       setClientList(Clients);
-    } else {
+    } else if(startDate!==null && endDate!==null){
       const filtered = Clients.filter(client => {
-        return client?.settlement_date?.toString() === debouncedSettlementDate;
+        const clientDate = moment(new Date(client?.settlement_date));
+        return clientDate.isBetween(startDate, endDate, 'day', '[]');
       });
       setClientList(filtered);
     }
 
-  }, [debouncedSettlementDate, Clients])
+  }, [startDate, endDate, Clients])
 
   const columns = [
     { key: "matternumber", title: "Matter Number" },
@@ -250,11 +252,17 @@ const ViewClients = () => {
               />
               <Button label="Outstanding Tasks" onClick={() => setShowOutstandingTask(true)} />
 
-              <input
-                type="date"
-                value={settlementDate}
-                onChange={(e) => setSettlementDate(e.target.value)}
+              <DatePicker
+                selectsRange={true}
+                startDate={startDate}
+                endDate={endDate}
+                onChange={(update) => {
+                  setSettlementDate(update);
+                }}
                 className="flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white bg-[#FB4A52]"
+                placeholderText="Select Date Range"
+                withPortal
+                isClearable
               />
             </div >
           </div >

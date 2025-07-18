@@ -4,11 +4,11 @@ import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { create } from "zustand";
-import dropdownicon from "../../icons/Button icons/Group 320.png";
 import ClientAPI from "../../api/userAPI";
 import * as XLSX from "xlsx-js-style";
 import Header from "../../components/layout/Header";
-import useDebounce from "../../hooks/useDebounce";
+import DatePicker from "react-datepicker";
+import moment from "moment";
 
 
 // Zustand Store for Archived Clients
@@ -72,9 +72,9 @@ export default function ArchivedClients() {
   const [openExcel, setOpenExcel] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [settlementDate, setSettlementDate] = useState("");
   const [clientList, setClientList] = useState([])
-  const debouncedSettlementDate = useDebounce(settlementDate, 1000);
+  const [settlementDate, setSettlementDate] = useState([null, null]);
+  const [startDate, endDate] = settlementDate;
   const api = new ClientAPI();
 
   useEffect(() => {
@@ -118,16 +118,17 @@ export default function ArchivedClients() {
   }
 
   useEffect(() => {
-      if (debouncedSettlementDate === '') {
-        setClientList(archivedClients);
-      } else {
-        const filtered = archivedClients.filter(client => {
-          return client?.settlement_date?.toString() === debouncedSettlementDate;
-        });
-        setClientList(filtered);
-      }
-  
-    }, [debouncedSettlementDate, archivedClients])
+    if (startDate === null && endDate === null) {
+      setClientList(archivedClients);
+    } else if (startDate !== null && endDate !== null) {
+      const filtered = archivedClients.filter(client => {
+        const clientDate = moment(new Date(client?.settlement_date));
+        return clientDate.isBetween(startDate, endDate, 'day', '[]');
+      });
+      setClientList(filtered);
+    }
+
+  }, [startDate, endDate, archivedClients])
 
   const convertToExcel = (data) => {
     const headers = Object.keys(data[0]);
@@ -203,11 +204,17 @@ export default function ArchivedClients() {
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
           <div className="flex gap-5">
             <Button label="Export to Excel" onClick={() => setOpenExcel(true)} />
-            <input
-              type="date"
-              value={settlementDate}
-              onChange={(e) => setSettlementDate(e.target.value)}
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update) => {
+                setSettlementDate(update);
+              }}
               className="flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white bg-[#FB4A52]"
+              placeholderText="Select Date Range"
+              withPortal
+              isClearable
             />
           </div>
         </div>
