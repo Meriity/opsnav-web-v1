@@ -121,7 +121,7 @@ function Dashboard() {
         <Header />
         {/* Welcome Card */}
         <div className="bg-[#A6E7FF] p-6 rounded-md overflow-y-auto max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] xl:max-h-[80vh]">
-          <h1 className="text-xl font-bold mt-3 font-poppins">Welcome to VK LAWYERS</h1>
+          <h1 className="text-xl font-bold mt-3 font-poppins">Welcome to OPSNAV</h1>
           <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
             We are a client-focused law firm committed to delivering expert legal solutions with integrity, professionalism, and personalized care.
           </p>

@@ -133,7 +133,7 @@ const ViewClientsTable = ({
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs shrink-0 cursor-pointer"
                             style={{ backgroundColor: stageColorMap[item?.stages?.[0]?.[keyName]] || stageColorMap['default'] }}
-                            title={`Stage ${keyName} - ${stageColorMap[item?.stages?.[0]?.[keyName]] || 'missing'}`}
+                            title={`Stage ${keyName} || 'missing'}`}
                             target='_blank'
                           >
                             {keyName.toUpperCase()}
