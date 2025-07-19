@@ -1,10 +1,4 @@
-import {
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-  Outlet,
-} from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -18,6 +12,7 @@ import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
 import SetPassword from "./pages/auth/SetPassword";
 import SetClientPassword from "./pages/clients/SetPassword";
+import WorkSelection from "./pages/admin/WorkSelection";
 import Home from "./pages/Home";
 
 // ✅ Auth Wrapper inside this file
@@ -57,8 +52,21 @@ function App() {
         <Route path="manage-users" element={<ManageUsers />} />
         <Route path="view-clients" element={<ViewClients />} />
         <Route path="archived-clients" element={<ArchivedClients />} />
-        <Route path="client/stages/:matterNumber/:stageNo?" element={<StagesLayout />} />
+        <Route
+          path="client/stages/:matterNumber/:stageNo?"
+          element={<StagesLayout />}
+        />
       </Route>
+
+           {/* Work Selection Route — Protected but no AppLayout */}
+      <Route
+        path="/admin/work-selection"
+        element={
+          <RequireAuth>
+            <WorkSelection />
+          </RequireAuth>
+        }
+      />
 
       {/* 🔒 Protected Client Dashboard */}
       <Route
@@ -84,6 +92,16 @@ function App() {
         <Route path="archived-clients" element={<ArchivedClients />} />
         <Route path="client/:clientId/stages" element={<StagesLayout />} />
       </Route>
+
+      {/* Work Selection Route — Protected but no AppLayout */}
+      <Route
+        path="/user/work-selection"
+        element={
+          <RequireAuth>
+            <WorkSelection />
+          </RequireAuth>
+        }
+      />
     </Routes>
   );
 }

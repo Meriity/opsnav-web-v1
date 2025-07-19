@@ -21,6 +21,7 @@ function LoginForm() {
       if (response.token) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", response.user.displayName);
+        localStorage.setItem("role", response.role);
         toast.success("Authentication successful! Logging in...", {
           position: "bottom-center",
         });
@@ -28,9 +29,9 @@ function LoginForm() {
 
       // Redirect based on role
       if (response.role === "admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin/work-selection");
       } else {
-        navigate("/user/dashboard");
+        navigate("/user/work-selection");
       }
     } catch (err) {
       toast.error("Authentication failed! Please check password and try again.", {
