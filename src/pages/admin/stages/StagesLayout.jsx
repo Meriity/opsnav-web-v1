@@ -267,7 +267,7 @@ export default function StagesLayout() {
                   <div
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#0080005e]" : "bg-[#F3F7FF]"
+                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#56aee8]" : "bg-[#F3F7FF]"
                       }`}
                   >
                     <div className="flex justify-between">
