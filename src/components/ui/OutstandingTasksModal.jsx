@@ -98,14 +98,16 @@ export default function OutstandingTasksModal({ open, onClose, activeMatter = nu
                     <div className="flex-grow overflow-y-auto">
                         <h2 className="text-2xl font-bold mb-4">Outstanding Tasks Report</h2>
 
-                        <div className="mb-4">
-                            <label className="text-sm font-semibold block mb-1">Matters Settling In</label>
-                            <select className="w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400" onChange={(e) => setMatterFilter(e.target.value)} value={matterFilter}>
-                                <option value="none">None</option>
-                                <option value="two_weeks">Two Weeks</option>
-                                <option value="four_weeks">Four Weeks</option>
-                            </select>
-                        </div>
+                        {
+                            !activeMatter && <div className="mb-4">
+                                <label className="text-sm font-semibold block mb-1">Matters Settling In</label>
+                                <select className="w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400" onChange={(e) => setMatterFilter(e.target.value)} value={matterFilter}>
+                                    <option value="none">None</option>
+                                    <option value="two_weeks">Two Weeks</option>
+                                    <option value="four_weeks">Four Weeks</option>
+                                </select>
+                            </div>
+                        }
 
                         {loading ? (
                             <Loader height={40} />
@@ -193,13 +195,13 @@ export default function OutstandingTasksModal({ open, onClose, activeMatter = nu
                     <div className="mt-6 flex justify-end gap-2">
                         <button
                             onClick={onClose}
-                            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+                            className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-red-600"
                         >
                             Close
                         </button>
                         <button
                             onClick={handleDownloadPDF}
-                            className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+                            className="bg-[#00AEEF] text-white px-6 py-2 rounded hover:bg-green-700"
                         >
                             Download
                         </button>

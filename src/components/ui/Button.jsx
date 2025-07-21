@@ -3,7 +3,6 @@ import clsx from 'clsx';
 const Button = ({
   label,
   onClick,
-  bg = "bg-[#00AEEF]",
   bghover = "hover:bg-sky-600",
   bgactive = "active:bg-sky-700",
   Icon1,
@@ -17,12 +16,10 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white cursor-pointer",
-        bg,
+        "flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white cursor-pointer bg-[#00AEEF]",
         bghover,
         bgactive,
         height,
-        width,
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >

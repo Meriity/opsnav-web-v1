@@ -14,6 +14,7 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DatePicker from "react-datepicker";
 import moment from "moment";
+import DateRangeModal from "../../components/ui/DateRangeModal";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
@@ -84,7 +85,8 @@ const ViewClients = () => {
   const [isClicked, setIsClicked] = useState(false) // especially for send mail.
   const [clientList, setClientList] = useState(null)
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null)
-  const [settlementDate, setSettlementDate] = useState([null, null]);
+  const [settlementDate, setSettlementDate] = useState(["", ""]);
+  const [showDateRange, setShowDateRange] = useState(false);
   const [startDate, endDate] = settlementDate;
 
   // Zustand Store
@@ -104,9 +106,9 @@ const ViewClients = () => {
   }, [Clients])
 
   useEffect(() => {
-    if (startDate === null && endDate === null) {
+    if (!startDate && !endDate) {
       setClientList(Clients);
-    } else if(startDate!==null && endDate!==null){
+    } else if (startDate !== "" && endDate !== "") {
       const filtered = Clients.filter(client => {
         const clientDate = moment(new Date(client?.settlement_date));
         return clientDate.isBetween(startDate, endDate, 'day', '[]');
@@ -153,7 +155,7 @@ const ViewClients = () => {
 
   return (
     <>
-      <OutstandingTasksModal open={showOutstandingTask} onClose={(prev) => setShowOutstandingTask(!prev)} activeMatter={otActiveMatterNumber} />
+      <OutstandingTasksModal open={showOutstandingTask} onClose={(prev) => { setShowOutstandingTask(!prev), setOTActiveMatterNumber(null) }} activeMatter={otActiveMatterNumber} />
 
       <Dialog open={showShareDialog} onClose={() => handelShareEmailModalClose()} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
@@ -231,6 +233,17 @@ const ViewClients = () => {
       {/* Create Client Modal */}
       <CreateClientModal isOpen={createuser} setIsOpen={() => setcreateuser(false)} />
 
+      {/* Date Range Modal */}
+      <DateRangeModal
+        isOpen={showDateRange}
+        setIsOpen={() => setShowDateRange(false)}
+        subTitle="Select the date range to filter clients."
+        handelSubmitFun={(fromDate, toDate) => {
+          setSettlementDate([fromDate, toDate]);
+          setShowDateRange(false);
+        }}
+      />
+
       {/* View Clients Layout */}
       <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
         <main className="w-full max-w-8xl mx-auto">
@@ -252,18 +265,7 @@ const ViewClients = () => {
               />
               <Button label="Outstanding Tasks" onClick={() => setShowOutstandingTask(true)} />
 
-              <DatePicker
-                selectsRange={true}
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(update) => {
-                  setSettlementDate(update);
-                }}
-                className="flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white bg-[#FB4A52]"
-                placeholderText="Select Date Range"
-                withPortal
-                isClearable
-              />
+              <Button label="Select Date Range" onClick={() => setShowDateRange(true)} />
             </div >
           </div >
 

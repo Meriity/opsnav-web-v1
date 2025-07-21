@@ -74,7 +74,7 @@ export default function Sidebar() {
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="px-4 py-2 flex text-black rounded w-55 items-center justify-between bg-sky-100 rounded-2xl"
+          className="px-4 py-2 cursor-pointer flex text-black w-55 items-center justify-between bg-sky-100 rounded-2xl"
         >
           <div className="flex gap-2">
             <CircleUserRound />
@@ -90,7 +90,7 @@ export default function Sidebar() {
           >
 
             <button onClick={handleLogout}
-              className="px-4 flex text-black rounded w-50 items-center justify-between"
+              className="px-4 flex cursor-pointer text-black rounded w-50 items-center justify-between"
             >
               Logout <LogOut className="w-4" />
             </button>

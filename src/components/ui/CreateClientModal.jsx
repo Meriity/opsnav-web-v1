@@ -185,7 +185,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                 isLoading ? (<button
                                     type="button"
                                     disabled={true}
-                                    className="w-full bg-sky-600 text-white py-2 rounded-md"
+                                    className="w-full bg-gray-500 text-white py-2 rounded-md"
                                 >
                                     Sending...
                                 </button>) : (

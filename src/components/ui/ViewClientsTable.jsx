@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Edit, Share2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Share2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import report from "../../icons/Button icons/Group 318.png";
 import { useNavigate } from "react-router-dom";
 import Pagination from './Pagination';
@@ -71,7 +71,7 @@ const ViewClientsTable = ({
                   >
                     <div className="flex items-center gap-1">
                       {column.title}
-                      {sortConfig.key === column.key && (sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+                      {sortConfig.key === column.key ? (sortConfig.direction === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />) : (<ArrowUpDown size={16} />)}
                     </div>
                   </th>
                 ))}
@@ -146,7 +146,7 @@ const ViewClientsTable = ({
                   {ot && (
                     <td className={`px-1 items-center ${rowSpacing}`} style={{ width: '30px' }}>
                       <div className="flex justify-center">
-                        <button type="button" onClick={() => { handelOTOpen(); handelOT(item?.matternumber); }}>
+                        <button type="button" className="cursor-pointer" onClick={() => { handelOTOpen(); handelOT(item?.matternumber); }}>
                           <img src={report} alt="OT Report" className="w-5 h-5" />
                         </button>
                       </div>
@@ -159,7 +159,7 @@ const ViewClientsTable = ({
                         {onEdit && (
                           <button
                             onClick={() => navigate(`/admin/client/stages/${item.matternumber}`)}
-                            className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Edit size={12} />
@@ -168,7 +168,7 @@ const ViewClientsTable = ({
                         )}
                         <button
                           onClick={() => onShare(item.matternumber, item.client_email)}
-                          className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                          className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
                           title="Share"
                         >
                           <Share2 size={12} />
