@@ -170,17 +170,13 @@ export default function ManageUsers() {
                   className="form-radio text-pink-600"
                 /> Admin</label>
               </div>
-              {
-                isLoading ? (<button
-                  type="button"
-                  disabled={true}
-                  className="w-full bg-sky-600 text-white py-2 rounded-md"
-                >
-                  Saving...
-                </button>) : (
-                  <button type="submit" className="w-full bg-[#00AEEF] text-white py-2 rounded hover:bg-blue-600">Create</button>
-                )
-              }
+              <button
+                type={isLoading ? "button" : "submit"}
+                disabled={isLoading}
+                className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition"
+              >
+                {isLoading ? "Processing..." : "Create User"}
+              </button>
             </form>
           </div>
         </div>

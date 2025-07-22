@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
@@ -9,6 +9,8 @@ import * as XLSX from "xlsx-js-style";
 import Header from "../../components/layout/Header";
 import DatePicker from "react-datepicker";
 import moment from "moment";
+import DateRangeModal from "../../components/ui/DateRangeModal";
+import { toast } from "react-toastify";
 
 
 // Zustand Store for Archived Clients
@@ -24,7 +26,6 @@ const useArchivedClientStore = create((set) => ({
     const api = new ClientAPI();
     try {
       const res = await api.getArchivedClients();
-      console.log("API Response:", res);
 
       const mapped = res.data.map((client, index) => {
         // Helper function to safely format dates
@@ -70,11 +71,11 @@ const useArchivedClientStore = create((set) => ({
 export default function ArchivedClients() {
   const { archivedClients, loading, isFetched, fetchArchivedClients } = useArchivedClientStore();
   const [openExcel, setOpenExcel] = useState(false);
+  const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [clientList, setClientList] = useState([])
-  const [settlementDate, setSettlementDate] = useState([null, null]);
-  const [startDate, endDate] = settlementDate;
+  const [isLoading, setIsLoading] = useState(false);
   const api = new ClientAPI();
 
   useEffect(() => {
@@ -93,42 +94,47 @@ export default function ArchivedClients() {
   ];
 
   async function handleExcelExport() {
-
-    console.log(fromDate, toDate);
-
+    setIsLoading(true);
+    if (!fromDate || !toDate) {
+      toast.error("Please select a valid date range");
+      setIsLoading(false);
+      return;
+    }
     try {
       const res = await api.getArchivedClientsDate(fromDate, toDate);
-      console.log(res);
-      if (!res.ok) {
-        if (res.status === 404) {
-          alert("No record found");
-        }
-        // throw new Error("Network response was not ok");
-      }
       const data = res.data;
 
       if (!data || data.length === 0) {
-        alert("No record found");
-        return;
+        toast.info("No data available for the selected date range");
       }
       convertToExcel(data);
     } catch (e) {
-      console.log("Error", e);
+      toast.error(e.message);
+    } finally {
+      setIsLoading(false);
+      setOpenExcel(false);
+      setFromDate("");
+      setToDate("");
     }
   }
 
   useEffect(() => {
-    if (startDate === null && endDate === null) {
+    if (archivedClients.length > 0) {
+      setClientList(archivedClients)
+    }
+  }, [archivedClients])
+
+  const handleDataFilter = (fromDate, toDate) => {
+    if (fromDate === "" && toDate === "") {
       setClientList(archivedClients);
-    } else if (startDate !== null && endDate !== null) {
+    } else if (fromDate !== "" && toDate !== "") {
       const filtered = archivedClients.filter(client => {
         const clientDate = moment(new Date(client?.settlement_date));
-        return clientDate.isBetween(startDate, endDate, 'day', '[]');
+        return clientDate.isBetween(fromDate, toDate, 'day', '[]');
       });
       setClientList(filtered);
     }
-
-  }, [startDate, endDate, archivedClients])
+  }
 
   const convertToExcel = (data) => {
     const headers = Object.keys(data[0]);
@@ -204,18 +210,7 @@ export default function ArchivedClients() {
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
           <div className="flex gap-5">
             <Button label="Export to Excel" onClick={() => setOpenExcel(true)} />
-            <DatePicker
-              selectsRange={true}
-              startDate={startDate}
-              endDate={endDate}
-              onChange={(update) => {
-                setSettlementDate(update);
-              }}
-              className="flex justify-center items-center gap-2 px-5 py-2 rounded-md transition-colors text-white bg-[#FB4A52]"
-              placeholderText="Select Date Range"
-              withPortal
-              isClearable
-            />
+            <Button label="Filter Data" onClick={() => setShowSettlementDateModal(true)} />
           </div>
         </div>
 
@@ -239,6 +234,13 @@ export default function ArchivedClients() {
       </main>
 
       {/* Excel Export Dialog */}
+      <DateRangeModal
+        isOpen={showSettlementDateModal}
+        setIsOpen={setShowSettlementDateModal}
+        handelSubmitFun={handleDataFilter}
+        subTitle="Filter on settlement date"
+      />
+
       <Dialog open={openExcel} onClose={() => setOpenExcel(false)} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -268,12 +270,16 @@ export default function ArchivedClients() {
                 />
               </div>
 
-              <button
-                onClick={handleExcelExport}
-                className="w-full mt-6 bg-[#00AEEF] text-white py-2 rounded hover:bg-blue-600"
-              >
-                Download Excel
-              </button>
+              <div className="mt-6 flex justify-end">
+                <button type="button" onClick={() => { setFromDate(""), setToDate(""), setOpenExcel(false) }} className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                  <RefreshCcw className="inline-block mr-1" size={16} />
+                </button>
+                <Button
+                  label={isLoading ? "Processing..." : "Download CSV"}
+                  onClick={handleExcelExport}
+                  disabled={isLoading}
+                />
+              </div>
             </DialogPanel>
           </div>
         </div>

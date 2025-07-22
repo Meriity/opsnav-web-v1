@@ -127,7 +127,7 @@ function Dashboard() {
           </p>
 
           <button
-            className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+            className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2 cursor-pointer"
             onClick={() => setcreateuser(true)}
           >
             <img src={Plus} alt="" className="w-5" />

@@ -80,22 +80,13 @@ function LoginForm() {
                 className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-            {
-              isLoading ? (<button
-                type="button"
-                disabled={true}
-                className="w-full bg-sky-600 text-white py-2 rounded-md"
-              >
-                Sending...
-              </button>) : (
-                <button
-                  type="submit"
-                  className="w-full bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition"
-                >
-                  Login
-                </button>
-              )
-            }
+            <button
+              type={isLoading ? "button" : "submit"}
+              disabled={isLoading}
+              className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition"
+            >
+              {isLoading ? "Processing..." : "Sign In"}
+            </button>
             {error && (
               <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
                 {error}

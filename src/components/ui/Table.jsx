@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import Eye from "../../icons/Button icons/Frame 362.png";
 import Pagination from './Pagination';
 
@@ -69,9 +69,9 @@ const Table = ({
                     >
                       <div className="flex items-center space-x-1">
                         <span>{column.title}</span>
-                        {isSorted && (
-                          sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
-                        )}
+                        {isSorted ? (
+                          sortDirection === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />
+                        ): (<ArrowUpDown size={16} />)}
                       </div>
                     </th>
                   );
@@ -106,7 +106,7 @@ const Table = ({
                         {onEdit && (
                           <button
                             onClick={() => onEdit(item)}
-                            className="flex flex-col items-center space-y-1 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="Edit"
                           >
                             <Edit size={16} />
@@ -116,7 +116,7 @@ const Table = ({
                         {onDelete && (
                           <button
                             onClick={() => onDelete(item)}
-                            className="flex flex-col items-center space-y-1 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                             title="Delete"
                           >
                             <Trash2 size={16} />
@@ -126,7 +126,7 @@ const Table = ({
                         {OnEye && (
                           <button
                             onClick={() => onEdit(item.id)}
-                            className="flex flex-col items-center space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="View"
                           >
                             <img src={Eye} alt="View" className='h-[20px]' />
