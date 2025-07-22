@@ -83,7 +83,7 @@ function LoginForm() {
             <button
               type={isLoading ? "button" : "submit"}
               disabled={isLoading}
-              className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition"
+              className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition cursor-pointer"
             >
               {isLoading ? "Processing..." : "Sign In"}
             </button>

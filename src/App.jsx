@@ -27,6 +27,17 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function RequireAuthClient({ children }) {
+  const matterNumber = localStorage.getItem("matterNumber"); // <- ✅ Match your login token key
+  const location = useLocation();
+
+  if (!matterNumber) {
+    return <Navigate to="/client/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <Routes>
@@ -72,9 +83,9 @@ function App() {
       <Route
         path="/client/dashboard/:matterNumber"
         element={
-          <RequireAuth>
+          <RequireAuthClient>
             <ClientDashboard />
-          </RequireAuth>
+          </RequireAuthClient>
         }
       />
 

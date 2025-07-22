@@ -39,20 +39,20 @@ export default function Home() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <button className="bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow">
+            <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow">
               Get Started For Free
             </button>
-            <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-semibold px-6 py-3 rounded-md">
+            <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-semibold px-6 py-3 rounded-md">
               Book A Demo
             </button>
           </div>
         </div>
 
         <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleLogin}>
+          <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleLogin}>
             Login
           </button>
-          <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
+          <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
             Signup
           </button>
         </div>
@@ -346,10 +346,10 @@ export default function Home() {
           <div className="flex flex-col sm:items-end">
             <p className="mb-2">Connect with us:</p>
             <div className="flex gap-4">
-              <Facebook className="w-6 h-6" />
-              <Instagram className="w-6 h-6" />
-              <Twitter className="w-6 h-6" />
-              <Bitcoin className="w-6 h-6" />
+              <Facebook className="w-6 h-6 cursor-pointer" />
+              <Instagram className="w-6 h-6 cursor-pointer" />
+              <Twitter className="w-6 h-6 cursor-pointer" />
+              <Bitcoin className="w-6 h-6 cursor-pointer" />
             </div>
           </div>
         </div>

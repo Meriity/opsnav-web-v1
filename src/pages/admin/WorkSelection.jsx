@@ -52,7 +52,7 @@ const handleSubmit = () => {
                     </h4>
                     <button
                         type="button"
-                        className="w-full bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition mt-4 mb-2 sm:my-6 text-sm sm:text-base"
+                        className="w-full cursor-pointer bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition mt-4 mb-2 sm:my-6 text-sm sm:text-base"
                          onClick={handleSubmit}
                     >
                         Next
@@ -73,7 +73,7 @@ const handleSubmit = () => {
                     </h4>
                     <button
                         type="button"
-                        className="w-full bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition mt-4 mb-2 sm:my-6 text-sm sm:text-base"
+                        className="w-full cursor-pointer bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600 transition mt-4 mb-2 sm:my-6 text-sm sm:text-base"
                        
                     >
                         Next
