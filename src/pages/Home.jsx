@@ -23,7 +23,7 @@ export default function Home() {
     <>
       <div
         className="relative min-h-screen bg-cover bg-center text-black"
-        style={{ backgroundImage: "url('/src/assets/images/home_bg.jpg')" }}
+        style={{ backgroundImage: "url('/home_bg.jpg')" }}
       >
         {/* <div className="absolute inset-0 bg-black/60" /> */}
 
