@@ -141,7 +141,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
           <p className="text-[12px] whitespace-nowrap">{statusState[key]}</p>
         </div>
       </div>
-      <div className="flex justify-between flex-wrap items-center">
+      <div className="flex flex-wrap items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input

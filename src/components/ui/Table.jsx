@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Edit, Trash2, ArrowUp, ArrowDown, ArrowUpDown,RefreshCw  } from 'lucide-react';
 import Eye from "../../icons/Button icons/Frame 362.png";
 import Pagination from './Pagination';
 
@@ -8,6 +8,7 @@ const Table = ({
   columns,
   onEdit,
   onDelete,
+  onReset,
   OnEye,
   showActions = true,
   hoverEffect = true,
@@ -123,6 +124,15 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
+                        
+                          {/* <button
+                            onClick={() => onreset(item)}
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
+                            title="Reset Password"
+                          >
+                            <RefreshCw  size={16} />
+                            <span className="text-xs">Reset</span>
+                          </button> */}
                         {OnEye && (
                           <button
                             onClick={() => onEdit(item.id)}

@@ -267,15 +267,14 @@ export default function StagesLayout() {
                   <div
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#56aee8]" : "bg-[#F3F7FF]"
-                      }`}
+                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#FFFFFF]" : bgcolor(stageStatus) || "bg-[#F3F7FF]"}`}
                   >
                     <div className="flex justify-between">
                       <p className="font-bold font-poppins">
                         Stage {index + 1}
                       </p>
                       <div
-                        className={`w-[90px] h-[18px] ${bgcolor(stageStatus)} ${stageStatus === "In progress"
+                        className={`w-[90px] h-[18px]  ${stageStatus === "In progress"
                           ? "text-[#FF9500]"
                           : "text-white"
                           } flex items-center justify-center rounded-4xl`}
