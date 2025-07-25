@@ -36,7 +36,8 @@ export default function Sidebar() {
         <div className="flex">
           <img
             className="w-[70px] h-[58px]"
-            src="https://vklawyers.com.au/wp-content/uploads/2024/10/vk-lawers-logo.png"
+            // src="https://vklawyers.com.au/wp-content/uploads/2024/10/vk-lawers-logo.png"
+            src="/Logo_vk.png"
             alt="Logo"
           />
         </div>

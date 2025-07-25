@@ -77,7 +77,7 @@ const ViewClientsTable = ({
                 ))}
 
                 {status && (
-                  <th className="px-3 py-2 text-left text-sm font-bold text-black" style={{ width: '110px' }}>
+                  <th className="px-3 py-2 text-left text-sm font-bold text-black" style={{ width: '170px' }}>
                     <div>Stages</div>
                   </th>
                 )}
@@ -126,7 +126,7 @@ const ViewClientsTable = ({
 
                   {status && (
                     <td className={`px-1 ${rowSpacing}`} style={{ width: '150px' }}>
-                      <div className="flex flex-wrap gap-1 w-[80px]">
+                      <div className="flex gap-1 w-[80px]">
                         {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
                           <a
                             href={`/admin/client/stages/${item.matternumber}/${(index + 1)}`}

@@ -208,7 +208,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
               <p className="text-[12px] whitespace-nowrap">{statusRetainer}</p>
             </div>
           </div>
-          <div className="flex justify-between gap-4 flex-wrap">
+          <div className="flex  gap-4 flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
@@ -240,7 +240,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
               <p className="text-[12px] whitespace-nowrap">{statusDeclaration}</p>
             </div>
           </div>
-          <div className="flex justify-between gap-4 flex-wrap">
+          <div className="flex  gap-4 flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
@@ -272,7 +272,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
               <p className="text-[12px] whitespace-nowrap">{statusContract}</p>
             </div>
           </div>
-          <div className="flex justify-between gap-4 flex-wrap">
+          <div className="flex gap-4 flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
@@ -339,7 +339,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
               <p className="text-[12px] whitespace-nowrap">{statusTenants}</p>
             </div>
           </div>
-          <div className="flex justify-between gap-4 flex-wrap">
+          <div className="flex  gap-4 flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
