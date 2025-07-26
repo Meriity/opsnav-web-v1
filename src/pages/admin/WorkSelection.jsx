@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 function WorkSelection() {
 const navigate = useNavigate();
-const handleSubmit = () => {
+const handleSubmit = () => { 
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("role");
 
