@@ -37,19 +37,51 @@ export default function StagesLayout() {
     { id: 6, title: "Final Letter/Close" },
   ];
 
-  function bgcolor(status) {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
-  }
+  // function bgcolor(status) {
+  //   switch (status) {
+  //     case "In progress":
+  //       return "bg-[#FFEECF]";
+  //     case "Completed":
+  //       return "bg-[#00A506]";
+  //     case "Not Completed":
+  //       return "bg-[#FF0000]";
+  //     default:
+  //       return "";
+  //   }
+  // }
+ // Handles both colorStatus values and evaluated statuses
+function bgcolor(status) {
+  const statusColors = {
+    // For evaluated statuses
+    "In progress": "bg-[#FFEECF]",
+    "Completed": "bg-[#00A506]",
+    "Not Completed": "bg-[#FF0000]",
+    // For direct colorStatus values
+    "green": "bg-[#00A506]",
+    "red": "bg-[#FF0000]",
+    "amber": "bg-[#FFEECF]",
+    "yellow": "bg-[#facc15]",
+    "blue": "bg-[#3b82f6]",
+  };
 
+  return statusColors[status] || "bg-[#F3F7FF]";
+}
+
+// Converts any status to display text
+function getStatusDisplayText(status) {
+  const textMap = {
+    "green": "Completed",
+    "red": "Not Completed",
+    "amber": "In progress",
+    "yellow": "Warning",
+    "blue": "Info",
+    "In progress": "In progress",
+    "Completed": "Completed",
+    "Not Completed": "Not Completed",
+  };
+
+  return textMap[status] || status;
+}
   function evaluateStageStatus(stageData, fields) {
     if (!stageData || fields.length === 0) return "Not Completed";
 
@@ -150,15 +182,31 @@ export default function StagesLayout() {
         const response = await api.getAllStages(matterNumber);
         setClientData(response);
 
-        const section = {
-          status1: evaluateStageStatus(response.stage1, [
+        // First check if colorStatus exists in any stage
+        const hasColorStatus = Object.values(response).some(
+          stage => stage && stage.colorStatus
+        );
+
+        const section = {};
+        
+        if (hasColorStatus) {
+          // Use colorStatus if available
+          section.status1 = response.stage1?.colorStatus || "Not Completed";
+          section.status2 = response.stage2?.colorStatus || "Not Completed";
+          section.status3 = response.stage3?.colorStatus || "Not Completed";
+          section.status4 = response.stage4?.colorStatus || "Not Completed";
+          section.status5 = response.stage5?.colorStatus || "Not Completed";
+          section.status6 = response.stage6?.colorStatus || "Not Completed";
+        } else {
+          // Fall back to field evaluation if no colorStatus
+          section.status1 = evaluateStageStatus(response.stage1, [
             "referral",
             "declarationForm",
             "contractReview",
             "tenants",
             "retainer",
-          ]),
-          status2: evaluateStageStatus(response.stage2, [
+          ]);
+          section.status2 = evaluateStageStatus(response.stage2, [
             "voi",
             "caf",
             "signedContract",
@@ -168,8 +216,8 @@ export default function StagesLayout() {
             "financeApproval",
             "obtainDaSeller",
             "checkCtController",
-          ]),
-          status3: evaluateStageStatus(response.stage3, [
+          ]);
+          section.status3 = evaluateStageStatus(response.stage3, [
             "titleSearch",
             "planImage",
             "landTax",
@@ -179,30 +227,30 @@ export default function StagesLayout() {
             "ownersCorp",
             "pexa",
             "inviteBank",
-          ]),
-          status4: evaluateStageStatus(response.stage4, [
+          ]);
+          section.status4 = evaluateStageStatus(response.stage4, [
             "dts",
             "soa",
             "frcgw",
             "dutyOnline",
-          ]),
-          status5: evaluateStageStatus(response.stage5, [
+          ]);
+          section.status5 = evaluateStageStatus(response.stage5, [
             "notifySoaToClient",
             "transferDocsOnPexa",
             "gstWithholding",
             "disbursementsInPexa",
             "addAgentFee",
             "settlementNotification",
-          ]),
-          status6: evaluateStageStatus(response.stage6, [
+          ]);
+          section.status6 = evaluateStageStatus(response.stage6, [
             "noaToCouncilWater",
             "dutyPaid",
             "finalLetterToClient",
             "finalLetterToAgent",
             "invoiced",
             "closeMatter",
-          ]),
-        };
+          ]);
+        }
 
         setStageStatuses(section);
       } catch (e) {
@@ -267,21 +315,24 @@ export default function StagesLayout() {
                   <div
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${selectedStage === stage.id ? "bg-[#0080005e]" : "bg-[#F3F7FF]"
-                      }`}
+                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${
+                      selectedStage === stage.id 
+                        ? "bg-[#FFFFFF]"  // White background for selected stage
+                        : bgcolor(stageStatus)  // Dynamic color based on status
+                    }`}
                   >
                     <div className="flex justify-between">
                       <p className="font-bold font-poppins">
                         Stage {index + 1}
                       </p>
                       <div
-                        className={`w-[90px] h-[18px]  ${stageStatus === "In progress"
-                          ? "text-[#FF9500]"
+                        className={`w-[90px] h-[18px]  ${stageStatus === "In progress" || stageStatus === "amber"
+                          ? "text-[#FF9500]" 
                           : "text-white"
-                          } flex items-center justify-center rounded-4xl`}
+                        } flex items-center justify-center rounded-4xl`}
                       >
                         <p className="text-[12px] whitespace-nowrap">
-                          {stageStatus}
+                          {getStatusDisplayText(stageStatus)}
                         </p>
                       </div>
                     </div>

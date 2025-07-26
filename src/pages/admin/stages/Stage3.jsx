@@ -131,7 +131,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
 
   const renderRadioGroup = ({ key, label }) => (
     <div className="mt-5" key={key}>
-      <div className="flex justify-between mb-3">
+      <div className="flex gap-4 items-center mb-3">
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
