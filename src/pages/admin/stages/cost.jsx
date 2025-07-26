@@ -118,13 +118,13 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
   }
 
   const renderTextField = (label) => (
-    <div className="mt-4" key={label}>
-      <label className="block mb-1 text-base font-bold">{label}</label>
+    <div className="mt-4 flex items-center justify-between" key={label}>
+      <label className="block mb-1 text-base font-bold pr-3">{label}</label>
       <input
         type="text"
         value={formValues[label] || ""}
         onChange={(e) => handleChange(label, e.target.value)}
-        className="w-full rounded p-2 bg-gray-100"
+        className="rounded p-2 bg-gray-100"
       />
     </div>
   );
@@ -136,7 +136,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
 
       <div className="flex mt-10 justify-between">
         <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
-        <Button label="Submit" width="w-[100px]" onClick={handleSubmit} />
+        <Button label="Save and Exit" width="w-[100px]" onClick={handleSubmit} />
       </div>
     </div>
   );

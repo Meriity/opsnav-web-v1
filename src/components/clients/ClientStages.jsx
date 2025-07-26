@@ -56,7 +56,7 @@ export default function Stages({ stageName, data }) {
         {data?.sections?.length > 0 &&
           data.sections.map((section, idx) => (
             <div key={idx} className="flex items-center gap-4 w-[240px] h-[50px]">
-              <div className="w-[136px] h-[38px] flex items-center justify-center bg-white">
+              <div className="w-[136px] h-[38px] flex items-center justify-center bg-white ">
                 <p className="text-[16px] text-gray-800 whitespace-nowrap">
                   {section.title}
                 </p>
@@ -93,7 +93,7 @@ export default function Stages({ stageName, data }) {
             transition={{ duration: 0.4, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col w-full max-w-[1720px] px-[20px] py-[10px] bg-[#DDF1FF] rounded-b-xl gap-4 mx-auto">
+            <div className="flex flex-col w-full max-w-[1720px] px-[20px] py-[10px] bg-[#DDF1FF] rounded-b-xl gap-4 mx-auto ">
               {data?.rows?.length > 0 &&
                 data.rows.map((row, i) => (
                   <div key={i} className="flex items-start gap-6">

@@ -22,10 +22,10 @@ export default function Home() {
   return (
     <>
       <div
-        className="relative min-h-screen bg-cover bg-center text-white"
-        style={{ backgroundImage: "url('/screen1.png')" }}
+        className="relative min-h-screen bg-cover bg-center text-black"
+        style={{ backgroundImage: "url('/home_bg.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black/60" />
+        {/* <div className="absolute inset-0 bg-black/60" /> */}
 
         <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-24 md:py-32">
           <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold pt-20 max-w-7xl">
@@ -33,9 +33,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 text-base md:text-lg max-w-4xl">
-            OpsNav brings control and clarity to your legal workflows — with
-            centralized case tracking, automated task flows, and instant
-            insights that keep your firm efficient and compliant.
+            OpsNav brings clarity and control to your most complex workflows — with centralised task tracking, automated processes, and real-time insights that keep your team aligned, productive, and moving forward with confidence.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -57,8 +55,9 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="absolute top-4 left-4 z-20 text-xl font-bold">
-          OPSNAV
+        <div className="absolute top-6 left-6 z-20 text-xl font-bold">
+          {/* OPSNAV */}
+          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-8 mx-auto sm:h-8 md:h-12 md:mx-0 lg:h-12" />
         </div>
       </div>
 
