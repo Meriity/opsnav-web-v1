@@ -18,6 +18,10 @@ export default function Home() {
   const handleLogin = () => {
     navigate("/admin/login");
   };
+
+  const handleClientLogin = () => {
+    navigate("/client/login");
+  }
   
   return (
     <>
@@ -50,7 +54,10 @@ export default function Home() {
           <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleLogin}>
             Login
           </button>
-          <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
+          <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleClientLogin}>
+            Client Portal
+          </button>
+          <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
             Signup
           </button>
         </div>

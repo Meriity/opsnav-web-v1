@@ -235,7 +235,7 @@ export default function ClientDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between shadow-2xl p-2 sm:items-center gap-4 mb-6">
         <div className="flex justify-center sm:justify-start">
-          <img className="w-[80px] h-[65px]" src="/Logo.png" alt="Logo" />
+          <img className="w-[170px] h-[65px]" src="/Logo.png" alt="Logo" />
         </div>
         <div className="flex justify-center sm:justify-end">
           <Button
