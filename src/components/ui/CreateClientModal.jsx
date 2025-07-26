@@ -77,7 +77,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                     name="matterNumber"
                                     value={formData.matterNumber}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required
                                 />
                             </div>
                             <div>
@@ -87,7 +87,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                     name="clientName"
                                     value={formData.clientName}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required
                                 />
                             </div>
                         </div>
@@ -105,7 +105,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                                 value={stateOption}
                                                 checked={formData.state === stateOption}
                                                 onChange={handleChange}
-                                                className="w-4 h-4"
+                                                className="w-4 h-4" required
                                             />
                                             <span>{stateOption}</span>
                                         </label>
@@ -123,7 +123,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                                 value={type}
                                                 checked={formData.clientType === type}
                                                 onChange={handleChange}
-                                                className="w-4 h-4"
+                                                className="w-4 h-4" required
                                             />
                                             <span>{type}</span>
                                         </label>
@@ -140,7 +140,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                 name="propertyAddress"
                                 value={formData.propertyAddress}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required
                             />
                         </div>
 
@@ -153,7 +153,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                     name="matterDate"
                                     value={formData.matterDate}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required
                                 />
                             </div>
                             <div>
@@ -163,7 +163,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                     name="settlementDate"
                                     value={formData.settlementDate}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required
                                 />
                             </div>
                         </div>
@@ -175,7 +175,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                                 type="text"
                                 value={formData.dataEntryBy}
                                 readOnly
-                                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
+                                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600" required
                             />
                         </div>
 
