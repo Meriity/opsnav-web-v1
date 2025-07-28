@@ -27,11 +27,10 @@ export default function DateRangeModal({ isOpen, setIsOpen, subTitle = "", hande
     }
 
     const handelDateReset = () => {
-        handelSubmitFun("", "")
-        setFromDate(() => "");
-        setToDate(() => "");
-        setIsOpen(false);
-    }
+    setFromDate("");  // Clear "From Date"
+    setToDate("");    // Clear "To Date"
+    // Removed setIsOpen(false) to keep popup open
+}
 
     return (
         <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-10">

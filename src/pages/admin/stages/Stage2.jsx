@@ -235,13 +235,13 @@ export default function Stage2({ changeStage, data, reloadTrigger, setReloadTrig
 
   const renderRadioGroup = (label, name, value, setValue, status, setStatus, showDate = false, dateValue = "", setDateValue = () => { }) => (
     <div className="py-2">
-      <div className="flex gap-4 items-center mb-2">
+      <div className="flex gap-4 justify-between items-center mb-2">
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div className={`w-[90px] h-[18px] ${bgcolor(status)} ${status === "In progress" ? "text-[#FF9500]" : "text-white"} flex items-center justify-center rounded-4xl`}>
           <p className="text-[12px] whitespace-nowrap">{status}</p>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input
