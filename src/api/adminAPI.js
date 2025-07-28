@@ -24,7 +24,7 @@ class AdminAPI {
         body: JSON.stringify({
           email,
           role,
-          displayName: displayName
+          display_name: displayName
         })
       });
       

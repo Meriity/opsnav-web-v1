@@ -317,7 +317,7 @@ function getStatusDisplayText(status) {
                     onClick={() => setSelectedStage(stage.id)}
                     className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${
                       selectedStage === stage.id 
-                        ? "bg-[#FFFFFF]"  // White background for selected stage
+                        ? "bg-[#FFFFFF] text-black"  // White background for selected stage
                         : bgcolor(stageStatus)  // Dynamic color based on status
                     }`}
                   >
@@ -328,10 +328,10 @@ function getStatusDisplayText(status) {
                       <div
                         className={`w-[90px] h-[18px]  ${stageStatus === "In progress" || stageStatus === "amber"
                           ? "text-[#FF9500]" 
-                          : "text-white"
-                        } flex items-center justify-center rounded-4xl`}
+                          : "text-black"
+                        } flex items-center justify-center rounded-4xl `}
                       >
-                        <p className="text-[12px] whitespace-nowrap">
+                        <p className="text-[12px] whitespace-nowrap font-bold">
                           {getStatusDisplayText(stageStatus)}
                         </p>
                       </div>
@@ -349,7 +349,7 @@ function getStatusDisplayText(status) {
                 {clientData && Showstage(selectedStage)}
               </div>
 
-              <div className="w-[710px] h-[540px]">
+              <div className="w-[910px] h-[540px]">
                 <div className="w-full max-w-4xl p-[30px] bg-white rounded-[10px] shadow">
                   <h2 className="text-xl font-bold mb-3">Matter Details</h2>
                   <form className="space-y-1">

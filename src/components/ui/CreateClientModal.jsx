@@ -35,7 +35,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
             });
             navigate(`/admin/client/stages/${matterNumber}`);
         } catch (e) {
-            toast.error("User not created", {
+            toast.error("Client not created", {
                 position: "bottom-center",
             });
         } finally {
