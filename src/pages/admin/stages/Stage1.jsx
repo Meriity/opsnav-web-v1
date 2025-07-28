@@ -199,7 +199,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
         {/* Retainer */}
         <div className="mt-5">
-          <div className="flex justify-between mb-3">
+          <div className="flex gap-4 items-center mb-3">
             <label className="block mb-1 text-base font-bold">Retainer</label>
             <div
               className={`w-[90px] h-[18px] ${bgcolor(statusRetainer)} ${statusRetainer === "In progress" ? "text-[#FF9500]" : "text-white"
@@ -229,7 +229,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
         {/* Declaration Form */}
         <div className="mt-5">
-          <div className="flex justify-between mb-3">
+          <div className="flex gap-4 items-center mb-3">
             <label className="block mb-1 text-base font-bold">Declaration form</label>
             <div
               className={`w-[90px] h-[18px] ${bgcolor(statusDeclaration)} ${statusDeclaration === "In progress"
@@ -261,7 +261,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
         {/* Declaration Form */}
         <div className="mt-5">
-          <div className="flex justify-between mb-3">
+          <div className="flex gap-4 items-center mb-3">
             <label className="block mb-1 text-base font-bold">Contract Review</label>
             <div
               className={`w-[90px] h-[18px] ${bgcolor(statusContract)} ${statusContract === "In progress"
@@ -293,7 +293,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
         {/* Quote Type */}
         <div className="mt-5">
-          <div className="flex justify-between mb-3">
+          <div className="flex gap-4 items-center mb-3">
             <label className="block mb-1 text-base font-bold">Quote Type</label>
           </div>
           <div className="flex gap-4 flex-wrap">
@@ -330,7 +330,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
 
         {/* Tenants */}
         <div className="mt-5">
-          <div className="flex justify-between mb-3">
+          <div className="flex gap-4 items-center mb-3">
             <label className="block mb-1 text-base font-bold">Tenants</label>
             <div
               className={`w-[90px] h-[18px] ${bgcolor(statusTenants)} ${statusTenants === "In progress" ? "text-[#FF9500]" : "text-white"
