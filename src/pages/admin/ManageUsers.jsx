@@ -156,16 +156,16 @@ export default function ManageUsers() {
                 <label><input
                   type="radio"
                   name="role"
-                  value="User"
-                  checked={role === 'User'}
+                  value="user"
+                  checked={role === 'user'}
                   onChange={handleChange}
                   className="form-radio text-blue-600"
                 /> User</label>
                 <label><input
                   type="radio"
                   name="role"
-                  value="Admin"
-                  checked={role === 'Admin'}
+                  value="admin"
+                  checked={role === 'admin'}
                   onChange={handleChange}
                   className="form-radio text-pink-600"
                 /> Admin</label>

@@ -23,7 +23,7 @@ class AdminAPI {
         headers: this.getHeaders(),
         body: JSON.stringify({
           email,
-          role,
+          role:role,
           display_name: displayName
         })
       });
