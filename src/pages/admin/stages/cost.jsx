@@ -11,19 +11,19 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
 
   const [formValues, setFormValues] = useState({
     "VOI/CAF": "",
-    // "VOI/CAF Note": "",
+    "VOI/CAF Note": "",
     "Title": "",
-    // "Title Note": "",
+    "Title Note": "",
     "Plan": "",
-    // "Plan Note": "",
+    "Plan Note": "",
     "Land Tax": "",
-    // "Land Tax Note": "",
+    "Land Tax Note": "",
     "Land Tax Amount": "",
-    // "Land Tax Amount Note": "",
+    "Land Tax Amount Note": "",
     "Land Information Certificate (Rates)": "",
-    // "Land Information Note": "",
+    "Land Information Note": "",
     "Water Certificate": "",
-    // "Water Certificate Note": "",
+    "Water Certificate Note": "",
     "Other fee (1)": "",
     "Note 1": "",
     "Other fee (2)": "",
@@ -32,13 +32,14 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
     "Note 3": "",
     "Other fee (4)": "",
     "Note 4": "",
-    "Other (total)": "",
+    "Other (total)": "0",
+    "Other (total) Note":"",
     "Total Costs": "",
-    // "Total Costs Note": "",
+    "Total Costs Note": "",
     "Quote Amount": "",
-    // "Quote Amount Note": "",
+    "Quote Amount Note": "",
     "Invoice Amount": "",
-    // "Invoice Amount Note": "",
+    "Invoice Amount Note": "",
   });
 
   const originalData = useRef({});
@@ -47,16 +48,16 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
     async function fetch() {
       try {
         const response = await api.getCost(matterNumber);
-        const cost = response.data;
+        const cost = response;
 
         const mapped = {
           "VOI/CAF": cost.voiCaf?.$numberDecimal || "",
           "VOI/CAF Note": cost.voiCafNote || "",
-          "Title": cost.title?.toString() || "",
+          "Title": cost.title?.$numberDecimal || "",
           "Title Note": cost.titleNote || "",
-          "Plan": cost.plan?.toString() || "",
+          "Plan": cost.plan?.$numberDecimal || "",
           "Plan Note": cost.planNote || "",
-          "Land Tax": cost.landTax?.toString() || "",
+          "Land Tax": cost.landTax?.$numberDecimal || "",
           "Land Tax Note": cost.landTaxNote || "",
           "Land Tax Amount": "", // optionally calculate if needed
           "Land Tax Amount Note": "",
@@ -73,6 +74,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
           "Other fee (4)": cost.otherFee_4?.$numberDecimal || "",
           "Note 4": cost.otherFee4Note || "",
           "Other (total)": cost.otherTotal?.$numberDecimal || "",
+          "Other (total) Note" : cost.otherTotalNote || "",
           "Total Costs": cost.totalCosts?.$numberDecimal || "",
           "Total Costs Note": cost.totalCostsNote || "",
           "Quote Amount": cost.quoteAmount?.$numberDecimal || "",
@@ -111,17 +113,17 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
       const payload = {
         matterNumber,
         voiCaf: formValues["VOI/CAF"],
-        // voiCafNote:formValues["VOI/CAF Note"],
+        voiCafNote:formValues["VOI/CAF Note"],
         title: formValues["Title"],
-        // titleNote: formValues["Title Note"],
+        titleNote: formValues["Title Note"],
         plan: formValues["Plan"],
-        // planNote: formValues["Plan Note"],
+        planNote: formValues["Plan Note"],
         landTax: formValues["Land Tax"],
-        // landTaxNote: formValues["Land Tax Note"],
+        landTaxNote: formValues["Land Tax Note"],
         landInformationCertificate: formValues["Land Information Certificate (Rates)"],
-        // landInformationCertificateNote: formValues["Land Information Note"],
+        landInformationCertificateNote: formValues["Land Information Note"],
         waterCertificate: formValues["Water Certificate"],
-        // waterCertificateNote: formValues["Water Certificate Note"],
+        waterCertificateNote: formValues["Water Certificate Note"],
         otherFee_1: formValues["Other fee (1)"],
         otherFee1Note: formValues["Note 1"],
         otherFee_2: formValues["Other fee (2)"],
@@ -131,12 +133,13 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
         otherFee_4: formValues["Other fee (4)"],
         otherFee4Note: formValues["Note 4"],
         otherTotal: formValues["Other (total)"],
+        otherTotalNote : formValues["Other (total) Note"],
         totalCosts: formValues["Total Costs"],
-        // totalCostsNote: formValues["Total Costs Note"],
+        totalCostsNote: formValues["Total Costs Note"],
         quoteAmount: formValues["Quote Amount"],
-        // quoteAmountNote: formValues["Quote Amount Note"],
+        quoteAmountNote: formValues["Quote Amount Note"],
         invoiceAmount: formValues["Invoice Amount"],
-        // invoiceAmountNote: formValues["Invoice Amount Note"]
+        invoiceAmountNote: formValues["Invoice Amount Note"]
       };
 
       console.log("Saving cost data:", payload);
@@ -166,7 +169,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
       <div className="grid grid-cols-3 gap-4 mb-4">
         <h1 className="font-bold text-[20px] text-center">Field</h1>
         <h1 className="font-bold text-[20px] text-center">Amount</h1>
-        <h1 className="font-bold text-[20px]"></h1> {/* Empty header */}
+        <h1 className="font-bold text-[20px]"></h1> 
       </div>
 
       <div className="space-y-4">
@@ -259,7 +262,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
         </div>
 
         {/* Land Tax Amount */}
-        <div className="grid grid-cols-3 gap-4 items-center">
+        {/* <div className="grid grid-cols-3 gap-4 items-center">
           <div className="font-bold text-gray-700">Land Tax Amount</div>
           <div>
             <input
@@ -278,7 +281,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
               placeholder="Enter Note"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Continue with all other fields in the same pattern... */}
         
@@ -410,7 +413,27 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             />
           </div>
         </div>
-
+        <div className="grid grid-cols-3 gap-4 items-center">
+          <div className="font-bold text-gray-700">Other (total)</div>
+          <div>
+            <input
+              type="number"
+              value={formValues["Other (total)"]}
+              onChange={(e) => handleFeeChange("Other (total)", e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+              readOnly // Added readOnly to prevent manual changes
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={formValues["Other (total) Note"]}
+              onChange={(e) => setFormValues({...formValues, "Other (total) Note": e.target.value})}
+              className="w-full rounded p-2 bg-gray-100"
+              placeholder="Enter Note"
+            />
+          </div>
+        </div>
 
         {/* Total Costs */}
         <div className="grid grid-cols-3 gap-4 items-center">
@@ -478,7 +501,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
           </div>
         </div>
       </div>
-      {/* <div className="space-y-4">
+       {/* <div className="space-y-4">
         {Object.keys(formValues).map((field) => (
           <div key={field} className="grid grid-cols-3 gap-4 items-center">
             <div className="font-bold text-gray-700">{field}</div>
@@ -486,7 +509,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <div> {renderTextField(field)}</div>
           </div>
         ))}
-      </div> */}
+      </div>  */}
 
       {/* Buttons Row */}
       <div className="grid grid-cols-3 gap-4 mt-10">
