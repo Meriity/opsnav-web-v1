@@ -32,7 +32,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
     "Note 3": "",
     "Other fee (4)": "",
     "Note 4": "",
-    "Other (total)": "0",
+    "Other (total)": "",
     "Other (total) Note":"",
     "Total Costs": "",
     "Total Costs Note": "",
@@ -419,7 +419,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="number"
               value={formValues["Other (total)"]}
-              onChange={(e) => handleFeeChange("Other (total)", e.target.value)}
+              onChange={(e) => setFormValues({...formValues, "Note 4": e.target.value})}
               className="w-full rounded p-2 bg-gray-100"
               readOnly // Added readOnly to prevent manual changes
             />
