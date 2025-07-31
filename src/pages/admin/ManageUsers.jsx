@@ -74,10 +74,10 @@ export default function ManageUsers() {
     { key: "createdAt", title: "Created At" },
   ];
 
-  const handleUserCreation = async (name, email) => {
+  const handleUserCreation = async (display_name, email,role) => {
     try {
       setIsLoading(true)
-      await api.createUser(email, role, name);
+      await api.createUser(email, role, display_name);
       toast.success("User created successfully!")
     } catch (err) {
       toast.success("Something went wrong!")
@@ -142,8 +142,8 @@ export default function ManageUsers() {
                 e.preventDefault();
                 const form = new FormData(e.target);
                 const email = form.get("email");
-                const name = form.get("name");
-                handleUserCreation(name, email, role);
+                const display_name = form.get("name");
+                handleUserCreation(display_name, email, role);
               }}
               className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
             >
@@ -155,17 +155,17 @@ export default function ManageUsers() {
               <div className="flex gap-6 mb-6">
                 <label><input
                   type="radio"
-                  name="gender"
-                  value="Male"
-                  checked={role === 'Male'}
+                  name="role"
+                  value="user"
+                  checked={role === 'user'}
                   onChange={handleChange}
                   className="form-radio text-blue-600"
                 /> User</label>
                 <label><input
                   type="radio"
-                  name="gender"
-                  value="Female"
-                  checked={role === 'Female'}
+                  name="role"
+                  value="admin"
+                  checked={role === 'admin'}
                   onChange={handleChange}
                   className="form-radio text-pink-600"
                 /> Admin</label>

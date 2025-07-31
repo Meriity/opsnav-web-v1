@@ -110,7 +110,7 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
   const renderRadioGroup = (label) => (
     <div key={label} className="mt-5">
-      <div className="flex justify-between mb-2">
+      <div className="flex gap-4 items-center justify-between mb-2">
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
@@ -120,7 +120,7 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
           <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
         </div>
       </div>
-      <div className="flex gap-4 flex-wrap items-center mb-3">
+      <div className="flex gap-4 flex-wrap justify-between items-center mb-3">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input
@@ -146,7 +146,7 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* System Note */}
       <div className="mt-5">
-        <div className="flex justify-between mb-3">
+        <div className="flex gap-4 justify-between items-center mb-3">
           <label className="block mb-1 text-base font-bold">System Note for Client</label>
           <div
             className={`w-[90px] h-[18px] ${bgcolor(getStatus(systemNote))} ${

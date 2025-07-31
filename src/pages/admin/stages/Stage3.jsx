@@ -131,7 +131,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
 
   const renderRadioGroup = ({ key, label }) => (
     <div className="mt-5" key={key}>
-      <div className="flex justify-between mb-3">
+      <div className="flex gap-4 items-center justify-between mb-3">
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
@@ -141,7 +141,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
           <p className="text-[12px] whitespace-nowrap">{statusState[key]}</p>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input

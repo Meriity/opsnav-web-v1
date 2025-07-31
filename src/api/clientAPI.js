@@ -251,7 +251,7 @@ class ClientAPI {
   // Insert/Update Cost
   async upsertCost(matterNumber, cost, additionalData = {}) {
     try {
-      const response = await fetch(`${this.baseUrl}/client/costs`, {
+      const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
