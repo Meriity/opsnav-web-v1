@@ -19,6 +19,7 @@ function LoginForm() {
       const response = await api.signInClient(matterNumber, password);
       if (response.matterNumber) {
         localStorage.setItem("matterNumber", response.matterNumber);
+        localStorage.setItem("logo", response.logo);
         navigate(`/client/dashboard/${btoa(response.matterNumber)}`);
       }
     } catch (err) {
@@ -33,7 +34,7 @@ function LoginForm() {
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         {/* Left Section - Welcome Message */}
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
-          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
+          <img src="/Logo.png" alt="VK Lawyers Logo" className="max-h-[60px] mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
           <p className="text-gray-600 mt-2 font-poppins">
             Track Your Property Matter Status Anytime, Anywhere

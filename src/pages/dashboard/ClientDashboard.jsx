@@ -179,6 +179,7 @@ const StageCard = ({ stage, stageIndex }) => {
 };
 
 export default function ClientDashboard() {
+  const logo = localStorage.getItem("logo") || "/Logo.png";
   const navigate = useNavigate();
   const api = new ClientAPI();
   let { matterNumber } = useParams();
@@ -465,7 +466,13 @@ export default function ClientDashboard() {
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center h-20 flex-shrink-0 border-b border-slate-200">
-            <img className="w-36 h-auto" src="/Logo.png" alt="Logo" />
+            {/* <img className="w-36 h-auto" src={logo} alt="Logo" /> */}
+            <img 
+              className="max-h-[60px]"  
+              alt="Logo" 
+              // src="/Logo.png"
+              src={logo}
+            />
           </div>
 
           {/* Static Content Area - No Scrolling */}
@@ -571,8 +578,8 @@ export default function ClientDashboard() {
                 Logout
               </button>
             </div>
-            </div>
-            </div>
+          </div>
+        </div>
       </aside>
 
       {/* ===== Main Content Area ===== */}
@@ -603,32 +610,32 @@ export default function ClientDashboard() {
 
           {/* Stage Cards Section */}
           <div>
-           <div className="flex items-center mb-6">
-  <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
-  <h2 className="text-2xl font-bold text-slate-800">
-    Stage-by-Stage Progress
-  </h2>
-</div>
+            <div className="flex items-center mb-6">
+              <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
+              <h2 className="text-2xl font-bold text-slate-800">
+                Stage-by-Stage Progress
+              </h2>
+            </div>
 
-{/* Icon Notation */}
-<div className="flex flex-wrap gap-4 mb-6 text-sm text-slate-600">
-  <div className="flex items-center gap-2">
-    <CheckCircle2 className="w-4 h-4 text-green-500" />
-    <span>Completed</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <XCircle className="w-4 h-4 text-red-500" />
-    <span>Not Completed</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <Clock className="w-4 h-4 text-yellow-500" />
-    <span>Processing</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <Circle className="w-4 h-4 text-slate-300" />
-    <span>Pending</span>
-  </div>
-</div>
+            {/* Icon Notation */}
+            <div className="flex flex-wrap gap-4 mb-6 text-sm text-slate-600">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span>Completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-red-500" />
+                <span>Not Completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-yellow-500" />
+                <span>Processing</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Circle className="w-4 h-4 text-slate-300" />
+                <span>Pending</span>
+              </div>
+            </div>
 
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
@@ -662,4 +669,3 @@ export default function ClientDashboard() {
   );
 }
 
-  

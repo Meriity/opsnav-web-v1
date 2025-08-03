@@ -8,6 +8,7 @@ import { ChevronsUpDown, LogOut, CircleUserRound } from "lucide-react";
 
 export default function Sidebar() {
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
+  const logo = localStorage.getItem("logo") || "/Logo.png";
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -30,14 +31,16 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
+    <aside className="flex flex-col w-64 h-screen justify-between px-4 py-5 bg-white border-r border-gray-200">
       {/* Logo */}
       <div>
-        <div className="flex">
+        <div className="flex flex-center">
           <img
-            className="w-[70px] h-[58px]"
+            className="max-h-[60px]"
             // src="https://vklawyers.com.au/wp-content/uploads/2024/10/vk-lawers-logo.png"
-            src="/Logo_vk.png"
+            // src="/Logo_vk.png"
+            // src="/Logo.png"
+            src={logo}
             alt="Logo"
           />
         </div>
