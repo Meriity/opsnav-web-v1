@@ -38,6 +38,6 @@ const handleLogin = () => {
                 </div>
         </>
     )
-}
+};
 
 export default ComingSoon;
