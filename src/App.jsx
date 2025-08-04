@@ -14,6 +14,8 @@ import SetPassword from "./pages/auth/SetPassword";
 import SetClientPassword from "./pages/clients/SetPassword";
 import WorkSelection from "./pages/admin/WorkSelection";
 import Home from "./pages/Home";
+import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
+
 
 // ✅ Auth Wrapper inside this file
 function RequireAuth({ children }) {
@@ -55,7 +57,9 @@ function App() {
         path="/admin"
         element={
           <RequireAuth>
-            <AppLayout />
+            <AutoLogoutWrapper>
+              <AppLayout />
+            </AutoLogoutWrapper>
           </RequireAuth>
         }
       >
@@ -74,7 +78,9 @@ function App() {
         path="/admin/work-selection"
         element={
           <RequireAuth>
+            <AutoLogoutWrapper>
             <WorkSelection />
+            </AutoLogoutWrapper>
           </RequireAuth>
         }
       />
@@ -84,7 +90,9 @@ function App() {
         path="/client/dashboard/:matterNumber"
         element={
           <RequireAuthClient>
+            <AutoLogoutWrapper>
             <ClientDashboard />
+            </AutoLogoutWrapper>
           </RequireAuthClient>
         }
       />
@@ -94,7 +102,9 @@ function App() {
         path="/user"
         element={
           <RequireAuth>
+            <AutoLogoutWrapper>
             <AppLayout />
+            </AutoLogoutWrapper>
           </RequireAuth>
         }
       >
@@ -109,7 +119,9 @@ function App() {
         path="/user/work-selection"
         element={
           <RequireAuth>
+            <AutoLogoutWrapper>
             <WorkSelection />
+            </AutoLogoutWrapper>
           </RequireAuth>
         }
       />
