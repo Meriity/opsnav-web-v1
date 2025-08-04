@@ -1,5 +1,5 @@
-const BASE_URL =
-  "https://opsnav-app-service-871399330172.us-central1.run.app/auth";
+const BASE_URL ='https://opsnav-app-service-871399330172.us-central1.run.app/auth';
+
 
 class AuthAPI {
   constructor() {
