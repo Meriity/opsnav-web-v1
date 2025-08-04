@@ -14,6 +14,7 @@ import SetPassword from "./pages/auth/SetPassword";
 import SetClientPassword from "./pages/clients/SetPassword";
 import WorkSelection from "./pages/admin/WorkSelection";
 import Home from "./pages/Home";
+import ComingSoon from "./pages/ComingSoon";
 
 // ✅ Auth Wrapper inside this file
 function RequireAuth({ children }) {
@@ -42,7 +43,8 @@ function App() {
   return (
     <Routes>
       {/* 🔓 Public Routes */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<ComingSoon/>} />
+      <Route path="/home" element={<Home />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
       <Route path="/set-password" element={<SetPassword />} />
