@@ -316,7 +316,8 @@ export default function ClientDashboard() {
             },
           ],
           noteTitle: "System Note for Client",
-          noteText: splitNoteParts(response.stage2.noteForClientB).beforeHyphen,
+          noteText: splitNoteParts(response.stage2.noteForClientB)
+            .beforeHyphen,
           rows: [
             {
               sections: [
