@@ -22,7 +22,6 @@ function LoginForm() {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", response.user.displayName);
         localStorage.setItem("role", response.role);
-        localStorage.setItem("logo", response.user.logo);
         toast.success("Authentication successful! Logging in...", {
           position: "bottom-center",
         });
@@ -48,7 +47,7 @@ function LoginForm() {
 
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
-          <img src="/Logo.png" alt="PSNAV Logo" className="h-24 mx-auto md:mx-0" />
+          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
           <p className="text-gray-600 mt-2 font-poppins">
             Secure. Simple. Seamless conveyancing.

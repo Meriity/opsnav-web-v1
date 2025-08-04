@@ -419,8 +419,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="number"
               value={formValues["Other (total)"]}
-              onChange={(e) => setFormValues({...formValues, "Other (total)": e.target.value})}
+              onChange={(e) => setFormValues({...formValues, "Note 4": e.target.value})}
               className="w-full rounded p-2 bg-gray-100"
+              readOnly // Added readOnly to prevent manual changes
             />
           </div>
           <div>
