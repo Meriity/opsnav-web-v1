@@ -2,40 +2,24 @@
 FROM node:20 AS builder
 
 WORKDIR /app
-
-# Copy everything
 COPY . .
 
-ARG ENV=production
-ENV NODE_ENV=$ENV
-
-# Copy the correct .env file
-RUN cp .env.$ENV .env
-
-# Clean previous installs
+# Clean existing modules and lockfiles to avoid cache issues
 RUN rm -rf node_modules package-lock.json
 
-# Install dependencies from package.json
+# Fresh install to ensure all deps and optional deps get resolved properly
 RUN npm install
 
-# Add the missing plugin so Vite finds it
-RUN npm install --save-dev @vitejs/plugin-react
-
-# Fix for Rollup native module issue
+# Fix: Manually install missing native dependency
 RUN npm install @rollup/rollup-linux-x64-gnu
 
-# Build the Vite app
 RUN npm run build
 
-# Stage 2: Serve with Nginx
+# Stage 2: Serve with Nginx (Alpine is fine here)
 FROM nginx:alpine
 
-# Copy built frontend from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Optional: Custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]

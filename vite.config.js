@@ -10,11 +10,9 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [
-    react({
-      jsxImportSource: 'react'
-    }),
+    react(),
     tailwindcss(),
-    svgr({ exportAsDefault: false }),
+    svgr({ exportAsDefault: false }), 
   ],
   resolve: {
     alias: {
