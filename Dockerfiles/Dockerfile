@@ -6,18 +6,20 @@ WORKDIR /app
 # Copy everything
 COPY . .
 
-# Accept ENV argument for build mode (defaults to production)
 ARG ENV=production
 ENV NODE_ENV=$ENV
 
-# Copy the correct .env file based on ENV argument
+# Copy the correct .env file
 RUN cp .env.$ENV .env
 
 # Clean previous installs
 RUN rm -rf node_modules package-lock.json
 
-# Install dependencies
+# Install dependencies from package.json
 RUN npm install
+
+# Add the missing plugin so Vite finds it
+RUN npm install --save-dev @vitejs/plugin-react
 
 # Fix for Rollup native module issue
 RUN npm install @rollup/rollup-linux-x64-gnu
@@ -31,7 +33,7 @@ FROM nginx:alpine
 # Copy built frontend from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration (if you have one)
+# Optional: Custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
