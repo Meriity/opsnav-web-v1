@@ -29,10 +29,10 @@ jobs:
         id: env
         run: |
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            echo "ENV=production" >> $GITHUB_ENV
+            echo "MODE=production" >> $GITHUB_ENV
             echo "SERVICE_SUFFIX=prod" >> $GITHUB_ENV
           elif [ "$GITHUB_REF_NAME" = "development" ]; then
-            echo "ENV=development" >> $GITHUB_ENV
+            echo "MODE=development" >> $GITHUB_ENV
             echo "SERVICE_SUFFIX=dev" >> $GITHUB_ENV
           fi
 
@@ -42,7 +42,7 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build \
-            --build-arg ENV=${{ env.ENV }} \
+            --build-arg MODE=${{ env.MODE }} \
             -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.SERVICE_SUFFIX }} \
             -f Dockerfiles/Dockerfile .
 
@@ -57,4 +57,5 @@ jobs:
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
-            --port 80
+            --port 80 \
+            --set-env-vars=VITE_API_BASE_URL=${{ env.MODE == 'production' && 'https://opsnav-app-service-871399330172.us-central1.run.app' || 'https://opsnav-app-service-dev-871399330172.us-central1.run.app' }}

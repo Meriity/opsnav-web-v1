@@ -4,19 +4,17 @@ FROM node:20 AS builder
 WORKDIR /app
 COPY . .
 
-# Use build argument to specify environment
-ARG ENV=production
-ENV ENV=$ENV
+# Use build argument to specify environment mode
+ARG MODE=production
+ENV MODE=$MODE
 
 # Install dependencies
 RUN rm -rf node_modules package-lock.json
 RUN npm install
 RUN npm install @rollup/rollup-linux-x64-gnu
 
-# Copy environment-specific file
-COPY .env.$ENV .env
-
-RUN npm run build
+# Build with specified mode
+RUN npm run build -- --mode $MODE
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
