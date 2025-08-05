@@ -84,7 +84,7 @@ class ClientAPI {
   async getStageOne(matterNumber) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/client/stage-one/${matterNumber}`,
+        `${this.baseUrl}/clients/stage-one/${matterNumber}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -149,14 +149,12 @@ class ClientAPI {
   }
 
   // Insert/Update Cost
-  async upsertCost(matterNumber, cost, additionalData = {}) {
+  async upsertCost(  additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
-          matterNumber,
-          cost,
           ...additionalData,
         }),
       });
