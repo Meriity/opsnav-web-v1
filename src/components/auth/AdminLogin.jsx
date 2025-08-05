@@ -43,14 +43,14 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
-
+    // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
+    <div className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center" style={{ backgroundImage: "url('/home_bg.jpg')" }}>
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
           <p className="text-gray-600 mt-2 font-poppins">
-            Secure. Simple. Seamless conveyancing.
+            Streamline with Precision. Scale Your Operations without bottlenecks.
           </p>
         </div>
 

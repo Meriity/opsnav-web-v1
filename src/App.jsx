@@ -45,8 +45,8 @@ function App() {
   return (
     <Routes>
       {/* 🔓 Public Routes */}
-      <Route path="/" element={<ComingSoon/>}  />
-      <Route path="/home" element={<Home />} />
+      {/* <Route path="/" element={<ComingSoon/>}  /> */}
+      <Route path="/" element={<Home />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
       <Route path="/set-password" element={<SetPassword />} />
