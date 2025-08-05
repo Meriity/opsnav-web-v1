@@ -1,5 +1,4 @@
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
-
 class AuthAPI {
   constructor() {
     this.baseUrl = BASE_URL;

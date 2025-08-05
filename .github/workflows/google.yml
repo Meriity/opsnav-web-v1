@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
 
 jobs:
   deploy:
@@ -24,21 +25,33 @@ jobs:
           project_id: melodic-keyword-461611-s9
 
       - name: Authenticate Docker with Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Set ENV_TYPE variable
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "ENV_TYPE=production" >> $GITHUB_ENV
+            echo "SERVICE_NAME=opsnav-web-service" >> $GITHUB_ENV
+          else
+            echo "ENV_TYPE=development" >> $GITHUB_ENV
+            echo "SERVICE_NAME=opsnav-web-dev" >> $GITHUB_ENV
+          fi
 
       - name: Build Docker Image
         run: |
-          docker build -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest -f Dockerfiles/Dockerfile .
+          docker build \
+            --build-arg ENV_TYPE=$ENV_TYPE \
+            -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:$ENV_TYPE \
+            -f Dockerfiles/Dockerfile .
 
-      - name: Push Docker Image to Artifact Registry
+      - name: Push Docker Image
         run: |
-          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest
+          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:$ENV_TYPE
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy opsnav-web-service \
-            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest \
+          gcloud run deploy $SERVICE_NAME \
+            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:$ENV_TYPE \
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
