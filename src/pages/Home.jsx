@@ -22,6 +22,10 @@ export default function Home() {
   const handleClientLogin = () => {
     navigate("/client/login");
   }
+
+  const handleLoginlegacy = () => {
+    window.location.href = "https://legacy.opsnav.com";
+  };
   
   return (
     <>
@@ -32,7 +36,15 @@ export default function Home() {
         {/* <div className="absolute inset-0 bg-black/60" /> */}
 
         <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-24 md:py-32">
-          <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold pt-20 max-w-7xl">
+          <h1 className="text-2xl md:text-3xl lg:text-3xl font-bold pt-20 max-w-7xl text-red-500">
+            Please Use legacy.opsnav.com
+          </h1>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow" onClick={handleLoginlegacy}>
+                  Continue
+              </button>
+          </div>
+          <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold pt-10 max-w-7xl">
             Streamline with Precision. Scale Your Operations without bottlenecks.
           </h1>
 
