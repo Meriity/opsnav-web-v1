@@ -1,6 +1,4 @@
-const BASE_URL ='https://opsnav-app-service-871399330172.us-central1.run.app/auth';
-
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 class AuthAPI {
   constructor() {
     this.baseUrl = BASE_URL;

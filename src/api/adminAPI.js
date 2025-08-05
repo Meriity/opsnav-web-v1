@@ -1,4 +1,4 @@
-const BASE_URL = 'https://opsnav-app-service-871399330172.us-central1.run.app';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class AdminAPI {
   constructor() {
@@ -16,22 +16,22 @@ class AdminAPI {
 
   // Create a new user
   async createUser(email, role, displayName) {
-    console.log(JSON.stringify({email,role,displayName}));
+    console.log(JSON.stringify({ email, role, displayName }));
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           email,
-          role:role,
+          role: role,
           display_name: displayName
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error creating user:', error);
@@ -46,11 +46,11 @@ class AdminAPI {
         method: 'GET',
         headers: this.getHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error getting all users:', error);
@@ -66,11 +66,11 @@ class AdminAPI {
         method: 'DELETE',
         headers: this.getHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -87,14 +87,14 @@ class AdminAPI {
         headers: this.getHeaders(),
         body: JSON.stringify({
           displayName: user.displayName,
-          role:user.role
+          role: user.role
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error editing user:', error);
@@ -109,11 +109,11 @@ class AdminAPI {
         method: 'GET',
         headers: this.getHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error getting user by ID:', error);
@@ -124,12 +124,12 @@ class AdminAPI {
   // Bulk operations
   async bulkCreateUsers(users) {
     try {
-      const promises = users.map(user => 
+      const promises = users.map(user =>
         this.createUser(user.email, user.role, user.display_name)
       );
-      
+
       const results = await Promise.allSettled(promises);
-      
+
       return results.map((result, index) => ({
         user: users[index],
         success: result.status === 'fulfilled',
@@ -168,9 +168,9 @@ class AdminAPI {
   async searchUsers(searchTerm) {
     try {
       const allUsers = await this.getAllUsers();
-      
+
       const searchLower = searchTerm.toLowerCase();
-      return allUsers.filter(user => 
+      return allUsers.filter(user =>
         user.email.toLowerCase().includes(searchLower) ||
         user.display_name.toLowerCase().includes(searchLower)
       );
@@ -184,7 +184,7 @@ class AdminAPI {
   async getUserStats() {
     try {
       const allUsers = await this.getAllUsers();
-      
+
       const stats = {
         totalUsers: allUsers.length,
         adminUsers: allUsers.filter(u => u.role === 'admin').length,
@@ -192,7 +192,7 @@ class AdminAPI {
         activeUsers: allUsers.filter(u => u.status === 'active').length,
         inactiveUsers: allUsers.filter(u => u.status === 'inactive').length
       };
-      
+
       return stats;
     } catch (error) {
       console.error('Error getting user statistics:', error);

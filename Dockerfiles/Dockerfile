@@ -2,20 +2,21 @@
 FROM node:20 AS builder
 
 WORKDIR /app
+
 COPY . .
 
-# Clean existing modules and lockfiles to avoid cache issues
-RUN rm -rf node_modules package-lock.json
+# Accept ENV argument for build mode
+ARG ENV=production
+ENV NODE_ENV=$ENV
 
-# Fresh install to ensure all deps and optional deps get resolved properly
+# Copy appropriate env file
+RUN cp .env.$ENV .env
+
+# Install and build
 RUN npm install
-
-# Fix: Manually install missing native dependency
-RUN npm install @rollup/rollup-linux-x64-gnu
-
 RUN npm run build
 
-# Stage 2: Serve with Nginx (Alpine is fine here)
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html

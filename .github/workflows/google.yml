@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
 
 jobs:
   deploy:
@@ -12,6 +13,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Set environment variables
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "ENV=production" >> $GITHUB_ENV
+            echo "SERVICE_NAME=opsnav-web-service" >> $GITHUB_ENV
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "development" ]]; then
+            echo "ENV=development" >> $GITHUB_ENV
+            echo "SERVICE_NAME=opsnav-web-service-dev" >> $GITHUB_ENV
+            echo "IMAGE_TAG=dev" >> $GITHUB_ENV
+          fi
 
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v2
@@ -29,16 +42,19 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest -f Dockerfiles/Dockerfile .
+          docker build \
+            -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.IMAGE_TAG }} \
+            --build-arg ENV=${{ env.ENV }} \
+            -f Dockerfiles/Dockerfile .
 
       - name: Push Docker Image to Artifact Registry
         run: |
-          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest
+          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.IMAGE_TAG }}
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy opsnav-web-service \
-            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.IMAGE_TAG }} \
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
