@@ -1,4 +1,4 @@
-const BASE_URL ="https://opsnav-app-service-871399330172.us-central1.run.app";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class AuthAPI {
   constructor() {
@@ -6,7 +6,7 @@ class AuthAPI {
   }
 
   async setPassword(token, password) {
-    const response = await fetch(`${this.baseUrl}/set-password`, {
+    const response = await fetch(`${this.baseUrl}/auth/set-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
@@ -17,28 +17,28 @@ class AuthAPI {
     return data;
   }
 
-async signIn(email, password) {
-  const response = await fetch(`${this.baseUrl}/signin`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  async signIn(email, password) {
+    const response = await fetch(`${this.baseUrl}/auth/signin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  const data = await response.json();
-  console.log("Full login response:", data); // <-- Check this in browser console
+    const data = await response.json();
+    console.log("Full login response:", data); // <-- Check this in browser console
 
-  if (!response.ok) {
-    throw new Error(
-      data.message || data.error || data.detail || "Login failed"
-    );
+    if (!response.ok) {
+      throw new Error(
+        data.message || data.error || data.detail || "Login failed"
+      );
+    }
+
+    return data;
   }
 
-  return data;
-}
-  
 
   async forgotPassword(email) {
-    const response = await fetch(`${this.baseUrl}/forgot-password`, {
+    const response = await fetch(`${this.baseUrl}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -50,7 +50,7 @@ async signIn(email, password) {
   }
 
   async resetPassword(token, password) {
-    const response = await fetch(`${this.baseUrl}/reset-password`, {
+    const response = await fetch(`${this.baseUrl}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
@@ -64,7 +64,7 @@ async signIn(email, password) {
   async signInClient(matterNumber, password) {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/client-view/signin",
+        `${BASE_URL}/client-view/signin`,
         {
           method: "POST",
           headers: {
@@ -78,7 +78,7 @@ async signIn(email, password) {
       );
 
       if (!response.ok) {
-        const errorData = await response.json(); 
+        const errorData = await response.json();
         throw new Error(errorData.message);
       }
 
