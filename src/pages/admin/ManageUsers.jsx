@@ -42,6 +42,7 @@ const useUserStore = create((set) => ({
     }
   },
 }));
+
 export default function ManageUsers() {
   const { users, isFetched, loading, fetchUsers, setIsFetched, setUsers } =
     useUserStore();
