@@ -46,7 +46,7 @@ class AdminAPI {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/admin/users/reset-password`,
+        `${this.baseUrl}/admin/users/reset-password`,
         {
           method: "POST",
           headers: this.getHeaders(),

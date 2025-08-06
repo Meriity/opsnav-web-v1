@@ -147,7 +147,7 @@ class ClientAPI {
   async getStageTwo(matterNumber) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/client/stage-two/${matterNumber}`,
+        `${this.baseUrl}/clients/stage-two/${matterNumber}`,
         {
           method: "GET",
           headers: this.getHeaders(),

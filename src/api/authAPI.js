@@ -1,119 +1,67 @@
-const BASE_URL ='https://opsnav-app-service-871399330172.us-central1.run.app/auth';
-
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL;
 
 class AuthAPI {
   constructor() {
     this.baseUrl = BASE_URL;
   }
 
-  // Set initial password for new users
   async setPassword(token, password) {
-    console.log(JSON.stringify({ token, password }));
-    try {
-      const response = await fetch(`${this.baseUrl}/set-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          password,
-        }),
-      });
+    const response = await fetch(`${this.baseUrl}/set-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error setting password:", error);
-      throw error;
-    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    return data;
   }
 
-  // Sign in user
-  async signIn(email, password) {
-    try {
-      const response = await fetch(`${this.baseUrl}/signin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+async signIn(email, password) {
+  const response = await fetch(`${this.baseUrl}/signin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  const data = await response.json();
+  console.log("Full login response:", data); // <-- Check this in browser console
 
-      const data = await response.json();
-
-      // Store token if provided
-      if (data.token) {
-        localStorage.setItem("authToken", data.token);
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Error signing in:", error);
-      throw error;
-    }
+  if (!response.ok) {
+    throw new Error(
+      data.message || data.error || data.detail || "Login failed"
+    );
   }
 
-  // Request password reset
+  return data;
+}
+  
+
   async forgotPassword(email) {
-    try {
-      const response = await fetch(`${this.baseUrl}/forgot-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-        }),
-      });
+    const response = await fetch(`${this.baseUrl}/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error requesting password reset:", error);
-      throw error;
-    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    return data;
   }
 
-  // Reset password with token
   async resetPassword(token, password) {
-    try {
-      const response = await fetch(`${this.baseUrl}/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          password,
-        }),
-      });
+    const response = await fetch(`${this.baseUrl}/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      throw error;
-    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    return data;
   }
 
-  //Client Login
   async signInClient(matterNumber, password) {
     try {
       const response = await fetch(
