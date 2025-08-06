@@ -18,7 +18,7 @@ const handleSubmit = () => {
 };
     return(
         <>
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-200 to-white relative pb-16 md:pb-0">
+        <div className="min-h-screen flex flex-col items-center justify-center from-sky-200 to-white relative pb-16 md:pb-0 bg-cover bg-center" style={{ backgroundImage: "url('/home_bg.jpg')" }}>
     {/* Logo */}
     <div className="absolute top-5 left-0 right-0 md:left-8 md:right-auto flex justify-center md:justify-start px-4">
         <img 

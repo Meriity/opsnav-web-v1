@@ -49,39 +49,39 @@ export default function StagesLayout() {
   //       return "";
   //   }
   // }
- // Handles both colorStatus values and evaluated statuses
-function bgcolor(status) {
-  const statusColors = {
-    // For evaluated statuses
-    "In progress": "bg-[#FFEECF]",
-    "Completed": "bg-[#00A506]",
-    "Not Completed": "bg-[#FF0000]",
-    // For direct colorStatus values
-    "green": "bg-[#00A506]",
-    "red": "bg-[#FF0000]",
-    "amber": "bg-[#FFEECF]",
-    "yellow": "bg-[#facc15]",
-    "blue": "bg-[#3b82f6]",
-  };
+  // Handles both colorStatus values and evaluated statuses
+  function bgcolor(status) {
+    const statusColors = {
+      // For evaluated statuses
+      "In progress": "bg-[#FFEECF]",
+      Completed: "bg-[#00A506]",
+      "Not Completed": "bg-[#FF0000]",
+      // For direct colorStatus values
+      green: "bg-[#00A506]",
+      red: "bg-[#FF0000]",
+      amber: "bg-[#FFEECF]",
+      yellow: "bg-[#facc15]",
+      blue: "bg-[#3b82f6]",
+    };
 
-  return statusColors[status] || "bg-[#F3F7FF]";
-}
+    return statusColors[status] || "bg-[#F3F7FF]";
+  }
 
-// Converts any status to display text
-function getStatusDisplayText(status) {
-  const textMap = {
-    "green": "Completed",
-    "red": "Not Completed",
-    "amber": "In progress",
-    "yellow": "Warning",
-    "blue": "Info",
-    "In progress": "In progress",
-    "Completed": "Completed",
-    "Not Completed": "Not Completed",
-  };
+  // Converts any status to display text
+  function getStatusDisplayText(status) {
+    const textMap = {
+      green: "Completed",
+      red: "Not Completed",
+      amber: "In progress",
+      yellow: "Warning",
+      blue: "Info",
+      "In progress": "In progress",
+      Completed: "Completed",
+      "Not Completed": "Not Completed",
+    };
 
-  return textMap[status] || status;
-}
+    return textMap[status] || status;
+  }
   function evaluateStageStatus(stageData, fields) {
     if (!stageData || fields.length === 0) return "Not Completed";
 
@@ -102,6 +102,7 @@ function getStatusDisplayText(status) {
 
   function RenderStage(newStage) {
     setSelectedStage(newStage);
+    setReloadStage((prev) => !prev);
   }
 
   function Showstage(stage) {
@@ -122,7 +123,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 3:
         return (
           <Stage3
@@ -130,7 +132,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 4:
         return (
           <Stage4
@@ -138,7 +141,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 5:
         return (
           <Stage5
@@ -146,7 +150,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 6:
         return (
           <Stage6
@@ -154,7 +159,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 7:
         return (
           <Cost
@@ -171,7 +177,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
     }
   }
 
@@ -180,15 +187,16 @@ function getStatusDisplayText(status) {
       try {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
+        console.log("Full API response:", response);
         setClientData(response);
 
         // First check if colorStatus exists in any stage
         const hasColorStatus = Object.values(response).some(
-          stage => stage && stage.colorStatus
+          (stage) => stage && stage.colorStatus
         );
 
         const section = {};
-        
+
         if (hasColorStatus) {
           // Use colorStatus if available
           section.status1 = response.stage1?.colorStatus || "Not Completed";
@@ -265,19 +273,33 @@ function getStatusDisplayText(status) {
     }
   }, [matterNumber, reloadStage]);
 
-  async function handleupdate() {
-    event.preventDefault();
+  async function handleupdate(e) {
+    e.preventDefault();
     try {
       const payload = {
-        settlementDate: clientData.settlementDate,
-        notes: clientData.notes
+        settlementDate: clientData.settlementDate || null,
+        notes: clientData.notes || "",
       };
 
-      await api.updateClientData(matterNumber, payload);
+      console.log("Sending update payload:", payload); // Debug log
+
+      const updatedData = await api.updateClientData(matterNumber, payload);
+      console.log("Update response:", updatedData); // Debug log
+
+      // Update local state with the response
+      setClientData((prev) => ({
+        ...prev,
+        settlementDate: updatedData.settlementDate,
+        notes: updatedData.notes,
+      }));
+
       alert("Updated successfully!");
     } catch (err) {
-      console.error("Error updating matter details:", err);
-      alert("Failed to update. Please try again.");
+      console.error("Update error:", {
+        error: err,
+        response: err.response?.data,
+      });
+      alert("Failed to update. Please check console for details.");
     }
   }
 
@@ -316,9 +338,9 @@ function getStatusDisplayText(status) {
                     key={stage.id}
                     onClick={() => setSelectedStage(stage.id)}
                     className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${
-                      selectedStage === stage.id 
-                        ? "bg-[#FFFFFF] text-black"  // White background for selected stage
-                        : bgcolor(stageStatus)  // Dynamic color based on status
+                      selectedStage === stage.id
+                        ? "bg-[#FFFFFF] text-black" // White background for selected stage
+                        : bgcolor(stageStatus) // Dynamic color based on status
                     }`}
                   >
                     <div className="flex justify-between">
@@ -326,9 +348,11 @@ function getStatusDisplayText(status) {
                         Stage {index + 1}
                       </p>
                       <div
-                        className={`w-[90px] h-[18px]  ${stageStatus === "In progress" || stageStatus === "amber"
-                          ? "text-[#FF9500]" 
-                          : "text-black"
+                        className={`w-[90px] h-[18px]  ${
+                          stageStatus === "In progress" ||
+                          stageStatus === "amber"
+                            ? "text-[#FF9500]"
+                            : "text-black"
                         } flex items-center justify-center rounded-4xl `}
                       >
                         <p className="text-[12px] whitespace-nowrap font-bold">
@@ -433,14 +457,21 @@ function getStatusDisplayText(status) {
                         <input
                           type="date"
                           value={
-                            clientData?.settlementDate?.split("T")[0] || ""
+                            clientData?.settlementDate
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : ""
                           }
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const dateValue = e.target.value
+                              ? new Date(e.target.value)
+                              : null;
                             setClientData((prev) => ({
                               ...prev,
-                              settlementDate: e.target.value,
-                            }))
-                          }
+                              settlementDate: dateValue,
+                            }));
+                          }}
                           className="w-full rounded p-2 border"
                         />
                       </div>
