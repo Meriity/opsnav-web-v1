@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
+import { HomeIcon } from "lucide-react";
 
 function LoginForm() {
   const api = new AuthAPI();
@@ -28,6 +29,10 @@ function LoginForm() {
     }
   };
 
+  const handleHome = async (e) => {
+    navigate("/");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
@@ -35,9 +40,8 @@ function LoginForm() {
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
-          <p className="text-gray-600 mt-2 font-poppins">
-            Track Your Property Matter Status Anytime, Anywhere
-          </p>
+          <button onClick={handleHome} className="w-[80px] mt-2 bg-sky-600 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"><HomeIcon/>
+            Home</button>
         </div>
 
         {/* Right Section - Login Box */}

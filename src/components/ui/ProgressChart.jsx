@@ -34,21 +34,15 @@ const ProgressChart = ({ completed, total, processing, chartImage }) => {
   
 
   return (
-<div className="relative w-48 h-48 flex-shrink-0">
+<div className="relative w-25 h-25 flex-shrink-0 mt-2">
   {/* Center Content: move behind */}
   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-    {chartImage ? (
-      <img
-        src={chartImage}
-        alt="center"
-        className="w-[100%] h-[100%] object-cover rounded-full"
-      />
-    ) : (
+
       <div className="flex flex-col items-center">
-        <span className="text-4xl font-bold text-slate-800">{percentage}%</span>
-        <span className="text-sm text-slate-500">Completed</span>
+        <span className="text-2xl font-bold text-slate-800">{percentage}%</span>
+        <span className="text-[13px] text-slate-500">Completed</span>
       </div>
-    )}
+    
   </div>
 
   <div className="w-full h-full z-20 relative">
