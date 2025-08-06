@@ -28,7 +28,11 @@ const useUserStore = create((set) => ({
         email: user.email,
         status: user.status,
         role: user.role,
-        createdAt: new Date(user.createdAt).toLocaleDateString("en-GB").split("/").reverse().join("-"),
+        createdAt: new Date(user.createdAt)
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .reverse()
+          .join("-"),
       }));
       set({ users: formatted, isFetched: true });
     } catch (err) {
@@ -40,14 +44,8 @@ const useUserStore = create((set) => ({
 }));
 
 export default function ManageUsers() {
-  const {
-    users,
-    isFetched,
-    loading,
-    fetchUsers,
-    setIsFetched,
-    setUsers,
-  } = useUserStore();
+  const { users, isFetched, loading, fetchUsers, setIsFetched, setUsers } =
+    useUserStore();
 
   const api = new AdminApi();
   const [selectedUser, setSelectedUser] = useState({});
@@ -56,7 +54,7 @@ export default function ManageUsers() {
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState("");
 
   const handleChange = (e) => {
     setRole(e.target.value);
@@ -74,15 +72,15 @@ export default function ManageUsers() {
     { key: "createdAt", title: "Created At" },
   ];
 
-  const handleUserCreation = async (display_name, email,role) => {
+  const handleUserCreation = async (display_name, email, role) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       await api.createUser(email, role, display_name);
-      toast.success("User created successfully!")
+      toast.success("User created successfully!");
     } catch (err) {
-      toast.success("Something went wrong!")
+      toast.success("Something went wrong!");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
       setOpenUser(false);
       setIsFetched(false);
     }
@@ -108,6 +106,20 @@ export default function ManageUsers() {
     }
   };
 
+  const handleReset = async (email) => {
+    try {
+      setIsLoading(true);
+      await api.resetPass(email);
+      toast.success("Reset password link sent successfully!");
+    } catch (err) {
+      toast.success("Something went wrong!");
+    } finally {
+      setIsLoading(false);
+      setOpenUser(false);
+      setIsFetched(false);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
       <main className="w-full max-w-8xl mx-auto">
@@ -115,7 +127,11 @@ export default function ManageUsers() {
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">Manage Users</h2>
-          <Button label="Create new user" icon={Plus} onClick={() => setOpenUser(true)} />
+          <Button
+            label="Create new user"
+            icon={Plus}
+            onClick={() => setOpenUser(true)}
+          />
         </div>
 
         {/* Table or Loader */}
@@ -125,8 +141,15 @@ export default function ManageUsers() {
           <Table
             data={users}
             columns={columns}
-            onEdit={(u) => { setSelectedUser(u); setOpenEdit(true); }}
-            onDelete={(id) => { setId(id); setOpenDelete(true); }}
+            onEdit={(u) => {
+              setSelectedUser(u);
+              setOpenEdit(true);
+            }}
+            onReset={handleReset}
+            onDelete={(id) => {
+              setId(id);
+              setOpenDelete(true);
+            }}
             itemsPerPage={5}
           />
         )}
@@ -147,28 +170,52 @@ export default function ManageUsers() {
               }}
               className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
             >
-              <button type="button" onClick={() => setOpenUser(false)} className="absolute top-4 right-5 text-red-500 text-3xl font-bold">&times;</button>
+              <button
+                type="button"
+                onClick={() => setOpenUser(false)}
+                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+              >
+                &times;
+              </button>
               <h2 className="text-lg font-bold mb-4">Create User</h2>
-              <input name="email" type="email" required placeholder="Email" className="w-full mb-4 px-4 py-3 border rounded" />
-              <input name="name" type="text" required placeholder="Display Name" className="w-full mb-4 px-4 py-3 border rounded" />
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="Email"
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
+              <input
+                name="name"
+                type="text"
+                required
+                placeholder="Display Name"
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
               <label className="block font-medium mb-2">Role</label>
               <div className="flex gap-6 mb-6">
-                <label><input
-                  type="radio"
-                  name="role"
-                  value="user"
-                  checked={role === 'user'}
-                  onChange={handleChange}
-                  className="form-radio text-blue-600"
-                /> User</label>
-                <label><input
-                  type="radio"
-                  name="role"
-                  value="admin"
-                  checked={role === 'admin'}
-                  onChange={handleChange}
-                  className="form-radio text-pink-600"
-                /> Admin</label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={role === "user"}
+                    onChange={handleChange}
+                    className="form-radio text-blue-600"
+                  />{" "}
+                  User
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={role === "admin"}
+                    onChange={handleChange}
+                    className="form-radio text-pink-600"
+                  />{" "}
+                  Admin
+                </label>
               </div>
               <button
                 type={isLoading ? "button" : "submit"}
@@ -188,13 +235,53 @@ export default function ManageUsers() {
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button onClick={() => setOpenEdit(false)} className="absolute top-4 right-5 text-red-500 text-3xl font-bold">&times;</button>
+              <button
+                onClick={() => setOpenEdit(false)}
+                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+              >
+                &times;
+              </button>
               <h2 className="text-lg font-bold mb-4">Edit User</h2>
-              <input value={selectedUser.displayName || ''} onChange={(e) => setSelectedUser({ ...selectedUser, displayName: e.target.value })} className="w-full mb-4 px-4 py-3 border rounded" />
-              <input value={selectedUser.email || ''} onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })} className="w-full mb-4 px-4 py-3 border rounded" />
+              <input
+                value={selectedUser.displayName || ""}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    displayName: e.target.value,
+                  })
+                }
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
+              <input
+                value={selectedUser.email || ""}
+                onChange={(e) =>
+                  setSelectedUser({ ...selectedUser, email: e.target.value })
+                }
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
               <div className="flex gap-6 mb-6">
-                <label><input type="radio" name="role" checked={selectedUser.role === "user"} onChange={() => setSelectedUser({ ...selectedUser, role: "user" })} /> User</label>
-                <label><input type="radio" name="role" checked={selectedUser.role === "admin"} onChange={() => setSelectedUser({ ...selectedUser, role: "admin" })} /> Admin</label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    checked={selectedUser.role === "user"}
+                    onChange={() =>
+                      setSelectedUser({ ...selectedUser, role: "user" })
+                    }
+                  />{" "}
+                  User
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    checked={selectedUser.role === "admin"}
+                    onChange={() =>
+                      setSelectedUser({ ...selectedUser, role: "admin" })
+                    }
+                  />{" "}
+                  Admin
+                </label>
               </div>
               <Button label="Update" onClick={handleUserUpdate} />
             </DialogPanel>
@@ -203,15 +290,29 @@ export default function ManageUsers() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={openDelete} onClose={setOpenDelete} className="relative z-10">
+      <Dialog
+        open={openDelete}
+        onClose={setOpenDelete}
+        className="relative z-10"
+      >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-md relative">
-              <button onClick={() => setOpenDelete(false)} className="absolute top-4 right-5 text-red-500 text-3xl font-bold">&times;</button>
+              <button
+                onClick={() => setOpenDelete(false)}
+                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+              >
+                &times;
+              </button>
               <h2 className="text-lg font-bold mb-4">Delete User</h2>
               <p className="mb-6">Are you sure you want to delete this user?</p>
-              <button onClick={handleUserDelete} className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700">Delete</button>
+              <button
+                onClick={handleUserDelete}
+                className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
             </DialogPanel>
           </div>
         </div>
