@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = "https://opsnav-app-service-871399330172.us-central1.run.app";
+
 class ClientAPI {
   constructor() {
     this.baseUrl = BASE_URL;

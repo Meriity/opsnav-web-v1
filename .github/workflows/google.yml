@@ -4,13 +4,11 @@ on:
   push:
     branches:
       - main
-      - development
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -25,37 +23,23 @@ jobs:
         with:
           project_id: melodic-keyword-461611-s9
 
-      - name: Set Environment Variables
-        id: env
+      - name: Authenticate Docker with Artifact Registry
         run: |
-          if [ "$GITHUB_REF_NAME" = "main" ]; then
-            echo "MODE=production" >> $GITHUB_ENV
-            echo "SERVICE_SUFFIX=prod" >> $GITHUB_ENV
-          elif [ "$GITHUB_REF_NAME" = "development" ]; then
-            echo "MODE=development" >> $GITHUB_ENV
-            echo "SERVICE_SUFFIX=dev" >> $GITHUB_ENV
-          fi
-
-      - name: Authenticate Docker
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+          gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build Docker Image
         run: |
-          docker build \
-            --build-arg MODE=${{ env.MODE }} \
-            -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.SERVICE_SUFFIX }} \
-            -f Dockerfiles/Dockerfile .
+          docker build -t us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest -f Dockerfiles/Dockerfile .
 
-      - name: Push Docker Image
+      - name: Push Docker Image to Artifact Registry
         run: |
-          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.SERVICE_SUFFIX }}
+          docker push us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy opsnav-web-service-${{ env.SERVICE_SUFFIX }} \
-            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:${{ env.SERVICE_SUFFIX }} \
+          gcloud run deploy opsnav-web-service \
+            --image us-central1-docker.pkg.dev/melodic-keyword-461611-s9/opsnav-web-repo/opsnav-web-image:latest \
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
-            --port 80 \
-            --set-env-vars=VITE_API_BASE_URL=${{ env.MODE == 'production' && 'https://opsnav-app-service-871399330172.us-central1.run.app' || 'https://opsnav-app-service-dev-871399330172.us-central1.run.app' }}
+            --port 80

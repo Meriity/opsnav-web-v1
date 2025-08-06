@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Edit, Trash2, ArrowUp, ArrowDown, ArrowUpDown,RefreshCw  } from 'lucide-react';
+import { useEffect, useState } from "react";
+import {
+  Edit,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  RefreshCw,
+} from "lucide-react";
 import Eye from "../../icons/Button icons/Frame 362.png";
-import Pagination from './Pagination';
+import Pagination from "./Pagination";
 
 const Table = ({
   data,
@@ -12,32 +19,32 @@ const Table = ({
   OnEye,
   showActions = true,
   hoverEffect = true,
-  tableClass = '',
-  rowSpacing = 'py-1',
-  headerBgColor = 'bg-[#D7F4FF]',
+  tableClass = "",
+  rowSpacing = "py-1",
+  headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortedColumn, setSortedColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortDirection, setSortDirection] = useState("asc");
 
   // Handle sorting
   const handleSort = (columnKey) => {
-    let direction = 'asc';
-    if (sortedColumn === columnKey && sortDirection === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+    if (sortedColumn === columnKey && sortDirection === "asc") {
+      direction = "desc";
     }
 
     const sorted = [...data].sort((a, b) => {
       const aVal = a[columnKey];
       const bVal = b[columnKey];
 
-      if (typeof aVal === 'string') {
-        return direction === 'asc'
+      if (typeof aVal === "string") {
+        return direction === "asc"
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
-      } else if (typeof aVal === 'number' || aVal instanceof Date) {
-        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+      } else if (typeof aVal === "number" || aVal instanceof Date) {
+        return direction === "asc" ? aVal - bVal : bVal - aVal;
       }
 
       return 0;
@@ -57,7 +64,9 @@ const Table = ({
     <div>
       <div className="font-bold w-full h-[70vh]">
         <div className="overflow-x-auto overflow-y-hidden w-full">
-          <table className={`w-full ${tableClass} border-separate border-spacing-y-2`}>
+          <table
+            className={`w-full ${tableClass} border-separate border-spacing-y-2`}
+          >
             <thead>
               <tr className={`${headerBgColor}`}>
                 {columns.map((column, colIndex) => {
@@ -66,13 +75,25 @@ const Table = ({
                     <th
                       key={column.key}
                       onClick={() => handleSort(column.key)}
-                      className={`px-3 py-4 text-left text-sm font-bold text-black cursor-pointer select-none ${colIndex === 0 ? 'rounded-l-2xl' : ''} ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
+                      className={`px-3 py-4 text-left text-sm font-bold text-black cursor-pointer select-none ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      } ${
+                        colIndex === columns.length - 1 && !showActions
+                          ? "rounded-r-2xl"
+                          : ""
+                      }`}
                     >
                       <div className="flex items-center space-x-1">
                         <span>{column.title}</span>
                         {isSorted ? (
-                          sortDirection === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />
-                        ): (<ArrowUpDown size={16} />)}
+                          sortDirection === "asc" ? (
+                            <ArrowUp size={16} />
+                          ) : (
+                            <ArrowDown size={16} />
+                          )
+                        ) : (
+                          <ArrowUpDown size={16} />
+                        )}
                       </div>
                     </th>
                   );
@@ -89,13 +110,21 @@ const Table = ({
               {currentData.map((item) => (
                 <tr
                   key={item.id}
-                  className={`border shadow-2xs transition-all ${hoverEffect ? 'hover:bg-sky-50' : ''}`}
-                  style={{ backgroundColor: 'white' }}
+                  className={`border shadow-2xs transition-all ${
+                    hoverEffect ? "hover:bg-sky-50" : ""
+                  }`}
+                  style={{ backgroundColor: "white" }}
                 >
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${colIndex === 0 ? 'rounded-l-2xl' : ''} ${colIndex === columns.length - 1 && !showActions ? 'rounded-r-2xl' : ''}`}
+                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      } ${
+                        colIndex === columns.length - 1 && !showActions
+                          ? "rounded-r-2xl"
+                          : ""
+                      }`}
                     >
                       {item[column.key]}
                     </td>
@@ -124,22 +153,25 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
-                        
-                          {/* <button
-                            onClick={() => onreset(item)}
-                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
-                            title="Reset Password"
-                          >
-                            <RefreshCw  size={16} />
-                            <span className="text-xs">Reset</span>
-                          </button> */}
+
+                        <button
+                          onClick={() => onReset(item.email)}
+                          type="button"
+                          className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
+                          title="Reset Password"
+                        >
+                          
+                          <RefreshCw size={16} />
+                          <span className="text-xs">Reset</span>
+                        </button>
+
                         {OnEye && (
                           <button
                             onClick={() => onEdit(item.id)}
                             className="flex flex-col items-center cursor-pointer space-y-1 p-2 py-4 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                             title="View"
                           >
-                            <img src={Eye} alt="View" className='h-[20px]' />
+                            <img src={Eye} alt="View" className="h-[20px]" />
                           </button>
                         )}
                       </div>
@@ -154,18 +186,22 @@ const Table = ({
 
       {/* Pagination Controls */}
       <Pagination
-        data={sortedColumn ? [...data].sort((a, b) => {
-          const aVal = a[sortedColumn];
-          const bVal = b[sortedColumn];
-          if (typeof aVal === 'string') {
-            return sortDirection === 'asc'
-              ? aVal.localeCompare(bVal)
-              : bVal.localeCompare(aVal);
-          } else if (typeof aVal === 'number' || aVal instanceof Date) {
-            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-          }
-          return 0;
-        }) : data}
+        data={
+          sortedColumn
+            ? [...data].sort((a, b) => {
+                const aVal = a[sortedColumn];
+                const bVal = b[sortedColumn];
+                if (typeof aVal === "string") {
+                  return sortDirection === "asc"
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+                } else if (typeof aVal === "number" || aVal instanceof Date) {
+                  return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+                }
+                return 0;
+              })
+            : data
+        }
         itemsPerPage={itemsPerPage}
         setCurrentData={setCurrentData}
       />
