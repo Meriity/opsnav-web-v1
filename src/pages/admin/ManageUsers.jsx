@@ -72,17 +72,41 @@ export default function ManageUsers() {
     { key: "createdAt", title: "Created At" },
   ];
 
+  // const handleUserCreation = async (display_name, email, role) => {
+  //   try {
+  //     setIsLoading(true);
+  //     await api.createUser(email, role, display_name);
+  //     toast.success("User created successfully!");
+  //   } catch (err) {
+  //     console.log("Error details:", err);
+  //     toast.success("Something went wrong!");
+  //   } finally {
+  //     setIsLoading(false);
+  //     setOpenUser(false);
+  //     setIsFetched(false);
+  //   }
+  // };
+
   const handleUserCreation = async (display_name, email, role) => {
     try {
       setIsLoading(true);
       await api.createUser(email, role, display_name);
       toast.success("User created successfully!");
-    } catch (err) {
-      toast.success("Something went wrong!");
-    } finally {
-      setIsLoading(false);
       setOpenUser(false);
       setIsFetched(false);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        toast.error(
+          err.response.data?.message || "This email is already registered!"
+        );
+      } else {
+        toast.error(
+          err.response?.data?.message ||
+            "Something went wrong. Please try again!"
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 

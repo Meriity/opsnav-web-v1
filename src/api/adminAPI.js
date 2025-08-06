@@ -14,27 +14,28 @@ class AdminAPI {
     };
   }
 
-  // Create a new user
+  //Create new User
   async createUser(email, role, displayName) {
-    console.log(JSON.stringify({ email, role, displayName }));
     try {
-      const response = await fetch(`${this.baseUrl}/admin/users`, {
+      const response = await fetch(`${this.baseUrl}/users`, {
         method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          email,
-          role: role,
-          display_name: displayName,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, role, displayName }),
       });
 
+      // Handle non-200 responses
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || "Request failed");
+        error.response = {
+          status: response.status,
+          data: errorData,
+        };
+        throw error;
       }
 
       return await response.json();
     } catch (error) {
-      console.error("Error creating user:", error);
       throw error;
     }
   }
