@@ -64,7 +64,7 @@ const StageCard = ({ stage, stageIndex }) => {
 
   return (
     <motion.div
-      className="relative overflow-hidden p-6 rounded-xl border border-white/40 bg-white/30 backdrop-blur-lg shadow-sm mb-5 hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
+      className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
@@ -110,7 +110,7 @@ const StageCard = ({ stage, stageIndex }) => {
           return (
             <div
               key={task.title}
-              className="flex items-center text-sm text-slate-700 mt-2"
+              className="flex items-center text-sm text-slate-600"
             >
               {icon}
               <span>{task.title}</span>
@@ -437,17 +437,14 @@ export default function ClientDashboard() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-sky-200 to-white overflow-hidden">
-      <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 hidden lg:flex flex-col backdrop-blur-xl text-slate-800 rounded-2xl border border-white/40 shadow-2xl overflow-y-auto">
+    <div className="bg-slate-100 h-screen flex font-sans overflow-hidden">
+      {/* ===== Left Sidebar ===== */}
+      <aside className="bg-white text-slate-800 w-72 hidden lg:flex flex-col flex-shrink-0 border-r border-slate-200 h-screen">
+        {/* The main content area that will grow */}
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center h-20 flex-shrink-0 border-b border-slate-200">
-            <img 
-              className="max-h-[60px]"  
-              alt="Logo" 
-              // src="/Logo.png"
-              src={logo}
-            />
+            <img className="w-36 h-auto" src="/Logo.png" alt="Logo" />
           </div>
           <div className="flex-grow p-6 flex flex-col justify-between">
             <div className="space-y-6">
@@ -551,57 +548,31 @@ export default function ClientDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto min-w-0 lg:ml-[19.5rem]">
-        <div className="p-6 sm:p-6">
-     <div
-  className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full h-[300px]"
->
-  {/* LEFT SECTION: Glassmorphism card */}
-  <motion.div
-    className="flex-1 min-w-0 h-75"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className="backdrop-blur-lg bg-gradient-to-b from-sky-200/40 to-white/30 text-lg h-full w-[572px] p-10 shadow-lg border border-white/30">
-      <h1 className="text-3xl font-bold text-gray-700 mt-8">
-        <span className="text-[#00AEEF]">Hello,</span>{" "}
-        {matterDetails.Clientname} 👋
-      </h1>
-      <p className="text-gray-700 mt-2">
-        Welcome back. Here is the latest status of your matter.
-      </p>
-                     {overallProgress && (
-                  <ProgressChart
-                    completed={overallProgress.completed}
-                    total={overallProgress.total}
-                    processing={overallProgress.processingTask}
-                  />
-                )}
-
-     
-    </div>
-  </motion.div>
-
-  {/* RIGHT SECTION: Full image box */}
-  <motion.div
-    className="w-[580px] h-[300px] overflow-hidden shadow-lg"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div
-      style={{
-        backgroundImage: 'url("/House.jpg")',
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }}
-      className="h-full"
-    ></div>
-  </motion.div>
-</div>
-
+      {/* ===== Main Content Area ===== */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 sm:p-10">
+          {/* Header Section */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-white p-8 rounded-2xl shadow-sm mb-10"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-slate-800">
+                Hello, {matterDetails.Clientname}👋
+              </h1>
+              <p className="text-slate-500 mt-1">
+                Welcome back. Here is the latest status of your matter.
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <ProgressChart
+                completed={overallProgress.completed}
+                total={overallProgress.total}
+              />
+            </div>
+          </motion.div>
 
           {/* Stage Cards Section */}
           <div>

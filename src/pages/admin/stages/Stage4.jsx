@@ -3,7 +3,12 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrigger }) {
+export default function Stage4({
+  changeStage,
+  data,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
   const stage = 4;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -12,7 +17,7 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
     dts: "DTS",
     dutyOnline: "Duty Online",
     soa: "SOA",
-    frcgw: "FRCGW"
+    frcgw: "FRCGW",
   };
 
   const getStatus = (value) => {
@@ -25,17 +30,22 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
 
   function bgcolor(status) {
     switch (status) {
-      case "In progress": return "bg-[#FFEECF]";
-      case "Completed": return "bg-[#00A506]";
-      case "Not Completed": return "bg-[#FF0000]";
-      default: return "";
+      case "In progress":
+        return "bg-[#FFEECF]";
+      case "Completed":
+        return "bg-[#00A506]";
+      case "Not Completed":
+        return "bg-[#FF0000]";
+      default:
+        return "";
     }
   }
 
   function extractNotes(note = "") {
-    let systemNote = "", clientComment = "";
+    let systemNote = "",
+      clientComment = "";
     if (typeof note === "string" && note.includes(" - ")) {
-      [systemNote, clientComment] = note.split(" - ").map(str => str.trim());
+      [systemNote, clientComment] = note.split(" - ").map((str) => str.trim());
     } else {
       systemNote = note || "";
     }
@@ -51,7 +61,6 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
 
   useEffect(() => {
     if (!data) return;
-
     const newFormState = {};
     const newStatusState = {};
 
@@ -62,19 +71,28 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
       newStatusState[label] = getStatus(val);
     });
 
+    // Handle contract price - works for both direct values and $numberDecimal
+    const rawPrice = data.contractPrice;
+    const contractPriceValue =
+      typeof rawPrice === "object" && rawPrice?.$numberDecimal
+        ? rawPrice.$numberDecimal
+        : rawPrice?.toString() || "";
+
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setContractPrice(data.contractPrice?.$numberDecimal || "");
+    setContractPrice(contractPriceValue);
 
-    const { systemNote, clientComment } = extractNotes(data.noteForClient || "");
+    const { systemNote, clientComment } = extractNotes(
+      data.noteForClient || ""
+    );
     setSystemNote(systemNote);
     setClientComment(clientComment);
 
     originalData.current = {
       ...newFormState,
-      contractPrice,
+      contractPrice: contractPriceValue,
       systemNote,
-      clientComment
+      clientComment,
     };
   }, [data, reloadTrigger]);
 
@@ -83,17 +101,24 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
       ...formState,
       contractPrice,
       systemNote,
-      clientComment
+      clientComment,
     };
     const original = originalData.current;
-    return Object.keys(current).some((key) => current[key] !== original[key]);
+    return Object.keys(current).some((key) => {
+      if (key === "contractPrice") {
+        return (current[key] || "") !== (original[key] || "");
+      }
+      return current[key] !== original[key];
+    });
   }
 
   function generateSystemNote() {
-    const incomplete = Object.keys(fieldMap).filter((key) => {
-      const label = fieldMap[key];
-      return formState[label]?.toLowerCase() !== "yes";
-    }).map(key => fieldMap[key]);
+    const incomplete = Object.keys(fieldMap)
+      .filter((key) => {
+        const label = fieldMap[key];
+        return formState[label]?.toLowerCase() !== "yes";
+      })
+      .map((key) => fieldMap[key]);
 
     if (incomplete.length === 0) return "All tasks completed";
     return `Pending: ${incomplete.join(", ")}`;
@@ -104,8 +129,8 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
       if (isChanged()) {
         const payload = {
           matterNumber,
-          contractPrice,
-          noteForClient: `${generateSystemNote()} - ${clientComment}`
+          contractPrice: contractPrice || null, // Send null if empty
+          noteForClient: `${generateSystemNote()} - ${clientComment}`,
         };
 
         // Convert labeled formState back to key-based
@@ -121,15 +146,22 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
           ...formState,
           contractPrice,
           systemNote,
-          clientComment
+          clientComment,
         };
 
-        setReloadTrigger?.(prev => !prev);
+        if (typeof setReloadTrigger === "function") {
+          setReloadTrigger((prev) => !prev);
+        }
       }
 
-      changeStage(stage + 1);
+      if (typeof changeStage === "function") {
+        changeStage(stage + 1);
+      }
     } catch (err) {
-      console.error("Failed to save Stage 4:", err);
+      console.error(
+        "Failed to save Stage 4:",
+        err.response?.data || err.message
+      );
     }
   }
 
@@ -139,7 +171,9 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
-            statusState[label] === "In progress" ? "text-[#FF9500]" : "text-white"
+            statusState[label] === "In progress"
+              ? "text-[#FF9500]"
+              : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
           <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
@@ -175,14 +209,20 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
         <input
           type="number"
           value={contractPrice}
-          onChange={(e) => setContractPrice(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setContractPrice(value === "" ? "" : value);
+          }}
           className="w-full rounded p-2 bg-gray-100"
+          step="0.01" // Allows decimal values
         />
       </div>
 
       {/* System Note */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">System Note for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          System Note for Client
+        </label>
         <input
           type="text"
           value={systemNote}
@@ -193,7 +233,9 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Client Comment */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">Comment for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          Comment for Client
+        </label>
         <textarea
           value={clientComment}
           onChange={(e) => setClientComment(e.target.value)}
@@ -203,7 +245,11 @@ export default function Stage4({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Buttons */}
       <div className="flex mt-10 justify-between">
-        <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
+        <Button
+          label="Back"
+          width="w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+        />
         <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
       </div>
     </div>

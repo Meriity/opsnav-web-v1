@@ -1,4 +1,4 @@
-const BASE_URL = "https://opsnav-app-service-871399330172.us-central1.run.app";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class ClientAPI {
   constructor() {
@@ -147,7 +147,7 @@ class ClientAPI {
   async getStageTwo(matterNumber) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/client/stage-two/${matterNumber}`,
+        `${this.baseUrl}/clients/stage-two/${matterNumber}`,
         {
           method: "GET",
           headers: this.getHeaders(),

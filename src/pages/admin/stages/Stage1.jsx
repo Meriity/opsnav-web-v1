@@ -162,6 +162,7 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           referral,
           retainer,
           declarationForm,
+          contractReview,
           quoteType,
           quoteAmount,
           tenants,

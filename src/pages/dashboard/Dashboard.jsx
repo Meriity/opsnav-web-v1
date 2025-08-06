@@ -1,4 +1,4 @@
-import Plus from "../../icons/Button icons/🔹Icon-Color.png"
+import Plus from "../../icons/Button icons/Icon-Color.png";
 import {
   BarChart,
   Bar,
@@ -16,7 +16,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import ClientAPI from "../../api/userAPI";
 import { useNavigate } from "react-router-dom";
-import { create } from 'zustand';
+import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 
@@ -30,18 +30,20 @@ const useDashboardStore = create((set) => ({
   loading: true,
   isFetched: false,
 
-  setDashboardData: (data) => set({
-    totalusers: data.lifetimeTotals.totalUsers,
-    totalactive: data.lifetimeTotals.totalActiveClients,
-    totalarchived: data.lifetimeTotals.totalArchivedClients,
-    chart: data.last10MonthsStats.map(item => ({
-      name: item.month,
-      value: item.closedMatters
-    })),
-    lastrecord: data.last10MonthsStats[data.last10MonthsStats.length - 2].closedMatters,
-    loading: false,
-    isFetched: true
-  }),
+  setDashboardData: (data) =>
+    set({
+      totalusers: data.lifetimeTotals.totalUsers,
+      totalactive: data.lifetimeTotals.totalActiveClients,
+      totalarchived: data.lifetimeTotals.totalArchivedClients,
+      chart: data.last10MonthsStats.map((item) => ({
+        name: item.month,
+        value: item.closedMatters,
+      })),
+      lastrecord:
+        data.last10MonthsStats[data.last10MonthsStats.length - 2].closedMatters,
+      loading: false,
+      isFetched: true,
+    }),
 
   setLoading: (isLoading) => set({ loading: isLoading }),
 }));
@@ -56,7 +58,7 @@ function Dashboard() {
     loading,
     setDashboardData,
     setLoading,
-    isFetched
+    isFetched,
   } = useDashboardStore();
 
   const [createuser, setcreateuser] = useState(false);
@@ -91,8 +93,6 @@ function Dashboard() {
       }
       fetchDashboard();
     }
-
-
   }, []);
 
   const [formData, setFormData] = useState({
@@ -103,7 +103,7 @@ function Dashboard() {
     propertyAddress: "",
     matterDate: "",
     settlementDate: "",
-    dataEntryBy: localStorage.getItem("user")
+    dataEntryBy: localStorage.getItem("user"),
   });
 
   if (loading) {
@@ -121,9 +121,13 @@ function Dashboard() {
         <Header />
         {/* Welcome Card */}
         <div className="bg-[#A6E7FF] p-6 rounded-md overflow-y-auto max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] xl:max-h-[80vh]">
-          <h1 className="text-xl font-bold mt-3 font-poppins">Welcome to OPSNAV</h1>
+          <h1 className="text-xl font-bold mt-3 font-poppins">
+            Welcome to OPSNAV
+          </h1>
           <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
-            We are a client-focused law firm committed to delivering expert legal solutions with integrity, professionalism, and personalized care.
+            We are a client-focused law firm committed to delivering expert
+            legal solutions with integrity, professionalism, and personalized
+            care.
           </p>
 
           <button
@@ -137,9 +141,21 @@ function Dashboard() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard icon={ManageUsersIcon} label="Total Users" value={totalusers} />
-          <StatCard icon={ViewClientsIcon} label="Total Clients" value={totalactive} />
-          <StatCard icon={ArchivedChatsIcon} label="Total Archives" value={totalarchived} />
+          <StatCard
+            icon={ManageUsersIcon}
+            label="Total Users"
+            value={totalusers}
+          />
+          <StatCard
+            icon={ViewClientsIcon}
+            label="Total Clients"
+            value={totalactive}
+          />
+          <StatCard
+            icon={ArchivedChatsIcon}
+            label="Total Archives"
+            value={totalarchived}
+          />
         </div>
 
         {/* Chart */}
@@ -162,10 +178,13 @@ function Dashboard() {
         </p>
 
         {/* Dialog for creating new user */}
-        <CreateClientModal isOpen={createuser} setIsOpen={() => setcreateuser(false)} />
+        <CreateClientModal
+          isOpen={createuser}
+          setIsOpen={() => setcreateuser(false)}
+        />
       </main>
     </div>
   );
-};
+}
 
 export default Dashboard;

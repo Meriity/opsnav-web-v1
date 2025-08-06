@@ -8,49 +8,57 @@ function LoginForm() {
   const api = new AuthAPI();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true)
+    setIsLoading(true);
+
     try {
       const response = await api.signIn(email, password);
+
       if (response.token) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", response.user.displayName);
         localStorage.setItem("role", response.role);
-        toast.success("Authentication successful! Logging in...", {
-          position: "bottom-center",
-        });
-      }
 
-      // Redirect based on role
-      if (response.role === "admin") {
-        navigate("/admin/work-selection");
-      } else {
-        navigate("/user/work-selection");
+        // Show success toast
+        toast.success("Logging in...", {
+          position: "top-right",
+        });
+
+        // Redirect after short delay
+        setTimeout(() => {
+          if (response.role === "admin") {
+            navigate("/admin/work-selection");
+          } else {
+            navigate("/user/work-selection");
+          }
+        }, 1500);
       }
     } catch (err) {
-      toast.error("Authentication failed! Please check password and try again.", {
-        position: "bottom-center",
-      });
+      toast.error(err.message, { position: "top-right" });
     } finally {
-      setIsLoading(true)
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
-
+    // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
+    <div className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center" style={{ backgroundImage: "url('/home_bg.jpg')" }}>
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
-          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
-          <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
+          <img
+            src="/Logo.png"
+            alt="VK Lawyers Logo"
+            className="h-24 mx-auto md:mx-0"
+          />
+          <h1 className="text-3xl font-bold mt-4 font-poppins">
+            WELCOME TO OPSNAV
+          </h1>
           <p className="text-gray-600 mt-2 font-poppins">
-            Secure. Simple. Seamless conveyancing.
+            Streamline with Precision. Scale Your Operations without bottlenecks.
           </p>
         </div>
 
@@ -61,7 +69,9 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block mb-1 font-medium text-sm text-gray-700">Email ID</label>
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Email ID
+              </label>
               <input
                 type="email"
                 value={email}
@@ -71,7 +81,9 @@ function LoginForm() {
               />
             </div>
             <div>
-              <label className="block mb-1 font-medium text-sm text-gray-700">Password</label>
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -86,38 +98,33 @@ function LoginForm() {
               className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition cursor-pointer"
             >
               {isLoading ? (
-  <span className="flex items-center justify-center gap-2">
-    <svg
-      className="w-4 h-4 animate-spin text-white"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      ></circle>
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      ></path>
-    </svg>
-    Signing in...
-  </span>
-) : (
-  "Sign In"
-)}
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="w-4 h-4 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
             </button>
-            {error && (
-              <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
-                {error}
-              </div>
-            )}
           </form>
         </div>
       </div>
@@ -129,4 +136,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default LoginForm;

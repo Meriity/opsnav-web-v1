@@ -1,4 +1,4 @@
-const BASE_URL = "https://opsnav-app-service-871399330172.us-central1.run.app";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class ClientAPI {
   constructor() {
@@ -84,7 +84,7 @@ class ClientAPI {
   async getStageOne(matterNumber) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/client/stage-one/${matterNumber}`,
+        `${this.baseUrl}/clients/stage-one/${matterNumber}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -149,14 +149,12 @@ class ClientAPI {
   }
 
   // Insert/Update Cost
-  async upsertCost(matterNumber, cost, additionalData = {}) {
+  async upsertCost(  additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
-          matterNumber,
-          cost,
           ...additionalData,
         }),
       });
@@ -326,7 +324,7 @@ class ClientAPI {
   async getArchivedClients() {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled",
+        `${BASE_URL}/clients/settled`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -348,7 +346,7 @@ class ClientAPI {
   async getArchivedClientsDate(from, to) {
     try {
       const response = await fetch(
-        `https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled?from=${from}&to=${to}`,
+        `${BASE_URL}/clients/settled?from=${from}&to=${to}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -368,7 +366,7 @@ class ClientAPI {
   async getDashboardData() {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/dashboard",
+        `${BASE_URL}/dashboard`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -424,7 +422,7 @@ class ClientAPI {
   async resendLinkToClient(email, matterNumber) {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/client-view/send-link",
+        `${BASE_URL}/client-view/send-link`,
         {
           method: "POST",
           headers: this.getHeaders(),
