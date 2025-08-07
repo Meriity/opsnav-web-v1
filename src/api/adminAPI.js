@@ -17,7 +17,7 @@ class AdminAPI {
   //Create new User
   async createUser(email, role, displayName) {
     try {
-      const response = await fetch(`${this.baseUrl}/users`, {
+      const response = await fetch(`${this.baseUrl}/admin/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, role, displayName }),
