@@ -19,7 +19,7 @@ class AdminAPI {
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: this.getHeaders(),
         body: JSON.stringify({ email, role, displayName }),
       });
 
