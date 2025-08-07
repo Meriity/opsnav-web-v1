@@ -38,7 +38,9 @@ function LoginForm() {
         }, 1500);
       }
     } catch (err) {
-      toast.error(err.message, { position: "top-right" });
+       toast.error(err.message || "Something went wrong. Please try again.", {
+        position: "top-right",
+      });
     } finally {
       setIsLoading(false);
     }
