@@ -16,6 +16,8 @@ import WorkSelection from "./pages/admin/WorkSelection";
 import Home from "./pages/Home";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 // ✅ Auth Wrapper inside this file
@@ -43,6 +45,7 @@ function RequireAuthClient({ children }) {
 
 function App() {
   return (
+      <>
     <Routes>
       {/* 🔓 Public Routes */}
       {/* <Route path="/" element={<ComingSoon/>}  /> */}
@@ -128,6 +131,8 @@ function App() {
         }
       />
     </Routes>
+    <ToastContainer position="top-right" />
+    </>
   );
 }
 
