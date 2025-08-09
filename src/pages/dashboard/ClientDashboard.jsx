@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import ProgressChart from "../../components/ui/ProgressChart";
-import Logo from "../../../public/main.jpg";
-import conveyancing from "../../../public/Illustrator_image-removebg-preview.png";
+
 // Icons
 import {
   LogOut,
@@ -87,7 +86,7 @@ const StageCard = ({ stage, stageIndex }) => {
         </div>
       </div>
 
-      <div className="space-y-3 mb-4 flex">
+      <div className="space-y-3 mb-5 flex">
         <div>
          {allTasks.map((task, index) => {
           const status = task.status?.toLowerCase();
@@ -119,13 +118,12 @@ const StageCard = ({ stage, stageIndex }) => {
         })}
         </div>
         <div className="absolute right-5">
-          {console.log(stage.svg)}
           <img src={stage.svg} alt="" style={{height:"60px"}} />
         </div>
       </div>
 
       {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-        <div className="mt-4 pt-4 border-t border-white/60 flex">
+        <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
           <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
             <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
               <NotepadText className="w-4 h-4" />
@@ -245,8 +243,7 @@ export default function ClientDashboard() {
         svg : "/stage 2A.svg",
         data: {
           sections: [
-            { title: "VOI", status: response.stage2.voi },
-            { title: "CAF", status: response.stage2.caf },
+
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -261,6 +258,15 @@ export default function ClientDashboard() {
                 {
                   title: "Deposit Receipt",
                   status: response.stage2.depositReceipt,
+                },
+                {
+                  title: "Identity Verification and Client Authorisation",
+                 status :
+  response.stage2.voi === "Yes" && response.stage2.caf === "Yes"
+    ? "Yes"
+    : response.stage2.voi === "Processing" && response.stage2.caf === "Processing"
+    ? "Processing"
+    : "No"
                 },
               ],
               noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -351,10 +357,7 @@ export default function ClientDashboard() {
         svg : "/stage 5.svg",
         data: {
           sections: [
-            {
-              title: "GST Withholding",
-              status: response.stage5.gstWithholding,
-            },
+
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage5.noteForClient).beforeHyphen,
@@ -362,16 +365,16 @@ export default function ClientDashboard() {
             {
               sections: [
                 {
-                  title: "Notify SOA",
+                  title: "Notification to Client",
                   status: response.stage5.notifySoaToClient,
                 },
                 {
-                  title: "Add Agent Fee",
-                  status: response.stage5.addAgentFee,
+                  title: "Transfer Documents Complete",
+                  status: response.stage5.transferDocsOnPexa,
                 },
                 {
                   title: "Settlement Notification to the authorities",
-                  status: response.stage5.settlementNotification,
+                  status: response.stage5.disbursementsInPexa,
                 },
               ],
               noteText: splitNoteParts(response.stage5.noteForClient)
@@ -438,7 +441,7 @@ export default function ClientDashboard() {
 
   return (
     <div className="flex h-screen bg-gradient-to-b from-sky-200 to-white overflow-hidden">
-      <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 hidden lg:flex flex-col backdrop-blur-xl text-slate-800 rounded-2xl border border-white/40 shadow-2xl overflow-y-auto">
+      <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 hidden lg:flex flex-col backdrop-blur-xl text-slate-800 rounded-2xl border border-white/40 shadow-sm mb-3 overflow-y-auto">
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center h-20 flex-shrink-0 border-b border-slate-200">
@@ -564,20 +567,20 @@ export default function ClientDashboard() {
     transition={{ duration: 0.5 }}
   >
     <div className="backdrop-blur-lg bg-gradient-to-b from-sky-200/40 to-white/30 text-lg h-full w-[572px] p-10 shadow-lg border border-white/30">
-      <h1 className="text-3xl font-bold text-gray-700 mt-8">
+      <h1 className="text-3xl font-bold text-gray-700 mt-18">
         <span className="text-[#00AEEF]">Hello,</span>{" "}
         {matterDetails.Clientname} 👋
       </h1>
       <p className="text-gray-700 mt-2">
         Welcome back. Here is the latest status of your matter.
       </p>
-                     {overallProgress && (
+                     {/* {overallProgress && (
                   <ProgressChart
                     completed={overallProgress.completed}
                     total={overallProgress.total}
                     processing={overallProgress.processingTask}
                   />
-                )}
+                )} */}
 
      
     </div>
@@ -596,9 +599,20 @@ export default function ClientDashboard() {
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
+        padding:"20px 20px"
       }}
       className="h-full"
-    ></div>
+    >  
+               {overallProgress && (
+                  <ProgressChart
+                    completed={overallProgress.completed}
+                    total={overallProgress.total}
+                    processing={overallProgress.processingTask}
+                  />
+                )}
+    
+
+    </div>
   </motion.div>
 </div>
 
@@ -607,8 +621,10 @@ export default function ClientDashboard() {
           <div>
             <div className="sticky top-0 z-10 backdrop-blur-md py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
               {/* Left: Chevron + Title */}
-              <div className="flex items-center">
-                <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
+              <div className="flex items-center gap-5">
+                {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
+                 */}
+                 <img src="/stage-by-stage.svg" style={{height:"60px"}} alt="" />
                 <h2 className="text-2xl font-bold text-slate-800">
                   Stage-by-Stage Progress
                 </h2>
