@@ -566,7 +566,7 @@ export default function ClientDashboard() {
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
   >
-    <div className="backdrop-blur-lg bg-gradient-to-b from-sky-200/40 to-white/30 text-lg h-full w-[572px] p-10 shadow-lg border border-white/30">
+    <div className="backdrop-blur-lg bg-gradient-to-b from-sky-200/40 to-white/30 text-lg h-full w-[580px] p-10 shadow-lg border border-white/30">
       <h1 className="text-3xl font-bold text-gray-700 mt-18">
         <span className="text-[#00AEEF]">Hello,</span>{" "}
         {matterDetails.Clientname} 👋
