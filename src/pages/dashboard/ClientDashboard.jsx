@@ -11,7 +11,7 @@ import {
   Home,
   FileText,
   User,
-  Menu, X,
+  X,
   CheckCircle2,
   Circle,
   XCircle,
@@ -75,9 +75,9 @@ const StageCard = ({ stage, stageIndex }) => {
       }}
       transition={{ duration: 0.5 }}
     >
-      {/* --- THIS IS THE NEW BACKGROUND ELEMENT --- */}
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-3/4 h-3/4 bg-sky-400 opacity-20 blur-3xl rounded-full"></div>
-      {/* ------------------------------------------- */}
+
 
       <div className="flex justify-between items-start mb-4">
         <div>
