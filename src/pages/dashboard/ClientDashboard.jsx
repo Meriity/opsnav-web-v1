@@ -621,7 +621,7 @@ export default function ClientDashboard() {
 
     {/* RIGHT SECTION: Full image box */}
     <motion.div
-      className="w-full md:w-[580px] h-[300px] overflow-hidden shadow-lg"
+      className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
