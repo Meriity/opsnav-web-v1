@@ -11,12 +11,14 @@ import {
   Home,
   FileText,
   User,
-  ChevronsRight,
+  X,
   CheckCircle2,
   Circle,
   XCircle,
   Clock,
   NotepadText,
+  ChevronsRight,
+
 } from "lucide-react";
 
 // Original API and Components
@@ -39,15 +41,18 @@ const StageCard = ({ stage, stageIndex }) => {
     };
     return stageMap[index] ?? index;
   };
+
   const allTasks = [
     ...stage.data.sections,
     ...(stage.data.rows[0]?.sections || []),
   ];
+
   const completedTasks = allTasks.filter(
     (task) =>
       task.status?.toLowerCase() === "yes" ||
       task.status?.toLowerCase() === "nr"
   ).length;
+
   const totalTasks = allTasks.length;
 
   let statusLabel = "Not Started";
@@ -57,7 +62,7 @@ const StageCard = ({ stage, stageIndex }) => {
     statusLabel = "In Progress";
     statusColor = "bg-yellow-100 text-yellow-800";
   } else if (completedTasks === totalTasks && totalTasks > 0) {
-    statusLabel = "Completed";
+    statusLabel = "Stage Completed";
     statusColor = "bg-green-100 text-green-800";
   }
 
@@ -70,6 +75,10 @@ const StageCard = ({ stage, stageIndex }) => {
       }}
       transition={{ duration: 0.5 }}
     >
+
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-3/4 h-3/4 bg-sky-400 opacity-20 blur-3xl rounded-full"></div>
+
+
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800">
@@ -88,37 +97,37 @@ const StageCard = ({ stage, stageIndex }) => {
 
       <div className="space-y-3 mb-5 flex">
         <div>
-         {allTasks.map((task, index) => {
-          const status = task.status?.toLowerCase();
-          let icon = (
-            <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
-          );
-          if (status === "yes" || status === "nr") {
-            icon = (
-              <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+          {allTasks.map((task, index) => {
+            const status = task.status?.toLowerCase();
+            let icon = (
+              <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
             );
-          } else if (status === "no") {
-            icon = (
-              <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+            if (status === "yes" || status === "nr") {
+              icon = (
+                <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+              );
+            } else if (status === "no") {
+              icon = (
+                <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+              );
+            } else if (status === "processing") {
+              icon = (
+                <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
+              );
+            }
+            return (
+              <div
+                key={task.title}
+                className="flex items-center text-sm text-slate-700 mt-2"
+              >
+                {icon}
+                <span>{task.title}</span>
+              </div>
             );
-          } else if (status === "processing") {
-            icon = (
-              <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
-            );
-          }
-          return (
-            <div
-              key={task.title}
-              className="flex items-center text-sm text-slate-700 mt-2"
-            >
-              {icon}
-              <span>{task.title}</span>
-            </div>
-          );
-        })}
+          })}
         </div>
         <div className="absolute right-5">
-          <img src={stage.svg} alt="" style={{height:"60px"}} />
+          <img src={stage.svg} alt="" style={{ height: "60px" }} />
         </div>
       </div>
 
@@ -143,6 +152,7 @@ const StageCard = ({ stage, stageIndex }) => {
 export default function ClientDashboard() {
   const logo = localStorage.getItem("logo") || "/Logo.png";
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
   const api = new ClientAPI();
   let { matterNumber } = useParams();
   matterNumber = atob(matterNumber);
@@ -441,32 +451,45 @@ export default function ClientDashboard() {
 
   return (
     <div className="flex h-screen bg-gradient-to-b from-sky-200 to-white overflow-hidden">
-      <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 hidden lg:flex flex-col backdrop-blur-xl text-slate-800 rounded-2xl border border-white/40 shadow-sm mb-3 overflow-y-auto">
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 sm:block
+        bg-gradient-to-b from-sky-200 to-white text-slate-800 rounded-2xl border border-white/40 
+        shadow-sm mb-3 overflow-y-auto flex-col z-50 
+        transform transition-transform duration-300 
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+        lg:translate-x-0 lg:flex`}
+      >
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center h-20 flex-shrink-0 border-b border-slate-200">
-            <img 
-              className="max-h-[60px]"  
-              alt="Logo" 
-              // src="/Logo.png"
+          <div className="flex items-center justify-center p-5 flex-shrink-0 border-b border-slate-200 relative">
+            <img
+              className="max-h-[40px]"
+              alt="Logo"
               src={logo}
             />
+            {/* Close button in mobile */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute right-3 top-3 lg:hidden"
+            >
+              <X className="w-5 h-5 text-[#00AEEF]" />
+            </button>
           </div>
+
+          {/* Sidebar content */}
           <div className="flex-grow p-6 flex flex-col justify-between">
             <div className="space-y-6">
+              {/* Matter Overview */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Matter Overview
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Matter Overview</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <User className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Client
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Client</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.Clientname}
                       </p>
@@ -475,9 +498,7 @@ export default function ClientDashboard() {
                   <div className="flex items-start gap-3">
                     <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Matter Number
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Matter Number</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.matter_number}
                       </p>
@@ -485,19 +506,17 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Key Dates */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Key Dates
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Key Dates</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Matter Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Matter Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.matter_date}
                       </p>
@@ -506,9 +525,7 @@ export default function ClientDashboard() {
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Settlement Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Settlement Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.settlement_date}
                       </p>
@@ -516,18 +533,16 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Property */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Property
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Property</span>
                 </h4>
                 <div className="flex items-start gap-3">
                   <Home className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-x font-medium text-slate-600">
-                      Address
-                    </p>
+                    <p className="text-x font-medium text-slate-600">Address</p>
                     <p className="text-sm text-slate-800 font-semibold">
                       {matterDetails.address}
                     </p>
@@ -538,13 +553,15 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Logout button */}
             <div className="pt-4">
               <button
                 onClick={() => {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="w-full justify-center bg-[#EEF5FF]  text-slate-700 hover:bg-[#B4D4FF] hover:text-slate-700 active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
+                className="w-full justify-center bg-[#98dffa] text-[#049bd4] hover:bg-[#B4D4FF] hover:text-slate-700 active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -554,67 +571,85 @@ export default function ClientDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto min-w-0 lg:ml-[19.5rem]">
-        <div className="p-6 sm:p-6">
-     <div
-  className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full h-[300px]"
->
-  {/* LEFT SECTION: Glassmorphism card */}
-  <motion.div
-    className="flex-1 min-w-0 h-75"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className="backdrop-blur-lg bg-gradient-to-b from-sky-200/40 to-white/30 text-lg h-full w-[580px] p-10 shadow-lg border border-white/30">
-      <h1 className="text-3xl font-bold text-gray-700 mt-18">
-        <span className="text-[#00AEEF]">Hello,</span>{" "}
-        {matterDetails.Clientname} 👋
-      </h1>
-      <p className="text-gray-700 mt-2">
-        Welcome back. Here is the latest status of your matter.
-      </p>
-                     {/* {overallProgress && (
-                  <ProgressChart
-                    completed={overallProgress.completed}
-                    total={overallProgress.total}
-                    processing={overallProgress.processingTask}
-                  />
-                )} */}
+      <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
+<div className="p-6 sm:p-6">
+  <div
+    className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full"
+  >      
+    {/* LEFT SECTION: Glassmorphism card */}
+    <motion.div
+      className="flex-1 min-w-0 gap-2"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
+       <button
+        onClick={() => setIsOpen(true)}
+        className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
+      > 
+        <ChevronsRight className="w-8 h-8  text-[#00AEEF]"  />
+        <span>Matter Details</span>
+      </button>
 
-     
-    </div>
-  </motion.div>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+        />
+      )}
+        <h1 className="text-3xl font-bold text-gray-700 md:mt-20">
+          <span className="text-[#00AEEF]">Hello,</span> {matterDetails.Clientname} 👋
+        </h1>
+        <p className="text-gray-700">
+          Welcome back. Here is the latest status of your matter.
+        </p>
 
-  {/* RIGHT SECTION: Full image box */}
-  <motion.div
-    className="w-[580px] h-[300px] overflow-hidden shadow-lg"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div
-      style={{
-        backgroundImage: 'url("/House.jpg")',
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        padding:"20px 20px"
-      }}
-      className="h-full"
-    >  
-               {overallProgress && (
-                  <ProgressChart
-                    completed={overallProgress.completed}
-                    total={overallProgress.total}
-                    processing={overallProgress.processingTask}
-                  />
-                )}
-    
+        {/* Show progress chart only on mobile */}
+        {/* <div className="mt-4 block md:hidden">
+          {overallProgress && (
+            <ProgressChart
+              completed={overallProgress.completed}
+              total={overallProgress.total}
+              processing={overallProgress.processingTask}
+            />
+          )}
+        </div> */}
+      </div>
+    </motion.div>
 
-    </div>
-  </motion.div>
-</div>
+    {/* RIGHT SECTION: Full image box */}
+    <motion.div
+      className="w-full md:w-[580px] h-[300px] overflow-hidden shadow-lg"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div
+        style={{
+          backgroundImage: 'url("/House.jpg")',
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          padding: "20px 20px",
+        }}
+        className="h-full"
+      >
+        {/* Show progress chart only on desktop */}
+        <div className="">
+          {overallProgress && (
+            <ProgressChart
+              completed={overallProgress.completed}
+              total={overallProgress.total}
+              processing={overallProgress.processingTask}
+            />
+          )}
+        </div>
+      </div>
+    </motion.div>
+  </div>
+
 
 
           {/* Stage Cards Section */}
@@ -683,3 +718,4 @@ export default function ClientDashboard() {
     </div>
   );
 }
+
