@@ -61,6 +61,7 @@ export default function Stage4({
 
   useEffect(() => {
     if (!data) return;
+
     const newFormState = {};
     const newStatusState = {};
 
@@ -71,7 +72,6 @@ export default function Stage4({
       newStatusState[label] = getStatus(val);
     });
 
-    // Handle contract price - works for both direct values and $numberDecimal
     const rawPrice = data.contractPrice;
     const contractPriceValue =
       typeof rawPrice === "object" && rawPrice?.$numberDecimal
@@ -124,12 +124,12 @@ export default function Stage4({
     return `Pending: ${incomplete.join(", ")}`;
   }
 
-  async function handleNextClick() {
+  async function handleSave() {
     try {
       if (isChanged()) {
         const payload = {
           matterNumber,
-          contractPrice: contractPrice || null, // Send null if empty
+          contractPrice: contractPrice || null,
           noteForClient: `${generateSystemNote()} - ${clientComment}`,
         };
 
@@ -148,20 +148,10 @@ export default function Stage4({
           systemNote,
           clientComment,
         };
-
-        if (typeof setReloadTrigger === "function") {
-          setReloadTrigger((prev) => !prev);
-        }
-      }
-
-      if (typeof changeStage === "function") {
-        changeStage(stage + 1);
+        setReloadTrigger?.((prev) => !prev);
       }
     } catch (err) {
-      console.error(
-        "Failed to save Stage 4:",
-        err.response?.data || err.message
-      );
+      console.error("Failed to save Stage 4:", err);
     }
   }
 
@@ -214,7 +204,7 @@ export default function Stage4({
             setContractPrice(value === "" ? "" : value);
           }}
           className="w-full rounded p-2 bg-gray-100"
-          step="0.01" // Allows decimal values
+          step="0.01"
         />
       </div>
 
@@ -249,8 +239,21 @@ export default function Stage4({
           label="Back"
           width="w-[100px]"
           onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
         />
-        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
+        <div className="flex gap-2">
+          <Button
+            label="Save"
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+          />
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={() => changeStage(stage + 1)}
+          />
+        </div>
       </div>
     </div>
   );

@@ -3,21 +3,33 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrigger }) {
-  const [referral, setReferral] = useState("");
-  const [retainer, setRetainer] = useState("");
-  const [declarationForm, setDeclarationForm] = useState("");
-  const [contractReview, setContractReview] = useState("");
-  const [quoteType, setQuoteType] = useState("");
-  const [quoteAmount, setQuoteAmount] = useState("");
-  const [tenants, setTenants] = useState("");
-  const [systemNote, setSystemNote] = useState("");
-  const [clientComment, setClientComment] = useState("");
-  const [statusRetainer, setStatusRetainer] = useState("In progress");
-  const [statusDeclaration, setStatusDeclaration] = useState("In progress");
-  const [statusContract, setStatusContract] = useState("In progress");
-  const [statusQuoteType, setStatusQuoteType] = useState("In progress");
-  const [statusTenants, setStatusTenants] = useState("In progress");
+export default function Stage1({
+  changeStage,
+  data,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
+  const [formData, setFormData] = useState({
+    referral: "",
+    retainer: "",
+    declarationForm: "",
+    contractReview: "",
+    quoteType: "",
+    quoteAmount: "",
+    tenants: "",
+    systemNote: "",
+    clientComment: "",
+  });
+
+  const [statuses, setStatuses] = useState({
+    retainer: "In progress",
+    declaration: "In progress",
+    contract: "In progress",
+    quoteType: "In progress",
+    tenants: "In progress",
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
   const originalData = useRef({});
 
   const stage = 1;
@@ -33,167 +45,148 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
   };
 
   function bgcolor(status) {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
+    const statusColors = {
+      "In progress": "bg-[#FF9500] text-white",
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+    };
+    return statusColors[status] || "bg-[#F3F7FF] text-black";
   }
 
   function extractNotes(note = "") {
-    let systemNote = "";
-    let clientComment = "";
-
-    if (typeof note === "string" && note.includes(" - ")) {
-      [systemNote, clientComment] = note.split(" - ").map((str) => str.trim());
-    } else {
-      systemNote = note || "";
-    }
-
-    return {
-      systemNote: systemNote || "",
-      clientComment: clientComment || "",
-    };
+    const [systemNote = "", clientComment = ""] = note
+      .split(" - ")
+      .map((str) => str.trim());
+    return { systemNote, clientComment };
   }
 
+  // Initialize form data
   useEffect(() => {
     if (!data) return;
 
     const { systemNote, clientComment } = extractNotes(data.noteForClient);
-    const fetchedData = {
+
+    const newFormData = {
       referral: data.referral || "",
       retainer: data.retainer || "",
       declarationForm: data.declarationForm || "",
       contractReview: data.contractReview || "",
       quoteType: data.quoteType || "",
-      quoteAmount: data.quoteAmount || "",
+      quoteAmount: data.quoteAmount?.$numberDecimal || data.quoteAmount || "",
       tenants: data.tenants || "",
       systemNote,
       clientComment,
     };
 
-    setReferral(fetchedData.referral);
-    setRetainer(fetchedData.retainer);
-    setDeclarationForm(fetchedData.declarationForm);
-    setContractReview(fetchedData.contractReview)
-    setQuoteType(fetchedData.quoteType);
-    setQuoteAmount(fetchedData.quoteAmount);
-    setTenants(fetchedData.tenants);
-    setSystemNote(fetchedData.systemNote);
-    setClientComment(fetchedData.clientComment);
+    setFormData(newFormData);
 
-    setStatusRetainer(getStatus(fetchedData.retainer));
-    setStatusDeclaration(getStatus(fetchedData.declarationForm));
-    setStatusContract(getStatus(fetchedData?.contractReview))
-    setStatusQuoteType(getStatus(fetchedData.quoteType));
-    setStatusTenants(getStatus(fetchedData.tenants));
-    originalData.current = fetchedData;
+    setStatuses({
+      retainer: getStatus(newFormData.retainer),
+      declaration: getStatus(newFormData.declarationForm),
+      contract: getStatus(newFormData.contractReview),
+      quoteType: getStatus(newFormData.quoteType),
+      tenants: getStatus(newFormData.tenants),
+    });
+
+    originalData.current = newFormData;
   }, [data, reloadTrigger]);
 
-  // ✅ Custom checker function
-  function checkFormStatus() {
-    const radios = [retainer, declarationForm, tenants];
-    const inputs = [referral, quoteAmount, systemNote, clientComment];
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
-    const allYes = radios.every((val) => val.toLowerCase() === "yes");
-    const anyFilled =
-      radios.some((val) => val) || inputs.some((val) => val.trim() !== "");
-
-    if (allYes) {
-      console.log("green");
-      return "green";
-    } else if (anyFilled) {
-      console.log("amber");
-      return "amber";
-    } else {
-      console.log("red");
-      return "red";
+    if (
+      ["retainer", "declarationForm", "contractReview", "tenants"].includes(
+        field
+      )
+    ) {
+      setStatuses((prev) => ({
+        ...prev,
+        [field === "declarationForm"
+          ? "declaration"
+          : field === "contractReview"
+          ? "contract"
+          : field]: getStatus(value),
+      }));
     }
-  }
+    if (field === "quoteType") {
+      setStatuses((prev) => ({
+        ...prev,
+        quoteType: getStatus(value),
+      }));
+    }
+  };
 
   function isChanged() {
-    const current = {
-      referral,
-      retainer,
-      declarationForm,
-      quoteType,
-      quoteAmount,
-      tenants,
-      systemNote,
-      clientComment,
-      contractReview,
-    };
-
-    const original = originalData.current;
-    return Object.keys(current).some((key) => current[key] !== original[key]);
+    return Object.keys(formData).some(
+      (key) => formData[key] !== originalData.current[key]
+    );
   }
 
-  async function handleNextClick() {
-    const updateNoteForClient = (retainer_value, declaration_form_value, contract_review_form_value) => {
-
+  const generateSystemNote = () => {
+    const { retainer, declarationForm, contractReview } = formData;
       const greenValues = ["Yes", "yes", "NR", "nr", "NA", "na"];
 
-      const isRetainerGreen = greenValues.includes(retainer_value)
-      const isDeclarationGreen = greenValues.includes(declaration_form_value);
-      const isContractGreen = greenValues.includes(contract_review_form_value);
+    const isRetainerGreen = greenValues.includes(retainer);
+    const isDeclarationGreen = greenValues.includes(declarationForm);
+    const isContractGreen = greenValues.includes(contractReview);
 
       if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
-        return 'Retainer, Declaration and Contract Review not received';
-      } else if (!isRetainerGreen) {
-        return 'Retainer not received';
-      } else if (!isDeclarationGreen) {
-        return 'Declaration not received ';
-      } else if (!isContractGreen) {
-        return 'Contract review not received ';
-      } else {
-        return 'Tasks completed ';
-      }
-
+      return "Retainer, Declaration and Contract Review not received";
     }
+    if (!isRetainerGreen) return "Retainer not received";
+    if (!isDeclarationGreen) return "Declaration not received";
+    if (!isContractGreen) return "Contract review not received";
+    return "Tasks completed";
+  };
+
+  async function handleSave() {
+    if (!isChanged() || isSaving) return;
+
+    setIsSaving(true);
+
     try {
-      if (isChanged()) {
+      const systemNote = generateSystemNote();
+      const noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
+
         const payload = {
           matterNumber,
-          referral,
-          retainer,
-          declarationForm,
-          contractReview,
-          quoteType,
-          quoteAmount,
-          tenants,
-          noteForClient: `${updateNoteForClient(retainer, declarationForm, contractReview)} - ${clientComment}`,
+        referral: formData.referral,
+        retainer: formData.retainer,
+        declarationForm: formData.declarationForm,
+        contractReview: formData.contractReview,
+        quoteType: formData.quoteType,
+        quoteAmount: formData.quoteAmount,
+        tenants: formData.tenants,
+        noteForClient,
         };
 
         await api.upsertStageOne(payload);
-        console.log("Stage 1 updated successfully!");
 
-        // ✅ Update originalData to reflect saved state
-        originalData.current = { ...payload, systemNote, clientComment };
-        setReloadTrigger(prev => !prev);
-      }
+      originalData.current = {
+        ...formData,
+        systemNote,
+      };
 
-      changeStage(stage + 1);
+      setReloadTrigger((prev) => !prev);
     } catch (error) {
       console.error("Failed to update stage 1:", error);
+    } finally {
+      setIsSaving(false);
     }
   }
 
-
   return (
-    <div>
       <div className="overflow-y-auto">
         {/* Referral */}
         <div className="mb-3">
           <label className="block mb-1 text-base font-bold">Referral</label>
           <input
             type="text"
-            value={referral}
-            onChange={(e) => setReferral(e.target.value)}
+          value={formData.referral}
+          onChange={(e) => handleChange("referral", e.target.value)}
             className="w-full rounded p-2 bg-gray-100"
           />
         </div>
@@ -203,10 +196,11 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           <div className="flex gap-4 justify-between items-center mb-3">
             <label className="block mb-1 text-base font-bold">Retainer</label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusRetainer)} ${statusRetainer === "In progress" ? "text-[#FF9500]" : "text-white"
-                } flex items-center justify-center rounded-4xl`}
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses.retainer
+            )} flex items-center justify-center rounded-4xl`}
             >
-              <p className="text-[12px] whitespace-nowrap">{statusRetainer}</p>
+            <p className="text-[12px] whitespace-nowrap">{statuses.retainer}</p>
             </div>
           </div>
           <div className="flex gap-4 justify-between flex-wrap">
@@ -216,11 +210,8 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
                   type="radio"
                   name="retainer"
                   value={val}
-                  checked={retainer.toLowerCase() === val.toLowerCase()}
-                  onChange={() => {
-                    setRetainer(val);
-                    setStatusRetainer(getStatus(val));
-                  }}
+                checked={formData.retainer.toLowerCase() === val.toLowerCase()}
+                onChange={() => handleChange("retainer", val)}
                 />
                 {val}
               </label>
@@ -231,28 +222,30 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
         {/* Declaration Form */}
         <div className="mt-5">
           <div className="flex gap-4 justify-between items-center mb-3">
-            <label className="block mb-1 text-base font-bold">Declaration form</label>
+          <label className="block mb-1 text-base font-bold">
+            Declaration form
+          </label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusDeclaration)} ${statusDeclaration === "In progress"
-                ? "text-[#FF9500]"
-                : "text-white"
-                } flex items-center justify-center rounded-4xl`}
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses.declaration
+            )} flex items-center justify-center rounded-4xl`}
             >
-              <p className="text-[12px] whitespace-nowrap">{statusDeclaration}</p>
-            </div>
+            <p className="text-[12px] whitespace-nowrap">
+              {statuses.declaration}
+            </p>
           </div>
-          <div className="flex  gap-4 justify-between flex-wrap">
+        </div>
+        <div className="flex gap-4 justify-between flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
                   type="radio"
                   name="declarationForm"
                   value={val}
-                  checked={declarationForm.toLowerCase() === val.toLowerCase()}
-                  onChange={() => {
-                    setDeclarationForm(val);
-                    setStatusDeclaration(getStatus(val));
-                  }}
+                checked={
+                  formData.declarationForm.toLowerCase() === val.toLowerCase()
+                }
+                onChange={() => handleChange("declarationForm", val)}
                 />
                 {val}
               </label>
@@ -260,17 +253,18 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           </div>
         </div>
 
-        {/* Declaration Form */}
+      {/* Contract Review */}
         <div className="mt-5">
           <div className="flex gap-4 justify-between items-center mb-3">
-            <label className="block mb-1 text-base font-bold">Contract Review</label>
+          <label className="block mb-1 text-base font-bold">
+            Contract Review
+          </label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusContract)} ${statusContract === "In progress"
-                ? "text-[#FF9500]"
-                : "text-white"
-                } flex items-center justify-center rounded-4xl`}
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses.contract
+            )} flex items-center justify-center rounded-4xl`}
             >
-              <p className="text-[12px] whitespace-nowrap">{statusContract}</p>
+            <p className="text-[12px] whitespace-nowrap">{statuses.contract}</p>
             </div>
           </div>
           <div className="flex gap-4 justify-between flex-wrap">
@@ -280,11 +274,10 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
                   type="radio"
                   name="contractReview"
                   value={val}
-                  checked={contractReview.toLowerCase() === val.toLowerCase()}
-                  onChange={() => {
-                    setContractReview(val);
-                    setStatusContract(getStatus(val));
-                  }}
+                checked={
+                  formData.contractReview.toLowerCase() === val.toLowerCase()
+                }
+                onChange={() => handleChange("contractReview", val)}
                 />
                 {val}
               </label>
@@ -296,6 +289,15 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
         <div className="mt-5">
           <div className="flex gap-4 justify-between items-center mb-3">
             <label className="block mb-1 text-base font-bold">Quote Type</label>
+          <div
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses.quoteType
+            )} flex items-center justify-center rounded-4xl`}
+          >
+            <p className="text-[12px] whitespace-nowrap">
+              {statuses.quoteType}
+            </p>
+          </div>
           </div>
           <div className="flex gap-4 flex-wrap">
             {["Variable", "Fixed"].map((val) => (
@@ -304,11 +306,8 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
                   type="radio"
                   name="quoteType"
                   value={val}
-                  checked={quoteType.toLowerCase() === val.toLowerCase()}
-                  onChange={() => {
-                    setQuoteType(val);
-                    setStatusQuoteType(getStatus(val));
-                  }}
+                checked={formData.quoteType.toLowerCase() === val.toLowerCase()}
+                onChange={() => handleChange("quoteType", val)}
                 />
                 {val}
               </label>
@@ -322,8 +321,8 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
             </label>
             <input
               type="text"
-              value={quoteAmount}
-              onChange={(e) => setQuoteAmount(e.target.value)}
+            value={formData.quoteAmount}
+            onChange={(e) => handleChange("quoteAmount", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -334,24 +333,22 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           <div className="flex gap-4 justify-between items-center mb-3">
             <label className="block mb-1 text-base font-bold">Tenants</label>
             <div
-              className={`w-[90px] h-[18px] ${bgcolor(statusTenants)} ${statusTenants === "In progress" ? "text-[#FF9500]" : "text-white"
-                } flex items-center justify-center rounded-4xl`}
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses.tenants
+            )} flex items-center justify-center rounded-4xl`}
             >
-              <p className="text-[12px] whitespace-nowrap">{statusTenants}</p>
-            </div>
+            <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
           </div>
-          <div className="flex  gap-4 justify-between flex-wrap">
+        </div>
+        <div className="flex gap-4 justify-between flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
               <label key={val} className="flex items-center gap-2">
                 <input
                   type="radio"
                   name="tenants"
                   value={val}
-                  checked={tenants.toLowerCase() === val.toLowerCase()}
-                  onChange={() => {
-                    setTenants(val);
-                    setStatusTenants(getStatus(val));
-                  }}
+                checked={formData.tenants.toLowerCase() === val.toLowerCase()}
+                onChange={() => handleChange("tenants", val)}
                 />
                 {val}
               </label>
@@ -366,8 +363,8 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
           </label>
           <input
             type="text"
-            value={systemNote}
-            onChange={(e) => setSystemNote(e.target.value)}
+          value={formData.systemNote}
+          onChange={(e) => handleChange("systemNote", e.target.value)}
             disabled
             className="w-full rounded p-2 bg-gray-100"
           />
@@ -379,8 +376,8 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
             Comment for client
           </label>
           <textarea
-            value={clientComment}
-            onChange={(e) => setClientComment(e.target.value)}
+          value={formData.clientComment}
+          onChange={(e) => handleChange("clientComment", e.target.value)}
             className="w-full rounded p-2 bg-gray-100"
           />
         </div>
@@ -393,10 +390,18 @@ export default function Stage1({ changeStage, data, reloadTrigger, setReloadTrig
             onClick={() => changeStage(stage - 1)}
             disabled={stage === 1}
           />
+        <div className="flex gap-2">
+          <Button
+            label={isSaving ? "Saving..." : "Save"}
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+            disabled={isSaving || !isChanged()}
+          />
           <Button
             label="Next"
             width="w-[100px]"
-            onClick={handleNextClick}
+            onClick={() => changeStage(stage + 1)}
           />
         </div>
       </div>

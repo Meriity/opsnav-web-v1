@@ -3,7 +3,12 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrigger }) {
+export default function Stage3({
+  changeStage,
+  data,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
   const stage = 3;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -17,7 +22,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
     { key: "water", label: "Water" },
     { key: "ownersCorp", label: "Owners Corp" },
     { key: "pexa", label: "PEXA" },
-    { key: "inviteBank", label: "Invite Bank" }
+    { key: "inviteBank", label: "Invite Bank" },
   ];
 
   const getStatus = (value) => {
@@ -51,7 +56,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
     }
     return {
       systemNote: systemNote || "",
-      clientComment: clientComment || ""
+      clientComment: clientComment || "",
     };
   }
 
@@ -73,14 +78,20 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
       newStatusState[key] = getStatus(value);
     });
 
-    const { systemNote: sn, clientComment: cc } = extractNotes(data.noteForClient);
+    const { systemNote: sn, clientComment: cc } = extractNotes(
+      data.noteForClient
+    );
 
     setFormState(newFormState);
     setStatusState(newStatusState);
     setSystemNote(sn);
     setClientComment(cc);
 
-    originalData.current = { ...newFormState, systemNote: sn, clientComment: cc };
+    originalData.current = {
+      ...newFormState,
+      systemNote: sn,
+      clientComment: cc,
+    };
   }, [data, reloadTrigger]);
 
   function isChanged() {
@@ -108,7 +119,7 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
     return `Pending: ${incomplete.join(", ")}`;
   };
 
-  async function handleNextClick() {
+  async function handleSave() {
     try {
       if (isChanged()) {
         const payload = {
@@ -117,13 +128,10 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
           noteForClient: `${updateNoteForClient()} - ${clientComment}`,
         };
 
-        console.log("Saving Stage 3:", payload);
         await api.upsertStageThree(payload);
-
         originalData.current = { ...formState, systemNote, clientComment };
-        setReloadTrigger?.(prev => !prev);
+        setReloadTrigger?.((prev) => !prev);
       }
-      changeStage(stage + 1);
     } catch (err) {
       console.error("Failed to save Stage 3:", err);
     }
@@ -167,7 +175,9 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* System Note */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">System Note for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          System Note for Client
+        </label>
         <input
           type="text"
           value={systemNote}
@@ -179,7 +189,9 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Client Comment */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">Comment for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          Comment for Client
+        </label>
         <textarea
           value={clientComment}
           onChange={(e) => setClientComment(e.target.value)}
@@ -189,8 +201,25 @@ export default function Stage3({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Buttons */}
       <div className="flex mt-10 justify-between">
-        <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
-        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
+        <Button
+          label="Back"
+          width="w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
+        />
+        <div className="flex gap-2">
+          <Button
+            label="Save"
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+          />
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={() => changeStage(stage + 1)}
+          />
+        </div>
       </div>
     </div>
   );
