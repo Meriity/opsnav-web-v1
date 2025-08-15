@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/userAPI";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import StageAPI from "../../../api/clientAPI";
 
-export default function CostComponent({ changeStage, reloadTrigger, setReloadTrigger }) {
+export default function CostComponent({
+  changeStage,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
   const stage = 7;
   const api = new ClientAPI();
+  const StagesAPI = new StageAPI();
   const { matterNumber } = useParams();
   const navigate = useNavigate();
 
@@ -33,19 +39,58 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
     "Other fee (4)": "",
     "Note 4": "",
     "Other (total)": "0",
-    "Other (total) Note":"",
+    "Other (total) Note": "",
     "Total Costs": "0",
     "Total Costs Note": "",
     "Quote Amount": "",
     "Quote Amount Note": "",
     "Invoice Amount": "",
     "Invoice Amount Note": "",
+    "Quote Type": "Variable",
   });
 
   const originalData = useRef({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const calculateTotals = (values = formValues) => {
+    const otherTotal = (
+      (parseFloat(values["Other fee (1)"]) || 0) +
+      (parseFloat(values["Other fee (2)"]) || 0) +
+      (parseFloat(values["Other fee (3)"]) || 0) +
+      (parseFloat(values["Other fee (4)"]) || 0)
+    ).toString();
+
+    const totalCosts = (
+      (parseFloat(values["VOI/CAF"]) || 0) +
+      (parseFloat(values["Title"]) || 0) +
+      (parseFloat(values["Plan"]) || 0) +
+      (parseFloat(values["Land Tax"]) || 0) +
+      (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
+      (parseFloat(values["Water Certificate"]) || 0) +
+      (parseFloat(otherTotal) || 0)
+    ).toString();
+
+    const quoteType = values["Quote Type"]?.toLowerCase() || "variable";
+    const quoteAmount = parseFloat(values["Quote Amount"]) || 0;
+
+    let invoiceAmount = "0";
+    if (quoteType === "fixed") {
+      invoiceAmount = values["Quote Amount"] || "0";
+    } else {
+      invoiceAmount = (parseFloat(totalCosts || 0) + quoteAmount).toString();
+    }
+
+    return {
+      ...values,
+      "Other (total)": otherTotal,
+      "Total Costs": totalCosts,
+      "Invoice Amount": invoiceAmount,
+    };
+  };
 
   useEffect(() => {
-    calculateTotals();
+    setFormValues((prev) => calculateTotals(prev));
   }, [
     formValues["Other fee (1)"],
     formValues["Other fee (2)"],
@@ -56,128 +101,100 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
     formValues["Plan"],
     formValues["Land Tax"],
     formValues["Land Information Certificate (Rates)"],
-    formValues["Water Certificate"]
+    formValues["Water Certificate"],
+    formValues["Quote Type"],
+    formValues["Quote Amount"],
   ]);
 
   useEffect(() => {
   async function fetchData() {
     try {
-      const stageResponse = await api.getStageOne(matterNumber);
-      const response = await api.getCost(matterNumber);
-      const cost = response;
-      const stage = stageResponse;
-      
-      console.log("Stage data:", stage);
+        setIsLoading(true);
+        const stageResponse = await StagesAPI.getAllStages(matterNumber);
+        const costData = stageResponse?.cost?.[0] || {};
 
-      // Initialize invoice amount
-      let invoiceAmount = cost.invoiceAmount?.$numberDecimal || "";
-      let quoteAmount = cost.quoteAmount?.$numberDecimal || "";
-      // Apply quote type logic if stage data exists
-      if (stage && stage.quoteType && stage.quoteAmount) {
-        console.log("Applying quote type logic");
-        if (stage.quoteType === "Fixed") {
-          invoiceAmount = stage.quoteAmount;
-          quoteAmount = stage.quoteAmount;
-          console.log("Fixed quote - invoice amount set to:", invoiceAmount,quoteAmount);
+        // Get quote info from stage1
+        const quoteType = stageResponse?.stage1?.quoteType || "Variable";
+        const quoteAmount =
+          stageResponse?.stage1?.quoteAmount?.$numberDecimal ||
+          stageResponse?.stage1?.quoteAmount ||
+          "";
+
+        // Calculate initial invoice amount
+        const totalCosts = (
+          (parseFloat(costData.voiCaf?.$numberDecimal) || 0) +
+          (parseFloat(costData.title?.$numberDecimal) || 0) +
+          (parseFloat(costData.plan?.$numberDecimal) || 0) +
+          (parseFloat(costData.landTax?.$numberDecimal) || 0) +
+          (parseFloat(costData.landInformationCertificate?.$numberDecimal) ||
+            0) +
+          (parseFloat(costData.waterCertificate?.$numberDecimal) || 0) +
+          (parseFloat(costData.otherTotal?.$numberDecimal) || 0)
+        ).toString();
+
+        let invoiceAmount = "";
+        if (quoteType.toLowerCase() === "fixed") {
+          invoiceAmount = quoteAmount;
         } else {
-          // Calculate total costs for non-fixed quotes
-           console.log("quoteAmount",stage.quoteAmount)
-          quoteAmount = stage.quoteAmount;
-         
-          const totalCosts = (
-            (parseFloat(cost.voiCaf?.$numberDecimal) || 0) +
-            (parseFloat(cost.title?.$numberDecimal) || 0) +
-            (parseFloat(cost.plan?.$numberDecimal) || 0) +
-            (parseFloat(cost.landTax?.$numberDecimal) || 0) +
-            (parseFloat(cost.landInformationCertificate?.$numberDecimal) || 0) +
-            (parseFloat(cost.waterCertificate?.$numberDecimal) || 0) +
-            (parseFloat(cost.otherTotal?.$numberDecimal) || 0)
+          invoiceAmount = (
+            parseFloat(totalCosts || 0) + parseFloat(quoteAmount || 0)
           ).toString();
-          
-          invoiceAmount = (parseFloat(totalCosts) + parseFloat(stage.quoteAmount)).toString();          
-          console.log("Non-fixed quote - calculated invoice amount:", invoiceAmount,quoteAmount);
-        }
       }
 
       const mapped = {
-        "VOI/CAF": cost.voiCaf?.$numberDecimal || "",
-        "VOI/CAF Note": cost.voiCafNote || "",
-        "Title": cost.title?.$numberDecimal || "",
-        "Title Note": cost.titleNote || "",
-        "Plan": cost.plan?.$numberDecimal || "",
-        "Plan Note": cost.planNote || "",
-        "Land Tax": cost.landTax?.$numberDecimal || "",
-        "Land Tax Note": cost.landTaxNote || "",
-        "Land Tax Amount": "", // optionally calculate if needed
+          "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
+          "VOI/CAF Note": costData.voiCafNote || "",
+          "Title": costData.title?.$numberDecimal || "",
+          "Title Note": costData.titleNote || "",
+          "Plan": costData.plan?.$numberDecimal || "",
+          "Plan Note": costData.planNote || "",
+          "Land Tax": costData.landTax?.$numberDecimal || "",
+          "Land Tax Note": costData.landTaxNote || "",
+          "Land Tax Amount": "",
         "Land Tax Amount Note": "",
-        "Land Information Certificate (Rates)": cost.landInformationCertificate?.$numberDecimal || "",
-        "Land Information Note": cost.landInformationCertificateNote || "",
-        "Water Certificate": cost.waterCertificate?.$numberDecimal || "",
-        "Water Certificate Note": cost.waterCertificateNote || "",
-        "Other fee (1)": cost.otherFee_1?.$numberDecimal || "",
-        "Note 1": cost.otherFee1Note || "",
-        "Other fee (2)": cost.otherFee_2?.$numberDecimal || "",
-        "Note 2": cost.otherFee2Note || "",
-        "Other fee (3)": cost.otherFee_3?.$numberDecimal || "",
-        "Note 3": cost.otherFee3Note || "",
-        "Other fee (4)": cost.otherFee_4?.$numberDecimal || "",
-        "Note 4": cost.otherFee4Note || "",
-        "Other (total)": cost.otherTotal?.$numberDecimal || "",
-        "Other (total) Note": cost.otherTotalNote || "",
-        "Total Costs": cost.totalCosts?.$numberDecimal || "",
-        "Total Costs Note": cost.totalCostsNote || "",
+          "Land Information Certificate (Rates)":
+            costData.landInformationCertificate?.$numberDecimal || "",
+          "Land Information Note":
+            costData.landInformationCertificateNote || "",
+          "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
+          "Water Certificate Note": costData.waterCertificateNote || "",
+          "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
+          "Note 1": costData.otherFee1Note || "",
+          "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
+          "Note 2": costData.otherFee2Note || "",
+          "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
+          "Note 3": costData.otherFee3Note || "",
+          "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
+          "Note 4": costData.otherFee4Note || "",
+          "Other (total)": costData.otherTotal?.$numberDecimal || "0",
+          "Other (total) Note": costData.otherTotalNote || "",
+          "Total Costs": costData.totalCosts?.$numberDecimal || "0",
+          "Total Costs Note": costData.totalCostsNote || "",
         "Quote Amount": quoteAmount,
-        "Quote Amount Note": cost.quoteAmountNote || "",
-        "Invoice Amount": invoiceAmount, // Use the calculated value
-        "Invoice Amount Note": cost.invoiceAmountNote || "",
-        "Quote Type": stage?.quoteType || "Fixed" // Add quote type to form state
-      };
+          "Quote Amount Note": costData.quoteAmountNote || "",
+          "Invoice Amount": invoiceAmount,
+          "Invoice Amount Note": costData.invoiceAmountNote || "",
+          "Quote Type": quoteType,
+        };
 
-      setFormValues(mapped);
-      originalData.current = mapped;
+        const calculatedMapped = calculateTotals(mapped);
+        setFormValues(calculatedMapped);
+        originalData.current = calculatedMapped;
     } catch (err) {
-      console.error("Failed to fetch cost data", err);
+        console.error("Failed to fetch data", err);
+      } finally {
+        setIsLoading(false);
     }
   }
 
   fetchData();
 }, [matterNumber, reloadTrigger]);
 
-  const calculateTotals = () => {
-    setFormValues(prevValues => {
-      // Calculate Other (total)
-      const otherTotal = (
-        (parseFloat(prevValues["Other fee (1)"]) || 0) +
-        (parseFloat(prevValues["Other fee (2)"]) || 0) +
-        (parseFloat(prevValues["Other fee (3)"]) || 0) +
-        (parseFloat(prevValues["Other fee (4)"]) || 0)
-      ).toString();
-
-      // Calculate Total Costs
-      const totalCosts = (
-        (parseFloat(prevValues["VOI/CAF"]) || 0) +
-        (parseFloat(prevValues["Title"]) || 0) +
-        (parseFloat(prevValues["Plan"]) || 0) +
-        (parseFloat(prevValues["Land Tax"]) || 0) +
-        (parseFloat(prevValues["Land Information Certificate (Rates)"]) || 0) +
-        (parseFloat(prevValues["Water Certificate"]) || 0) +
-        (parseFloat(otherTotal) || 0)
-      ).toString();
-
-      return {
-        ...prevValues,
-        "Other (total)": otherTotal,
-        "Total Costs": totalCosts
-      };
-    });
-  };
-
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
    const handleNumberChange = (field, value) => {
-    // Only allow numbers and decimal points
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
       handleChange(field, value);
     }
@@ -190,64 +207,80 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
   }
 
   async function handleSubmit() {
+    setIsSaving(true);
     try {
       if (!isChanged()) {
         console.log("No changes to submit");
+        navigate(-1);
         return;
       }
-      const payload = {
-        matterNumber: matterNumber,
-       voiCaf: parseFloat(formValues["VOI/CAF"]) || 0,
-      voiCafNote: formValues["VOI/CAF Note"],
-      title: parseFloat(formValues["Title"]) || 0,
-      titleNote: formValues["Title Note"],
-      plan: parseFloat(formValues["Plan"]) || 0,
-      planNote: formValues["Plan Note"],
-      landTax: parseFloat(formValues["Land Tax"]) || 0,
-      landTaxNote: formValues["Land Tax Note"],
-      landInformationCertificate: parseFloat(formValues["Land Information Certificate (Rates)"]) || 0,
-      landInformationCertificateNote: formValues["Land Information Note"],
-      waterCertificate: parseFloat(formValues["Water Certificate"]) || 0,
-      waterCertificateNote: formValues["Water Certificate Note"],
-      otherFee_1: parseFloat(formValues["Other fee (1)"]) || 0,
-      otherFee1Note: formValues["Note 1"],
-      otherFee_2: parseFloat(formValues["Other fee (2)"]) || 0,
-      otherFee2Note: formValues["Note 2"],
-      otherFee_3: parseFloat(formValues["Other fee (3)"]) || 0,
-      otherFee3Note: formValues["Note 3"],
-      otherFee_4: parseFloat(formValues["Other fee (4)"]) || 0,
-      otherFee4Note: formValues["Note 4"],
-      otherTotal: parseFloat(formValues["Other (total)"]) || 0,
-      otherTotalNote: formValues["Other (total) Note"],
-      totalCosts: parseFloat(formValues["Total Costs"]) || 0,
-      totalCostsNote: formValues["Total Costs Note"],
-      quoteAmount: parseFloat(formValues["Quote Amount"]) || 0,
-      quoteAmountNote: formValues["Quote Amount Note"],
-      invoiceAmount: parseFloat(formValues["Invoice Amount"]) || 0,
-      invoiceAmountNote: formValues["Invoice Amount Note"]
+
+      const formatNumber = (value) => {
+        if (value === "") return 0;
+        const num = parseFloat(value);
+        return isNaN(num) ? 0 : num;
       };
 
-      console.log("Saving cost data:", payload);
-      await api.upsertCost(payload);
-      setReloadTrigger(!reloadTrigger);
+      const payload = {
+        matterNumber: matterNumber,
+        voiCaf: formatNumber(formValues["VOI/CAF"]),
+      voiCafNote: formValues["VOI/CAF Note"],
+        title: formatNumber(formValues["Title"]),
+      titleNote: formValues["Title Note"],
+        plan: formatNumber(formValues["Plan"]),
+      planNote: formValues["Plan Note"],
+        landTax: formatNumber(formValues["Land Tax"]),
+      landTaxNote: formValues["Land Tax Note"],
+        landInformationCertificate: formatNumber(
+          formValues["Land Information Certificate (Rates)"]
+        ),
+      landInformationCertificateNote: formValues["Land Information Note"],
+        waterCertificate: formatNumber(formValues["Water Certificate"]),
+      waterCertificateNote: formValues["Water Certificate Note"],
+        otherFee_1: formatNumber(formValues["Other fee (1)"]),
+      otherFee1Note: formValues["Note 1"],
+        otherFee_2: formatNumber(formValues["Other fee (2)"]),
+      otherFee2Note: formValues["Note 2"],
+        otherFee_3: formatNumber(formValues["Other fee (3)"]),
+      otherFee3Note: formValues["Note 3"],
+        otherFee_4: formatNumber(formValues["Other fee (4)"]),
+      otherFee4Note: formValues["Note 4"],
+        otherTotal: formatNumber(formValues["Other (total)"]),
+      otherTotalNote: formValues["Other (total) Note"],
+        totalCosts: formatNumber(formValues["Total Costs"]),
+      totalCostsNote: formValues["Total Costs Note"],
+        quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
+        quoteAmount: formatNumber(formValues["Quote Amount"]),
+      quoteAmountNote: formValues["Quote Amount Note"],
+        invoiceAmount: formatNumber(formValues["Invoice Amount"]),
+        invoiceAmountNote: formValues["Invoice Amount Note"],
+      };
+
+      // Save cost data
+      const response = await api.upsertCost(payload);
+      console.log("Save successful:", response);
+
+      // const stageResponse =  await StagesAPI.upsertStageOne(matterNumber, {
+      //   quoteType: formValues["Quote Type"],
+      //   quoteAmount: formValues["Quote Amount"],
+      // });
+
+      // Update stage1 with quote information
+
+      setReloadTrigger((prev) => !prev);
       navigate(-1);
     } catch (err) {
-      console.error("Error submitting cost data:", err);
+      console.error("Full error:", err);
+    
+      
+    } finally {
+      setIsSaving(false);
     }
   }
-  
 
-  const renderTextField = (label) => (
-    <div className="mt-4 flex items-center justify-between" key={label}>
-      <label className="block mb-1 text-base font-bold pr-3">{label}</label>
-      <input
-        type="text"
-        value={formValues[label] || ""}
-        onChange={(e) => handleChange(label, e.target.value)}
-        className="rounded p-2 bg-gray-100"
-      />
-    </div>
-  );
+  if (isLoading) {
+    return <div className="p-4 text-center">Loading cost data...</div>;
+  }
 
   return (
     <div className="overflow-y-auto">
@@ -288,7 +321,7 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Title"]}
-              onChange={(e) =>  handleNumberChange("Title", e.target.value)}
+              onChange={(e) => handleNumberChange("Title", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -347,38 +380,21 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
           </div>
         </div>
 
-        {/* Land Tax Amount */}
-        {/* <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Land Tax Amount</div>
-          <div>
-            <input
-              type="number"
-              value={formValues["Land Tax Amount"]}
-              onChange={(e) => setFormValues({...formValues, "Land Tax Amount": e.target.value})}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Land Tax Amount Note"]}
-              onChange={(e) => setFormValues({...formValues, "Land Tax Amount Note": e.target.value})}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div> */}
-
-        {/* Continue with all other fields in the same pattern... */}
-        
         {/* Land Information Certificate (Rates) */}
         <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Land Information Certificate (Rates)</div>
+          <div className="font-bold text-gray-700">
+            Land Information Certificate (Rates)
+          </div>
           <div>
             <input
               type="text"
               value={formValues["Land Information Certificate (Rates)"]}
-              onChange={(e) => handleNumberChange("Land Information Certificate (Rates)", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange(
+                  "Land Information Certificate (Rates)",
+                  e.target.value
+                )
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -386,7 +402,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Land Information Note"]}
-              onChange={(e) => handleChange("Land Information Note", e.target.value)}
+              onChange={(e) =>
+                handleChange("Land Information Note", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
@@ -400,7 +418,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Water Certificate"]}
-              onChange={(e) => handleNumberChange("Water Certificate", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange("Water Certificate", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -408,7 +428,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Water Certificate Note"]}
-              onChange={(e) => handleChange("Water Certificate Note", e.target.value)}
+              onChange={(e) =>
+                handleChange("Water Certificate Note", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
@@ -422,7 +444,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Other fee (1)"]}
-              onChange={(e) => handleNumberChange("Other fee (1)", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange("Other fee (1)", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -430,20 +454,23 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Note 1"]}
-              onChange={(e) => handleChange( "Note 1", e.target.value)}
+              onChange={(e) => handleChange("Note 1", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
           </div>
         </div>
 
+        {/* Other fee (2) */}
         <div className="grid grid-cols-3 gap-4 items-center">
           <div className="font-bold text-gray-700">Other fee (2)</div>
           <div>
             <input
               type="text"
               value={formValues["Other fee (2)"]}
-              onChange={(e) => handleNumberChange("Other fee (2)", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange("Other fee (2)", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -458,13 +485,16 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
           </div>
         </div>
 
+        {/* Other fee (3) */}
         <div className="grid grid-cols-3 gap-4 items-center">
           <div className="font-bold text-gray-700">Other fee (3)</div>
           <div>
             <input
               type="text"
               value={formValues["Other fee (3)"]}
-              onChange={(e) => handleNumberChange("Other fee (3)", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange("Other fee (3)", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -479,13 +509,16 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
           </div>
         </div>
 
+        {/* Other fee (4) */}
         <div className="grid grid-cols-3 gap-4 items-center">
           <div className="font-bold text-gray-700">Other fee (4)</div>
           <div>
             <input
               type="text"
               value={formValues["Other fee (4)"]}
-              onChange={(e) => handleNumberChange("Other fee (4)", e.target.value)}
+              onChange={(e) =>
+                handleNumberChange("Other fee (4)", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -493,12 +526,14 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
              <input
               type="text"
               value={formValues["Note 4"]}
-              onChange={(e) => setForhandleChangemValues("Note 4", e.target.value)}
+              onChange={(e) => handleChange("Note 4", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
           </div>
         </div>
+
+        {/* Other (total) */}
         <div className="grid grid-cols-3 gap-4 items-center">
           <div className="font-bold text-gray-700">Other (total)</div>
           <div>
@@ -506,14 +541,16 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
               type="number"
               value={formValues["Other (total)"]}
               className="w-full rounded p-2 bg-gray-100"
-              readOnly // Added readOnly to prevent manual changes
+              readOnly
             />
           </div>
           <div>
             <input
               type="text"
               value={formValues["Other (total) Note"]}
-              onChange={(e) => handleChange("Other (total) Note", e.target.value)}
+              onChange={(e) =>
+                handleChange("Other (total) Note", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
@@ -549,7 +586,6 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="number"
               value={formValues["Quote Amount"]}
-              onChange={(e) => handleNumberChange("Quote Amount", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
               readOnly
             />
@@ -558,7 +594,9 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Quote Amount Note"]}
-              onChange={(e) => handleChange("Quote Amount Note", e.target.value)}
+              onChange={(e) =>
+                handleChange("Quote Amount Note", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
@@ -572,7 +610,6 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="number"
               value={formValues["Invoice Amount"]}
-              onChange={(e) => handleNumberChange("Invoice Amount", e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
               readOnly
             />
@@ -581,31 +618,33 @@ export default function CostComponent({ changeStage, reloadTrigger, setReloadTri
             <input
               type="text"
               value={formValues["Invoice Amount Note"]}
-              onChange={(e) => handleChange("Invoice Amount Note", e.target.value)}
+              onChange={(e) =>
+                handleChange("Invoice Amount Note", e.target.value)
+              }
               className="w-full rounded p-2 bg-gray-100"
               placeholder="Enter Note"
             />
           </div>
         </div>
       </div>
-       {/* <div className="space-y-4">
-        {Object.keys(formValues).map((field) => (
-          <div key={field} className="grid grid-cols-3 gap-4 items-center">
-            <div className="font-bold text-gray-700">{field}</div>
-           
-            <div> {renderTextField(field)}</div>
-          </div>
-        ))}
-      </div>  */}
 
       {/* Buttons Row */}
       <div className="grid grid-cols-3 gap-4 mt-10">
         <div>
-          <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
+          <Button
+            label="Back"
+            width="w-[100px]"
+            onClick={() => changeStage(stage - 1)}
+          />
         </div>
-        <div></div> {/* Empty column to align buttons properly */}
+        <div></div>
         <div className="flex justify-end">
-          <Button label="Save and Exit" width="w-[100px]" onClick={handleSubmit} />
+          <Button
+            label={isSaving ? "Saving..." : "Save and Exit"}
+            width="w-[100px]"
+            onClick={handleSubmit}
+            disabled={isSaving}
+          />
         </div>
       </div>
     </div>

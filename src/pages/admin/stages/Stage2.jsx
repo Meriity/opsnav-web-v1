@@ -88,14 +88,12 @@ export default function Stage2({
 
     const noteA = extractNotes(data.noteForClientA);
     const noteB = extractNotes(data.noteForClientB);
-
-    // Format dates to YYYY-MM-DD for date inputs
+    console.log("data", data);
     const formatDate = (dateString) => {
       if (!dateString) return "";
       const date = new Date(dateString);
       return date.toISOString().split("T")[0];
     };
-
     setSignedContract(data.signedContract || "");
     setKeyDates(data.sendKeyDates || "");
     setVoi(data.voi || "");
@@ -190,7 +188,7 @@ export default function Stage2({
     return Object.keys(current).some((key) => current[key] !== original[key]);
   }
 
-  async function handleNextClick() {
+  async function handleSave() {
     const updateNoteAForClient = (
       voi_value,
       caf_value,
@@ -272,10 +270,9 @@ export default function Stage2({
 
         await api.upsertStageTwo(matterNumber, checkFormStatus(), payload);
         originalData.current = payload;
+        console.log("Stage 2 updated!");
         setReloadTrigger((prev) => !prev);
       }
-
-      changeStage(stage + 1);
     } catch (error) {
       console.error("Failed to update stage 2:", error);
     }
@@ -447,8 +444,21 @@ export default function Stage2({
           label="Back"
           width="w-[100px]"
           onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
         />
-        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
+        <div className="flex gap-2">
+          <Button
+            label="Save"
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+          />
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={() => changeStage(stage + 1)}
+          />
+        </div>
       </div>
     </div>
   );

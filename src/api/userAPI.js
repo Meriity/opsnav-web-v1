@@ -1,5 +1,4 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 class ClientAPI {
   constructor() {
     this.baseUrl = BASE_URL;
@@ -149,7 +148,7 @@ class ClientAPI {
   }
 
   // Insert/Update Cost
-  async upsertCost(  additionalData = {}) {
+  async upsertCost(additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
