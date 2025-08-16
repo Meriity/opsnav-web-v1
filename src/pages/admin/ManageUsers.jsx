@@ -133,7 +133,7 @@ export default function ManageUsers() {
   const handleReset = async (email) => {
     try {
       setIsLoading(true);
-      await api.resetPass(email);
+      await api.resetPassword(email);
       toast.success("Reset password link sent successfully!");
     } catch (err) {
       toast.success("Something went wrong!");

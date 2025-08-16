@@ -480,13 +480,14 @@ class ClientAPI {
   async setPassword(token, password) {
     try {
       const response = await fetch(`${this.baseUrl}/client-view/set-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token,
-          password})
+          password,
+        }),
       });
       
       if (!response.ok) {
@@ -495,7 +496,7 @@ class ClientAPI {
       
       return await response.json();
     } catch (error) {
-      console.error('Error setting password:', error);
+      console.error("Error setting password:", error);
       throw error;
     }
   }

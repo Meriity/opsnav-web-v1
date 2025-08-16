@@ -3,7 +3,12 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrigger }) {
+export default function Stage6({
+  changeStage,
+  data,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
   const stage = 6;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -14,7 +19,7 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
     finalLetterToClient: "Final Letter to Client",
     finalLetterToAgent: "Final Letter to Agent",
     invoiced: "Invoiced",
-    closeMatter: "Close Matter"
+    closeMatter: "Close Matter",
   };
 
   const getStatus = (value) => {
@@ -27,10 +32,14 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
   const bgcolor = (status) => {
     switch (status) {
-      case "In progress": return "bg-[#FFEECF]";
-      case "Completed": return "bg-[#00A506]";
-      case "Not Completed": return "bg-[#FF0000]";
-      default: return "";
+      case "In progress":
+        return "bg-[#FFEECF]";
+      case "Completed":
+        return "bg-[#00A506]";
+      case "Not Completed":
+        return "bg-[#FF0000]";
+      default:
+        return "";
     }
   };
 
@@ -57,34 +66,36 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
     originalData.current = {
       ...newFormState,
-      systemNote: data.noteForClient || ""
+      systemNote: data.noteForClient || "",
     };
   }, [data, reloadTrigger]);
 
   function isChanged() {
     const current = {
       ...formState,
-      systemNote
+      systemNote,
     };
     const original = originalData.current;
     return Object.keys(current).some((key) => current[key] !== original[key]);
   }
 
   function generateSystemNote() {
-    const incomplete = Object.entries(fieldMap).filter(([key, label]) => {
+    const incomplete = Object.entries(fieldMap)
+      .filter(([key, label]) => {
       return formState[label]?.toLowerCase() !== "yes";
-    }).map(([key, label]) => label);
+      })
+      .map(([key, label]) => label);
 
     if (incomplete.length === 0) return "All tasks completed";
     return `Pending: ${incomplete.join(", ")}`;
   }
 
-  async function handleNextClick() {
+  async function handleSave() {
     try {
       if (isChanged()) {
         const payload = {
           matterNumber,
-          noteForClient: systemNote
+          noteForClient: systemNote,
         };
 
         Object.entries(fieldMap).forEach(([key, label]) => {
@@ -96,13 +107,10 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
         originalData.current = {
           ...formState,
-          systemNote
+          systemNote,
         };
-
-        setReloadTrigger?.(prev => !prev);
+        setReloadTrigger?.((prev) => !prev);
       }
-
-      changeStage(stage + 1);
     } catch (err) {
       console.error("Failed to save Stage 6:", err);
     }
@@ -114,7 +122,9 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
-            statusState[label] === "In progress" ? "text-[#FF9500]" : "text-white"
+            statusState[label] === "In progress"
+              ? "text-[#FF9500]"
+              : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
           <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
@@ -147,13 +157,19 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
       {/* System Note */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">System Note for Client</label>
+          <label className="block mb-1 text-base font-bold">
+            System Note for Client
+          </label>
           <div
             className={`w-[90px] h-[18px] ${bgcolor(getStatus(systemNote))} ${
-              getStatus(systemNote) === "In progress" ? "text-[#FF9500]" : "text-white"
+              getStatus(systemNote) === "In progress"
+                ? "text-[#FF9500]"
+                : "text-white"
             } flex items-center justify-center rounded-4xl`}
           >
-            <p className="text-[12px] whitespace-nowrap">{getStatus(systemNote)}</p>
+            <p className="text-[12px] whitespace-nowrap">
+              {getStatus(systemNote)}
+            </p>
           </div>
         </div>
         <input
@@ -166,8 +182,25 @@ export default function Stage6({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Buttons */}
       <div className="flex mt-10 justify-between">
-        <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
-        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
+        <Button
+          label="Back"
+          width="w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
+        />
+        <div className="flex gap-2">
+          <Button
+            label="Save"
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+          />
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={() => changeStage(stage + 1)}
+          />
+        </div>
       </div>
     </div>
   );
