@@ -172,7 +172,7 @@ class ClientAPI {
   async getClients() {
     try {
       const response = await fetch(
-        'https://opsnav-app-service-871399330172.us-central1.run.app/user/clients/active',
+        'https://opsnav-app-service-dev-871399330172.us-central1.run.app/user/clients/active',
         {
           method: "GET",
           headers: this.getHeaders(),
