@@ -350,13 +350,13 @@ export default function Stage1({
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
           <label className="block mb-1 text-base font-bold">Tenants</label>
-          {/* <div
+          <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
             >
             <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
-          </div> */}
+          </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
           {["Yes", "No", "Processing", "N/R"].map((val) => (
