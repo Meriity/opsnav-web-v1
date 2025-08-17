@@ -30,26 +30,6 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Check matter number when input loses focus
-  const handleMatterNumberBlur = async () => {
-    if (!formData.matterNumber) return;
-
-    setIsCheckingMatterNumber(true);
-    try {
-      const exists = await checkMatterNumberExists(formData.matterNumber);
-      if (exists) {
-        setMatterNumberError("This matter number already exists");
-      }
-    } catch (error) {
-      console.error("Error checking matter number:", error);
-      toast.error("Error checking matter number", {
-        position: "bottom-center",
-      });
-    } finally {
-      setIsCheckingMatterNumber(false);
-    }
-  };
-
   async function checkMatterNumberExists(number) {
     try {
       const api = new ClientAPI();
@@ -151,7 +131,6 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                   name="matterNumber"
                   value={formData.matterNumber}
                   onChange={handleChange}
-                  onBlur={handleMatterNumberBlur}
                   pattern="[0-9]*"
                   inputMode="numeric"
                   className={`w-full px-4 py-2 rounded-md border ${

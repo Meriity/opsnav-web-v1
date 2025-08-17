@@ -21,24 +21,41 @@ export default function Stage4({
   };
 
   const getStatus = (value) => {
-    if (!value) return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
-    if (val === "no") return "Not Completed";
-    return "In progress";
+    if (!value) return "Not Completed"; // Default to red
+    const val = value.toLowerCase().trim();
+    if (
+      val === "yes" ||
+      val === "na" ||
+      val === "n/a" ||
+      val === "nr" ||
+      val === "n/r"
+    )
+      return "Completed"; // Green
+    if (val === "no") return "Not Completed"; // Red
+    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    return "Not Completed"; // Fallback to red
   };
 
+  // function bgcolor(status) {
+  //   switch (status) {
+  //     case "In progress":
+  //       return "bg-[#FFEECF]";
+  //     case "Completed":
+  //       return "bg-[#00A506]";
+  //     case "Not Completed":
+  //       return "bg-[#FF0000]";
+  //     default:
+  //       return "";
+  //   }
+  // }
+
   function bgcolor(status) {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
+    const statusColors = {
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+      "In progress": "bg-[#FFEECF] text-[#FF9500]",
+    };
+    return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
   function extractNotes(note = "") {
@@ -113,10 +130,11 @@ export default function Stage4({
   }
 
   function generateSystemNote() {
+    const greenValues = ["yes", "na", "n/a", "nr", "n/r"];
     const incomplete = Object.keys(fieldMap)
       .filter((key) => {
         const label = fieldMap[key];
-        return formState[label]?.toLowerCase() !== "yes";
+        return !greenValues.includes(formState[label]?.toLowerCase());
       })
       .map((key) => fieldMap[key]);
 
