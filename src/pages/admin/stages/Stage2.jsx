@@ -22,25 +22,44 @@ export default function Stage2({
   const { matterNumber } = useParams();
   const originalData = useRef({});
 
+  // const getStatus = (value) => {
+  //   if (!value) return "In progress";
+  //   const val = value.toLowerCase();
+  //   if (val === "yes") return "Completed";
+  //   if (val === "no") return "Not Completed";
+  //   return "In progress";
+  // };
+
   const getStatus = (value) => {
-    if (!value) return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
-    if (val === "no") return "Not Completed";
-    return "In progress";
+    if (!value) return "Not Completed"; // Default to red
+    const val = value.toLowerCase().trim();
+    if (val === "yes" || val === "nr" || val === "n/r" || val === "nr")
+      return "Completed"; // Green
+    if (val === "no") return "Not Completed"; // Red
+    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    return "Not Completed"; // Fallback to red
   };
 
+  // function bgcolor(status) {
+  //   switch (status) {
+  //     case "In progress":
+  //       return "bg-[#FFEECF]";
+  //     case "Completed":
+  //       return "bg-[#00A506]";
+  //     case "Not Completed":
+  //       return "bg-[#FF0000]";
+  //     default:
+  //       return "";
+  //   }
+  // }
+
   function bgcolor(status) {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
+    const statusColors = {
+      Completed: "bg-[#00A506] text-white", // Green
+      "Not Completed": "bg-[#FF0000] text-white", // Red
+      "In progress": "bg-[#FFEECF] text-[#FF9500]", // Yellow (amber)
+    };
+    return statusColors[status] || "bg-[#FF0000] text-white"; // Default to red
   }
 
   const extractNotes = (note = "") => {

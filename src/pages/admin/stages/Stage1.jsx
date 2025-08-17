@@ -37,20 +37,36 @@ export default function Stage1({
   const { matterNumber } = useParams();
 
   const getStatus = (value) => {
-    if (typeof value !== "string") return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
+    if (typeof value !== "string") return "Not Completed"; // Default for new clients
+
+    const val = value.toLowerCase().trim();
+
+    // Completed statuses
+    if (
+      val === "yes" ||
+      val === "nr" ||
+      val === "n/r" ||
+      val === "na" ||
+      val === "n/a"
+    )
+      return "Completed";
+
+    // Not Completed statuses
     if (val === "no") return "Not Completed";
-    return "In progress";
+
+    // In progress statuses
+    if (val === "processing" || val === "in progress") return "In progress";
+
+    return "Not Completed"; // Default fallback
   };
 
   function bgcolor(status) {
     const statusColors = {
-      "In progress": "bg-[#FF9500] text-white",
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
+      Completed: "bg-[#00A506] text-white", // Green
+      "Not Completed": "bg-[#FF0000] text-white", // Red
+      "In progress": "bg-[#FFEECF] text-[#FF9500]", // Amber/Yellow
     };
-    return statusColors[status] || "bg-[#F3F7FF] text-black";
+    return statusColors[status] || "bg-[#FF0000] text-white"; // Default to red
   }
 
   function extractNotes(note = "") {
@@ -127,13 +143,15 @@ export default function Stage1({
 
   const generateSystemNote = () => {
     const { retainer, declarationForm, contractReview } = formData;
-      const greenValues = ["Yes", "yes", "NR", "nr", "NA", "na"];
+    const greenValues = ["yes", "nr", "n/r", "na", "n/a"];
 
-    const isRetainerGreen = greenValues.includes(retainer);
-    const isDeclarationGreen = greenValues.includes(declarationForm);
-    const isContractGreen = greenValues.includes(contractReview);
+    const isRetainerGreen = greenValues.includes(retainer.toLowerCase());
+    const isDeclarationGreen = greenValues.includes(
+      declarationForm.toLowerCase()
+    );
+    const isContractGreen = greenValues.includes(contractReview.toLowerCase());
 
-      if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
+    if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
       return "Retainer, Declaration and Contract Review not received";
     }
     if (!isRetainerGreen) return "Retainer not received";
@@ -151,8 +169,8 @@ export default function Stage1({
       const systemNote = generateSystemNote();
       const noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
-        const payload = {
-          matterNumber,
+      const payload = {
+        matterNumber,
         referral: formData.referral,
         retainer: formData.retainer,
         declarationForm: formData.declarationForm,
@@ -161,9 +179,9 @@ export default function Stage1({
         quoteAmount: formData.quoteAmount,
         tenants: formData.tenants,
         noteForClient,
-        };
+      };
 
-        await api.upsertStageOne(payload);
+      await api.upsertStageOne(payload);
 
       originalData.current = {
         ...formData,
@@ -179,117 +197,117 @@ export default function Stage1({
   }
 
   return (
-      <div className="overflow-y-auto">
-        {/* Referral */}
-        <div className="mb-3">
-          <label className="block mb-1 text-base font-bold">Referral</label>
-          <input
-            type="text"
+    <div className="overflow-y-auto">
+      {/* Referral */}
+      <div className="mb-3">
+        <label className="block mb-1 text-base font-bold">Referral</label>
+        <input
+          type="text"
           value={formData.referral}
           onChange={(e) => handleChange("referral", e.target.value)}
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
 
-        {/* Retainer */}
-        <div className="mt-5">
-          <div className="flex gap-4 justify-between items-center mb-3">
-            <label className="block mb-1 text-base font-bold">Retainer</label>
-            <div
+      {/* Retainer */}
+      <div className="mt-5">
+        <div className="flex gap-4 justify-between items-center mb-3">
+          <label className="block mb-1 text-base font-bold">Retainer</label>
+          <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.retainer
             )} flex items-center justify-center rounded-4xl`}
-            >
+          >
             <p className="text-[12px] whitespace-nowrap">{statuses.retainer}</p>
-            </div>
-          </div>
-          <div className="flex gap-4 justify-between flex-wrap">
-            {["Yes", "No", "Processing", "N/R"].map((val) => (
-              <label key={val} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="retainer"
-                  value={val}
-                checked={formData.retainer.toLowerCase() === val.toLowerCase()}
-                onChange={() => handleChange("retainer", val)}
-                />
-                {val}
-              </label>
-            ))}
           </div>
         </div>
+        <div className="flex gap-4 justify-between flex-wrap">
+          {["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label key={val} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="retainer"
+                value={val}
+                checked={formData.retainer?.toLowerCase() === val.toLowerCase()}
+                onChange={() => handleChange("retainer", val)}
+              />
+              {val}
+            </label>
+          ))}
+        </div>
+      </div>
 
-        {/* Declaration Form */}
-        <div className="mt-5">
-          <div className="flex gap-4 justify-between items-center mb-3">
+      {/* Declaration Form */}
+      <div className="mt-5">
+        <div className="flex gap-4 justify-between items-center mb-3">
           <label className="block mb-1 text-base font-bold">
             Declaration form
           </label>
-            <div
+          <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.declaration
             )} flex items-center justify-center rounded-4xl`}
-            >
+          >
             <p className="text-[12px] whitespace-nowrap">
               {statuses.declaration}
             </p>
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
-            {["Yes", "No", "Processing", "N/R"].map((val) => (
-              <label key={val} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="declarationForm"
-                  value={val}
+          {["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label key={val} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="declarationForm"
+                value={val}
                 checked={
                   formData.declarationForm.toLowerCase() === val.toLowerCase()
                 }
                 onChange={() => handleChange("declarationForm", val)}
-                />
-                {val}
-              </label>
-            ))}
-          </div>
+              />
+              {val}
+            </label>
+          ))}
         </div>
+      </div>
 
       {/* Contract Review */}
-        <div className="mt-5">
-          <div className="flex gap-4 justify-between items-center mb-3">
+      <div className="mt-5">
+        <div className="flex gap-4 justify-between items-center mb-3">
           <label className="block mb-1 text-base font-bold">
             Contract Review
           </label>
-            <div
+          <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.contract
             )} flex items-center justify-center rounded-4xl`}
-            >
+          >
             <p className="text-[12px] whitespace-nowrap">{statuses.contract}</p>
-            </div>
           </div>
-          <div className="flex gap-4 justify-between flex-wrap">
-            {["Yes", "No", "Processing", "N/R"].map((val) => (
-              <label key={val} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="contractReview"
-                  value={val}
+        </div>
+        <div className="flex gap-4 justify-between flex-wrap">
+          {["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label key={val} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="contractReview"
+                value={val}
                 checked={
                   formData.contractReview.toLowerCase() === val.toLowerCase()
                 }
                 onChange={() => handleChange("contractReview", val)}
-                />
-                {val}
-              </label>
-            ))}
-          </div>
+              />
+              {val}
+            </label>
+          ))}
         </div>
+      </div>
 
-        {/* Quote Type */}
-        <div className="mt-5">
-          <div className="flex gap-4 justify-between items-center mb-3">
-            <label className="block mb-1 text-base font-bold">Quote Type</label>
-          <div
+      {/* Quote Type */}
+      <div className="mt-5">
+        <div className="flex gap-4 justify-between items-center mb-3">
+          <label className="block mb-1 text-base font-bold">Quote Type</label>
+          {/* <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.quoteType
             )} flex items-center justify-center rounded-4xl`}
@@ -297,42 +315,42 @@ export default function Stage1({
             <p className="text-[12px] whitespace-nowrap">
               {statuses.quoteType}
             </p>
-          </div>
-          </div>
-          <div className="flex gap-4 flex-wrap">
-            {["Variable", "Fixed"].map((val) => (
-              <label key={val} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="quoteType"
-                  value={val}
+          </div> */}
+        </div>
+        <div className="flex gap-4 flex-wrap">
+          {["Variable", "Fixed"].map((val) => (
+            <label key={val} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="quoteType"
+                value={val}
                 checked={formData.quoteType.toLowerCase() === val.toLowerCase()}
                 onChange={() => handleChange("quoteType", val)}
-                />
-                {val}
-              </label>
-            ))}
-          </div>
-
-          {/* Quote Amount */}
-          <div className="mt-5">
-            <label className="block mb-1 text-base font-bold">
-              Quote amount (incl GST)
+              />
+              {val}
             </label>
-            <input
-              type="text"
-            value={formData.quoteAmount}
-            onChange={(e) => handleChange("quoteAmount", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
+          ))}
         </div>
 
-        {/* Tenants */}
+        {/* Quote Amount */}
         <div className="mt-5">
-          <div className="flex gap-4 justify-between items-center mb-3">
-            <label className="block mb-1 text-base font-bold">Tenants</label>
-            <div
+          <label className="block mb-1 text-base font-bold">
+            Quote amount (incl GST)
+          </label>
+          <input
+            type="text"
+            value={formData.quoteAmount}
+            onChange={(e) => handleChange("quoteAmount", e.target.value)}
+            className="w-full rounded p-2 bg-gray-100"
+          />
+        </div>
+      </div>
+
+      {/* Tenants */}
+      <div className="mt-5">
+        <div className="flex gap-4 justify-between items-center mb-3">
+          <label className="block mb-1 text-base font-bold">Tenants</label>
+          <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
@@ -341,55 +359,55 @@ export default function Stage1({
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
-            {["Yes", "No", "Processing", "N/R"].map((val) => (
-              <label key={val} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="tenants"
-                  value={val}
+          {["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label key={val} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="tenants"
+                value={val}
                 checked={formData.tenants.toLowerCase() === val.toLowerCase()}
                 onChange={() => handleChange("tenants", val)}
-                />
-                {val}
-              </label>
-            ))}
-          </div>
+              />
+              {val}
+            </label>
+          ))}
         </div>
+      </div>
 
-        {/* System Note for Client */}
-        <div className="mt-5">
-          <label className="block mb-1 text-base font-bold">
-            System note for client
-          </label>
-          <input
-            type="text"
+      {/* System Note for Client */}
+      <div className="mt-5">
+        <label className="block mb-1 text-base font-bold">
+          System note for client
+        </label>
+        <input
+          type="text"
           value={formData.systemNote}
           onChange={(e) => handleChange("systemNote", e.target.value)}
-            disabled
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
 
-        {/* Comment for Client */}
-        <div className="mt-5">
-          <label className="block mb-1 text-base font-bold">
-            Comment for client
-          </label>
-          <textarea
+      {/* Comment for Client */}
+      <div className="mt-5">
+        <label className="block mb-1 text-base font-bold">
+          Comment for client
+        </label>
+        <textarea
           value={formData.clientComment}
           onChange={(e) => handleChange("clientComment", e.target.value)}
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
 
-        {/* Buttons */}
-        <div className="flex mt-10 justify-between">
-          <Button
-            label="Back"
-            width="w-[100px]"
-            onClick={() => changeStage(stage - 1)}
-            disabled={stage === 1}
-          />
+      {/* Buttons */}
+      <div className="flex mt-10 justify-between">
+        <Button
+          label="Back"
+          width="w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
+        />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving..." : "Save"}
