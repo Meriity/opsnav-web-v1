@@ -24,39 +24,44 @@ const useArchivedClientStore = create((set) => ({
   fetchArchivedClients: async () => {
     set({ loading: true });
     const api = new ClientAPI();
-    try {
-      const res = await api.getArchivedClients();
+ try {
+  const res = await api.getArchivedClients();
 
-      const mapped = res.data.map((client, index) => {
-        // Helper function to safely format dates
-        const formatDate = (dateString) => {
-          if (!dateString) return "N/A";
-          try {
-            const date = new Date(dateString);
-            return isNaN(date.getTime()) ? "N/A" : date.toISOString().split('T')[0];
-          } catch {
-            return "N/A";
-          }
-        };
+  const mapped = res.clients.map((client, index) => {
+    // Helper function to safely format dates
+    const formatDate = (dateString) => {
+      if (!dateString) return "N/A";
+      try {
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? "N/A" : date.toISOString().split("T")[0];
+      } catch {
+        return "N/A";
+      }
+    };
 
-        return {
-          id: index + 1,
-          matternumber: client.MATTER_NUMBER || "N/A",
-          client_name: client.CLIENT_NAME || "N/A",
-          property_address: client.PROPERTY_ADDRESS || "N/A",
-          state: client.STATE || "N/A",
-          type: client.CLIENT_TYPE || "N/A",
-          matter_date: formatDate(client.MATTER_DATE),
-          settlement_date: formatDate(client.SETTLEMENT_DATE),
-          status: client.CLOSE_MATTER || "N/A",
-          // Additional fields from API
-          data_entry_by: client.DATA_ENTRY_BY,
-          referral: client.REFERRAL,
-          contract_price: client.CONTRACT_PRICE?.$numberDecimal || "0.00",
-          council: client.COUNCIL,
-          invoiced: client.INVOICED
-        };
-      });
+    return {
+      id: index + 1,
+      matternumber: client.matterNumber || "N/A",
+      client_name: client.clientName || "N/A",
+      property_address: client.propertyAddress || "N/A",
+      state: client.state || "N/A",
+      type: client.clientType || "N/A",
+      matter_date: formatDate(client.matterDate),
+      settlement_date: formatDate(client.settlementDate),
+      status: client.closeMatter || "N/A",
+
+      // Additional fields
+      data_entry_by: client.dataEntryBy || "N/A",
+      referral: client.referral || "N/A", // not always in API, safe check
+      contract_price:
+        client.costData?.[0]?.quoteAmount?.$numberDecimal || "0.00",
+      council: client.council || "N/A", // not always in API, safe check
+      invoiced: client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
+
+      // Optional: if you want total costs too
+      total_costs: client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
+    };
+  });
 
       set({ archivedClients: mapped, isFetched: true });
     } catch (err) {

@@ -323,7 +323,7 @@ class ClientAPI {
   async getArchivedClients() {
     try {
       const response = await fetch(
-        `${BASE_URL}/clients/settled`,
+        `${BASE_URL}/user/clients/archived`,
         {
           method: "GET",
           headers: this.getHeaders(),

@@ -67,85 +67,95 @@ const StageCard = ({ stage, stageIndex }) => {
   }
 
   return (
-    <motion.div
-      className="relative overflow-hidden p-6 rounded-xl border border-white/40 bg-white/30 backdrop-blur-lg shadow-sm mb-5 hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-      }}
-      transition={{ duration: 0.5 }}
-    >
+<motion.div
+  className="relative group overflow-hidden p-6 rounded-xl border border-white/40 
+             bg-white/30 shadow-sm mb-5 
+             hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
+  variants={{
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  }}
+  transition={{ duration: 0.5 }}
+>
+ 
+  <div
+    className="absolute top-1/2 left-1/2 
+               -translate-x-1/2 -translate-y-1/2 
+               w-3/4 h-3/4 
+               bg-sky-400 opacity-20 blur-3xl rounded-full 
+               hidden group-hover:block z-0 transition duration-500"
+  ></div>
 
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-3/4 h-3/4 bg-sky-400 opacity-20 blur-3xl rounded-full"></div>
+  {/* Card Content */}
+  <div className="relative z-10">
+    <div className="flex justify-between items-start mb-4">
+      <div>
+        <h3 className="text-lg font-bold text-slate-800">
+          {stage.stageName}
+        </h3>
+        <p
+          className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
+        >
+          {statusLabel}
+        </p>
+      </div>
+      <div className="text-3xl font-light text-slate-400">
+        0{getNextStageIndex(stageIndex)}
+      </div>
+    </div>
 
+    <div className="space-y-3 mb-5 flex">
+      <div className="w-full">
+        {allTasks.map((task) => {
+          const status = task.status?.toLowerCase();
+          let icon = (
+            <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
+          );
+          if (status === "yes" || status === "nr") {
+            icon = (
+              <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+            );
+          } else if (status === "no") {
+            icon = (
+              <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+            );
+          } else if (status === "processing") {
+            icon = (
+              <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
+            );
+          }
+          return (
+            <div
+  key={task.title}
+  className="flex items-center text-sm text-slate-700 mt-2 w-40 sm:w-auto"
+>
+              {icon}
+              <span>{task.title}</span>
+            </div>
+          );
+        })}
+      </div>
+     <div className="absolute right-5 sm:right-2">
+  <img src={stage.svg} alt="" className="h-15 sm:w-auto" />
+</div>
+    </div>
 
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">
-            {stage.stageName}
-          </h3>
-          <p
-            className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
-          >
-            {statusLabel}
+    {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
+      <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
+        <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
+          <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
+            <NotepadText className="w-4 h-4" />
+            Notes
           </p>
-        </div>
-        <div className="text-3xl font-light text-slate-400">
-          0{getNextStageIndex(stageIndex)}
-        </div>
+          {stage.data.noteText && <p>{stage.data.noteText}</p>}
+          {stage.data.rows[0]?.noteText && (
+            <p>{stage.data.rows[0].noteText}</p>
+          )}
+        </blockquote>
       </div>
-
-      <div className="space-y-3 mb-5 flex">
-        <div>
-          {allTasks.map((task, index) => {
-            const status = task.status?.toLowerCase();
-            let icon = (
-              <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
-            );
-            if (status === "yes" || status === "nr") {
-              icon = (
-                <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-              );
-            } else if (status === "no") {
-              icon = (
-                <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
-              );
-            } else if (status === "processing") {
-              icon = (
-                <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
-              );
-            }
-            return (
-              <div
-                key={task.title}
-                className="flex items-center text-sm text-slate-700 mt-2"
-              >
-                {icon}
-                <span>{task.title}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div className="absolute right-5">
-          <img src={stage.svg} alt="" style={{ height: "60px" }} />
-        </div>
-      </div>
-
-      {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-        <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
-          <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
-            <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
-              <NotepadText className="w-4 h-4" />
-              Notes
-            </p>
-            {stage.data.noteText && <p>{stage.data.noteText}</p>}
-            {stage.data.rows[0]?.noteText && (
-              <p>{stage.data.rows[0].noteText}</p>
-            )}
-          </blockquote>
-        </div>
-      )}
-    </motion.div>
+    )}
+  </div>
+</motion.div>
   );
 };
 
@@ -169,6 +179,7 @@ export default function ClientDashboard() {
   });
 
   function formatMatterDetails(apiResponse) {
+    console.log(apiResponse);
     return {
       matter_date: new Date(apiResponse.matterDate).toLocaleDateString("en-GB"),
       matter_number: apiResponse.matterNumber.toString(),
@@ -251,6 +262,7 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Contract Confirmation",
         svg : "/stage 2A.svg",
+        financeApproval:response.stage2.financeApprovalDate.slice(0,10) || "Not Set",
         data: {
           sections: [
 
@@ -450,11 +462,11 @@ export default function ClientDashboard() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-sky-200 to-white overflow-hidden">
+    <div className="flex h-screen bg-[#F9FAFB] overflow-hidden">
       {/* Sidebar */}
       <aside
         className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 sm:block
-        bg-gradient-to-b from-sky-200 to-white text-slate-800 rounded-2xl border border-white/40 
+        bg-[#FFFF] text-slate-800 rounded-2xl border border-white/40 
         shadow-sm mb-3 overflow-y-auto flex-col z-50 
         transform transition-transform duration-300 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
@@ -516,9 +528,9 @@ export default function ClientDashboard() {
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">Matter Date</p>
+                      <p className="text-x font-medium text-slate-600">Unconditional Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.matter_date}
+                        {stageDetails[1].financeApproval}
                       </p>
                     </div>
                   </div>
@@ -561,7 +573,7 @@ export default function ClientDashboard() {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="w-full justify-center bg-[#98dffa] text-[#049bd4] hover:bg-[#B4D4FF] hover:text-slate-700 active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
+                className="w-full justify-center bg-[#00AEEF] hover:bg-[#007A9E] text-white active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -574,8 +586,9 @@ export default function ClientDashboard() {
       <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
 <div className="p-6 sm:p-6">
   <div
-    className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full"
+    className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]"
   >      
+  
     {/* LEFT SECTION: Glassmorphism card */}
     <motion.div
       className="flex-1 min-w-0 gap-2"
@@ -583,7 +596,9 @@ export default function ClientDashboard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+         
       <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
+      
        <button
         onClick={() => setIsOpen(true)}
         className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
@@ -599,10 +614,10 @@ export default function ClientDashboard() {
           className="fixed inset-0 bg-black/40 z-40 lg:hidden"
         />
       )}
-        <h1 className="text-3xl font-bold text-gray-700 md:mt-20">
-          <span className="text-[#00AEEF]">Hello,</span> {matterDetails.Clientname} 👋
+        <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
+         Hello, {matterDetails.Clientname} 👋
         </h1>
-        <p className="text-gray-700">
+        <p className="text-gray-100">
           Welcome back. Here is the latest status of your matter.
         </p>
 
@@ -654,7 +669,7 @@ export default function ClientDashboard() {
 
           {/* Stage Cards Section */}
           <div>
-            <div className="sticky top-0 z-10 backdrop-blur-md py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
+            <div className="sticky top-0 z-20 bg-white py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
               {/* Left: Chevron + Title */}
               <div className="flex items-center gap-5">
                 {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
