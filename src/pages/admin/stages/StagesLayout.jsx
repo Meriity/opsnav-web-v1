@@ -86,18 +86,26 @@ export default function StagesLayout() {
     if (!stageData || fields.length === 0) return "Not Completed";
 
     let yesCount = 0;
+    let noCount = 0;
     let emptyCount = 0;
 
     for (const field of fields) {
       const val = stageData[field]?.toString().toLowerCase();
-      if (val === "yes") yesCount++;
-      else if (!val || val === "null" || val === "undefined" || val === "")
+
+      if (val === "yes") {
+        yesCount++;
+      } else if (val === "no") {
+        noCount++;
+      } else if (!val || val === "null" || val === "undefined" || val === "") {
         emptyCount++;
     }
+    }
 
-    if (emptyCount === fields.length) return "Not Completed";
-    if (yesCount === fields.length) return "Completed";
-    return "In progress";
+    if (emptyCount === fields.length) return "Not Completed"; // all empty
+    if (noCount === fields.length) return "Not Completed"; // all no
+    if (yesCount === fields.length) return "Completed"; // all yes
+
+    return ""; // mixed values
   }
 
   function RenderStage(newStage) {

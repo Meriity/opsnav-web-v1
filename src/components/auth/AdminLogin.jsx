@@ -25,7 +25,7 @@ function LoginForm() {
 
         // Show success toast
         toast.success("Logging in...", {
-          position: "top-right",
+          position: "bottom-center",
         });
 
         // Redirect after short delay
@@ -39,7 +39,7 @@ function LoginForm() {
       }
     } catch (err) {
        toast.error(err.message || "Something went wrong. Please try again.", {
-        position: "top-right",
+        position: "bottom-center",
       });
     } finally {
       setIsLoading(false);
@@ -48,7 +48,10 @@ function LoginForm() {
 
   return (
     // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
-    <div className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center" style={{ backgroundImage: "url('/home_bg.jpg')" }}>
+    <div
+      className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center"
+      style={{ backgroundImage: "url('/home_bg.jpg')" }}
+    >
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img
@@ -60,14 +63,13 @@ function LoginForm() {
             WELCOME TO OPSNAV
           </h1>
           <p className="text-gray-600 mt-2 font-poppins">
-            Streamline with Precision. Scale Your Operations without bottlenecks.
+            Streamline with Precision. Scale Your Operations without
+            bottlenecks.
           </p>
         </div>
 
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
           <h2 className="text-xl font-semibold text-center mb-6">SIGN IN</h2>
-
-
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -138,4 +140,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default LoginForm;

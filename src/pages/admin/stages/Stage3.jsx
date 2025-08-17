@@ -12,6 +12,7 @@ export default function Stage3({
   const stage = 3;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
+  const [isSaving, setIsSaving] = useState(false);
 
   const fields = [
     { key: "titleSearch", label: "Title Search" },
@@ -26,45 +27,40 @@ export default function Stage3({
   ];
 
   const getStatus = (value) => {
-    if (!value) return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
+    if (!value) return "Not Completed";
+    const val = value.toLowerCase().trim();
+    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    return "In progress";
+    if (["processing", "in progress"].includes(val)) return "In progress";
+    return "Not Completed";
   };
 
   const bgcolor = (status) => {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
-  };
-
-  function extractNotes(note = "") {
-    let systemNote = "";
-    let clientComment = "";
-    if (typeof note === "string" && note.includes(" - ")) {
-      [systemNote, clientComment] = note.split(" - ").map((str) => str.trim());
-    } else {
-      systemNote = note || "";
-    }
-    return {
-      systemNote: systemNote || "",
-      clientComment: clientComment || "",
+    const statusColors = {
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+      "In progress": "bg-[#FFEECF] text-[#FF9500]",
     };
-  }
+    return statusColors[status] || "bg-[#FF0000] text-white";
+  };
 
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
-  const [systemNote, setSystemNote] = useState("");
   const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
+
+  const updateNoteForClient = () => {
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const incompleteTasks = fields
+      .filter(
+        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+      )
+      .map(({ label }) => label);
+
+    if (incompleteTasks.length === 0) return "All tasks completed";
+    if (incompleteTasks.length === fields.length) return "No tasks completed";
+    return `Pending: ${incompleteTasks.join(", ")}`;
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -78,62 +74,72 @@ export default function Stage3({
       newStatusState[key] = getStatus(value);
     });
 
-    const { systemNote: sn, clientComment: cc } = extractNotes(
-      data.noteForClient
-    );
+    const noteParts = data.noteForClient?.split(" - ") || [];
+    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
 
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setSystemNote(sn);
-    setClientComment(cc);
+    setClientComment(clientComment);
 
     originalData.current = {
       ...newFormState,
-      systemNote: sn,
-      clientComment: cc,
+      clientComment,
+      systemNote: noteParts[0]?.trim() || updateNoteForClient(),
     };
   }, [data, reloadTrigger]);
 
   function isChanged() {
-    const current = { ...formState, systemNote, clientComment };
+    const currentSystemNote = updateNoteForClient();
+    const current = {
+      ...formState,
+      clientComment,
+      systemNote: currentSystemNote,
+    };
     const original = originalData.current;
-    return Object.keys(current).some((key) => current[key] !== original[key]);
+
+    // Compare all fields including the generated system note
+    const formChanged = fields.some(
+      ({ key }) =>
+        String(formState[key] || "").trim() !==
+        String(original[key] || "").trim()
+    );
+    const commentChanged =
+      String(clientComment).trim() !== String(original.clientComment).trim();
+    const noteChanged = currentSystemNote !== original.systemNote;
+
+    return formChanged || commentChanged || noteChanged;
   }
-
-  function checkFormStatus() {
-    const values = Object.values(formState);
-    const allYes = values.every((val) => val?.toLowerCase() === "yes");
-    const anyFilled = values.some((val) => val?.trim() !== "");
-
-    if (allYes) return "green";
-    if (anyFilled) return "amber";
-    return "red";
-  }
-
-  const updateNoteForClient = () => {
-    const incomplete = fields
-      .filter(({ key }) => formState[key]?.toLowerCase() !== "yes")
-      .map(({ label }) => label);
-
-    if (incomplete.length === 0) return "All tasks completed";
-    return `Pending: ${incomplete.join(", ")}`;
-  };
 
   async function handleSave() {
+    if (!isChanged()) return;
+
+    setIsSaving(true);
     try {
-      if (isChanged()) {
+      const systemNote = updateNoteForClient();
+      const fullNote = clientComment
+        ? `${systemNote} - ${clientComment}`
+        : systemNote;
+
         const payload = {
           matterNumber,
           ...formState,
-          noteForClient: `${updateNoteForClient()} - ${clientComment}`,
+        noteForClient: fullNote,
         };
 
         await api.upsertStageThree(payload);
-        originalData.current = { ...formState, systemNote, clientComment };
+
+      // Update original data with current state after successful save
+      originalData.current = {
+        ...formState,
+        clientComment,
+        systemNote,
+      };
+
         setReloadTrigger?.((prev) => !prev);
-      }
     } catch (err) {
       console.error("Failed to save Stage 3:", err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -158,8 +164,8 @@ export default function Stage3({
               value={val}
               checked={formState[key]?.toLowerCase() === val.toLowerCase()}
               onChange={() => {
-                setFormState({ ...formState, [key]: val });
-                setStatusState({ ...statusState, [key]: getStatus(val) });
+                setFormState((prev) => ({ ...prev, [key]: val }));
+                setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
               }}
             />
             {val}
@@ -173,21 +179,18 @@ export default function Stage3({
     <div className="overflow-y-auto">
       {fields.map(renderRadioGroup)}
 
-      {/* System Note */}
       <div className="mt-5">
         <label className="block mb-1 text-base font-bold">
           System Note for Client
         </label>
         <input
           type="text"
-          value={systemNote}
+          value={updateNoteForClient()}
           disabled
-          onChange={(e) => setSystemNote(e.target.value)}
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
 
-      {/* Client Comment */}
       <div className="mt-5">
         <label className="block mb-1 text-base font-bold">
           Comment for Client
@@ -199,7 +202,6 @@ export default function Stage3({
         />
       </div>
 
-      {/* Buttons */}
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
@@ -209,10 +211,11 @@ export default function Stage3({
         />
         <div className="flex gap-2">
           <Button
-            label="Save"
+            label={isSaving ? "Saving " : "Save"}
             width="w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
+            disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"

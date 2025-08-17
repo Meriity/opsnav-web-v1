@@ -12,41 +12,52 @@ export default function Stage6({
   const stage = 6;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const fieldMap = {
-    noaToCouncilWater: "NOA to Council/Water",
-    dutyPaid: "Duty Paid",
-    finalLetterToClient: "Final Letter to Client",
-    finalLetterToAgent: "Final Letter to Agent",
-    invoiced: "Invoiced",
-    closeMatter: "Close Matter",
-  };
+  const fields = [
+    { key: "noaToCouncilWater", label: "NOA to Council/Water" },
+    { key: "dutyPaid", label: "Duty Paid" },
+    { key: "finalLetterToClient", label: "Final Letter to Client" },
+    { key: "finalLetterToAgent", label: "Final Letter to Agent" },
+    { key: "invoiced", label: "Invoiced" },
+    { key: "closeMatter", label: "Close Matter" },
+  ];
 
   const getStatus = (value) => {
-    if (!value) return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
+    if (!value) return "Not Completed";
+    const val = value.toLowerCase().trim();
+    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    return "In progress";
+    if (["processing", "in progress"].includes(val)) return "In progress";
+    return "Not Completed";
   };
 
   const bgcolor = (status) => {
-    switch (status) {
-      case "In progress":
-        return "bg-[#FFEECF]";
-      case "Completed":
-        return "bg-[#00A506]";
-      case "Not Completed":
-        return "bg-[#FF0000]";
-      default:
-        return "";
-    }
+    const statusColors = {
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+      "In progress": "bg-[#FFEECF] text-[#FF9500]",
+    };
+    return statusColors[status] || "bg-[#FF0000] text-white";
   };
 
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
-  const [systemNote, setSystemNote] = useState("");
+  const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
+
+  const updateNoteForClient = () => {
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const incompleteTasks = fields
+      .filter(
+        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+      )
+      .map(({ label }) => label);
+
+    if (incompleteTasks.length === 0) return "All tasks completed";
+    if (incompleteTasks.length === fields.length) return "No tasks completed";
+    return `Pending: ${incompleteTasks.join(", ")}`;
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -54,93 +65,102 @@ export default function Stage6({
     const newFormState = {};
     const newStatusState = {};
 
-    Object.entries(fieldMap).forEach(([key, label]) => {
-      const val = data[key] || "";
-      newFormState[label] = val;
-      newStatusState[label] = getStatus(val);
+    fields.forEach(({ key }) => {
+      const value = data[key] || "";
+      newFormState[key] = value;
+      newStatusState[key] = getStatus(value);
     });
+
+    const noteParts = data.noteForClient?.split(" - ") || [];
+    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
 
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setSystemNote(data.noteForClient || "");
+    setClientComment(clientComment);
 
     originalData.current = {
       ...newFormState,
-      systemNote: data.noteForClient || "",
+      clientComment,
+      systemNote: noteParts[0]?.trim() || updateNoteForClient(),
     };
   }, [data, reloadTrigger]);
 
   function isChanged() {
+    const currentSystemNote = updateNoteForClient();
     const current = {
       ...formState,
-      systemNote,
+      clientComment,
+      systemNote: currentSystemNote,
     };
     const original = originalData.current;
-    return Object.keys(current).some((key) => current[key] !== original[key]);
-  }
 
-  function generateSystemNote() {
-    const incomplete = Object.entries(fieldMap)
-      .filter(([key, label]) => {
-      return formState[label]?.toLowerCase() !== "yes";
-      })
-      .map(([key, label]) => label);
+    const formChanged = fields.some(
+      ({ key }) =>
+        String(formState[key] || "").trim() !==
+        String(original[key] || "").trim()
+    );
+    const commentChanged =
+      String(clientComment).trim() !== String(original.clientComment).trim();
+    const noteChanged = currentSystemNote !== original.systemNote;
 
-    if (incomplete.length === 0) return "All tasks completed";
-    return `Pending: ${incomplete.join(", ")}`;
+    return formChanged || commentChanged || noteChanged;
   }
 
   async function handleSave() {
+    if (!isChanged()) return;
+
+    setIsSaving(true);
     try {
-      if (isChanged()) {
+      const systemNote = updateNoteForClient();
+      const fullNote = clientComment
+        ? `${systemNote} - ${clientComment}`
+        : systemNote;
+
         const payload = {
           matterNumber,
-          noteForClient: systemNote,
+        ...formState,
+        noteForClient: fullNote,
         };
 
-        Object.entries(fieldMap).forEach(([key, label]) => {
-          payload[key] = formState[label];
-        });
-
-        console.log("Saving Stage 6:", payload);
         await api.upsertStageSix(payload);
 
         originalData.current = {
           ...formState,
+        clientComment,
           systemNote,
         };
+
         setReloadTrigger?.((prev) => !prev);
-      }
     } catch (err) {
       console.error("Failed to save Stage 6:", err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  const renderRadioGroup = (label) => (
-    <div key={label} className="mt-5">
-      <div className="flex gap-4 items-center justify-between mb-2">
+  const renderRadioGroup = ({ key, label }) => (
+    <div className="mt-5" key={key}>
+      <div className="flex gap-4 items-center justify-between mb-3">
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
-          className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
-            statusState[label] === "In progress"
-              ? "text-[#FF9500]"
-              : "text-white"
+          className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
+            statusState[key] === "In progress" ? "text-[#FF9500]" : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
-          <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
+          <p className="text-[12px] whitespace-nowrap">{statusState[key]}</p>
         </div>
       </div>
-      <div className="flex gap-4 flex-wrap justify-between items-center mb-3">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input
               type="radio"
-              name={label}
+              name={key}
               value={val}
-              checked={formState[label]?.toLowerCase() === val.toLowerCase()}
+              checked={formState[key]?.toLowerCase() === val.toLowerCase()}
               onChange={() => {
-                setFormState({ ...formState, [label]: val });
-                setStatusState({ ...statusState, [label]: getStatus(val) });
+                setFormState((prev) => ({ ...prev, [key]: val }));
+                setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
               }}
             />
             {val}
@@ -152,30 +172,28 @@ export default function Stage6({
 
   return (
     <div className="overflow-y-auto">
-      {Object.values(fieldMap).map((label) => renderRadioGroup(label))}
+      {fields.map(renderRadioGroup)}
 
-      {/* System Note */}
+    
       <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
           <label className="block mb-1 text-base font-bold">
             System Note for Client
           </label>
-          <div
-            className={`w-[90px] h-[18px] ${bgcolor(getStatus(systemNote))} ${
-              getStatus(systemNote) === "In progress"
-                ? "text-[#FF9500]"
-                : "text-white"
-            } flex items-center justify-center rounded-4xl`}
-          >
-            <p className="text-[12px] whitespace-nowrap">
-              {getStatus(systemNote)}
-            </p>
-          </div>
-        </div>
         <input
           type="text"
-          value={systemNote}
-          onChange={(e) => setSystemNote(e.target.value)}
+          value={updateNoteForClient()}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+
+      <div className="mt-5">
+        <label className="block mb-1 text-base font-bold">
+          Comment for Client
+        </label>
+        <textarea
+          value={clientComment}
+          onChange={(e) => setClientComment(e.target.value)}
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
@@ -190,10 +208,11 @@ export default function Stage6({
         />
         <div className="flex gap-2">
           <Button
-            label="Save"
+            label={isSaving ? "Saving" : "Save"}
             width="w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
+            disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"

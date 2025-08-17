@@ -37,20 +37,36 @@ export default function Stage1({
   const { matterNumber } = useParams();
 
   const getStatus = (value) => {
-    if (typeof value !== "string") return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
+    if (typeof value !== "string") return "Not Completed"; // Default for new clients
+
+    const val = value.toLowerCase().trim();
+
+    // Completed statuses
+    if (
+      val === "yes" ||
+      val === "nr" ||
+      val === "n/r" ||
+      val === "na" ||
+      val === "n/a"
+    )
+      return "Completed";
+
+    // Not Completed statuses
     if (val === "no") return "Not Completed";
-    return "In progress";
+
+    // In progress statuses
+    if (val === "processing" || val === "in progress") return "In progress";
+
+    return "Not Completed"; // Default fallback
   };
 
   function bgcolor(status) {
     const statusColors = {
-      "In progress": "bg-[#FF9500] text-white",
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
+      Completed: "bg-[#00A506] text-white", // Green
+      "Not Completed": "bg-[#FF0000] text-white", // Red
+      "In progress": "bg-[#FFEECF] text-[#FF9500]", // Amber/Yellow
     };
-    return statusColors[status] || "bg-[#F3F7FF] text-black";
+    return statusColors[status] || "bg-[#FF0000] text-white"; // Default to red
   }
 
   function extractNotes(note = "") {
@@ -127,11 +143,13 @@ export default function Stage1({
 
   const generateSystemNote = () => {
     const { retainer, declarationForm, contractReview } = formData;
-      const greenValues = ["Yes", "yes", "NR", "nr", "NA", "na"];
+    const greenValues = ["yes", "nr", "n/r", "na", "n/a"];
 
-    const isRetainerGreen = greenValues.includes(retainer);
-    const isDeclarationGreen = greenValues.includes(declarationForm);
-    const isContractGreen = greenValues.includes(contractReview);
+    const isRetainerGreen = greenValues.includes(retainer.toLowerCase());
+    const isDeclarationGreen = greenValues.includes(
+      declarationForm.toLowerCase()
+    );
+    const isContractGreen = greenValues.includes(contractReview.toLowerCase());
 
       if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
       return "Retainer, Declaration and Contract Review not received";
@@ -210,7 +228,7 @@ export default function Stage1({
                   type="radio"
                   name="retainer"
                   value={val}
-                checked={formData.retainer.toLowerCase() === val.toLowerCase()}
+                checked={formData.retainer?.toLowerCase() === val.toLowerCase()}
                 onChange={() => handleChange("retainer", val)}
                 />
                 {val}
@@ -289,7 +307,7 @@ export default function Stage1({
         <div className="mt-5">
           <div className="flex gap-4 justify-between items-center mb-3">
             <label className="block mb-1 text-base font-bold">Quote Type</label>
-          <div
+          {/* <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.quoteType
             )} flex items-center justify-center rounded-4xl`}
@@ -297,7 +315,7 @@ export default function Stage1({
             <p className="text-[12px] whitespace-nowrap">
               {statuses.quoteType}
             </p>
-          </div>
+          </div> */}
           </div>
           <div className="flex gap-4 flex-wrap">
             {["Variable", "Fixed"].map((val) => (
@@ -332,13 +350,13 @@ export default function Stage1({
         <div className="mt-5">
           <div className="flex gap-4 justify-between items-center mb-3">
             <label className="block mb-1 text-base font-bold">Tenants</label>
-            <div
+          {/* <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
             >
             <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
-          </div>
+          </div> */}
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
             {["Yes", "No", "Processing", "N/R"].map((val) => (
