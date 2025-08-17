@@ -82,23 +82,26 @@ export default function StagesLayout() {
 
     return textMap[status] || status;
   }
-  function evaluateStageStatus(stageData, fields) {
-    if (!stageData || fields.length === 0) return "Not Completed";
+    function evaluateStageStatus(stageData, fields) {
+      if (!stageData || fields.length === 0) return "Not Completed";
 
-    let yesCount = 0;
-    let emptyCount = 0;
+      let yesCount = 0;
+      let noCount = 0;
+      let emptyCount = 0;
 
-    for (const field of fields) {
-      const val = stageData[field]?.toString().toLowerCase();
-      if (val === "yes") yesCount++;
-      else if (!val || val === "null" || val === "undefined" || val === "")
-        emptyCount++;
+      for (const field of fields) {
+        const val = stageData[field]?.toString().toLowerCase();
+        if (val === "yes") yesCount++;
+        else if (val === "no") noCount++;
+        else if (!val || val === "null" || val === "undefined" || val === "")
+          emptyCount++;
+      }
+
+      if (emptyCount === fields.length) return "Not Completed";
+      if (yesCount === fields.length) return "Completed";
+      if (noCount === fields.length) return "Not Completed";
+      return "In progress";
     }
-
-    if (emptyCount === fields.length) return "Not Completed";
-    if (yesCount === fields.length) return "Completed";
-    return "In progress";
-  }
 
   function RenderStage(newStage) {
     setSelectedStage(newStage);
@@ -114,6 +117,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            color={stageStatuses}
           />
         );
       case 2:
@@ -191,21 +195,21 @@ export default function StagesLayout() {
         setClientData(response);
 
         // First check if colorStatus exists in any stage
-        const hasColorStatus = Object.values(response).some(
-          (stage) => stage && stage.colorStatus
-        );
+        // const hasColorStatus = Object.values(response).some(
+        //   (stage) => stage && stage.colorStatus
+        // );
 
         const section = {};
 
-        if (hasColorStatus) {
-          // Use colorStatus if available
-          section.status1 = response.stage1?.colorStatus || "Not Completed";
-          section.status2 = response.stage2?.colorStatus || "Not Completed";
-          section.status3 = response.stage3?.colorStatus || "Not Completed";
-          section.status4 = response.stage4?.colorStatus || "Not Completed";
-          section.status5 = response.stage5?.colorStatus || "Not Completed";
-          section.status6 = response.stage6?.colorStatus || "Not Completed";
-        } else {
+        // if (hasColorStatus) {
+        //   // Use colorStatus if available
+        //   section.status1 = response.stage1?.colorStatus || "Not Completed";
+        //   section.status2 = response.stage2?.colorStatus || "Not Completed";
+        //   section.status3 = response.stage3?.colorStatus || "Not Completed";
+        //   section.status4 = response.stage4?.colorStatus || "Not Completed";
+        //   section.status5 = response.stage5?.colorStatus || "Not Completed";
+        //   section.status6 = response.stage6?.colorStatus || "Not Completed";
+        // } else {
           // Fall back to field evaluation if no colorStatus
           section.status1 = evaluateStageStatus(response.stage1, [
             "referral",
@@ -258,7 +262,6 @@ export default function StagesLayout() {
             "invoiced",
             "closeMatter",
           ]);
-        }
 
         setStageStatuses(section);
       } catch (e) {
