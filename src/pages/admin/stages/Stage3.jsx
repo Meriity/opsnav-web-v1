@@ -120,13 +120,13 @@ export default function Stage3({
         ? `${systemNote} - ${clientComment}`
         : systemNote;
 
-        const payload = {
-          matterNumber,
-          ...formState,
+      const payload = {
+        matterNumber,
+        ...formState,
         noteForClient: fullNote,
-        };
+      };
 
-        await api.upsertStageThree(payload);
+      await api.upsertStageThree(payload);
 
       // Update original data with current state after successful save
       originalData.current = {
@@ -135,7 +135,7 @@ export default function Stage3({
         systemNote,
       };
 
-        setReloadTrigger?.((prev) => !prev);
+      setReloadTrigger?.((prev) => !prev);
     } catch (err) {
       console.error("Failed to save Stage 3:", err);
     } finally {

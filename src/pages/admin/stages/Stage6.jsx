@@ -116,21 +116,21 @@ export default function Stage6({
         ? `${systemNote} - ${clientComment}`
         : systemNote;
 
-        const payload = {
-          matterNumber,
+      const payload = {
+        matterNumber,
         ...formState,
         noteForClient: fullNote,
-        };
+      };
 
-        await api.upsertStageSix(payload);
+      await api.upsertStageSix(payload);
 
-        originalData.current = {
-          ...formState,
+      originalData.current = {
+        ...formState,
         clientComment,
-          systemNote,
-        };
+        systemNote,
+      };
 
-        setReloadTrigger?.((prev) => !prev);
+      setReloadTrigger?.((prev) => !prev);
     } catch (err) {
       console.error("Failed to save Stage 6:", err);
     } finally {
@@ -176,9 +176,9 @@ export default function Stage6({
 
     
       <div className="mt-5">
-          <label className="block mb-1 text-base font-bold">
-            System Note for Client
-          </label>
+        <label className="block mb-1 text-base font-bold">
+          System Note for Client
+        </label>
         <input
           type="text"
           value={updateNoteForClient()}

@@ -98,7 +98,7 @@ export default function StagesLayout() {
         noCount++;
       } else if (!val || val === "null" || val === "undefined" || val === "") {
         emptyCount++;
-    }
+      }
     }
 
     if (emptyCount === fields.length) return "Not Completed"; // all empty
