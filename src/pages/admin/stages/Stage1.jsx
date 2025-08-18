@@ -47,7 +47,9 @@ export default function Stage1({
       val === "nr" ||
       val === "n/r" ||
       val === "na" ||
-      val === "n/a"
+      val === "n/a"||
+      val === "Variable"||
+      val==="Fixed"
     )
       return "Completed";
 
