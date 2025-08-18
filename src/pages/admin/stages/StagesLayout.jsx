@@ -91,14 +91,16 @@ export default function StagesLayout() {
 
       for (const field of fields) {
         const val = stageData[field]?.toString().toLowerCase();
-        if (val === "yes") yesCount++;
+        console.log(fields.length);
+        console.log(val);
+        if (val === "yes" || val=="fixed" || val=="variable") yesCount++;
         else if (val === "no") noCount++;
         else if (!val || val === "null" || val === "undefined" || val === "")
           emptyCount++;
       }
 
       if (emptyCount === fields.length) return "Not Completed";
-      if (yesCount === fields.length) return "Completed";
+      if (yesCount === fields.length)  return "Completed";
       if (noCount === fields.length) return "Not Completed";
       return "In progress";
     }
@@ -195,28 +197,27 @@ export default function StagesLayout() {
         setClientData(response);
 
         // First check if colorStatus exists in any stage
-        // const hasColorStatus = Object.values(response).some(
-        //   (stage) => stage && stage.colorStatus
-        // );
+        const hasColorStatus = Object.values(response).some(
+          (stage) => stage && stage.colorStatus
+        );
 
         const section = {};
 
-        // if (hasColorStatus) {
+        if (hasColorStatus) {
         //   // Use colorStatus if available
-        //   section.status1 = response.stage1?.colorStatus || "Not Completed";
-        //   section.status2 = response.stage2?.colorStatus || "Not Completed";
-        //   section.status3 = response.stage3?.colorStatus || "Not Completed";
-        //   section.status4 = response.stage4?.colorStatus || "Not Completed";
-        //   section.status5 = response.stage5?.colorStatus || "Not Completed";
-        //   section.status6 = response.stage6?.colorStatus || "Not Completed";
-        // } else {
+          section.status1 = response.stage1?.colorStatus || "Not Completed";
+          section.status2 = response.stage2?.colorStatus || "Not Completed";
+          section.status3 = response.stage3?.colorStatus || "Not Completed";
+          section.status4 = response.stage4?.colorStatus || "Not Completed";
+          section.status5 = response.stage5?.colorStatus || "Not Completed";
+          section.status6 = response.stage6?.colorStatus || "Not Completed";
+        } else {
           // Fall back to field evaluation if no colorStatus
           section.status1 = evaluateStageStatus(response.stage1, [
             "referral",
             "declarationForm",
             "contractReview",
             "tenants",
-            "retainer",
           ]);
           section.status2 = evaluateStageStatus(response.stage2, [
             "voi",
@@ -262,7 +263,7 @@ export default function StagesLayout() {
             "invoiced",
             "closeMatter",
           ]);
-
+        }
         setStageStatuses(section);
       } catch (e) {
         console.error("Error fetching stage details:", e);
@@ -318,7 +319,11 @@ export default function StagesLayout() {
               label="Back"
               bg="bg-[#FB4A52]"
               width="w-[84px]"
-              onClick={() => navigate("/admin/view-clients")}
+              onClick={() => { 
+                navigate("/admin/view-clients");
+                localStorage.removeItem("client-storage");
+              }
+              }
             />
             <Button
               label="Cost"

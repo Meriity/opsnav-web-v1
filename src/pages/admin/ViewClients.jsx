@@ -98,6 +98,7 @@ const ViewClients = () => {
   } = useClientStore();
 
   useEffect(() => {
+    if(!localStorage.getItem("client-storage")) fetchClients();
     if (Clients.length === 0) fetchClients();
   }, []);
 
