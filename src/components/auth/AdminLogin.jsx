@@ -18,10 +18,13 @@ function LoginForm() {
     try {
       const response = await api.signIn(email, password);
 
-      if (response.token) {
+        if (response.token) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", response.user.displayName);
-        localStorage.setItem("role", response.role);
+        localStorage.setItem("access",response.user.access);
+        localStorage.setItem("role", response.user.role);
+        localStorage.setItem("logo", response.user.logo);
+
 
         // Show success toast
         toast.success("Logging in...", {
