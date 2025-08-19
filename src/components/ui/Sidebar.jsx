@@ -52,15 +52,15 @@ export default function Sidebar() {
                 key={to}
                 onClick={() => navigate(to)}
                 className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
-                  ? "bg-[#00AEEF] text-white"
-                  : "hover:bg-gray-100 text-gray-800"
-                  }`}
+                    ? "bg-[#00AEEF] text-white"
+                    : "hover:bg-gray-100 text-gray-800"
+                }`}
               >
                 <img
                   src={icon}
                   alt={label}
                   className={`w-[30px] h-[30px] ${isActive ? "filter brightness-0 invert" : ""
-                    }`}
+                  }`}
                 />
                 <span className="ml-4 font-medium">{label}</span>
               </button>
