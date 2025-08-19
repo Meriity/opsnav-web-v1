@@ -82,28 +82,28 @@ export default function StagesLayout() {
 
     return textMap[status] || status;
   }
-    function evaluateStageStatus(stageData, fields) {
-      if (!stageData || fields.length === 0) return "Not Completed";
+  function evaluateStageStatus(stageData, fields) {
+    if (!stageData || fields.length === 0) return "Not Completed";
 
-      let yesCount = 0;
-      let noCount = 0;
-      let emptyCount = 0;
+    let yesCount = 0;
+    let noCount = 0;
+    let emptyCount = 0;
 
-      for (const field of fields) {
-        const val = stageData[field]?.toString().toLowerCase();
-        console.log(fields.length);
-        console.log(val);
+    for (const field of fields) {
+      const val = stageData[field]?.toString().toLowerCase();
+      console.log(fields.length);
+      console.log(val);
         if (val === "yes" || val=="fixed" || val=="variable") yesCount++;
-        else if (val === "no") noCount++;
-        else if (!val || val === "null" || val === "undefined" || val === "")
-          emptyCount++;
-      }
-
-      if (emptyCount === fields.length) return "Not Completed";
-      if (yesCount === fields.length)  return "Completed";
-      if (noCount === fields.length) return "Not Completed";
-      return "In progress";
+      else if (val === "no") noCount++;
+      else if (!val || val === "null" || val === "undefined" || val === "")
+        emptyCount++;
     }
+
+    if (emptyCount === fields.length) return "Not Completed";
+      if (yesCount === fields.length)  return "Completed";
+    if (noCount === fields.length) return "Not Completed";
+    return "In progress";
+  }
 
   function RenderStage(newStage) {
     setSelectedStage(newStage);
@@ -204,7 +204,7 @@ export default function StagesLayout() {
         const section = {};
 
         if (hasColorStatus) {
-        //   // Use colorStatus if available
+          //   // Use colorStatus if available
           section.status1 = response.stage1?.colorStatus || "Not Completed";
           section.status2 = response.stage2?.colorStatus || "Not Completed";
           section.status3 = response.stage3?.colorStatus || "Not Completed";
@@ -319,7 +319,7 @@ export default function StagesLayout() {
               label="Back"
               bg="bg-[#FB4A52]"
               width="w-[84px]"
-              onClick={() => { 
+              onClick={() => {
                 navigate("/admin/view-clients");
                 localStorage.removeItem("client-storage");
               }
