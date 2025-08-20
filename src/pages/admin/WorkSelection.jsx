@@ -15,18 +15,18 @@ function WorkSelection() {
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("role");
 try{
-     if (!token) {
-      navigate("/admin/login");
+      if (!token) {
+        navigate("/admin/login");
     } else if (role === "admin" || role==="superadmin") {
-      navigate("/admin/dashboard");
-    } else if (role === "user") {
-      navigate("/user/dashboard");
-    }
+        navigate("/admin/dashboard");
+      } else if (role === "user") {
+        navigate("/user/dashboard");
+      }
   }
 
 catch(e){
-    console.log(e);
-}
+      console.log(e);
+    }
   }
 
 
@@ -90,6 +90,6 @@ catch(e){
       </div>
     </>
   );
-  }
+}
 
 export default WorkSelection;

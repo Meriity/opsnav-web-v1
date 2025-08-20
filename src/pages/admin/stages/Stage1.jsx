@@ -356,7 +356,7 @@ export default function Stage1({
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
-            >
+          >
             <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
           </div>
         </div>

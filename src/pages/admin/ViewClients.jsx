@@ -33,21 +33,21 @@ const useClientStore = create(
           const formattedClients = response.map((client) => {
             return (
               {
-                id: client._id,
-                matternumber: client.matterNumber || "N/A",
-                dataentryby: client.dataEntryBy || "N/A",
-                client_name: client.clientName || "N/A",
-                property_address: client.propertyAddress || "N/A",
-                state: client.state || "N/A",
-                client_type: client.clientType || "N/A",
-                settlement_date: client.settlementDate
-                  ? client.settlementDate.split("T")[0]
-                  : "N/A",
-                final_approval: client.matterDate
-                  ? client.matterDate.split("T")[0]
-                  : "N/A",
-                building_pestinspect: "N/A",
-                close_matter: client.closeMatter || "Active",
+              id: client._id,
+              matternumber: client.matterNumber || "N/A",
+              dataentryby: client.dataEntryBy || "N/A",
+              client_name: client.clientName || "N/A",
+              property_address: client.propertyAddress || "N/A",
+              state: client.state || "N/A",
+              client_type: client.clientType || "N/A",
+              settlement_date: client.settlementDate
+                ? client.settlementDate.split("T")[0]
+                : "N/A",
+              final_approval: client.matterDate
+                ? client.matterDate.split("T")[0]
+                : "N/A",
+              building_pestinspect: "N/A",
+              close_matter: client.closeMatter || "Active",
                 stages: client?.stages || []
               }
             )
@@ -278,29 +278,29 @@ const ViewClients = () => {
 
           {
             loading || !clientList ? (
-              <Loader />
+            <Loader />
             ) : clientList?.length == 0 ? (<div className="flex justify-center items-center py-8">
               <div className="text-lg">Data not found</div>
             </div>) : (
-              <div className="w-full">
-                <ViewClientsTable
-                  data={clientList}
-                  columns={columns}
-                  onEdit={() => console.log("Edit hits")}
-                  onDelete={() => console.log("Delete hits")}
-                  itemsPerPage={5}
+            <div className="w-full">
+              <ViewClientsTable
+                data={clientList}
+                columns={columns}
+                onEdit={() => console.log("Edit hits")}
+                onDelete={() => console.log("Delete hits")}
+                itemsPerPage={5}
                   onShare={
                     (matterNumber, reshareEmail) => {
-                      setShareDetails({ matterNumber, reshareEmail });
-                      setShowShareDialog(true);
+                  setShareDetails({ matterNumber, reshareEmail });
+                  setShowShareDialog(true);
                     }
                   }
-                  status={true}
-                  ot={true}
-                  handelOTOpen={() => setShowOutstandingTask(true)}
-                  handelOT={setOTActiveMatterNumber}
-                />
-              </div>
+                status={true}
+                ot={true}
+                handelOTOpen={() => setShowOutstandingTask(true)}
+                handelOT={setOTActiveMatterNumber}
+              />
+            </div>
             )
           }
         </main >

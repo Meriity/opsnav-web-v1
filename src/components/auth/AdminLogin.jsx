@@ -18,7 +18,7 @@ function LoginForm() {
     try {
       const response = await api.signIn(email, password);
 
-        if (response.token) {
+      if (response.token) {
         localStorage.setItem("authToken", response.token);
         localStorage.setItem("user", response.user.displayName);
         localStorage.setItem("access",response.user.access);
