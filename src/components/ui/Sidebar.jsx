@@ -12,11 +12,27 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  let managerUser = { label: "Manage Users", icon: ManageUsersIcon, to: "/admin/manage-users" };
+  let managerUser = {
+    label: "Manage Users",
+    icon: ManageUsersIcon,
+    to: "/admin/manage-users",
+  };
   const menuItems = [
-    { label: "Dashboard", icon: DashboardIcon, to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard" },
-    { label: "View Clients", icon: ViewClientsIcon, to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients" },
-    { label: "Archived Clients", icon: ArchivedChatsIcon, to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients" },
+    {
+      label: "Dashboard",
+      icon: DashboardIcon,
+      to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
+    },
+    {
+      label: "View Clients",
+      icon: ViewClientsIcon,
+      to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
+    },
+    {
+      label: "Archived Clients",
+      icon: ArchivedChatsIcon,
+      to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
+    },
   ];
 
   isAdminRoute && menuItems.splice(1, 0, managerUser);
@@ -27,7 +43,14 @@ export default function Sidebar() {
     localStorage.removeItem("client-storage");
     localStorage.removeItem("matterNumber");
     navigate("/admin/login");
-  }
+  };
+
+  const handleViewClientsClick = () => {
+    // Clear the client-storage from localStorage
+    localStorage.removeItem("client-storage");
+    // Navigate to the appropriate view-clients route
+    navigate(isAdminRoute ? "/admin/view-clients" : "/user/view-clients");
+  };
 
   return (
     <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
@@ -47,11 +70,17 @@ export default function Sidebar() {
           {menuItems.map(({ label, icon, to }) => {
             const isActive = location.pathname === to;
 
+            const handleClick =
+              label === "View Clients"
+                ? handleViewClientsClick
+                : () => navigate(to);
+
             return (
               <button
                 key={to}
-                onClick={() => navigate(to)}
-                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full text-left ${isActive
+                onClick={handleClick}
+                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full text-left ${
+                  isActive
                     ? "bg-[#00AEEF] text-white"
                     : "hover:bg-gray-100 text-gray-800"
                 }`}
@@ -59,7 +88,8 @@ export default function Sidebar() {
                 <img
                   src={icon}
                   alt={label}
-                  className={`w-[30px] h-[30px] ${isActive ? "filter brightness-0 invert" : ""
+                  className={`w-[30px] h-[30px] ${
+                    isActive ? "filter brightness-0 invert" : ""
                   }`}
                 />
                 <span className="ml-4 font-medium">{label}</span>
@@ -89,8 +119,8 @@ export default function Sidebar() {
             ref={dropdownRef}
             className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
           >
-
-            <button onClick={handleLogout}
+            <button
+              onClick={handleLogout}
               className="px-4 flex cursor-pointer text-black rounded w-50 items-center justify-between"
             >
               Logout <LogOut className="w-4" />
@@ -101,4 +131,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-
