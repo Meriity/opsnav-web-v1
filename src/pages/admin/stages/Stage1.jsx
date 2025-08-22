@@ -47,9 +47,9 @@ export default function Stage1({
       val === "nr" ||
       val === "n/r" ||
       val === "na" ||
-      val === "n/a"||
-      val === "Variable"||
-      val==="Fixed"
+      val === "n/a" ||
+      val === "Variable" ||
+      val === "Fixed"
     )
       return "Completed";
 
@@ -412,7 +412,7 @@ export default function Stage1({
         />
         <div className="flex gap-2">
           <Button
-            label={isSaving ? "Saving..." : "Save"}
+            label={isSaving ? "Saving" : "Save"}
             width="w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
