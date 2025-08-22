@@ -6,17 +6,12 @@ import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
 import { useDropdown } from "../../hooks/dropdown";
 import { ChevronsUpDown, LogOut, CircleUserRound } from "lucide-react";
 
-export default function Sidebar() {
+export default function Sidebar({ setSidebarOpen }) {
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  let managerUser = {
-    label: "Manage Users",
-    icon: ManageUsersIcon,
-    to: "/admin/manage-users",
-  };
   const menuItems = [
     {
       label: "Dashboard",
@@ -35,7 +30,13 @@ export default function Sidebar() {
     },
   ];
 
-  isAdminRoute && menuItems.splice(1, 0, managerUser);
+  if (isAdminRoute) {
+    menuItems.splice(1, 0, {
+      label: "Manage Users",
+      icon: ManageUsersIcon,
+      to: "/admin/manage-users",
+    });
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -46,34 +47,40 @@ export default function Sidebar() {
   };
 
   const handleViewClientsClick = () => {
-    // Clear the client-storage from localStorage
     localStorage.removeItem("client-storage");
-    // Navigate to the appropriate view-clients route
     navigate(isAdminRoute ? "/admin/view-clients" : "/user/view-clients");
+    if (typeof setSidebarOpen === "function") {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleNavigate = (to) => {
+    navigate(to);
+    if (typeof setSidebarOpen === "function") {
+      setSidebarOpen(false);
+    }
   };
 
   return (
     <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
-      {/* Logo */}
       <div>
-        <div className="flex">
+        <div className="flex px-2">
           <img
-            className="w-[70px] h-[58px]"
-            // src="https://vklawyers.com.au/wp-content/uploads/2024/10/vk-lawers-logo.png"
-            src={localStorage.getItem("logo")}
+            className="w-[70px] h-auto"
+            src={
+              localStorage.getItem("logo") ||
+              "https://via.placeholder.com/70x58"
+            }
             alt="Logo"
           />
         </div>
-
-        {/* Navigation */}
         <nav className="flex flex-col space-y-4 mt-7">
           {menuItems.map(({ label, icon, to }) => {
             const isActive = location.pathname === to;
-
             const handleClick =
               label === "View Clients"
                 ? handleViewClientsClick
-                : () => navigate(to);
+                : () => handleNavigate(to);
 
             return (
               <button
@@ -98,30 +105,27 @@ export default function Sidebar() {
           })}
         </nav>
       </div>
-
-      {/* User Footer */}
-      {/* User Dropdown Footer */}
       <div className="relative">
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="px-4 py-2 cursor-pointer flex text-black w-55 items-center justify-between bg-sky-100 rounded-2xl"
+          className="px-4 py-2 cursor-pointer flex text-black w-full items-center justify-between bg-sky-100 rounded-2xl"
         >
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center truncate">
             <CircleUserRound />
-            {localStorage.getItem("user")}
+            <span className="truncate">{localStorage.getItem("user")}</span>
           </div>
-          <ChevronsUpDown className="w-5" />
+          <ChevronsUpDown className="w-5 shrink-0" />
         </button>
 
         {isOpen && (
           <div
             ref={dropdownRef}
-            className="absolute bottom-full mt-2 mb-2 bg-white shadow-md p-2 rounded w-50 hover:bg-sky-200 active:bg-sky-100"
+            className="absolute bottom-full mb-2 bg-white shadow-lg p-2 rounded w-full border"
           >
             <button
               onClick={handleLogout}
-              className="px-4 flex cursor-pointer text-black rounded w-50 items-center justify-between"
+              className="px-4 py-2 flex cursor-pointer text-black rounded w-full items-center justify-between hover:bg-sky-100"
             >
               Logout <LogOut className="w-4" />
             </button>

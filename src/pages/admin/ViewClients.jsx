@@ -1,79 +1,69 @@
-// ⬇ Imports
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import {
+  Dialog,
+  Menu,
+  Transition,
+  DialogBackdrop,
+  DialogPanel,
+} from "@headlessui/react";
+import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import ClientAPI from "../../api/userAPI";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import Header from "../../components/layout/Header"
-import { toast } from 'react-toastify';
+import Header from "../../components/layout/Header";
+import { toast } from "react-toastify";
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
 import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
-import DatePicker from "react-datepicker";
-import moment from "moment";
 import DateRangeModal from "../../components/ui/DateRangeModal";
+import moment from "moment";
 
 // ⬇ Zustand Store Definition (inline)
 const useClientStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       clients: [],
       loading: false,
       error: null,
-      api: new ClientAPI(),
-
       fetchClients: async () => {
         set({ loading: true, error: null });
         const api = new ClientAPI();
         try {
           const response = await api.getClients();
-          const formattedClients = response.map((client) => {
-            return (
-              {
-              id: client._id,
-              matternumber: client.matterNumber || "N/A",
-              dataentryby: client.dataEntryBy || "N/A",
-              client_name: client.clientName || "N/A",
-              property_address: client.propertyAddress || "N/A",
-              state: client.state || "N/A",
-              client_type: client.clientType || "N/A",
-              settlement_date: client.settlementDate
-                ? client.settlementDate.split("T")[0]
-                : "N/A",
-              final_approval: client.matterDate
-                ? client.matterDate.split("T")[0]
-                : "N/A",
-              building_pestinspect: "N/A",
-              close_matter: client.closeMatter || "Active",
-                stages: client?.stages || []
-              }
-            )
-          })
+          const formattedClients = response.map((client) => ({
+            id: client._id,
+            matternumber: client.matterNumber || "N/A",
+            dataentryby: client.dataEntryBy || "N/A",
+            client_name: client.clientName || "N/A",
+            property_address: client.propertyAddress || "N/A",
+            state: client.state || "N/A",
+            client_type: client.clientType || "N/A",
+            settlement_date: client.settlementDate
+              ? client.settlementDate.split("T")[0]
+              : "N/A",
+            final_approval: client.matterDate
+              ? client.matterDate.split("T")[0]
+              : "N/A",
+            close_matter: client.closeMatter || "Active",
+            stages: client?.stages || [],
+          }));
           set({ clients: formattedClients });
         } catch (err) {
           console.error("Error fetching clients:", err);
-          set({
-            error: err.message,
-            clients: [],
-          });
+          set({ error: err.message, clients: [] });
         } finally {
           set({ loading: false });
         }
       },
     }),
-    {
-      name: "client-storage", // localStorage key
-    }
+    { name: "client-storage" }
   )
 );
 
-// ⬇ Component Start
 const ViewClients = () => {
-  // Dialogs and states
-  const api = new ClientAPI();
   const [createuser, setcreateuser] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -82,106 +72,121 @@ const ViewClients = () => {
     reshareEmail: "",
   });
   const [email, setemail] = useState("");
-  const [isClicked, setIsClicked] = useState(false) // especially for send mail.
-  const [clientList, setClientList] = useState(null)
-  const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null)
+  const [isClicked, setIsClicked] = useState(false);
+  const [clientList, setClientList] = useState(null);
+  const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [settlementDate, setSettlementDate] = useState(["", ""]);
   const [showDateRange, setShowDateRange] = useState(false);
-  const [startDate, endDate] = settlementDate;
-
-  // Zustand Store
-  const {
-    clients: Clients,
-    fetchClients,
-    loading,
-    error,
-  } = useClientStore();
+  const { clients: Clients, fetchClients, loading, error } = useClientStore();
 
   useEffect(() => {
-    if(!localStorage.getItem("client-storage")) fetchClients();
-    if (Clients.length === 0) fetchClients();
+    if (!localStorage.getItem("client-storage") || Clients.length === 0) {
+      fetchClients();
+    }
   }, []);
 
   useEffect(() => {
     setClientList(Clients || []);
-  }, [Clients])
+  }, [Clients]);
 
   useEffect(() => {
-    if (!startDate && !endDate) {
-      setClientList(Clients);
-    } else if (startDate !== "" && endDate !== "") {
-      const filtered = Clients.filter(client => {
-        const clientDate = moment(new Date(client?.settlement_date));
-        return clientDate.isBetween(startDate, endDate, 'day', '[]');
+    const [startDate, endDate] = settlementDate;
+    if (startDate && endDate) {
+      const filtered = Clients.filter((client) => {
+        const clientDate = moment(client.settlement_date);
+        return clientDate.isBetween(
+          moment(startDate),
+          moment(endDate),
+          "day",
+          "[]"
+        );
       });
       setClientList(filtered);
+    } else {
+      setClientList(Clients);
     }
-
-  }, [startDate, endDate, Clients])
+  }, [settlementDate, Clients]);
 
   const columns = [
-    { key: "matternumber", title: "Matter Number" },
-    { key: "dataentryby", title: "Data Entry By" },
-    { key: "client_name", title: "Client Name" },
-    { key: "property_address", title: "Property Address" },
-    { key: "state", title: "State" },
-    { key: "client_type", title: "Client Type" },
-    { key: "settlement_date", title: "Settlement Date" },
-    { key: "final_approval", title: "Matter Date" },
-    { key: "building_pestinspect", title: "Close Matter" },
+    { key: "matternumber", title: "Matter Number", width: "15%" },
+    { key: "dataentryby", title: "Data Entry By", width: "15%" },
+    { key: "client_name", title: "Client Name", width: "15%" },
+    { key: "property_address", title: "Property Address", width: "20%" },
+    { key: "state", title: "State", width: "10%" },
+    { key: "client_type", title: "Client Type", width: "10%" },
+    { key: "settlement_date", title: "Settlement Date", width: "15%" },
+    { key: "final_approval", title: "Matter Date", width: "15%" },
+    { key: "close_matter", title: "Close Matter", width: "10%" },
   ];
 
-
+  const api = new ClientAPI();
   async function handelReShareEmail() {
     try {
-      setIsClicked((prev) => !prev)
+      setIsClicked(true);
       await api.resendLinkToClient(email, shareDetails?.matterNumber);
-      toast.success('Email send successfully.');
+      toast.success("Email sent successfully.");
     } catch (error) {
       toast.error(error.message);
     } finally {
-      handelShareEmailModalClose()
+      handelShareEmailModalClose();
     }
   }
 
   const handelShareEmailModalClose = () => {
-    setShowShareDialog(false)
-    setIsClicked(false)
-    setemail("")
-    setShareDetails({
-      matterNumber: "",
-      reshareEmail: "",
-    })
-  }
+    setShowShareDialog(false);
+    setIsClicked(false);
+    setemail("");
+    setShareDetails({ matterNumber: "", reshareEmail: "" });
+  };
 
   return (
     <>
-      <OutstandingTasksModal open={showOutstandingTask} onClose={(prev) => { setShowOutstandingTask(!prev), setOTActiveMatterNumber(null) }} activeMatter={otActiveMatterNumber} />
+      <OutstandingTasksModal
+        open={showOutstandingTask}
+        onClose={() => {
+          setShowOutstandingTask(false);
+          setOTActiveMatterNumber(null);
+        }}
+        activeMatter={otActiveMatterNumber}
+      />
+      <CreateClientModal
+        isOpen={createuser}
+        setIsOpen={() => setcreateuser(false)}
+      />
+      <DateRangeModal
+        isOpen={showDateRange}
+        setIsOpen={() => setShowDateRange(false)}
+        subTitle="Select the date range to filter clients."
+        handelSubmitFun={(fromDate, toDate) => {
+          setSettlementDate([fromDate, toDate]);
+          setShowDateRange(false);
+        }}
+      />
 
-      <Dialog open={showShareDialog} onClose={() => handelShareEmailModalClose()} className="relative z-10">
+      <Dialog
+        open={showShareDialog}
+        onClose={handelShareEmailModalClose}
+        className="relative z-50"
+      >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
-
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-            {/* Close button */}
             <button
-              onClick={() => handelShareEmailModalClose()}
+              onClick={handelShareEmailModalClose}
               className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
             >
               &times;
             </button>
-
-            {/* Title */}
-            <h2 className="text-xl font-semibold mb-2 text-center">Share to Client</h2>
-
-            {/* Description */}
+            <h2 className="text-xl font-semibold mb-2 text-center">
+              Share to Client
+            </h2>
             <p className="text-sm text-center text-gray-700 mb-4">
               Please enter the client email for matter No. :{" "}
-              <span className="text-blue-500 underline cursor-pointer">{shareDetails?.matterNumber}</span>
-            </p >
-
-            {/* Email input with icon */}
-            < div className="relative mb-4" >
+              <span className="text-blue-500 underline cursor-pointer">
+                {shareDetails?.matterNumber}
+              </span>
+            </p>
+            <div className="relative mb-4">
               <input
                 type="email"
                 placeholder="Enter email address"
@@ -199,112 +204,143 @@ const ViewClients = () => {
                   <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
                 </svg>
               </span>
-            </div >
-
-            {/* Reshare notice */}
-            {/* <p className="text-center text-sm text-gray-600 mb-4">
-              Reshare link to <strong className="text-black">vinukumaraws@gmail.com</strong>
-            </p> */}
-
-            {/* Send Link button */}
-            {
-              isClicked ? <button
-                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3"
-              >
+            </div>
+            {isClicked ? (
+              <button className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3">
                 Sending...
-              </button> : <button
+              </button>
+            ) : (
+              <button
                 className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
                 onClick={handelReShareEmail}
               >
                 Send Link
               </button>
-            }
-
-
-            {/* Manage Access */}
-            <button
-              className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition"
-            >
+            )}
+            <button className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition">
               Manage Access
             </button>
-          </DialogPanel >
-        </div >
-      </Dialog >
+          </DialogPanel>
+        </div>
+      </Dialog>
 
-      {/* Create Client Modal */}
-      <CreateClientModal isOpen={createuser} setIsOpen={() => setcreateuser(false)} />
+      <div className="space-y-4">
+        <Header />
 
-      {/* Date Range Modal */}
-      <DateRangeModal
-        isOpen={showDateRange}
-        setIsOpen={() => setShowDateRange(false)}
-        subTitle="Select the date range to filter clients."
-        handelSubmitFun={(fromDate, toDate) => {
-          setSettlementDate([fromDate, toDate]);
-          setShowDateRange(false);
-        }}
-      />
-
-      {/* View Clients Layout */}
-      <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
-        <main className="w-full max-w-8xl mx-auto">
-
-          <Header />
-
-          <div className="flex justify-between items-center w-full mb-[15] p-2">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-semibold">View Clients</h2>
-            </div>
-            <div className="shrink-0 flex gap-7.5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-2">
+          <h3 className="text-xl font-semibold shrink-0">View Clients</h3>
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-4">
               <Button
                 label="Create Client"
-                bg="bg-[#00A506]"
-                bghover="text-green-700"
-                bgactive="text-green-900"
                 Icon1={userplus}
                 onClick={() => setcreateuser(true)}
+                width="w-[195px]"
               />
-              <Button label="Outstanding Tasks" onClick={() => setShowOutstandingTask(true)} />
-
-              <Button label="Select Date Range" onClick={() => setShowDateRange(true)} />
-            </div >
-          </div >
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              Error loading clients: {error}
-            </div>
-          )}
-
-          {
-            loading || !clientList ? (
-            <Loader />
-            ) : clientList?.length == 0 ? (<div className="flex justify-center items-center py-8">
-              <div className="text-lg">Data not found</div>
-            </div>) : (
-            <div className="w-full">
-              <ViewClientsTable
-                data={clientList}
-                columns={columns}
-                onEdit={() => console.log("Edit hits")}
-                onDelete={() => console.log("Delete hits")}
-                itemsPerPage={5}
-                  onShare={
-                    (matterNumber, reshareEmail) => {
-                  setShareDetails({ matterNumber, reshareEmail });
-                  setShowShareDialog(true);
-                    }
-                  }
-                status={true}
-                ot={true}
-                handelOTOpen={() => setShowOutstandingTask(true)}
-                handelOT={setOTActiveMatterNumber}
+              <Button
+                label="Outstanding Tasks"
+                onClick={() => setShowOutstandingTask(true)}
+                width="w-[195px]"
+              />
+              <Button
+                label="Select Date Range"
+                onClick={() => setShowDateRange(true)}
+                width="w-[195px]"
               />
             </div>
-            )
-          }
-        </main >
-      </div >
+            <div className="flex lg:hidden items-center gap-2">
+              <Button
+                label="Create Client"
+                Icon1={userplus}
+                onClick={() => setcreateuser(true)}
+                width="w-auto"
+              />
+              <Menu as="div" className="relative">
+                <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <EllipsisVerticalIcon
+                    className="h-5 w-5 text-gray-600"
+                    aria-hidden="true"
+                  />
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="py-1">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowOutstandingTask(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            Outstanding Tasks
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowDateRange(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            Select Date Range
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div
+            className="p-4 text-red-700 bg-red-100 border-l-4 border-red-500"
+            role="alert"
+          >
+            <p>{error}</p>
+          </div>
+        )}
+
+        {loading || !clientList ? (
+          <Loader />
+        ) : clientList.length === 0 ? (
+          <div className="py-10 text-center text-gray-500">Data not found</div>
+        ) : (
+          <div className="px-2">
+            <ViewClientsTable
+              data={clientList}
+              columns={columns}
+              onEdit={true}
+              onShare={(matterNumber, reshareEmail) => {
+                setShareDetails({ matterNumber, reshareEmail });
+                setShowShareDialog(true);
+              }}
+              itemsPerPage={5}
+              status={true}
+              ot={true}
+              handelOTOpen={() => setShowOutstandingTask(true)}
+              handelOT={setOTActiveMatterNumber}
+            />
+          </div>
+        )}
+      </div>
     </>
   );
 };

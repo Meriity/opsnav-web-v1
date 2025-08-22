@@ -23,12 +23,12 @@ const Table = ({
   rowSpacing = "py-1",
   headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
+  showReset = true, 
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-  // Handle sorting
   const handleSort = (columnKey) => {
     let direction = "asc";
     if (sortedColumn === columnKey && sortDirection === "asc") {
@@ -153,18 +153,18 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
-
-                        <button
-                          onClick={() => onReset(item.email)}
-                          type="button"
-                          className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
-                          title="Reset Password"
-                        >
-                          
-                          <RefreshCw size={16} />
-                          <span className="text-xs">Reset</span>
-                        </button>
-
+                        {/* Conditionally render the "Reset" button based on the new prop */}
+                        {showReset && onReset && (
+                          <button
+                            onClick={() => onReset(item.email)}
+                            type="button"
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
+                            title="Reset Password"
+                          >
+                            <RefreshCw size={16} />
+                            <span className="text-xs">Reset</span>
+                          </button>
+                        )}
                         {OnEye && (
                           <button
                             onClick={() => onEdit(item.id)}

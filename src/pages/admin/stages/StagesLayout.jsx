@@ -319,7 +319,7 @@ export default function StagesLayout() {
           <div className="flex items-center gap-1">
             <Button
               label="Back"
-              bg="bg-[#FB4A52]"
+              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[70px] md:w-[84px]"
               onClick={() => {
                 navigate("/admin/view-clients");
@@ -329,7 +329,7 @@ export default function StagesLayout() {
 
             <Button
               label="Cost"
-              bg="bg-[#FB4A52]"
+              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[70px] md:w-[84px]"
               onClick={() => RenderStage(7)}
             />
