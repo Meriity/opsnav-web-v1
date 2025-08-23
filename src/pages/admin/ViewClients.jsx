@@ -78,6 +78,7 @@ const ViewClients = () => {
   const [settlementDate, setSettlementDate] = useState(["", ""]);
   const [showDateRange, setShowDateRange] = useState(false);
   const { clients: Clients, fetchClients, loading, error } = useClientStore();
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   useEffect(() => {
     if (!localStorage.getItem("client-storage") || Clients.length === 0) {
@@ -108,14 +109,14 @@ const ViewClients = () => {
   }, [settlementDate, Clients]);
 
   const columns = [
-    { key: "matternumber", title: "Matter Number", width: "15%" },
-    { key: "dataentryby", title: "Data Entry By", width: "15%" },
-    { key: "client_name", title: "Client Name", width: "15%" },
-    { key: "property_address", title: "Property Address", width: "20%" },
-    { key: "state", title: "State", width: "10%" },
-    { key: "client_type", title: "Client Type", width: "10%" },
-    { key: "settlement_date", title: "Settlement Date", width: "15%" },
-    { key: "final_approval", title: "Matter Date", width: "15%" },
+    { key: "matternumber", title: "Matter Number", width: "10%" },
+    { key: "dataentryby", title: "Data Entry By", width: "14%" },
+    { key: "client_name", title: "Client Name", width: "10%" },
+    { key: "property_address", title: "Property Address", width: "12%" },
+    { key: "state", title: "State", width: "6%" },
+    { key: "client_type", title: "Client Type", width: "8%" },
+    { key: "settlement_date", title: "Settlement Date", width: "10%" },
+    { key: "final_approval", title: "Matter Date", width: "12%" },
     { key: "close_matter", title: "Close Matter", width: "10%" },
   ];
 
@@ -230,22 +231,44 @@ const ViewClients = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-2">
           <h3 className="text-xl font-semibold shrink-0">View Clients</h3>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Clients per page:
+              </label>
+              <select
+                id="items-per-page"
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+            </div>
             <div className="hidden lg:flex items-center gap-4">
               <Button
                 label="Create Client"
                 Icon1={userplus}
                 onClick={() => setcreateuser(true)}
-                width="w-[195px]"
+                width="w-[150px]"
               />
               <Button
                 label="Outstanding Tasks"
                 onClick={() => setShowOutstandingTask(true)}
-                width="w-[195px]"
+                width="w-[150px]"
               />
               <Button
                 label="Select Date Range"
                 onClick={() => setShowDateRange(true)}
-                width="w-[195px]"
+                width="w-[150px]"
               />
             </div>
             <div className="flex lg:hidden items-center gap-2">
@@ -323,7 +346,7 @@ const ViewClients = () => {
         ) : clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">Data not found</div>
         ) : (
-          <div className="px-2">
+          <div className="px-0.5">
             <ViewClientsTable
               data={clientList}
               columns={columns}
@@ -332,7 +355,7 @@ const ViewClients = () => {
                 setShareDetails({ matterNumber, reshareEmail });
                 setShowShareDialog(true);
               }}
-              itemsPerPage={5}
+              itemsPerPage={itemsPerPage}
               status={true}
               ot={true}
               handelOTOpen={() => setShowOutstandingTask(true)}

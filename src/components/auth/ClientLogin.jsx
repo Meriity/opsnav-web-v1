@@ -18,8 +18,12 @@ function LoginForm() {
     setIsLoading(true)
     try {
       const response = await api.signInClient(matterNumber, password);
+      console.log(response);
       if (response.matterNumber) {
+        localStorage.removeItem("matterNumber");
+        localStorage.removeItem("logo");
         localStorage.setItem("matterNumber", response.matterNumber);
+        localStorage.setItem("logo", response.logo);
         navigate(`/client/dashboard/${btoa(response.matterNumber)}`);
       }
     } catch (err) {
@@ -40,7 +44,7 @@ function LoginForm() {
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
           <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
-          <button onClick={handleHome} className="w-[80px] mt-2 bg-sky-600 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"><HomeIcon/>
+          <button onClick={handleHome} className="w-[80px] mt-2 bg-sky-600 mx-auto cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"><HomeIcon/>
             Home</button>
         </div>
 

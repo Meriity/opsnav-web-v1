@@ -57,10 +57,9 @@ const ViewClientsTable = ({
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto">
-        {/* Added table-fixed for reliable truncation */}
+      <div className="overflow-x-auto lg:overflow-x-hidden">
         <table
-          className={`min-w-full border-separate border-spacing-y-1 table-fixed ${tableClass}`}
+          className={`w-full border-separate border-spacing-y-1 table-auto min-w-full lg:w-full ${tableClass}`}
         >
           <thead>
             <tr className={headerBgColor}>
@@ -68,12 +67,11 @@ const ViewClientsTable = ({
                 <th
                   key={column.key}
                   onClick={() => handleSort(column.key)}
-                  className={`px-3 py-4 text-left text-md font-bold text-black ${
+                  className={`px-2 py-4 text-left text-md lg:text-sm font-bold text-black whitespace-normal ${
                     colIndex === 0 ? "rounded-l-2xl" : ""
-                  } cursor-pointer select-none whitespace-nowrap`}
-                  style={{ width: column.width || "auto" }}
+                  } cursor-pointer select-none`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0">
                     {column.title}
                     {sortConfig.key === column.key ? (
                       sortConfig.direction === "asc" ? (
@@ -88,27 +86,18 @@ const ViewClientsTable = ({
                 </th>
               ))}
               {status && (
-                <th
-                  className="px-3 py-2 text-left text-sm font-bold text-black"
-                  style={{ width: "170px" }}
-                >
+                <th className="px-2 py-2 text-left text-sm lg:text-sm font-bold text-black whitespace-normal">
                   Stages
                 </th>
               )}
               {ot && (
-                <th
-                  className="px-3 py-2 text-left text-sm font-bold text-black"
-                  style={{ width: "45px" }}
-                >
+                <th className="px-1.5 py-2 text-left text-sm lg:text-sm font-bold text-black whitespace-normal">
                   OT
                 </th>
               )}
               {showActions && (
-                <th
-                  className="px-3 py-2 text-left text-sm font-bold text-black rounded-r-2xl"
-                  style={{ width: "95px" }}
-                >
-                  Actions
+                <th className="px-2 py-2 text-left text-sm lg:text-sm font-bold text-black rounded-r-2xl whitespace-normal">
+                  Action
                 </th>
               )}
             </tr>
@@ -124,14 +113,12 @@ const ViewClientsTable = ({
                 {columns.map((column, colIndex) => (
                   <td
                     key={column.key}
-                    className={`px-3 ${rowSpacing} text-sm text-black align-middle ${
+                    className={`px-2 ${rowSpacing} text-sm lg:text-xs text-black align-middle text-wrap break-words ${
                       colIndex === 0 ? "rounded-l-2xl" : ""
                     }`}
-                    style={{ width: column.width || "auto" }}
                   >
-                    {/* --- TEXT TRUNCATION FIX IS HERE --- */}
                     <div
-                      className="font-bold truncate"
+                      className="font-bold lg:font-normal 2xl:font-bold"
                       title={item[column.key]}
                     >
                       {item[column.key]}
@@ -139,37 +126,59 @@ const ViewClientsTable = ({
                   </td>
                 ))}
                 {status && (
-                  <td
-                    className={`px-1 align-middle`}
-                    style={{ width: "150px" }}
-                  >
-                    <div className="flex gap-1">
-                      {Object.keys(item?.stages?.[0] || {}).map(
-                        (keyName, index) => (
-                          <a
-                            href={`/admin/client/stages/${item.matternumber}/${
-                              index + 1
-                            }`}
-                            key={keyName}
-                            className="px-1 py-1 text-white rounded text-xs font-bold cursor-pointer"
-                            style={{
-                              backgroundColor:
-                                stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                                stageColorMap["default"],
-                            }}
-                            title={`Stage ${keyName}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {keyName.toUpperCase()}
-                          </a>
-                        )
-                      )}
+                  <td className={`px-1 align-middle`}>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex gap-1">
+                        {Object.keys(item?.stages?.[0] || {})
+                          .slice(0, 3)
+                          .map((keyName, index) => (
+                            <a
+                              href={`/admin/client/stages/${
+                                item.matternumber
+                              }/${index + 1}`}
+                              key={keyName}
+                              className="px-1 py-1 text-white rounded text-xs font-bold cursor-pointer"
+                              style={{
+                                backgroundColor:
+                                  stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                                  stageColorMap["default"],
+                              }}
+                              title={`Stage ${keyName}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {keyName.toUpperCase()}
+                            </a>
+                          ))}
+                      </div>
+                      <div className="flex gap-1">
+                        {Object.keys(item?.stages?.[0] || {})
+                          .slice(3)
+                          .map((keyName, index) => (
+                            <a
+                              href={`/admin/client/stages/${
+                                item.matternumber
+                              }/${index + 4}`}
+                              key={keyName}
+                              className="px-1 py-1 text-white rounded text-xs font-bold cursor-pointer"
+                              style={{
+                                backgroundColor:
+                                  stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                                  stageColorMap["default"],
+                              }}
+                              title={`Stage ${keyName}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {keyName.toUpperCase()}
+                            </a>
+                          ))}
+                      </div>
                     </div>
                   </td>
                 )}
                 {ot && (
-                  <td className={`px-1 align-middle`} style={{ width: "30px" }}>
+                  <td className={`px-1 align-middle`}>
                     <div className="flex justify-center">
                       <button
                         type="button"
@@ -185,11 +194,8 @@ const ViewClientsTable = ({
                   </td>
                 )}
                 {showActions && (
-                  <td
-                    className={`px-3 rounded-r-2xl align-middle`}
-                    style={{ width: "80px" }}
-                  >
-                    <div className="flex items-center space-x-1">
+                  <td className={`px-0.5 rounded-r-2xl align-middle`}>
+                    <div className="flex flex-col items-center space-y-2">
                       {onEdit && (
                         <button
                           onClick={() =>
