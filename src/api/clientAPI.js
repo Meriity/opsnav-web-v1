@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 class ClientAPI {
   constructor() {
     this.baseUrl = BASE_URL;
@@ -146,7 +147,7 @@ class ClientAPI {
   async getStageTwo(matterNumber) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/client/stage-two/${matterNumber}`,
+        `${this.baseUrl}/clients/stage-two/${matterNumber}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -479,22 +480,23 @@ class ClientAPI {
   async setPassword(token, password) {
     try {
       const response = await fetch(`${this.baseUrl}/client-view/set-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token,
-          password})
+          password,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
-      console.error('Error setting password:', error);
+      console.error("Error setting password:", error);
       throw error;
     }
   }

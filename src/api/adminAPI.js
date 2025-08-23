@@ -7,34 +7,75 @@ class AdminAPI {
 
   // Get authorization headers
   getHeaders() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
-  // Create a new user
+  async handleResponse(response) {
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const error = new Error(data.message || "Request failed");
+      error.response = {
+        status: response.status,
+        data,
+      };
+      throw error;
+    }
+
+    return data;
+  }
+
+  // Create new User
   async createUser(email, role, displayName) {
-    console.log(JSON.stringify({ email, role, displayName }));
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify({
           email,
-          role: role,
-          display_name: displayName
-        })
+          role,
+          display_name: displayName,
+        }),
       });
 
+      // Handle non-200 responses
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || "Request failed");
+        error.response = {
+          status: response.status,
+          data: errorData,
+        };
+        throw error;
       }
 
-      return await response.json();
+      return await this.handleResponse(response);
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
+      s;
+      throw error;
+    }
+  }
+
+  // Reset password
+  async resetPassword(email) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/admin/users/reset-password`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error resetting password:", error);
       throw error;
     }
   }
@@ -43,17 +84,13 @@ class AdminAPI {
   async getAllUsers() {
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
-        method: 'GET',
-        headers: this.getHeaders()
+        method: "GET",
+        headers: this.getHeaders(),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await this.handleResponse(response);
     } catch (error) {
-      console.error('Error getting all users:', error);
+      console.error("Error getting all users:", error);
       throw error;
     }
   }
@@ -63,8 +100,8 @@ class AdminAPI {
     console.log(userId);
     try {
       const response = await fetch(`${this.baseUrl}/admin/users/${userId.id}`, {
-        method: 'DELETE',
-        headers: this.getHeaders()
+        method: "DELETE",
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
@@ -73,7 +110,7 @@ class AdminAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
       throw error;
     }
   }
@@ -83,12 +120,12 @@ class AdminAPI {
     console.log(user);
     try {
       const response = await fetch(`${this.baseUrl}/admin/users/${user.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: this.getHeaders(),
         body: JSON.stringify({
           displayName: user.displayName,
-          role: user.role
-        })
+          role: user.role,
+        }),
       });
 
       if (!response.ok) {
@@ -97,7 +134,7 @@ class AdminAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Error editing user:', error);
+      console.error("Error editing user:", error);
       throw error;
     }
   }
@@ -106,8 +143,8 @@ class AdminAPI {
   async getUserById(userId) {
     try {
       const response = await fetch(`${this.baseUrl}/admin/users/${userId}`, {
-        method: 'GET',
-        headers: this.getHeaders()
+        method: "GET",
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
@@ -116,7 +153,7 @@ class AdminAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Error getting user by ID:', error);
+      console.error("Error getting user by ID:", error);
       throw error;
     }
   }
@@ -124,7 +161,7 @@ class AdminAPI {
   // Bulk operations
   async bulkCreateUsers(users) {
     try {
-      const promises = users.map(user =>
+      const promises = users.map((user) =>
         this.createUser(user.email, user.role, user.display_name)
       );
 
@@ -132,12 +169,12 @@ class AdminAPI {
 
       return results.map((result, index) => ({
         user: users[index],
-        success: result.status === 'fulfilled',
-        data: result.status === 'fulfilled' ? result.value : null,
-        error: result.status === 'rejected' ? result.reason : null
+        success: result.status === "fulfilled",
+        data: result.status === "fulfilled" ? result.value : null,
+        error: result.status === "rejected" ? result.reason : null,
       }));
     } catch (error) {
-      console.error('Error in bulk create users:', error);
+      console.error("Error in bulk create users:", error);
       throw error;
     }
   }
@@ -146,9 +183,13 @@ class AdminAPI {
   async updateUserRole(userId, newRole) {
     try {
       const user = await this.getUserById(userId);
-      return await this.editUser(userId, user.display_name, newRole);
+      return await this.editUser({
+        id: userId,
+        displayName: user.displayName,
+        role: newRole,
+      });
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error("Error updating user role:", error);
       throw error;
     }
   }
@@ -157,9 +198,9 @@ class AdminAPI {
   async getUsersByRole(role) {
     try {
       const allUsers = await this.getAllUsers();
-      return allUsers.filter(user => user.role === role);
+      return allUsers.users.filter((user) => user.role === role);
     } catch (error) {
-      console.error('Error getting users by role:', error);
+      console.error("Error getting users by role:", error);
       throw error;
     }
   }
@@ -168,14 +209,16 @@ class AdminAPI {
   async searchUsers(searchTerm) {
     try {
       const allUsers = await this.getAllUsers();
-
       const searchLower = searchTerm.toLowerCase();
-      return allUsers.filter(user =>
-        user.email.toLowerCase().includes(searchLower) ||
-        user.display_name.toLowerCase().includes(searchLower)
+
+      return allUsers.users.filter(
+        (user) =>
+          user.email.toLowerCase().includes(searchLower) ||
+          (user.display_name &&
+            user.display_name.toLowerCase().includes(searchLower))
       );
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       throw error;
     }
   }
@@ -186,16 +229,17 @@ class AdminAPI {
       const allUsers = await this.getAllUsers();
 
       const stats = {
-        totalUsers: allUsers.length,
-        adminUsers: allUsers.filter(u => u.role === 'admin').length,
-        regularUsers: allUsers.filter(u => u.role === 'user').length,
-        activeUsers: allUsers.filter(u => u.status === 'active').length,
-        inactiveUsers: allUsers.filter(u => u.status === 'inactive').length
+        totalUsers: allUsers.users.length,
+        adminUsers: allUsers.users.filter((u) => u.role === "admin").length,
+        regularUsers: allUsers.users.filter((u) => u.role === "user").length,
+        activeUsers: allUsers.users.filter((u) => u.status === "active").length,
+        inactiveUsers: allUsers.users.filter((u) => u.status === "inactive")
+          .length,
       };
 
       return stats;
     } catch (error) {
-      console.error('Error getting user statistics:', error);
+      console.error("Error getting user statistics:", error);
       throw error;
     }
   }

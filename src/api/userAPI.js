@@ -148,7 +148,7 @@ class ClientAPI {
   }
 
   // Insert/Update Cost
-  async upsertCost(  additionalData = {}) {
+  async upsertCost(additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
@@ -172,7 +172,7 @@ class ClientAPI {
   async getClients() {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/user/clients/active",
+        'https://opsnav-app-service-dev-871399330172.us-central1.run.app/user/clients/active',
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -323,7 +323,7 @@ class ClientAPI {
   async getArchivedClients() {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled",
+        `${BASE_URL}/user/clients/archived`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -345,7 +345,7 @@ class ClientAPI {
   async getArchivedClientsDate(from, to) {
     try {
       const response = await fetch(
-        `https://opsnav-app-service-871399330172.us-central1.run.app/clients/settled?from=${from}&to=${to}`,
+        `${BASE_URL}/clients/settled?from=${from}&to=${to}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -365,7 +365,7 @@ class ClientAPI {
   async getDashboardData() {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/dashboard",
+        `${BASE_URL}/dashboard`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -421,7 +421,7 @@ class ClientAPI {
   async resendLinkToClient(email, matterNumber) {
     try {
       const response = await fetch(
-        "https://opsnav-app-service-871399330172.us-central1.run.app/client-view/send-link",
+        `${BASE_URL}/client-view/send-link`,
         {
           method: "POST",
           headers: this.getHeaders(),

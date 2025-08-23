@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import ProgressChart from "../../components/ui/ProgressChart";
-import Logo from "../../../public/main.jpg";
-import conveyancing from "../../../public/Illustrator_image-removebg-preview.png";
+
 // Icons
 import {
   LogOut,
@@ -12,12 +11,14 @@ import {
   Home,
   FileText,
   User,
-  ChevronsRight,
+  X,
   CheckCircle2,
   Circle,
   XCircle,
   Clock,
   NotepadText,
+  ChevronsRight,
+
 } from "lucide-react";
 
 // Original API and Components
@@ -40,15 +41,18 @@ const StageCard = ({ stage, stageIndex }) => {
     };
     return stageMap[index] ?? index;
   };
+
   const allTasks = [
     ...stage.data.sections,
     ...(stage.data.rows[0]?.sections || []),
   ];
+
   const completedTasks = allTasks.filter(
     (task) =>
       task.status?.toLowerCase() === "yes" ||
       task.status?.toLowerCase() === "nr"
   ).length;
+
   const totalTasks = allTasks.length;
 
   let statusLabel = "Not Started";
@@ -58,37 +62,51 @@ const StageCard = ({ stage, stageIndex }) => {
     statusLabel = "In Progress";
     statusColor = "bg-yellow-100 text-yellow-800";
   } else if (completedTasks === totalTasks && totalTasks > 0) {
-    statusLabel = "Completed";
+    statusLabel = "Stage Completed";
     statusColor = "bg-green-100 text-green-800";
   }
 
   return (
-    <motion.div
-      className="relative overflow-hidden p-6 rounded-xl border border-white/40 bg-white/30 backdrop-blur-lg shadow-sm mb-5"
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-      }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">
-            {stage.stageName}
-          </h3>
-          <p
-            className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
-          >
-            {statusLabel}
-          </p>
-        </div>
-        <div className="text-3xl font-light text-slate-400">
-          0{getNextStageIndex(stageIndex)}
-        </div>
-      </div>
+<motion.div
+  className="relative group overflow-hidden p-6 rounded-xl border border-white/40 
+             bg-white/30 shadow-sm mb-5 
+             hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
+  variants={{
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  }}
+  transition={{ duration: 0.5 }}
+>
+ 
+  <div
+    className="absolute top-1/2 left-1/2 
+               -translate-x-1/2 -translate-y-1/2 
+               w-3/4 h-3/4 
+               bg-sky-400 opacity-20 blur-3xl rounded-full 
+               hidden group-hover:block z-0 transition duration-500"
+  ></div>
 
-      <div className="space-y-3 mb-4">
-        {allTasks.map((task, index) => {
+  {/* Card Content */}
+  <div className="relative z-10">
+    <div className="flex justify-between items-start mb-4">
+      <div>
+        <h3 className="text-lg font-bold text-slate-800">
+          {stage.stageName}
+        </h3>
+        <p
+          className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
+        >
+          {statusLabel}
+        </p>
+      </div>
+      <div className="text-3xl font-light text-slate-400">
+        0{getNextStageIndex(stageIndex)}
+      </div>
+    </div>
+
+    <div className="space-y-3 mb-5 flex">
+      <div className="w-full">
+        {allTasks.map((task) => {
           const status = task.status?.toLowerCase();
           let icon = (
             <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
@@ -108,37 +126,43 @@ const StageCard = ({ stage, stageIndex }) => {
           }
           return (
             <div
-              key={task.title}
-              className="flex items-center text-sm text-slate-700"
-            >
+  key={task.title}
+  className="flex items-center text-sm text-slate-700 mt-2 w-40 sm:w-auto"
+>
               {icon}
               <span>{task.title}</span>
             </div>
           );
         })}
       </div>
+     <div className="absolute right-5 sm:right-2">
+  <img src={stage.svg} alt="" className="h-15 sm:w-auto" />
+</div>
+    </div>
 
-      {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-        <div className="mt-4 pt-4 border-t border-white/60 flex">
-          <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
-            <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
-              <NotepadText className="w-4 h-4" />
-              Notes
-            </p>
-            {stage.data.noteText && <p>{stage.data.noteText}</p>}
-            {stage.data.rows[0]?.noteText && (
-              <p>{stage.data.rows[0].noteText}</p>
-            )}
-          </blockquote>
-        </div>
-      )}
-    </motion.div>
+    {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
+      <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
+        <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
+          <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
+            <NotepadText className="w-4 h-4" />
+            Notes
+          </p>
+          {stage.data.noteText && <p>{stage.data.noteText}</p>}
+          {stage.data.rows[0]?.noteText && (
+            <p>{stage.data.rows[0].noteText}</p>
+          )}
+        </blockquote>
+      </div>
+    )}
+  </div>
+</motion.div>
   );
 };
 
 export default function ClientDashboard() {
   const logo = localStorage.getItem("logo") || "/Logo.png";
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
   const api = new ClientAPI();
   let { matterNumber } = useParams();
   matterNumber = atob(matterNumber);
@@ -155,6 +179,7 @@ export default function ClientDashboard() {
   });
 
   function formatMatterDetails(apiResponse) {
+    console.log(apiResponse);
     return {
       matter_date: new Date(apiResponse.matterDate).toLocaleDateString("en-GB"),
       matter_number: apiResponse.matterNumber.toString(),
@@ -207,12 +232,13 @@ export default function ClientDashboard() {
 
     if (response.stage1)
       stages.push({
-        stageName: "Stage 1",
+        stageName: "Initialisation",
+        svg : "/stage 1.svg",
         data: {
           sections: [
             { title: "Retainer", status: response.stage1.retainer },
             {
-              title: "Declaration Form",
+              title: "Declaration Forms",
               status: response.stage1.declarationForm,
             },
           ],
@@ -221,7 +247,6 @@ export default function ClientDashboard() {
           rows: [
             {
               sections: [
-                { title: "Tenants", status: response.stage1.tenants },
                 {
                   title: "Contract Review",
                   status: response.stage1.contractReview,
@@ -235,11 +260,12 @@ export default function ClientDashboard() {
       });
     if (response.stage2) {
       stages.push({
-        stageName: "Stage 2A",
+        stageName: "Contract Confirmation",
+        svg : "/stage 2A.svg",
+        financeApproval:response.stage2.financeApprovalDate.slice(0,10) || "Not Set",
         data: {
           sections: [
-            { title: "VOI", status: response.stage2.voi },
-            { title: "CAF", status: response.stage2.caf },
+
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -248,12 +274,21 @@ export default function ClientDashboard() {
             {
               sections: [
                 {
-                  title: "Signed Contract",
+                  title: "Receive Signed Contract",
                   status: response.stage2.signedContract,
                 },
                 {
                   title: "Deposit Receipt",
                   status: response.stage2.depositReceipt,
+                },
+                {
+                  title: "Identity Verification and Client Authorisation",
+                 status :
+  response.stage2.voi === "Yes" && response.stage2.caf === "Yes"
+    ? "Yes"
+    : response.stage2.voi === "Processing" && response.stage2.caf === "Processing"
+    ? "Processing"
+    : "No"
                 },
               ],
               noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -263,11 +298,12 @@ export default function ClientDashboard() {
         },
       });
       stages.push({
-        stageName: "Stage 2B",
+        stageName: "Approvals",
+        svg : "/stage 2B.svg",
         data: {
           sections: [
             {
-              title: "Building & Pest",
+              title: "Building & Pest Inspection",
               status: response.stage2.buildingAndPest,
             },
             {
@@ -282,12 +318,8 @@ export default function ClientDashboard() {
             {
               sections: [
                 {
-                  title: "Obtain DA Seller",
+                  title: "Discharge Authority",
                   status: response.stage2.obtainDaSeller,
-                },
-                {
-                  title: "CT Controller",
-                  status: response.stage2.checkCtController,
                 },
               ],
               noteText: splitNoteParts(response.stage2.noteForClientB)
@@ -299,19 +331,19 @@ export default function ClientDashboard() {
     }
     if (response.stage3)
       stages.push({
-        stageName: "Stage 3",
+        stageName: "Searches & Due Diligence",
+        svg : "/stage 3.svg",
         data: {
           sections: [
-            { title: "Instrument", status: response.stage3.instrument },
-            { title: "Title Search", status: response.stage3.titleSearch },
+            { title: "Title & Plan Search", status: response.stage3.titleSearch },
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage3.noteForClient).beforeHyphen,
           rows: [
             {
               sections: [
-                { title: "Invite Bank", status: response.stage3.inviteBank },
-                { title: "Rates", status: response.stage3.rates },
+                { title: "PEXA & Invite Bank", status: response.stage3.inviteBank },
+                { title: "Rates & Water", status: response.stage3.rates },
               ],
               noteText: splitNoteParts(response.stage3.noteForClient)
                 .afterHyphen,
@@ -321,19 +353,19 @@ export default function ClientDashboard() {
       });
     if (response.stage4)
       stages.push({
-        stageName: "Stage 4",
+        stageName: "Duty & Settlement Adjustment",
+        svg : "/stage 4.svg",
         data: {
           sections: [
-            { title: "DTS", status: response.stage4.dts },
-            { title: "SOA", status: response.stage4.soa },
+            { title: "Dutiable statement", status: response.stage4.dts },
+            { title: "Statement of Adjustment", status: response.stage4.soa },
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage4.noteForClient).beforeHyphen,
           rows: [
             {
               sections: [
-                { title: "Duty Online", status: response.stage4.dutyOnline },
-                { title: "FRCGW", status: response.stage4.frcgw },
+                { title: "Duties Online", status: response.stage4.dutyOnline },
               ],
               noteText: splitNoteParts(response.stage4.noteForClient)
                 .afterHyphen,
@@ -343,13 +375,11 @@ export default function ClientDashboard() {
       });
     if (response.stage5)
       stages.push({
-        stageName: "Stage 5",
+        stageName: "Finalisation & notifications",
+        svg : "/stage 5.svg",
         data: {
           sections: [
-            {
-              title: "GST Withholding",
-              status: response.stage5.gstWithholding,
-            },
+
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage5.noteForClient).beforeHyphen,
@@ -357,16 +387,16 @@ export default function ClientDashboard() {
             {
               sections: [
                 {
-                  title: "Notify SOA",
+                  title: "Notification to Client",
                   status: response.stage5.notifySoaToClient,
                 },
                 {
-                  title: "Add Agent Fee",
-                  status: response.stage5.addAgentFee,
+                  title: "Transfer Documents Complete",
+                  status: response.stage5.transferDocsOnPexa,
                 },
                 {
-                  title: "Settlement Notification",
-                  status: response.stage5.settlementNotification,
+                  title: "Settlement Notification to the authorities",
+                  status: response.stage5.disbursementsInPexa,
                 },
               ],
               noteText: splitNoteParts(response.stage5.noteForClient)
@@ -432,34 +462,46 @@ export default function ClientDashboard() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-sky-200 to-white overflow-hidden">
-      <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 hidden lg:flex flex-col backdrop-blur-xl text-slate-800 rounded-2xl border border-white/40 overflow-y-auto shadow-xl">
+    <div className="flex h-screen bg-[#F9FAFB] overflow-hidden">
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 sm:block
+        bg-[#FFFF] text-slate-800 rounded-2xl border border-white/40 
+        shadow-sm mb-3 overflow-y-auto flex-col z-50 
+        transform transition-transform duration-300 
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+        lg:translate-x-0 lg:flex`}
+      >
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center h-20 flex-shrink-0 border-b border-slate-200">
-            {/* <img className="w-36 h-auto" src={logo} alt="Logo" /> */}
-            <img 
-              className="max-h-[60px]"  
-              alt="Logo" 
-              // src="/Logo.png"
+          <div className="flex items-center justify-center p-5 flex-shrink-0 border-b border-slate-200 relative">
+            <img
+              className="max-h-[40px]"
+              alt="Logo"
               src={logo}
             />
+            {/* Close button in mobile */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute right-3 top-3 lg:hidden"
+            >
+              <X className="w-5 h-5 text-[#00AEEF]" />
+            </button>
           </div>
+
+          {/* Sidebar content */}
           <div className="flex-grow p-6 flex flex-col justify-between">
             <div className="space-y-6">
+              {/* Matter Overview */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Matter Overview
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Matter Overview</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <User className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Client
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Client</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.Clientname}
                       </p>
@@ -468,9 +510,7 @@ export default function ClientDashboard() {
                   <div className="flex items-start gap-3">
                     <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Matter Number
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Matter Number</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.matter_number}
                       </p>
@@ -478,30 +518,26 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Key Dates */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Key Dates
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Key Dates</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Matter Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Unconditional Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.matter_date}
+                        {stageDetails[1].financeApproval}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Settlement Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Settlement Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.settlement_date}
                       </p>
@@ -509,18 +545,16 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Property */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Property
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Property</span>
                 </h4>
                 <div className="flex items-start gap-3">
                   <Home className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-x font-medium text-slate-600">
-                      Address
-                    </p>
+                    <p className="text-x font-medium text-slate-600">Address</p>
                     <p className="text-sm text-slate-800 font-semibold">
                       {matterDetails.address}
                     </p>
@@ -531,13 +565,15 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Logout button */}
             <div className="pt-4">
               <button
                 onClick={() => {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="w-full justify-center bg-[#EEF5FF]  text-slate-700 hover:bg-[#B4D4FF] hover:text-slate-700 active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
+                className="w-full justify-center bg-[#00AEEF] hover:bg-[#007A9E] text-white active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -547,73 +583,98 @@ export default function ClientDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto min-w-0 lg:ml-[19.5rem]">
-        <div className="p-6 sm:p-6">
-          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-white/40 bg-white/30 backdrop-blur-lg p-6 rounded-2xl shadow-sm mb-3 overflow-hidden">
-            <div></div>
-            <motion.div
-              className="flex-1 min-w-0"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl font-bold text-slate-800">
-                <span className="text-[#00AEEF]">Hello,</span>{" "}
-                {matterDetails.Clientname} 👋
-              </h1>
-              <p className="text-slate-500 mt-1">
-                Welcome back. Here is the latest status of your matter.
-              </p>
-              <p className="text-slate-500 mt-1">
-                Your matter is{" "}
-                <span className="text-[#00AEEF] font-bold">
-                  {overallProgress.total > 0
-                    ? Math.round(
-                        (overallProgress.completed / overallProgress.total) *
-                          100
-                      )
-                    : 0}
-                  %
-                </span>{" "}
-                completed.
-              </p>
-            </motion.div>
-            <motion.div
-              className="min-w-0 flex flex-col items-center"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <motion.div
-                className="flex items-center gap-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <img
-                  src={conveyancing}
-                  alt="Conveyancing"
-                  className="mb-4 h-[170px] w-full max-w-xs object-contain"
-                />
+      <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
+<div className="p-6 sm:p-6">
+  <div
+    className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]"
+  >      
+  
+    {/* LEFT SECTION: Glassmorphism card */}
+    <motion.div
+      className="flex-1 min-w-0 gap-2"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+         
+      <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
+      
+       <button
+        onClick={() => setIsOpen(true)}
+        className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
+      > 
+        <ChevronsRight className="w-8 h-8  text-[#00AEEF]"  />
+        <span>Matter Details</span>
+      </button>
 
-                {overallProgress && (
-                  <ProgressChart
-                    completed={overallProgress.completed}
-                    total={overallProgress.total}
-                    processing={overallProgress.processingTask}
-                    chartImage={Logo}
-                  />
-                )}
-              </motion.div>
-            </motion.div>
-          </div>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+        />
+      )}
+        <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
+         Hello, {matterDetails.Clientname} 👋
+        </h1>
+        <p className="text-gray-100">
+          Welcome back. Here is the latest status of your matter.
+        </p>
+
+        {/* Show progress chart only on mobile */}
+        {/* <div className="mt-4 block md:hidden">
+          {overallProgress && (
+            <ProgressChart
+              completed={overallProgress.completed}
+              total={overallProgress.total}
+              processing={overallProgress.processingTask}
+            />
+          )}
+        </div> */}
+      </div>
+    </motion.div>
+
+    {/* RIGHT SECTION: Full image box */}
+    <motion.div
+      className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div
+        style={{
+          backgroundImage: 'url("/House.jpg")',
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          padding: "20px 20px",
+        }}
+        className="h-full"
+      >
+        {/* Show progress chart only on desktop */}
+        <div className="">
+          {overallProgress && (
+            <ProgressChart
+              completed={overallProgress.completed}
+              total={overallProgress.total}
+              processing={overallProgress.processingTask}
+            />
+          )}
+        </div>
+      </div>
+    </motion.div>
+  </div>
+
+
 
           {/* Stage Cards Section */}
           <div>
-            <div className="sticky top-0 z-10 backdrop-blur-md py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
+            <div className="sticky top-0 z-20 bg-white py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
               {/* Left: Chevron + Title */}
-              <div className="flex items-center">
-                <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
+              <div className="flex items-center gap-5">
+                {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
+                 */}
+                 <img src="/stage-by-stage.svg" style={{height:"60px"}} alt="" />
                 <h2 className="text-2xl font-bold text-slate-800">
                   Stage-by-Stage Progress
                 </h2>
@@ -672,3 +733,4 @@ export default function ClientDashboard() {
     </div>
   );
 }
+

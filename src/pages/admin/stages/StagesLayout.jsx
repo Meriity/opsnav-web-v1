@@ -19,6 +19,16 @@ export default function StagesLayout() {
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isTabletView, setIsTabletView] = useState(
+    window.innerWidth >= 768 && window.innerWidth < 1024
+  );
+  const [isLaptopView, setIsLaptopView] = useState(
+    window.innerWidth >= 1024 && window.innerWidth < 1440
+  );
+  const [isLargeScreenView, setIsLargeScreenView] = useState(
+    window.innerWidth >= 1440
+  );
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
     status2: "Not Completed",
@@ -49,59 +59,63 @@ export default function StagesLayout() {
   //       return "";
   //   }
   // }
- // Handles both colorStatus values and evaluated statuses
-function bgcolor(status) {
-  const statusColors = {
-    // For evaluated statuses
-    "In progress": "bg-[#FFEECF]",
-    "Completed": "bg-[#00A506]",
-    "Not Completed": "bg-[#FF0000]",
-    // For direct colorStatus values
-    "green": "bg-[#00A506]",
-    "red": "bg-[#FF0000]",
-    "amber": "bg-[#FFEECF]",
-    "yellow": "bg-[#facc15]",
-    "blue": "bg-[#3b82f6]",
-  };
+  // Handles both colorStatus values and evaluated statuses
+  function bgcolor(status) {
+    const statusColors = {
+      // For evaluated statuses
+      "In progress": "bg-[#FFEECF]",
+      Completed: "bg-[#00A506]",
+      "Not Completed": "bg-[#FF0000]",
+      // For direct colorStatus values
+      green: "bg-[#00A506]",
+      red: "bg-[#FF0000]",
+      amber: "bg-[#FFEECF]",
+      yellow: "bg-[#facc15]",
+      blue: "bg-[#3b82f6]",
+    };
 
-  return statusColors[status] || "bg-[#F3F7FF]";
-}
+    return statusColors[status] || "bg-[#F3F7FF]";
+  }
 
-// Converts any status to display text
-function getStatusDisplayText(status) {
-  const textMap = {
-    "green": "Completed",
-    "red": "Not Completed",
-    "amber": "In progress",
-    "yellow": "Warning",
-    "blue": "Info",
-    "In progress": "In progress",
-    "Completed": "Completed",
-    "Not Completed": "Not Completed",
-  };
+  // Converts any status to display text
+  function getStatusDisplayText(status) {
+    const textMap = {
+      green: "Completed",
+      red: "Not Completed",
+      amber: "In progress",
+      yellow: "Warning",
+      blue: "Info",
+      "In progress": "In progress",
+      Completed: "Completed",
+      "Not Completed": "Not Completed",
+    };
 
-  return textMap[status] || status;
-}
-  function evaluateStageStatus(stageData, fields) {
-    if (!stageData || fields.length === 0) return "Not Completed";
+    return textMap[status] || status;
+  }
+    function evaluateStageStatus(stageData, fields) {
+      if (!stageData || fields.length === 0) return "Not Completed";
 
-    let yesCount = 0;
-    let emptyCount = 0;
+      let yesCount = 0;
+      let noCount = 0;
+      let emptyCount = 0;
 
     for (const field of fields) {
       const val = stageData[field]?.toString().toLowerCase();
-      if (val === "yes") yesCount++;
+      if (val === "yes" || val == "fixed" || val == "variable") yesCount++;
+      else if (val === "no") noCount++;
       else if (!val || val === "null" || val === "undefined" || val === "")
         emptyCount++;
     }
 
     if (emptyCount === fields.length) return "Not Completed";
     if (yesCount === fields.length) return "Completed";
+    if (noCount === fields.length) return "Not Completed";
     return "In progress";
   }
 
   function RenderStage(newStage) {
     setSelectedStage(newStage);
+    setReloadStage((prev) => !prev);
   }
 
   function Showstage(stage) {
@@ -113,6 +127,7 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            color={stageStatuses}
           />
         );
       case 2:
@@ -122,7 +137,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 3:
         return (
           <Stage3
@@ -130,7 +146,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 4:
         return (
           <Stage4
@@ -138,7 +155,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 5:
         return (
           <Stage5
@@ -146,7 +164,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 6:
         return (
           <Stage6
@@ -154,7 +173,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
       case 7:
         return (
           <Cost
@@ -171,7 +191,8 @@ function getStatusDisplayText(status) {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          />);
+          />
+        );
     }
   }
 
@@ -180,17 +201,17 @@ function getStatusDisplayText(status) {
       try {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
+        console.log("Full API response:", response);
         setClientData(response);
 
         // First check if colorStatus exists in any stage
         const hasColorStatus = Object.values(response).some(
-          stage => stage && stage.colorStatus
+          (stage) => stage && stage.colorStatus
         );
 
         const section = {};
-        
+
         if (hasColorStatus) {
-          // Use colorStatus if available
           section.status1 = response.stage1?.colorStatus || "Not Completed";
           section.status2 = response.stage2?.colorStatus || "Not Completed";
           section.status3 = response.stage3?.colorStatus || "Not Completed";
@@ -198,13 +219,11 @@ function getStatusDisplayText(status) {
           section.status5 = response.stage5?.colorStatus || "Not Completed";
           section.status6 = response.stage6?.colorStatus || "Not Completed";
         } else {
-          // Fall back to field evaluation if no colorStatus
           section.status1 = evaluateStageStatus(response.stage1, [
             "referral",
             "declarationForm",
             "contractReview",
             "tenants",
-            "retainer",
           ]);
           section.status2 = evaluateStageStatus(response.stage2, [
             "voi",
@@ -251,7 +270,6 @@ function getStatusDisplayText(status) {
             "closeMatter",
           ]);
         }
-
         setStageStatuses(section);
       } catch (e) {
         console.error("Error fetching stage details:", e);
@@ -265,205 +283,274 @@ function getStatusDisplayText(status) {
     }
   }, [matterNumber, reloadStage]);
 
-  async function handleupdate() {
-    event.preventDefault();
+  async function handleupdate(e) {
+    e.preventDefault();
     try {
       const payload = {
-        settlementDate: clientData.settlementDate,
-        notes: clientData.notes
+        settlementDate: clientData.settlementDate || null,
+        notes: clientData.notes || "",
       };
 
-      await api.updateClientData(matterNumber, payload);
+      const updatedData = await api.updateClientData(matterNumber, payload);
+      setClientData((prev) => ({
+        ...prev,
+        settlementDate: updatedData.settlementDate,
+        notes: updatedData.notes,
+      }));
+
       alert("Updated successfully!");
     } catch (err) {
-      console.error("Error updating matter details:", err);
-      alert("Failed to update. Please try again.");
+      console.error("Update error:", {
+        error: err,
+        response: err.response?.data,
+      });
+      alert("Failed to update. Please check console for details.");
     }
   }
 
   return (
-    <div className="flex w-full h-full bg-gray-100">
-      <main className="flex-grow h-full space-y-4 w-[1230px]">
-        <div className="flex justify-between items-center">
+    <div className="flex flex-col w-full min-h-screen bg-gray-100">
+      <main className="flex-grow p-4 w-full max-w-screen-xl mx-auto">
+        <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-semibold">
             Hello {localStorage.getItem("user")}
           </h2>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-1">
             <Button
               label="Back"
-              bg="bg-[#FB4A52]"
-              width="w-[84px]"
-              onClick={() => navigate("/admin/view-clients")}
+              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+              width="w-[70px] md:w-[84px]"
+              onClick={() => {
+                navigate("/admin/view-clients");
+                localStorage.removeItem("client-storage");
+              }}
             />
+
             <Button
               label="Cost"
-              bg="bg-[#FB4A52]"
-              width="w-[84px]"
-              onClick={() => setSelectedStage(7)}
+              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+              width="w-[70px] md:w-[84px]"
+              onClick={() => RenderStage(7)}
             />
           </div>
         </div>
-
         {loading ? (
           <Loader />
         ) : (
           <>
-            <div className="flex px-4 py-3 bg-[#F2FBFF] gap-[10px] rounded flex-wrap">
-              {stages.map((stage, index) => {
-                const stageStatus = stageStatuses[`status${stage.id}`];
-                return (
-                  <div
-                    key={stage.id}
-                    onClick={() => setSelectedStage(stage.id)}
-                    className={`cursor-pointer p-2 rounded shadow w-[190px] h-[62px] transition-colors duration-200 ${
-                      selectedStage === stage.id 
-                        ? "bg-[#FFFFFF] text-black"  // White background for selected stage
-                        : bgcolor(stageStatus)  // Dynamic color based on status
-                    }`}
-                  >
-                    <div className="flex justify-between">
-                      <p className="font-bold font-poppins">
-                        Stage {index + 1}
-                      </p>
+            {isMobileView || isTabletView || isLaptopView ? (
+              <div className="overflow-x-auto mb-4">
+                <div className="flex space-x-2 min-w-max px-4 py-1 bg-[#F2FBFF] rounded">
+                  {stages.map((stage, index) => {
+                    const stageStatus = stageStatuses[`status${stage.id}`];
+                    return (
                       <div
-                        className={`w-[90px] h-[18px]  ${stageStatus === "In progress" || stageStatus === "amber"
-                          ? "text-[#FF9500]" 
-                          : "text-black"
-                        } flex items-center justify-center rounded-4xl `}
+                        key={stage.id}
+                        onClick={() => setSelectedStage(stage.id)}
+                        className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 flex-shrink-0 w-40 h-[62px] ${
+                          selectedStage === stage.id
+                            ? "bg-[#FFFFFF] text-black"
+                            : bgcolor(stageStatus)
+                        }`}
                       >
-                        <p className="text-[12px] whitespace-nowrap font-bold">
-                          {getStatusDisplayText(stageStatus)}
+                        <div className="flex justify-between">
+                          <p className="font-bold font-poppins text-xs">
+                            Stage {index + 1}
+                          </p>
+
+                          <div
+                            className={`h-[18px] ${
+                              stageStatus === "In progress" ||
+                              stageStatus === "amber"
+                                ? "text-[#FF9500]"
+                                : "text-black"
+                            } flex items-center justify-center rounded-4xl`}
+                          >
+                            <p className="text-[10px] whitespace-nowrap font-bold">
+                              {getStatusDisplayText(stageStatus)}
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs">{stage.title}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`
+ grid grid-cols-6 gap-2 px-3 py-1 bg-[#F2FBFF] rounded mb-4`}
+              >
+                {stages.map((stage, index) => {
+                  const stageStatus = stageStatuses[`status${stage.id}`];
+                  return (
+                    <div
+                      key={stage.id}
+                      onClick={() => setSelectedStage(stage.id)}
+                      className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[70px] ${
+                        selectedStage === stage.id
+                          ? "bg-[#FFFFFF] text-black "
+                          : bgcolor(stageStatus)
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <p className="font-bold font-poppins text-md">
+                          Stage {index + 1}
                         </p>
+                        <div
+                          className={`min-w-[90px] px-1 h-[18px] ${
+                            stageStatus === "In progress" ||
+                            stageStatus === "amber"
+                              ? "text-[#FF9500]"
+                              : stageStatus === "Completed" ||
+                                stageStatus === "green"
+                          } flex items-center justify-center rounded-4xl`}
+                        >
+                          <p className="text-xs whitespace-nowrap font-bold">
+                            {getStatusDisplayText(stageStatus)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-1">
+                        <p className="text-md">{stage.title}</p>
                       </div>
                     </div>
-                    <div>
-                      <p>{stage.title}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-[22px]">
-              <div className="w-full p-6 rounded-md max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] xl:max-h-[80vh] bg-white overflow-y-auto">
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex flex-col xl:flex-row gap-4">
+              <div className="w-full xl:w-3/4 p-4 rounded-md bg-white overflow-y-auto">
                 {clientData && Showstage(selectedStage)}
               </div>
-
-              <div className="w-[910px] h-[540px]">
-                <div className="w-full max-w-4xl p-[30px] bg-white rounded-[10px] shadow">
-                  <h2 className="text-xl font-bold mb-3">Matter Details</h2>
-                  <form className="space-y-1">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          Matter Date
-                        </label>
-                        <input
-                          type="date"
-                          value={clientData?.matterDate?.split("T")[0] || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          Matter Number
-                        </label>
-                        <input
-                          type="text"
-                          value={clientData?.matterNumber || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          Client Name
-                        </label>
-                        <input
-                          type="text"
-                          value={clientData?.clientName || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
+              <div className="w-full xl:w-1/2">
+                <div className="w-full bg-white rounded shadow border border-gray-200 p-4">
+                  <h2 className="text-lg font-bold mb-2">Matter Details</h2>
+                  <form
+                    className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
+                    onSubmit={handleupdate}
+                  >
+                    {/* First Row - 3 columns */}
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold mb-1">
+                        Matter Date
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.matterDate?.split("T")[0] || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-md border border-gray-200"
+                        disabled
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold mb-1">
+                        Matter Number
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.matterNumber || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-md border border-gray-200"
+                        disabled
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold mb-1">
+                        Client Name
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.clientName || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-md border border-gray-200"
+                        disabled
+                      />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-2">
-                        <label className="block mb-1 text-sm font-medium">
-                          Property Address
-                        </label>
-                        <input
-                          type="text"
-                          value={clientData?.propertyAddress || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          State
-                        </label>
-                        <input
-                          type="text"
-                          value={clientData?.state || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
+                    {/* Second Row - 2 columns */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-1">
+                        Property Address
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.propertyAddress || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-md border border-gray-200"
+                        disabled
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold mb-1">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.state || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-md border border-gray-200"
+                        disabled
+                      />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          Client Type
-                        </label>
-                        <input
-                          type="text"
-                          value={clientData?.clientType || ""}
-                          className="w-full rounded p-2 bg-gray-100"
-                          disabled
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-sm font-medium">
-                          Settlement Date
-                        </label>
-                        <input
-                          type="date"
-                          value={
-                            clientData?.settlementDate?.split("T")[0] || ""
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...prev,
-                              settlementDate: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded p-2 border"
-                        />
-                      </div>
+                    {/* Third Row - 2 columns */}
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold mb-1">
+                        Client Type
+                      </label>
+                      <input
+                        type="text"
+                        value={clientData?.clientType || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-[8px] text-sm border border-gray-200"
+                        disabled
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-1">
+                        Settlement Date
+                      </label>
+                      <input
+                        type="date"
+                        value={
+                          clientData?.settlementDate
+                            ? new Date(clientData.settlementDate)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const dateValue = e.target.value
+                            ? new Date(e.target.value)
+                            : null;
+                          setClientData((prev) => ({
+                            ...prev,
+                            settlementDate: dateValue,
+                          }));
+                        }}
+                        className="w-full rounded p-2 border border-gray-200 text-sm"
+                      />
                     </div>
 
-                    <div>
-                      <label className="block mb-1 text-sm font-medium">
+                    {/* Fourth Row - 1 column */}
+                    <div className="md:col-span-3">
+                      <label className="block text-sm font-semibold mb-1">
                         Data Entry By
                       </label>
                       <input
                         type="text"
                         value={clientData?.dataEntryBy || ""}
-                        className="w-full rounded p-2 bg-gray-100"
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-sm border border-gray-200"
                         disabled
                       />
                     </div>
 
-                    <div>
-                      <label className="block mb-1 text-sm font-medium">
+                    {/* Fifth Row - Full width */}
+                    <div className="md:col-span-3">
+                      <label className="block text-sm font-semibold mb-1">
                         Notes / Comments
                       </label>
                       <textarea
-                        rows={4}
+                        rows={5}
                         value={clientData?.notes || ""}
                         onChange={(e) =>
                           setClientData((prev) => ({
@@ -472,17 +559,19 @@ function getStatusDisplayText(status) {
                           }))
                         }
                         placeholder="Enter comments here..."
-                        className="w-full border rounded p-2 resize-none"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm resize-none"
                       />
                     </div>
 
-                    <button
-                      type="submit"
-                      className="w-full bg-[#00AEEF] hover:bg-[#0086bf] text-white font-medium py-2 rounded"
-                      onClick={handleupdate}
-                    >
-                      Update
-                    </button>
+                    {/* Update Button - Full width */}
+                    <div className="md:col-span-3 mt-3">
+                      <button
+                        type="submit"
+                        className="w-full bg-[#00AEEF] hover:bg-[#0086bf] text-white font-medium rounded py-2 text-base"
+                      >
+                        Update
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>

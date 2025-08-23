@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { RefreshCcw } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
-import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { create } from "zustand";
 import ClientAPI from "../../api/userAPI";
 import * as XLSX from "xlsx-js-style";
@@ -27,13 +27,13 @@ const useArchivedClientStore = create((set) => ({
     try {
       const res = await api.getArchivedClients();
 
-      const mapped = res.data.map((client, index) => {
+      const mapped = res.clients.map((client, index) => {
         // Helper function to safely format dates
         const formatDate = (dateString) => {
           if (!dateString) return "N/A";
           try {
             const date = new Date(dateString);
-            return isNaN(date.getTime()) ? "N/A" : date.toISOString().split('T')[0];
+        return isNaN(date.getTime()) ? "N/A" : date.toISOString().split("T")[0];
           } catch {
             return "N/A";
           }
@@ -41,20 +41,21 @@ const useArchivedClientStore = create((set) => ({
 
         return {
           id: index + 1,
-          matternumber: client.MATTER_NUMBER || "N/A",
-          client_name: client.CLIENT_NAME || "N/A",
-          property_address: client.PROPERTY_ADDRESS || "N/A",
-          state: client.STATE || "N/A",
-          type: client.CLIENT_TYPE || "N/A",
-          matter_date: formatDate(client.MATTER_DATE),
-          settlement_date: formatDate(client.SETTLEMENT_DATE),
-          status: client.CLOSE_MATTER || "N/A",
-          // Additional fields from API
-          data_entry_by: client.DATA_ENTRY_BY,
-          referral: client.REFERRAL,
-          contract_price: client.CONTRACT_PRICE?.$numberDecimal || "0.00",
-          council: client.COUNCIL,
-          invoiced: client.INVOICED
+          matternumber: client.matterNumber || "N/A",
+          client_name: client.clientName || "N/A",
+          property_address: client.propertyAddress || "N/A",
+          state: client.state || "N/A",
+          type: client.clientType || "N/A",
+          matter_date: formatDate(client.matterDate),
+          settlement_date: formatDate(client.settlementDate),
+          status: client.closeMatter || "N/A",
+          data_entry_by: client.dataEntryBy || "N/A",
+          referral: client.referral || "N/A",
+          contract_price:
+            client.costData?.[0]?.quoteAmount?.$numberDecimal || "0.00",
+          council: client.council || "N/A",
+      invoiced: client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
+      total_costs: client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
         };
       });
 
@@ -145,8 +146,6 @@ export default function ArchivedClients() {
 
   const downloadExcel = (data) => {
     const ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Column widths
     ws["!cols"] = data[0].map((_, i) => {
       const maxLength = data.reduce((max, row) => {
         const len = row[i] ? row[i].toString().length : 0;
@@ -155,7 +154,6 @@ export default function ArchivedClients() {
       return { wch: maxLength + 4 };
     });
 
-    // Row heights
     ws["!rows"] = data.map((row, i) => {
       if (i === 0) return { hpt: 40 };
       const maxHeight = row.reduce((max, cell) => {
@@ -165,10 +163,16 @@ export default function ArchivedClients() {
       return { hpt: maxHeight };
     });
 
-    // Header style
     const headerColors = [
-      "CCD9CF", "ABD0ED", "F0F005", "A3D7F0", "F0C6A3", "9EF0BC",
-      "95E5F5", "ECBBF2", "B3F2B5",
+      "CCD9CF",
+      "ABD0ED",
+      "F0F005",
+      "A3D7F0",
+      "F0C6A3",
+      "9EF0BC",
+      "95E5F5",
+      "ECBBF2",
+      "B3F2B5",
     ];
 
     const range = XLSX.utils.decode_range(ws["!ref"]);
@@ -209,8 +213,14 @@ export default function ArchivedClients() {
         <div className="flex justify-between items-center w-full mb-[15] p-2">
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
           <div className="flex gap-5">
-            <Button label="Export to Excel" onClick={() => setOpenExcel(true)} />
-            <Button label="Filter Data" onClick={() => setShowSettlementDateModal(true)} />
+            <Button
+              label="Export to Excel"
+              onClick={() => setOpenExcel(true)}
+            />
+            <Button
+              label="Filter Data"
+              onClick={() => setShowSettlementDateModal(true)}
+            />
           </div>
         </div>
 
@@ -228,6 +238,7 @@ export default function ArchivedClients() {
               itemsPerPage={5}
               pagination="absolute bottom-5 left-1/2 transform -translate-x-1/2 mt-4 ml-28"
               OnEye={true}
+              showReset={false}
             />
           )}
         </div>
@@ -241,7 +252,11 @@ export default function ArchivedClients() {
         subTitle="Filter on settlement date"
       />
 
-      <Dialog open={openExcel} onClose={() => setOpenExcel(false)} className="relative z-10">
+      <Dialog
+        open={openExcel}
+        onClose={() => setOpenExcel(false)}
+        className="relative z-10"
+      >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-7 text-center">
@@ -253,7 +268,9 @@ export default function ArchivedClients() {
                 &times;
               </button>
               <h2 className="text-lg font-bold mb-2">Export to Excel</h2>
-              <p className="text-sm text-gray-600 mb-5">Filter by settlement date:</p>
+              <p className="text-sm text-gray-600 mb-5">
+                Filter by settlement date:
+              </p>
 
               <div className="space-y-4">
                 <input
@@ -271,7 +288,13 @@ export default function ArchivedClients() {
               </div>
 
               <div className="mt-6 flex justify-end">
-                <button type="button" onClick={() => { setFromDate(""), setToDate(""), setOpenExcel(false) }} className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFromDate(""), setToDate(""), setOpenExcel(false);
+                  }}
+                  className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
                   <RefreshCcw className="inline-block mr-1" size={16} />
                 </button>
                 <Button

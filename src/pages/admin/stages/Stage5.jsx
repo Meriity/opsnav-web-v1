@@ -3,7 +3,12 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
-export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrigger }) {
+export default function Stage5({
+  changeStage,
+  data,
+  reloadTrigger,
+  setReloadTrigger,
+}) {
   const stage = 5;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -14,30 +19,52 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
     gstWithholding: "GST Withholding",
     disbursementsInPexa: "Disbursements in PEXA",
     addAgentFee: "Add Agent Fee",
-    settlementNotification: "Settlement Notification"
+    settlementNotification: "Settlement Notification",
   };
 
   const getStatus = (value) => {
-    if (!value) return "In progress";
-    const val = value.toLowerCase();
-    if (val === "yes") return "Completed";
-    if (val === "no") return "Not Completed";
-    return "In progress";
+    if (!value) return "Not Completed"; // Default to red
+    const val = value.toLowerCase().trim();
+    if (
+      val === "yes" ||
+      val === "na" ||
+      val === "n/a" ||
+      val === "nr" ||
+      val === "n/r"
+    )
+      return "Completed"; // Green
+    if (val === "no") return "Not Completed"; // Red
+    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    return "Not Completed"; // Fallback to red
   };
 
+  // function bgcolor(status) {
+  //   switch (status) {
+  //     case "In progress":
+  //       return "bg-[#FFEECF]";
+  //     case "Completed":
+  //       return "bg-[#00A506]";
+  //     case "Not Completed":
+  //       return "bg-[#FF0000]";
+  //     default:
+  //       return "";
+  //   }
+  // }
+
   function bgcolor(status) {
-    switch (status) {
-      case "In progress": return "bg-[#FFEECF]";
-      case "Completed": return "bg-[#00A506]";
-      case "Not Completed": return "bg-[#FF0000]";
-      default: return "";
-    }
+    const statusColors = {
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+      "In progress": "bg-[#FFEECF] text-[#FF9500]",
+    };
+    return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
   function extractNotes(note = "") {
-    let systemNote = "", clientComment = "";
+    let systemNote = "",
+      clientComment = "";
     if (typeof note === "string" && note.includes(" - ")) {
-      [systemNote, clientComment] = note.split(" - ").map(str => str.trim());
+      [systemNote, clientComment] = note.split(" - ").map((str) => str.trim());
     } else {
       systemNote = note || "";
     }
@@ -66,7 +93,9 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
     setStatusState(newStatusState);
     setCouncil(data.council || "");
 
-    const { systemNote, clientComment } = extractNotes(data.noteForClient || "");
+    const { systemNote, clientComment } = extractNotes(
+      data.noteForClient || ""
+    );
     setSystemNote(systemNote);
     setClientComment(clientComment);
 
@@ -74,7 +103,7 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
       ...newFormState,
       council,
       systemNote,
-      clientComment
+      clientComment,
     };
   }, [data, reloadTrigger]);
 
@@ -83,28 +112,31 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
       ...formState,
       council,
       systemNote,
-      clientComment
+      clientComment,
     };
     const original = originalData.current;
     return Object.keys(current).some((key) => current[key] !== original[key]);
   }
 
   function generateSystemNote() {
-    const incomplete = Object.entries(fieldMap).filter(([key, label]) => {
-      return formState[label]?.toLowerCase() !== "yes";
-    }).map(([key, label]) => label);
+    const greenValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const incomplete = Object.entries(fieldMap)
+      .filter(([key, label]) => {
+        return !greenValues.includes(formState[label]?.toLowerCase());
+      })
+      .map(([key, label]) => label);
 
     if (incomplete.length === 0) return "All tasks completed";
     return `Pending: ${incomplete.join(", ")}`;
   }
 
-  async function handleNextClick() {
+  async function handleSave() {
     try {
       if (isChanged()) {
         const payload = {
           matterNumber,
           council,
-          noteForClient: `${generateSystemNote()} - ${clientComment}`
+          noteForClient: `${generateSystemNote()} - ${clientComment}`,
         };
 
         Object.entries(fieldMap).forEach(([key, label]) => {
@@ -118,13 +150,10 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
           ...formState,
           council,
           systemNote,
-          clientComment
+          clientComment,
         };
-
-        setReloadTrigger?.(prev => !prev);
+        setReloadTrigger?.((prev) => !prev);
       }
-
-      changeStage(stage + 1);
     } catch (err) {
       console.error("Failed to save Stage 5:", err);
     }
@@ -136,7 +165,9 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
         <label className="block mb-1 text-base font-bold">{label}</label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
-            statusState[label] === "In progress" ? "text-[#FF9500]" : "text-white"
+            statusState[label] === "In progress"
+              ? "text-[#FF9500]"
+              : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
           <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
@@ -179,7 +210,9 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* System Note */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">System Note for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          System Note for Client
+        </label>
         <input
           type="text"
           value={generateSystemNote()}
@@ -190,7 +223,9 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Client Comment */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">Comment for Client</label>
+        <label className="block mb-1 text-base font-bold">
+          Comment for Client
+        </label>
         <textarea
           value={clientComment}
           onChange={(e) => setClientComment(e.target.value)}
@@ -200,8 +235,25 @@ export default function Stage5({ changeStage, data, reloadTrigger, setReloadTrig
 
       {/* Buttons */}
       <div className="flex mt-10 justify-between">
-        <Button label="Back" width="w-[100px]" onClick={() => changeStage(stage - 1)} />
-        <Button label="Next" width="w-[100px]" onClick={handleNextClick} />
+        <Button
+          label="Back"
+          width="w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+          disabled={stage === 1}
+        />
+        <div className="flex gap-2">
+          <Button
+            label="Save"
+            width="w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+          />
+          <Button
+            label="Next"
+            width="w-[100px]"
+            onClick={() => changeStage(stage + 1)}
+          />
+        </div>
       </div>
     </div>
   );
