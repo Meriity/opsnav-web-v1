@@ -4,9 +4,19 @@ import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
 import { useDropdown } from "../../hooks/dropdown";
-import { ChevronsUpDown, LogOut, CircleUserRound } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  CircleUserRound,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-export default function Sidebar({ setSidebarOpen }) {
+export default function Sidebar({
+  setSidebarOpen,
+  isCollapsed,
+  onCollapseToggle,
+}) {
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,11 +72,13 @@ export default function Sidebar({ setSidebarOpen }) {
   };
 
   return (
-    <aside className="flex flex-col w-64 h-screen justify-between px-4 py-8 bg-white border-r border-gray-200">
+    <aside className="flex flex-col h-screen justify-between px-4 py-8 bg-white relative">
       <div>
-        <div className="flex px-2">
+        <div className="flex px-2 justify-center">
           <img
-            className="w-[70px] h-auto"
+            className={`${
+              isCollapsed ? "w-[40px]" : "w-[70px]"
+            } h-auto transition-all duration-300`}
             src={
               localStorage.getItem("logo") ||
               "https://via.placeholder.com/70x58"
@@ -74,6 +86,15 @@ export default function Sidebar({ setSidebarOpen }) {
             alt="Logo"
           />
         </div>
+
+        {/* Desktop Toggle Button */}
+        <button
+          onClick={onCollapseToggle}
+          className="hidden md:flex absolute top-1/2 -right-4 transform -translate-y-1/2 p-1 rounded-full bg-gray-200 shadow-md z-50 hover:bg-gray-300"
+        >
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+
         <nav className="flex flex-col space-y-4 mt-7">
           {menuItems.map(({ label, icon, to }) => {
             const isActive = location.pathname === to;
@@ -86,11 +107,11 @@ export default function Sidebar({ setSidebarOpen }) {
               <button
                 key={to}
                 onClick={handleClick}
-                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full text-left ${
+                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full ${
                   isActive
                     ? "bg-[#00AEEF] text-white"
                     : "hover:bg-gray-100 text-gray-800"
-                }`}
+                } ${isCollapsed ? "justify-center" : "text-left"}`}
               >
                 <img
                   src={icon}
@@ -99,7 +120,9 @@ export default function Sidebar({ setSidebarOpen }) {
                     isActive ? "filter brightness-0 invert" : ""
                   }`}
                 />
-                <span className="ml-4 font-medium">{label}</span>
+                {!isCollapsed && (
+                  <span className="ml-4 font-medium">{label}</span>
+                )}
               </button>
             );
           })}
@@ -109,13 +132,17 @@ export default function Sidebar({ setSidebarOpen }) {
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="px-4 py-2 cursor-pointer flex text-black w-full items-center justify-between bg-sky-100 rounded-2xl"
+          className={`px-4 py-2 cursor-pointer flex text-black w-full items-center ${
+            isCollapsed ? "justify-center" : "justify-between"
+          } bg-sky-100 rounded-2xl`}
         >
           <div className="flex gap-2 items-center truncate">
             <CircleUserRound />
-            <span className="truncate">{localStorage.getItem("user")}</span>
+            {!isCollapsed && (
+              <span className="truncate">{localStorage.getItem("user")}</span>
+            )}
           </div>
-          <ChevronsUpDown className="w-5 shrink-0" />
+          {!isCollapsed && <ChevronsUpDown className="w-5 shrink-0" />}
         </button>
 
         {isOpen && (

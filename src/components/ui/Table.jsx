@@ -23,7 +23,7 @@ const Table = ({
   rowSpacing = "py-1",
   headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
-  showReset = true, 
+  showReset = true,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortedColumn, setSortedColumn] = useState(null);
@@ -83,7 +83,7 @@ const Table = ({
                           : ""
                       }`}
                     >
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-0">
                         <span>{column.title}</span>
                         {isSorted ? (
                           sortDirection === "asc" ? (
@@ -105,7 +105,6 @@ const Table = ({
                 )}
               </tr>
             </thead>
-
             <tbody>
               {currentData.map((item) => (
                 <tr
@@ -118,7 +117,7 @@ const Table = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${
+                      className={`px-3 ${rowSpacing} text-sm text-black align-middle font-bold lg:font-normal 2xl:font-bold ${
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       } ${
                         colIndex === columns.length - 1 && !showActions
@@ -129,7 +128,6 @@ const Table = ({
                       {item[column.key]}
                     </td>
                   ))}
-
                   {showActions && (
                     <td className={`px-3 ${rowSpacing} rounded-r-2xl`}>
                       <div className="flex items-center space-x-3">
@@ -153,7 +151,6 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
-                        {/* Conditionally render the "Reset" button based on the new prop */}
                         {showReset && onReset && (
                           <button
                             onClick={() => onReset(item.email)}
@@ -183,8 +180,6 @@ const Table = ({
           </table>
         </div>
       </div>
-
-      {/* Pagination Controls */}
       <Pagination
         data={
           sortedColumn
