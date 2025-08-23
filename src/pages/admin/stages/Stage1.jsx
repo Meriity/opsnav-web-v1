@@ -47,9 +47,9 @@ export default function Stage1({
       val === "nr" ||
       val === "n/r" ||
       val === "na" ||
-      val === "n/a"||
-      val === "Variable"||
-      val==="Fixed"
+      val === "n/a" ||
+      val === "Variable" ||
+      val === "Fixed"
     )
       return "Completed";
 
@@ -356,7 +356,7 @@ export default function Stage1({
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
-            >
+          >
             <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
           </div>
         </div>
@@ -412,7 +412,7 @@ export default function Stage1({
         />
         <div className="flex gap-2">
           <Button
-            label={isSaving ? "Saving..." : "Save"}
+            label={isSaving ? "Saving" : "Save"}
             width="w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}

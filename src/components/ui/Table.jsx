@@ -23,12 +23,12 @@ const Table = ({
   rowSpacing = "py-1",
   headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
+  showReset = true,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-  // Handle sorting
   const handleSort = (columnKey) => {
     let direction = "asc";
     if (sortedColumn === columnKey && sortDirection === "asc") {
@@ -83,7 +83,7 @@ const Table = ({
                           : ""
                       }`}
                     >
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-0">
                         <span>{column.title}</span>
                         {isSorted ? (
                           sortDirection === "asc" ? (
@@ -105,7 +105,6 @@ const Table = ({
                 )}
               </tr>
             </thead>
-
             <tbody>
               {currentData.map((item) => (
                 <tr
@@ -118,7 +117,7 @@ const Table = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-3 ${rowSpacing} text-sm text-black align-middle ${
+                      className={`px-3 ${rowSpacing} text-sm text-black align-middle font-bold lg:font-normal 2xl:font-bold ${
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       } ${
                         colIndex === columns.length - 1 && !showActions
@@ -129,7 +128,6 @@ const Table = ({
                       {item[column.key]}
                     </td>
                   ))}
-
                   {showActions && (
                     <td className={`px-3 ${rowSpacing} rounded-r-2xl`}>
                       <div className="flex items-center space-x-3">
@@ -153,18 +151,17 @@ const Table = ({
                             <span className="text-xs">Delete</span>
                           </button>
                         )}
-
-                        <button
-                          onClick={() => onReset(item.email)}
-                          type="button"
-                          className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
-                          title="Reset Password"
-                        >
-                          
-                          <RefreshCw size={16} />
-                          <span className="text-xs">Reset</span>
-                        </button>
-
+                        {showReset && onReset && (
+                          <button
+                            onClick={() => onReset(item.email)}
+                            type="button"
+                            className="flex flex-col items-center cursor-pointer space-y-1 p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
+                            title="Reset Password"
+                          >
+                            <RefreshCw size={16} />
+                            <span className="text-xs">Reset</span>
+                          </button>
+                        )}
                         {OnEye && (
                           <button
                             onClick={() => onEdit(item.id)}
@@ -183,8 +180,6 @@ const Table = ({
           </table>
         </div>
       </div>
-
-      {/* Pagination Controls */}
       <Pagination
         data={
           sortedColumn
