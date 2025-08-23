@@ -18,8 +18,12 @@ function LoginForm() {
     setIsLoading(true)
     try {
       const response = await api.signInClient(matterNumber, password);
+      console.log(response);
       if (response.matterNumber) {
+        localStorage.removeItem("matterNumber");
+        localStorage.removeItem("logo");
         localStorage.setItem("matterNumber", response.matterNumber);
+        localStorage.setItem("logo", response.logo);
         navigate(`/client/dashboard/${btoa(response.matterNumber)}`);
       }
     } catch (err) {
