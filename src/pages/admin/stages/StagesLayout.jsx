@@ -15,6 +15,7 @@ export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
+  const isadmin=  localStorage.getItem("role") === "admin" ? true : false;
   const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
@@ -322,7 +323,7 @@ export default function StagesLayout() {
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[70px] md:w-[84px]"
               onClick={() => {
-                navigate("/admin/view-clients");
+                isadmin ? navigate("admin/view-clients") : navigate("/user/view-clients"); 
                 localStorage.removeItem("client-storage");
               }}
             />
