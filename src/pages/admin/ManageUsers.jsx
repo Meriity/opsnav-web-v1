@@ -8,7 +8,7 @@ import AdminApi from "../../api/adminAPI";
 import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
-import { useSearchStore } from "../SearchStore/SearchStore";
+import { useSearchStore } from "../SearchStore/searchStore.js";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({

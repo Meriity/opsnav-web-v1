@@ -3,7 +3,7 @@ import useDebounce from "../../hooks/useDebounce";
 import { Search } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
-import { useSearchStore } from "../../pages/SearchStore/SearchStore";
+import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore(); 
@@ -14,7 +14,7 @@ export default function Header() {
   const api = new ClientAPI();
   const navigate = useNavigate();
 
-  
+
   useEffect(() => {
     if (debouncedInput.trim()) {
       fetchSearchResults(debouncedInput);

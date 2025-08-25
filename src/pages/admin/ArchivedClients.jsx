@@ -11,7 +11,7 @@ import DatePicker from "react-datepicker";
 import moment from "moment";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import { toast } from "react-toastify";
-import { useSearchStore } from "../SearchStore/SearchStore";
+import { useSearchStore } from "../SearchStore/searchStore.js";
 
 // Zustand Store for Archived Clients
 const useArchivedClientStore = create((set) => ({
