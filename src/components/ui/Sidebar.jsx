@@ -77,7 +77,7 @@ export default function Sidebar({
         <div className="flex px-2 justify-center">
           <img
             className={`${
-              isCollapsed ? "w-[40px]" : "w-[70px]"
+              isCollapsed ? "w-[40px]" : "w-[120px]"
             } h-auto transition-all duration-300`}
             src={
               localStorage.getItem("logo") ||
@@ -92,7 +92,7 @@ export default function Sidebar({
           onClick={onCollapseToggle}
           className="hidden md:flex absolute top-1/2 -right-4 transform -translate-y-1/2 p-1 rounded-full bg-gray-200 shadow-md z-50 hover:bg-gray-300"
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
 
         <nav className="flex flex-col space-y-4 mt-7">

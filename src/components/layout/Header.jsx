@@ -3,15 +3,17 @@ import useDebounce from "../../hooks/useDebounce";
 import { Search } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
+import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
+  const { searchQuery, setSearchQuery } = useSearchStore(); 
   const debouncedInput = useDebounce(searchQuery, 500);
+  const [searchResult, setSearchResult] = useState([]);
   const [showDropdown, setShowDropdown] = useState(true);
   const [loading, setLoading] = useState(false);
   const api = new ClientAPI();
   const navigate = useNavigate();
+
 
   useEffect(() => {
     if (debouncedInput.trim()) {
@@ -21,9 +23,12 @@ export default function Header() {
     }
   }, [debouncedInput]);
 
-  const handleSearchOnchange = useCallback((e) => {
-    setSearchQuery(e.target.value);
-  }, []);
+  const handleSearchOnchange = useCallback(
+    (e) => {
+      setSearchQuery(e.target.value);
+    },
+    [setSearchQuery]
+  );
 
   function handelListClick(val) {
     return navigate(`/admin/client/stages/${val.matterNumber}`, {
@@ -79,7 +84,6 @@ export default function Header() {
           Hello {localStorage.getItem("user")}
         </h2>
 
-        {/* This div now has padding and the search bar has a responsive width */}
         <div className="flex justify-center items-center relative w-full md:w-fit px-4 md:px-0">
           <div
             onClick={toggleFullScreen}

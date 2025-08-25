@@ -8,6 +8,7 @@ import AdminApi from "../../api/adminAPI";
 import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
+import { useSearchStore } from "../SearchStore/searchStore.js";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -46,6 +47,7 @@ const useUserStore = create((set) => ({
 export default function ManageUsers() {
   const { users, isFetched, loading, fetchUsers, setIsFetched, setUsers } =
     useUserStore();
+  const { searchQuery } = useSearchStore();
 
   const api = new AdminApi();
   const [selectedUser, setSelectedUser] = useState({});
@@ -55,6 +57,7 @@ export default function ManageUsers() {
   const [openDelete, setOpenDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState("");
+  const [userList, setUserList] = useState([]);
 
   const handleChange = (e) => {
     setRole(e.target.value);
@@ -64,6 +67,22 @@ export default function ManageUsers() {
     if (!isFetched) fetchUsers();
   }, [isFetched]);
 
+  // Apply search filter
+  useEffect(() => {
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      const filtered = users.filter(
+        (user) =>
+          String(user.displayName).toLowerCase().includes(lowercasedQuery) ||
+          String(user.email).toLowerCase().includes(lowercasedQuery) ||
+          String(user.role).toLowerCase().includes(lowercasedQuery)
+      );
+      setUserList(filtered);
+    } else {
+      setUserList(users);
+    }
+  }, [searchQuery, users]);
+
   const columns = [
     { key: "displayName", title: "Display Name" },
     { key: "email", title: "Email" },
@@ -71,21 +90,6 @@ export default function ManageUsers() {
     { key: "role", title: "Role" },
     { key: "createdAt", title: "Created At" },
   ];
-
-  // const handleUserCreation = async (display_name, email, role) => {
-  //   try {
-  //     setIsLoading(true);
-  //     await api.createUser(email, role, display_name);
-  //     toast.success("User created successfully!");
-  //   } catch (err) {
-  //     console.log("Error details:", err);
-  //     toast.success("Something went wrong!");
-  //   } finally {
-  //     setIsLoading(false);
-  //     setOpenUser(false);
-  //     setIsFetched(false);
-  //   }
-  // };
 
   const handleUserCreation = async (display_name, email, role) => {
     try {
@@ -163,7 +167,7 @@ export default function ManageUsers() {
           <Loader />
         ) : (
           <Table
-            data={users}
+            data={userList}
             columns={columns}
             onEdit={(u) => {
               setSelectedUser(u);
@@ -175,6 +179,7 @@ export default function ManageUsers() {
               setOpenDelete(true);
             }}
             itemsPerPage={5}
+            cellFontSize="text-xs lg:text-sm xl:text-base" // Pass the custom font size here
           />
         )}
       </main>
