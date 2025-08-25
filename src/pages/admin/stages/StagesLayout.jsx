@@ -15,7 +15,8 @@ export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
-  const isadmin=  localStorage.getItem("role") === "admin" ? true : false;
+  const role = localStorage.getItem("role");
+  const isadmin = role === "superadmin" || role === "admin";
   const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
@@ -120,6 +121,30 @@ export default function StagesLayout() {
   }
 
   function Showstage(stage) {
+function normalizeCloseMatterForClient(client) {
+  if (!client || typeof client !== "object") return client;
+  console.log(client);
+
+  const value = client.closeMatter;
+  let newValue;
+
+  if (!value || value.trim() === "") {
+    newValue = ""
+  } else if (value.toLowerCase() === "cancelled") {
+    newValue = "Cancelled";
+  } else if (value.toLowerCase() === "closed") {
+    newValue = "Completed";
+  } else {
+    newValue = value;
+  }
+
+  return {
+    ...client,
+    closeMatter: newValue
+  };
+}
+
+
     switch (stage) {
       case 1:
         return (
@@ -133,6 +158,7 @@ export default function StagesLayout() {
         );
       case 2:
         return (
+          
           <Stage2
             data={clientData?.stage2}
             changeStage={RenderStage}
@@ -170,7 +196,7 @@ export default function StagesLayout() {
       case 6:
         return (
           <Stage6
-            data={clientData?.stage6}
+            data={normalizeCloseMatterForClient(clientData?.stage6)}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -323,7 +349,7 @@ export default function StagesLayout() {
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[70px] md:w-[84px]"
               onClick={() => {
-                isadmin ? navigate("admin/view-clients") : navigate("/user/view-clients"); 
+                isadmin ? navigate("/admin/view-clients") : navigate("/user/view-clients"); 
                 localStorage.removeItem("client-storage");
               }}
             />
