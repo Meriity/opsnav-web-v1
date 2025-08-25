@@ -14,6 +14,7 @@ export default function Header() {
   const api = new ClientAPI();
   const navigate = useNavigate();
 
+  
   useEffect(() => {
     if (debouncedInput.trim()) {
       fetchSearchResults(debouncedInput);
