@@ -18,9 +18,8 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
-import { useClientStore } from "../ClientStore/clientstore";
-import { useSearchStore } from "../SearchStore/SearchStore";
-
+import { useClientStore } from "../ClientStore/clientstore.js";
+import { useSearchStore } from "../SearchStore/SearchStore.js";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
