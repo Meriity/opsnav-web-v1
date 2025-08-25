@@ -19,7 +19,8 @@ import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import { useClientStore } from "../ClientStore/clientstore.js";
-import { useSearchStore } from "../SearchStore/SearchStore.js";
+import { useSearchStore } from "../SearchStore/searchStore.js";
+
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
