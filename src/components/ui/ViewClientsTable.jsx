@@ -7,15 +7,7 @@ import Pagination from "./Pagination";
 const ViewClientsTable = ({
   data,
   columns,
-  onEdit,
   onShare,
-  showActions = true,
-  status = false,
-  ot = false,
-  hoverEffect = true,
-  tableClass = "",
-  rowSpacing = "py-3",
-  headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
   handelOTOpen,
   handelOT,
@@ -57,21 +49,21 @@ const ViewClientsTable = ({
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto lg:overflow-x-hidden">
-        <table
-          className={`w-full border-separate border-spacing-y-1 table-auto min-w-full lg:w-full ${tableClass}`}
-        >
-          <thead>
-            <tr className={headerBgColor}>
+      {/* Desktop Table View */}
+      <div className="hidden lg:block">
+        <table className="w-full border-separate border-spacing-y-1 table-fixed">
+          <thead className="bg-[#D7F4FF]">
+            <tr>
               {columns.map((column, colIndex) => (
                 <th
                   key={column.key}
+                  style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-4 text-left text-md lg:text-sm font-bold text-black whitespace-normal ${
+                  className={`px-2 py-4 text-left text-sm  text-black ${
                     colIndex === 0 ? "rounded-l-2xl" : ""
                   } cursor-pointer select-none`}
                 >
-                  <div className="flex items-center gap-0">
+                  <div className="flex items-center gap-1">
                     {column.title}
                     {sortConfig.key === column.key ? (
                       sortConfig.direction === "asc" ? (
@@ -85,149 +77,210 @@ const ViewClientsTable = ({
                   </div>
                 </th>
               ))}
-              {status && (
-                <th className="px-2 py-2 text-left text-sm lg:text-sm font-bold text-black whitespace-normal">
-                  Stages
-                </th>
-              )}
-              {ot && (
-                <th className="px-1.5 py-2 text-left text-sm lg:text-sm font-bold text-black whitespace-normal">
-                  OT
-                </th>
-              )}
-              {showActions && (
-                <th className="px-2 py-2 text-left text-sm lg:text-sm font-bold text-black rounded-r-2xl whitespace-normal">
-                  Action
-                </th>
-              )}
+              <th
+                className="px-2 py-2 text-left text-sm  text-black"
+                style={{ width: "12%" }}
+              >
+                Stages
+              </th>
+              <th
+                className="px-1.5 py-2 text-left text-sm  text-black"
+                style={{ width: "2%" }}
+              >
+                OT
+              </th>
+              <th
+                className="px-2 py-2 text-left text-sm  text-black rounded-r-2xl"
+                style={{ width: "6%" }}
+              >
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
             {currentData.map((item) => (
               <tr
                 key={item.id}
-                className={`bg-white rounded-2xl transition-all ${
-                  hoverEffect ? "hover:bg-sky-50" : ""
-                }`}
+                className="bg-white rounded-2xl transition-all hover:bg-sky-50"
               >
                 {columns.map((column, colIndex) => (
                   <td
                     key={column.key}
-                    className={`px-2 ${rowSpacing} text-sm lg:text-xs text-black align-middle text-wrap break-words ${
+                    className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
                       colIndex === 0 ? "rounded-l-2xl" : ""
                     }`}
                   >
                     <div
-                      className="font-bold lg:font-normal 2xl:font-bold"
+                      className=" lg:font-normal 2xl:"
                       title={item[column.key]}
                     >
                       {item[column.key]}
                     </div>
                   </td>
                 ))}
-                {status && (
-                  <td className={`px-1 align-middle`}>
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex gap-1">
-                        {Object.keys(item?.stages?.[0] || {})
-                          .slice(0, 3)
-                          .map((keyName, index) => (
-                            <a
-                              href={`/admin/client/stages/${
-                                item.matternumber
-                              }/${index + 1}`}
-                              key={keyName}
-                              className="px-1 py-1 text-white rounded text-xs font-bold cursor-pointer"
-                              style={{
-                                backgroundColor:
-                                  stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                                  stageColorMap["default"],
-                              }}
-                              title={`Stage ${keyName}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {keyName.toUpperCase()}
-                            </a>
-                          ))}
-                      </div>
-                      <div className="flex gap-1">
-                        {Object.keys(item?.stages?.[0] || {})
-                          .slice(3)
-                          .map((keyName, index) => (
-                            <a
-                              href={`/admin/client/stages/${
-                                item.matternumber
-                              }/${index + 4}`}
-                              key={keyName}
-                              className="px-1 py-1 text-white rounded text-xs font-bold cursor-pointer"
-                              style={{
-                                backgroundColor:
-                                  stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                                  stageColorMap["default"],
-                              }}
-                              title={`Stage ${keyName}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {keyName.toUpperCase()}
-                            </a>
-                          ))}
-                      </div>
-                    </div>
-                  </td>
-                )}
-                {ot && (
-                  <td className={`px-1 align-middle`}>
-                    <div className="flex justify-center">
-                      <button
-                        type="button"
-                        className="cursor-pointer"
-                        onClick={() => {
-                          handelOTOpen();
-                          handelOT(item?.matternumber);
-                        }}
-                      >
-                        <img src={report} alt="OT Report" className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                )}
-                {showActions && (
-                  <td className={`px-0.5 rounded-r-2xl align-middle`}>
-                    <div className="flex flex-col items-center space-y-2">
-                      {onEdit && (
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/admin/client/stages/${item.matternumber}`
-                            )
-                          }
-                          className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
-                          title="Edit"
+                <td className="px-1 align-middle">
+                  <div className="flex flex-wrap gap-1">
+                    {Object.keys(item?.stages?.[0] || {}).map(
+                      (keyName, index) => (
+                        <a
+                          href={`/admin/client/stages/${item.matternumber}/${
+                            index + 1
+                          }`}
+                          key={keyName}
+                          className="px-1 py-1 text-white rounded text-xs  cursor-pointer"
+                          style={{
+                            backgroundColor:
+                              stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                              stageColorMap["default"],
+                          }}
+                          title={`Stage ${keyName}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                          <Edit size={12} />
-                          <span className="text-xs">Edit</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() =>
-                          onShare(item.matternumber, item.client_email)
-                        }
-                        className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
-                        title="Share"
-                      >
-                        <Share2 size={12} />
-                        <span className="text-xs">Share</span>
-                      </button>
-                    </div>
-                  </td>
-                )}
+                          {keyName.toUpperCase()}
+                        </a>
+                      )
+                    )}
+                  </div>
+                </td>
+                <td className="px-1 align-middle">
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      className="cursor-pointer"
+                      onClick={() => {
+                        handelOTOpen();
+                        handelOT(item?.matternumber);
+                      }}
+                    >
+                      <img src={report} alt="OT Report" className="w-5 h-5" />
+                    </button>
+                  </div>
+                </td>
+                <td className="px-0.5 rounded-r-2xl align-middle">
+                  <div className="flex flex-col items-center space-y-2">
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/client/stages/${item.matternumber}`)
+                      }
+                      className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
+                      title="Edit"
+                    >
+                      <Edit size={12} />
+                      <span className="text-xs">Edit</span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        onShare(item.matternumber, item.client_email)
+                      }
+                      className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                      title="Share"
+                    >
+                      <Share2 size={12} />
+                      <span className="text-xs">Share</span>
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Mobile & Tablet Card View */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+        {currentData.map((item) => (
+          <div
+            key={item.id}
+            className="bg-white rounded-2xl shadow p-4 space-y-3"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs text-gray-500">Matter #</p>
+                <p className=" text-blue-600">{item.matternumber}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  className="cursor-pointer p-1"
+                  onClick={() => {
+                    handelOTOpen();
+                    handelOT(item?.matternumber);
+                  }}
+                >
+                  <img src={report} alt="OT Report" className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() =>
+                    navigate(`/admin/client/stages/${item.matternumber}`)
+                  }
+                  className="p-1 text-blue-600"
+                  title="Edit"
+                >
+                  <Edit size={16} />
+                </button>
+                <button
+                  onClick={() => onShare(item.matternumber, item.client_email)}
+                  className="p-1 text-gray-600"
+                  title="Share"
+                >
+                  <Share2 size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Client</p>
+              <p className="font-semibold break-words">{item.client_name}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Address</p>
+              <p className="text-sm break-words">{item.property_address}</p>
+            </div>
+
+            <div className="flex justify-between text-xs pt-2">
+              <div>
+                <p className="text-gray-500">Settlement</p>
+                <p>{item.settlement_date}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Status</p>
+                <p>{item.close_matter}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Entered By</p>
+                <p>{item.dataentryby}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Stages</p>
+              <div className="flex flex-wrap gap-1">
+                {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
+                  <a
+                    href={`/admin/client/stages/${item.matternumber}/${
+                      index + 1
+                    }`}
+                    key={keyName}
+                    className="px-2 py-1 text-white rounded text-xs "
+                    style={{
+                      backgroundColor:
+                        stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                        stageColorMap["default"],
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {keyName.toUpperCase()}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <Pagination
         data={sortedData}
         itemsPerPage={itemsPerPage}

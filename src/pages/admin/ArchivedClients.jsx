@@ -11,7 +11,7 @@ import DatePicker from "react-datepicker";
 import moment from "moment";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import { toast } from "react-toastify";
-
+import { useSearchStore } from "../SearchStore/SearchStore";
 
 // Zustand Store for Archived Clients
 const useArchivedClientStore = create((set) => ({
@@ -33,7 +33,9 @@ const useArchivedClientStore = create((set) => ({
           if (!dateString) return "N/A";
           try {
             const date = new Date(dateString);
-        return isNaN(date.getTime()) ? "N/A" : date.toISOString().split("T")[0];
+            return isNaN(date.getTime())
+              ? "N/A"
+              : date.toISOString().split("T")[0];
           } catch {
             return "N/A";
           }
@@ -54,8 +56,10 @@ const useArchivedClientStore = create((set) => ({
           contract_price:
             client.costData?.[0]?.quoteAmount?.$numberDecimal || "0.00",
           council: client.council || "N/A",
-      invoiced: client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
-      total_costs: client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
+          invoiced:
+            client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
+          total_costs:
+            client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
         };
       });
 
@@ -66,16 +70,19 @@ const useArchivedClientStore = create((set) => ({
     } finally {
       set({ loading: false });
     }
-  }
+  },
 }));
 
 export default function ArchivedClients() {
-  const { archivedClients, loading, isFetched, fetchArchivedClients } = useArchivedClientStore();
+  const { archivedClients, loading, isFetched, fetchArchivedClients } =
+    useArchivedClientStore();
+  const { searchQuery } = useSearchStore();
+
   const [openExcel, setOpenExcel] = useState(false);
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [clientList, setClientList] = useState([])
+  const [clientList, setClientList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const api = new ClientAPI();
 
@@ -83,15 +90,41 @@ export default function ArchivedClients() {
     if (!isFetched) fetchArchivedClients();
   }, [isFetched]);
 
+  useEffect(() => {
+    let filteredData = archivedClients;
+
+    // Apply date range filter first
+    if (fromDate && toDate) {
+      filteredData = filteredData.filter((client) => {
+        const clientDate = moment(new Date(client?.settlement_date));
+        return clientDate.isBetween(fromDate, toDate, "day", "[]");
+      });
+    }
+
+    // Apply search query filter
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filteredData = filteredData.filter(
+        (client) =>
+          String(client.matternumber).toLowerCase().includes(lowercasedQuery) ||
+          String(client.client_name).toLowerCase().includes(lowercasedQuery) ||
+          String(client.property_address)
+            .toLowerCase()
+            .includes(lowercasedQuery)
+      );
+    }
+    setClientList(filteredData);
+  }, [archivedClients, fromDate, toDate, searchQuery]);
+
   const columns = [
-    { key: 'matternumber', title: 'Matter Number' },
-    { key: 'client_name', title: 'Client Name' },
-    { key: 'property_address', title: 'Property Address' },
-    { key: 'state', title: 'State' },
-    { key: 'type', title: 'Client Type' },
-    { key: 'matter_date', title: 'Matter Date' },
-    { key: 'settlement_date', title: 'Settlement Date' },
-    { key: 'status', title: 'Status' },
+    { key: "matternumber", title: "Matter Number" },
+    { key: "client_name", title: "Client Name" },
+    { key: "property_address", title: "Property Address" },
+    { key: "state", title: "State" },
+    { key: "type", title: "Client Type" },
+    { key: "matter_date", title: "Matter Date" },
+    { key: "settlement_date", title: "Settlement Date" },
+    { key: "status", title: "Status" },
   ];
 
   async function handleExcelExport() {
@@ -119,23 +152,17 @@ export default function ArchivedClients() {
     }
   }
 
-  useEffect(() => {
-    if (archivedClients.length > 0) {
-      setClientList(archivedClients)
-    }
-  }, [archivedClients])
-
   const handleDataFilter = (fromDate, toDate) => {
     if (fromDate === "" && toDate === "") {
       setClientList(archivedClients);
     } else if (fromDate !== "" && toDate !== "") {
-      const filtered = archivedClients.filter(client => {
+      const filtered = archivedClients.filter((client) => {
         const clientDate = moment(new Date(client?.settlement_date));
-        return clientDate.isBetween(fromDate, toDate, 'day', '[]');
+        return clientDate.isBetween(fromDate, toDate, "day", "[]");
       });
       setClientList(filtered);
     }
-  }
+  };
 
   const convertToExcel = (data) => {
     const headers = Object.keys(data[0]);
@@ -211,7 +238,7 @@ export default function ArchivedClients() {
         <Header />
         {/* Archive Header */}
         <div className="flex justify-between items-center w-full mb-[15] p-2">
-          <h2 className="text-2xl font-semibold">Archived Clients</h2>
+          <h2 className="text-xl lg:text-lg font-semibold">Archived Clients</h2>
           <div className="flex gap-5">
             <Button
               label="Export to Excel"
@@ -239,6 +266,7 @@ export default function ArchivedClients() {
               pagination="absolute bottom-5 left-1/2 transform -translate-x-1/2 mt-4 ml-28"
               OnEye={true}
               showReset={false}
+              cellFontSize="text-xs lg:text-sm xl:text-base" // Pass the custom font size here
             />
           )}
         </div>
@@ -268,7 +296,7 @@ export default function ArchivedClients() {
                 &times;
               </button>
               <h2 className="text-lg font-bold mb-2">Export to Excel</h2>
-              <p className="text-sm text-gray-600 mb-5">
+              <p className="text-sm lg:text-xs text-gray-600 mb-5">
                 Filter by settlement date:
               </p>
 
@@ -310,4 +338,3 @@ export default function ArchivedClients() {
     </div>
   );
 }
-
