@@ -26,7 +26,7 @@ export default function Stage6({
   const getStatus = (value) => {
     if (!value) return "Not Completed";
     const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
+    if (["yes", "na", "n/a", "nr", "n/r","completed","cancelled"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
     if (["processing", "in progress"].includes(val)) return "In progress";
     return "Not Completed";
@@ -47,7 +47,7 @@ export default function Stage6({
   const originalData = useRef({});
 
   const updateNoteForClient = () => {
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r","completed","cancelled"];
     const incompleteTasks = fields
       .filter(
         ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
@@ -138,7 +138,16 @@ export default function Stage6({
     }
   }
 
-  const renderRadioGroup = ({ key, label }) => (
+  const renderRadioGroup = ({ key, label }) => {
+  // default values
+  let options = ["Yes", "No", "Processing", "N/R"];
+
+  // override for closeMatter
+  if (key === "closeMatter") {
+    options = ["Completed", "Cancelled"];
+  }
+
+  return (
     <div className="mt-5" key={key}>
       <div className="flex gap-4 items-center justify-between mb-3">
         <label className="block mb-1 text-base font-bold">{label}</label>
@@ -150,8 +159,12 @@ export default function Stage6({
           <p className="text-[12px] whitespace-nowrap">{statusState[key]}</p>
         </div>
       </div>
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        {["Yes", "No", "Processing", "N/R"].map((val) => (
+      <div
+  className={`flex flex-wrap items-center gap-4 ${
+    key === "closeMatter" ? "gap-[20px]" : "justify-between"
+  }`}
+>
+        {options.map((val) => (
           <label key={val} className="flex items-center gap-2">
             <input
               type="radio"
@@ -169,12 +182,10 @@ export default function Stage6({
       </div>
     </div>
   );
-
+};
   return (
     <div className="overflow-y-auto">
       {fields.map(renderRadioGroup)}
-
-    
       <div className="mt-5">
         <label className="block mb-1 text-base font-bold">
           System Note for Client
