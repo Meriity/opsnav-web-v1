@@ -87,7 +87,7 @@ export default function ArchivedClients() {
   const api = new ClientAPI();
 
   useEffect(() => {
-    if (!isFetched) fetchArchivedClients();
+    fetchArchivedClients();
   }, [isFetched]);
 
   useEffect(() => {
