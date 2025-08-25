@@ -30,6 +30,7 @@ ChartJS.register(ArcElement, Tooltip);
 
 // Card for each individual stage
 const StageCard = ({ stage, stageIndex }) => {
+  // // // // console.log(stage);
   const getNextStageIndex = (index) => {
     const stageMap = {
       0: "1",
@@ -50,7 +51,7 @@ const StageCard = ({ stage, stageIndex }) => {
   const completedTasks = allTasks.filter(
     (task) =>
       task.status?.toLowerCase() === "yes" ||
-      task.status?.toLowerCase() === "nr"
+      task.status?.toLowerCase() === "n/r"
   ).length;
 
   const totalTasks = allTasks.length;
@@ -58,10 +59,10 @@ const StageCard = ({ stage, stageIndex }) => {
   let statusLabel = "Not Started";
   let statusColor = "bg-gray-200 text-gray-700";
 
-  if (completedTasks > 0 && completedTasks < totalTasks) {
+  if (stage.stagecolor==="amber") {
     statusLabel = "In Progress";
     statusColor = "bg-yellow-100 text-yellow-800";
-  } else if (completedTasks === totalTasks && totalTasks > 0) {
+  } else if (stage.stagecolor==="green") {
     statusLabel = "Stage Completed";
     statusColor = "bg-green-100 text-green-800";
   }
@@ -111,7 +112,7 @@ const StageCard = ({ stage, stageIndex }) => {
           let icon = (
             <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
           );
-          if (status === "yes" || status === "nr") {
+          if (status === "yes" || status === "n/r") {
             icon = (
               <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
             );
@@ -177,11 +178,16 @@ export default function ClientDashboard() {
     address: "",
     state: "",
   });
-
+    const formatDate = (dateString) => {
+  return dateString
+    ? new Date(dateString).toLocaleDateString("en-GB")
+    : "Not Set";
+};
   function formatMatterDetails(apiResponse) {
-    console.log(apiResponse);
+    // // // console.log(apiResponse);
+
     return {
-      matter_date: new Date(apiResponse.matterDate).toLocaleDateString("en-GB"),
+      matter_date: formatDate(apiResponse.matterDate),
       matter_number: apiResponse.matterNumber.toString(),
       Clientname: apiResponse.clientName,
       address: apiResponse.propertyAddress,
@@ -189,10 +195,8 @@ export default function ClientDashboard() {
       type:
         apiResponse.clientType.charAt(0).toUpperCase() +
         apiResponse.clientType.slice(1),
-      settlement_date: new Date(
-        apiResponse.settlementDate
-      ).toLocaleDateString("en-GB"),
-    };
+        settlement_date: formatDate(apiResponse.settlementDate),
+    }
   }
 
   function splitNoteParts(note) {
@@ -206,7 +210,7 @@ export default function ClientDashboard() {
 
   function mapStagesFromDB(response) {
     const stages = [];
-    console.log(response);
+    // // // console.log(response);
     const createStage = (stageName, stageData, noteKey) => {
       if (!stageData) return;
       const note = splitNoteParts(stageData[noteKey]);
@@ -234,6 +238,7 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Initialisation",
         svg : "/stage 1.svg",
+        stagecolor:response.stage1.colorStatus,
         data: {
           sections: [
             { title: "Retainer", status: response.stage1.retainer },
@@ -262,7 +267,8 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Contract Confirmation",
         svg : "/stage 2A.svg",
-        financeApproval:response.stage2.financeApprovalDate.slice(0,10) || "Not Set",
+        stagecolor:response.stage2.colorStatus,
+        financeApproval:formatDate(response.stage2.financeApprovalDate),
         data: {
           sections: [
 
@@ -300,11 +306,13 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Approvals",
         svg : "/stage 2B.svg",
+        stagecolor:response.stage2.colorStatus,
         data: {
           sections: [
             {
               title: "Building & Pest Inspection",
               status: response.stage2.buildingAndPest,
+
             },
             {
               title: "Finance Approval",
@@ -333,6 +341,7 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Searches & Due Diligence",
         svg : "/stage 3.svg",
+        stagecolor:response.stage3.colorStatus,
         data: {
           sections: [
             { title: "Title & Plan Search", status: response.stage3.titleSearch },
@@ -355,6 +364,7 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Duty & Settlement Adjustment",
         svg : "/stage 4.svg",
+        stagecolor:response.stage4.colorStatus,
         data: {
           sections: [
             { title: "Dutiable statement", status: response.stage4.dts },
@@ -377,6 +387,7 @@ export default function ClientDashboard() {
       stages.push({
         stageName: "Finalisation & notifications",
         svg : "/stage 5.svg",
+        stagecolor:response.stage5.colorStatus,
         data: {
           sections: [
 
@@ -417,6 +428,7 @@ export default function ClientDashboard() {
         setMatterDetails(formatted);
         const stagedetails = await api.getAllStages(matterNumber);
         const stageformatted = mapStagesFromDB(stagedetails);
+        // // // console.log(stageformatted);
         setStageDetails(stageformatted);
       } catch (error) {
         console.error("Failed to fetch matter details:", error);
@@ -441,7 +453,7 @@ export default function ClientDashboard() {
       completedTasks += allTasks.filter(
         (task) =>
           task.status?.toLowerCase() === "yes" ||
-          task.status?.toLowerCase() === "nr"
+          task.status?.toLowerCase() === "n/r"
       ).length;
       processingTasks += allTasks.filter(
         (task) => task.status?.toLowerCase() === "processing"
@@ -450,7 +462,7 @@ export default function ClientDashboard() {
         (task) => task.status?.toLowerCase() === "no"
       ).length;
     });
-    console.log(completedTasks, processingTasks, notCompletedTasks);
+    // // console.log(completedTasks, processingTasks, notCompletedTasks);
     return {
       completed: completedTasks,
       notcompleted: totalTasks,
@@ -466,7 +478,7 @@ export default function ClientDashboard() {
       {/* Sidebar */}
       <aside
         className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 sm:block
-        bg-[#FFFF] text-slate-800 rounded-2xl border border-white/40 
+        bg-[#F9FAFB] text-slate-800 rounded-2xl border border-white/40 
         shadow-sm mb-3 overflow-y-auto flex-col z-50 
         transform transition-transform duration-300 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
@@ -474,9 +486,9 @@ export default function ClientDashboard() {
       >
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center p-5 flex-shrink-0 border-b border-slate-200 relative">
+          <div className="flex items-center justify-center p-4 flex-shrink-0 border-b border-slate-200 relative">
             <img
-              className="max-h-[40px]"
+              className="max-h-[60px]"
               alt="Logo"
               src={logo}
             />
@@ -636,23 +648,18 @@ export default function ClientDashboard() {
 
     {/* RIGHT SECTION: Full image box */}
     <motion.div
-      className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg"
+      className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-[#B9F3FC]"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div
-        style={{
-          backgroundImage: 'url("/House.jpg")',
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-          padding: "20px 20px",
-        }}
-        className="h-full"
-      >
-        {/* Show progress chart only on desktop */}
-        <div className="">
+     <div 
+  style={{
+    padding: "20px 20px",
+  }}
+  className="h-full sm:block md:flex"
+>
+   <div>
           {overallProgress && (
             <ProgressChart
               completed={overallProgress.completed}
@@ -661,6 +668,14 @@ export default function ClientDashboard() {
             />
           )}
         </div>
+  <img
+    src="/Home.svg"
+    alt="Home"
+    width={450}
+    height={400}
+    style={{ objectFit:"fill" }}
+  />
+
       </div>
     </motion.div>
   </div>
@@ -669,7 +684,7 @@ export default function ClientDashboard() {
 
           {/* Stage Cards Section */}
           <div>
-            <div className="sticky top-0 z-20 bg-white py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
+            <div className="sticky top-0 z-20 bg-[#F9FAFB] py-4 px-2 flex items-center justify-between mb-4 mr-1 flex-wrap gap-4">
               {/* Left: Chevron + Title */}
               <div className="flex items-center gap-5">
                 {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
