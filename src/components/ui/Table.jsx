@@ -24,6 +24,7 @@ const Table = ({
   headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
   showReset = true,
+  cellFontSize = "text-xs lg:text-sm xl:text-base", // New prop with default value
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortedColumn, setSortedColumn] = useState(null);
@@ -117,7 +118,8 @@ const Table = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-3 ${rowSpacing} text-sm text-black align-middle font-bold lg:font-normal 2xl:font-bold ${
+                      className={`px-3 ${rowSpacing} ${cellFontSize} text-black align-middle lg:font-normal ${
+                        // Apply the new prop
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       } ${
                         colIndex === columns.length - 1 && !showActions
