@@ -21,7 +21,6 @@ import moment from "moment";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 
-
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
@@ -80,8 +79,8 @@ const ViewClients = () => {
   const columns = [
     { key: "matternumber", title: "Matter Number", width: "8%" },
     { key: "dataentryby", title: "Data Entry By", width: "10%" },
-    { key: "client_name", title: "Client Name", width: "12%" },
-    { key: "property_address", title: "Property Address", width: "15%" },
+    { key: "client_name", title: "Client Name", width: "10%" },
+    { key: "property_address", title: "Property Address", width: "10%" },
     { key: "state", title: "State", width: "5%" },
     { key: "client_type", title: "Client Type", width: "7%" },
     { key: "settlement_date", title: "Settlement Date", width: "8%" },

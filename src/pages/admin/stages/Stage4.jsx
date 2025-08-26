@@ -176,7 +176,10 @@ export default function Stage4({
   const renderRadioGroup = (label) => (
     <div key={label} className="mt-5">
       <div className="flex gap-4 items-center justify-between mb-2">
-        <label className="block mb-1 text-base font-bold">{label}</label>
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {label}
+        </label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(statusState[label])} ${
             statusState[label] === "In progress"
@@ -184,12 +187,19 @@ export default function Stage4({
               : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
-          <p className="text-[12px] whitespace-nowrap">{statusState[label]}</p>
+          {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+          <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+            {statusState[label]}
+          </p>
         </div>
       </div>
       <div className="flex gap-4 justify-between flex-wrap items-center mb-3">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
-          <label key={val} className="flex items-center gap-2">
+          // Added text-sm md:text-base for consistency
+          <label
+            key={val}
+            className="flex items-center gap-2 text-sm md:text-base"
+          >
             <input
               type="radio"
               name={label}
@@ -213,7 +223,10 @@ export default function Stage4({
 
       {/* Contract Price */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">Contract Price</label>
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          Contract Price
+        </label>
         <input
           type="number"
           value={contractPrice}
@@ -228,7 +241,8 @@ export default function Stage4({
 
       {/* System Note */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
         <input
@@ -241,7 +255,8 @@ export default function Stage4({
 
       {/* Client Comment */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           Comment for Client
         </label>
         <textarea
@@ -255,20 +270,20 @@ export default function Stage4({
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
-          width="w-[100px]"
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
         <div className="flex gap-2">
           <Button
             label="Save"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
           />
           <Button
             label="Next"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>
