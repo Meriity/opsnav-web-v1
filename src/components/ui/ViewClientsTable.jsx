@@ -1,6 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { Edit, Share2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import report from "../../icons/Button icons/Group 318.png";
+import {
+  Edit,
+  Share2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ClipboardList,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
 
@@ -59,38 +65,40 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-4 text-left text-sm  text-black ${
+                  className={`px-2 py-3 text-center text-sm  text-black ${
                     colIndex === 0 ? "rounded-l-2xl" : ""
                   } cursor-pointer select-none`}
                 >
-                  <div className="flex items-center gap-1">
-                    {column.title}
-                    {sortConfig.key === column.key ? (
-                      sortConfig.direction === "asc" ? (
-                        <ArrowUp size={16} />
+                  <div className="flex flex-col items-center">
+                    <span>{column.title}</span>
+                    <span>
+                      {sortConfig.key === column.key ? (
+                        sortConfig.direction === "asc" ? (
+                          <ArrowUp size={14} />
+                        ) : (
+                          <ArrowDown size={14} />
+                        )
                       ) : (
-                        <ArrowDown size={16} />
-                      )
-                    ) : (
-                      <ArrowUpDown size={16} />
-                    )}
+                        <ArrowUpDown size={14} />
+                      )}
+                    </span>
                   </div>
                 </th>
               ))}
               <th
-                className="px-2 py-2 text-left text-sm  text-black"
-                style={{ width: "12%" }}
+                className="pl-6 pr-5 py-3 text-center text-sm text-black"
+                style={{ width: "11%" }}
               >
                 Stages
               </th>
               <th
-                className="px-1.5 py-2 text-left text-sm  text-black"
-                style={{ width: "2%" }}
+                className="py-3 pl-6 text-center text-sm text-black"
+                style={{ width: "6%" }}
               >
                 OT
               </th>
               <th
-                className="px-2 py-2 text-left text-sm  text-black rounded-r-2xl"
+                className="pl-2 pr-2 py-3 text-center text-sm text-black rounded-r-2xl"
                 style={{ width: "6%" }}
               >
                 Action
@@ -118,8 +126,8 @@ const ViewClientsTable = ({
                     </div>
                   </td>
                 ))}
-                <td className="px-1 align-middle">
-                  <div className="flex flex-wrap gap-1">
+                <td className="pl-3 align-middle">
+                  <div className="flex flex-nowrap gap-0.5 justify-center">
                     {Object.keys(item?.stages?.[0] || {}).map(
                       (keyName, index) => (
                         <a
@@ -127,7 +135,7 @@ const ViewClientsTable = ({
                             index + 1
                           }`}
                           key={keyName}
-                          className="px-1 py-1 text-white rounded text-xs  cursor-pointer"
+                          className="px-1 py-1 text-white rounded text-xs  cursor-pointer"
                           style={{
                             backgroundColor:
                               stageColorMap[item?.stages?.[0]?.[keyName]] ||
@@ -143,21 +151,22 @@ const ViewClientsTable = ({
                     )}
                   </div>
                 </td>
-                <td className="px-1 align-middle">
+                <td className="pl-8 align-middle">
                   <div className="flex justify-center">
                     <button
                       type="button"
-                      className="cursor-pointer"
+                      title="View Outstanding Tasks"
+                      className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
                       onClick={() => {
                         handelOTOpen();
                         handelOT(item?.matternumber);
                       }}
                     >
-                      <img src={report} alt="OT Report" className="w-5 h-5" />
+                      <ClipboardList size={20} />
                     </button>
                   </div>
                 </td>
-                <td className="px-0.5 rounded-r-2xl align-middle">
+                <td className="pl-3 pr-2 rounded-r-2xl align-middle">
                   <div className="flex flex-col items-center space-y-2">
                     <button
                       onClick={() =>
@@ -202,13 +211,14 @@ const ViewClientsTable = ({
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
-                  className="cursor-pointer p-1"
+                  title="View Outstanding Tasks"
+                  className="p-1 text-gray-700"
                   onClick={() => {
                     handelOTOpen();
                     handelOT(item?.matternumber);
                   }}
                 >
-                  <img src={report} alt="OT Report" className="w-5 h-5" />
+                  <ClipboardList size={20} />
                 </button>
                 <button
                   onClick={() =>

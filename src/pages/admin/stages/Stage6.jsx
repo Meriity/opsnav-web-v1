@@ -26,7 +26,10 @@ export default function Stage6({
   const getStatus = (value) => {
     if (!value) return "Not Completed";
     const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r","completed","cancelled"].includes(val)) return "Completed";
+    if (
+      ["yes", "na", "n/a", "nr", "n/r", "completed", "cancelled"].includes(val)
+    )
+      return "Completed";
     if (val === "no") return "Not Completed";
     if (["processing", "in progress"].includes(val)) return "In progress";
     return "Not Completed";
@@ -47,7 +50,15 @@ export default function Stage6({
   const originalData = useRef({});
 
   const updateNoteForClient = () => {
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r","completed","cancelled"];
+    const completedValues = [
+      "yes",
+      "na",
+      "n/a",
+      "nr",
+      "n/r",
+      "completed",
+      "cancelled",
+    ];
     const incompleteTasks = fields
       .filter(
         ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
@@ -139,55 +150,71 @@ export default function Stage6({
   }
 
   const renderRadioGroup = ({ key, label }) => {
-  // default values
-  let options = ["Yes", "No", "Processing", "N/R"];
+    // default values
+    let options = ["Yes", "No", "Processing", "N/R"];
 
-  // override for closeMatter
-  if (key === "closeMatter") {
-    options = ["Completed", "Cancelled"];
-  }
+    // override for closeMatter
+    if (key === "closeMatter") {
+      options = ["Completed", "Cancelled"];
+    }
 
-  return (
-    <div className="mt-5" key={key}>
-      <div className="flex gap-4 items-center justify-between mb-3">
-        <label className="block mb-1 text-base font-bold">{label}</label>
+    return (
+      <div className="mt-5" key={key}>
+        <div className="flex gap-4 items-center justify-between mb-3">
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            {label}
+          </label>
+          <div
+            className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
+              statusState[key] === "In progress"
+                ? "text-[#FF9500]"
+                : "text-white"
+            } flex items-center justify-center rounded-4xl`}
+          >
+            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+              {statusState[key]}
+            </p>
+          </div>
+        </div>
         <div
-          className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
-            statusState[key] === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
+          className={`flex flex-wrap items-center gap-4 ${
+            key === "closeMatter" ? "gap-[20px]" : "justify-between"
+          }`}
         >
-          <p className="text-[12px] whitespace-nowrap">{statusState[key]}</p>
+          {options.map((val) => (
+            // Added text-sm md:text-base for consistency
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
+              <input
+                type="radio"
+                name={key}
+                value={val}
+                checked={formState[key]?.toLowerCase() === val.toLowerCase()}
+                onChange={() => {
+                  setFormState((prev) => ({ ...prev, [key]: val }));
+                  setStatusState((prev) => ({
+                    ...prev,
+                    [key]: getStatus(val),
+                  }));
+                }}
+              />
+              {val}
+            </label>
+          ))}
         </div>
       </div>
-      <div
-  className={`flex flex-wrap items-center gap-4 ${
-    key === "closeMatter" ? "gap-[20px]" : "justify-between"
-  }`}
->
-        {options.map((val) => (
-          <label key={val} className="flex items-center gap-2">
-            <input
-              type="radio"
-              name={key}
-              value={val}
-              checked={formState[key]?.toLowerCase() === val.toLowerCase()}
-              onChange={() => {
-                setFormState((prev) => ({ ...prev, [key]: val }));
-                setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
-              }}
-            />
-            {val}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-};
+    );
+  };
   return (
     <div className="overflow-y-auto">
       {fields.map(renderRadioGroup)}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
         <input
@@ -199,7 +226,8 @@ export default function Stage6({
       </div>
 
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           Comment for Client
         </label>
         <textarea
@@ -213,21 +241,21 @@ export default function Stage6({
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
-          width="w-[100px]"
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving" : "Save"}
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

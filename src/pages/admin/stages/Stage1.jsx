@@ -202,7 +202,9 @@ export default function Stage1({
     <div className="overflow-y-auto">
       {/* Referral */}
       <div className="mb-3">
-        <label className="block mb-1 text-base font-bold">Referral</label>
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          Referral
+        </label>
         <input
           type="text"
           value={formData.referral}
@@ -214,18 +216,25 @@ export default function Stage1({
       {/* Retainer */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">Retainer</label>
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            Retainer
+          </label>
           <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.retainer
             )} flex items-center justify-center rounded-4xl`}
           >
-            <p className="text-[12px] whitespace-nowrap">{statuses.retainer}</p>
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+              {statuses.retainer}
+            </p>
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
           {["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label key={val} className="flex items-center gap-2">
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
               <input
                 type="radio"
                 name="retainer"
@@ -242,7 +251,8 @@ export default function Stage1({
       {/* Declaration Form */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
             Declaration form
           </label>
           <div
@@ -250,14 +260,19 @@ export default function Stage1({
               statuses.declaration
             )} flex items-center justify-center rounded-4xl`}
           >
-            <p className="text-[12px] whitespace-nowrap">
+            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
               {statuses.declaration}
             </p>
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
           {["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label key={val} className="flex items-center gap-2">
+            // Added text-sm md:text-base for consistency
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
               <input
                 type="radio"
                 name="declarationForm"
@@ -276,7 +291,8 @@ export default function Stage1({
       {/* Contract Review */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
             Contract Review
           </label>
           <div
@@ -284,12 +300,19 @@ export default function Stage1({
               statuses.contract
             )} flex items-center justify-center rounded-4xl`}
           >
-            <p className="text-[12px] whitespace-nowrap">{statuses.contract}</p>
+            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+              {statuses.contract}
+            </p>
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
           {["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label key={val} className="flex items-center gap-2">
+            // Added text-sm md:text-base for consistency
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
               <input
                 type="radio"
                 name="contractReview"
@@ -308,20 +331,18 @@ export default function Stage1({
       {/* Quote Type */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">Quote Type</label>
-          {/* <div
-            className={`w-[90px] h-[18px] ${bgcolor(
-              statuses.quoteType
-            )} flex items-center justify-center rounded-4xl`}
-          >
-            <p className="text-[12px] whitespace-nowrap">
-              {statuses.quoteType}
-            </p>
-          </div> */}
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            Quote Type
+          </label>
         </div>
         <div className="flex gap-4 flex-wrap">
           {["Variable", "Fixed"].map((val) => (
-            <label key={val} className="flex items-center gap-2">
+            // Added text-sm md:text-base for consistency
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
               <input
                 type="radio"
                 name="quoteType"
@@ -336,7 +357,8 @@ export default function Stage1({
 
         {/* Quote Amount */}
         <div className="mt-5">
-          <label className="block mb-1 text-base font-bold">
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
             Quote amount (incl GST)
           </label>
           <input
@@ -351,18 +373,28 @@ export default function Stage1({
       {/* Tenants */}
       <div className="mt-5">
         <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-base font-bold">Tenants</label>
+          {/* Changed text-base to text-sm md:text-base */}
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            Tenants
+          </label>
           <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses.tenants
             )} flex items-center justify-center rounded-4xl`}
           >
-            <p className="text-[12px] whitespace-nowrap">{statuses.tenants}</p>
+            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+              {statuses.tenants}
+            </p>
           </div>
         </div>
         <div className="flex gap-4 justify-between flex-wrap">
           {["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label key={val} className="flex items-center gap-2">
+            // Added text-sm md:text-base for consistency
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
               <input
                 type="radio"
                 name="tenants"
@@ -378,7 +410,8 @@ export default function Stage1({
 
       {/* System Note for Client */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           System note for client
         </label>
         <input
@@ -392,7 +425,8 @@ export default function Stage1({
 
       {/* Comment for Client */}
       <div className="mt-5">
-        <label className="block mb-1 text-base font-bold">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
           Comment for client
         </label>
         <textarea
@@ -406,21 +440,21 @@ export default function Stage1({
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
-          width="w-[100px]"
+          width="w-[70px] md:w-[100px]" 
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving" : "Save"}
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]" 
             bg="bg-blue-500"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]" 
             onClick={() => changeStage(stage + 1)}
           />
         </div>
