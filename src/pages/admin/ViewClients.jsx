@@ -85,7 +85,7 @@ const ViewClients = () => {
     { key: "client_type", title: "Client Type", width: "7%" },
     { key: "settlement_date", title: "Settlement Date", width: "8%" },
     { key: "final_approval", title: "Matter Date", width: "8%" },
-    { key: "close_matter", title: "Close Matter", width: "7%" },
+    // { key: "close_matter", title: "Close Matter", width: "7%" },
   ];
 
   const api = new ClientAPI();
@@ -196,8 +196,10 @@ const ViewClients = () => {
       <div className="space-y-4">
         <Header />
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-2">
-          <h3 className="text-xl font-semibold shrink-0">View Clients</h3>
+        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-2">
+          <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
+            View Clients
+          </h3>
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
@@ -237,7 +239,7 @@ const ViewClients = () => {
               />
               <Button
                 label="Select Date Range"
-                onClick={() => setSettlementDate(["", ""])}
+                onClick={() => setShowDateRange(true)}
                 width="w-[150px]"
               />
             </div>
