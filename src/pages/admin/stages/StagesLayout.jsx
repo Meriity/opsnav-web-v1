@@ -80,6 +80,44 @@ export default function StagesLayout() {
 
     return textMap[status] || status;
   }
+
+  function cardBaseClasses(selected) {
+    return [
+      "cursor-pointer p-3 rounded-lg border bg-white",
+      "border-gray-300 transition-all duration-200 shadow-sm",
+      selected
+        ? "ring-2 ring-sky-400"
+        : "hover:shadow-md hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400",
+    ].join(" ");
+  }
+
+  function leftAccent(status) {
+    const map = {
+      Completed: "bg-green-600",
+      "Not Completed": "bg-red-600",
+      "In progress": "bg-amber-500",
+      green: "bg-green-600",
+      red: "bg-red-600",
+      amber: "bg-amber-500",
+    };
+    return map[status] || "bg-gray-300";
+  }
+
+  function badgeClasses(status) {
+    // subtle, professional status pill
+    const color =
+      status === "Completed"
+        ? "text-green-700 border-green-300 bg-green-50"
+        : status === "Not Completed"
+        ? "text-red-700 border-red-300 bg-red-50"
+        : "text-amber-700 border-amber-300 bg-amber-50";
+
+    return [
+      "px-2 py-0.5 text-[10px] xl:text-xs rounded-full border font-medium",
+      color,
+    ].join(" ");
+  }
+
   function evaluateStageStatus(stageData, fields) {
     if (!stageData || fields.length === 0) return "Not Completed";
 
@@ -353,50 +391,6 @@ export default function StagesLayout() {
           <>
             {isSmallScreen ? (
               <>
-                {/* --- OLD SCROLLBAR VERSION (COMMENTED OUT AS REQUESTED) --- */}
-                {/*
-                <div className="overflow-x-auto mb-4">
-                  <div className="flex space-x-2 min-w-max px-4 py-1 bg-[#F2FBFF] rounded">
-                    {stages.map((stage, index) => {
-                      const stageStatus = stageStatuses[`status${stage.id}`];
-                      return (
-                        <div
-                          key={stage.id}
-                          onClick={() => setSelectedStage(stage.id)}
-                          className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 flex-shrink-0 w-40 h-[62px] ${
-                            selectedStage === stage.id
-                              ? "bg-[#FFFFFF] text-black"
-                              : bgcolor(stageStatus)
-                          }`}
-                        >
-                          <div className="flex justify-between">
-                            <p className="font-bold font-poppins text-xs">
-                              Stage {index + 1}
-                            </p>
-                            <div
-                              className={`h-[18px] ${
-                                stageStatus === "In progress" ||
-                                stageStatus === "amber"
-                                  ? "text-[#FF9500]"
-                                  : "text-black"
-                              } flex items-center justify-center rounded-4xl`}
-                            >
-                              <p className="text-[10px] whitespace-nowrap font-bold">
-                                {getStatusDisplayText(stageStatus)}
-                              </p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-xs">{stage.title}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                  */}
-
-                {/* --- NEW WRAPPING GRID VERSION --- */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
                   {stages.map((stage, index) => {
                     const stageStatus = stageStatuses[`status${stage.id}`];
@@ -404,10 +398,12 @@ export default function StagesLayout() {
                       <div
                         key={stage.id}
                         onClick={() => setSelectedStage(stage.id)}
-                        className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] ${
+                        className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${ // BORDER IS NOW border-2
                           selectedStage === stage.id
-                            ? "bg-[#FFFFFF] text-black"
-                            : bgcolor(stageStatus)
+                            ? "bg-[#FFFFFF] text-black border-gray-500" // SELECTED BORDER IS GRAY
+                            : `${bgcolor(
+                                stageStatus
+                              )} border-gray-300` // DEFAULT BORDER IS GRAY
                         }`}
                       >
                         <div className="flex justify-between">
@@ -446,10 +442,12 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] ${
+                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${ // BORDER IS NOW border-2
                         selectedStage === stage.id
-                          ? "bg-[#FFFFFF] text-black "
-                          : bgcolor(stageStatus)
+                          ? "bg-[#FFFFFF] text-black border-gray-500" // SELECTED BORDER IS GRAY
+                          : `${bgcolor(
+                              stageStatus
+                            )} border-gray-300` // DEFAULT BORDER IS GRAY
                       }`}
                     >
                       <div className="flex justify-between items-start">
