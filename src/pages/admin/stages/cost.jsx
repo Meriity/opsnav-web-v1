@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/userAPI";
 import { useParams, useNavigate } from "react-router-dom";
 import StageAPI from "../../../api/clientAPI";
-
+import CostInputRow from "../../../components/ui/CostInputRow"; 
 export default function CostComponent({
   changeStage,
   reloadTrigger,
@@ -18,9 +18,9 @@ export default function CostComponent({
   const [formValues, setFormValues] = useState({
     "VOI/CAF": "",
     "VOI/CAF Note": "",
-    "Title": "",
+    Title: "",
     "Title Note": "",
-    "Plan": "",
+    Plan: "",
     "Plan Note": "",
     "Land Tax": "",
     "Land Tax Note": "",
@@ -53,6 +53,7 @@ export default function CostComponent({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+ 
   const calculateTotals = (values = formValues) => {
     const otherTotal = (
       (parseFloat(values["Other fee (1)"]) || 0) +
@@ -107,20 +108,18 @@ export default function CostComponent({
   ]);
 
   useEffect(() => {
-  async function fetchData() {
-    try {
+    async function fetchData() {
+      try {
         setIsLoading(true);
         const stageResponse = await StagesAPI.getAllStages(matterNumber);
         const costData = stageResponse?.cost?.[0] || {};
 
-        // Get quote info from stage1
         const quoteType = stageResponse?.stage1?.quoteType || "Variable";
         const quoteAmount =
           stageResponse?.stage1?.quoteAmount?.$numberDecimal ||
           stageResponse?.stage1?.quoteAmount ||
           "";
 
-        // Calculate initial invoice amount
         const totalCosts = (
           (parseFloat(costData.voiCaf?.$numberDecimal) || 0) +
           (parseFloat(costData.title?.$numberDecimal) || 0) +
@@ -139,19 +138,19 @@ export default function CostComponent({
           invoiceAmount = (
             parseFloat(totalCosts || 0) + parseFloat(quoteAmount || 0)
           ).toString();
-      }
+        }
 
-      const mapped = {
+        const mapped = {
           "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
           "VOI/CAF Note": costData.voiCafNote || "",
-          "Title": costData.title?.$numberDecimal || "",
+          Title: costData.title?.$numberDecimal || "",
           "Title Note": costData.titleNote || "",
-          "Plan": costData.plan?.$numberDecimal || "",
+          Plan: costData.plan?.$numberDecimal || "",
           "Plan Note": costData.planNote || "",
           "Land Tax": costData.landTax?.$numberDecimal || "",
           "Land Tax Note": costData.landTaxNote || "",
           "Land Tax Amount": "",
-        "Land Tax Amount Note": "",
+          "Land Tax Amount Note": "",
           "Land Information Certificate (Rates)":
             costData.landInformationCertificate?.$numberDecimal || "",
           "Land Information Note":
@@ -170,7 +169,7 @@ export default function CostComponent({
           "Other (total) Note": costData.otherTotalNote || "",
           "Total Costs": costData.totalCosts?.$numberDecimal || "0",
           "Total Costs Note": costData.totalCostsNote || "",
-        "Quote Amount": quoteAmount,
+          "Quote Amount": quoteAmount,
           "Quote Amount Note": costData.quoteAmountNote || "",
           "Invoice Amount": invoiceAmount,
           "Invoice Amount Note": costData.invoiceAmountNote || "",
@@ -180,21 +179,21 @@ export default function CostComponent({
         const calculatedMapped = calculateTotals(mapped);
         setFormValues(calculatedMapped);
         originalData.current = calculatedMapped;
-    } catch (err) {
+      } catch (err) {
         console.error("Failed to fetch data", err);
       } finally {
         setIsLoading(false);
+      }
     }
-  }
 
-  fetchData();
-}, [matterNumber, reloadTrigger]);
+    fetchData();
+  }, [matterNumber, reloadTrigger]);
 
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
-   const handleNumberChange = (field, value) => {
+  const handleNumberChange = (field, value) => {
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
       handleChange(field, value);
     }
@@ -224,34 +223,34 @@ export default function CostComponent({
       const payload = {
         matterNumber: matterNumber,
         voiCaf: formatNumber(formValues["VOI/CAF"]),
-      voiCafNote: formValues["VOI/CAF Note"],
+        voiCafNote: formValues["VOI/CAF Note"],
         title: formatNumber(formValues["Title"]),
-      titleNote: formValues["Title Note"],
+        titleNote: formValues["Title Note"],
         plan: formatNumber(formValues["Plan"]),
-      planNote: formValues["Plan Note"],
+        planNote: formValues["Plan Note"],
         landTax: formatNumber(formValues["Land Tax"]),
-      landTaxNote: formValues["Land Tax Note"],
+        landTaxNote: formValues["Land Tax Note"],
         landInformationCertificate: formatNumber(
           formValues["Land Information Certificate (Rates)"]
         ),
-      landInformationCertificateNote: formValues["Land Information Note"],
+        landInformationCertificateNote: formValues["Land Information Note"],
         waterCertificate: formatNumber(formValues["Water Certificate"]),
-      waterCertificateNote: formValues["Water Certificate Note"],
+        waterCertificateNote: formValues["Water Certificate Note"],
         otherFee_1: formatNumber(formValues["Other fee (1)"]),
-      otherFee1Note: formValues["Note 1"],
+        otherFee1Note: formValues["Note 1"],
         otherFee_2: formatNumber(formValues["Other fee (2)"]),
-      otherFee2Note: formValues["Note 2"],
+        otherFee2Note: formValues["Note 2"],
         otherFee_3: formatNumber(formValues["Other fee (3)"]),
-      otherFee3Note: formValues["Note 3"],
+        otherFee3Note: formValues["Note 3"],
         otherFee_4: formatNumber(formValues["Other fee (4)"]),
-      otherFee4Note: formValues["Note 4"],
+        otherFee4Note: formValues["Note 4"],
         otherTotal: formatNumber(formValues["Other (total)"]),
-      otherTotalNote: formValues["Other (total) Note"],
+        otherTotalNote: formValues["Other (total) Note"],
         totalCosts: formatNumber(formValues["Total Costs"]),
-      totalCostsNote: formValues["Total Costs Note"],
+        totalCostsNote: formValues["Total Costs Note"],
         quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
         quoteAmount: formatNumber(formValues["Quote Amount"]),
-      quoteAmountNote: formValues["Quote Amount Note"],
+        quoteAmountNote: formValues["Quote Amount Note"],
         invoiceAmount: formatNumber(formValues["Invoice Amount"]),
         invoiceAmountNote: formValues["Invoice Amount Note"],
       };
@@ -284,368 +283,148 @@ export default function CostComponent({
 
   return (
     <div className="overflow-y-auto">
-      {/* Header Row */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <h1 className="font-bold text-[20px] text-center">Field</h1>
-        <h1 className="font-bold text-[20px] text-center">Amount</h1>
-        <h1 className="font-bold text-[20px] text-center">Notes</h1> 
-      </div>
+      <div className="space-y-2">
+        <CostInputRow
+          label="VOI/CAF"
+          amountValue={formValues["VOI/CAF"]}
+          noteValue={formValues["VOI/CAF Note"]}
+          onAmountChange={(e) => handleNumberChange("VOI/CAF", e.target.value)}
+          onNoteChange={(e) => handleChange("VOI/CAF Note", e.target.value)}
+        />
+        <CostInputRow
+          label="Title"
+          amountValue={formValues["Title"]}
+          noteValue={formValues["Title Note"]}
+          onAmountChange={(e) => handleNumberChange("Title", e.target.value)}
+          onNoteChange={(e) => handleChange("Title Note", e.target.value)}
+        />
+        <CostInputRow
+          label="Plan"
+          amountValue={formValues["Plan"]}
+          noteValue={formValues["Plan Note"]}
+          onAmountChange={(e) => handleNumberChange("Plan", e.target.value)}
+          onNoteChange={(e) => handleChange("Plan Note", e.target.value)}
+        />
+        <CostInputRow
+          label="Land Tax"
+          amountValue={formValues["Land Tax"]}
+          noteValue={formValues["Land Tax Note"]}
+          onAmountChange={(e) => handleNumberChange("Land Tax", e.target.value)}
+          onNoteChange={(e) => handleChange("Land Tax Note", e.target.value)}
+        />
+        <CostInputRow
+          label="Land Information Certificate (Rates)"
+          amountValue={formValues["Land Information Certificate (Rates)"]}
+          noteValue={formValues["Land Information Note"]}
+          onAmountChange={(e) =>
+            handleNumberChange(
+              "Land Information Certificate (Rates)",
+              e.target.value
+            )
+          }
+          onNoteChange={(e) =>
+            handleChange("Land Information Note", e.target.value)
+          }
+        />
+        <CostInputRow
+          label="Water Certificate"
+          amountValue={formValues["Water Certificate"]}
+          noteValue={formValues["Water Certificate Note"]}
+          onAmountChange={(e) =>
+            handleNumberChange("Water Certificate", e.target.value)
+          }
+          onNoteChange={(e) =>
+            handleChange("Water Certificate Note", e.target.value)
+          }
+        />
+        <CostInputRow
+          label="Other fee (1)"
+          amountValue={formValues["Other fee (1)"]}
+          noteValue={formValues["Note 1"]}
+          onAmountChange={(e) =>
+            handleNumberChange("Other fee (1)", e.target.value)
+          }
+          onNoteChange={(e) => handleChange("Note 1", e.target.value)}
+        />
+        <CostInputRow
+          label="Other fee (2)"
+          amountValue={formValues["Other fee (2)"]}
+          noteValue={formValues["Note 2"]}
+          onAmountChange={(e) =>
+            handleNumberChange("Other fee (2)", e.target.value)
+          }
+          onNoteChange={(e) => handleChange("Note 2", e.target.value)}
+        />
+        <CostInputRow
+          label="Other fee (3)"
+          amountValue={formValues["Other fee (3)"]}
+          noteValue={formValues["Note 3"]}
+          onAmountChange={(e) =>
+            handleNumberChange("Other fee (3)", e.target.value)
+          }
+          onNoteChange={(e) => handleChange("Note 3", e.target.value)}
+        />
+        <CostInputRow
+          label="Other fee (4)"
+          amountValue={formValues["Other fee (4)"]}
+          noteValue={formValues["Note 4"]}
+          onAmountChange={(e) =>
+            handleNumberChange("Other fee (4)", e.target.value)
+          }
+          onNoteChange={(e) => handleChange("Note 4", e.target.value)}
+        />
 
-      <div className="space-y-4">
-        {/* VOI/CAF */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">VOI/CAF</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["VOI/CAF"]}
-              onChange={(e) => handleNumberChange("VOI/CAF", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["VOI/CAF Note"]}
-              onChange={(e) => handleChange("VOI/CAF Note", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
+        <hr className="my-4" />
 
-        {/* Title */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Title</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Title"]}
-              onChange={(e) => handleNumberChange("Title", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Title Note"]}
-              onChange={(e) => handleChange("Title Note", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Plan */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Plan</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Plan"]}
-              onChange={(e) => handleNumberChange("Plan", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Plan Note"]}
-              onChange={(e) => handleChange("Plan Note", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Land Tax */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Land Tax</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Land Tax"]}
-              onChange={(e) => handleNumberChange("Land Tax", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Land Tax Note"]}
-              onChange={(e) => handleChange("Land Tax Note", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Land Information Certificate (Rates) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">
-            Land Information Certificate (Rates)
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Land Information Certificate (Rates)"]}
-              onChange={(e) =>
-                handleNumberChange(
-                  "Land Information Certificate (Rates)",
-                  e.target.value
-                )
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Land Information Note"]}
-              onChange={(e) =>
-                handleChange("Land Information Note", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Water Certificate */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Water Certificate</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Water Certificate"]}
-              onChange={(e) =>
-                handleNumberChange("Water Certificate", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Water Certificate Note"]}
-              onChange={(e) =>
-                handleChange("Water Certificate Note", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Other fee (1) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Other fee (1)</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Other fee (1)"]}
-              onChange={(e) =>
-                handleNumberChange("Other fee (1)", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Note 1"]}
-              onChange={(e) => handleChange("Note 1", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Other fee (2) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Other fee (2)</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Other fee (2)"]}
-              onChange={(e) =>
-                handleNumberChange("Other fee (2)", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Note 2"]}
-              onChange={(e) => handleChange("Note 2", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Other fee (3) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Other fee (3)</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Other fee (3)"]}
-              onChange={(e) =>
-                handleNumberChange("Other fee (3)", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Note 3"]}
-              onChange={(e) => handleChange("Note 3", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Other fee (4) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Other fee (4)</div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Other fee (4)"]}
-              onChange={(e) =>
-                handleNumberChange("Other fee (4)", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-            />
-          </div>
-          <div>
-             <input
-              type="text"
-              value={formValues["Note 4"]}
-              onChange={(e) => handleChange("Note 4", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Other (total) */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Other (total)</div>
-          <div>
-            <input
-              type="number"
-              value={formValues["Other (total)"]}
-              className="w-full rounded p-2 bg-gray-100"
-              readOnly
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Other (total) Note"]}
-              onChange={(e) =>
-                handleChange("Other (total) Note", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Total Costs */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Total Costs</div>
-          <div>
-            <input
-              type="number"
-              value={formValues["Total Costs"]}
-              className="w-full rounded p-2 bg-gray-100"
-              readOnly
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Total Costs Note"]}
-              onChange={(e) => handleChange("Total Costs Note", e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Quote Amount */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Quote Amount</div>
-          <div>
-            <input
-              type="number"
-              value={formValues["Quote Amount"]}
-              className="w-full rounded p-2 bg-gray-100"
-              readOnly
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Quote Amount Note"]}
-              onChange={(e) =>
-                handleChange("Quote Amount Note", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
-
-        {/* Invoice Amount */}
-        <div className="grid grid-cols-3 gap-4 items-center">
-          <div className="font-bold text-gray-700">Invoice Amount</div>
-          <div>
-            <input
-              type="number"
-              value={formValues["Invoice Amount"]}
-              className="w-full rounded p-2 bg-gray-100"
-              readOnly
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={formValues["Invoice Amount Note"]}
-              onChange={(e) =>
-                handleChange("Invoice Amount Note", e.target.value)
-              }
-              className="w-full rounded p-2 bg-gray-100"
-              placeholder="Enter Note"
-            />
-          </div>
-        </div>
+        <CostInputRow
+          label="Other (total)"
+          amountValue={formValues["Other (total)"]}
+          noteValue={formValues["Other (total) Note"]}
+          onNoteChange={(e) =>
+            handleChange("Other (total) Note", e.target.value)
+          }
+          isReadOnly={true}
+        />
+        <CostInputRow
+          label="Total Costs"
+          amountValue={formValues["Total Costs"]}
+          noteValue={formValues["Total Costs Note"]}
+          onNoteChange={(e) => handleChange("Total Costs Note", e.target.value)}
+          isReadOnly={true}
+        />
+        <CostInputRow
+          label="Quote Amount"
+          amountValue={formValues["Quote Amount"]}
+          noteValue={formValues["Quote Amount Note"]}
+          onNoteChange={(e) =>
+            handleChange("Quote Amount Note", e.target.value)
+          }
+          isReadOnly={false}
+        />
+        <CostInputRow
+          label="Invoice Amount"
+          amountValue={formValues["Invoice Amount"]}
+          noteValue={formValues["Invoice Amount Note"]}
+          onNoteChange={(e) =>
+            handleChange("Invoice Amount Note", e.target.value)
+          }
+          isReadOnly={true}
+        />
       </div>
 
       {/* Buttons Row */}
-      <div className="grid grid-cols-3 gap-4 mt-10">
-        <div>
-          <Button
-            label="Back"
-            width="w-[100px]"
-            onClick={() => changeStage(stage - 1)}
-          />
-        </div>
-        <div></div>
-        <div className="flex justify-end">
-          <Button
-            label={isSaving ? "Saving..." : "Save and Exit"}
-            width="w-[100px]"
-            onClick={handleSubmit}
-            disabled={isSaving}
-          />
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-10">
+        <Button
+          label="Back"
+          width="w-full md:w-[100px]"
+          onClick={() => changeStage(stage - 1)}
+        />
+        <Button
+          label={isSaving ? "Saving..." : "Save and Exit"}
+          width="w-full md:w-[120px]"
+          onClick={handleSubmit}
+          disabled={isSaving}
+        />
       </div>
     </div>
   );

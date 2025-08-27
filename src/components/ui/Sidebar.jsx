@@ -53,7 +53,8 @@ export default function Sidebar({
     localStorage.removeItem("authToken");
     localStorage.removeItem("client-storage");
     localStorage.removeItem("matterNumber");
-    navigate("/admin/login");
+    // This line forces a hard refresh
+    window.location.href = "/admin/login";
   };
 
   const handleViewClientsClick = () => {
@@ -107,6 +108,7 @@ export default function Sidebar({
               <button
                 key={to}
                 onClick={handleClick}
+                title={label}
                 className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full ${
                   isActive
                     ? "bg-[#00AEEF] text-white"
@@ -152,9 +154,13 @@ export default function Sidebar({
           >
             <button
               onClick={handleLogout}
-              className="px-4 py-2 flex cursor-pointer text-black rounded w-full items-center justify-between hover:bg-sky-100"
+              title="Logout"
+              className={`w-full px-4 py-2 flex items-center rounded cursor-pointer text-black hover:bg-sky-100 ${
+                isCollapsed ? "justify-center" : "justify-between"
+              }`}
             >
-              Logout <LogOut className="w-4" />
+              {!isCollapsed && <span>Logout</span>}
+              <LogOut className="w-4 shrink-0" />
             </button>
           </div>
         )}

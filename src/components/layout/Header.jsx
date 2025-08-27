@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import useDebounce from "../../hooks/useDebounce";
 import { Search } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
@@ -6,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
 
 export default function Header() {
-  const { searchQuery, setSearchQuery } = useSearchStore(); 
+  const { searchQuery, setSearchQuery } = useSearchStore();
   const debouncedInput = useDebounce(searchQuery, 500);
   const [searchResult, setSearchResult] = useState([]);
   const [showDropdown, setShowDropdown] = useState(true);
@@ -14,6 +15,12 @@ export default function Header() {
   const api = new ClientAPI();
   const navigate = useNavigate();
 
+  const searchBoxRef = useRef(null);
+  const [dropdownPos, setDropdownPos] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+  });
 
   useEffect(() => {
     if (debouncedInput.trim()) {
@@ -31,6 +38,7 @@ export default function Header() {
   );
 
   function handelListClick(val) {
+    setShowDropdown(false);
     return navigate(`/admin/client/stages/${val.matterNumber}`, {
       state: { val },
     });
@@ -48,6 +56,17 @@ export default function Header() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (searchBoxRef.current) {
+      const rect = searchBoxRef.current.getBoundingClientRect();
+      setDropdownPos({
+        left: rect.left,
+        top: rect.bottom + window.scrollY,
+        width: rect.width,
+      });
+    }
+  }, [searchQuery]);
 
   const toggleFullScreen = () => {
     const doc = window.document;
@@ -79,12 +98,15 @@ export default function Header() {
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-white p-2 mb-2 block md:flex justify-between items-center">
+      <div className="sticky top-0 bg-white p-2 mb-2 block md:flex justify-between items-center">
         <h2 className="text-xl font-semibold py-3">
           Hello {localStorage.getItem("user")}
         </h2>
 
-        <div className="flex justify-center items-center relative w-full md:w-fit px-4 md:px-0">
+        <div
+          className="flex justify-center items-center relative w-full md:w-fit px-4 md:px-0"
+          ref={searchBoxRef}
+        >
           <div
             onClick={toggleFullScreen}
             className="relative right-6 text-[#00AEE5] hover:text-blue-500 cursor-pointer"
@@ -102,45 +124,56 @@ export default function Header() {
             </svg>
           </div>
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-full md:max-w-xs">
-            <Search className="w-4 h-4 text-gray-500" />
+            <Search className="w-4 h-4 text-gray-500 " />
             <input
               type="text"
               placeholder="Search by Matter Number, Client Name"
-              className="outline-none text-sm bg-transparent w-full"
+              className="outline-none text-sm bg-transparent w-full "
               value={searchQuery}
               onChange={handleSearchOnchange}
+              onFocus={() => setShowDropdown(true)}
             />
           </div>
-          {showDropdown && (
-            <div className="absolute left-0 top-full mt-1 w-full bg-white rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
-              {loading ? (
-                <div className="p-3 text-gray-500 text-sm">Loading...</div>
-              ) : searchQuery.trim() && searchResult.length === 0 ? (
-                <div className="p-3 text-gray-400 text-sm">
-                  No results found
-                </div>
-              ) : (
-                <ul className="divide-y divide-gray-100">
-                  {searchResult.map((item, index) => (
-                    <li
-                      key={index}
-                      className="p-3 hover:bg-blue-50 cursor-pointer text-sm"
-                      onClick={() => handelListClick(item)}
-                    >
-                      <span className="font-medium text-gray-800">
-                        {item?.matterNumber}
-                      </span>
-                      <span className="text-gray-500 ml-2">
-                        — {item?.clientName}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* ✅ Portal Dropdown */}
+      {showDropdown &&
+        createPortal(
+          <div
+            className="absolute bg-white rounded-md shadow-md z-50 max-h-60 overflow-y-auto"
+            style={{
+              left: dropdownPos.left,
+              top: dropdownPos.top,
+              width: dropdownPos.width,
+              position: "absolute",
+            }}
+          >
+            {loading ? (
+              <div className="p-3 text-gray-500 text-sm">Loading...</div>
+            ) : searchQuery.trim() && searchResult.length === 0 ? (
+              <div className="p-3 text-gray-400 text-sm">No results found</div>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {searchResult.map((item, index) => (
+                  <li
+                    key={index}
+                    className="p-3 hover:bg-blue-50 cursor-pointer text-sm"
+                    onClick={() => handelListClick(item)}
+                  >
+                    <span className="font-medium text-gray-800">
+                      {item?.matterNumber}
+                    </span>
+                    <span className="text-gray-500 ml-2">
+                      — {item?.clientName}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 
 export default function Stage6({
   changeStage,
@@ -13,6 +15,7 @@ export default function Stage6({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fields = [
     { key: "noaToCouncilWater", label: "NOA to Council/Water" },
@@ -61,7 +64,8 @@ export default function Stage6({
     ];
     const incompleteTasks = fields
       .filter(
-        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+        ({ key }) =>
+          !completedValues.includes((formState[key] || "").toLowerCase())
       )
       .map(({ label }) => label);
 
@@ -72,23 +76,18 @@ export default function Stage6({
 
   useEffect(() => {
     if (!data) return;
-
     const newFormState = {};
     const newStatusState = {};
-
     fields.forEach(({ key }) => {
       const value = data[key] || "";
       newFormState[key] = value;
       newStatusState[key] = getStatus(value);
     });
-
     const noteParts = data.noteForClient?.split(" - ") || [];
     const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
-
     setFormState(newFormState);
     setStatusState(newStatusState);
     setClientComment(clientComment);
-
     originalData.current = {
       ...newFormState,
       clientComment,
@@ -104,7 +103,6 @@ export default function Stage6({
       systemNote: currentSystemNote,
     };
     const original = originalData.current;
-
     const formChanged = fields.some(
       ({ key }) =>
         String(formState[key] || "").trim() !==
@@ -113,66 +111,72 @@ export default function Stage6({
     const commentChanged =
       String(clientComment).trim() !== String(original.clientComment).trim();
     const noteChanged = currentSystemNote !== original.systemNote;
-
     return formChanged || commentChanged || noteChanged;
+  }
+
+  async function proceedWithSave() {
+    return new Promise(async (resolve, reject) => {
+      setIsSaving(true);
+      try {
+        const systemNote = updateNoteForClient();
+        const fullNote = clientComment
+          ? `${systemNote} - ${clientComment}`
+          : systemNote;
+        const payload = { matterNumber, ...formState, noteForClient: fullNote };
+
+        await api.upsertStageSix(payload);
+        toast.success("Stage 6 saved successfully!");
+
+        originalData.current = { ...formState, clientComment, systemNote };
+        setReloadTrigger?.((prev) => !prev);
+
+        setIsModalOpen(false);
+        resolve();
+      } catch (err) {
+        console.error("Failed to save Stage 6:", err);
+        toast.error("Failed to save changes.");
+        reject(err);
+      } finally {
+        setIsSaving(false);
+      }
+    });
   }
 
   async function handleSave() {
     if (!isChanged()) return;
 
-    setIsSaving(true);
-    try {
-      const systemNote = updateNoteForClient();
-      const fullNote = clientComment
-        ? `${systemNote} - ${clientComment}`
-        : systemNote;
+    const originalCloseMatter = (originalData.current.closeMatter || "")
+      .trim()
+      .toLowerCase();
+    const currentCloseMatter = (formState.closeMatter || "")
+      .trim()
+      .toLowerCase();
+    const isCloseMatterChanged =
+      currentCloseMatter && originalCloseMatter !== currentCloseMatter;
 
-      const payload = {
-        matterNumber,
-        ...formState,
-        noteForClient: fullNote,
-      };
-
-      await api.upsertStageSix(payload);
-
-      originalData.current = {
-        ...formState,
-        clientComment,
-        systemNote,
-      };
-
-      setReloadTrigger?.((prev) => !prev);
-    } catch (err) {
-      console.error("Failed to save Stage 6:", err);
-    } finally {
-      setIsSaving(false);
+    if (isCloseMatterChanged) {
+      setIsModalOpen(true);
+    } else {
+      await proceedWithSave();
     }
   }
 
   const renderRadioGroup = ({ key, label }) => {
-    // default values
     let options = ["Yes", "No", "Processing", "N/R"];
-
-    // override for closeMatter
     if (key === "closeMatter") {
       options = ["Completed", "Cancelled"];
     }
-
     return (
       <div className="mt-5" key={key}>
         <div className="flex gap-4 items-center justify-between mb-3">
-          {/* Changed text-base to text-sm md:text-base */}
           <label className="block mb-1 text-sm md:text-base font-bold">
             {label}
           </label>
           <div
-            className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
-              statusState[key] === "In progress"
-                ? "text-[#FF9500]"
-                : "text-white"
-            } flex items-center justify-center rounded-4xl`}
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statusState[key]
+            )} flex items-center justify-center rounded-4xl`}
           >
-            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
             <p className="text-[10px] md:text-[12px] whitespace-nowrap">
               {statusState[key]}
             </p>
@@ -184,7 +188,6 @@ export default function Stage6({
           }`}
         >
           {options.map((val) => (
-            // Added text-sm md:text-base for consistency
             <label
               key={val}
               className="flex items-center gap-2 text-sm md:text-base"
@@ -209,57 +212,65 @@ export default function Stage6({
       </div>
     );
   };
+
   return (
-    <div className="overflow-y-auto">
-      {fields.map(renderRadioGroup)}
-      <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          System Note for Client
-        </label>
-        <input
-          type="text"
-          value={updateNoteForClient()}
-          disabled
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
+    <>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => !isSaving && setIsModalOpen(false)}
+        onConfirm={proceedWithSave}
+        title="Are you sure?"
+      >
+        You are about to finalize this matter as{" "}
+        <strong className="text-gray-900">"{formState.closeMatter}"</strong>.
+      </ConfirmationModal>
 
-      <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          Comment for Client
-        </label>
-        <textarea
-          value={clientComment}
-          onChange={(e) => setClientComment(e.target.value)}
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-
-      {/* Buttons */}
-      <div className="flex mt-10 justify-between">
-        <Button
-          label="Back"
-          width="w-[70px] md:w-[100px]"
-          onClick={() => changeStage(stage - 1)}
-          disabled={stage === 1}
-        />
-        <div className="flex gap-2">
-          <Button
-            label={isSaving ? "Saving" : "Save"}
-            width="w-[70px] md:w-[100px]"
-            bg="bg-blue-500"
-            onClick={handleSave}
-            disabled={isSaving || !isChanged()}
-          />
-          <Button
-            label="Next"
-            width="w-[70px] md:w-[100px]"
-            onClick={() => changeStage(stage + 1)}
+      <div className="overflow-y-auto">
+        {fields.map(renderRadioGroup)}
+        <div className="mt-5">
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            System Note for Client
+          </label>
+          <input
+            type="text"
+            value={updateNoteForClient()}
+            disabled
+            className="w-full rounded p-2 bg-gray-100"
           />
         </div>
+        <div className="mt-5">
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            Comment for Client
+          </label>
+          <textarea
+            value={clientComment}
+            onChange={(e) => setClientComment(e.target.value)}
+            className="w-full rounded p-2 bg-gray-100"
+          />
+        </div>
+        <div className="flex mt-10 justify-between">
+          <Button
+            label="Back"
+            width="w-[70px] md:w-[100px]"
+            onClick={() => changeStage(stage - 1)}
+            disabled={stage === 1}
+          />
+          <div className="flex gap-2">
+            <Button
+              label={isSaving ? "Saving..." : "Save"}
+              width="w-[70px] md:w-[100px]"
+              bg="bg-blue-500"
+              onClick={handleSave}
+              disabled={isSaving || !isChanged()}
+            />
+            <Button
+              label="Next"
+              width="w-[70px] md:w-[100px]"
+              onClick={() => changeStage(stage + 1)}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

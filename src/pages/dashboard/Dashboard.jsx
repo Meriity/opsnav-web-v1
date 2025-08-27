@@ -124,10 +124,16 @@ function Dashboard() {
           <h1 className="text-xl font-bold mt-3 font-poppins">
             Welcome to OPSNAV
           </h1>
-          <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
+          {/* <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
             We are a client-focused law firm committed to delivering expert
             legal solutions with integrity, professionalism, and personalized
             care.
+          </p> */}
+          <p className="font-poppins text-sm mt-1 text-gray-800 max-w-5xl">
+            OpsNav brings clarity and control to your most complex workflows —
+            with centralised task tracking, automated processes, and real-time
+            insights that keep your team aligned, productive, and moving forward
+            with confidence.
           </p>
 
           <button

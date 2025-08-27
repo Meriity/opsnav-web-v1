@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
+import { formatDate } from "../../utils/formatters";
+
 
 const ViewClientsTable = ({
   data,
@@ -58,7 +60,7 @@ const ViewClientsTable = ({
       {/* Desktop Table View */}
       <div className="hidden lg:block">
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
-          <thead className="bg-[#D7F4FF]">
+          <thead className="bg-[#A6E7FF]">
             <tr>
               {columns.map((column, colIndex) => (
                 <th
@@ -119,10 +121,13 @@ const ViewClientsTable = ({
                     }`}
                   >
                     <div
-                      className=" lg:font-normal 2xl:"
+                      className=" lg:font-normal 2xl:text-center"
                       title={item[column.key]}
                     >
-                      {item[column.key]}
+                      {column.key === "settlement_date" ||
+                      column.key === "final_approval"
+                        ? formatDate(item[column.key])
+                        : item[column.key]}
                     </div>
                   </td>
                 ))}
@@ -252,11 +257,7 @@ const ViewClientsTable = ({
             <div className="flex justify-between text-xs pt-2">
               <div>
                 <p className="text-gray-500">Settlement</p>
-                <p>{item.settlement_date}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Status</p>
-                <p>{item.close_matter}</p>
+                <p>{formatDate(item.settlement_date)}</p>
               </div>
               <div>
                 <p className="text-gray-500">Entered By</p>
