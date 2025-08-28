@@ -31,7 +31,7 @@ export default function Stage3({
     const val = value.toLowerCase().trim();
     if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In progress";
+    if (["processing", "in progress"].includes(val)) return "In Progress";
     return "Not Completed";
   };
 

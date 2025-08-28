@@ -34,7 +34,7 @@ export default function Stage6({
     )
       return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In progress";
+    if (["processing", "in progress"].includes(val)) return "In Progress";
     return "Not Completed";
   };
 

@@ -58,7 +58,7 @@ function LoginForm() {
             className="h-24 mx-auto md:mx-0"
           />
           <h1 className="text-3xl font-bold mt-4 font-poppins">
-            WELCOME TO OPSNAV
+            WELCOME TO Opsnav
           </h1>
           <p className="text-gray-600 mt-2 font-poppins">
             Secure. Simple. Seamless conveyancing.

@@ -32,7 +32,7 @@ export default function Stage4({
     )
       return "Completed"; // Green
     if (val === "no") return "Not Completed"; // Red
-    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    if (val === "processing" || val === "in progress") return "In Progress"; // Yellow
     return "Not Completed"; // Fallback to red
   };
 

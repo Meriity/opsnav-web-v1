@@ -53,7 +53,7 @@ export default function StagesLayout() {
 
   function bgcolor(status) {
     const statusColors = {
-      "In progress": "bg-[#FFEECF]",
+      "In Progress": "bg-[#FFEECF]", // Changed Casing
       Completed: "bg-[#00A506]",
       "Not Completed": "bg-[#FF0000]",
       green: "bg-[#00A506]",
@@ -70,10 +70,10 @@ export default function StagesLayout() {
     const textMap = {
       green: "Completed",
       red: "Not Completed",
-      amber: "In progress",
+      amber: "In Progress", // Changed Casing
       yellow: "Warning",
       blue: "Info",
-      "In progress": "In progress",
+      "In Progress": "In Progress", // Changed Casing
       Completed: "Completed",
       "Not Completed": "Not Completed",
     };
@@ -95,7 +95,7 @@ export default function StagesLayout() {
     const map = {
       Completed: "bg-green-600",
       "Not Completed": "bg-red-600",
-      "In progress": "bg-amber-500",
+      "In Progress": "bg-amber-500", // Changed Casing
       green: "bg-green-600",
       red: "bg-red-600",
       amber: "bg-amber-500",
@@ -136,7 +136,7 @@ export default function StagesLayout() {
     if (emptyCount === fields.length) return "Not Completed";
     if (yesCount === fields.length) return "Completed";
     if (noCount === fields.length) return "Not Completed";
-    return "In progress";
+    return "In Progress"; // Changed Casing
   }
 
   function RenderStage(newStage) {
@@ -398,12 +398,10 @@ export default function StagesLayout() {
                       <div
                         key={stage.id}
                         onClick={() => setSelectedStage(stage.id)}
-                        className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${ // BORDER IS NOW border-2
+                        className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
                           selectedStage === stage.id
-                            ? "bg-[#FFFFFF] text-black border-gray-500" // SELECTED BORDER IS GRAY
-                            : `${bgcolor(
-                                stageStatus
-                              )} border-gray-300` // DEFAULT BORDER IS GRAY
+                            ? "bg-[#FFFFFF] text-black border-gray-500"
+                            : `${bgcolor(stageStatus)} border-gray-300`
                         }`}
                       >
                         <div className="flex justify-between">
@@ -413,7 +411,7 @@ export default function StagesLayout() {
 
                           <div
                             className={`h-[18px] ${
-                              stageStatus === "In progress" ||
+                              stageStatus === "In Progress" || // Changed Casing
                               stageStatus === "amber"
                                 ? "text-[#FF9500]"
                                 : "text-black"
@@ -442,12 +440,10 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${ // BORDER IS NOW border-2
+                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${
                         selectedStage === stage.id
-                          ? "bg-[#FFFFFF] text-black border-gray-500" // SELECTED BORDER IS GRAY
-                          : `${bgcolor(
-                              stageStatus
-                            )} border-gray-300` // DEFAULT BORDER IS GRAY
+                          ? "bg-[#FFFFFF] text-black border-gray-500"
+                          : `${bgcolor(stageStatus)} border-gray-300`
                       }`}
                     >
                       <div className="flex justify-between items-start">
@@ -456,7 +452,7 @@ export default function StagesLayout() {
                         </p>
                         <div
                           className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${
-                            stageStatus === "In progress" ||
+                            stageStatus === "In Progress" || // Changed Casing
                             stageStatus === "amber"
                               ? "text-[#FF9500]"
                               : stageStatus === "Completed" ||

@@ -36,7 +36,7 @@ export default function Stage2({
     if (val === "yes" || val === "nr" || val === "n/r" || val === "nr")
       return "Completed"; // Green
     if (val === "no") return "Not Completed"; // Red
-    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    if (val === "processing" || val === "in progress") return "In Progress"; // Yellow
     return "Not Completed"; // Fallback to red
   };
 
@@ -98,7 +98,7 @@ export default function Stage2({
     useState("In progress");
   const [statusBuildingPest, setStatusBuildingPest] = useState("In progress");
   const [statusFinanceApproval, setStatusFinanceApproval] =
-    useState("In progress");
+    useState("In progress");  
   const [statusCt, setStatusCt] = useState("In progress");
   const [statusDA, setStatusDA] = useState("In progress");
 
