@@ -53,7 +53,7 @@ const Table = ({
                   <th
                     key={column.key}
                     onClick={() => handleSort(column.key)}
-                    className={`sticky top-0 z-10 px-3 py-4 text-left text-sm font-bold text-black cursor-pointer select-none ${headerBgColor} ${
+                    className={`sticky top-0 z-[1] px-3 py-4 text-left text-sm font-bold text-black cursor-pointer select-none ${headerBgColor} ${
                       colIndex === 0 ? "rounded-l-2xl" : ""
                     } ${
                       colIndex === columns.length - 1 && !showActions
@@ -80,7 +80,7 @@ const Table = ({
               })}
               {showActions && (
                 <th
-                  className={`sticky top-0 z-10 px-3 py-2 text-left text-sm font-bold text-black rounded-r-2xl ${headerBgColor}`}
+                  className={`sticky top-0 z-[1] px-3 py-2 text-left text-sm font-bold text-black rounded-r-2xl ${headerBgColor}`}
                 >
                   Actions
                 </th>

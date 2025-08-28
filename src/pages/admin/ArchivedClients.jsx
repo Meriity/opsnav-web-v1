@@ -2,80 +2,15 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { create } from "zustand";
-import ClientAPI from "../../api/userAPI";
-import * as XLSX from "xlsx-js-style";
 import Header from "../../components/layout/Header";
-import DatePicker from "react-datepicker";
+import * as XLSX from "xlsx-js-style";
 import moment from "moment";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import Loader from "../../components/ui/Loader";
-
-// Zustand Store for Archived Clients
-const useArchivedClientStore = create((set) => ({
-  archivedClients: [],
-  loading: false,
-  isFetched: false,
-  setClients: (clients) => set({ archivedClients: clients }),
-  setLoading: (loading) => set({ loading }),
-  setIsFetched: (isFetched) => set({ isFetched }),
-  fetchArchivedClients: async () => {
-    set({ loading: true });
-    const api = new ClientAPI();
-    try {
-      const res = await api.getArchivedClients();
-
-      const mapped = res.clients.map((client, index) => {
-        // Updated formatDate function for DD-MM-YYYY
-        const formatDate = (dateString) => {
-          if (!dateString) return "N/A";
-          try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return "N/A";
-            // Format to DD-MM-YYYY
-            const day = String(date.getDate()).padStart(2, "0");
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const year = date.getFullYear();
-            return `${day}-${month}-${year}`;
-          } catch {
-            return "N/A";
-          }
-        };
-
-        return {
-          id: index + 1,
-          matternumber: client.matterNumber || "N/A",
-          client_name: client.clientName || "N/A",
-          property_address: client.propertyAddress || "N/A",
-          state: client.state || "N/A",
-          type: client.clientType || "N/A",
-          matter_date: formatDate(client.matterDate),
-          settlement_date: formatDate(client.settlementDate),
-          status: client.closeMatter || "N/A",
-          data_entry_by: client.dataEntryBy || "N/A",
-          referral: client.referral || "N/A",
-          contract_price:
-            client.costData?.[0]?.quoteAmount?.$numberDecimal || "0.00",
-          council: client.council || "N/A",
-          invoiced:
-            client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
-          total_costs:
-            client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
-        };
-      });
-
-      set({ archivedClients: mapped, isFetched: true });
-    } catch (err) {
-      console.error("Failed to fetch archived clients", err);
-      set({ archivedClients: [], isFetched: true });
-    } finally {
-      set({ loading: false });
-    }
-  },
-}));
+import ClientAPI from "../../api/userAPI";
+import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -106,12 +41,16 @@ export default function ArchivedClients() {
     useArchivedClientStore();
   const { searchQuery } = useSearchStore();
 
-  const [openExcel, setOpenExcel] = useState(false);
+  // Modals
+  const [openExcel, setOpenExcel] = useState(false); // uses DateRangeModal now
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+
+  // Date range state (Date objects from DateRangeModal)
+  const [fromDate, setFromDate] = useState(null); // Date | null
+  const [toDate, setToDate] = useState(null); // Date | null
+
   const [clientList, setClientList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(10);
   const api = new ClientAPI();
 
@@ -124,6 +63,7 @@ export default function ArchivedClients() {
     }
   }, [isFetched, fetchArchivedClients]);
 
+  // Apply date & search filters to list
   useEffect(() => {
     let filteredData = archivedClients;
 
@@ -145,6 +85,7 @@ export default function ArchivedClients() {
             .includes(lowercasedQuery)
       );
     }
+
     setClientList(filteredData);
   }, [archivedClients, fromDate, toDate, searchQuery]);
 
@@ -165,7 +106,6 @@ export default function ArchivedClients() {
     setSortedColumn(columnKey);
   };
 
-  
   const sortedClientList = useMemo(() => {
     let sortableItems = [...clientList];
     if (sortedColumn !== null) {
@@ -173,70 +113,51 @@ export default function ArchivedClients() {
         const aVal = a[sortedColumn];
         const bVal = b[sortedColumn];
 
-        // Handle date sorting specifically since 'DD-MM-YYYY' is not lexicographically sortable
+        // Sort DD-MM-YYYY correctly
         if (
           sortedColumn === "matter_date" ||
           sortedColumn === "settlement_date"
         ) {
           const dateA = moment(aVal, "DD-MM-YYYY");
           const dateB = moment(bVal, "DD-MM-YYYY");
-          if (dateA.isBefore(dateB)) {
-            return sortDirection === "asc" ? -1 : 1;
-          }
-          if (dateA.isAfter(dateB)) {
-            return sortDirection === "asc" ? 1 : -1;
-          }
+          if (dateA.isBefore(dateB)) return sortDirection === "asc" ? -1 : 1;
+          if (dateA.isAfter(dateB)) return sortDirection === "asc" ? 1 : -1;
           return 0;
         }
 
-        if (aVal < bVal) {
-          return sortDirection === "asc" ? -1 : 1;
-        }
-        if (aVal > bVal) {
-          return sortDirection === "asc" ? 1 : -1;
-        }
+        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
         return 0;
       });
     }
     return sortableItems;
   }, [clientList, sortedColumn, sortDirection]);
 
-  async function handleExcelExport() {
-    setIsLoading(true);
-    if (!fromDate || !toDate) {
+  // ----- Export helpers -----
+  async function handleExcelExport(withFrom, withTo) {
+    setIsExporting(true);
+    if (!withFrom || !withTo) {
       toast.error("Please select a valid date range");
-      setIsLoading(false);
+      setIsExporting(false);
       return;
     }
     try {
-      const res = await api.getArchivedClientsDate(fromDate, toDate);
+      const from = moment(withFrom).format("YYYY-MM-DD");
+      const to = moment(withTo).format("YYYY-MM-DD");
+      const res = await api.getArchivedClientsDate(from, to);
       const data = res.data;
 
       if (!data || data.length === 0) {
         toast.info("No data available for the selected date range");
+      } else {
+        convertToExcel(data);
       }
-      convertToExcel(data);
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setIsLoading(false);
-      setOpenExcel(false);
-      setFromDate("");
-      setToDate("");
+      setIsExporting(false);
     }
   }
-
-  const handleDataFilter = (fromDate, toDate) => {
-    if (fromDate === "" && toDate === "") {
-      setClientList(archivedClients);
-    } else if (fromDate !== "" && toDate !== "") {
-      const filtered = archivedClients.filter((client) => {
-        const clientDate = moment(new Date(client?.settlement_date));
-        return clientDate.isBetween(fromDate, toDate, "day", "[]");
-      });
-      setClientList(filtered);
-    }
-  };
 
   const convertToExcel = (data) => {
     const headers = Object.keys(data[0]);
@@ -247,6 +168,8 @@ export default function ArchivedClients() {
 
   const downloadExcel = (data) => {
     const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // column widths
     ws["!cols"] = data[0].map((_, i) => {
       const maxLength = data.reduce(
         (max, row) => Math.max(max, row[i] ? String(row[i]).length : 0),
@@ -254,7 +177,11 @@ export default function ArchivedClients() {
       );
       return { wch: maxLength + 4 };
     });
+
+    // row heights
     ws["!rows"] = data.map((row, i) => ({ hpt: i === 0 ? 40 : 20 }));
+
+    // header styles
     const range = XLSX.utils.decode_range(ws["!ref"]);
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
@@ -266,29 +193,37 @@ export default function ArchivedClients() {
             vertical: "center",
             wrapText: true,
           },
-          fill: {
-            patternType: "solid",
-            fgColor: { rgb: "CCD9CF" },
-          },
+          fill: { patternType: "solid", fgColor: { rgb: "CCD9CF" } },
         };
       }
     }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Archived Clients");
     XLSX.writeFile(wb, "ArchivedClients.xlsx");
+  };
+
+  // Reuse for list filtering (called by Filter modal)
+  const handleDataFilter = (from, to) => {
+    setFromDate(from || null);
+    setToDate(to || null);
   };
 
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
       <main className="w-full max-w-8xl mx-auto">
         <Header />
+
+        {/* Toolbar */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
+
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Button
-                label="Export"
+                label={isExporting ? "Exporting..." : "Export"}
                 onClick={() => setOpenExcel(true)}
+                disabled={isExporting}
                 className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
               />
               <Button
@@ -296,12 +231,19 @@ export default function ArchivedClients() {
                 onClick={() => setShowSettlementDateModal(true)}
                 className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
               />
+              <Button
+                label="Select Date Range"
+                onClick={() => setShowSettlementDateModal(true)}
+                className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+              />
             </div>
           </div>
+
           <div className="flex lg:hidden items-center space-x-2">
             <Button
-              label="Export"
+              label={isExporting ? "Exporting..." : "Export"}
               onClick={() => setOpenExcel(true)}
+              disabled={isExporting}
               className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
             />
             <Button
@@ -309,9 +251,15 @@ export default function ArchivedClients() {
               onClick={() => setShowSettlementDateModal(true)}
               className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
             />
+            <Button
+              label="Select Date Range"
+              onClick={() => setShowSettlementDateModal(true)}
+              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+            />
           </div>
         </div>
 
+        {/* Table / Cards */}
         {loading ? (
           <Loader />
         ) : (
@@ -338,6 +286,7 @@ export default function ArchivedClients() {
                 handleSort={handleSort}
               />
             </div>
+
             <div className="grid grid-cols-1 gap-4 lg:hidden">
               <div className="flex justify-start">
                 <ClientsPerPage
@@ -386,50 +335,30 @@ export default function ArchivedClients() {
           </>
         )}
       </main>
+
+      {/* FILTER modal (same as before) */}
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
+        subTitle="Select the date range to filter clients."
         handelSubmitFun={(from, to) => {
-          setFromDate(from);
-          setToDate(to);
           handleDataFilter(from, to);
           setShowSettlementDateModal(false);
         }}
       />
-      <Dialog open={openExcel} onClose={() => setOpenExcel(false)}>
-        <DialogBackdrop className="fixed inset-0 bg-black/30" />
-        <DialogPanel className="w-full max-w-md bg-white p-6 rounded-lg shadow-xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <h3 className="text-lg font-semibold mb-4">Export to Excel</h3>
-          <p className="mb-4">Select the date range for the Excel export.</p>
-          <div className="flex flex-col space-y-4">
-            <DatePicker
-              selected={fromDate}
-              onChange={(date) => setFromDate(date)}
-              placeholderText="From Date"
-              className="w-full p-2 border rounded"
-            />
-            <DatePicker
-              selected={toDate}
-              onChange={(date) => setToDate(date)}
-              placeholderText="To Date"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div className="mt-6 flex justify-end space-x-4">
-            <Button
-              label="Cancel"
-              onClick={() => setOpenExcel(false)}
-              className="bg-gray-200 text-gray-800"
-            />
-            <Button
-              label={isLoading ? "Exporting..." : "Export"}
-              onClick={handleExcelExport}
-              disabled={isLoading}
-              className="bg-blue-500 hover:bg-blue-600"
-            />
-          </div>
-        </DialogPanel>
-      </Dialog>
+
+      {/* EXPORT modal — reuses the exact same DateRangeModal */}
+      <DateRangeModal
+        isOpen={openExcel}
+        setIsOpen={setOpenExcel}
+        subTitle="Select the date range for the Excel export."
+        handelSubmitFun={async (from, to) => {
+          setFromDate(from);
+          setToDate(to);
+          await handleExcelExport(from, to); // do the export after picking dates
+          setOpenExcel(false);
+        }}
+      />
     </div>
   );
 }

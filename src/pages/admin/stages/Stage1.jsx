@@ -22,11 +22,11 @@ export default function Stage1({
   });
 
   const [statuses, setStatuses] = useState({
-    retainer: "In progress",
-    declaration: "In progress",
-    contract: "In progress",
-    quoteType: "In progress",
-    tenants: "In progress",
+    retainer: "In Progress",
+    declaration: "In Progress",
+    contract: "In Progress",
+    quoteType: "In Progress",
+    tenants: "In Progress",
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -57,7 +57,7 @@ export default function Stage1({
     if (val === "no") return "Not Completed";
 
     // In progress statuses
-    if (val === "processing" || val === "in progress") return "In progress";
+    if (val === "processing" || val === "in progress") return "In Progress";
 
     return "Not Completed"; // Default fallback
   };
