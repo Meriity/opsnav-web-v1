@@ -35,13 +35,21 @@ const useDashboardStore = create((set) => ({
   lastrecord: 0,
   loading: true,
   setDashboardData: (data) =>
-    set({
-      totalusers: data.lifetimeTotals.totalUsers || 0,
-      totalactive: data.lifetimeTotals.totalActiveClients || 0,
-      lastrecord:
-        data.last10MonthsStats[data.last10MonthsStats.length - 2]
-          ?.closedMatters || 0,
-      loading: false,
+    set(() => {
+      const arr = Array.isArray(data.last10MonthsStats)
+        ? data.last10MonthsStats.slice(-10) // cap to last 10
+        : [];
+      const lastRec =
+        arr[arr.length - 1]?.closedMatters ??
+        arr[arr.length - 1]?.count ??
+        arr[arr.length - 1]?.total ??
+        0;
+      return {
+        totalusers: data.lifetimeTotals?.totalUsers || 0,
+        totalactive: data.lifetimeTotals?.totalActiveClients || 0,
+        lastrecord: lastRec,
+        loading: false,
+      };
     }),
 }));
 
@@ -60,8 +68,8 @@ function Dashboard() {
   const [createuser, setcreateuser] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
 
-  // --- State for Chart Logic ---
-  const [chartView, setChartView] = useState("last10Months");
+  // ✅ chartView must be a string, not an object
+  const [chartView, setChartView] = useState("last10Months"); // "last10Months" | "allTime"
   const [allChartData, setAllChartData] = useState({
     tenMonths: [],
     allTime: [],
@@ -70,17 +78,17 @@ function Dashboard() {
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
-  // --- Combined Effect for Data Fetching and View Switching ---
   useEffect(() => {
     const fetchAndSetData = async () => {
       try {
         const data = await clientApi.getDashboardData();
-        setDashboardData(data); // Update Zustand store
+        setDashboardData(data);
 
-        // Store both datasets in a single state object
         setAllChartData({
-          tenMonths: data.last10MonthsStats || [],
-          allTime: data.allTimeStats || [],
+          tenMonths: Array.isArray(data.last10MonthsStats)
+            ? data.last10MonthsStats
+            : [],
+          allTime: Array.isArray(data.allTimeStats) ? data.allTimeStats : [],
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -90,36 +98,38 @@ function Dashboard() {
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
 
-  // --- Effect to update the chart when the view or data changes ---
   useEffect(() => {
-    // This is for debugging - check your browser console (F12)
-    console.log(`Switching chart view to: ${chartView}`);
-    console.log("Available 10-month data:", allChartData.tenMonths);
-    console.log("Available All-Time data:", allChartData.allTime);
+    // Debug logs (optional)
+    // console.log("chartView:", chartView);
+    // console.log("10M:", allChartData.tenMonths);
+    // console.log("ALL:", allChartData.allTime);
 
     if (chartView === "last10Months") {
-      const formattedData = allChartData.tenMonths.map((item) => ({
+      // show ONLY the last 10 points
+      const ten = (allChartData.tenMonths || []).slice(-10);
+      const formattedData = ten.map((item) => ({
         ...item,
-        name: item.month, // e.g., "Jan"
+        name: item.month,
+        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
       }));
       setCurrentChartData(formattedData);
     } else if (chartView === "allTime") {
-      const formattedData = allChartData.allTime.map((item) => ({
+      const all = allChartData.allTime || [];
+      const formattedData = all.map((item) => ({
         ...item,
-        name: `${item.month} ${item.year}`, // e.g., "Jan 2023"
+        name: `${item.month} ${item.year}`,
+        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
       }));
       setCurrentChartData(formattedData);
     }
   }, [chartView, allChartData]);
 
-  // --- Calendar Data Fetching ---
   useEffect(() => {
     if (!isArchivedFetched) {
       fetchArchivedClients();
     }
   }, [isArchivedFetched, fetchArchivedClients]);
 
-  // --- Memoized calculation for the dynamic card total ---
   const chartPeriodTotal = useMemo(() => {
     if (!currentChartData || currentChartData.length === 0) return 0;
     return currentChartData.reduce(
@@ -128,7 +138,6 @@ function Dashboard() {
     );
   }, [currentChartData]);
 
-  // --- Calendar Events and Styling ---
   const calendarEvents = useMemo(() => {
     if (!archivedClients || archivedClients.length === 0) return [];
     return archivedClients
@@ -177,7 +186,6 @@ function Dashboard() {
     );
   }
 
-  // --- JSX a---
   return (
     <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
       <Header />
@@ -256,7 +264,7 @@ function Dashboard() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                     <Tooltip />
                     <Bar
                       dataKey="closedMatters"
@@ -307,4 +315,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;

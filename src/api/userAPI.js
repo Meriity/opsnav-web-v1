@@ -1,4 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const BASE_URL = "http://localhost:5000";
+
 class ClientAPI {
   constructor() {
     this.baseUrl = BASE_URL;
@@ -168,17 +170,14 @@ class ClientAPI {
       throw error;
     }
   }
+
   // get clients
   async getClients() {
     try {
-      const response = await fetch(
-        `${this.baseUrl}/user/clients/active`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
-      console.log(response);
+      const response = await fetch(`${this.baseUrl}/user/clients/active`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -299,6 +298,7 @@ class ClientAPI {
       throw error;
     }
   }
+
   async createClient(clientData) {
     try {
       const response = await fetch(`${this.baseUrl}/user/clients`, {
@@ -306,7 +306,6 @@ class ClientAPI {
         headers: this.getHeaders(),
         body: JSON.stringify(clientData),
       });
-      console.log(JSON.stringify(clientData));
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -322,16 +321,12 @@ class ClientAPI {
   // get clients
   async getArchivedClients() {
     try {
-      const response = await fetch(
-        `${BASE_URL}/user/clients/archived`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
       const data = await response.json();
 
-      console.log(data);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -345,13 +340,12 @@ class ClientAPI {
   async getArchivedClientsDate(from, to) {
     try {
       const response = await fetch(
-        `${BASE_URL}/clients/settled?from=${from}&to=${to}`,
+        `${this.baseUrl}/clients/settled?from=${from}&to=${to}`,
         {
           method: "GET",
           headers: this.getHeaders(),
         }
       );
-      console.log(response);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -362,28 +356,38 @@ class ClientAPI {
     }
   }
 
+  // ✅ Calls dashboard with explicit ranges and normalizes the payload
   async getDashboardData() {
+    const fetchRange = async (range) => {
+      const res = await fetch(`${this.baseUrl}/dashboard?range=${range}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return res.json();
+    };
+
     try {
-      const response = await fetch(
-        `${BASE_URL}/dashboard`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
-
-      console.log("Raw response:", response);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // 10 months (backend expects lowercase 'tenmonths'; try camelCase fallback)
+      let tenData;
+      try {
+        tenData = await fetchRange("tenmonths");
+      } catch {
+        tenData = await fetchRange("tenMonths");
       }
 
-      const data = await response.json();
-      console.log("Parsed JSON data:", data);
+      // All time
+      const allData = await fetchRange("all");
 
       return {
-        lifetimeTotals: data.lifetimeTotals,
-        last10MonthsStats: data.last10MonthsStats,
+        lifetimeTotals:
+          tenData?.lifetimeTotals || allData?.lifetimeTotals || {},
+        last10MonthsStats: Array.isArray(tenData?.monthlyStats)
+          ? tenData.monthlyStats
+          : [],
+        allTimeStats: Array.isArray(allData?.monthlyStats)
+          ? allData.monthlyStats
+          : [],
       };
     } catch (error) {
       console.error("Error getting dashboard data:", error);
@@ -420,20 +424,17 @@ class ClientAPI {
   // Resend link to client
   async resendLinkToClient(email, matterNumber) {
     try {
-      const response = await fetch(
-        `${BASE_URL}/client-view/send-link`,
-        {
-          method: "POST",
-          headers: this.getHeaders(),
-          body: JSON.stringify({
-            email,
-            matterNumber,
-          }),
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/client-view/send-link`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          email,
+          matterNumber,
+        }),
+      });
 
       if (!response.ok) {
-        const errorData = await response.json(); 
+        const errorData = await response.json();
         throw new Error(errorData.message);
       }
 
