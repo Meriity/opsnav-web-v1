@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const BASE_URL = "http://localhost:5000";
 
 class ClientAPI {
   constructor() {
@@ -229,13 +230,26 @@ class ClientAPI {
 
   async upsertStageSix(additionalData = {}) {
     try {
-      const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
+      // console.log(additionalData);
+      // Function to update closeMatter status
+function updateCloseMatter(client) {
+  if (!client.closeMatter || client.closeMatter.trim() === '') {
+    client.closeMatter = 'open';
+  } else if (client.closeMatter === 'Completed') {
+    client.closeMatter = 'closed';
+  } else if (client.closeMatter === 'Cancelled') {
+    client.closeMatter = 'cancelled';
+  }
+  return client;
+}
+
+const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
         method: "POST",
         headers: this.getHeaders(),
-        body: JSON.stringify(additionalData),
+        body: JSON.stringify(updateCloseMatter(additionalData)),
       });
+      // console.log();
 
-      console.log(JSON.stringify(additionalData));
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

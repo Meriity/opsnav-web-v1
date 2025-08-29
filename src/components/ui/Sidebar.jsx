@@ -53,7 +53,8 @@ export default function Sidebar({
     localStorage.removeItem("authToken");
     localStorage.removeItem("client-storage");
     localStorage.removeItem("matterNumber");
-    navigate("/admin/login");
+    // This line forces a hard refresh
+    window.location.href = "/admin/login";
   };
 
   const handleViewClientsClick = () => {
@@ -77,7 +78,7 @@ export default function Sidebar({
         <div className="flex px-2 justify-center">
           <img
             className={`${
-              isCollapsed ? "w-[40px]" : "w-[70px]"
+              isCollapsed ? "w-[40px]" : "w-[120px]"
             } h-auto transition-all duration-300`}
             src={
               localStorage.getItem("logo") ||
@@ -92,7 +93,7 @@ export default function Sidebar({
           onClick={onCollapseToggle}
           className="hidden md:flex absolute top-1/2 -right-4 transform -translate-y-1/2 p-1 rounded-full bg-gray-200 shadow-md z-50 hover:bg-gray-300"
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
 
         <nav className="flex flex-col space-y-4 mt-7">
@@ -107,6 +108,7 @@ export default function Sidebar({
               <button
                 key={to}
                 onClick={handleClick}
+                title={label}
                 className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full ${
                   isActive
                     ? "bg-[#00AEEF] text-white"
@@ -152,9 +154,13 @@ export default function Sidebar({
           >
             <button
               onClick={handleLogout}
-              className="px-4 py-2 flex cursor-pointer text-black rounded w-full items-center justify-between hover:bg-sky-100"
+              title="Logout"
+              className={`w-full px-4 py-2 flex items-center rounded cursor-pointer text-black hover:bg-sky-100 ${
+                isCollapsed ? "justify-center" : "justify-between"
+              }`}
             >
-              Logout <LogOut className="w-4" />
+              {!isCollapsed && <span>Logout</span>}
+              <LogOut className="w-4 shrink-0" />
             </button>
           </div>
         )}

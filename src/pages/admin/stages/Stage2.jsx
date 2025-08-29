@@ -36,7 +36,7 @@ export default function Stage2({
     if (val === "yes" || val === "nr" || val === "n/r" || val === "nr")
       return "Completed"; // Green
     if (val === "no") return "Not Completed"; // Red
-    if (val === "processing" || val === "in progress") return "In progress"; // Yellow
+    if (val === "processing" || val === "in progress") return "In Progress"; // Yellow
     return "Not Completed"; // Fallback to red
   };
 
@@ -98,7 +98,7 @@ export default function Stage2({
     useState("In progress");
   const [statusBuildingPest, setStatusBuildingPest] = useState("In progress");
   const [statusFinanceApproval, setStatusFinanceApproval] =
-    useState("In progress");
+    useState("In progress");  
   const [statusCt, setStatusCt] = useState("In progress");
   const [statusDA, setStatusDA] = useState("In progress");
 
@@ -310,18 +310,28 @@ export default function Stage2({
   ) => (
     <div className="py-2">
       <div className="flex gap-4 justify-between items-center mb-2">
-        <label className="block mb-1 text-base font-bold">{label}</label>
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {label}
+        </label>
         <div
           className={`w-[90px] h-[18px] ${bgcolor(status)} ${
             status === "In progress" ? "text-[#FF9500]" : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
-          <p className="text-[12px] whitespace-nowrap">{status}</p>
+          {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
+          <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+            {status}
+          </p>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
-          <label key={val} className="flex items-center gap-2">
+          // Added text-sm md:text-base for consistency
+          <label
+            key={val}
+            className="flex items-center gap-2 text-sm md:text-base"
+          >
             <input
               type="radio"
               name={name}
@@ -418,7 +428,8 @@ export default function Stage2({
       )}
 
       <div className="mt-5">
-        <label className="font-bold text-base mb-1 block">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="font-bold text-sm md:text-base mb-1 block">
           System Note (VOI / CAF / Deposit)
         </label>
         <input
@@ -428,7 +439,8 @@ export default function Stage2({
         />
       </div>
       <div className="mt-5">
-        <label className="font-bold text-base mb-1 block">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="font-bold text-sm md:text-base mb-1 block">
           Client Comment (VOI / CAF / Deposit)
         </label>
         <textarea
@@ -438,7 +450,8 @@ export default function Stage2({
         />
       </div>
       <div className="mt-5">
-        <label className="font-bold text-base mb-1 block">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="font-bold text-sm md:text-base mb-1 block">
           System Note (B&P / Finance)
         </label>
         <input
@@ -448,7 +461,8 @@ export default function Stage2({
         />
       </div>
       <div className="mt-5">
-        <label className="font-bold text-base mb-1 block">
+        {/* Changed text-base to text-sm md:text-base */}
+        <label className="font-bold text-sm md:text-base mb-1 block">
           Client Comment (B&P / Finance)
         </label>
         <textarea
@@ -461,20 +475,20 @@ export default function Stage2({
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
-          width="w-[100px]"
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
         <div className="flex gap-2">
           <Button
             label="Save"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
           />
           <Button
             label="Next"
-            width="w-[100px]"
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

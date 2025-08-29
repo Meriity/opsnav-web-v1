@@ -11,8 +11,6 @@ import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment } from "react";
 import ClientAPI from "../../api/userAPI";
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import Header from "../../components/layout/Header";
 import { toast } from "react-toastify";
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
@@ -20,48 +18,8 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
-
-// ⬇ Zustand Store Definition (inline)
-const useClientStore = create(
-  persist(
-    (set) => ({
-      clients: [],
-      loading: false,
-      error: null,
-      fetchClients: async () => {
-        set({ loading: true, error: null });
-        const api = new ClientAPI();
-        try {
-          const response = await api.getClients();
-          const formattedClients = response.map((client) => ({
-            id: client._id,
-            matternumber: client.matterNumber || "N/A",
-            dataentryby: client.dataEntryBy || "N/A",
-            client_name: client.clientName || "N/A",
-            property_address: client.propertyAddress || "N/A",
-            state: client.state || "N/A",
-            client_type: client.clientType || "N/A",
-            settlement_date: client.settlementDate
-              ? client.settlementDate.split("T")[0]
-              : "N/A",
-            final_approval: client.matterDate
-              ? client.matterDate.split("T")[0]
-              : "N/A",
-            close_matter: client.closeMatter || "Active",
-            stages: client?.stages || [],
-          }));
-          set({ clients: formattedClients });
-        } catch (err) {
-          console.error("Error fetching clients:", err);
-          set({ error: err.message, clients: [] });
-        } finally {
-          set({ loading: false });
-        }
-      },
-    }),
-    { name: "client-storage" }
-  )
-);
+import { useClientStore } from "../ClientStore/clientstore.js";
+import { useSearchStore } from "../SearchStore/searchStore.js";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -78,22 +36,20 @@ const ViewClients = () => {
   const [settlementDate, setSettlementDate] = useState(["", ""]);
   const [showDateRange, setShowDateRange] = useState(false);
   const { clients: Clients, fetchClients, loading, error } = useClientStore();
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const { searchQuery } = useSearchStore();
+  const [itemsPerPage, setItemsPerPage] = useState(100);
 
   useEffect(() => {
-    if (!localStorage.getItem("client-storage") || Clients.length === 0) {
-      fetchClients();
-    }
-  }, []);
+    fetchClients();
+  }, [fetchClients]);
 
   useEffect(() => {
-    setClientList(Clients || []);
-  }, [Clients]);
+    let filteredData = Clients;
 
-  useEffect(() => {
+    // Apply date range filter first
     const [startDate, endDate] = settlementDate;
     if (startDate && endDate) {
-      const filtered = Clients.filter((client) => {
+      filteredData = filteredData.filter((client) => {
         const clientDate = moment(client.settlement_date);
         return clientDate.isBetween(
           moment(startDate),
@@ -102,22 +58,34 @@ const ViewClients = () => {
           "[]"
         );
       });
-      setClientList(filtered);
-    } else {
-      setClientList(Clients);
     }
-  }, [settlementDate, Clients]);
+
+    // Apply search query filter
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filteredData = filteredData.filter(
+        (client) =>
+          String(client.client_name).toLowerCase().includes(lowercasedQuery) ||
+          String(client.matternumber).toLowerCase().includes(lowercasedQuery) ||
+          String(client.property_address)
+            .toLowerCase()
+            .includes(lowercasedQuery)
+      );
+    }
+
+    setClientList(filteredData);
+  }, [settlementDate, Clients, searchQuery]);
 
   const columns = [
-    { key: "matternumber", title: "Matter Number", width: "10%" },
-    { key: "dataentryby", title: "Data Entry By", width: "14%" },
+    { key: "matternumber", title: "Matter Number", width: "8%" },
+    { key: "dataentryby", title: "Data Entry By", width: "10%" },
     { key: "client_name", title: "Client Name", width: "10%" },
-    { key: "property_address", title: "Property Address", width: "12%" },
-    { key: "state", title: "State", width: "6%" },
-    { key: "client_type", title: "Client Type", width: "8%" },
-    { key: "settlement_date", title: "Settlement Date", width: "10%" },
-    { key: "final_approval", title: "Matter Date", width: "12%" },
-    { key: "close_matter", title: "Close Matter", width: "10%" },
+    { key: "property_address", title: "Property Address", width: "10%" },
+    { key: "state", title: "State", width: "5%" },
+    { key: "client_type", title: "Client Type", width: "7%" },
+    { key: "settlement_date", title: "Settlement Date", width: "8%" },
+    { key: "final_approval", title: "Matter Date", width: "8%" },
+    // { key: "close_matter", title: "Close Matter", width: "7%" },
   ];
 
   const api = new ClientAPI();
@@ -228,9 +196,12 @@ const ViewClients = () => {
       <div className="space-y-4">
         <Header />
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-2">
-          <h3 className="text-xl font-semibold shrink-0">View Clients</h3>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-2">
+          <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
+            View Clients
+          </h3>
+          <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
+            {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
               <label
                 htmlFor="items-per-page"
@@ -253,6 +224,7 @@ const ViewClients = () => {
                 <option value={500}>500</option>
               </select>
             </div>
+
             <div className="hidden lg:flex items-center gap-4">
               <Button
                 label="Create Client"
@@ -272,12 +244,6 @@ const ViewClients = () => {
               />
             </div>
             <div className="flex lg:hidden items-center gap-2">
-              <Button
-                label="Create Client"
-                Icon1={userplus}
-                onClick={() => setcreateuser(true)}
-                width="w-auto"
-              />
               <Menu as="div" className="relative">
                 <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                   <EllipsisVerticalIcon

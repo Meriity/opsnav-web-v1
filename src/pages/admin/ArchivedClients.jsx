@@ -1,139 +1,161 @@
-import { useEffect, useState } from "react";
-import { RefreshCcw } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { create } from "zustand";
-import ClientAPI from "../../api/userAPI";
-import * as XLSX from "xlsx-js-style";
 import Header from "../../components/layout/Header";
-import DatePicker from "react-datepicker";
+import * as XLSX from "xlsx-js-style";
 import moment from "moment";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import { toast } from "react-toastify";
+import { useSearchStore } from "../SearchStore/searchStore.js";
+import Loader from "../../components/ui/Loader";
+import ClientAPI from "../../api/userAPI";
+import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 
-
-// Zustand Store for Archived Clients
-const useArchivedClientStore = create((set) => ({
-  archivedClients: [],
-  loading: false,
-  isFetched: false,
-  setClients: (clients) => set({ archivedClients: clients }),
-  setLoading: (loading) => set({ loading }),
-  setIsFetched: (isFetched) => set({ isFetched }),
-  fetchArchivedClients: async () => {
-    set({ loading: true });
-    const api = new ClientAPI();
-    try {
-      const res = await api.getArchivedClients();
-
-      const mapped = res.clients.map((client, index) => {
-        // Helper function to safely format dates
-        const formatDate = (dateString) => {
-          if (!dateString) return "N/A";
-          try {
-            const date = new Date(dateString);
-        return isNaN(date.getTime()) ? "N/A" : date.toISOString().split("T")[0];
-          } catch {
-            return "N/A";
-          }
-        };
-
-        return {
-          id: index + 1,
-          matternumber: client.matterNumber || "N/A",
-          client_name: client.clientName || "N/A",
-          property_address: client.propertyAddress || "N/A",
-          state: client.state || "N/A",
-          type: client.clientType || "N/A",
-          matter_date: formatDate(client.matterDate),
-          settlement_date: formatDate(client.settlementDate),
-          status: client.closeMatter || "N/A",
-          data_entry_by: client.dataEntryBy || "N/A",
-          referral: client.referral || "N/A",
-          contract_price:
-            client.costData?.[0]?.quoteAmount?.$numberDecimal || "0.00",
-          council: client.council || "N/A",
-      invoiced: client.costData?.[0]?.invoiceAmount?.$numberDecimal || "0.00",
-      total_costs: client.costData?.[0]?.totalCosts?.$numberDecimal || "0.00",
-        };
-      });
-
-      set({ archivedClients: mapped, isFetched: true });
-    } catch (err) {
-      console.error("Failed to fetch archived clients", err);
-      set({ archivedClients: [], isFetched: true });
-    } finally {
-      set({ loading: false });
-    }
-  }
-}));
+function ClientsPerPage({ value, onChange }) {
+  return (
+    <div className="flex items-center space-x-2 text-sm text-gray-700">
+      <span>Show</span>
+      <select
+        id="clients-per-page"
+        value={value}
+        onChange={onChange}
+        className="block px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+      >
+        <option>5</option>
+        <option>10</option>
+        <option>20</option>
+        <option>50</option>
+        <option>100</option>
+        <option>200</option>
+        <option>500</option>
+      </select>
+      <span>entries</span>
+    </div>
+  );
+}
 
 export default function ArchivedClients() {
-  const { archivedClients, loading, isFetched, fetchArchivedClients } = useArchivedClientStore();
-  const [openExcel, setOpenExcel] = useState(false);
+  const navigate = useNavigate();
+  const { archivedClients, loading, isFetched, fetchArchivedClients } =
+    useArchivedClientStore();
+  const { searchQuery } = useSearchStore();
+
+  // Modals
+  const [openExcel, setOpenExcel] = useState(false); // uses DateRangeModal now
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [clientList, setClientList] = useState([])
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Date range state (Date objects from DateRangeModal)
+  const [fromDate, setFromDate] = useState(null); // Date | null
+  const [toDate, setToDate] = useState(null); // Date | null
+
+  const [clientList, setClientList] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const [clientsPerPage, setClientsPerPage] = useState(10);
   const api = new ClientAPI();
 
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
   useEffect(() => {
-    if (!isFetched) fetchArchivedClients();
-  }, [isFetched]);
+    if (!isFetched) {
+      fetchArchivedClients();
+    }
+  }, [isFetched, fetchArchivedClients]);
+
+  // Apply date & search filters to list
+  useEffect(() => {
+    let filteredData = archivedClients;
+
+    if (fromDate && toDate) {
+      filteredData = filteredData.filter((client) => {
+        const clientDate = moment(new Date(client?.settlement_date));
+        return clientDate.isBetween(fromDate, toDate, "day", "[]");
+      });
+    }
+
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filteredData = filteredData.filter(
+        (client) =>
+          String(client.matternumber).toLowerCase().includes(lowercasedQuery) ||
+          String(client.client_name).toLowerCase().includes(lowercasedQuery) ||
+          String(client.property_address)
+            .toLowerCase()
+            .includes(lowercasedQuery)
+      );
+    }
+
+    setClientList(filteredData);
+  }, [archivedClients, fromDate, toDate, searchQuery]);
 
   const columns = [
-    { key: 'matternumber', title: 'Matter Number' },
-    { key: 'client_name', title: 'Client Name' },
-    { key: 'property_address', title: 'Property Address' },
-    { key: 'state', title: 'State' },
-    { key: 'type', title: 'Client Type' },
-    { key: 'matter_date', title: 'Matter Date' },
-    { key: 'settlement_date', title: 'Settlement Date' },
-    { key: 'status', title: 'Status' },
+    { key: "matternumber", title: "Matter Number" },
+    { key: "client_name", title: "Client Name" },
+    { key: "property_address", title: "Property Address" },
+    { key: "state", title: "State" },
+    { key: "type", title: "Client Type" },
+    { key: "matter_date", title: "Matter Date" },
+    { key: "settlement_date", title: "Settlement Date" },
+    { key: "status", title: "Status" },
   ];
 
-  async function handleExcelExport() {
-    setIsLoading(true);
-    if (!fromDate || !toDate) {
+  const handleSort = (columnKey) => {
+    const isAsc = sortedColumn === columnKey && sortDirection === "asc";
+    setSortDirection(isAsc ? "desc" : "asc");
+    setSortedColumn(columnKey);
+  };
+
+  const sortedClientList = useMemo(() => {
+    let sortableItems = [...clientList];
+    if (sortedColumn !== null) {
+      sortableItems.sort((a, b) => {
+        const aVal = a[sortedColumn];
+        const bVal = b[sortedColumn];
+
+        // Sort DD-MM-YYYY correctly
+        if (
+          sortedColumn === "matter_date" ||
+          sortedColumn === "settlement_date"
+        ) {
+          const dateA = moment(aVal, "DD-MM-YYYY");
+          const dateB = moment(bVal, "DD-MM-YYYY");
+          if (dateA.isBefore(dateB)) return sortDirection === "asc" ? -1 : 1;
+          if (dateA.isAfter(dateB)) return sortDirection === "asc" ? 1 : -1;
+          return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [clientList, sortedColumn, sortDirection]);
+
+  // ----- Export helpers -----
+  async function handleExcelExport(withFrom, withTo) {
+    setIsExporting(true);
+    if (!withFrom || !withTo) {
       toast.error("Please select a valid date range");
-      setIsLoading(false);
+      setIsExporting(false);
       return;
     }
     try {
-      const res = await api.getArchivedClientsDate(fromDate, toDate);
+      const from = moment(withFrom).format("YYYY-MM-DD");
+      const to = moment(withTo).format("YYYY-MM-DD");
+      const res = await api.getArchivedClientsDate(from, to);
       const data = res.data;
 
       if (!data || data.length === 0) {
         toast.info("No data available for the selected date range");
+      } else {
+        convertToExcel(data);
       }
-      convertToExcel(data);
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setIsLoading(false);
-      setOpenExcel(false);
-      setFromDate("");
-      setToDate("");
-    }
-  }
-
-  useEffect(() => {
-    if (archivedClients.length > 0) {
-      setClientList(archivedClients)
-    }
-  }, [archivedClients])
-
-  const handleDataFilter = (fromDate, toDate) => {
-    if (fromDate === "" && toDate === "") {
-      setClientList(archivedClients);
-    } else if (fromDate !== "" && toDate !== "") {
-      const filtered = archivedClients.filter(client => {
-        const clientDate = moment(new Date(client?.settlement_date));
-        return clientDate.isBetween(fromDate, toDate, 'day', '[]');
-      });
-      setClientList(filtered);
+      setIsExporting(false);
     }
   }
 
@@ -146,168 +168,197 @@ export default function ArchivedClients() {
 
   const downloadExcel = (data) => {
     const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // column widths
     ws["!cols"] = data[0].map((_, i) => {
-      const maxLength = data.reduce((max, row) => {
-        const len = row[i] ? row[i].toString().length : 0;
-        return Math.max(max, len);
-      }, 10);
+      const maxLength = data.reduce(
+        (max, row) => Math.max(max, row[i] ? String(row[i]).length : 0),
+        10
+      );
       return { wch: maxLength + 4 };
     });
 
-    ws["!rows"] = data.map((row, i) => {
-      if (i === 0) return { hpt: 40 };
-      const maxHeight = row.reduce((max, cell) => {
-        const lines = cell?.toString().split("\n").length || 1;
-        return Math.max(max, lines * 15);
-      }, 15);
-      return { hpt: maxHeight };
-    });
+    // row heights
+    ws["!rows"] = data.map((row, i) => ({ hpt: i === 0 ? 40 : 20 }));
 
-    const headerColors = [
-      "CCD9CF",
-      "ABD0ED",
-      "F0F005",
-      "A3D7F0",
-      "F0C6A3",
-      "9EF0BC",
-      "95E5F5",
-      "ECBBF2",
-      "B3F2B5",
-    ];
-
+    // header styles
     const range = XLSX.utils.decode_range(ws["!ref"]);
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
-      if (!ws[cellRef]) continue;
-
-      ws[cellRef].s = {
-        font: { bold: true, color: { rgb: "000000" } },
-        alignment: { horizontal: "center", vertical: "center", wrapText: true },
-        fill: {
-          type: "pattern",
-          patternType: "solid",
-          fgColor: { rgb: headerColors[C % headerColors.length] },
-        },
-        border: {
-          top: { style: "thin", color: { rgb: "000000" } },
-          bottom: { style: "thin", color: { rgb: "000000" } },
-          left: { style: "thin", color: { rgb: "000000" } },
-          right: { style: "thin", color: { rgb: "000000" } },
-        },
-      };
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, color: { rgb: "000000" } },
+          alignment: {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: true,
+          },
+          fill: { patternType: "solid", fgColor: { rgb: "CCD9CF" } },
+        };
+      }
     }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Archived Clients");
-    XLSX.writeFile(wb, "archived_clients.xlsx");
+    XLSX.writeFile(wb, "ArchivedClients.xlsx");
+  };
 
-    setOpenExcel(false);
+  // Reuse for list filtering (called by Filter modal)
+  const handleDataFilter = (from, to) => {
+    setFromDate(from || null);
+    setToDate(to || null);
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100">
+    <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
       <main className="w-full max-w-8xl mx-auto">
-        {/* Top Header */}
         <Header />
-        {/* Archive Header */}
-        <div className="flex justify-between items-center w-full mb-[15] p-2">
+
+        {/* Toolbar */}
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Archived Clients</h2>
-          <div className="flex gap-5">
+
+          <div className="hidden lg:flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Button
+                label={isExporting ? "Exporting..." : "Export"}
+                onClick={() => setOpenExcel(true)}
+                disabled={isExporting}
+                className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+              />
+              <Button
+                label="Filter"
+                onClick={() => setShowSettlementDateModal(true)}
+                className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+              />
+              <Button
+                label="Select Date Range"
+                onClick={() => setShowSettlementDateModal(true)}
+                className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+              />
+            </div>
+          </div>
+
+          <div className="flex lg:hidden items-center space-x-2">
             <Button
-              label="Export to Excel"
+              label={isExporting ? "Exporting..." : "Export"}
               onClick={() => setOpenExcel(true)}
+              disabled={isExporting}
+              className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
             />
             <Button
-              label="Filter Data"
+              label="Filter"
               onClick={() => setShowSettlementDateModal(true)}
+              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+            />
+            <Button
+              label="Select Date Range"
+              onClick={() => setShowSettlementDateModal(true)}
+              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
             />
           </div>
         </div>
 
-        {/* Table */}
-        <div className="w-full">
-          {loading ? (
-            <div className="flex justify-center items-center h-48 mt-40">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
-              <div className="ml-5 text-[#00AEEF]">Loading Please wait!</div>
+        {/* Table / Cards */}
+        {loading ? (
+          <Loader />
+        ) : (
+          <>
+            <div className="hidden lg:block">
+              <div className="flex justify-start mb-4">
+                <ClientsPerPage
+                  value={clientsPerPage}
+                  onChange={(e) => setClientsPerPage(Number(e.target.value))}
+                />
+              </div>
+              <Table
+                data={sortedClientList}
+                columns={columns}
+                itemsPerPage={clientsPerPage}
+                showActions={true}
+                cellWrappingClass="whitespace-normal"
+                headerBgColor="bg-[#A6E7FF]"
+                OnEye={(client) =>
+                  navigate(`/admin/client/view/${client.matternumber}`)
+                }
+                sortedColumn={sortedColumn}
+                sortDirection={sortDirection}
+                handleSort={handleSort}
+              />
             </div>
-          ) : (
-            <Table
-              data={clientList}
-              columns={columns}
-              itemsPerPage={5}
-              pagination="absolute bottom-5 left-1/2 transform -translate-x-1/2 mt-4 ml-28"
-              OnEye={true}
-              showReset={false}
-            />
-          )}
-        </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:hidden">
+              <div className="flex justify-start">
+                <ClientsPerPage
+                  value={clientsPerPage}
+                  onChange={(e) => setClientsPerPage(Number(e.target.value))}
+                />
+              </div>
+              {sortedClientList.slice(0, clientsPerPage).map((client) => (
+                <div key={client.id} className="bg-white p-4 rounded-lg shadow">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-bold truncate">
+                      {client.client_name}
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      {client.matternumber}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    {client.property_address}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="font-semibold">State: </span>
+                      {client.state}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Type: </span>
+                      {client.type}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Matter Date: </span>
+                      {client.matter_date}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Settlement Date: </span>
+                      {client.settlement_date}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Status: </span>
+                      {client.status}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </main>
 
-      {/* Excel Export Dialog */}
+      {/* FILTER modal (same as before) */}
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
-        handelSubmitFun={handleDataFilter}
-        subTitle="Filter on settlement date"
+        subTitle="Select the date range to filter clients."
+        handelSubmitFun={(from, to) => {
+          handleDataFilter(from, to);
+          setShowSettlementDateModal(false);
+        }}
       />
 
-      <Dialog
-        open={openExcel}
-        onClose={() => setOpenExcel(false)}
-        className="relative z-10"
-      >
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-7 text-center">
-            <DialogPanel className="relative transform overflow-hidden rounded-lg bg-[#F3F4FB] text-left shadow-xl sm:my-8 sm:w-full sm:max-w-lg p-6">
-              <button
-                onClick={() => setOpenExcel(false)}
-                className="absolute top-4 right-5 text-red-500 text-2xl font-bold hover:scale-110"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-2">Export to Excel</h2>
-              <p className="text-sm text-gray-600 mb-5">
-                Filter by settlement date:
-              </p>
-
-              <div className="space-y-4">
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full px-4 py-2 border rounded"
-                />
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full px-4 py-2 border rounded"
-                />
-              </div>
-
-              <div className="mt-6 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFromDate(""), setToDate(""), setOpenExcel(false);
-                  }}
-                  className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                >
-                  <RefreshCcw className="inline-block mr-1" size={16} />
-                </button>
-                <Button
-                  label={isLoading ? "Processing..." : "Download CSV"}
-                  onClick={handleExcelExport}
-                  disabled={isLoading}
-                />
-              </div>
-            </DialogPanel>
-          </div>
-        </div>
-      </Dialog>
+      {/* EXPORT modal — reuses the exact same DateRangeModal */}
+      <DateRangeModal
+        isOpen={openExcel}
+        setIsOpen={setOpenExcel}
+        subTitle="Select the date range for the Excel export."
+        handelSubmitFun={async (from, to) => {
+          setFromDate(from);
+          setToDate(to);
+          await handleExcelExport(from, to); // do the export after picking dates
+          setOpenExcel(false);
+        }}
+      />
     </div>
   );
 }
-
