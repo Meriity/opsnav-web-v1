@@ -18,6 +18,7 @@ import ClientAPI from "../../api/userAPI";
 import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Calendar Imports ---
 import moment from "moment";
@@ -37,7 +38,7 @@ const useDashboardStore = create((set) => ({
   setDashboardData: (data) =>
     set(() => {
       const arr = Array.isArray(data.last10MonthsStats)
-        ? data.last10MonthsStats.slice(-10) // cap to last 10
+        ? data.last10MonthsStats.slice(-10)
         : [];
       const lastRec =
         arr[arr.length - 1]?.closedMatters ??
@@ -55,7 +56,83 @@ const useDashboardStore = create((set) => ({
 
 const CustomEvent = ({ event }) => <div title={event.title}>{event.title}</div>;
 
-// --- Dashboard Component ---
+// --- Helper Components & Hooks ---
+
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return windowSize;
+};
+
+const ResponsiveCalendarToolbar = ({
+  label,
+  onNavigate,
+  onView,
+  views,
+  view: currentView,
+}) => {
+  return (
+    <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3">
+      <div className="flex items-center justify-center w-full sm:w-auto mb-2 sm:mb-0">
+        <button
+          type="button"
+          onClick={() => onNavigate("PREV")}
+          aria-label="Previous"
+          className="p-2 rounded-full hover:bg-gray-200 transition"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate("TODAY")}
+          className="mx-2 px-4 py-1.5 text-sm font-semibold border rounded-md hover:bg-gray-200 transition"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate("NEXT")}
+          aria-label="Next"
+          className="p-2 rounded-full hover:bg-gray-200 transition"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="text-lg font-bold text-gray-800 order-first sm:order-none mb-2 sm:mb-0">
+        {label}
+      </div>
+      <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-white">
+        {views.map((viewName) => (
+          <button
+            key={viewName}
+            onClick={() => onView(viewName)}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${
+              currentView === viewName
+                ? "bg-blue-500 text-white shadow"
+                : "text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {viewName}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function Dashboard() {
   const { totalusers, totalactive, lastrecord, loading, setDashboardData } =
     useDashboardStore();
@@ -67,14 +144,14 @@ function Dashboard() {
 
   const [createuser, setcreateuser] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
-
-  // ✅ chartView must be a string, not an object
-  const [chartView, setChartView] = useState("last10Months"); // "last10Months" | "allTime"
+  const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
     tenMonths: [],
     allTime: [],
   });
   const [currentChartData, setCurrentChartData] = useState([]);
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
@@ -83,7 +160,6 @@ function Dashboard() {
       try {
         const data = await clientApi.getDashboardData();
         setDashboardData(data);
-
         setAllChartData({
           tenMonths: Array.isArray(data.last10MonthsStats)
             ? data.last10MonthsStats
@@ -99,13 +175,7 @@ function Dashboard() {
   }, [clientApi, setDashboardData]);
 
   useEffect(() => {
-    // Debug logs (optional)
-    // console.log("chartView:", chartView);
-    // console.log("10M:", allChartData.tenMonths);
-    // console.log("ALL:", allChartData.allTime);
-
     if (chartView === "last10Months") {
-      // show ONLY the last 10 points
       const ten = (allChartData.tenMonths || []).slice(-10);
       const formattedData = ten.map((item) => ({
         ...item,
@@ -167,6 +237,19 @@ function Dashboard() {
 
   const handleNavigate = (newDate) => setCalendarDate(newDate);
 
+  const { views, defaultView } = useMemo(() => {
+    if (isMobile) {
+      return {
+        views: ["agenda", "day"],
+        defaultView: "agenda",
+      };
+    }
+    return {
+      views: ["month", "week", "day", "agenda"],
+      defaultView: "month",
+    };
+  }, [isMobile]);
+
   const StatCard = ({ icon, label, value }) => (
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm w-full">
       <img src={icon} alt={label} className="h-10 w-10 mr-4" />
@@ -187,9 +270,9 @@ function Dashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
       <Header />
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
@@ -254,7 +337,6 @@ function Dashboard() {
                 </button>
               </div>
             </div>
-
             {currentChartData && currentChartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={300}>
@@ -301,7 +383,12 @@ function Dashboard() {
                 popup
                 onNavigate={handleNavigate}
                 dayPropGetter={dayPropGetter}
-                components={{ event: CustomEvent }}
+                views={views}
+                defaultView={defaultView}
+                components={{
+                  event: CustomEvent,
+                  toolbar: ResponsiveCalendarToolbar,
+                }}
               />
             </div>
           </div>
