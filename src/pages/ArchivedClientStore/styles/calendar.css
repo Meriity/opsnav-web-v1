@@ -1,3 +1,8 @@
+html,
+body {
+  overflow: hidden !important;
+}
+
 .rbc-event {
   font-size: 0.75rem;
   white-space: normal;
@@ -5,6 +10,7 @@
   padding: 2px 5px;
   background-color: #00aeef;
   border: 1px solid #008fbf;
+  border-radius: 4px;
 }
 
 .off-month-day .rbc-button-link {
@@ -13,8 +19,50 @@
 
 .off-month-day {
   pointer-events: none;
+  background-color: #f8f9fa;
 }
 
 .off-month-day .rbc-event {
   visibility: hidden !important;
+}
+
+/* --- Responsive Styles for Mobile --- */
+@media (max-width: 767px) {
+  .rbc-event,
+  .rbc-agenda-event-cell {
+    font-size: 11px;
+  }
+
+  .rbc-header {
+    font-size: 12px;
+    padding: 8px 2px;
+    text-align: center;
+  }
+
+  .rbc-date-cell {
+    font-size: 13px;
+    padding: 2px;
+  }
+  
+  .rbc-agenda-view table thead tr th {
+    font-size: 12px;
+    padding: 8px 4px;
+    text-align: left;
+  }
+
+  .rbc-agenda-date-cell {
+    font-size: 11px !important;
+    white-space: nowrap;
+    width: 70px;
+  }
+
+  .rbc-agenda-time-cell {
+    font-size: 11px !important;
+    padding: 0 8px !important;
+    width: 60px;
+  }
+
+  .rbc-agenda-event-cell {
+    width: 100%;
+  }
 }
