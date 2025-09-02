@@ -83,9 +83,17 @@ const ViewClients = () => {
     { key: "property_address", title: "Property Address", width: "10%" },
     { key: "state", title: "State", width: "5%" },
     { key: "client_type", title: "Client Type", width: "7%" },
-    { key: "settlement_date", title: "Settlement Date", width: "8%" },
-    { key: "final_approval", title: "Matter Date", width: "8%" },
-    // { key: "close_matter", title: "Close Matter", width: "7%" },
+    { key: "settlement_date", title: "Settlement Date", width: "10%" },
+    {
+      key: "finance_approval_date",
+      title: "Finance Approval Date",
+      width: "10%",
+    },
+    {
+      key: "building_and_pest_date",
+      title: "Building & Pest Date",
+      width: "10%",
+    },
   ];
 
   const api = new ClientAPI();

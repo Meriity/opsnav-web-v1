@@ -26,6 +26,7 @@ export const useClientStore = create(
         const api = new ClientAPI();
         try {
           const response = await api.getClients();
+          console.log("Raw API response:", response);
           const formattedClients = response.map((client) => ({
             id: client._id,
             matternumber: client.matterNumber || "N/A",
@@ -37,9 +38,13 @@ export const useClientStore = create(
             settlement_date: client.settlementDate
               ? client.settlementDate.split("T")[0]
               : "N/A",
-            final_approval: client.matterDate
-              ? client.matterDate.split("T")[0]
-              : "N/A",
+            finance_approval_date: client.financeApprovalDate
+              ? client.financeApprovalDate.split("T")[0]
+              : null,
+
+            building_and_pest_date: client.buildingAndPestDate
+              ? client.buildingAndPestDate.split("T")[0]
+              : null,
             close_matter: client.closeMatter || "Active",
             stages: client?.stages || [],
           }));

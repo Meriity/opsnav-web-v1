@@ -15,6 +15,25 @@ class ClientAPI {
     };
   }
 
+  // --- NEW FUNCTION TO GET CALENDAR DATES ---
+  async getCalendarDates() {
+    try {
+      // The endpoint you provided is used here
+      const response = await fetch(`${this.baseUrl}/user/clients/dates`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting calendar dates:", error);
+      throw error;
+    }
+  }
+
   // Get client details by matter number
   async getClientDetails(matterNumber) {
     try {
@@ -56,7 +75,7 @@ class ClientAPI {
       throw error;
     }
   }
-
+  
   // Insert/Update Stage One
   async upsertStageOne(matterNumber, colorStatus, additionalData = {}) {
     try {

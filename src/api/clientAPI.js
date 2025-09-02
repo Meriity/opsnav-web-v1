@@ -49,7 +49,8 @@ class ClientAPI {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+      const res = await response.json();
+      return res.client || res;
     } catch (error) {
       console.error("Error updating client data:", error);
       throw error;
@@ -232,24 +233,23 @@ class ClientAPI {
     try {
       // console.log(additionalData);
       // Function to update closeMatter status
-function updateCloseMatter(client) {
-  if (!client.closeMatter || client.closeMatter.trim() === '') {
-    client.closeMatter = 'open';
-  } else if (client.closeMatter === 'Completed') {
-    client.closeMatter = 'closed';
-  } else if (client.closeMatter === 'Cancelled') {
-    client.closeMatter = 'cancelled';
-  }
-  return client;
-}
+      function updateCloseMatter(client) {
+        if (!client.closeMatter || client.closeMatter.trim() === "") {
+          client.closeMatter = "open";
+        } else if (client.closeMatter === "Completed") {
+          client.closeMatter = "closed";
+        } else if (client.closeMatter === "Cancelled") {
+          client.closeMatter = "cancelled";
+        }
+        return client;
+      }
 
-const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
+      const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify(updateCloseMatter(additionalData)),
       });
       // console.log();
-
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
