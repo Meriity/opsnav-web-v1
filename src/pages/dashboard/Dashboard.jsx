@@ -143,6 +143,7 @@ function Dashboard() {
   } = useArchivedClientStore();
 
   const [createuser, setcreateuser] = useState(false);
+  const [createOrder, setcreateOrder] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
@@ -288,6 +289,15 @@ function Dashboard() {
               <img src={Plus} alt="" className="w-5" />
               <span>Add New Client</span>
             </button>
+            {localStorage.getItem("company") === "idg" &&
+             <button
+              className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+              onClick={() => setcreateOrder(true)}
+            >
+              <img src={Plus} alt="" className="w-5" />
+              <span>Add New Order</span>
+            </button>
+            }
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -395,8 +405,15 @@ function Dashboard() {
         </div>
       </main>
       <CreateClientModal
+        createType="client"
+        companyName={localStorage.getItem("company")}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+      />
+      <CreateClientModal
+        createType="order"
+        isOpen={createOrder}
+        setIsOpen={() => setcreateOrder(false)}
       />
     </div>
   );

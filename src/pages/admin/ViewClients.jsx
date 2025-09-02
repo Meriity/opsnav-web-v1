@@ -23,6 +23,7 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
+  const [createOrder, setcreateOrder] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareDetails, setShareDetails] = useState({
@@ -119,8 +120,14 @@ const ViewClients = () => {
         activeMatter={otActiveMatterNumber}
       />
       <CreateClientModal
+        createType="client"
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+      />
+      <CreateClientModal
+        createType="order"
+        isOpen={createOrder}
+        setIsOpen={() => setcreateOrder(false)}
       />
       <DateRangeModal
         isOpen={showDateRange}
@@ -226,7 +233,8 @@ const ViewClients = () => {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              <Button
+              {localStorage.getItem("company")==="vkl"&&<>
+                <Button
                 label="Create Client"
                 Icon1={userplus}
                 onClick={() => setcreateuser(true)}
@@ -242,6 +250,25 @@ const ViewClients = () => {
                 onClick={() => setShowDateRange(true)}
                 width="w-[150px]"
               />
+              </>}
+               {localStorage.getItem("company")==="idg"&&<>
+                <Button
+                label="Create Client"
+                Icon1={userplus}
+                onClick={() => setcreateuser(true)}
+                width="w-[150px]"
+              />
+              <Button
+                label="Create Order"
+                onClick={() => setcreateOrder(true)}
+                width="w-[150px]"
+              />
+              <Button
+                label="Select Date Range"
+                onClick={() => setShowDateRange(true)}
+                width="w-[150px]"
+              />
+              </>}
             </div>
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
