@@ -417,7 +417,7 @@ export default function CostComponent({
         <Button
           label="Back"
           width="w-full md:w-[100px]"
-          onClick={() => changeStage(stage - 1)}
+          onClick={() => changeStage(stage - 1)}    
         />
         <Button
           label={isSaving ? "Saving..." : "Save and Exit"}

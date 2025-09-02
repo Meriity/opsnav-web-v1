@@ -147,7 +147,6 @@ export default function StagesLayout() {
   function Showstage(stage) {
     function normalizeCloseMatterForClient(client) {
       if (!client || typeof client !== "object") return client;
-      console.log(client);
 
       const value = client.closeMatter;
       let newValue;
@@ -250,8 +249,18 @@ export default function StagesLayout() {
       try {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
-        console.log("Full API response:", response);
-        setClientData(response);
+
+        // merge notes safely
+        setClientData((prev) => ({
+          ...prev,
+          ...response,
+          notes:
+            response.notes !== undefined ? response.notes : prev?.notes || "",
+          settlementDate:
+            response.settlementDate !== undefined
+              ? response.settlementDate
+              : prev?.settlementDate || null,
+        }));
 
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
@@ -342,8 +351,8 @@ export default function StagesLayout() {
       const updatedData = await api.updateClientData(matterNumber, payload);
       setClientData((prev) => ({
         ...prev,
-        settlementDate: updatedData.settlementDate,
-        notes: updatedData.notes,
+        settlementDate: updatedData.settlementDate ?? prev.settlementDate,
+        notes: updatedData.notes ?? prev.notes,
       }));
 
       alert("Updated successfully!");
