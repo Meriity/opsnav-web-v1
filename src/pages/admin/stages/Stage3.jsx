@@ -15,7 +15,7 @@ export default function Stage3({
   const [isSaving, setIsSaving] = useState(false);
 
   const fields = [
-    { key: "titleSearch", label: "Title Search" },
+    { key: "titleSearch", label: "Title Search", hasDate: true }, // ✅ with date
     { key: "planImage", label: "Plan Image" },
     { key: "landTax", label: "Land Tax" },
     { key: "instrument", label: "Instrument" },
@@ -26,10 +26,22 @@ export default function Stage3({
     { key: "inviteBank", label: "Invite Bank" },
   ];
 
+  // const getStatus = (value) => {
+  //   if (!value) return "Not Completed";
+  //   const val = value.toLowerCase().trim();
+  //   if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
+  //   if (val === "no") return "Not Completed";
+  //   if (["processing", "in progress"].includes(val)) return "In Progress";
+  //   return "Not Completed";
+  // };
+
   const getStatus = (value) => {
-    if (!value) return "Not Completed";
+    if (!value || typeof value !== "string") return "Not Completed";
     const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    if (completedValues.includes(val)) {
+      return "Completed";
+    }
     if (val === "no") return "Not Completed";
     if (["processing", "in progress"].includes(val)) return "In Progress";
     return "Not Completed";
@@ -62,16 +74,23 @@ export default function Stage3({
     return `Pending: ${incompleteTasks.join(", ")}`;
   };
 
+  // ✅ Load stage data
   useEffect(() => {
     if (!data) return;
 
     const newFormState = {};
     const newStatusState = {};
 
-    fields.forEach(({ key }) => {
+    fields.forEach(({ key, hasDate }) => {
       const value = data[key] || "";
       newFormState[key] = value;
       newStatusState[key] = getStatus(value);
+
+      if (hasDate) {
+        newFormState[`${key}Date`] = data[`${key}Date`]
+          ? data[`${key}Date`].split("T")[0] // format for <input type="date" />
+          : "";
+      }
     });
 
     const noteParts = data.noteForClient?.split(" - ") || [];
@@ -97,19 +116,25 @@ export default function Stage3({
     };
     const original = originalData.current;
 
-    // Compare all fields including the generated system note
     const formChanged = fields.some(
       ({ key }) =>
         String(formState[key] || "").trim() !==
         String(original[key] || "").trim()
     );
+    const dateChanged = fields.some(
+      ({ key, hasDate }) =>
+        hasDate &&
+        String(formState[`${key}Date`] || "").trim() !==
+          String(original[`${key}Date`] || "").trim()
+    );
     const commentChanged =
       String(clientComment).trim() !== String(original.clientComment).trim();
     const noteChanged = currentSystemNote !== original.systemNote;
 
-    return formChanged || commentChanged || noteChanged;
+    return formChanged || dateChanged || commentChanged || noteChanged;
   }
 
+  // ✅ Save handler
   async function handleSave() {
     if (!isChanged()) return;
 
@@ -124,11 +149,11 @@ export default function Stage3({
         matterNumber,
         ...formState,
         noteForClient: fullNote,
+        titleSearchDate: formState.titleSearchDate || null, // ✅ send date
       };
 
       await api.upsertStageThree(payload);
 
-      // Update original data with current state after successful save
       originalData.current = {
         ...formState,
         clientComment,
@@ -143,10 +168,10 @@ export default function Stage3({
     }
   }
 
-  const renderRadioGroup = ({ key, label }) => (
+  // ✅ Render radios + optional date
+  const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
       <div className="flex gap-4 items-center justify-between mb-3">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           {label}
         </label>
@@ -155,7 +180,6 @@ export default function Stage3({
             statusState[key] === "In progress" ? "text-[#FF9500]" : "text-white"
           } flex items-center justify-center rounded-4xl`}
         >
-          {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
           <p className="text-[10px] md:text-[12px] whitespace-nowrap">
             {statusState[key]}
           </p>
@@ -163,7 +187,6 @@ export default function Stage3({
       </div>
       <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
-          // Added text-sm md:text-base for consistency
           <label
             key={val}
             className="flex items-center gap-2 text-sm md:text-base"
@@ -176,11 +199,32 @@ export default function Stage3({
               onChange={() => {
                 setFormState((prev) => ({ ...prev, [key]: val }));
                 setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
+                if (hasDate && val.toLowerCase() === "yes") {
+                  setFormState((prev) => ({
+                    ...prev,
+                    [`${key}Date`]:
+                      prev[`${key}Date`] ||
+                      new Date().toISOString().split("T")[0],
+                  }));
+                }
               }}
             />
             {val}
           </label>
         ))}
+        {hasDate && (
+          <input
+            type="date"
+            value={formState[`${key}Date`] || ""}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                [`${key}Date`]: e.target.value,
+              }))
+            }
+            className="border p-1 rounded text-sm"
+          />
+        )}
       </div>
     </div>
   );
@@ -190,7 +234,6 @@ export default function Stage3({
       {fields.map(renderRadioGroup)}
 
       <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
@@ -203,7 +246,6 @@ export default function Stage3({
       </div>
 
       <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           Comment for Client
         </label>

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/userAPI";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import StageAPI from "../../../api/clientAPI";
-import CostInputRow from "../../../components/ui/CostInputRow"; 
+import CostInputRow from "../../../components/ui/CostInputRow";
+
 export default function CostComponent({
   changeStage,
   reloadTrigger,
@@ -13,7 +14,6 @@ export default function CostComponent({
   const api = new ClientAPI();
   const StagesAPI = new StageAPI();
   const { matterNumber } = useParams();
-  const navigate = useNavigate();
 
   const [formValues, setFormValues] = useState({
     "VOI/CAF": "",
@@ -53,7 +53,6 @@ export default function CostComponent({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
- 
   const calculateTotals = (values = formValues) => {
     const otherTotal = (
       (parseFloat(values["Other fee (1)"]) || 0) +
@@ -210,8 +209,7 @@ export default function CostComponent({
     try {
       if (!isChanged()) {
         console.log("No changes to submit");
-        navigate(-1);
-        return;
+        return; // ✅ removed navigate(-1)
       }
 
       const formatNumber = (value) => {
@@ -259,19 +257,10 @@ export default function CostComponent({
       const response = await api.upsertCost(payload);
       console.log("Save successful:", response);
 
-      // const stageResponse =  await StagesAPI.upsertStageOne(matterNumber, {
-      //   quoteType: formValues["Quote Type"],
-      //   quoteAmount: formValues["Quote Amount"],
-      // });
-
-      // Update stage1 with quote information
-
       setReloadTrigger((prev) => !prev);
-      navigate(-1);
+      // ❌ removed navigate(-1) → stay on page
     } catch (err) {
       console.error("Full error:", err);
-    
-      
     } finally {
       setIsSaving(false);
     }
@@ -417,10 +406,10 @@ export default function CostComponent({
         <Button
           label="Back"
           width="w-full md:w-[100px]"
-          onClick={() => changeStage(stage - 1)}    
+          onClick={() => changeStage(stage - 1)}
         />
         <Button
-          label={isSaving ? "Saving..." : "Save and Exit"}
+          label={isSaving ? "Saving..." : "Save"}
           width="w-full md:w-[120px]"
           onClick={handleSubmit}
           disabled={isSaving}
