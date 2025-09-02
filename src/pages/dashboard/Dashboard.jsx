@@ -54,7 +54,21 @@ const useDashboardStore = create((set) => ({
     }),
 }));
 
-const CustomEvent = ({ event }) => <div title={event.title}>{event.title}</div>;
+const CustomEvent = ({ event }) => {
+  return (
+    <div
+      style={{
+        wordWrap: "break-word",
+        whiteSpace: "normal",
+        lineHeight: "1.2",
+      }}
+    >
+      <div className="font-semibold text-[11.5px] text-white leading-tight">
+        {event.title} - [{event.clientType}]
+      </div>
+    </div>
+  );
+};
 
 // --- Helper Components & Hooks ---
 
@@ -151,11 +165,13 @@ function Dashboard() {
     allTime: [],
   });
   const [currentChartData, setCurrentChartData] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]); // State for calendar events
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
+  // Effect for general dashboard data (charts, stats)
   useEffect(() => {
     const fetchAndSetData = async () => {
       try {
@@ -174,6 +190,44 @@ function Dashboard() {
     };
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
+
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      try {
+        const data = await clientApi.getCalendarDates();
+        const events = [];
+        data.forEach((item) => {
+          if (item.buildingAndPestDate) {
+            events.push({
+              title: `[${item.matterNumber}] - B&P`,
+              start: moment(item.buildingAndPestDate).toDate(),
+              end: moment(item.buildingAndPestDate).toDate(),
+              allDay: true,
+              type: "buildingAndPest",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+            });
+          }
+          if (item.financeApprovalDate) {
+            events.push({
+              title: `[${item.matterNumber}] - Finance`,
+              start: moment(item.financeApprovalDate).toDate(),
+              end: moment(item.financeApprovalDate).toDate(),
+              allDay: true,
+              type: "financeApproval",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+            });
+          }
+        });
+        setCalendarEvents(events);
+      } catch (error) {
+        toast.error("Could not load calendar dates.");
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+    fetchCalendarData();
+  }, [clientApi]);
 
   useEffect(() => {
     if (chartView === "last10Months") {
@@ -209,22 +263,26 @@ function Dashboard() {
     );
   }, [currentChartData]);
 
-  const calendarEvents = useMemo(() => {
-    if (!archivedClients || archivedClients.length === 0) return [];
-    return archivedClients
-      .filter(
-        (client) =>
-          client.isClosed &&
-          client.settlement_date_iso &&
-          client.settlement_date_iso !== "N/A"
-      )
-      .map((client) => ({
-        title: `[${client.matternumber}] - ${client.client_name}`,
-        start: moment(client.settlement_date_iso, "YYYY-MM-DD").toDate(),
-        end: moment(client.settlement_date_iso, "YYYY-MM-DD").toDate(),
-        allDay: true,
-      }));
-  }, [archivedClients]);
+  const eventStyleGetter = useCallback((event, start, end, isSelected) => {
+    let backgroundColor = "#3174ad"; // Default color
+    if (event.type === "buildingAndPest") {
+      backgroundColor = "#B24592"; //violet
+    } else if (event.type === "financeApproval") {
+      backgroundColor = "#f83600"; //orange
+    }
+
+    const style = {
+      backgroundColor,
+      borderRadius: "0px",
+      opacity: 0.8,
+      color: "white",
+      border: "0px",
+      display: "block",
+    };
+    return {
+      style: style,
+    };
+  }, []);
 
   const dayPropGetter = useCallback(
     (date) => ({
@@ -381,7 +439,7 @@ function Dashboard() {
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
-              Settlement Calendar
+              Important Dates
             </h2>
             <div className="h-[65vh] min-h-[500px]">
               <Calendar
@@ -395,6 +453,7 @@ function Dashboard() {
                 dayPropGetter={dayPropGetter}
                 views={views}
                 defaultView={defaultView}
+                eventPropGetter={eventStyleGetter}
                 components={{
                   event: CustomEvent,
                   toolbar: ResponsiveCalendarToolbar,
