@@ -486,9 +486,9 @@ export default function ClientDashboard() {
       >
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center p-4 flex-shrink-0 border-b border-slate-200 relative">
+          <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative">
             <img
-              className="max-h-[60px]"
+              className="h-auto w-[120px]"
               alt="Logo"
               src={logo}
             />

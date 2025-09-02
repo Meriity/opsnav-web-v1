@@ -38,7 +38,11 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
+    // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
+     <div
+      className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center"
+      style={{ backgroundImage: "url('/home_bg.jpg')" }}
+    >
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         {/* Left Section - Welcome Message */}
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
@@ -50,7 +54,7 @@ function LoginForm() {
 
         {/* Right Section - Login Box */}
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
-          <h2 className="text-xl font-semibold text-center mb-6">CLIENT LOG-IN</h2>
+          <h2 className="text-xl font-semibold text-center mb-6">CLIENT PORTAL LOGIN</h2>
 
 
 

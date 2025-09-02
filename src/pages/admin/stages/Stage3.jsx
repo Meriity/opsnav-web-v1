@@ -13,9 +13,10 @@ export default function Stage3({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
-
-  const fields = [
-    { key: "titleSearch", label: "Title Search", hasDate: true }, // ✅ with date
+  let fields=[];
+  if(localStorage.getItem('company')==="vkl") {
+  fields = [
+    { key: "titleSearch", label: "Title Search" },
     { key: "planImage", label: "Plan Image" },
     { key: "landTax", label: "Land Tax" },
     { key: "instrument", label: "Instrument" },
@@ -25,6 +26,19 @@ export default function Stage3({
     { key: "pexa", label: "PEXA" },
     { key: "inviteBank", label: "Invite Bank" },
   ];
+}
+else if (localStorage.getItem('company')==="idg"){
+   fields = [
+    { key: "assign_agent", label: "Assign Agent / Team Member" },
+    { key: "materils_needed", label: "Check if Materials Needed are in stock" },
+    { key: "additional materials", label: "Procure additional materials if required" },
+    { key: "job_priority", label: "Confirm Job Priority" },
+    { key: "schedule_activity", label: "Schedule Job Activity" },
+    { key: "allocate_vehicle", label: "Allocate Vehicle / Installer" },
+    { key: "finalize", label: "Finalize Draft Cost Sheet (Fixed + Variable)" },
+    { key: "Approve Plan", label: "Approve plan and move to preparation" },
+  ];
+}
 
   // const getStatus = (value) => {
   //   if (!value) return "Not Completed";

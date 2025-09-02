@@ -10,6 +10,7 @@ import {
   CircleUserRound,
   ChevronLeft,
   ChevronRight,
+  ListOrdered 
 } from "lucide-react";
 
 export default function Sidebar({
@@ -21,7 +22,8 @@ export default function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
-
+  const company=localStorage.getItem("company");
+  
   const menuItems = [
     {
       label: "Dashboard",
@@ -29,13 +31,22 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-      label: "View Clients",
+      label: company === "vkl"
+  ? "View Clients"
+  : company === "idg"
+  ? "View Orders"
+  : "View"
+,
       icon: ViewClientsIcon,
       to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
     },
     {
-      label: "Archived Clients",
-      icon: ArchivedChatsIcon,
+      label: company === "vkl"
+  ? "Archived Clients"
+  : company === "idg"
+  ? "Completed Orders"
+  : "Completed/Archived",
+      icon: ArchivedChatsIcon, 
       to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
     },
   ];

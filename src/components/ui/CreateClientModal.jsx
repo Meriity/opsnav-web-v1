@@ -4,8 +4,9 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-export default function CreateClientModal({ isOpen, setIsOpen }) {
+export default function CreateClientModal({ isOpen, setIsOpen, company,createType }) {
   const [isLoading, setIsLoading] = useState(false);
+  
   const [matterNumberError, setMatterNumberError] = useState("");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -113,7 +114,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
           </button>
 
           {/* Title */}
-          <h2 className="text-2xl font-bold mb-6 text-center">Create Client</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">{createType==="order" ? "Create Order" : createType==="client" ? "Create Client" : "Create"}</h2>
 
           <form
             className="space-y-5"
@@ -124,7 +125,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
           >
             {/* Matter Number & Client Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              {localStorage.getItem("company") === "vkl" && <div>
                 <label className="block mb-1 font-medium">Matter Number*</label>
                 <input
                   type="text"
@@ -133,9 +134,8 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                   onChange={handleChange}
                   pattern="[0-9]*"
                   inputMode="numeric"
-                  className={`w-full px-4 py-2 rounded-md border ${
-                    matterNumberError ? "border-red-500" : "border-gray-300"
-                  } bg-white`}
+                  className={`w-full px-4 py-2 rounded-md border ${matterNumberError ? "border-red-500" : "border-gray-300"
+                    } bg-white`}
                   required
                 />
                 {matterNumberError && (
@@ -143,7 +143,32 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                     {matterNumberError}
                   </p>
                 )}
+              </div>}
+
+              {localStorage.getItem("company")==="idg" &&  createType!="order" &&<div>
+                <label className="block mb-1 font-medium">Client ID</label>
+                <input
+                  type="text"
+                  name="clientId"
+                  value={`IDG${Math.floor(10000000 + Math.random() * 90000000)}`}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                  disabled
+                />
               </div>
+              }
+
+              {localStorage.getItem("company")==="idg" && createType==="order" && <div>
+                <label className="block mb-1 font-medium">Order ID</label>
+                <input
+                  type="text"
+                  name="clientId"
+                  value={`IDGORD${Math.floor(10000000 + Math.random() * 90000000)}`}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                  disabled
+                />
+              </div>
+              }
+
               <div>
                 <label className="block mb-1 font-medium">Client Name*</label>
                 <input
@@ -158,6 +183,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
             </div>
 
             {/* State & Client Type */}
+            {localStorage.getItem("company")==="vkl" &&
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 font-medium">State*</label>
@@ -204,8 +230,68 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                 </div>
               </div>
             </div>
+}
+{localStorage.getItem("company")==="idg" && createType!="client" && 
+<div>
+  <label className="block mb-1 font-medium">Order Type</label>
+  <select
+    name="category"
+    value={formData.category || ""}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev, 
+        category: e.target.value,
+      }))
+    }
+    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+    required
+  >
+    <option value="">
+      Select
+    </option>
+    <option value="real_estate">Real Estate</option>
+    <option value="vehicle">Vehicle</option>
+    <option value="commercial">Commercial</option>
+    <option value="others">Others</option>
+  </select>
+</div>
+}
 
+
+
+
+            {localStorage.getItem("company")==="idg" && createType!="order" &&
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium">
+                Contact*
+              </label>
+              <input
+                type="text"
+                name="contact"
+                // value={formData.propertyAddress}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                required
+              />
+            </div>
+             <div>
+              <label className="block mb-1 font-medium">
+                Email*
+              </label>
+              <input
+                type="email"
+                name="contact"
+                // value={formData.propertyAddress}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                required
+              />
+            </div>
+            </div>
+            }
             {/* Property Address */}
+            {createType!="order" &&
             <div>
               <label className="block mb-1 font-medium">
                 Property Address*
@@ -219,8 +305,40 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                 required
               />
             </div>
+}
 
             {/* Matter Date & Settlement Date */}
+            {localStorage.getItem("company")==="idg" && createType!="client" && 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium">Order Date*</label>
+                <input
+                  type="date"
+                  name="matterDate"
+                  value={formData.matterDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">
+                  Delivery Date*
+                </label>
+                <input
+                  type="date"
+                  name="settlementDate"
+                  value={formData.settlementDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                  required
+                />
+              </div>
+            </div>
+}
+
+                      {/* Matter Date & Settlement Date */}
+            {localStorage.getItem("company")==="vkl" &&
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 font-medium">Matter Date*</label>
@@ -247,6 +365,7 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                 />
               </div>
             </div>
+}
 
             {/* Data Entry By */}
             <div>
@@ -273,11 +392,10 @@ export default function CreateClientModal({ isOpen, setIsOpen }) {
                 <button
                   type="submit"
                   disabled={!!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md ${
-                    matterNumberError
+                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md ${matterNumberError
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-sky-600"
-                  }`}
+                    }`}
                 >
                   Add New Client
                 </button>
