@@ -189,6 +189,7 @@ function Dashboard() {
   } = useArchivedClientStore();
 
   const [createuser, setcreateuser] = useState(false);
+  const [createOrder, setcreateOrder] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
@@ -367,9 +368,7 @@ function Dashboard() {
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
             <p className="text-sm mt-1 text-gray-800 max-w-5xl">
-              We are a client-focused law firm committed to delivering expert
-              legal solutions with integrity, professionalism, and personalized
-              care.
+              We are a client-focused firm dedicated to providing reliable solutions with integrity, professionalism, and personalized care.
             </p>
             <button
               className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
@@ -378,6 +377,15 @@ function Dashboard() {
               <img src={Plus} alt="" className="w-5" />
               <span>Add New Client</span>
             </button>
+            {localStorage.getItem("company") === "idg" &&
+             <button
+              className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+              onClick={() => setcreateOrder(true)}
+            >
+              <img src={Plus} alt="" className="w-5" />
+              <span>Add New Order</span>
+            </button>
+            }
           </div>
 
           {/* Stats */}
@@ -490,8 +498,15 @@ function Dashboard() {
         </div>
       </main>
       <CreateClientModal
+        createType="client"
+        companyName={localStorage.getItem("company")}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+      />
+      <CreateClientModal
+        createType="order"
+        isOpen={createOrder}
+        setIsOpen={() => setcreateOrder(false)}
       />
     </div>
   );

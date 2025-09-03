@@ -23,7 +23,9 @@ function LoginForm() {
         localStorage.setItem("user", response.user.displayName);
         localStorage.setItem("access", response.user.access);
         localStorage.setItem("role", response.user.role);
+        localStorage.setItem("company",response.user.company);
         localStorage.setItem("logo", response.user.logo);
+
 
         // Show success toast
         toast.success("Logging in...", {
