@@ -31,7 +31,7 @@ export default function Stages({ stageName, data }) {
   if (s === "nr") return "NR";
   if (s === "processing") return "In Progress";
 
-  return status; // fallback: return raw value if no match
+  return status;
 }
 
 
