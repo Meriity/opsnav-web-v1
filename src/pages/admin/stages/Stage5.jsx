@@ -8,12 +8,28 @@ import PropTypes from "prop-types";
 const formConfig = {
   vkl: {
     fields: [
-      { name: "notifySoaToClient", label: "Notify SOA to Client", type: "radio" },
-      { name: "transferDocsOnPexa", label: "Transfer Docs on PEXA", type: "radio" },
+      {
+        name: "notifySoaToClient",
+        label: "Notify SOA to Client",
+        type: "radio",
+      },
+      {
+        name: "transferDocsOnPexa",
+        label: "Transfer Docs on PEXA",
+        type: "radio",
+      },
       { name: "gstWithholding", label: "GST Withholding", type: "radio" },
-      { name: "disbursementsInPexa", label: "Disbursements in PEXA", type: "radio" },
+      {
+        name: "disbursementsInPexa",
+        label: "Disbursements in PEXA",
+        type: "radio",
+      },
       { name: "addAgentFee", label: "Add Agent Fee", type: "radio" },
-      { name: "settlementNotification", label: "Settlement Notification", type: "radio" },
+      {
+        name: "settlementNotification",
+        label: "Settlement Notification",
+        type: "radio",
+      },
       { name: "council", label: "Council", type: "text" },
     ],
     noteGroups: [
@@ -24,22 +40,32 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: [ // Only radio fields affect the note
-          "notifySoaToClient", "transferDocsOnPexa", "gstWithholding", 
-          "disbursementsInPexa", "addAgentFee", "settlementNotification"
+        fieldsForNote: [
+          "notifySoaToClient",
+          "transferDocsOnPexa",
+          "gstWithholding",
+          "disbursementsInPexa",
+          "addAgentFee",
+          "settlementNotification",
         ],
       },
     ],
   },
   idg: {
     fields: [
-      { name: "printMaterials", label: "Print Boards, Stickers, Signage", type: "radio" },
-      { name: "applyFinishing", label: "Apply Lamination / Cutting / Mounting", type: "radio" },
-      { name: "preapplyStickers", label: "Pre-apply Auction / Leased / Sold Stickers", type: "radio" },
-      { name: "packageMaterials", label: "Package Boards / Materials for delivery", type: "radio" },
-      { name: "qualityCheck", label: "Perform Quality Check", type: "radio" },
-      { name: "labelJob", label: "Label job with Agent / Address / Suburb", type: "radio" },
-      { name: "markJobReady", label: "Mark job as ready for delivery", type: "radio" },
+      { name: "order_photo", label: "Order Photo", type: "radio" },
+      { name: "photo_ready", label: "Photo Ready", type: "radio" },
+      { name: "install_complete", label: "Install Complete", type: "radio" },
+      { name: "delivery_complete", label: "Delivery Complete", type: "radio" },
+      { name: "pickup_complete", label: "Pickup Complete", type: "radio" },
+      {
+        name: "check_stock_levels",
+        label: "Check Stock Levels",
+        type: "radio",
+      },
+      { name: "issue_invoice", label: "Issue Invoice", type: "radio" },
+      { name: "order_complete", label: "Order Complete", type: "radio" },
+      { name: "send_survey", label: "Send Survey", type: "radio" },
     ],
     noteGroups: [
       {
@@ -49,9 +75,16 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: [ // All fields for IDG are radio types and affect the note
-          "printMaterials", "applyFinishing", "preapplyStickers", "packageMaterials",
-          "qualityCheck", "labelJob", "markJobReady"
+        fieldsForNote: [
+          "order_photo",
+          "photo_ready",
+          "install_complete",
+          "delivery_complete",
+          "pickup_complete",
+          "check_stock_levels",
+          "issue_invoice",
+          "order_complete",
+          "send_survey",
         ],
       },
     ],
@@ -103,22 +136,30 @@ export default function Stage5({
   };
 
   const generateSystemNote = (noteGroupId) => {
-    const noteGroup = currentConfig.noteGroups.find(ng => ng.id === noteGroupId);
+    const noteGroup = currentConfig.noteGroups.find(
+      (ng) => ng.id === noteGroupId
+    );
     if (!noteGroup) return "";
-    
+
     const greenValues = ["yes", "na", "n/a", "nr", "n/r"];
-    const fieldsToCheck = currentConfig.fields.filter(f => noteGroup.fieldsForNote.includes(f.name));
-    
+    const fieldsToCheck = currentConfig.fields.filter((f) =>
+      noteGroup.fieldsForNote.includes(f.name)
+    );
+
     const incomplete = fieldsToCheck
-      .filter(field => !greenValues.includes((formData[field.name] || "").toLowerCase()))
-      .map(field => field.label);
-      
+      .filter(
+        (field) =>
+          !greenValues.includes((formData[field.name] || "").toLowerCase())
+      )
+      .map((field) => field.label);
+
     if (incomplete.length === 0) return "All tasks completed";
     return `Pending: ${incomplete.join(", ")}`;
   };
-  
+
   useEffect(() => {
     if (!data) return;
+
     const initialFormData = {};
     const initialStatuses = {};
 
@@ -140,32 +181,45 @@ export default function Stage5({
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    const fieldConfig = currentConfig.fields.find(f => f.name === field);
+    let processedValue = value;
+
+    // Normalize "N/R" to "nr" before setting the state
+    if (
+      typeof processedValue === "string" &&
+      processedValue.toLowerCase().trim() === "n/r"
+    ) {
+      processedValue = "nr";
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+
+    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses(prev => ({ ...prev, [field]: getStatus(value) }));
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
   };
 
-  const isChanged = () => JSON.stringify(formData) !== JSON.stringify(originalData.current);
-  
+  const isChanged = () =>
+    JSON.stringify(formData) !== JSON.stringify(originalData.current);
+
   async function handleSave() {
     if (!isChanged() || isSaving) return;
     setIsSaving(true);
 
     try {
       const payload = { matterNumber, ...formData };
-      
-      currentConfig.noteGroups.forEach(group => {
+
+      currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] = `${systemNote} - ${clientComment}`.trim();
+        payload[group.noteForClientKey] =
+          `${systemNote} - ${clientComment}`.trim();
         delete payload[group.clientCommentKey];
       });
 
       await api.upsertStageFive(payload);
       originalData.current = { ...formData };
-      setReloadTrigger(prev => !prev);
+      setReloadTrigger((prev) => !prev);
     } catch (err) {
       console.error("Failed to save Stage 5:", err);
     } finally {
@@ -179,17 +233,35 @@ export default function Stage5({
         return (
           <div key={field.name} className="mt-5">
             <div className="flex gap-4 items-center justify-between mb-2">
-              <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
-              <div className={`w-[90px] h-[18px] ${bgcolor(statuses[field.name])} flex items-center justify-center rounded-4xl`}>
-                <p className="text-[10px] md:text-[12px] whitespace-nowrap">{statuses[field.name]}</p>
+              <label className="block mb-1 text-sm md:text-base font-bold">
+                {field.label}
+              </label>
+              <div
+                className={`w-[90px] h-[18px] ${bgcolor(
+                  statuses[field.name]
+                )} flex items-center justify-center rounded-4xl`}
+              >
+                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                  {statuses[field.name]}
+                </p>
               </div>
             </div>
             <div className="flex gap-4 justify-between flex-wrap items-center mb-3">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
-                <label key={val} className="flex items-center gap-2 text-sm md:text-base">
+                <label
+                  key={val}
+                  className="flex items-center gap-2 text-sm md:text-base"
+                >
                   <input
-                    type="radio" name={field.name} value={val}
-                    checked={(formData[field.name] || "").toLowerCase() === val.toLowerCase()}
+                    type="radio"
+                    name={field.name}
+                    value={val}
+                    checked={
+                      (formData[field.name] || "").toLowerCase() ===
+                        val.toLowerCase() ||
+                      (val.toLowerCase() === "n/r" &&
+                        (formData[field.name] || "").toLowerCase() === "nr")
+                    }
                     onChange={() => handleChange(field.name, val)}
                   />
                   {val}
@@ -201,7 +273,9 @@ export default function Stage5({
       case "text":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
             <input
               type="text"
               value={formData[field.name] || ""}
@@ -218,11 +292,20 @@ export default function Stage5({
   const renderNoteGroup = (group) => (
     <div key={group.id}>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">{group.systemNoteLabel}</label>
-        <input type="text" value={generateSystemNote(group.id)} disabled className="w-full rounded p-2 bg-gray-100" />
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.systemNoteLabel}
+        </label>
+        <input
+          type="text"
+          value={generateSystemNote(group.id)}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">{group.clientCommentLabel}</label>
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.clientCommentLabel}
+        </label>
         <textarea
           value={formData[group.clientCommentKey] || ""}
           onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
@@ -239,16 +322,21 @@ export default function Stage5({
 
       <div className="flex mt-10 justify-between">
         <Button
-          label="Back" width="w-[70px] md:w-[100px]"
+          label="Back"
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
         />
         <div className="flex gap-2">
           <Button
-            label={isSaving ? "Saving..." : "Save"} width="w-[70px] md:w-[100px]" bg="bg-blue-500"
-            onClick={handleSave} disabled={isSaving || !isChanged()}
+            label={isSaving ? "Saving..." : "Save"}
+            width="w-[70px] md:w-[100px]"
+            bg="bg-blue-500"
+            onClick={handleSave}
+            disabled={isSaving || !isChanged()}
           />
           <Button
-            label="Next" width="w-[70px] md:w-[100px]"
+            label="Next"
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

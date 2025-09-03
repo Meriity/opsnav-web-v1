@@ -15,7 +15,7 @@ class ClientAPI {
     };
   }
 
-  // --- NEW FUNCTION TO GET CALENDAR DATES ---
+  // --- FUNCTION TO GET CALENDAR DATES ---
   async getCalendarDates() {
     try {
       // The endpoint you provided is used here
@@ -75,7 +75,7 @@ class ClientAPI {
       throw error;
     }
   }
-  
+
   // Insert/Update Stage One
   async upsertStageOne(matterNumber, colorStatus, additionalData = {}) {
     try {
@@ -134,7 +134,6 @@ class ClientAPI {
           ...additionalData,
         }),
       });
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
