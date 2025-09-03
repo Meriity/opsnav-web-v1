@@ -186,6 +186,13 @@ export default function Stage1({
   }, [data, reloadTrigger, company]); // Add 'company' as a dependency
 
   const handleChange = (field, value) => {
+    let processedValue = value;
+    if (
+      typeof processedValue === "string" &&
+      processedValue.toLowerCase().trim() === "n/r"
+    ) {
+      processedValue = "nr";
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     const fieldConfig = currentFields.find((f) => f.name === field);
@@ -284,20 +291,20 @@ export default function Stage1({
             </div>
           </div>
         );
-      
+
       case "system-note":
         return (
-             <div key={field.name} className="mt-5">
-                <label className="block mb-1 text-sm md:text-base font-bold">
-                    {field.label}
-                </label>
-                <input
-                    type="text"
-                    value={generateSystemNote()}
-                    disabled
-                    className="w-full rounded p-2 bg-gray-100"
-                />
-            </div>
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={generateSystemNote()}
+              disabled
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
         );
 
       case "textarea":
