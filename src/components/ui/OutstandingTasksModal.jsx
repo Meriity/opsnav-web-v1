@@ -20,7 +20,6 @@ export default function OutstandingTasksModal({
 
   useEffect(() => {
     if (open) {
-      // Reset to page 1 when filter or matter changes
       setCurrentPage(1);
       fetchData(1);
     }
@@ -42,7 +41,7 @@ export default function OutstandingTasksModal({
       );
       if (activeMatter) {
         setData([response]);
-        setTotalPages(1); // Only one page for a single matter
+        setTotalPages(1);
       } else {
         setData(response.results || []);
         setTotalPages(response.totalPages || 1);
@@ -84,7 +83,7 @@ export default function OutstandingTasksModal({
             index === 0 ? `${item.matterNumber} - ${item.clientName}` : "",
             index === 0 ? formatDate(item.settlementDate) : "",
             stage,
-            tasks.join("\n"), // Use newline for better PDF formatting
+            tasks.join("\n"),
           ]);
         });
       }
@@ -97,13 +96,11 @@ export default function OutstandingTasksModal({
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [0, 123, 255] },
       didDrawCell: (data) => {
-        // This logic merges cells for matter number and settlement date
         if (
           data.section === "body" &&
           (data.column.index === 0 || data.column.index === 1)
         ) {
           if (data.cell.raw === "") {
-            // Find the starting cell of the row span
             let i = data.row.index - 1;
             let startCell = null;
             while (i >= 0) {
@@ -116,7 +113,7 @@ export default function OutstandingTasksModal({
             }
             if (startCell) {
               startCell.rowSpan = (startCell.rowSpan || 1) + 1;
-              data.cell.styles.lineWidth = 0; // Hide border of merged cell
+              data.cell.styles.lineWidth = 0;
             }
           }
         }

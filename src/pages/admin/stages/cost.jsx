@@ -52,33 +52,37 @@ export default function CostComponent({
   const originalData = useRef({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
   const calculateTotals = (values = formValues) => {
-    const otherTotal = (
-      (parseFloat(values["Other fee (1)"]) || 0) +
-      (parseFloat(values["Other fee (2)"]) || 0) +
-      (parseFloat(values["Other fee (3)"]) || 0) +
-      (parseFloat(values["Other fee (4)"]) || 0)
-    ).toString();
+    const formatNum = (num) => {
+      if (isNaN(num)) return "0";
+      return parseFloat(num).toFixed(2); 
+    };
 
-    const totalCosts = (
+    const otherTotal = formatNum(
+      (parseFloat(values["Other fee (1)"]) || 0) +
+        (parseFloat(values["Other fee (2)"]) || 0) +
+        (parseFloat(values["Other fee (3)"]) || 0) +
+        (parseFloat(values["Other fee (4)"]) || 0)
+    );
+
+    const totalCosts = formatNum(
       (parseFloat(values["VOI/CAF"]) || 0) +
-      (parseFloat(values["Title"]) || 0) +
-      (parseFloat(values["Plan"]) || 0) +
-      (parseFloat(values["Land Tax"]) || 0) +
-      (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
-      (parseFloat(values["Water Certificate"]) || 0) +
-      (parseFloat(otherTotal) || 0)
-    ).toString();
+        (parseFloat(values["Title"]) || 0) +
+        (parseFloat(values["Plan"]) || 0) +
+        (parseFloat(values["Land Tax"]) || 0) +
+        (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
+        (parseFloat(values["Water Certificate"]) || 0) +
+        (parseFloat(otherTotal) || 0)
+    );
 
     const quoteType = values["Quote Type"]?.toLowerCase() || "variable";
     const quoteAmount = parseFloat(values["Quote Amount"]) || 0;
 
     let invoiceAmount = "0";
     if (quoteType === "fixed") {
-      invoiceAmount = values["Quote Amount"] || "0";
+      invoiceAmount = formatNum(values["Quote Amount"] || 0);
     } else {
-      invoiceAmount = (parseFloat(totalCosts || 0) + quoteAmount).toString();
+      invoiceAmount = formatNum(parseFloat(totalCosts || 0) + quoteAmount);
     }
 
     return {
@@ -209,13 +213,13 @@ export default function CostComponent({
     try {
       if (!isChanged()) {
         console.log("No changes to submit");
-        return; // ✅ removed navigate(-1)
+        return;
       }
 
       const formatNumber = (value) => {
         if (value === "") return 0;
         const num = parseFloat(value);
-        return isNaN(num) ? 0 : num;
+        return isNaN(num) ? 0 : parseFloat(num.toFixed(2));
       };
 
       const payload = {
@@ -258,7 +262,6 @@ export default function CostComponent({
       console.log("Save successful:", response);
 
       setReloadTrigger((prev) => !prev);
-      // ❌ removed navigate(-1) → stay on page
     } catch (err) {
       console.error("Full error:", err);
     } finally {

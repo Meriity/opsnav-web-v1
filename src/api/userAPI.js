@@ -375,7 +375,6 @@ class ClientAPI {
     }
   }
 
-  // ✅ Calls dashboard with explicit ranges and normalizes the payload
   async getDashboardData() {
     const fetchRange = async (range) => {
       const res = await fetch(`${this.baseUrl}/dashboard?range=${range}`, {
@@ -387,7 +386,6 @@ class ClientAPI {
     };
 
     try {
-      // 10 months (backend expects lowercase 'tenmonths'; try camelCase fallback)
       let tenData;
       try {
         tenData = await fetchRange("tenmonths");
