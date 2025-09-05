@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
@@ -6,7 +6,14 @@ import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import PropTypes from "prop-types";
 
-// --- Configuration Object for Stage 6 ---
+const normalizeValue = (v) => {
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
+};
+
 const formConfig = {
   vkl: {
     fields: [
@@ -31,8 +38,8 @@ const formConfig = {
         name: "closeMatter",
         label: "Close Matter",
         type: "radio",
-        options: ["Completed", "Cancelled"], // Custom options
-        triggersModal: true, // Special property to trigger confirmation
+        options: ["Completed", "Cancelled"],
+        triggersModal: true,
       },
     ],
     noteGroups: [
@@ -40,7 +47,7 @@ const formConfig = {
         id: "main",
         systemNoteLabel: "System Note for Client",
         clientCommentLabel: "Comment for Client",
-        systemNoteKey: "clientComment", // In this stage, there's only one note part
+        systemNoteKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
           "noaToCouncilWater",
@@ -86,8 +93,8 @@ const formConfig = {
         name: "archiveOrder",
         label: "Move order to Archived Orders",
         type: "radio",
-        options: ["Completed", "Cancelled"], // Custom options
-        triggersModal: true, // Special property to trigger confirmation
+        options: ["Completed", "Cancelled"],
+        triggersModal: true,
       },
     ],
     noteGroups: [
@@ -112,7 +119,25 @@ const formConfig = {
   },
 };
 
-// --- Component Definition ---
+const getStatus = (value) => {
+  const val = normalizeValue(value);
+  if (!val) return "Not Completed";
+  if (["yes", "na", "n/a", "nr", "completed", "cancelled"].includes(val))
+    return "Completed";
+  if (val === "no") return "Not Completed";
+  if (["processing", "inprogress"].includes(val)) return "In Progress";
+  return "Not Completed";
+};
+
+const bgcolor = (status) => {
+  const statusColors = {
+    Completed: "bg-[#00A506] text-white",
+    "Not Completed": "bg-[#FF0000] text-white",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+  };
+  return statusColors[status] || "bg-[#FF0000] text-white";
+};
+
 export default function Stage6({
   changeStage,
   data,
@@ -133,71 +158,62 @@ export default function Stage6({
   const currentConfig = formConfig[company] || formConfig.vkl;
   const modalField = currentConfig.fields.find((f) => f.triggersModal);
 
-  const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (
-      ["yes", "na", "n/a", "nr", "n/r", "completed", "cancelled"].includes(val)
-    )
-      return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
-    return "Not Completed";
-  };
-
-  const bgcolor = (status) => {
-    const statusColors = {
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
-    };
-    return statusColors[status] || "bg-[#FF0000] text-white";
-  };
-
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
       (ng) => ng.id === noteGroupId
     );
     if (!noteGroup) return "";
-
-    const greenValues = [
-      "yes",
-      "na",
-      "n/a",
-      "nr",
-      "n/r",
-      "completed",
-      "cancelled",
-    ];
+    const greenValues = ["yes", "na", "n/a", "nr", "completed", "cancelled"];
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
-
     const incomplete = fieldsToCheck
       .filter(
         (field) =>
-          !greenValues.includes((formData[field.name] || "").toLowerCase())
+          !greenValues.includes(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
-
     if (incomplete.length === 0) return "All tasks completed";
     return `Pending: ${incomplete.join(", ")}`;
   };
 
   useEffect(() => {
     if (!data) return;
+
+    const stageData = data.stage6 || data.stage || data || {};
+
     const initialFormData = {};
     const initialStatuses = {};
 
     currentConfig.fields.forEach((field) => {
-      initialFormData[field.name] = data[field.name] || "";
-      if (field.type === "radio") {
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      const rawVal = stageData[field.name] ?? data[field.name] ?? "";
+
+      if (field.name === "closeMatter") {
+        const norm = normalizeValue(rawVal);
+        if (
+          ["yes", "true", "closed", "complete", "completed", "done"].includes(
+            norm
+          )
+        ) {
+          initialFormData[field.name] = "completed";
+        } else if (["cancel", "cancelled", "canceled", "void"].includes(norm)) {
+          initialFormData[field.name] = "cancelled";
+        } else {
+          initialFormData[field.name] = normalizeValue(rawVal);
+        }
+      } else {
+        initialFormData[field.name] = normalizeValue(rawVal);
       }
+
+      initialStatuses[field.name] = getStatus(initialFormData[field.name]);
     });
 
     currentConfig.noteGroups.forEach((group) => {
-      const noteParts = data[group.noteForClientKey]?.split(" - ") || [];
+      const noteParts = (
+        stageData[group.noteForClientKey] ||
+        data[group.noteForClientKey] ||
+        ""
+      ).split(" - ");
       initialFormData[group.systemNoteKey] =
         noteParts.length > 1 ? noteParts[1].trim() : "";
     });
@@ -208,22 +224,12 @@ export default function Stage6({
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
-    let processedValue = value;
+    const processed = typeof value === "string" ? normalizeValue(value) : value;
+    setFormData((prev) => ({ ...prev, [field]: processed }));
 
-    // Normalize "N/R" to "nr" before setting the state
-    if (
-      typeof processedValue === "string" &&
-      processedValue.toLowerCase().trim() === "n/r"
-    ) {
-      processedValue = "nr";
-    }
-
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-
-    // Correctly find the field config and update statuses
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
     }
   };
 
@@ -245,14 +251,14 @@ export default function Stage6({
       });
 
       await api.upsertStageSix(payload);
-      toast.success("Stage 6 saved successfully!");
 
+      toast.success("Stage 6 saved successfully!");
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to save Stage 6:", err);
-      toast.error("Failed to save changes.");
+      toast.error("Failed to save Stage 6.");
     } finally {
       setIsSaving(false);
     }
@@ -262,24 +268,27 @@ export default function Stage6({
     if (!isChanged()) return;
 
     if (modalField) {
-      const originalValue = (
+      const originalValue = normalizeValue(
         originalData.current[modalField.name] || ""
-      ).toLowerCase();
-      const currentValue = (formData[modalField.name] || "").toLowerCase();
-
+      );
+      const currentValue = normalizeValue(formData[modalField.name] || "");
       if (currentValue && originalValue !== currentValue) {
         setIsModalOpen(true);
         return;
       }
     }
+
     await proceedWithSave();
   }
 
   const renderField = (field) => {
     const options = field.options || ["Yes", "No", "Processing", "N/R"];
+    const isCloseMatter =
+      field.name === "closeMatter" || field.name === "archiveOrder";
+
     return (
-      <div key={field.name} className="mt-5">
-        <div className="flex gap-4 items-center justify-between mb-2">
+      <div key={field.name} className="mt-8">
+        <div className="flex gap-4 items-center justify-between mb-5">
           <label className="block mb-1 text-sm md:text-base font-bold">
             {field.label}
           </label>
@@ -289,14 +298,17 @@ export default function Stage6({
             )} flex items-center justify-center rounded-4xl`}
           >
             <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statuses[field.name]}
+              {statuses[field.name] ?? "Not Completed"}
             </p>
           </div>
         </div>
+
         <div
-          className={`flex flex-wrap items-center gap-4 ${
-            field.options ? "gap-[20px]" : "justify-between"
-          }`}
+          className={
+            isCloseMatter
+              ? "flex items-center gap-4 mb-6" // tighter
+              : "flex justify-between items-center gap-6 mb-6" // original wide spacing
+          }
         >
           {options.map((val) => (
             <label
@@ -308,10 +320,8 @@ export default function Stage6({
                 name={field.name}
                 value={val}
                 checked={
-                  (formData[field.name] || "").toLowerCase() ===
-                    val.toLowerCase() ||
-                  (val.toLowerCase() === "n/r" &&
-                    (formData[field.name] || "").toLowerCase() === "nr")
+                  normalizeValue(formData[field.name] || "") ===
+                  normalizeValue(val)
                 }
                 onChange={() => handleChange(field.name, val)}
               />
@@ -324,8 +334,8 @@ export default function Stage6({
   };
 
   const renderNoteGroup = (group) => (
-    <div key={group.id}>
-      <div className="mt-5">
+    <div key={group.id} className="mt-8">
+      <div className="mb-6">
         <label className="block mb-1 text-sm md:text-base font-bold">
           {group.systemNoteLabel}
         </label>
@@ -336,7 +346,8 @@ export default function Stage6({
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
-      <div className="mt-5">
+
+      <div>
         <label className="block mb-1 text-sm md:text-base font-bold">
           {group.clientCommentLabel}
         </label>

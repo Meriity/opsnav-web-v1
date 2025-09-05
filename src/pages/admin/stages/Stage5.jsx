@@ -4,7 +4,6 @@ import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 
-// --- Configuration Object for Stage 5 ---
 const formConfig = {
   vkl: {
     fields: [
@@ -29,6 +28,8 @@ const formConfig = {
         name: "settlementNotification",
         label: "Settlement Notification",
         type: "radio",
+        hasDate: true,
+        dateFieldName: "settlementNotificationDate",
       },
       { name: "council", label: "Council", type: "text" },
     ],
@@ -91,7 +92,40 @@ const formConfig = {
   },
 };
 
-// --- Component Definition ---
+const normalizeValue = (v) => {
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
+};
+
+const getStatus = (value) => {
+  const val = normalizeValue(value);
+  if (!val) return "Not Completed";
+  if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
+  if (val === "no") return "Not Completed";
+  if (["processing", "inprogress", "inprogress"].includes(val))
+    return "In Progress";
+  return "Not Completed";
+};
+
+function bgcolor(status) {
+  const statusColors = {
+    Completed: "bg-[#00A506] text-white",
+    "Not Completed": "bg-[#FF0000] text-white",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+  };
+  return statusColors[status] || "bg-[#FF0000] text-white";
+}
+
+const extractNotes = (note = "") => {
+  const [systemNote = "", clientComment = ""] = (note || "")
+    .split(" - ")
+    .map((s) => s.trim());
+  return { systemNote, clientComment };
+};
+
 export default function Stage5({
   changeStage,
   data,
@@ -110,46 +144,20 @@ export default function Stage5({
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
 
-  const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
-    return "Not Completed";
-  };
-
-  function bgcolor(status) {
-    const statusColors = {
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
-    };
-    return statusColors[status] || "bg-[#FF0000] text-white";
-  }
-
-  const extractNotes = (note = "") => {
-    const [systemNote = "", clientComment = ""] = (note || "")
-      .split(" - ")
-      .map((str) => str.trim());
-    return { systemNote, clientComment };
-  };
-
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
       (ng) => ng.id === noteGroupId
     );
     if (!noteGroup) return "";
 
-    const greenValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
 
     const incomplete = fieldsToCheck
       .filter(
-        (field) =>
-          !greenValues.includes((formData[field.name] || "").toLowerCase())
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
 
@@ -164,9 +172,19 @@ export default function Stage5({
     const initialStatuses = {};
 
     currentConfig.fields.forEach((field) => {
-      initialFormData[field.name] = data[field.name] || "";
       if (field.type === "radio") {
+        initialFormData[field.name] = normalizeValue(data[field.name] || "");
         initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      } else if (field.type === "text") {
+        initialFormData[field.name] = data[field.name] || "";
+      } else {
+        initialFormData[field.name] = data[field.name] || "";
+      }
+
+      if (field.hasDate) {
+        initialFormData[field.dateFieldName] = data[field.dateFieldName]
+          ? new Date(data[field.dateFieldName]).toISOString().split("T")[0]
+          : "";
       }
     });
 
@@ -178,17 +196,16 @@ export default function Stage5({
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
+    currentConfig.noteGroups.forEach((group) => {
+      originalData.current[group.clientCommentKey] =
+        initialFormData[group.clientCommentKey] || "";
+    });
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
     let processedValue = value;
-
-    // Normalize "N/R" to "nr" before setting the state
-    if (
-      typeof processedValue === "string" &&
-      processedValue.toLowerCase().trim() === "n/r"
-    ) {
-      processedValue = "nr";
+    if (typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
     }
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
@@ -199,8 +216,13 @@ export default function Stage5({
     }
   };
 
-  const isChanged = () =>
-    JSON.stringify(formData) !== JSON.stringify(originalData.current);
+  const handleDateChange = (dateField, value) => {
+    setFormData((prev) => ({ ...prev, [dateField]: value }));
+  };
+
+  const isChanged = () => {
+    return JSON.stringify(formData) !== JSON.stringify(originalData.current);
+  };
 
   async function handleSave() {
     if (!isChanged() || isSaving) return;
@@ -214,10 +236,11 @@ export default function Stage5({
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey];
+        delete payload[group.clientCommentKey]; 
       });
 
       await api.upsertStageFive(payload);
+
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
     } catch (err) {
@@ -246,6 +269,7 @@ export default function Stage5({
                 </p>
               </div>
             </div>
+
             <div className="flex gap-4 justify-between flex-wrap items-center mb-3">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
                 <label
@@ -257,16 +281,25 @@ export default function Stage5({
                     name={field.name}
                     value={val}
                     checked={
-                      (formData[field.name] || "").toLowerCase() ===
-                        val.toLowerCase() ||
-                      (val.toLowerCase() === "n/r" &&
-                        (formData[field.name] || "").toLowerCase() === "nr")
+                      normalizeValue(formData[field.name] || "") ===
+                      normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
                   />
                   {val}
                 </label>
               ))}
+
+              {field.hasDate && (
+                <input
+                  type="date"
+                  value={formData[field.dateFieldName] || ""}
+                  onChange={(e) =>
+                    handleDateChange(field.dateFieldName, e.target.value)
+                  }
+                  className="ml-2 p-1 border rounded"
+                />
+              )}
             </div>
           </div>
         );
@@ -279,7 +312,12 @@ export default function Stage5({
             <input
               type="text"
               value={formData[field.name] || ""}
-              onChange={(e) => handleChange(field.name, e.target.value)}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  [field.name]: e.target.value,
+                }))
+              }
               className="w-full rounded p-2 bg-gray-100"
             />
           </div>
@@ -308,7 +346,12 @@ export default function Stage5({
         </label>
         <textarea
           value={formData[group.clientCommentKey] || ""}
-          onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              [group.clientCommentKey]: e.target.value,
+            }))
+          }
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>

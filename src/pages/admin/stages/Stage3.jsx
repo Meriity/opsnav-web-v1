@@ -13,6 +13,8 @@ export default function Stage3({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
+
+  // fields config
   let fields = [];
   if (localStorage.getItem("company") === "vkl") {
     fields = [
@@ -48,15 +50,24 @@ export default function Stage3({
     ];
   }
 
+  const normalizeValue = (v) => {
+    if (v === undefined || v === null) return "";
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+  };
+
   const getStatus = (value) => {
-    if (!value || typeof value !== "string") return "Not Completed";
-    const val = value.toLowerCase().trim();
+    const val = normalizeValue(value);
+    if (!val) return "Not Completed";
     const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
     if (completedValues.includes(val)) {
       return "Completed";
     }
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress", "in progress"].includes(val))
+      return "In Progress";
     return "Not Completed";
   };
 
@@ -64,7 +75,7 @@ export default function Stage3({
     const statusColors = {
       Completed: "bg-[#00A506] text-white",
       "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]", // Corrected key
+      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
     };
     return statusColors[status] || "bg-[#FF0000] text-white";
   };
@@ -75,10 +86,10 @@ export default function Stage3({
   const originalData = useRef({});
 
   const updateNoteForClient = () => {
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
     const incompleteTasks = fields
       .filter(
-        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+        ({ key }) => !completedValues.has(normalizeValue(formState[key] || ""))
       )
       .map(({ label }) => label);
 
@@ -94,9 +105,9 @@ export default function Stage3({
     const newStatusState = {};
 
     fields.forEach(({ key, hasDate }) => {
-      const value = data[key] || "";
-      newFormState[key] = value;
-      newStatusState[key] = getStatus(value);
+      const rawValue = data[key] || "";
+      newFormState[key] = normalizeValue(rawValue);
+      newStatusState[key] = getStatus(newFormState[key]);
 
       if (hasDate) {
         newFormState[`${key}Date`] = data[`${key}Date`]
@@ -105,16 +116,16 @@ export default function Stage3({
       }
     });
 
-    const noteParts = data.noteForClient?.split(" - ") || [];
-    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
+    const noteParts = (data.noteForClient || "").split(" - ");
+    const clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
 
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setClientComment(clientComment);
+    setClientComment(clientCommentPart);
 
     originalData.current = {
       ...newFormState,
-      clientComment,
+      clientComment: clientCommentPart,
       systemNote: noteParts[0]?.trim() || updateNoteForClient(),
     };
   }, [data, reloadTrigger]);
@@ -145,6 +156,28 @@ export default function Stage3({
 
     return formChanged || dateChanged || commentChanged || noteChanged;
   }
+
+  const handleChange = (key, value, hasDate) => {
+    let processedValue = value;
+    if (typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
+    }
+
+    setFormState((prev) => ({ ...prev, [key]: processedValue }));
+    setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
+
+    if (hasDate) {
+      if (processedValue === "yes") {
+        setFormState((prev) => ({
+          ...prev,
+          [`${key}Date`]:
+            prev[`${key}Date`] || new Date().toISOString().split("T")[0],
+        }));
+      } else {
+        setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
+      }
+    }
+  };
 
   async function handleSave() {
     if (!isChanged()) return;
@@ -179,30 +212,6 @@ export default function Stage3({
     }
   }
 
-  // --- NEW HANDLECHANGE FUNCTION ---
-  const handleChange = (key, value, hasDate) => {
-    let processedValue = value;
-
-    // Normalize "N/R" to "nr" before setting the state
-    if (
-      typeof processedValue === "string" &&
-      processedValue.toLowerCase().trim() === "n/r"
-    ) {
-      processedValue = "nr";
-    }
-
-    setFormState((prev) => ({ ...prev, [key]: processedValue }));
-    setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
-
-    if (hasDate && processedValue.toLowerCase() === "yes") {
-      setFormState((prev) => ({
-        ...prev,
-        [`${key}Date`]:
-          prev[`${key}Date`] || new Date().toISOString().split("T")[0],
-      }));
-    }
-  };
-
   const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
       <div className="flex gap-4 items-center justify-between mb-3">
@@ -219,6 +228,7 @@ export default function Stage3({
           </p>
         </div>
       </div>
+
       <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label
@@ -229,13 +239,16 @@ export default function Stage3({
               type="radio"
               name={key}
               value={val}
-              checked={formState[key]?.toLowerCase() === val.toLowerCase()}
-              // --- UPDATED ONCHANGE HANDLER ---
+              // compare normalized values
+              checked={
+                normalizeValue(formState[key] || "") === normalizeValue(val)
+              }
               onChange={() => handleChange(key, val, hasDate)}
             />
             {val}
           </label>
         ))}
+
         {hasDate && (
           <input
             type="date"
