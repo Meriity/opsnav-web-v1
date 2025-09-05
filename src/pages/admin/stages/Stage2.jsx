@@ -93,7 +93,6 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          // All fields for IDG contribute to the single note
           "confirmCustomerAcceptance",
           "confirmPaymentTerms",
           "verifyInternalCapacity",
@@ -104,7 +103,13 @@ const formConfig = {
   },
 };
 
-// --- Component Definition ---
+const normalizeValue = (v) => {
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
+};
 
 export default function Stage2({
   changeStage,
@@ -125,11 +130,12 @@ export default function Stage2({
   const currentConfig = formConfig[company] || formConfig.vkl;
 
   const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (["yes", "nr", "n/r"].includes(val)) return "Completed";
+    const val = normalizeValue(value);
+    if (!val) return "Not Completed";
+    if (["yes", "nr", "na", "n/a"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress", "inprogress"].includes(val))
+      return "In Progress";
     return "Not Completed";
   };
 
@@ -155,15 +161,14 @@ export default function Stage2({
     );
     if (!noteGroup) return "";
 
-    const greenValues = ["yes", "nr", "n/r", "na", "n/a"];
+    const greenValues = new Set(["yes", "nr", "na", "na"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
 
     const notReceived = fieldsToCheck
       .filter(
-        (field) =>
-          !greenValues.includes((formData[field.name] || "").toLowerCase())
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
 
@@ -182,10 +187,13 @@ export default function Stage2({
     };
 
     currentConfig.fields.forEach((field) => {
-      initialFormData[field.name] = data[field.name] || "";
       if (field.type === "radio") {
-        initialStatuses[field.name] = getStatus(data[field.name]);
+        initialFormData[field.name] = normalizeValue(data[field.name] || "");
+        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      } else {
+        initialFormData[field.name] = data[field.name] || "";
       }
+
       if (field.hasDate) {
         initialFormData[field.dateFieldName] = formatDate(
           data[field.dateFieldName]
@@ -204,22 +212,20 @@ export default function Stage2({
     originalData.current = initialFormData;
   }, [data, reloadTrigger, company]);
 
-  // The new function to use in all stage files
   const handleChange = (field, value) => {
     let processedValue = value;
 
-    // Normalize "N/R" to "nr" before setting the state
+    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     if (
-      typeof processedValue === "string" &&
-      processedValue.toLowerCase().trim() === "n/r"
+      fieldConfig &&
+      fieldConfig.type === "radio" &&
+      typeof processedValue === "string"
     ) {
-      processedValue = "nr";
+      processedValue = normalizeValue(processedValue);
     }
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
 
-    // If you have status logic like in Stage1, make sure it uses the new 'processedValue'
-    const fieldConfig = currentFields.find((f) => f.name === field);
     if (fieldConfig && fieldConfig.type === "radio") {
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
@@ -233,28 +239,24 @@ export default function Stage2({
     setIsSaving(true);
 
     try {
-      const payload = { ...formData }; // Start with all form data
-
-      // Dynamically generate and attach the final notes
+      const payload = { ...formData };
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
 
-        // Clean up intermediate note keys from payload
         delete payload[group.systemNoteKey];
         delete payload[group.clientCommentKey];
       });
 
-      // Simple status check for API call
       const allCompleted = currentConfig.fields.every(
         (f) => getStatus(formData[f.name]) === "Completed"
       );
-      const formStatus = allCompleted ? "green" : "amber"; // Simplified logic
-
+      const formStatus = allCompleted ? "green" : "amber";
       await api.upsertStageTwo(matterNumber, formStatus, payload);
-      originalData.current = { ...formData }; // Update original data snapshot
+
+      originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
     } catch (error) {
       console.error("Failed to update stage 2:", error);
@@ -279,6 +281,7 @@ export default function Stage2({
           </p>
         </div>
       </div>
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label
@@ -290,13 +293,15 @@ export default function Stage2({
               name={field.name}
               value={val}
               checked={
-                (formData[field.name] || "").toLowerCase() === val.toLowerCase()
+                normalizeValue(formData[field.name] || "") ===
+                normalizeValue(val)
               }
               onChange={() => handleChange(field.name, val)}
             />
             {val}
           </label>
         ))}
+
         {field.hasDate && (
           <input
             type="date"

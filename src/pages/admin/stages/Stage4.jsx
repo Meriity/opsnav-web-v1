@@ -4,7 +4,6 @@ import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 
-// --- Configuration Object for Stage 4 ---
 const formConfig = {
   vkl: {
     fields: [
@@ -22,7 +21,7 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["dts", "dutyOnline", "soa", "frcgw"], // Only radio fields affect the note
+        fieldsForNote: ["dts", "dutyOnline", "soa", "frcgw"],
       },
     ],
   },
@@ -73,7 +72,6 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        // All fields in IDG's config are radio types and should affect the note
         fieldsForNote: [
           "createArtwork",
           "approveDesign",
@@ -89,7 +87,39 @@ const formConfig = {
   },
 };
 
-// --- Component Definition ---
+const normalizeValue = (v) => {
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
+};
+
+const getStatus = (value) => {
+  const val = normalizeValue(value);
+  if (!val) return "Not Completed";
+  if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
+  if (val === "no") return "Not Completed";
+  if (["processing", "inprogress"].includes(val)) return "In Progress";
+  return "Not Completed";
+};
+
+function bgcolor(status) {
+  const statusColors = {
+    Completed: "bg-[#00A506] text-white",
+    "Not Completed": "bg-[#FF0000] text-white",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+  };
+  return statusColors[status] || "bg-[#FF0000] text-white";
+}
+
+const extractNotes = (note = "") => {
+  const [systemNote = "", clientComment = ""] = (note || "")
+    .split(" - ")
+    .map((str) => str.trim());
+  return { systemNote, clientComment };
+};
+
 export default function Stage4({
   changeStage,
   data,
@@ -108,46 +138,20 @@ export default function Stage4({
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
 
-  const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
-    return "Not Completed";
-  };
-
-  function bgcolor(status) {
-    const statusColors = {
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
-    };
-    return statusColors[status] || "bg-[#FF0000] text-white";
-  }
-
-  const extractNotes = (note = "") => {
-    const [systemNote = "", clientComment = ""] = (note || "")
-      .split(" - ")
-      .map((str) => str.trim());
-    return { systemNote, clientComment };
-  };
-
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
       (ng) => ng.id === noteGroupId
     );
     if (!noteGroup) return "";
 
-    const greenValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
 
     const incomplete = fieldsToCheck
       .filter(
-        (field) =>
-          !greenValues.includes((formData[field.name] || "").toLowerCase())
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
 
@@ -168,12 +172,11 @@ export default function Stage4({
           typeof rawPrice === "object" && rawPrice?.$numberDecimal
             ? rawPrice.$numberDecimal
             : rawPrice?.toString() || "";
+      } else if (field.type === "radio") {
+        initialFormData[field.name] = normalizeValue(data[field.name] || "");
+        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
       } else {
         initialFormData[field.name] = data[field.name] || "";
-      }
-
-      if (field.type === "radio") {
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
       }
     });
 
@@ -189,13 +192,8 @@ export default function Stage4({
 
   const handleChange = (field, value) => {
     let processedValue = value;
-
-    // Normalize "N/R" to "nr" before setting the state
-    if (
-      typeof processedValue === "string" &&
-      processedValue.toLowerCase().trim() === "n/r"
-    ) {
-      processedValue = "nr";
+    if (typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
     }
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
@@ -221,10 +219,9 @@ export default function Stage4({
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey]; // Clean up temp key
+        delete payload[group.clientCommentKey]; 
       });
 
-      // Ensure number fields are sent as numbers or null
       currentConfig.fields.forEach((field) => {
         if (field.type === "number") {
           payload[field.name] =
@@ -272,10 +269,8 @@ export default function Stage4({
                     name={field.name}
                     value={val}
                     checked={
-                      (formData[field.name] || "").toLowerCase() ===
-                        val.toLowerCase() ||
-                      (val.toLowerCase() === "n/r" &&
-                        (formData[field.name] || "").toLowerCase() === "nr")
+                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
                   />
