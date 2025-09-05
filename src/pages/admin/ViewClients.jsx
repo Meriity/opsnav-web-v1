@@ -77,7 +77,10 @@ const ViewClients = () => {
     setClientList(filteredData);
   }, [settlementDate, Clients, searchQuery]);
 
-  const columns = [
+
+  let columns = [];
+  if(localStorage.getItem("company")==="vkl"){
+  columns = [
     { key: "matternumber", title: "Matter Number", width: "8%" },
     { key: "dataentryby", title: "Data Entry By", width: "10%" },
     { key: "client_name", title: "Client Name", width: "10%" },
@@ -96,6 +99,17 @@ const ViewClients = () => {
       width: "10%",
     },
   ];
+}else if(localStorage.getItem("company")==="idg"){
+   columns = [
+  { key: 'matternumber', title: 'Client ID', width: '10%' },
+  { key: 'dataentryby', title: 'Data Entry By', width: '15%' },
+  { key: 'client_name', title: 'Client Name', width: '10%' },
+  { key: 'property_address', title: 'Billing Address', width: '15%' },
+  { key: 'client_type', title: 'Client Type', width: '10%' },
+  // { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+  { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+];
+}
 
   const api = new ClientAPI();
   async function handelReShareEmail() {
@@ -208,10 +222,10 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
-      <div className="space-y-4">
+      <div className="space-y-4 p-2">
         <Header />
 
-        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-2">
+        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
             View Clients
           </h3>
@@ -347,7 +361,7 @@ const ViewClients = () => {
         ) : clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">Data not found</div>
         ) : (
-          <div className="px-0.5">
+          <div className="px-5">
             <ViewClientsTable
               data={clientList}
               columns={columns}

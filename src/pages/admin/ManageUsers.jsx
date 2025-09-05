@@ -193,9 +193,10 @@ export default function ManageUsers() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
-      <main className="w-full max-w-8xl mx-auto">
+    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
         <Header />
+      <main className="w-full max-w-8xl mx-auto p-5">
+
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">Manage Users</h2>

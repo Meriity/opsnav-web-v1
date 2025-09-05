@@ -77,7 +77,7 @@ const DashboardLayout = () => {
 
       {/* Main Content Area - Fixed to show on all screens */}
       <div className="flex-1 h-full overflow-y-auto">
-        <div className="p-4 w-full">
+        <div className="w-full">
           <Outlet />
           <Footer />
         </div>

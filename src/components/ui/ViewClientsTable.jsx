@@ -22,7 +22,7 @@ const ViewClientsTable = ({
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
-
+  console.log(columns);
   const stageColorMap = {
     green: "green",
     red: "red",
@@ -228,7 +228,7 @@ const ViewClientsTable = ({
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-gray-500">Matter #</p>
+                <p className="text-xs text-gray-500">{localStorage.getItem("company")==="vkl" ? "Matter Number" : localStorage.getItem("company")==="idg" ? "Client ID" : "Reg Number"}</p>
                 <p className=" text-blue-600">{item.matternumber}</p>
               </div>
               <div className="flex items-center space-x-2">
@@ -263,18 +263,18 @@ const ViewClientsTable = ({
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">Client</p>
+              <p className="text-xs text-gray-500">Client Name</p>
               <p className="font-semibold break-words">{item.client_name}</p>
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">Address</p>
+              <p className="text-xs text-gray-500">{localStorage.getItem("company")==="vkl" ? "Property Address" : localStorage.getItem("company")==="idg" ? "Billing Address" : "Address"}</p>
               <p className="text-sm break-words">{item.property_address}</p>
             </div>
 
             <div className="flex justify-between text-xs pt-2">
               <div>
-                <p className="text-gray-500">Settlement</p>
+                <p className="text-gray-500">{localStorage.getItem("company")==="vkl" ? "Settlement Date" : localStorage.getItem("company")==="idg" ? "Delivery Date" : "Date"}</p>
                 <p>{formatDate(item.settlement_date)}</p>
               </div>
               <div>

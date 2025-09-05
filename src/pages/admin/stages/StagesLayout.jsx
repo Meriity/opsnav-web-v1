@@ -46,7 +46,7 @@ export default function StagesLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const stages = [
+  let stages = [
     { id: 1, title: "Retainer/Declaration" },
     { id: 2, title: "VOI/CAF/Approvals" },
     { id: 3, title: "Searches/PEXA" },
@@ -54,6 +54,27 @@ export default function StagesLayout() {
     { id: 5, title: "Notify/Transfer/Disb" },
     { id: 6, title: "Final Letter/Close" },
   ];
+
+  if(localStorage.getItem("company")==="vkl"){
+    stages = [
+    { id: 1, title: "Retainer/Declaration" },
+    { id: 2, title: "VOI/CAF/Approvals" },
+    { id: 3, title: "Searches/PEXA" },
+    { id: 4, title: "DTS/DOL/SOA" },
+    { id: 5, title: "Notify/Transfer/Disb" },
+    { id: 6, title: "Final Letter/Close" },
+  ];
+  }
+  else if(localStorage.getItem("company")==="idg"){
+     stages = [
+    { id: 1, title: "Initiate" },
+    { id: 2, title: "Approve" },
+    { id: 3, title: "Plan" },
+    { id: 4, title: "Prepare" },
+    { id: 5, title: "Process" },
+    { id: 6, title: "Final Deliver" },
+  ];
+  }
 
   function bgcolor(status) {
     const statusColors = {
@@ -542,7 +563,7 @@ export default function StagesLayout() {
                     {/* Second Row - 2 columns */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Property Address
+                        {localStorage.getItem("company")==="vkl"?"Property Address":company==="idg"?"Billing Address":"Address"}
                       </label>
                       <input
                         type="text"

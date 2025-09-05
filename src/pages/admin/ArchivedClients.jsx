@@ -89,7 +89,9 @@ export default function ArchivedClients() {
     setClientList(filteredData);
   }, [archivedClients, fromDate, toDate, searchQuery]);
 
-  const columns = [
+  let columns=[];
+  if(localStorage.getItem("company")==="vkl"){
+   columns = [
     { key: "matternumber", title: "Matter Number" },
     { key: "client_name", title: "Client Name" },
     { key: "property_address", title: "Property Address" },
@@ -99,6 +101,19 @@ export default function ArchivedClients() {
     { key: "settlement_date", title: "Settlement Date" },
     { key: "status", title: "Status" },
   ];
+}
+else if(localStorage.getItem("company")==="idg"){
+   columns = [
+    { key: "matternumber", title: "Client ID" },
+    { key: "client_name", title: "Client Name" },
+    { key: "property_address", title: "Billing Address" },
+    { key: "state", title: "State" },
+    { key: "type", title: "Client Type" },
+    { key: "matter_date", title: "Order Date" },
+    { key: "settlement_date", title: "Delivery Date" },
+    { key: "status", title: "Status" },
+  ];
+}
 
   const handleSort = (columnKey) => {
     const isAsc = sortedColumn === columnKey && sortDirection === "asc";
@@ -210,9 +225,10 @@ export default function ArchivedClients() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden">
-      <main className="w-full max-w-8xl mx-auto">
-        <Header />
+    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
+              <Header />
+      <main className="w-full max-w-8xl mx-auto p-5">
+
 
         {/* Toolbar */}
         <div className="flex justify-between items-center mb-4">
