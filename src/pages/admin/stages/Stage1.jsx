@@ -110,13 +110,21 @@ export default function Stage1({
   const company = localStorage.getItem("company") || "vkl"; // Default to 'vkl'
   const currentFields = formConfig[company] || formConfig.vkl; // Fallback to 'vkl' config
 
+  // Helper to normalize/standardize values for comparison and storage
+  const normalizeValue = (v) => {
+    if (v === undefined || v === null) return "";
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+  };
+
   const getStatus = (value) => {
-    if (typeof value !== "string") return "Not Completed";
-    const val = value.toLowerCase().trim();
-    const completed = ["yes", "nr", "n/r", "na", "n/a", "variable", "fixed"];
-    if (completed.includes(val)) return "Completed";
+    const val = normalizeValue(value);
+    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+    if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress"].includes(val)) return "In Progress";
     return "Not Completed";
   };
 
@@ -124,7 +132,7 @@ export default function Stage1({
     const statusColors = {
       Completed: "bg-[#00A506] text-white",
       "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]", // Corrected key from 'In progress'
+      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
     };
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
@@ -136,14 +144,13 @@ export default function Stage1({
     return { systemNote, clientComment };
   }
 
-  // Generic function to generate system note based on the current fields
   const generateSystemNote = () => {
     const radioFields = currentFields.filter((field) => field.type === "radio");
-    const greenValues = ["yes", "nr", "n/r", "na", "n/a", "variable", "fixed"];
+    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]); 
 
     const notReceived = radioFields
       .filter(
-        (field) => !greenValues.includes(formData[field.name]?.toLowerCase())
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
 
@@ -163,13 +170,16 @@ export default function Stage1({
     const initialFormData = {};
     const initialStatuses = {};
 
-    // Populate form data and statuses based on the client's configuration
     currentFields.forEach((field) => {
       if (field.name === "quoteAmount") {
         initialFormData[field.name] =
           data[field.name]?.$numberDecimal || data[field.name] || "";
       } else {
-        initialFormData[field.name] = data[field.name] || "";
+        if (field.type === "radio") {
+          initialFormData[field.name] = normalizeValue(data[field.name] || "");
+        } else {
+          initialFormData[field.name] = data[field.name] || "";
+        }
       }
 
       if (field.type === "radio") {
@@ -183,14 +193,20 @@ export default function Stage1({
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
-  }, [data, reloadTrigger, company]); // Add 'company' as a dependency
+  }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
     const fieldConfig = currentFields.find((f) => f.name === field);
+    let processedValue = value;
+
     if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(value) }));
+      processedValue = normalizeValue(value);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+
+    if (fieldConfig && fieldConfig.type === "radio") {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
   };
 
@@ -213,7 +229,7 @@ export default function Stage1({
         ...formData,
         noteForClient,
       };
-      delete payload.systemNote; // systemNote is part of noteForClient
+      delete payload.systemNote; 
       delete payload.clientComment;
 
       await api.upsertStageOne(payload);
@@ -227,7 +243,6 @@ export default function Stage1({
     }
   }
 
-  // Helper to render a field based on its configuration
   const renderField = (field) => {
     switch (field.type) {
       case "text":
@@ -262,7 +277,11 @@ export default function Stage1({
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 justify-between flex-wrap">
+            <div
+              className={`flex gap-4 ${
+                field.options.length > 2 ? "justify-between" : ""
+              } flex-wrap`}
+            >
               {field.options.map((val) => (
                 <label
                   key={val}
@@ -273,8 +292,8 @@ export default function Stage1({
                     name={field.name}
                     value={val}
                     checked={
-                      (formData[field.name] || "").toLowerCase() ===
-                      val.toLowerCase()
+                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
                   />
@@ -284,20 +303,20 @@ export default function Stage1({
             </div>
           </div>
         );
-      
+
       case "system-note":
         return (
-             <div key={field.name} className="mt-5">
-                <label className="block mb-1 text-sm md:text-base font-bold">
-                    {field.label}
-                </label>
-                <input
-                    type="text"
-                    value={generateSystemNote()}
-                    disabled
-                    className="w-full rounded p-2 bg-gray-100"
-                />
-            </div>
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={generateSystemNote()}
+              disabled
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
         );
 
       case "textarea":
@@ -321,13 +340,9 @@ export default function Stage1({
 
   return (
     <div className="overflow-y-auto">
-      {/* Dynamically render fields based on company config */}
       {currentFields.map((field) => renderField(field))}
-
-      {/* Render common fields */}
       {commonFields.map((field) => renderField(field))}
 
-      {/* Buttons */}
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"

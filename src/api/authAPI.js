@@ -26,7 +26,7 @@ class AuthAPI {
     });
 
     const data = await response.json();
-    console.log("Full login response:", data); // <-- Check this in browser console
+    console.log("Full login response:", data);
 
     if (!response.ok) {
       throw new Error(

@@ -13,51 +13,61 @@ export default function Stage3({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
-  let fields=[];
-  if(localStorage.getItem('company')==="vkl") {
-  fields = [
-    { key: "titleSearch", label: "Title Search" },
-    { key: "planImage", label: "Plan Image" },
-    { key: "landTax", label: "Land Tax" },
-    { key: "instrument", label: "Instrument" },
-    { key: "rates", label: "Rates" },
-    { key: "water", label: "Water" },
-    { key: "ownersCorp", label: "Owners Corp" },
-    { key: "pexa", label: "PEXA" },
-    { key: "inviteBank", label: "Invite Bank" },
-  ];
-}
-else if (localStorage.getItem('company')==="idg"){
-   fields = [
-    { key: "assign_agent", label: "Assign Agent / Team Member" },
-    { key: "materils_needed", label: "Check if Materials Needed are in stock" },
-    { key: "additional materials", label: "Procure additional materials if required" },
-    { key: "job_priority", label: "Confirm Job Priority" },
-    { key: "schedule_activity", label: "Schedule Job Activity" },
-    { key: "allocate_vehicle", label: "Allocate Vehicle / Installer" },
-    { key: "finalize", label: "Finalize Draft Cost Sheet (Fixed + Variable)" },
-    { key: "Approve Plan", label: "Approve plan and move to preparation" },
-  ];
-}
 
-  // const getStatus = (value) => {
-  //   if (!value) return "Not Completed";
-  //   const val = value.toLowerCase().trim();
-  //   if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
-  //   if (val === "no") return "Not Completed";
-  //   if (["processing", "in progress"].includes(val)) return "In Progress";
-  //   return "Not Completed";
-  // };
+  // fields config
+  let fields = [];
+  if (localStorage.getItem("company") === "vkl") {
+    fields = [
+      { key: "titleSearch", label: "Title Search", hasDate: true },
+      { key: "planImage", label: "Plan Image" },
+      { key: "landTax", label: "Land Tax" },
+      { key: "instrument", label: "Instrument" },
+      { key: "rates", label: "Rates" },
+      { key: "water", label: "Water" },
+      { key: "ownersCorp", label: "Owners Corp" },
+      { key: "pexa", label: "PEXA" },
+      { key: "inviteBank", label: "Invite Bank" },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    fields = [
+      { key: "assign_agent", label: "Assign Agent / Team Member" },
+      {
+        key: "materils_needed",
+        label: "Check if Materials Needed are in stock",
+      },
+      {
+        key: "additional materials",
+        label: "Procure additional materials if required",
+      },
+      { key: "job_priority", label: "Confirm Job Priority" },
+      { key: "schedule_activity", label: "Schedule Job Activity" },
+      { key: "allocate_vehicle", label: "Allocate Vehicle / Installer" },
+      {
+        key: "finalize",
+        label: "Finalize Draft Cost Sheet (Fixed + Variable)",
+      },
+      { key: "Approve Plan", label: "Approve plan and move to preparation" },
+    ];
+  }
+
+  const normalizeValue = (v) => {
+    if (v === undefined || v === null) return "";
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+  };
 
   const getStatus = (value) => {
-    if (!value || typeof value !== "string") return "Not Completed";
-    const val = value.toLowerCase().trim();
+    const val = normalizeValue(value);
+    if (!val) return "Not Completed";
     const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
     if (completedValues.includes(val)) {
       return "Completed";
     }
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress", "in progress"].includes(val))
+      return "In Progress";
     return "Not Completed";
   };
 
@@ -65,7 +75,7 @@ else if (localStorage.getItem('company')==="idg"){
     const statusColors = {
       Completed: "bg-[#00A506] text-white",
       "Not Completed": "bg-[#FF0000] text-white",
-      "In progress": "bg-[#FFEECF] text-[#FF9500]",
+      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
     };
     return statusColors[status] || "bg-[#FF0000] text-white";
   };
@@ -76,10 +86,10 @@ else if (localStorage.getItem('company')==="idg"){
   const originalData = useRef({});
 
   const updateNoteForClient = () => {
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
     const incompleteTasks = fields
       .filter(
-        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+        ({ key }) => !completedValues.has(normalizeValue(formState[key] || ""))
       )
       .map(({ label }) => label);
 
@@ -88,7 +98,6 @@ else if (localStorage.getItem('company')==="idg"){
     return `Pending: ${incompleteTasks.join(", ")}`;
   };
 
-  // ✅ Load stage data
   useEffect(() => {
     if (!data) return;
 
@@ -96,27 +105,27 @@ else if (localStorage.getItem('company')==="idg"){
     const newStatusState = {};
 
     fields.forEach(({ key, hasDate }) => {
-      const value = data[key] || "";
-      newFormState[key] = value;
-      newStatusState[key] = getStatus(value);
+      const rawValue = data[key] || "";
+      newFormState[key] = normalizeValue(rawValue);
+      newStatusState[key] = getStatus(newFormState[key]);
 
       if (hasDate) {
         newFormState[`${key}Date`] = data[`${key}Date`]
-          ? data[`${key}Date`].split("T")[0] // format for <input type="date" />
+          ? data[`${key}Date`].split("T")[0]
           : "";
       }
     });
 
-    const noteParts = data.noteForClient?.split(" - ") || [];
-    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
+    const noteParts = (data.noteForClient || "").split(" - ");
+    const clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
 
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setClientComment(clientComment);
+    setClientComment(clientCommentPart);
 
     originalData.current = {
       ...newFormState,
-      clientComment,
+      clientComment: clientCommentPart,
       systemNote: noteParts[0]?.trim() || updateNoteForClient(),
     };
   }, [data, reloadTrigger]);
@@ -148,7 +157,28 @@ else if (localStorage.getItem('company')==="idg"){
     return formChanged || dateChanged || commentChanged || noteChanged;
   }
 
-  // ✅ Save handler
+  const handleChange = (key, value, hasDate) => {
+    let processedValue = value;
+    if (typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
+    }
+
+    setFormState((prev) => ({ ...prev, [key]: processedValue }));
+    setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
+
+    if (hasDate) {
+      if (processedValue === "yes") {
+        setFormState((prev) => ({
+          ...prev,
+          [`${key}Date`]:
+            prev[`${key}Date`] || new Date().toISOString().split("T")[0],
+        }));
+      } else {
+        setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
+      }
+    }
+  };
+
   async function handleSave() {
     if (!isChanged()) return;
 
@@ -163,7 +193,7 @@ else if (localStorage.getItem('company')==="idg"){
         matterNumber,
         ...formState,
         noteForClient: fullNote,
-        titleSearchDate: formState.titleSearchDate || null, // ✅ send date
+        titleSearchDate: formState.titleSearchDate || null,
       };
 
       await api.upsertStageThree(payload);
@@ -182,7 +212,6 @@ else if (localStorage.getItem('company')==="idg"){
     }
   }
 
-  // ✅ Render radios + optional date
   const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
       <div className="flex gap-4 items-center justify-between mb-3">
@@ -190,15 +219,16 @@ else if (localStorage.getItem('company')==="idg"){
           {label}
         </label>
         <div
-          className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
-            statusState[key] === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
+          className={`w-[90px] h-[18px] ${bgcolor(
+            statusState[key]
+          )} flex items-center justify-center rounded-4xl`}
         >
           <p className="text-[10px] md:text-[12px] whitespace-nowrap">
             {statusState[key]}
           </p>
         </div>
       </div>
+
       <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label
@@ -209,23 +239,16 @@ else if (localStorage.getItem('company')==="idg"){
               type="radio"
               name={key}
               value={val}
-              checked={formState[key]?.toLowerCase() === val.toLowerCase()}
-              onChange={() => {
-                setFormState((prev) => ({ ...prev, [key]: val }));
-                setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
-                if (hasDate && val.toLowerCase() === "yes") {
-                  setFormState((prev) => ({
-                    ...prev,
-                    [`${key}Date`]:
-                      prev[`${key}Date`] ||
-                      new Date().toISOString().split("T")[0],
-                  }));
-                }
-              }}
+              // compare normalized values
+              checked={
+                normalizeValue(formState[key] || "") === normalizeValue(val)
+              }
+              onChange={() => handleChange(key, val, hasDate)}
             />
             {val}
           </label>
         ))}
+
         {hasDate && (
           <input
             type="date"

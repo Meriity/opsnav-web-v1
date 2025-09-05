@@ -22,7 +22,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Calendar Imports ---
 import moment from "moment";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
@@ -70,8 +70,39 @@ const CustomEvent = ({ event }) => {
   );
 };
 
-// --- Helper Components & Hooks ---
+// --- Custom Agenda Renderer with spacing ---
+const CustomAgendaEvent = ({ event }) => (
+  <div className="mb-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition shadow-sm">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      {/* Left side: Title + Date */}
+      <div className="flex flex-col">
+        <span className="font-semibold text-gray-800 text-sm sm:text-base">
+          {event.title}
+        </span>
+        <span className="text-xs text-gray-500 mt-1">
+          {moment(event.start).format("DD MMM YYYY")}
+        </span>
+      </div>
 
+      {/* Right side: Client type */}
+      <span
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
+          event.type === "buildingAndPest"
+            ? "bg-purple-100 text-purple-700"
+            : event.type === "financeApproval"
+            ? "bg-orange-100 text-orange-700"
+            : "bg-blue-100 text-blue-700"
+        }`}
+      >
+        {event.clientType}
+      </span>
+    </div>
+  </div>
+  
+);
+
+
+// --- Helper Hooks ---
 const useWindowSize = () => {
   const [windowSize, setWindowSize] = useState({
     width: undefined,
@@ -91,6 +122,7 @@ const useWindowSize = () => {
   return windowSize;
 };
 
+// --- Custom Toolbar ---
 const ResponsiveCalendarToolbar = ({
   label,
   onNavigate,
@@ -164,7 +196,7 @@ function Dashboard() {
     allTime: [],
   });
   const [currentChartData, setCurrentChartData] = useState([]);
-  const [calendarEvents, setCalendarEvents] = useState([]); // State for calendar events
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
@@ -185,7 +217,7 @@ function Dashboard() {
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
-  // Effect for general dashboard data (charts, stats)
+  // Fetch dashboard data
   useEffect(() => {
     const fetchAndSetData = async () => {
       try {
@@ -205,6 +237,7 @@ function Dashboard() {
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
 
+  // Fetch calendar events
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
@@ -243,6 +276,7 @@ function Dashboard() {
     fetchCalendarData();
   }, [clientApi]);
 
+  // Handle chart view switch
   useEffect(() => {
     if (chartView === "last10Months") {
       const ten = (allChartData.tenMonths || []).slice(-10);
@@ -263,6 +297,7 @@ function Dashboard() {
     }
   }, [chartView, allChartData]);
 
+  // Archived fetch
   useEffect(() => {
     if (!isArchivedFetched) {
       fetchArchivedClients();
@@ -277,24 +312,23 @@ function Dashboard() {
     );
   }, [currentChartData]);
 
-  const eventStyleGetter = useCallback((event, start, end, isSelected) => {
-    let backgroundColor = "#3174ad"; // Default color
+  const eventStyleGetter = useCallback((event) => {
+    let backgroundColor = "#3174ad";
     if (event.type === "buildingAndPest") {
-      backgroundColor = "#B24592"; //violet
+      backgroundColor = "#B24592";
     } else if (event.type === "financeApproval") {
-      backgroundColor = "#f83600"; //orange
+      backgroundColor = "#f83600";
     }
 
-    const style = {
-      backgroundColor,
-      borderRadius: "0px",
-      opacity: 0.8,
-      color: "white",
-      border: "0px",
-      display: "block",
-    };
     return {
-      style: style,
+      style: {
+        backgroundColor,
+        borderRadius: "6px",
+        opacity: 0.9,
+        color: "white",
+        border: "0px",
+        padding: "2px 6px",
+      },
     };
   }, []);
 
@@ -312,14 +346,11 @@ function Dashboard() {
 
   const { views, defaultView } = useMemo(() => {
     if (isMobile) {
-      return {
-        views: ["agenda", "day"],
-        defaultView: "agenda",
-      };
+      return { views: [Views.AGENDA, Views.DAY], defaultView: Views.AGENDA };
     }
     return {
-      views: ["month", "week", "day", "agenda"],
-      defaultView: "month",
+      views: [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA],
+      defaultView: Views.MONTH,
     };
   }, [isMobile]);
 
@@ -370,6 +401,7 @@ function Dashboard() {
             }
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <StatCard
               icon={ManageUsersIcon}
@@ -388,6 +420,7 @@ function Dashboard() {
             />
           </div>
 
+          {/* Chart */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-700">
@@ -449,6 +482,7 @@ function Dashboard() {
             )}
           </div>
 
+          {/* Calendar */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
               Important Dates
@@ -468,6 +502,7 @@ function Dashboard() {
                 eventPropGetter={eventStyleGetter}
                 components={{
                   event: CustomEvent,
+                  agenda: { event: CustomAgendaEvent },
                   toolbar: ResponsiveCalendarToolbar,
                 }}
               />

@@ -15,7 +15,7 @@ class ClientAPI {
     };
   }
 
-  // --- NEW FUNCTION TO GET CALENDAR DATES ---
+  // --- FUNCTION TO GET CALENDAR DATES ---
   async getCalendarDates() {
     try {
       // The endpoint you provided is used here
@@ -75,7 +75,7 @@ class ClientAPI {
       throw error;
     }
   }
-  
+
   // Insert/Update Stage One
   async upsertStageOne(matterNumber, colorStatus, additionalData = {}) {
     try {
@@ -134,7 +134,6 @@ class ClientAPI {
           ...additionalData,
         }),
       });
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -375,7 +374,6 @@ class ClientAPI {
     }
   }
 
-  // ✅ Calls dashboard with explicit ranges and normalizes the payload
   async getDashboardData() {
     const fetchRange = async (range) => {
       const res = await fetch(`${this.baseUrl}/dashboard?range=${range}`, {
@@ -387,7 +385,6 @@ class ClientAPI {
     };
 
     try {
-      // 10 months (backend expects lowercase 'tenmonths'; try camelCase fallback)
       let tenData;
       try {
         tenData = await fetchRange("tenmonths");
