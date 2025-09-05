@@ -155,7 +155,6 @@ function Dashboard() {
     isFetched: isArchivedFetched,
     fetchArchivedClients,
   } = useArchivedClientStore();
-
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -168,6 +167,21 @@ function Dashboard() {
   const [calendarEvents, setCalendarEvents] = useState([]); // State for calendar events
   const { width } = useWindowSize();
   const isMobile = width < 768;
+
+  const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const company = localStorage.getItem("company");
+    const closedLabel = company === "idg" ? "Closed Orders" : company === "vkl" ? "Closed Matters":"Closed";
+
+    return (
+      <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
+        <p className="font-semibold">{label}</p>
+        <p>{`${closedLabel}: ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
@@ -329,16 +343,14 @@ function Dashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-100 p-2">
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
             <p className="text-sm mt-1 text-gray-800 max-w-5xl">
-              We are a client-focused law firm committed to delivering expert
-              legal solutions with integrity, professionalism, and personalized
-              care.
+              Your operations. Simplified. Amplified.
             </p>
             <button
               className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
@@ -379,7 +391,7 @@ function Dashboard() {
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-700">
-                Closed Matters (
+                {localStorage.getItem("company")==="vkl" ? "Closed Matters" : localStorage.getItem("company")==="idg" ? "Closed Orders" :"Closed"} (
                 {chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
@@ -415,7 +427,7 @@ function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar
                       dataKey="closedMatters"
                       fill="#00AEEF"
@@ -426,7 +438,7 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord} Matters Solved In Last Month
+                    {lastrecord} {localStorage.getItem("company")==="vkl" ? "Matters Solved In Last Month" : localStorage.getItem("company")==="idg" ? "Orders Closed In Last Month" : "Closed"}
                   </p>
                 )}
               </>
@@ -471,6 +483,7 @@ function Dashboard() {
       />
       <CreateClientModal
         createType="order"
+        companyName={localStorage.getItem("company")}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
