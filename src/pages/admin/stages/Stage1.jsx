@@ -3,32 +3,102 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 
+// Configuration object for different clients
+const formConfig = {
+  vkl: [
+    { name: "referral", label: "Referral", type: "text" },
+    {
+      name: "retainer",
+      label: "Retainer",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "declarationForm",
+      label: "Declaration form",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "contractReview",
+      label: "Contract Review",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "quoteType",
+      label: "Quote Type",
+      type: "radio",
+      options: ["Variable", "Fixed"],
+    },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+    {
+      name: "tenants",
+      label: "Tenants",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+  ],
+  idg: [
+    {
+      name: "verifyCustomerDetails",
+      label: "Verify Customer Details",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "validateJobAddress",
+      label: "Validate Job Address",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "checkDistanceFeasibility",
+      label: "Check Distance / Feasibility",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "identifyOrderType",
+      label: "Identify Order Type",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "confirmCostingType",
+      label: "Confirm Costing Type",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "recordRequestedTimeline",
+      label: "Record Requested Timeline / Deadline",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "saveOrderReadyForApproval",
+      label: "Save order as ready for approval",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+  ],
+};
+
+// Common fields for all clients
+const commonFields = [
+  { name: "systemNote", label: "System note for client", type: "system-note" },
+  { name: "clientComment", label: "Comment for client", type: "textarea" },
+];
+
 export default function Stage1({
   changeStage,
   data,
   reloadTrigger,
   setReloadTrigger,
 }) {
-  const [formData, setFormData] = useState({
-    referral: "",
-    retainer: "",
-    declarationForm: "",
-    contractReview: "",
-    quoteType: "",
-    quoteAmount: "",
-    tenants: "",
-    systemNote: "",
-    clientComment: "",
-  });
-
-  const [statuses, setStatuses] = useState({
-    retainer: "In Progress",
-    declaration: "In Progress",
-    contract: "In Progress",
-    quoteType: "In Progress",
-    tenants: "In Progress",
-  });
-
+  const [formData, setFormData] = useState({});
+  const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const originalData = useRef({});
 
@@ -36,39 +106,35 @@ export default function Stage1({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
 
+  // Determine the company and get its specific configuration
+  const company = localStorage.getItem("company") || "vkl"; // Default to 'vkl'
+  const currentFields = formConfig[company] || formConfig.vkl; // Fallback to 'vkl' config
+
+  // Helper to normalize/standardize values for comparison and storage
+  const normalizeValue = (v) => {
+    if (v === undefined || v === null) return "";
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+  };
+
   const getStatus = (value) => {
-    if (typeof value !== "string") return "Not Completed"; // Default for new clients
-
-    const val = value.toLowerCase().trim();
-
-    // Completed statuses
-    if (
-      val === "yes" ||
-      val === "nr" ||
-      val === "n/r" ||
-      val === "na" ||
-      val === "n/a" ||
-      val === "Variable" ||
-      val === "Fixed"
-    )
-      return "Completed";
-
-    // Not Completed statuses
+    const val = normalizeValue(value);
+    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+    if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
-
-    // In progress statuses
-    if (val === "processing" || val === "in progress") return "In Progress";
-
-    return "Not Completed"; // Default fallback
+    if (["processing", "inprogress"].includes(val)) return "In Progress";
+    return "Not Completed";
   };
 
   function bgcolor(status) {
     const statusColors = {
-      Completed: "bg-[#00A506] text-white", // Green
-      "Not Completed": "bg-[#FF0000] text-white", // Red
-      "In progress": "bg-[#FFEECF] text-[#FF9500]", // Amber/Yellow
+      Completed: "bg-[#00A506] text-white",
+      "Not Completed": "bg-[#FF0000] text-white",
+      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
     };
-    return statusColors[status] || "bg-[#FF0000] text-white"; // Default to red
+    return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
   function extractNotes(note = "") {
@@ -78,62 +144,69 @@ export default function Stage1({
     return { systemNote, clientComment };
   }
 
-  // Initialize form data
+  const generateSystemNote = () => {
+    const radioFields = currentFields.filter((field) => field.type === "radio");
+    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]); 
+
+    const notReceived = radioFields
+      .filter(
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+      )
+      .map((field) => field.label);
+
+    if (notReceived.length === 0) {
+      return "Tasks completed";
+    }
+    if (notReceived.length === 1) {
+      return `${notReceived[0]} not received`;
+    }
+    return `${notReceived.join(", ")} not received`;
+  };
+
   useEffect(() => {
     if (!data) return;
 
     const { systemNote, clientComment } = extractNotes(data.noteForClient);
+    const initialFormData = {};
+    const initialStatuses = {};
 
-    const newFormData = {
-      referral: data.referral || "",
-      retainer: data.retainer || "",
-      declarationForm: data.declarationForm || "",
-      contractReview: data.contractReview || "",
-      quoteType: data.quoteType || "",
-      quoteAmount: data.quoteAmount?.$numberDecimal || data.quoteAmount || "",
-      tenants: data.tenants || "",
-      systemNote,
-      clientComment,
-    };
+    currentFields.forEach((field) => {
+      if (field.name === "quoteAmount") {
+        initialFormData[field.name] =
+          data[field.name]?.$numberDecimal || data[field.name] || "";
+      } else {
+        if (field.type === "radio") {
+          initialFormData[field.name] = normalizeValue(data[field.name] || "");
+        } else {
+          initialFormData[field.name] = data[field.name] || "";
+        }
+      }
 
-    setFormData(newFormData);
-
-    setStatuses({
-      retainer: getStatus(newFormData.retainer),
-      declaration: getStatus(newFormData.declarationForm),
-      contract: getStatus(newFormData.contractReview),
-      quoteType: getStatus(newFormData.quoteType),
-      tenants: getStatus(newFormData.tenants),
+      if (field.type === "radio") {
+        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      }
     });
 
-    originalData.current = newFormData;
-  }, [data, reloadTrigger]);
+    initialFormData.systemNote = systemNote;
+    initialFormData.clientComment = clientComment;
+
+    setFormData(initialFormData);
+    setStatuses(initialStatuses);
+    originalData.current = initialFormData;
+  }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    const fieldConfig = currentFields.find((f) => f.name === field);
+    let processedValue = value;
 
-    if (
-      ["retainer", "declarationForm", "contractReview", "tenants"].includes(
-        field
-      )
-    ) {
-      setStatuses((prev) => ({
-        ...prev,
-        [field === "declarationForm"
-          ? "declaration"
-          : field === "contractReview"
-          ? "contract"
-          : field]: getStatus(value),
-      }));
+    if (fieldConfig && fieldConfig.type === "radio") {
+      processedValue = normalizeValue(value);
     }
-    if (field === "quoteType") {
-      setStatuses((prev) => ({
-        ...prev,
-        quoteType: getStatus(value),
-      }));
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+
+    if (fieldConfig && fieldConfig.type === "radio") {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
   };
 
@@ -143,28 +216,8 @@ export default function Stage1({
     );
   }
 
-  const generateSystemNote = () => {
-    const { retainer, declarationForm, contractReview } = formData;
-    const greenValues = ["yes", "nr", "n/r", "na", "n/a"];
-
-    const isRetainerGreen = greenValues.includes(retainer.toLowerCase());
-    const isDeclarationGreen = greenValues.includes(
-      declarationForm.toLowerCase()
-    );
-    const isContractGreen = greenValues.includes(contractReview.toLowerCase());
-
-    if (!isRetainerGreen && !isDeclarationGreen && !isContractGreen) {
-      return "Retainer, Declaration and Contract Review not received";
-    }
-    if (!isRetainerGreen) return "Retainer not received";
-    if (!isDeclarationGreen) return "Declaration not received";
-    if (!isContractGreen) return "Contract review not received";
-    return "Tasks completed";
-  };
-
   async function handleSave() {
     if (!isChanged() || isSaving) return;
-
     setIsSaving(true);
 
     try {
@@ -173,23 +226,15 @@ export default function Stage1({
 
       const payload = {
         matterNumber,
-        referral: formData.referral,
-        retainer: formData.retainer,
-        declarationForm: formData.declarationForm,
-        contractReview: formData.contractReview,
-        quoteType: formData.quoteType,
-        quoteAmount: formData.quoteAmount,
-        tenants: formData.tenants,
+        ...formData,
         noteForClient,
       };
+      delete payload.systemNote; 
+      delete payload.clientComment;
 
       await api.upsertStageOne(payload);
 
-      originalData.current = {
-        ...formData,
-        systemNote,
-      };
-
+      originalData.current = { ...formData, systemNote };
       setReloadTrigger((prev) => !prev);
     } catch (error) {
       console.error("Failed to update stage 1:", error);
@@ -198,263 +243,124 @@ export default function Stage1({
     }
   }
 
+  const renderField = (field) => {
+    switch (field.type) {
+      case "text":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        );
+
+      case "radio":
+        return (
+          <div key={field.name} className="mt-5">
+            <div className="flex gap-4 justify-between items-center mb-3">
+              <label className="block mb-1 text-sm md:text-base font-bold">
+                {field.label}
+              </label>
+              <div
+                className={`w-[90px] h-[18px] ${bgcolor(
+                  statuses[field.name]
+                )} flex items-center justify-center rounded-4xl`}
+              >
+                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                  {statuses[field.name]}
+                </p>
+              </div>
+            </div>
+            <div
+              className={`flex gap-4 ${
+                field.options.length > 2 ? "justify-between" : ""
+              } flex-wrap`}
+            >
+              {field.options.map((val) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 text-sm md:text-base"
+                >
+                  <input
+                    type="radio"
+                    name={field.name}
+                    value={val}
+                    checked={
+                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(val)
+                    }
+                    onChange={() => handleChange(field.name, val)}
+                  />
+                  {val}
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "system-note":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={generateSystemNote()}
+              disabled
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        );
+
+      case "textarea":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <textarea
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="overflow-y-auto">
-      {/* Referral */}
-      <div className="mb-3">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          Referral
-        </label>
-        <input
-          type="text"
-          value={formData.referral}
-          onChange={(e) => handleChange("referral", e.target.value)}
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
+      {currentFields.map((field) => renderField(field))}
+      {commonFields.map((field) => renderField(field))}
 
-      {/* Retainer */}
-      <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Retainer
-          </label>
-          <div
-            className={`w-[90px] h-[18px] ${bgcolor(
-              statuses.retainer
-            )} flex items-center justify-center rounded-4xl`}
-          >
-            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statuses.retainer}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-4 justify-between flex-wrap">
-          {["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name="retainer"
-                value={val}
-                checked={formData.retainer?.toLowerCase() === val.toLowerCase()}
-                onChange={() => handleChange("retainer", val)}
-              />
-              {val}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Declaration Form */}
-      <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
-          {/* Changed text-base to text-sm md:text-base */}
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Declaration form
-          </label>
-          <div
-            className={`w-[90px] h-[18px] ${bgcolor(
-              statuses.declaration
-            )} flex items-center justify-center rounded-4xl`}
-          >
-            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
-            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statuses.declaration}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-4 justify-between flex-wrap">
-          {["Yes", "No", "Processing", "N/R"].map((val) => (
-            // Added text-sm md:text-base for consistency
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name="declarationForm"
-                value={val}
-                checked={
-                  formData.declarationForm.toLowerCase() === val.toLowerCase()
-                }
-                onChange={() => handleChange("declarationForm", val)}
-              />
-              {val}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Contract Review */}
-      <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
-          {/* Changed text-base to text-sm md:text-base */}
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Contract Review
-          </label>
-          <div
-            className={`w-[90px] h-[18px] ${bgcolor(
-              statuses.contract
-            )} flex items-center justify-center rounded-4xl`}
-          >
-            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
-            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statuses.contract}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-4 justify-between flex-wrap">
-          {["Yes", "No", "Processing", "N/R"].map((val) => (
-            // Added text-sm md:text-base for consistency
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name="contractReview"
-                value={val}
-                checked={
-                  formData.contractReview.toLowerCase() === val.toLowerCase()
-                }
-                onChange={() => handleChange("contractReview", val)}
-              />
-              {val}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Quote Type */}
-      <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
-          {/* Changed text-base to text-sm md:text-base */}
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Quote Type
-          </label>
-        </div>
-        <div className="flex gap-4 flex-wrap">
-          {["Variable", "Fixed"].map((val) => (
-            // Added text-sm md:text-base for consistency
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name="quoteType"
-                value={val}
-                checked={formData.quoteType.toLowerCase() === val.toLowerCase()}
-                onChange={() => handleChange("quoteType", val)}
-              />
-              {val}
-            </label>
-          ))}
-        </div>
-
-        {/* Quote Amount */}
-        <div className="mt-5">
-          {/* Changed text-base to text-sm md:text-base */}
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Quote amount (incl GST)
-          </label>
-          <input
-            type="text"
-            value={formData.quoteAmount}
-            onChange={(e) => handleChange("quoteAmount", e.target.value)}
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
-      </div>
-
-      {/* Tenants */}
-      <div className="mt-5">
-        <div className="flex gap-4 justify-between items-center mb-3">
-          {/* Changed text-base to text-sm md:text-base */}
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Tenants
-          </label>
-          <div
-            className={`w-[90px] h-[18px] ${bgcolor(
-              statuses.tenants
-            )} flex items-center justify-center rounded-4xl`}
-          >
-            {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
-            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statuses.tenants}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-4 justify-between flex-wrap">
-          {["Yes", "No", "Processing", "N/R"].map((val) => (
-            // Added text-sm md:text-base for consistency
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name="tenants"
-                value={val}
-                checked={formData.tenants.toLowerCase() === val.toLowerCase()}
-                onChange={() => handleChange("tenants", val)}
-              />
-              {val}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* System Note for Client */}
-      <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          System note for client
-        </label>
-        <input
-          type="text"
-          value={formData.systemNote}
-          onChange={(e) => handleChange("systemNote", e.target.value)}
-          disabled
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-
-      {/* Comment for Client */}
-      <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          Comment for client
-        </label>
-        <textarea
-          value={formData.clientComment}
-          onChange={(e) => handleChange("clientComment", e.target.value)}
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-
-      {/* Buttons */}
       <div className="flex mt-10 justify-between">
         <Button
           label="Back"
-          width="w-[70px] md:w-[100px]" 
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving" : "Save"}
-            width="w-[70px] md:w-[100px]" 
+            width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
-            width="w-[70px] md:w-[100px]" 
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

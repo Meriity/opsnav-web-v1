@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
 import { formatDate } from "../../utils/formatters";
 
-
 const ViewClientsTable = ({
   data,
   columns,
@@ -23,7 +22,7 @@ const ViewClientsTable = ({
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
-
+  console.log(columns);
   const stageColorMap = {
     green: "green",
     red: "red",
@@ -67,7 +66,7 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm  text-black ${
+                  className={`px-2 py-3 text-center text-sm text-black ${
                     colIndex === 0 ? "rounded-l-2xl" : ""
                   } cursor-pointer select-none`}
                 >
@@ -108,95 +107,114 @@ const ViewClientsTable = ({
             </tr>
           </thead>
           <tbody>
-            {currentData.map((item) => (
-              <tr
-                key={item.id}
-                className="bg-white rounded-2xl transition-all hover:bg-sky-50"
-              >
-                {columns.map((column, colIndex) => (
-                  <td
-                    key={column.key}
-                    className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
-                      colIndex === 0 ? "rounded-l-2xl" : ""
-                    }`}
-                  >
-                    <div
-                      className=" lg:font-normal 2xl:text-center"
-                      title={item[column.key]}
+            {currentData.map((item) => {
+              // 🔍 Debug log for each row
+              console.log("Row data:", item);
+              console.log("Row keys:", Object.keys(item));
+
+              return (
+                <tr
+                  key={item.id}
+                  className="bg-white rounded-2xl transition-all hover:bg-sky-50"
+                >
+                  {columns.map((column, colIndex) => (
+                    <td
+                      key={column.key}
+                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      }`}
                     >
-                      {column.key === "settlement_date" ||
-                      column.key === "final_approval"
-                        ? formatDate(item[column.key])
-                        : item[column.key]}
+                      <div
+                        className="lg:font-normal 2xl:text-center"
+                        title={item[column.key]}
+                      >
+                        {[
+                          "settlement_date",
+                          "finance_approval_date",
+                          "building_and_pest_date",
+                        ].includes(column.key) ? (
+                          item[column.key] &&
+                          item[column.key] !== "-" &&
+                          item[column.key] !== "N/A" ? (
+                            formatDate(item[column.key])
+                          ) : (
+                            <span className="text-sm font-bold text-gray-700">
+                              —
+                            </span>
+                          )
+                        ) : (
+                          item[column.key]
+                        )}
+                      </div>
+                    </td>
+                  ))}
+                  <td className="pl-3 align-middle">
+                    <div className="flex flex-nowrap gap-0.5 justify-center">
+                      {Object.keys(item?.stages?.[0] || {}).map(
+                        (keyName, index) => (
+                          <a
+                            href={`/admin/client/stages/${item.matternumber}/${
+                              index + 1
+                            }`}
+                            key={keyName}
+                            className="px-1 py-1 text-white rounded text-xs cursor-pointer"
+                            style={{
+                              backgroundColor:
+                                stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                                stageColorMap["default"],
+                            }}
+                            title={`Stage ${keyName}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {keyName.toUpperCase()}
+                          </a>
+                        )
+                      )}
                     </div>
                   </td>
-                ))}
-                <td className="pl-3 align-middle">
-                  <div className="flex flex-nowrap gap-0.5 justify-center">
-                    {Object.keys(item?.stages?.[0] || {}).map(
-                      (keyName, index) => (
-                        <a
-                          href={`/admin/client/stages/${item.matternumber}/${
-                            index + 1
-                          }`}
-                          key={keyName}
-                          className="px-1 py-1 text-white rounded text-xs  cursor-pointer"
-                          style={{
-                            backgroundColor:
-                              stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                              stageColorMap["default"],
-                          }}
-                          title={`Stage ${keyName}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {keyName.toUpperCase()}
-                        </a>
-                      )
-                    )}
-                  </div>
-                </td>
-                <td className="pl-8 align-middle">
-                  <div className="flex justify-center">
-                    <button
-                      type="button"
-                      title="View Outstanding Tasks"
-                      className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
-                      onClick={() => {
-                        handelOTOpen();
-                        handelOT(item?.matternumber);
-                      }}
-                    >
-                      <ClipboardList size={20} />
-                    </button>
-                  </div>
-                </td>
-                <td className="pl-3 pr-2 rounded-r-2xl align-middle">
-                  <div className="flex flex-col items-center space-y-2">
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/client/stages/${item.matternumber}`)
-                      }
-                      className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
-                      title="Edit"
-                    >
-                      <Edit size={12} />
-                      <span className="text-xs">Edit</span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        onShare(item.matternumber, item.client_email)
-                      }
-                      className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
-                      title="Share"
-                    >
-                      <Share2 size={12} />
-                      <span className="text-xs">Share</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  <td className="pl-8 align-middle">
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        title="View Outstanding Tasks"
+                        className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
+                        onClick={() => {
+                          handelOTOpen();
+                          handelOT(item?.matternumber);
+                        }}
+                      >
+                        <ClipboardList size={20} />
+                      </button>
+                    </div>
+                  </td>
+                  <td className="pl-3 pr-2 rounded-r-2xl align-middle">
+                    <div className="flex flex-col items-center space-y-2">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/client/stages/${item.matternumber}`)
+                        }
+                        className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
+                        title="Edit"
+                      >
+                        <Edit size={12} />
+                        <span className="text-xs">Edit</span>
+                      </button>
+                      <button
+                        onClick={() =>
+                          onShare(item.matternumber, item.client_email)
+                        }
+                        className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                        title="Share"
+                      >
+                        <Share2 size={12} />
+                        <span className="text-xs">Share</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -210,7 +228,7 @@ const ViewClientsTable = ({
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-gray-500">Matter #</p>
+                <p className="text-xs text-gray-500">{localStorage.getItem("company")==="vkl" ? "Matter Number" : localStorage.getItem("company")==="idg" ? "Client ID" : "Reg Number"}</p>
                 <p className=" text-blue-600">{item.matternumber}</p>
               </div>
               <div className="flex items-center space-x-2">
@@ -245,18 +263,18 @@ const ViewClientsTable = ({
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">Client</p>
+              <p className="text-xs text-gray-500">Client Name</p>
               <p className="font-semibold break-words">{item.client_name}</p>
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">Address</p>
+              <p className="text-xs text-gray-500">{localStorage.getItem("company")==="vkl" ? "Property Address" : localStorage.getItem("company")==="idg" ? "Billing Address" : "Address"}</p>
               <p className="text-sm break-words">{item.property_address}</p>
             </div>
 
             <div className="flex justify-between text-xs pt-2">
               <div>
-                <p className="text-gray-500">Settlement</p>
+                <p className="text-gray-500">{localStorage.getItem("company")==="vkl" ? "Settlement Date" : localStorage.getItem("company")==="idg" ? "Delivery Date" : "Date"}</p>
                 <p>{formatDate(item.settlement_date)}</p>
               </div>
               <div>

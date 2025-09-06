@@ -14,24 +14,60 @@ export default function Stage3({
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
 
-  const fields = [
-    { key: "titleSearch", label: "Title Search" },
-    { key: "planImage", label: "Plan Image" },
-    { key: "landTax", label: "Land Tax" },
-    { key: "instrument", label: "Instrument" },
-    { key: "rates", label: "Rates" },
-    { key: "water", label: "Water" },
-    { key: "ownersCorp", label: "Owners Corp" },
-    { key: "pexa", label: "PEXA" },
-    { key: "inviteBank", label: "Invite Bank" },
-  ];
+  // fields config
+  let fields = [];
+  if (localStorage.getItem("company") === "vkl") {
+    fields = [
+      { key: "titleSearch", label: "Title Search", hasDate: true },
+      { key: "planImage", label: "Plan Image" },
+      { key: "landTax", label: "Land Tax" },
+      { key: "instrument", label: "Instrument" },
+      { key: "rates", label: "Rates" },
+      { key: "water", label: "Water" },
+      { key: "ownersCorp", label: "Owners Corp" },
+      { key: "pexa", label: "PEXA" },
+      { key: "inviteBank", label: "Invite Bank" },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    fields = [
+      { key: "assign_agent", label: "Assign Agent / Team Member" },
+      {
+        key: "materils_needed",
+        label: "Check if Materials Needed are in stock",
+      },
+      {
+        key: "additional materials",
+        label: "Procure additional materials if required",
+      },
+      { key: "job_priority", label: "Confirm Job Priority" },
+      { key: "schedule_activity", label: "Schedule Job Activity" },
+      { key: "allocate_vehicle", label: "Allocate Vehicle / Installer" },
+      {
+        key: "finalize",
+        label: "Finalize Draft Cost Sheet (Fixed + Variable)",
+      },
+      { key: "Approve Plan", label: "Approve plan and move to preparation" },
+    ];
+  }
+
+  const normalizeValue = (v) => {
+    if (v === undefined || v === null) return "";
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+  };
 
   const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (["yes", "na", "n/a", "nr", "n/r"].includes(val)) return "Completed";
+    const val = normalizeValue(value);
+    if (!val) return "Not Completed";
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    if (completedValues.includes(val)) {
+      return "Completed";
+    }
     if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress", "in progress"].includes(val))
+      return "In Progress";
     return "Not Completed";
   };
 
@@ -39,7 +75,7 @@ export default function Stage3({
     const statusColors = {
       Completed: "bg-[#00A506] text-white",
       "Not Completed": "bg-[#FF0000] text-white",
-      "In progress": "bg-[#FFEECF] text-[#FF9500]",
+      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
     };
     return statusColors[status] || "bg-[#FF0000] text-white";
   };
@@ -50,10 +86,10 @@ export default function Stage3({
   const originalData = useRef({});
 
   const updateNoteForClient = () => {
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
     const incompleteTasks = fields
       .filter(
-        ({ key }) => !completedValues.includes(formState[key]?.toLowerCase())
+        ({ key }) => !completedValues.has(normalizeValue(formState[key] || ""))
       )
       .map(({ label }) => label);
 
@@ -68,22 +104,28 @@ export default function Stage3({
     const newFormState = {};
     const newStatusState = {};
 
-    fields.forEach(({ key }) => {
-      const value = data[key] || "";
-      newFormState[key] = value;
-      newStatusState[key] = getStatus(value);
+    fields.forEach(({ key, hasDate }) => {
+      const rawValue = data[key] || "";
+      newFormState[key] = normalizeValue(rawValue);
+      newStatusState[key] = getStatus(newFormState[key]);
+
+      if (hasDate) {
+        newFormState[`${key}Date`] = data[`${key}Date`]
+          ? data[`${key}Date`].split("T")[0]
+          : "";
+      }
     });
 
-    const noteParts = data.noteForClient?.split(" - ") || [];
-    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
+    const noteParts = (data.noteForClient || "").split(" - ");
+    const clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
 
     setFormState(newFormState);
     setStatusState(newStatusState);
-    setClientComment(clientComment);
+    setClientComment(clientCommentPart);
 
     originalData.current = {
       ...newFormState,
-      clientComment,
+      clientComment: clientCommentPart,
       systemNote: noteParts[0]?.trim() || updateNoteForClient(),
     };
   }, [data, reloadTrigger]);
@@ -97,18 +139,45 @@ export default function Stage3({
     };
     const original = originalData.current;
 
-    // Compare all fields including the generated system note
     const formChanged = fields.some(
       ({ key }) =>
         String(formState[key] || "").trim() !==
         String(original[key] || "").trim()
     );
+    const dateChanged = fields.some(
+      ({ key, hasDate }) =>
+        hasDate &&
+        String(formState[`${key}Date`] || "").trim() !==
+          String(original[`${key}Date`] || "").trim()
+    );
     const commentChanged =
       String(clientComment).trim() !== String(original.clientComment).trim();
     const noteChanged = currentSystemNote !== original.systemNote;
 
-    return formChanged || commentChanged || noteChanged;
+    return formChanged || dateChanged || commentChanged || noteChanged;
   }
+
+  const handleChange = (key, value, hasDate) => {
+    let processedValue = value;
+    if (typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
+    }
+
+    setFormState((prev) => ({ ...prev, [key]: processedValue }));
+    setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
+
+    if (hasDate) {
+      if (processedValue === "yes") {
+        setFormState((prev) => ({
+          ...prev,
+          [`${key}Date`]:
+            prev[`${key}Date`] || new Date().toISOString().split("T")[0],
+        }));
+      } else {
+        setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
+      }
+    }
+  };
 
   async function handleSave() {
     if (!isChanged()) return;
@@ -124,11 +193,11 @@ export default function Stage3({
         matterNumber,
         ...formState,
         noteForClient: fullNote,
+        titleSearchDate: formState.titleSearchDate || null,
       };
 
       await api.upsertStageThree(payload);
 
-      // Update original data with current state after successful save
       originalData.current = {
         ...formState,
         clientComment,
@@ -143,27 +212,25 @@ export default function Stage3({
     }
   }
 
-  const renderRadioGroup = ({ key, label }) => (
+  const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
       <div className="flex gap-4 items-center justify-between mb-3">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           {label}
         </label>
         <div
-          className={`w-[90px] h-[18px] ${bgcolor(statusState[key])} ${
-            statusState[key] === "In progress" ? "text-[#FF9500]" : "text-white"
-          } flex items-center justify-center rounded-4xl`}
+          className={`w-[90px] h-[18px] ${bgcolor(
+            statusState[key]
+          )} flex items-center justify-center rounded-4xl`}
         >
-          {/* Changed text-[12px] to text-[10px] md:text-[12px] */}
           <p className="text-[10px] md:text-[12px] whitespace-nowrap">
             {statusState[key]}
           </p>
         </div>
       </div>
+
       <div className="flex flex-wrap justify-between items-center gap-4">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
-          // Added text-sm md:text-base for consistency
           <label
             key={val}
             className="flex items-center gap-2 text-sm md:text-base"
@@ -172,15 +239,29 @@ export default function Stage3({
               type="radio"
               name={key}
               value={val}
-              checked={formState[key]?.toLowerCase() === val.toLowerCase()}
-              onChange={() => {
-                setFormState((prev) => ({ ...prev, [key]: val }));
-                setStatusState((prev) => ({ ...prev, [key]: getStatus(val) }));
-              }}
+              // compare normalized values
+              checked={
+                normalizeValue(formState[key] || "") === normalizeValue(val)
+              }
+              onChange={() => handleChange(key, val, hasDate)}
             />
             {val}
           </label>
         ))}
+
+        {hasDate && (
+          <input
+            type="date"
+            value={formState[`${key}Date`] || ""}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                [`${key}Date`]: e.target.value,
+              }))
+            }
+            className="border p-1 rounded text-sm"
+          />
+        )}
       </div>
     </div>
   );
@@ -190,7 +271,6 @@ export default function Stage3({
       {fields.map(renderRadioGroup)}
 
       <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
@@ -203,7 +283,6 @@ export default function Stage3({
       </div>
 
       <div className="mt-5">
-        {/* Changed text-base to text-sm md:text-base */}
         <label className="block mb-1 text-sm md:text-base font-bold">
           Comment for Client
         </label>

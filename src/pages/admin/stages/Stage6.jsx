@@ -1,9 +1,142 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
+import PropTypes from "prop-types";
+
+const normalizeValue = (v) => {
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
+};
+
+const formConfig = {
+  vkl: {
+    fields: [
+      {
+        name: "noaToCouncilWater",
+        label: "NOA to Council/Water",
+        type: "radio",
+      },
+      { name: "dutyPaid", label: "Duty Paid", type: "radio" },
+      {
+        name: "finalLetterToClient",
+        label: "Final Letter to Client",
+        type: "radio",
+      },
+      {
+        name: "finalLetterToAgent",
+        label: "Final Letter to Agent",
+        type: "radio",
+      },
+      { name: "invoiced", label: "Invoiced", type: "radio" },
+      {
+        name: "closeMatter",
+        label: "Close Matter",
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+        triggersModal: true,
+      },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for Client",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: [
+          "noaToCouncilWater",
+          "dutyPaid",
+          "finalLetterToClient",
+          "finalLetterToAgent",
+          "invoiced",
+          "closeMatter",
+        ],
+      },
+    ],
+  },
+  idg: {
+    fields: [
+      {
+        name: "assignInstaller",
+        label: "Assign Installer / Field Staff",
+        type: "radio",
+      },
+      {
+        name: "performInstallation",
+        label: "Perform Installation / Removal On-Site",
+        type: "radio",
+      },
+      { name: "placePointers", label: "Place Street Pointers", type: "radio" },
+      {
+        name: "applyOnSiteStickers",
+        label: "Apply On-Site Stickers",
+        type: "radio",
+      },
+      {
+        name: "capturePhotos",
+        label: "Capture Proof of Completion Photos",
+        type: "radio",
+      },
+      { name: "updateStatusExcel", label: "Update Status", type: "radio" },
+      {
+        name: "generateInvoice",
+        label: "Generate and send Invoice",
+        type: "radio",
+      },
+      {
+        name: "archiveOrder",
+        label: "Move order to Archived Orders",
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+        triggersModal: true,
+      },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for Client",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: [
+          "assignInstaller",
+          "performInstallation",
+          "placePointers",
+          "applyOnSiteStickers",
+          "capturePhotos",
+          "updateStatusExcel",
+          "generateInvoice",
+          "archiveOrder",
+        ],
+      },
+    ],
+  },
+};
+
+const getStatus = (value) => {
+  const val = normalizeValue(value);
+  if (!val) return "Not Completed";
+  if (["yes", "na", "n/a", "nr", "completed", "cancelled"].includes(val))
+    return "Completed";
+  if (val === "no") return "Not Completed";
+  if (["processing", "inprogress"].includes(val)) return "In Progress";
+  return "Not Completed";
+};
+
+const bgcolor = (status) => {
+  const statusColors = {
+    Completed: "bg-[#00A506] text-white",
+    "Not Completed": "bg-[#FF0000] text-white",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+  };
+  return statusColors[status] || "bg-[#FF0000] text-white";
+};
 
 export default function Stage6({
   changeStage,
@@ -14,178 +147,168 @@ export default function Stage6({
   const stage = 6;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
+
+  const [formData, setFormData] = useState({});
+  const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fields = [
-    { key: "noaToCouncilWater", label: "NOA to Council/Water" },
-    { key: "dutyPaid", label: "Duty Paid" },
-    { key: "finalLetterToClient", label: "Final Letter to Client" },
-    { key: "finalLetterToAgent", label: "Final Letter to Agent" },
-    { key: "invoiced", label: "Invoiced" },
-    { key: "closeMatter", label: "Close Matter" },
-  ];
-
-  const getStatus = (value) => {
-    if (!value) return "Not Completed";
-    const val = value.toLowerCase().trim();
-    if (
-      ["yes", "na", "n/a", "nr", "n/r", "completed", "cancelled"].includes(val)
-    )
-      return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "in progress"].includes(val)) return "In Progress";
-    return "Not Completed";
-  };
-
-  const bgcolor = (status) => {
-    const statusColors = {
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
-      "In progress": "bg-[#FFEECF] text-[#FF9500]",
-    };
-    return statusColors[status] || "bg-[#FF0000] text-white";
-  };
-
-  const [formState, setFormState] = useState({});
-  const [statusState, setStatusState] = useState({});
-  const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
 
-  const updateNoteForClient = () => {
-    const completedValues = [
-      "yes",
-      "na",
-      "n/a",
-      "nr",
-      "n/r",
-      "completed",
-      "cancelled",
-    ];
-    const incompleteTasks = fields
-      .filter(
-        ({ key }) =>
-          !completedValues.includes((formState[key] || "").toLowerCase())
-      )
-      .map(({ label }) => label);
+  const company = localStorage.getItem("company") || "vkl";
+  const currentConfig = formConfig[company] || formConfig.vkl;
+  const modalField = currentConfig.fields.find((f) => f.triggersModal);
 
-    if (incompleteTasks.length === 0) return "All tasks completed";
-    if (incompleteTasks.length === fields.length) return "No tasks completed";
-    return `Pending: ${incompleteTasks.join(", ")}`;
+  const generateSystemNote = (noteGroupId) => {
+    const noteGroup = currentConfig.noteGroups.find(
+      (ng) => ng.id === noteGroupId
+    );
+    if (!noteGroup) return "";
+    const greenValues = ["yes", "na", "n/a", "nr", "completed", "cancelled"];
+    const fieldsToCheck = currentConfig.fields.filter((f) =>
+      noteGroup.fieldsForNote.includes(f.name)
+    );
+    const incomplete = fieldsToCheck
+      .filter(
+        (field) =>
+          !greenValues.includes(normalizeValue(formData[field.name] || ""))
+      )
+      .map((field) => field.label);
+    if (incomplete.length === 0) return "All tasks completed";
+    return `Pending: ${incomplete.join(", ")}`;
   };
 
   useEffect(() => {
     if (!data) return;
-    const newFormState = {};
-    const newStatusState = {};
-    fields.forEach(({ key }) => {
-      const value = data[key] || "";
-      newFormState[key] = value;
-      newStatusState[key] = getStatus(value);
-    });
-    const noteParts = data.noteForClient?.split(" - ") || [];
-    const clientComment = noteParts.length > 1 ? noteParts[1].trim() : "";
-    setFormState(newFormState);
-    setStatusState(newStatusState);
-    setClientComment(clientComment);
-    originalData.current = {
-      ...newFormState,
-      clientComment,
-      systemNote: noteParts[0]?.trim() || updateNoteForClient(),
-    };
-  }, [data, reloadTrigger]);
 
-  function isChanged() {
-    const currentSystemNote = updateNoteForClient();
-    const current = {
-      ...formState,
-      clientComment,
-      systemNote: currentSystemNote,
-    };
-    const original = originalData.current;
-    const formChanged = fields.some(
-      ({ key }) =>
-        String(formState[key] || "").trim() !==
-        String(original[key] || "").trim()
-    );
-    const commentChanged =
-      String(clientComment).trim() !== String(original.clientComment).trim();
-    const noteChanged = currentSystemNote !== original.systemNote;
-    return formChanged || commentChanged || noteChanged;
-  }
+    const stageData = data.stage6 || data.stage || data || {};
+
+    const initialFormData = {};
+    const initialStatuses = {};
+
+    currentConfig.fields.forEach((field) => {
+      const rawVal = stageData[field.name] ?? data[field.name] ?? "";
+
+      if (field.name === "closeMatter") {
+        const norm = normalizeValue(rawVal);
+        if (
+          ["yes", "true", "closed", "complete", "completed", "done"].includes(
+            norm
+          )
+        ) {
+          initialFormData[field.name] = "completed";
+        } else if (["cancel", "cancelled", "canceled", "void"].includes(norm)) {
+          initialFormData[field.name] = "cancelled";
+        } else {
+          initialFormData[field.name] = normalizeValue(rawVal);
+        }
+      } else {
+        initialFormData[field.name] = normalizeValue(rawVal);
+      }
+
+      initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+    });
+
+    currentConfig.noteGroups.forEach((group) => {
+      const noteParts = (
+        stageData[group.noteForClientKey] ||
+        data[group.noteForClientKey] ||
+        ""
+      ).split(" - ");
+      initialFormData[group.systemNoteKey] =
+        noteParts.length > 1 ? noteParts[1].trim() : "";
+    });
+
+    setFormData(initialFormData);
+    setStatuses(initialStatuses);
+    originalData.current = initialFormData;
+  }, [data, reloadTrigger, company]);
+
+  const handleChange = (field, value) => {
+    const processed = typeof value === "string" ? normalizeValue(value) : value;
+    setFormData((prev) => ({ ...prev, [field]: processed }));
+
+    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
+    if (fieldConfig && fieldConfig.type === "radio") {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
+    }
+  };
+
+  const isChanged = () =>
+    JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
   async function proceedWithSave() {
-    return new Promise(async (resolve, reject) => {
-      setIsSaving(true);
-      try {
-        const systemNote = updateNoteForClient();
-        const fullNote = clientComment
+    setIsSaving(true);
+    try {
+      const payload = { matterNumber, ...formData };
+
+      currentConfig.noteGroups.forEach((group) => {
+        const systemNote = generateSystemNote(group.id);
+        const clientComment = formData[group.systemNoteKey] || "";
+        payload[group.noteForClientKey] = clientComment
           ? `${systemNote} - ${clientComment}`
           : systemNote;
-        const payload = { matterNumber, ...formState, noteForClient: fullNote };
+        delete payload[group.systemNoteKey];
+      });
 
-        await api.upsertStageSix(payload);
-        toast.success("Stage 6 saved successfully!");
+      await api.upsertStageSix(payload);
 
-        originalData.current = { ...formState, clientComment, systemNote };
-        setReloadTrigger?.((prev) => !prev);
-
-        setIsModalOpen(false);
-        resolve();
-      } catch (err) {
-        console.error("Failed to save Stage 6:", err);
-        toast.error("Failed to save changes.");
-        reject(err);
-      } finally {
-        setIsSaving(false);
-      }
-    });
+      toast.success("Stage 6 saved successfully!");
+      originalData.current = { ...formData };
+      setReloadTrigger((prev) => !prev);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to save Stage 6:", err);
+      toast.error("Failed to save Stage 6.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleSave() {
     if (!isChanged()) return;
 
-    const originalCloseMatter = (originalData.current.closeMatter || "")
-      .trim()
-      .toLowerCase();
-    const currentCloseMatter = (formState.closeMatter || "")
-      .trim()
-      .toLowerCase();
-    const isCloseMatterChanged =
-      currentCloseMatter && originalCloseMatter !== currentCloseMatter;
-
-    if (isCloseMatterChanged) {
-      setIsModalOpen(true);
-    } else {
-      await proceedWithSave();
+    if (modalField) {
+      const originalValue = normalizeValue(
+        originalData.current[modalField.name] || ""
+      );
+      const currentValue = normalizeValue(formData[modalField.name] || "");
+      if (currentValue && originalValue !== currentValue) {
+        setIsModalOpen(true);
+        return;
+      }
     }
+
+    await proceedWithSave();
   }
 
-  const renderRadioGroup = ({ key, label }) => {
-    let options = ["Yes", "No", "Processing", "N/R"];
-    if (key === "closeMatter") {
-      options = ["Completed", "Cancelled"];
-    }
+  const renderField = (field) => {
+    const options = field.options || ["Yes", "No", "Processing", "N/R"];
+    const isCloseMatter =
+      field.name === "closeMatter" || field.name === "archiveOrder";
+
     return (
-      <div className="mt-5" key={key}>
-        <div className="flex gap-4 items-center justify-between mb-3">
+      <div key={field.name} className="mt-8">
+        <div className="flex gap-4 items-center justify-between mb-5">
           <label className="block mb-1 text-sm md:text-base font-bold">
-            {label}
+            {field.label}
           </label>
           <div
             className={`w-[90px] h-[18px] ${bgcolor(
-              statusState[key]
+              statuses[field.name]
             )} flex items-center justify-center rounded-4xl`}
           >
             <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-              {statusState[key]}
+              {statuses[field.name] ?? "Not Completed"}
             </p>
           </div>
         </div>
+
         <div
-          className={`flex flex-wrap items-center gap-4 ${
-            key === "closeMatter" ? "gap-[20px]" : "justify-between"
-          }`}
+          className={
+            isCloseMatter
+              ? "flex items-center gap-4 mb-6" // tighter
+              : "flex justify-between items-center gap-6 mb-6" // original wide spacing
+          }
         >
           {options.map((val) => (
             <label
@@ -194,16 +317,13 @@ export default function Stage6({
             >
               <input
                 type="radio"
-                name={key}
+                name={field.name}
                 value={val}
-                checked={formState[key]?.toLowerCase() === val.toLowerCase()}
-                onChange={() => {
-                  setFormState((prev) => ({ ...prev, [key]: val }));
-                  setStatusState((prev) => ({
-                    ...prev,
-                    [key]: getStatus(val),
-                  }));
-                }}
+                checked={
+                  normalizeValue(formData[field.name] || "") ===
+                  normalizeValue(val)
+                }
+                onChange={() => handleChange(field.name, val)}
               />
               {val}
             </label>
@@ -212,6 +332,33 @@ export default function Stage6({
       </div>
     );
   };
+
+  const renderNoteGroup = (group) => (
+    <div key={group.id} className="mt-8">
+      <div className="mb-6">
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.systemNoteLabel}
+        </label>
+        <input
+          type="text"
+          value={generateSystemNote(group.id)}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.clientCommentLabel}
+        </label>
+        <textarea
+          value={formData[group.systemNoteKey] || ""}
+          onChange={(e) => handleChange(group.systemNoteKey, e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -222,38 +369,21 @@ export default function Stage6({
         title="Are you sure?"
       >
         You are about to finalize this matter as{" "}
-        <strong className="text-gray-900">"{formState.closeMatter}"</strong>.
+        <strong className="text-gray-900">
+          "{modalField && formData[modalField.name]}"
+        </strong>
+        . This action may be irreversible.
       </ConfirmationModal>
 
       <div className="overflow-y-auto">
-        {fields.map(renderRadioGroup)}
-        <div className="mt-5">
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            System Note for Client
-          </label>
-          <input
-            type="text"
-            value={updateNoteForClient()}
-            disabled
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
-        <div className="mt-5">
-          <label className="block mb-1 text-sm md:text-base font-bold">
-            Comment for Client
-          </label>
-          <textarea
-            value={clientComment}
-            onChange={(e) => setClientComment(e.target.value)}
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        </div>
+        {currentConfig.fields.map(renderField)}
+        {currentConfig.noteGroups.map(renderNoteGroup)}
+
         <div className="flex mt-10 justify-between">
           <Button
             label="Back"
             width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage - 1)}
-            disabled={stage === 1}
           />
           <div className="flex gap-2">
             <Button
@@ -274,3 +404,10 @@ export default function Stage6({
     </>
   );
 }
+
+Stage6.propTypes = {
+  changeStage: PropTypes.func.isRequired,
+  data: PropTypes.object,
+  reloadTrigger: PropTypes.bool.isRequired,
+  setReloadTrigger: PropTypes.func.isRequired,
+};

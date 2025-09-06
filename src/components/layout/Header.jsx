@@ -98,7 +98,7 @@ export default function Header() {
 
   return (
     <>
-      <div className="sticky top-0 bg-white p-2 mb-2 block md:flex justify-between items-center">
+      <div className="sticky top-0 p-4 bg-white mb-2 block md:flex justify-between items-center rounded-lg">
         <h2 className="text-xl font-semibold py-3">
           Hello {localStorage.getItem("user")}
         </h2>

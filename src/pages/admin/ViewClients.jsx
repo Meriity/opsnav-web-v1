@@ -23,6 +23,7 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
+  const [createOrder, setcreateOrder] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareDetails, setShareDetails] = useState({
@@ -76,17 +77,39 @@ const ViewClients = () => {
     setClientList(filteredData);
   }, [settlementDate, Clients, searchQuery]);
 
-  const columns = [
+
+  let columns = [];
+  if(localStorage.getItem("company")==="vkl"){
+  columns = [
     { key: "matternumber", title: "Matter Number", width: "8%" },
     { key: "dataentryby", title: "Data Entry By", width: "10%" },
     { key: "client_name", title: "Client Name", width: "10%" },
     { key: "property_address", title: "Property Address", width: "10%" },
     { key: "state", title: "State", width: "5%" },
     { key: "client_type", title: "Client Type", width: "7%" },
-    { key: "settlement_date", title: "Settlement Date", width: "8%" },
-    { key: "final_approval", title: "Matter Date", width: "8%" },
-    // { key: "close_matter", title: "Close Matter", width: "7%" },
+    { key: "settlement_date", title: "Settlement Date", width: "10%" },
+    {
+      key: "finance_approval_date",
+      title: "Finance Approval Date",
+      width: "10%",
+    },
+    {
+      key: "building_and_pest_date",
+      title: "Building & Pest Date",
+      width: "10%",
+    },
   ];
+}else if(localStorage.getItem("company")==="idg"){
+   columns = [
+  { key: 'matternumber', title: 'Client ID', width: '10%' },
+  { key: 'dataentryby', title: 'Data Entry By', width: '15%' },
+  { key: 'client_name', title: 'Client Name', width: '10%' },
+  { key: 'property_address', title: 'Billing Address', width: '15%' },
+  { key: 'client_type', title: 'Client Type', width: '10%' },
+  // { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+  { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+];
+}
 
   const api = new ClientAPI();
   async function handelReShareEmail() {
@@ -119,8 +142,14 @@ const ViewClients = () => {
         activeMatter={otActiveMatterNumber}
       />
       <CreateClientModal
+        createType="client"
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+      />
+      <CreateClientModal
+        createType="order"
+        isOpen={createOrder}
+        setIsOpen={() => setcreateOrder(false)}
       />
       <DateRangeModal
         isOpen={showDateRange}
@@ -193,10 +222,10 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
-      <div className="space-y-4">
+      <div className="space-y-4 p-2">
         <Header />
 
-        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-2">
+        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
             View Clients
           </h3>
@@ -226,7 +255,8 @@ const ViewClients = () => {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              <Button
+              {localStorage.getItem("company")==="vkl"&&<>
+                <Button
                 label="Create Client"
                 Icon1={userplus}
                 onClick={() => setcreateuser(true)}
@@ -242,6 +272,25 @@ const ViewClients = () => {
                 onClick={() => setShowDateRange(true)}
                 width="w-[150px]"
               />
+              </>}
+               {localStorage.getItem("company")==="idg"&&<>
+                <Button
+                label="Create Client"
+                Icon1={userplus}
+                onClick={() => setcreateuser(true)}
+                width="w-[150px]"
+              />
+              <Button
+                label="Create Order"
+                onClick={() => setcreateOrder(true)}
+                width="w-[150px]"
+              />
+              <Button
+                label="Select Date Range"
+                onClick={() => setShowDateRange(true)}
+                width="w-[150px]"
+              />
+              </>}
             </div>
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
@@ -312,7 +361,7 @@ const ViewClients = () => {
         ) : clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">Data not found</div>
         ) : (
-          <div className="px-0.5">
+          <div className="px-5">
             <ViewClientsTable
               data={clientList}
               columns={columns}

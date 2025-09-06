@@ -10,6 +10,8 @@ import Stage6 from "./Stage6";
 import Cost from "./cost";
 import ClientAPI from "../../../api/clientAPI";
 import Loader from "../../../components/ui/Loader";
+import UploadDialog from "../../../components/ui/uploadDialog";
+
 
 export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
@@ -22,6 +24,8 @@ export default function StagesLayout() {
   const [clientData, setClientData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
+  const [isOpen, setIsOpen] = useState(false);
+  const company=localStorage.getItem("company");
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -42,7 +46,7 @@ export default function StagesLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const stages = [
+  let stages = [
     { id: 1, title: "Retainer/Declaration" },
     { id: 2, title: "VOI/CAF/Approvals" },
     { id: 3, title: "Searches/PEXA" },
@@ -50,6 +54,27 @@ export default function StagesLayout() {
     { id: 5, title: "Notify/Transfer/Disb" },
     { id: 6, title: "Final Letter/Close" },
   ];
+
+  if(localStorage.getItem("company")==="vkl"){
+    stages = [
+    { id: 1, title: "Retainer/Declaration" },
+    { id: 2, title: "VOI/CAF/Approvals" },
+    { id: 3, title: "Searches/PEXA" },
+    { id: 4, title: "DTS/DOL/SOA" },
+    { id: 5, title: "Notify/Transfer/Disb" },
+    { id: 6, title: "Final Letter/Close" },
+  ];
+  }
+  else if(localStorage.getItem("company")==="idg"){
+     stages = [
+    { id: 1, title: "Initiate" },
+    { id: 2, title: "Approve" },
+    { id: 3, title: "Plan" },
+    { id: 4, title: "Prepare" },
+    { id: 5, title: "Process" },
+    { id: 6, title: "Final Deliver" },
+  ];
+  }
 
   function bgcolor(status) {
     const statusColors = {
@@ -147,7 +172,6 @@ export default function StagesLayout() {
   function Showstage(stage) {
     function normalizeCloseMatterForClient(client) {
       if (!client || typeof client !== "object") return client;
-      console.log(client);
 
       const value = client.closeMatter;
       let newValue;
@@ -250,8 +274,18 @@ export default function StagesLayout() {
       try {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
-        console.log("Full API response:", response);
-        setClientData(response);
+
+        // merge notes safely
+        setClientData((prev) => ({
+          ...prev,
+          ...response,
+          notes:
+            response.notes !== undefined ? response.notes : prev?.notes || "",
+          settlementDate:
+            response.settlementDate !== undefined
+              ? response.settlementDate
+              : prev?.settlementDate || null,
+        }));
 
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
@@ -342,8 +376,8 @@ export default function StagesLayout() {
       const updatedData = await api.updateClientData(matterNumber, payload);
       setClientData((prev) => ({
         ...prev,
-        settlementDate: updatedData.settlementDate,
-        notes: updatedData.notes,
+        settlementDate: updatedData.settlementDate ?? prev.settlementDate,
+        notes: updatedData.notes ?? prev.notes,
       }));
 
       alert("Updated successfully!");
@@ -358,6 +392,7 @@ export default function StagesLayout() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-gray-100">
+      <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
       <main className="flex-grow p-4 w-full max-w-screen-xl mx-auto">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-lg md:text-xl font-semibold">
@@ -365,6 +400,13 @@ export default function StagesLayout() {
           </h2>
 
           <div className="flex items-center gap-1">
+            <Button
+              label="Upload Image"
+              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+              width="w-[140px] "
+              onClick={() => setIsOpen(true)}
+            />
+            
             <Button
               label="Back"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
@@ -478,7 +520,7 @@ export default function StagesLayout() {
               </div>
               <div className="w-full xl:w-1/2">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4">
-                  <h2 className="text-lg font-bold mb-2">Matter Details</h2>
+                  <h2 className="text-lg font-bold mb-2">{company==="vkl"?"Matter Details":company==="idg"?"Order Details":""}</h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
                     onSubmit={handleupdate}
@@ -486,7 +528,7 @@ export default function StagesLayout() {
                     {/* First Row - 3 columns */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Matter Date
+                        {company==="vkl"?"Matter Date":company==="idg"?"Order Date":""}
                       </label>
                       <input
                         type="text"
@@ -497,7 +539,7 @@ export default function StagesLayout() {
                     </div>
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Matter Number
+                       {company==="vkl"?"Matter Number":company==="idg"?"Order ID":""}
                       </label>
                       <input
                         type="text"
@@ -521,7 +563,7 @@ export default function StagesLayout() {
                     {/* Second Row - 2 columns */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Property Address
+                        {localStorage.getItem("company")==="vkl"?"Property Address":company==="idg"?"Billing Address":"Address"}
                       </label>
                       <input
                         type="text"
@@ -545,7 +587,7 @@ export default function StagesLayout() {
                     {/* Third Row - 2 columns */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Client Type
+                       {company==="vkl"?"Client Type":company==="idg"?"Order Type":""}
                       </label>
                       <input
                         type="text"
@@ -556,7 +598,7 @@ export default function StagesLayout() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Settlement Date
+                        {company==="vkl"?"Settlement Date":company==="idg"?"Delivery Date":""}
                       </label>
                       <input
                         type="date"

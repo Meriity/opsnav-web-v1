@@ -18,10 +18,11 @@ import ClientAPI from "../../api/userAPI";
 import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Calendar Imports ---
 import moment from "moment";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
@@ -37,7 +38,7 @@ const useDashboardStore = create((set) => ({
   setDashboardData: (data) =>
     set(() => {
       const arr = Array.isArray(data.last10MonthsStats)
-        ? data.last10MonthsStats.slice(-10) // cap to last 10
+        ? data.last10MonthsStats.slice(-10)
         : [];
       const lastRec =
         arr[arr.length - 1]?.closedMatters ??
@@ -53,9 +54,131 @@ const useDashboardStore = create((set) => ({
     }),
 }));
 
-const CustomEvent = ({ event }) => <div title={event.title}>{event.title}</div>;
+const CustomEvent = ({ event }) => {
+  return (
+    <div
+      style={{
+        wordWrap: "break-word",
+        whiteSpace: "normal",
+        lineHeight: "1.2",
+      }}
+    >
+      <div className="font-semibold text-[11.5px] text-white leading-tight">
+        {event.title} - [{event.clientType}]
+      </div>
+    </div>
+  );
+};
 
-// --- Dashboard Component ---
+// --- Custom Agenda Renderer with spacing ---
+const CustomAgendaEvent = ({ event }) => (
+  <div className="mb-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition shadow-sm">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      {/* Left side: Title + Date */}
+      <div className="flex flex-col">
+        <span className="font-semibold text-gray-800 text-sm sm:text-base">
+          {event.title}
+        </span>
+        <span className="text-xs text-gray-500 mt-1">
+          {moment(event.start).format("DD MMM YYYY")}
+        </span>
+      </div>
+
+      {/* Right side: Client type */}
+      <span
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
+          event.type === "buildingAndPest"
+            ? "bg-purple-100 text-purple-700"
+            : event.type === "financeApproval"
+            ? "bg-orange-100 text-orange-700"
+            : "bg-blue-100 text-blue-700"
+        }`}
+      >
+        {event.clientType}
+      </span>
+    </div>
+  </div>
+  
+);
+
+
+// --- Helper Hooks ---
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return windowSize;
+};
+
+// --- Custom Toolbar ---
+const ResponsiveCalendarToolbar = ({
+  label,
+  onNavigate,
+  onView,
+  views,
+  view: currentView,
+}) => {
+  return (
+    <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3">
+      <div className="flex items-center justify-center w-full sm:w-auto mb-2 sm:mb-0">
+        <button
+          type="button"
+          onClick={() => onNavigate("PREV")}
+          aria-label="Previous"
+          className="p-2 rounded-full hover:bg-gray-200 transition"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate("TODAY")}
+          className="mx-2 px-4 py-1.5 text-sm font-semibold border rounded-md hover:bg-gray-200 transition"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate("NEXT")}
+          aria-label="Next"
+          className="p-2 rounded-full hover:bg-gray-200 transition"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="text-lg font-bold text-gray-800 order-first sm:order-none mb-2 sm:mb-0">
+        {label}
+      </div>
+      <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-white">
+        {views.map((viewName) => (
+          <button
+            key={viewName}
+            onClick={() => onView(viewName)}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${
+              currentView === viewName
+                ? "bg-blue-500 text-white shadow"
+                : "text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {viewName}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function Dashboard() {
   const { totalusers, totalactive, lastrecord, loading, setDashboardData } =
     useDashboardStore();
@@ -64,26 +187,42 @@ function Dashboard() {
     isFetched: isArchivedFetched,
     fetchArchivedClients,
   } = useArchivedClientStore();
-
   const [createuser, setcreateuser] = useState(false);
+  const [createOrder, setcreateOrder] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
-
-  // ✅ chartView must be a string, not an object
-  const [chartView, setChartView] = useState("last10Months"); // "last10Months" | "allTime"
+  const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
     tenMonths: [],
     allTime: [],
   });
   const [currentChartData, setCurrentChartData] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
+
+  const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const company = localStorage.getItem("company");
+    const closedLabel = company === "idg" ? "Closed Orders" : company === "vkl" ? "Closed Matters":"Closed";
+
+    return (
+      <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
+        <p className="font-semibold">{label}</p>
+        <p>{`${closedLabel}: ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
   const clientApi = useMemo(() => new ClientAPI(), []);
 
+  // Fetch dashboard data
   useEffect(() => {
     const fetchAndSetData = async () => {
       try {
         const data = await clientApi.getDashboardData();
         setDashboardData(data);
-
         setAllChartData({
           tenMonths: Array.isArray(data.last10MonthsStats)
             ? data.last10MonthsStats
@@ -98,14 +237,48 @@ function Dashboard() {
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
 
+  // Fetch calendar events
   useEffect(() => {
-    // Debug logs (optional)
-    // console.log("chartView:", chartView);
-    // console.log("10M:", allChartData.tenMonths);
-    // console.log("ALL:", allChartData.allTime);
+    const fetchCalendarData = async () => {
+      try {
+        const data = await clientApi.getCalendarDates();
+        const events = [];
+        data.forEach((item) => {
+          if (item.buildingAndPestDate) {
+            events.push({
+              title: `[${item.matterNumber}] - B&P`,
+              start: moment(item.buildingAndPestDate).toDate(),
+              end: moment(item.buildingAndPestDate).toDate(),
+              allDay: true,
+              type: "buildingAndPest",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+            });
+          }
+          if (item.financeApprovalDate) {
+            events.push({
+              title: `[${item.matterNumber}] - Finance`,
+              start: moment(item.financeApprovalDate).toDate(),
+              end: moment(item.financeApprovalDate).toDate(),
+              allDay: true,
+              type: "financeApproval",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+            });
+          }
+        });
+        setCalendarEvents(events);
+      } catch (error) {
+        toast.error("Could not load calendar dates.");
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+    fetchCalendarData();
+  }, [clientApi]);
 
+  // Handle chart view switch
+  useEffect(() => {
     if (chartView === "last10Months") {
-      // show ONLY the last 10 points
       const ten = (allChartData.tenMonths || []).slice(-10);
       const formattedData = ten.map((item) => ({
         ...item,
@@ -124,6 +297,7 @@ function Dashboard() {
     }
   }, [chartView, allChartData]);
 
+  // Archived fetch
   useEffect(() => {
     if (!isArchivedFetched) {
       fetchArchivedClients();
@@ -138,22 +312,25 @@ function Dashboard() {
     );
   }, [currentChartData]);
 
-  const calendarEvents = useMemo(() => {
-    if (!archivedClients || archivedClients.length === 0) return [];
-    return archivedClients
-      .filter(
-        (client) =>
-          client.isClosed &&
-          client.settlement_date_iso &&
-          client.settlement_date_iso !== "N/A"
-      )
-      .map((client) => ({
-        title: `[${client.matternumber}] - ${client.client_name}`,
-        start: moment(client.settlement_date_iso, "YYYY-MM-DD").toDate(),
-        end: moment(client.settlement_date_iso, "YYYY-MM-DD").toDate(),
-        allDay: true,
-      }));
-  }, [archivedClients]);
+  const eventStyleGetter = useCallback((event) => {
+    let backgroundColor = "#3174ad";
+    if (event.type === "buildingAndPest") {
+      backgroundColor = "#B24592";
+    } else if (event.type === "financeApproval") {
+      backgroundColor = "#f83600";
+    }
+
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: "6px",
+        opacity: 0.9,
+        color: "white",
+        border: "0px",
+        padding: "2px 6px",
+      },
+    };
+  }, []);
 
   const dayPropGetter = useCallback(
     (date) => ({
@@ -166,6 +343,16 @@ function Dashboard() {
   );
 
   const handleNavigate = (newDate) => setCalendarDate(newDate);
+
+  const { views, defaultView } = useMemo(() => {
+    if (isMobile) {
+      return { views: [Views.AGENDA, Views.DAY], defaultView: Views.AGENDA };
+    }
+    return {
+      views: [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA],
+      defaultView: Views.MONTH,
+    };
+  }, [isMobile]);
 
   const StatCard = ({ icon, label, value }) => (
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm w-full">
@@ -187,16 +374,14 @@ function Dashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-100 p-2">
       <Header />
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
             <p className="text-sm mt-1 text-gray-800 max-w-5xl">
-              We are a client-focused law firm committed to delivering expert
-              legal solutions with integrity, professionalism, and personalized
-              care.
+              Your operations. Simplified. Amplified.
             </p>
             <button
               className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
@@ -205,8 +390,18 @@ function Dashboard() {
               <img src={Plus} alt="" className="w-5" />
               <span>Add New Client</span>
             </button>
+            {localStorage.getItem("company") === "idg" &&
+             <button
+              className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+              onClick={() => setcreateOrder(true)}
+            >
+              <img src={Plus} alt="" className="w-5" />
+              <span>Add New Order</span>
+            </button>
+            }
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <StatCard
               icon={ManageUsersIcon}
@@ -225,10 +420,11 @@ function Dashboard() {
             />
           </div>
 
+          {/* Chart */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-700">
-                Closed Matters (
+                {localStorage.getItem("company")==="vkl" ? "Closed Matters" : localStorage.getItem("company")==="idg" ? "Closed Orders" :"Closed"} (
                 {chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
@@ -254,7 +450,6 @@ function Dashboard() {
                 </button>
               </div>
             </div>
-
             {currentChartData && currentChartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={300}>
@@ -265,7 +460,7 @@ function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar
                       dataKey="closedMatters"
                       fill="#00AEEF"
@@ -276,7 +471,7 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord} Matters Solved In Last Month
+                    {lastrecord} {localStorage.getItem("company")==="vkl" ? "Matters Solved In Last Month" : localStorage.getItem("company")==="idg" ? "Orders Closed In Last Month" : "Closed"}
                   </p>
                 )}
               </>
@@ -287,9 +482,10 @@ function Dashboard() {
             )}
           </div>
 
+          {/* Calendar */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
-              Settlement Calendar
+              Important Dates
             </h2>
             <div className="h-[65vh] min-h-[500px]">
               <Calendar
@@ -301,15 +497,30 @@ function Dashboard() {
                 popup
                 onNavigate={handleNavigate}
                 dayPropGetter={dayPropGetter}
-                components={{ event: CustomEvent }}
+                views={views}
+                defaultView={defaultView}
+                eventPropGetter={eventStyleGetter}
+                components={{
+                  event: CustomEvent,
+                  agenda: { event: CustomAgendaEvent },
+                  toolbar: ResponsiveCalendarToolbar,
+                }}
               />
             </div>
           </div>
         </div>
       </main>
       <CreateClientModal
+        createType="client"
+        companyName={localStorage.getItem("company")}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+      />
+      <CreateClientModal
+        createType="order"
+        companyName={localStorage.getItem("company")}
+        isOpen={createOrder}
+        setIsOpen={() => setcreateOrder(false)}
       />
     </div>
   );
