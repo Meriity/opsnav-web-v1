@@ -77,39 +77,38 @@ const ViewClients = () => {
     setClientList(filteredData);
   }, [settlementDate, Clients, searchQuery]);
 
-
   let columns = [];
-  if(localStorage.getItem("company")==="vkl"){
-  columns = [
-    { key: "matternumber", title: "Matter Number", width: "8%" },
-    { key: "dataentryby", title: "Data Entry By", width: "10%" },
-    { key: "client_name", title: "Client Name", width: "10%" },
-    { key: "property_address", title: "Property Address", width: "10%" },
-    { key: "state", title: "State", width: "5%" },
-    { key: "client_type", title: "Client Type", width: "7%" },
-    { key: "settlement_date", title: "Settlement Date", width: "10%" },
-    {
-      key: "finance_approval_date",
-      title: "Finance Approval Date",
-      width: "10%",
-    },
-    {
-      key: "building_and_pest_date",
-      title: "Building & Pest Date",
-      width: "10%",
-    },
-  ];
-}else if(localStorage.getItem("company")==="idg"){
-   columns = [
-  { key: 'matternumber', title: 'Client ID', width: '10%' },
-  { key: 'dataentryby', title: 'Data Entry By', width: '15%' },
-  { key: 'client_name', title: 'Client Name', width: '10%' },
-  { key: 'property_address', title: 'Billing Address', width: '15%' },
-  { key: 'client_type', title: 'Client Type', width: '10%' },
-  // { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
-  { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
-];
-}
+  if (localStorage.getItem("company") === "vkl") {
+    columns = [
+      { key: "matternumber", title: "Matter Number", width: "8%" },
+      { key: "dataentryby", title: "Data Entry By", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "property_address", title: "Property Address", width: "10%" },
+      { key: "state", title: "State", width: "5%" },
+      { key: "client_type", title: "Client Type", width: "7%" },
+      { key: "settlement_date", title: "Settlement Date", width: "10%" },
+      {
+        key: "finance_approval_date",
+        title: "Finance Approval Date",
+        width: "10%",
+      },
+      {
+        key: "building_and_pest_date",
+        title: "Building & Pest Date",
+        width: "10%",
+      },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    columns = [
+      { key: "matternumber", title: "Client ID", width: "10%" },
+      { key: "dataentryby", title: "Data Entry By", width: "15%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "property_address", title: "Billing Address", width: "15%" },
+      { key: "client_type", title: "Client Type", width: "10%" },
+      // { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+      { key: "settlement_date", title: "Delivery Date", width: "10%" },
+    ];
+  }
 
   const api = new ClientAPI();
   async function handelReShareEmail() {
@@ -159,6 +158,7 @@ const ViewClients = () => {
           setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
         }}
+        onReset={() => setSettlementDate(["", ""])}
       />
 
       <Dialog
@@ -255,42 +255,46 @@ const ViewClients = () => {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              {localStorage.getItem("company")==="vkl"&&<>
-                <Button
-                label="Create Client"
-                Icon1={userplus}
-                onClick={() => setcreateuser(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Outstanding Tasks"
-                onClick={() => setShowOutstandingTask(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowDateRange(true)}
-                width="w-[150px]"
-              />
-              </>}
-               {localStorage.getItem("company")==="idg"&&<>
-                <Button
-                label="Create Client"
-                Icon1={userplus}
-                onClick={() => setcreateuser(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Create Order"
-                onClick={() => setcreateOrder(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowDateRange(true)}
-                width="w-[150px]"
-              />
-              </>}
+              {localStorage.getItem("company") === "vkl" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
+              )}
+              {localStorage.getItem("company") === "idg" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Create Order"
+                    onClick={() => setcreateOrder(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
+              )}
             </div>
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
