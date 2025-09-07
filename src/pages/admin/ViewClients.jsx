@@ -101,12 +101,11 @@ const ViewClients = () => {
   ];
 }else if(localStorage.getItem("company")==="idg"){
    columns = [
-  { key: 'matternumber', title: 'Client ID', width: '10%' },
-  { key: 'dataentryby', title: 'Data Entry By', width: '15%' },
+  { key: 'clientId', title: 'Client ID', width: '10%' },
+  { key: 'data_entry_by', title: 'Data Entry By', width: '15%' },
   { key: 'client_name', title: 'Client Name', width: '10%' },
-  { key: 'property_address', title: 'Billing Address', width: '15%' },
+  { key: 'billing_address', title: 'Billing Address', width: '15%' },
   { key: 'client_type', title: 'Client Type', width: '10%' },
-  // { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
   { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
 ];
 }
@@ -227,7 +226,7 @@ const ViewClients = () => {
 
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            View Clients
+            {localStorage.getItem("company") === "vkl"? "View Clients" : "Vew Orders"}
           </h3>
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}

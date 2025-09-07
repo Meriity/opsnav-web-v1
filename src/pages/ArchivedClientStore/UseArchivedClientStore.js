@@ -26,7 +26,14 @@ export const useArchivedClientStore = create((set, get) => ({
     set({ loading: true });
     const api = new ClientAPI();
     try {
-      const res = await api.getArchivedClients();
+      const company=localStorage.getItem("company");
+          const res = await (
+           company === "vkl"
+         ? api.getArchivedClients()
+         : company === "idg"
+         ? api.getIDGCompletedOrders()
+         : api.getClients()
+      );
 
       const mapped = res.clients.map((client, index) => ({
         // --- Data for Archived Clients Table ---
