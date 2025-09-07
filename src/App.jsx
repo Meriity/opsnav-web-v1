@@ -13,6 +13,7 @@ import ForgotPassword from "./components/auth/ForgotPasswordForm";
 import SetPassword from "./pages/auth/SetPassword";
 import SetClientPassword from "./pages/clients/SetPassword";
 import WorkSelection from "./pages/admin/WorkSelection";
+import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
@@ -70,6 +71,7 @@ function App() {
       >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="manage-users" element={<ManageUsers />} />
+        <Route path="manage-clients" element={<ManageClients />} />
         <Route path="view-clients" element={<ViewClients />} />
         <Route path="archived-clients" element={<ArchivedClients />} />
         <Route
@@ -115,6 +117,7 @@ function App() {
       >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="view-clients" element={<ViewClients />} />
+        <Route path="manage-clients" element={<ManageClients />} />
         <Route path="archived-clients" element={<ArchivedClients />} />
         <Route path="client/:clientId/stages" element={<StagesLayout />} />
       </Route>
