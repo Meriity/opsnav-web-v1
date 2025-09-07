@@ -77,7 +77,6 @@ const ViewClients = () => {
     setClientList(filteredData);
   }, [settlementDate, Clients, searchQuery]);
 
-
   let columns = [];
   if(localStorage.getItem("company")==="vkl"){
   columns = [
@@ -158,6 +157,7 @@ const ViewClients = () => {
           setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
         }}
+        onReset={() => setSettlementDate(["", ""])}
       />
 
       <Dialog
@@ -254,42 +254,46 @@ const ViewClients = () => {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              {localStorage.getItem("company")==="vkl"&&<>
-                <Button
-                label="Create Client"
-                Icon1={userplus}
-                onClick={() => setcreateuser(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Outstanding Tasks"
-                onClick={() => setShowOutstandingTask(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowDateRange(true)}
-                width="w-[150px]"
-              />
-              </>}
-               {localStorage.getItem("company")==="idg"&&<>
-                <Button
-                label="Create Client"
-                Icon1={userplus}
-                onClick={() => setcreateuser(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Create Order"
-                onClick={() => setcreateOrder(true)}
-                width="w-[150px]"
-              />
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowDateRange(true)}
-                width="w-[150px]"
-              />
-              </>}
+              {localStorage.getItem("company") === "vkl" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
+              )}
+              {localStorage.getItem("company") === "idg" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Create Order"
+                    onClick={() => setcreateOrder(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
+              )}
             </div>
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">

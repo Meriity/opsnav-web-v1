@@ -42,12 +42,10 @@ export default function ArchivedClients() {
   const { searchQuery } = useSearchStore();
 
   // Modals
-  const [openExcel, setOpenExcel] = useState(false); // uses DateRangeModal now
+  const [openExcel, setOpenExcel] = useState(false); 
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
-
-  // Date range state (Date objects from DateRangeModal)
-  const [fromDate, setFromDate] = useState(null); // Date | null
-  const [toDate, setToDate] = useState(null); // Date | null
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null); 
 
   const [clientList, setClientList] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -89,31 +87,30 @@ export default function ArchivedClients() {
     setClientList(filteredData);
   }, [archivedClients, fromDate, toDate, searchQuery]);
 
-  let columns=[];
-  if(localStorage.getItem("company")==="vkl"){
-   columns = [
-    { key: "matternumber", title: "Matter Number" },
-    { key: "client_name", title: "Client Name" },
-    { key: "property_address", title: "Property Address" },
-    { key: "state", title: "State" },
-    { key: "type", title: "Client Type" },
-    { key: "matter_date", title: "Matter Date" },
-    { key: "settlement_date", title: "Settlement Date" },
-    { key: "status", title: "Status" },
-  ];
-}
-else if(localStorage.getItem("company")==="idg"){
-   columns = [
-    { key: "matternumber", title: "Client ID" },
-    { key: "client_name", title: "Client Name" },
-    { key: "property_address", title: "Billing Address" },
-    { key: "state", title: "State" },
-    { key: "type", title: "Client Type" },
-    { key: "matter_date", title: "Order Date" },
-    { key: "settlement_date", title: "Delivery Date" },
-    { key: "status", title: "Status" },
-  ];
-}
+  let columns = [];
+  if (localStorage.getItem("company") === "vkl") {
+    columns = [
+      { key: "matternumber", title: "Matter Number" },
+      { key: "client_name", title: "Client Name" },
+      { key: "property_address", title: "Property Address" },
+      { key: "state", title: "State" },
+      { key: "type", title: "Client Type" },
+      { key: "matter_date", title: "Matter Date" },
+      { key: "settlement_date", title: "Settlement Date" },
+      { key: "status", title: "Status" },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    columns = [
+      { key: "matternumber", title: "Client ID" },
+      { key: "client_name", title: "Client Name" },
+      { key: "property_address", title: "Billing Address" },
+      { key: "state", title: "State" },
+      { key: "type", title: "Client Type" },
+      { key: "matter_date", title: "Order Date" },
+      { key: "settlement_date", title: "Delivery Date" },
+      { key: "status", title: "Status" },
+    ];
+  }
 
   const handleSort = (columnKey) => {
     const isAsc = sortedColumn === columnKey && sortDirection === "asc";
@@ -218,7 +215,6 @@ else if(localStorage.getItem("company")==="idg"){
     XLSX.writeFile(wb, "ArchivedClients.xlsx");
   };
 
-  // Reuse for list filtering (called by Filter modal)
   const handleDataFilter = (from, to) => {
     setFromDate(from || null);
     setToDate(to || null);
@@ -226,10 +222,8 @@ else if(localStorage.getItem("company")==="idg"){
 
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
-              <Header />
+      <Header />
       <main className="w-full max-w-8xl mx-auto p-5">
-
-
         {/* Toolbar */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">  {localStorage.getItem("company") === "vkl"? "Archived Clients" : "Completed Orders"} </h2>
@@ -274,7 +268,6 @@ else if(localStorage.getItem("company")==="idg"){
           </div>
         </div>
 
-        {/* Table / Cards */}
         {loading ? (
           <Loader />
         ) : (
@@ -350,8 +343,6 @@ else if(localStorage.getItem("company")==="idg"){
           </>
         )}
       </main>
-
-      {/* FILTER modal (same as before) */}
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
@@ -360,9 +351,9 @@ else if(localStorage.getItem("company")==="idg"){
           handleDataFilter(from, to);
           setShowSettlementDateModal(false);
         }}
+        onReset={() => handleDataFilter(null, null)}
       />
 
-      {/* EXPORT modal — reuses the exact same DateRangeModal */}
       <DateRangeModal
         isOpen={openExcel}
         setIsOpen={setOpenExcel}
@@ -370,8 +361,12 @@ else if(localStorage.getItem("company")==="idg"){
         handelSubmitFun={async (from, to) => {
           setFromDate(from);
           setToDate(to);
-          await handleExcelExport(from, to); // do the export after picking dates
+          await handleExcelExport(from, to); 
           setOpenExcel(false);
+        }}
+        onReset={() => {
+          setFromDate(null);
+          setToDate(null);
         }}
       />
     </div>
