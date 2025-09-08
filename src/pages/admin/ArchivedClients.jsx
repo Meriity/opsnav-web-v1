@@ -226,8 +226,7 @@ export default function ArchivedClients() {
       <main className="w-full max-w-8xl mx-auto p-5">
         {/* Toolbar */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">Archived Clients</h2>
-
+          <h2 className="text-2xl font-semibold">  {localStorage.getItem("company") === "vkl"? "Archived Clients" : "Completed Orders"} </h2>
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Button

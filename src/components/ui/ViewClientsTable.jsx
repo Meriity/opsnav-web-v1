@@ -22,6 +22,7 @@ const ViewClientsTable = ({
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
+  console.log(data);
   console.log(columns);
   const stageColorMap = {
     green: "green",
@@ -52,6 +53,7 @@ const ViewClientsTable = ({
 
   useEffect(() => {
     setCurrentData(sortedData.slice(0, itemsPerPage));
+    console.log(currentData);
   }, [sortedData, itemsPerPage]);
 
   return (

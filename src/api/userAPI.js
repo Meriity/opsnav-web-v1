@@ -206,6 +206,54 @@ class ClientAPI {
     }
   }
 
+    async getIDGOrders() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/active`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting cost:", error);
+      throw error;
+    }
+  }
+
+  async getCompletedIDGClients() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting cost:", error);
+      throw error;
+    }
+  }
+
+      async getIDGClients() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting cost:", error);
+      throw error;
+    }
+  }
+
   // Get Cost data
   async getCost(matterNumber) {
     try {
@@ -336,8 +384,64 @@ class ClientAPI {
     }
   }
 
+    async createIDGClient(clientData) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+
+      async createIDGOrder(clientData) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+
   // get clients
   async getArchivedClients() {
+    try {
+      const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return data;
+    } catch (error) {
+      console.error("Error getting cost:", error);
+      throw error;
+    }
+  }
+
+    async getIDGCompletedOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
         method: "GET",
@@ -377,6 +481,43 @@ class ClientAPI {
   async getDashboardData() {
     const fetchRange = async (range) => {
       const res = await fetch(`${this.baseUrl}/dashboard?range=${range}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return res.json();
+    };
+
+    try {
+      let tenData;
+      try {
+        tenData = await fetchRange("tenmonths");
+      } catch {
+        tenData = await fetchRange("tenMonths");
+      }
+
+      // All time
+      const allData = await fetchRange("all");
+
+      return {
+        lifetimeTotals:
+          tenData?.lifetimeTotals || allData?.lifetimeTotals || {},
+        last10MonthsStats: Array.isArray(tenData?.monthlyStats)
+          ? tenData.monthlyStats
+          : [],
+        allTimeStats: Array.isArray(allData?.monthlyStats)
+          ? allData.monthlyStats
+          : [],
+      };
+    } catch (error) {
+      console.error("Error getting dashboard data:", error);
+      throw error;
+    }
+  }
+
+    async getIDGDashboardData() {
+    const fetchRange = async (range) => {
+      const res = await fetch(`${this.baseUrl}/idg/dashboard?range=${range}`, {
         method: "GET",
         headers: this.getHeaders(),
       });

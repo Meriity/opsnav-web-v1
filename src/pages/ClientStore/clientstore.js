@@ -21,41 +21,72 @@ export const useClientStore = create(
       },
 
       // ACTIONS
-      fetchClients: async () => {
-        set({ loading: true, error: null });
-        const api = new ClientAPI();
-        try {
-          const response = await api.getClients();
-          console.log("Raw API response:", response);
-          const formattedClients = response.map((client) => ({
-            id: client._id,
-            matternumber: client.matterNumber || "N/A",
-            dataentryby: client.dataEntryBy || "N/A",
-            client_name: client.clientName || "N/A",
-            property_address: client.propertyAddress || "N/A",
-            state: client.state || "N/A",
-            client_type: client.clientType || "N/A",
-            settlement_date: client.settlementDate
-              ? client.settlementDate.split("T")[0]
-              : "N/A",
-            finance_approval_date: client.financeApprovalDate
-              ? client.financeApprovalDate.split("T")[0]
-              : null,
+fetchClients: async () => {
+  set({ loading: true, error: null });
+  const api = new ClientAPI();
 
-            building_and_pest_date: client.buildingAndPestDate
-              ? client.buildingAndPestDate.split("T")[0]
-              : null,
-            close_matter: client.closeMatter || "Active",
-            stages: client?.stages || [],
-          }));
-          set({ clients: formattedClients });
-        } catch (err) {
-          console.error("Error fetching clients:", err);
-          set({ error: err.message, clients: [] });
-        } finally {
-          set({ loading: false });
-        }
-      },
+  try {
+    const company = localStorage.getItem("company");
+    const response = await (
+      company === "vkl"
+        ? api.getClients()
+        : company === "idg"
+        ? api.getIDGOrders()
+        : api.getClients()
+    );
+
+    console.log("Raw API response:", response);
+
+    let formattedClients = [];
+
+    if (company === "vkl") {
+      formattedClients = response.map((client) => ({
+        id: client._id || "N/A",
+        matternumber: client.matterNumber || "N/A",
+        dataentryby: client.dataEntryBy || "N/A",
+        client_name: client.clientName || "N/A",
+        property_address: client.propertyAddress || "N/A",
+        state: client.state || "N/A",
+        client_type: client.clientType || "N/A",
+        settlement_date: client.settlementDate
+          ? client.settlementDate.split("T")[0]
+          : "N/A",
+        finance_approval_date: client.financeApprovalDate
+          ? client.financeApprovalDate.split("T")[0]
+          : null,
+        building_and_pest_date: client.buildingAndPestDate
+          ? client.buildingAndPestDate.split("T")[0]
+          : null,
+        close_matter: client.closeMatter || "Active",
+        stages: Array.isArray(client.stages) ? client.stages : [],
+      }));
+    } else if (company === "idg") {
+      formattedClients = response.data.map((client) => ({
+        id: client._id || "N/A",
+        clientId: client.orderId || "N/A",
+        data_entry_by: client.dataEntryBy || "N/A",
+        client_name: client.client.name || "N/A",
+        billing_address: client.client.billingAddress || "N/A",
+        client_type: client.orderType || "N/A",
+        settlement_date: client.orderDate
+          ? client.orderDate.split("T")[0]
+          : "N/A",
+        finance_approval_date: client.deliveryDate
+          ? client.deliveryDate.split("T")[0]
+          : null,
+      }));
+    }
+
+    console.log("Formatted Clients:", formattedClients);
+    set({ clients: formattedClients });
+  } catch (err) {
+    console.error("Error fetching clients:", err);
+    set({ error: err.message, clients: [] });
+  } finally {
+    set({ loading: false });
+  }
+},
+
       setSearchQuery: (query) => set({ searchQuery: query }),
       updateStage1: (updates) =>
         set((state) => ({

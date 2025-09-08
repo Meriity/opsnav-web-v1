@@ -59,6 +59,15 @@ export default function Sidebar({
     });
   }
 
+  if(company === "idg"){
+    menuItems.splice(2, 0, {
+      label: "Manage Clients",
+      icon: ManageUsersIcon,
+      to: "/admin/manage-clients",
+    });
+
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");

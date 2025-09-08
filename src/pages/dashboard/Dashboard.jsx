@@ -47,7 +47,7 @@ const useDashboardStore = create((set) => ({
         0;
       return {
         totalusers: data.lifetimeTotals?.totalUsers || 0,
-        totalactive: data.lifetimeTotals?.totalActiveClients || 0,
+        totalactive: data.lifetimeTotals?.totalActiveClients || data.lifetimeTotals?.totalActiveOrders,
         lastrecord: lastRec,
         loading: false,
       };
@@ -216,12 +216,19 @@ function Dashboard() {
 };
 
   const clientApi = useMemo(() => new ClientAPI(), []);
-
+  let company = localStorage.getItem("company");
   // Fetch dashboard data
   useEffect(() => {
     const fetchAndSetData = async () => {
       try {
-        const data = await clientApi.getDashboardData();
+        const data = await (
+           company === "vkl"
+         ? clientApi.getDashboardData()
+         : company === "idg"
+         ? clientApi.getIDGDashboardData()
+         : clientApi.getDashboardData()
+      );
+      console.log("Dashboard data:", data);
         setDashboardData(data);
         setAllChartData({
           tenMonths: Array.isArray(data.last10MonthsStats)

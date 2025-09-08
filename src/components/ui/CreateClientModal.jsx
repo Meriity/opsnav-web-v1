@@ -37,6 +37,14 @@ export default function CreateClientModal({
   const [formData, setFormData] = useState(initialFormData);
   const [id, setId] = useState({ clientId: "", orderId: "" });
 
+  // State for generated IDs, specific to 'idg' company
+  const [id, setId] = useState({ clientId: "", orderId: "" });
+
+  // CORRECTED: useState is now called once at the top level
+  const [formData, setFormData] = useState(getInitialFormData);
+  const [clients, setclients] = useState([]);
+
+  // Effect to generate IDs and reset the form when the modal opens for 'idg'
   useEffect(() => {
     if (isOpen) {
       // Reset form and errors
@@ -87,6 +95,7 @@ export default function CreateClientModal({
     }
   }
 
+  // --- SUBMIT HANDLER ---
   async function handleSubmit() {
     // VKL requires matter number
     if (isVkl && !formData.matterNumber) {
@@ -109,6 +118,8 @@ export default function CreateClientModal({
     }
 
     setIsLoading(true);
+    const company = localStorage.getItem("company");
+    const api = new ClientAPI();
 
     try {
       // For VKL check matter number uniqueness
@@ -144,19 +155,15 @@ export default function CreateClientModal({
         "An error occurred. Please check the details and try again.",
         { position: "bottom-center" }
       );
+
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={() => setIsOpen(false)}
-      className="relative z-10"
-    >
+    <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-10">
       <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-
       <div className="fixed inset-0 z-10 flex items-center justify-center p-4 overflow-y-auto">
         <DialogPanel className="max-w-500 relative transform overflow-hidden rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-3xl data-closed:sm:translate-y-0 data-closed:sm:scale-95 p-6">
           <button
@@ -165,7 +172,9 @@ export default function CreateClientModal({
           >
             &times;
           </button>
-
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            {createType === "order" ? "Create Order" : "Create Client"}
+          </h2>
           <h2 className="text-2xl font-bold mb-6 text-center">
             {createType === "order"
               ? "Create Order"
@@ -312,27 +321,20 @@ export default function CreateClientModal({
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-medium">Client Type*</label>
-                  <div className="flex gap-4 flex-wrap">
-                    {["Buyer", "Seller", "Transfer"].map((type) => (
-                      <label
-                        key={type}
-                        className="inline-flex items-center gap-1"
-                      >
-                        <input
-                          type="radio"
-                          name="clientType"
-                          value={type}
-                          checked={formData.clientType === type}
-                          onChange={handleChange}
-                          className="w-4 h-4"
-                          required
-                        />
-                        <span>{type}</span>
-                      </label>
-                    ))}
+                  <label className="block mb-1 font-medium">Property Address*</label>
+                  <input type="text" name="propertyAddress" value={formData.propertyAddress} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Matter Date*</label>
+                    <input type="date" name="matterDate" value={formData.matterDate} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Settlement Date*</label>
+                    <input type="date" name="settlementDate" value={formData.settlementDate} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required />
                   </div>
                 </div>
+
               </div>
             )}
 
@@ -431,7 +433,7 @@ export default function CreateClientModal({
               </div>
             </div>
 
-            {/* Data Entry By */}
+            {/* --- Common Fields --- */}
             <div>
               <label className="block mb-1 font-medium">Data Entry By</label>
               <input
