@@ -12,20 +12,97 @@ import ClientAPI from "../../../api/clientAPI";
 import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
 
-
 export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-  const isadmin = role === "superadmin" || role === "admin";
+
+  const [role, setRole] = useState(() => {
+    const r = localStorage.getItem("role");
+    if (r) return r;
+
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "null");
+      if (u?.role) return u.role;
+    } catch (e) {}
+
+    try {
+      const t = localStorage.getItem("token");
+      if (t) {
+        const payload = JSON.parse(atob(t.split(".")[1] || ""));
+        if (payload?.role) return payload.role;
+      }
+    } catch (e) {}
+
+    return null;
+  });
+
+  const isAnyAdmin = role === "superadmin" || role === "admin";
+  const isSuperAdmin = role === "superadmin";
+
+  useEffect(() => {
+    console.log("StagesLayout: role ->", role, "isSuperAdmin ->", isSuperAdmin);
+  }, [role, isSuperAdmin]);
+
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (["role", "user", "token"].includes(e.key)) {
+        const newRole =
+          localStorage.getItem("role") ||
+          (() => {
+            try {
+              const u = JSON.parse(localStorage.getItem("user") || "null");
+              return u?.role;
+            } catch (e) {
+              return null;
+            }
+          })();
+        setRole(newRole);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    const refreshRole = () => {
+      const currentRole =
+        localStorage.getItem("role") ||
+        (() => {
+          try {
+            const u = JSON.parse(localStorage.getItem("user") || "null");
+            return u?.role;
+          } catch (e) {
+            return null;
+          }
+        })();
+      if (currentRole !== role) {
+        setRole(currentRole);
+      }
+    };
+
+    const onVisibility = () => {
+      if (!document.hidden) refreshRole();
+    };
+    const onFocus = () => refreshRole();
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [role, setRole]);
+
+  // ---------- component state ----------
   const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
-  const company=localStorage.getItem("company");
+  const company = localStorage.getItem("company");
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -36,7 +113,6 @@ export default function StagesLayout() {
     status6: "Not Completed",
   });
 
-  // This hook ensures the view updates on window resize
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 1024);
@@ -45,6 +121,9 @@ export default function StagesLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
+  const CLIENT_TYPE_OPTIONS = ["Buyer", "Seller", "Transfer"];
 
   let stages = [
     { id: 1, title: "Retainer/Declaration" },
@@ -55,30 +134,29 @@ export default function StagesLayout() {
     { id: 6, title: "Final Letter/Close" },
   ];
 
-  if(localStorage.getItem("company")==="vkl"){
+  if (localStorage.getItem("company") === "vkl") {
     stages = [
-    { id: 1, title: "Retainer/Declaration" },
-    { id: 2, title: "VOI/CAF/Approvals" },
-    { id: 3, title: "Searches/PEXA" },
-    { id: 4, title: "DTS/DOL/SOA" },
-    { id: 5, title: "Notify/Transfer/Disb" },
-    { id: 6, title: "Final Letter/Close" },
-  ];
-  }
-  else if(localStorage.getItem("company")==="idg"){
-     stages = [
-    { id: 1, title: "Initiate" },
-    { id: 2, title: "Approve" },
-    { id: 3, title: "Plan" },
-    { id: 4, title: "Prepare" },
-    { id: 5, title: "Process" },
-    { id: 6, title: "Final Deliver" },
-  ];
+      { id: 1, title: "Retainer/Declaration" },
+      { id: 2, title: "VOI/CAF/Approvals" },
+      { id: 3, title: "Searches/PEXA" },
+      { id: 4, title: "DTS/DOL/SOA" },
+      { id: 5, title: "Notify/Transfer/Disb" },
+      { id: 6, title: "Final Letter/Close" },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    stages = [
+      { id: 1, title: "Initiate" },
+      { id: 2, title: "Approve" },
+      { id: 3, title: "Plan" },
+      { id: 4, title: "Prepare" },
+      { id: 5, title: "Process" },
+      { id: 6, title: "Final Deliver" },
+    ];
   }
 
   function bgcolor(status) {
     const statusColors = {
-      "In Progress": "bg-[#FFEECF]", // Changed Casing
+      "In Progress": "bg-[#FFEECF]",
       Completed: "bg-[#00A506]",
       "Not Completed": "bg-[#FF0000]",
       green: "bg-[#00A506]",
@@ -95,10 +173,10 @@ export default function StagesLayout() {
     const textMap = {
       green: "Completed",
       red: "Not Completed",
-      amber: "In Progress", // Changed Casing
+      amber: "In Progress",
       yellow: "Warning",
       blue: "Info",
-      "In Progress": "In Progress", // Changed Casing
+      "In Progress": "In Progress",
       Completed: "Completed",
       "Not Completed": "Not Completed",
     };
@@ -120,7 +198,7 @@ export default function StagesLayout() {
     const map = {
       Completed: "bg-green-600",
       "Not Completed": "bg-red-600",
-      "In Progress": "bg-amber-500", // Changed Casing
+      "In Progress": "bg-amber-500",
       green: "bg-green-600",
       red: "bg-red-600",
       amber: "bg-amber-500",
@@ -129,7 +207,6 @@ export default function StagesLayout() {
   }
 
   function badgeClasses(status) {
-    // subtle, professional status pill
     const color =
       status === "Completed"
         ? "text-green-700 border-green-300 bg-green-50"
@@ -161,7 +238,7 @@ export default function StagesLayout() {
     if (emptyCount === fields.length) return "Not Completed";
     if (yesCount === fields.length) return "Completed";
     if (noCount === fields.length) return "Not Completed";
-    return "In Progress"; // Changed Casing
+    return "In Progress";
   }
 
   function RenderStage(newStage) {
@@ -275,17 +352,33 @@ export default function StagesLayout() {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
 
-        // merge notes safely
-        setClientData((prev) => ({
-          ...prev,
-          ...response,
-          notes:
-            response.notes !== undefined ? response.notes : prev?.notes || "",
-          settlementDate:
-            response.settlementDate !== undefined
-              ? response.settlementDate
-              : prev?.settlementDate || null,
-        }));
+        // read role from server response if provided and set it immediately
+        const serverRole =
+          response?.role || response?.currentUser?.role || null;
+        if (serverRole) {
+          setRole(serverRole);
+        }
+
+        // normalize dates and notes to strings to avoid object-valued inputs
+        setClientData((prev) => {
+          const normalized = {
+            ...prev,
+            ...response,
+            matterDate: response.matterDate
+              ? typeof response.matterDate === "string"
+                ? response.matterDate
+                : new Date(response.matterDate).toISOString()
+              : prev?.matterDate || "",
+            settlementDate: response.settlementDate
+              ? typeof response.settlementDate === "string"
+                ? response.settlementDate
+                : new Date(response.settlementDate).toISOString()
+              : prev?.settlementDate || "",
+            notes:
+              response.notes !== undefined ? response.notes : prev?.notes || "",
+          };
+          return normalized;
+        });
 
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
@@ -369,15 +462,30 @@ export default function StagesLayout() {
     e.preventDefault();
     try {
       const payload = {
-        settlementDate: clientData.settlementDate || null,
-        notes: clientData.notes || "",
+        // always include settlementDate & notes
+        settlementDate: clientData?.settlementDate || null,
+        notes: clientData?.notes || "",
       };
+
+      // only include fields that superadmin can edit
+      if (isSuperAdmin) {
+        payload.matterDate = clientData?.matterDate || null;
+        payload.clientName = clientData?.clientName || "";
+        payload.propertyAddress = clientData?.propertyAddress || "";
+        payload.state = clientData?.state || "";
+        payload.clientType = clientData?.clientType || "";
+      }
 
       const updatedData = await api.updateClientData(matterNumber, payload);
       setClientData((prev) => ({
         ...prev,
         settlementDate: updatedData.settlementDate ?? prev.settlementDate,
         notes: updatedData.notes ?? prev.notes,
+        matterDate: updatedData.matterDate ?? prev.matterDate,
+        clientName: updatedData.clientName ?? prev.clientName,
+        propertyAddress: updatedData.propertyAddress ?? prev.propertyAddress,
+        state: updatedData.state ?? prev.state,
+        clientType: updatedData.clientType ?? prev.clientType,
       }));
 
       alert("Updated successfully!");
@@ -406,13 +514,13 @@ export default function StagesLayout() {
               width="w-[140px] "
               onClick={() => setIsOpen(true)}
             />
-            
+
             <Button
               label="Back"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[60px] md:w-[70px]"
               onClick={() => {
-                isadmin
+                isAnyAdmin
                   ? navigate("/admin/view-clients")
                   : navigate("/user/view-clients");
                 localStorage.removeItem("client-storage");
@@ -453,7 +561,7 @@ export default function StagesLayout() {
 
                           <div
                             className={`h-[18px] ${
-                              stageStatus === "In Progress" || // Changed Casing
+                              stageStatus === "In Progress" ||
                               stageStatus === "amber"
                                 ? "text-[#FF9500]"
                                 : "text-black"
@@ -494,7 +602,7 @@ export default function StagesLayout() {
                         </p>
                         <div
                           className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${
-                            stageStatus === "In Progress" || // Changed Casing
+                            stageStatus === "In Progress" ||
                             stageStatus === "amber"
                               ? "text-[#FF9500]"
                               : stageStatus === "Completed" ||
@@ -520,7 +628,13 @@ export default function StagesLayout() {
               </div>
               <div className="w-full xl:w-1/2">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4">
-                  <h2 className="text-lg font-bold mb-2">{company==="vkl"?"Matter Details":company==="idg"?"Order Details":""}</h2>
+                  <h2 className="text-lg font-bold mb-2">
+                    {company === "vkl"
+                      ? "Matter Details"
+                      : company === "idg"
+                      ? "Order Details"
+                      : ""}
+                  </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
                     onSubmit={handleupdate}
@@ -528,91 +642,187 @@ export default function StagesLayout() {
                     {/* First Row - 3 columns */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {company==="vkl"?"Matter Date":company==="idg"?"Order Date":""}
+                        {company === "vkl"
+                          ? "Matter Date"
+                          : company === "idg"
+                          ? "Order Date"
+                          : ""}
                       </label>
                       <input
-                        type="text"
-                        value={clientData?.matterDate?.split("T")[0] || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
+                        id="matterDate"
+                        name="matterDate"
+                        type={isSuperAdmin ? "date" : "text"}
+                        value={
+                          clientData?.matterDate
+                            ? clientData.matterDate.split?.("T")[0] ??
+                              clientData.matterDate
+                            : ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          const v = e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "";
+                          setClientData((prev) => ({ ...prev, matterDate: v }));
+                        }}
+                        className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled={!isSuperAdmin}
                       />
                     </div>
+
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                       {company==="vkl"?"Matter Number":company==="idg"?"Order ID":""}
+                        {company === "vkl"
+                          ? "Matter Number"
+                          : company === "idg"
+                          ? "Order ID"
+                          : ""}
                       </label>
                       <input
                         type="text"
                         value={clientData?.matterNumber || ""}
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
+                        disabled={true}
+                        readOnly
                       />
                     </div>
+
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         Client Name
                       </label>
                       <input
+                        id="clientName"
+                        name="clientName"
                         type="text"
                         value={clientData?.clientName || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...prev,
+                            clientName: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
                       />
                     </div>
 
                     {/* Second Row - 2 columns */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {localStorage.getItem("company")==="vkl"?"Property Address":company==="idg"?"Billing Address":"Address"}
+                        {localStorage.getItem("company") === "vkl"
+                          ? "Property Address"
+                          : company === "idg"
+                          ? "Billing Address"
+                          : "Address"}
                       </label>
                       <input
+                        id="propertyAddress"
+                        name="propertyAddress"
                         type="text"
                         value={clientData?.propertyAddress || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...prev,
+                            propertyAddress: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
                       />
                     </div>
+
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
                       </label>
-                      <input
-                        type="text"
+                      <select
+                        id="state"
+                        name="state"
                         value={clientData?.state || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
-                      />
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...prev,
+                            state: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
+                      >
+                        <option value="">Select state</option>
+                        {STATE_OPTIONS.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Third Row - 2 columns */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                       {company==="vkl"?"Client Type":company==="idg"?"Order Type":""}
+                        {company === "vkl"
+                          ? "Client Type"
+                          : company === "idg"
+                          ? "Order Type"
+                          : ""}
                       </label>
-                      <input
-                        type="text"
+                      <select
+                        id="clientType"
+                        name="clientType"
                         value={clientData?.clientType || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                        disabled
-                      />
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...prev,
+                            clientType: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded px-1 py-[8px] text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
+                      >
+                        <option value="">Select client type</option>
+                        {CLIENT_TYPE_OPTIONS.map((ct) => (
+                          <option key={ct} value={ct}>
+                            {ct}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {company==="vkl"?"Settlement Date":company==="idg"?"Delivery Date":""}
+                        {company === "vkl"
+                          ? "Settlement Date"
+                          : company === "idg"
+                          ? "Delivery Date"
+                          : ""}
                       </label>
                       <input
+                        id="settlementDate"
+                        name="settlementDate"
                         type="date"
                         value={
                           clientData?.settlementDate
-                            ? new Date(clientData.settlementDate)
-                                .toISOString()
-                                .split("T")[0]
+                            ? clientData.settlementDate.split?.("T")[0] ??
+                              clientData.settlementDate
                             : ""
                         }
                         onChange={(e) => {
                           const dateValue = e.target.value
-                            ? new Date(e.target.value)
-                            : null;
+                            ? new Date(e.target.value).toISOString()
+                            : "";
                           setClientData((prev) => ({
                             ...prev,
                             settlementDate: dateValue,
@@ -631,7 +841,8 @@ export default function StagesLayout() {
                         type="text"
                         value={clientData?.dataEntryBy || ""}
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
+                        disabled={true}
+                        readOnly
                       />
                     </div>
 
