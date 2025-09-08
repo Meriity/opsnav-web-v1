@@ -4,12 +4,18 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-export default function CreateClientModal({ isOpen, setIsOpen, companyName, createType }) {
+export default function CreateClientModal({
+  isOpen,
+  setIsOpen,
+  companyName,
+  createType,
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [matterNumberError, setMatterNumberError] = useState("");
   const navigate = useNavigate();
-  const [id,setId] = useState("");
-  const [formData, setFormData] = useState({
+  const [id, setId] = useState({ clientId: "", orderId: "" });
+
+  const initialFormData = {
     matterNumber: "",
     clientName: "",
     state: "",
@@ -18,22 +24,35 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
     matterDate: "",
     settlementDate: "",
     dataEntryBy: localStorage.getItem("user"),
-  });
+    // Add other fields from the 'idg' form to ensure they are controlled
+    client: "",
+    category: "",
+    contact: "",
+    email: "",
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  const isVkl = localStorage.getItem("company") === "vkl";
 
   useEffect(() => {
-    if (isOpen && localStorage.getItem("company") === "idg") {
-      if (createType !== "order") {
-        setId({
-          clientId: `IDG${Math.floor(10000000 + Math.random() * 90000000)}`,
-          orderId: "",
-        });
-      } else {
-        setId({
-          clientId: "",
-          orderId: `IDGORD${Math.floor(10000000 + Math.random() * 90000000)}`,
-        });
+    if (isOpen) {
+      setFormData(initialFormData);
+      setMatterNumberError(""); 
+
+      if (localStorage.getItem("company") === "idg") {
+        if (createType !== "order") {
+          setId({
+            clientId: `IDG${Math.floor(10000000 + Math.random() * 90000000)}`,
+            orderId: "",
+          });
+        } else {
+          setId({
+            clientId: "",
+            orderId: `IDGORD${Math.floor(10000000 + Math.random() * 90000000)}`,
+          });
+        }
       }
-      setFormData({}); 
     }
   }, [isOpen, createType]);
 
@@ -41,8 +60,8 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
     const { name, value } = e.target;
 
     if (name === "matterNumber") {
-      if (!/^\d*$/.test(value)) return; // Blocks non-numeric input
-      setMatterNumberError(""); // Clear error when user types
+      if (!/^\d*$/.test(value)) return;
+      setMatterNumberError("");
     }
 
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -55,26 +74,31 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
       return response.exists;
     } catch (error) {
       console.error("Error checking matter number:", error);
-      return false; // Assume it doesn't exist if there's an error
+      return false;
     }
   }
 
   async function handleSubmit() {
-    // Validate matter number first
-    if (!formData.matterNumber) {
+    const isIdgClient =
+      localStorage.getItem("company") === "idg" && createType === "client";
+    if (isVkl && !formData.matterNumber) {
       setMatterNumberError("Matter number is required");
       return;
     }
 
-    // Validate other required fields
-    if (
-      !formData.clientName ||
-      !formData.state ||
-      !formData.clientType ||
-      !formData.propertyAddress ||
-      !formData.matterDate ||
-      !formData.settlementDate
-    ) {
+    // Define required fields based on the context
+    const requiredFields = ["propertyAddress", "matterDate", "settlementDate"];
+    if (isVkl) {
+      requiredFields.push("clientName", "state", "clientType");
+    }
+    if (isIdgClient) {
+      requiredFields.push("clientName", "contact", "email");
+    }
+
+    // Check if any required field is empty
+    const isMissingField = requiredFields.some((field) => !formData[field]);
+
+    if (isMissingField) {
       toast.error("Please fill all required fields", {
         position: "bottom-center",
       });
@@ -84,29 +108,38 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
     setIsLoading(true);
 
     try {
-      // Check if matter number exists
-      const exists = await checkMatterNumberExists(formData.matterNumber);
-      if (exists) {
-        toast.error("A client with this matter number already exists", {
-          position: "bottom-center",
-        });
-        setMatterNumberError("This matter number already exists");
-        return;
+      if (isVkl) {
+        const exists = await checkMatterNumberExists(formData.matterNumber);
+        if (exists) {
+          toast.error("A client with this matter number already exists", {
+            position: "bottom-center",
+          });
+          setMatterNumberError("This matter number already exists");
+          setIsLoading(false); // Stop loading
+          return;
+        }
       }
 
-      // If matter number doesn't exist, proceed with creation
       const api = new ClientAPI();
-      await api.createClient(formData);
+      const payload = { ...formData, ...id };
+      await api.createClient(payload);
+
       toast.success("Client created successfully!", {
         position: "bottom-center",
       });
-      navigate(`/admin/client/stages/${formData.matterNumber}`);
-      setIsOpen(false); // Close the modal on success
+      const navigateTo = isVkl
+        ? formData.matterNumber
+        : id.clientId || id.orderId;
+      navigate(`/admin/client/stages/${navigateTo}`);
+      setIsOpen(false);
     } catch (e) {
       console.error("Error creating client:", e);
-      toast.error("This matter number already exists", {
-        position: "bottom-center",
-      });
+      toast.error(
+        "An error occurred. Please check the details and try again.",
+        {
+          position: "bottom-center",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -119,20 +152,21 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
       className="relative z-10"
     >
       <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-
       <div className="fixed inset-0 z-10 flex items-center justify-center p-4 overflow-y-auto">
         <DialogPanel className="max-w-500 relative transform overflow-hidden rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-3xl data-closed:sm:translate-y-0 data-closed:sm:scale-95 p-6">
-          {/* Close Button */}
           <button
             onClick={() => setIsOpen(false)}
             className="absolute top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
           >
             &times;
           </button>
-
-          {/* Title */}
-          <h2 className="text-2xl font-bold mb-6 text-center">{createType === "order" ? "Create Order" : createType === "client" ? "Create Client" : "Create"}</h2>
-
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            {createType === "order"
+              ? "Create Order"
+              : createType === "client"
+              ? "Create Client"
+              : "Create"}
+          </h2>
           <form
             className="space-y-5"
             onSubmit={(e) => {
@@ -142,86 +176,113 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
           >
             {/* Matter Number & Client Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {localStorage.getItem("company") === "vkl" && <div>
-                <label className="block mb-1 font-medium">Matter Number*</label>
-                <input
-                  type="text"
-                  name="matterNumber"
-                  value={formData.matterNumber}
-                  onChange={handleChange}
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  className={`w-full px-4 py-2 rounded-md border ${matterNumberError ? "border-red-500" : "border-gray-300"
-                    } bg-white`}
-                  required
-                />
-                {matterNumberError && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {matterNumberError}
-                  </p>
+              {localStorage.getItem("company") === "vkl" && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      Matter Number*
+                    </label>
+                    <input
+                      type="text"
+                      name="matterNumber"
+                      value={formData.matterNumber}
+                      onChange={handleChange}
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      className={`w-full px-4 py-2 rounded-md border ${
+                        matterNumberError ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                      required
+                    />
+                    {matterNumberError && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {matterNumberError}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      Client Name*
+                    </label>
+                    <input
+                      type="text"
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {localStorage.getItem("company") === "idg" &&
+                createType !== "order" && (
+                  <div>
+                    <label className="block mb-1 font-medium">Client ID</label>
+                    <input
+                      type="text"
+                      name="clientId"
+                      value={id.clientId}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      disabled
+                    />
+                  </div>
                 )}
-              </div>}
 
-              {localStorage.getItem("company") === "idg" && createType != "order" && <div>
-                <label className="block mb-1 font-medium">Client ID</label>
-                <input
-                  type="text"
-                  name="clientId"
-                  value={id.clientId}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                  disabled
-                />
-              </div>
-              }
+              {localStorage.getItem("company") === "idg" &&
+                createType === "order" && (
+                  <div>
+                    <label className="block mb-1 font-medium">Order ID</label>
+                    <input
+                      type="text"
+                      name="orderId"
+                      value={id.orderId}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      disabled
+                    />
+                  </div>
+                )}
 
-              {localStorage.getItem("company") === "idg" && createType === "order" && <div>
-                <label className="block mb-1 font-medium">Order ID</label>
-                <input
-                  type="text"
-                  name="clientId"
-                  value={id.orderId}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                  disabled
-                />
-              </div>
-              }
-              {localStorage.getItem("company") === "idg" && createType === "order" &&
-                <div>
-                  <label className="block mb-1 font-medium">Select Client</label>
-                  <select
-                    name="client"
-                    value={formData.client || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        client: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    required
-                  >
-                    <option value="">Select</option>
-                    <option value="idg_testing">IDG Testing</option>
-                  </select>
-                </div>
-              }
-              {localStorage.getItem("company") === "idg" && createType === "client" &&
-                <div>
-                  <label className="block mb-1 font-medium">Client Name*</label>
-                  <input
-                    type="text"
-                    name="clientName"
-                    value={formData.clientName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    required
-                  />
-                </div>
-              }
+              {localStorage.getItem("company") === "idg" &&
+                createType === "order" && (
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      Select Client
+                    </label>
+                    <select
+                      name="client"
+                      value={formData.client || ""}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="idg_testing">IDG Testing</option>
+                    </select>
+                  </div>
+                )}
+
+              {localStorage.getItem("company") === "idg" &&
+                createType === "client" && (
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      Client Name*
+                    </label>
+                    <input
+                      type="text"
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    />
+                  </div>
+                )}
             </div>
 
             {/* State & Client Type */}
-            {localStorage.getItem("company") === "vkl" &&
+            {localStorage.getItem("company") === "vkl" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-1 font-medium">State*</label>
@@ -268,68 +329,60 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
                   </div>
                 </div>
               </div>
-            }
-            {localStorage.getItem("company") === "idg" && createType != "client" &&
-              <div>
-                <label className="block mb-1 font-medium">Order Type</label>
-                <select
-                  name="category"
-                  value={formData.category || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      category: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                  required
-                >
-                  <option value="">
-                    Select
-                  </option>
-                  <option value="real_estate">Real Estate</option>
-                  <option value="vehicle">Vehicle</option>
-                  <option value="commercial">Commercial</option>
-                  <option value="others">Others</option>
-                </select>
-              </div>
-            }
+            )}
 
-
-
-
-            {localStorage.getItem("company") === "idg" && createType != "order" &&
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Order Type for IDG */}
+            {localStorage.getItem("company") === "idg" &&
+              createType !== "client" && (
                 <div>
-                  <label className="block mb-1 font-medium">
-                    Contact*
-                  </label>
-                  <input
-                    type="text"
-                    name="contact"
-                    // value={formData.propertyAddress}
+                  <label className="block mb-1 font-medium">Order Type</label>
+                  <select
+                    name="category"
+                    value={formData.category || ""}
                     onChange={handleChange}
                     className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                     required
-                  />
+                  >
+                    <option value="">Select</option>
+                    <option value="real_estate">Real Estate</option>
+                    <option value="vehicle">Vehicle</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="others">Others</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="block mb-1 font-medium">
-                    Email*
-                  </label>
-                  <input
-                    type="email"
-                    name="contact"
-                    // value={formData.propertyAddress}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    required
-                  />
+              )}
+
+            {/* Contact & Email for IDG Client */}
+            {localStorage.getItem("company") === "idg" &&
+              createType !== "order" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Contact*</label>
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Email*</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-            }
+              )}
+
             {/* Property Address */}
-            {localStorage.getItem("company") === "vkl" &&
+            {localStorage.getItem("company") === "vkl" && (
               <div>
                 <label className="block mb-1 font-medium">
                   Property Address*
@@ -343,83 +396,55 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
                   required
                 />
               </div>
-            }
+            )}
 
-            {createType != "order" && localStorage.getItem("company") === "idg" &&
+            {/* Billing Address for IDG Client */}
+            {createType !== "order" &&
+              localStorage.getItem("company") === "idg" && (
+                <div>
+                  <label className="block mb-1 font-medium">
+                    Billing Address*
+                  </label>
+                  <input
+                    type="text"
+                    name="propertyAddress"
+                    value={formData.propertyAddress}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                    required
+                  />
+                </div>
+              )}
+
+            {/* Dates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 font-medium">
-                  Billing Address*
+                  {isVkl ? "Matter Date*" : "Order Date*"}
                 </label>
                 <input
-                  type="text"
-                  name="propertyAddress"
-                  value={formData.propertyAddress}
+                  type="date"
+                  name="matterDate"
+                  value={formData.matterDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
                   required
                 />
               </div>
-            }
-
-            {/* Matter Date & Settlement Date */}
-            {localStorage.getItem("company") === "idg" && createType != "client" &&
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1 font-medium">Order Date*</label>
-                  <input
-                    type="date"
-                    name="matterDate"
-                    value={new Date().toISOString().split("T")[0]}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">
-                    Delivery Date*
-                  </label>
-                  <input
-                    type="date"
-                    name="settlementDate"
-                    value={formData.settlementDate}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block mb-1 font-medium">
+                  {isVkl ? "Settlement Date*" : "Delivery Date*"}
+                </label>
+                <input
+                  type="date"
+                  name="settlementDate"
+                  value={formData.settlementDate}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
+                  required
+                />
               </div>
-            }
-
-            {/* Matter Date & Settlement Date */}
-            {localStorage.getItem("company") === "vkl" &&
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1 font-medium">Matter Date*</label>
-                  <input
-                    type="date"
-                    name="matterDate"
-                    value={formData.matterDate}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">
-                    Settlement Date*
-                  </label>
-                  <input
-                    type="date"
-                    name="settlementDate"
-                    value={formData.settlementDate}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                    required
-                  />
-                </div>
-              </div>
-            }
+            </div>
 
             {/* Data Entry By */}
             <div>
@@ -434,34 +459,21 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
 
             {/* Submit Button */}
             <div className="pt-4">
-              {isLoading ? (
-                <button
-                  type="button"
-                  disabled={true}
-                  className="w-full bg-sky-600 text-white py-2 rounded-md"
-                >
-                  Creating...
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md ${matterNumberError
+              <button
+                type="submit"
+                disabled={isLoading || !!matterNumberError}
+                className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-opacity ${
+                  isLoading || matterNumberError
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-sky-600"
-                    }`}
-                >
-                  {createType === "client"
-                    ? companyName === "idg"
-                      ? "Create Client"
-                      : "Create Client"
-                    : createType === "order"
-                      ? companyName === "idg"
-                        ? "Create Order"
-                        : "Create Order"
-                      : "Add new Client"}
-                </button>
-              )}
+                }`}
+              >
+                {isLoading
+                  ? "Creating..."
+                  : createType === "order"
+                  ? "Create Order"
+                  : "Create Client"}
+              </button>
             </div>
           </form>
         </DialogPanel>
