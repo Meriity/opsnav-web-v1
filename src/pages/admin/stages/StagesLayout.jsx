@@ -231,6 +231,7 @@ export default function StagesLayout() {
         return (
           <Stage2
             data={clientData?.stage2}
+            clientType={clientData?.clientType}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
