@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Button from "../../../components/ui/Button";
 import Stage1 from "./Stage1";
 import Stage2 from "./Stage2";
@@ -11,13 +12,13 @@ import Cost from "./cost";
 import ClientAPI from "../../../api/clientAPI";
 import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
+import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 
 export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
   const navigate = useNavigate();
 
-  // ---------- role state + storage listener ----------
   const [role, setRole] = useState(() => {
     const r = localStorage.getItem("role");
     if (r) return r;
@@ -84,14 +85,18 @@ export default function StagesLayout() {
     };
   }, [role]);
 
-  // ---------- component state ----------
   const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
+  const [originalClientData, setOriginalClientData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
   const company = localStorage.getItem("company");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -102,6 +107,12 @@ export default function StagesLayout() {
     status6: "Not Completed",
   });
 
+  const [originalMatterNumber, setOriginalMatterNumber] =
+    useState(matterNumber);
+  useEffect(() => {
+    setOriginalMatterNumber(matterNumber);
+  }, [matterNumber]);
+
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 1024);
@@ -110,7 +121,6 @@ export default function StagesLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // EXACT option lists you requested
   const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
   const CLIENT_TYPE_OPTIONS = ["Buyer", "Seller", "Transfer"];
 
@@ -288,31 +298,40 @@ export default function StagesLayout() {
       try {
         setLoading(true);
         const response = await api.getAllStages(matterNumber);
-
-        // read role from server response if provided
         const serverRole =
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
 
-        // normalize dates and notes
+        const normalized = {
+          ...response,
+          matterDate: response.matterDate
+            ? typeof response.matterDate === "string"
+              ? response.matterDate
+              : new Date(response.matterDate).toISOString()
+            : "",
+          settlementDate: response.settlementDate
+            ? typeof response.settlementDate === "string"
+              ? response.settlementDate
+              : new Date(response.settlementDate).toISOString()
+            : "",
+          notes:
+            response.notes !== undefined
+              ? response.notes
+              : response.notes ?? "",
+        };
+
         setClientData((prev) => {
-          const normalized = {
-            ...prev,
-            ...response,
-            matterDate: response.matterDate
-              ? typeof response.matterDate === "string"
-                ? response.matterDate
-                : new Date(response.matterDate).toISOString()
-              : prev?.matterDate || "",
-            settlementDate: response.settlementDate
-              ? typeof response.settlementDate === "string"
-                ? response.settlementDate
-                : new Date(response.settlementDate).toISOString()
-              : prev?.settlementDate || "",
-            notes:
-              response.notes !== undefined ? response.notes : prev?.notes || "",
-          };
-          return normalized;
+          return { ...(prev || {}), ...normalized };
+        });
+        setOriginalClientData((prev) => {
+          try {
+            if (!prev || prev.matterNumber !== normalized.matterNumber) {
+              return JSON.parse(JSON.stringify(normalized));
+            }
+            return prev;
+          } catch {
+            return normalized;
+          }
         });
 
         const hasColorStatus = Object.values(response).some(
@@ -382,6 +401,7 @@ export default function StagesLayout() {
         setStageStatuses(section);
       } catch (e) {
         console.error("Error fetching stage details:", e);
+        toast.error("Failed to fetch client details.");
       } finally {
         setLoading(false);
       }
@@ -389,42 +409,109 @@ export default function StagesLayout() {
 
     if (matterNumber) fetchDetails();
   }, [matterNumber, reloadStage]);
+  useEffect(() => {
+    if (!clientData || !originalClientData) {
+      setHasChanges(false);
+      return;
+    }
+    try {
+      const a = JSON.stringify(clientData);
+      const b = JSON.stringify(originalClientData);
+      setHasChanges(a !== b);
+    } catch (err) {
+      setHasChanges(true);
+    }
+  }, [clientData, originalClientData]);
 
   async function handleupdate(e) {
     e.preventDefault();
+    if (!hasChanges) return;
+    setShowConfirmModal(true);
+  }
+
+  async function performUpdate() {
+    if (!hasChanges) {
+      setShowConfirmModal(false);
+      return;
+    }
+
+    setIsUpdating(true);
     try {
       const payload = {
         settlementDate: clientData?.settlementDate || null,
         notes: clientData?.notes || "",
       };
-
       if (isSuperAdmin) {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
         payload.propertyAddress = clientData?.propertyAddress || "";
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
+
+        if (
+          clientData?.matterNumber !== undefined &&
+          String(clientData?.matterNumber) !== String(originalMatterNumber)
+        ) {
+          payload.matterNumber = clientData.matterNumber;
+        }
       }
 
-      const updatedData = await api.updateClientData(matterNumber, payload);
-      setClientData((prev) => ({
-        ...prev,
-        settlementDate: updatedData.settlementDate ?? prev.settlementDate,
-        notes: updatedData.notes ?? prev.notes,
-        matterDate: updatedData.matterDate ?? prev.matterDate,
-        clientName: updatedData.clientName ?? prev.clientName,
-        propertyAddress: updatedData.propertyAddress ?? prev.propertyAddress,
-        state: updatedData.state ?? prev.state,
-        clientType: updatedData.clientType ?? prev.clientType,
-      }));
-
-      alert("Updated successfully!");
+      const resp = await api.updateClientData(originalMatterNumber, payload);
+      const updatedClient = resp.client || resp;
+      const normalizedUpdated = {
+        ...updatedClient,
+        matterDate: updatedClient?.matterDate
+          ? typeof updatedClient.matterDate === "string"
+            ? updatedClient.matterDate
+            : new Date(updatedClient.matterDate).toISOString()
+          : "",
+        settlementDate: updatedClient?.settlementDate
+          ? typeof updatedClient.settlementDate === "string"
+            ? updatedClient.settlementDate
+            : new Date(updatedClient.settlementDate).toISOString()
+          : "",
+      };
+      setClientData((prev) => ({ ...(prev || {}), ...normalizedUpdated }));
+      setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
+      setOriginalMatterNumber(
+        normalizedUpdated.matterNumber || originalMatterNumber
+      );
+      toast.success("Matter details updated successfully");
+      if (resp.directUrl) {
+        let direct = resp.directUrl;
+        if (!direct.startsWith("/")) direct = `/${direct}`;
+        if (!direct.match(/^\/admin/)) direct = `/admin${direct}`;
+        setTimeout(() => {
+          try {
+            navigate(direct);
+          } catch {
+            window.location.href = direct;
+          }
+        }, 450);
+        return;
+      }
+      if (
+        normalizedUpdated?.matterNumber &&
+        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
+      ) {
+        setTimeout(() => {
+          try {
+            navigate(`/admin/client/stages/${normalizedUpdated.matterNumber}`);
+          } catch {
+            window.location.href = `/admin/client/stages/${normalizedUpdated.matterNumber}`;
+          }
+        }, 450);
+      }
     } catch (err) {
-      console.error("Update error:", {
-        error: err,
-        response: err.response?.data,
-      });
-      alert("Failed to update. Please check console for details.");
+      console.error("Update error:", err);
+      let msg = "Failed to update. Check console for details.";
+      if (err?.message) msg = err.message;
+      else if (err?.body?.message) msg = err.body.message;
+
+      toast.error(msg);
+    } finally {
+      setIsUpdating(false);
+      setShowConfirmModal(false);
     }
   }
 
@@ -459,7 +546,7 @@ export default function StagesLayout() {
               label="Cost"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[60px] md:w-[70px]"
-              onClick={() => RenderStage(7)}
+              onClick={() => setSelectedStage(7)}
             />
           </div>
         </div>
@@ -609,13 +696,28 @@ export default function StagesLayout() {
                           ? "Order ID"
                           : ""}
                       </label>
-                      <input
-                        type="text"
-                        value={clientData?.matterNumber || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
-                        readOnly
-                      />
+
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={clientData?.matterNumber || ""}
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...prev,
+                              matterNumber: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={clientData?.matterNumber || ""}
+                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          disabled
+                          readOnly
+                        />
+                      )}
                     </div>
 
                     {/* Client Name */}
@@ -670,7 +772,7 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* State: show select only to superadmin; others see disabled input */}
+            
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
@@ -706,7 +808,6 @@ export default function StagesLayout() {
                       )}
                     </div>
 
-                    {/* Client Type: select only for superadmin; others see disabled input */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {company === "vkl"
@@ -814,7 +915,12 @@ export default function StagesLayout() {
                     <div className="md:col-span-3 mt-3">
                       <button
                         type="submit"
-                        className="w-full bg-[#00AEEF] hover:bg-[#0086bf] text-white font-medium rounded py-2 text-base"
+                        className={`w-full ${
+                          hasChanges
+                            ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
+                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                        } font-medium rounded py-2 text-base`}
+                        disabled={!hasChanges}
                       >
                         Update
                       </button>
@@ -826,6 +932,14 @@ export default function StagesLayout() {
           </>
         )}
       </main>
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirm update"
+        onConfirm={performUpdate}
+      >
+        Are you sure you want to update client data?
+      </ConfirmationModal>
     </div>
   );
 }
