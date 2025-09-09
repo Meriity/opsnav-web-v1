@@ -447,6 +447,7 @@ export default function StagesLayout() {
         payload.propertyAddress = clientData?.propertyAddress || "";
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
+        payload.dataEntryBy = clientData?.dataEntryBy || "";
 
         if (
           clientData?.matterNumber !== undefined &&
@@ -772,7 +773,6 @@ export default function StagesLayout() {
                       />
                     </div>
 
-            
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
@@ -880,17 +880,33 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Data Entry By */}
+                    {/* Data Entry By */}
                     <div className="md:col-span-3">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         Data Entry By
                       </label>
-                      <input
-                        type="text"
-                        value={clientData?.dataEntryBy || ""}
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
-                        readOnly
-                      />
+
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={clientData?.dataEntryBy || ""}
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...prev,
+                              dataEntryBy: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={clientData?.dataEntryBy || ""}
+                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          disabled
+                          readOnly
+                        />
+                      )}
                     </div>
 
                     {/* Notes */}
