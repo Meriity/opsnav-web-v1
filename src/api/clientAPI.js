@@ -38,6 +38,7 @@ class ClientAPI {
   }
 
   // Update client data
+  // clientAPI.js — improved updateClientData
   async updateClientData(matterNumber, data) {
     try {
       const response = await fetch(`${this.baseUrl}/clients/${matterNumber}`, {
@@ -46,10 +47,29 @@ class ClientAPI {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // read body as text then try to parse JSON (so we can surface server messages)
+      const text = await response.text();
+      let parsed = null;
+      try {
+        parsed = text ? JSON.parse(text) : null;
+      } catch (e) {
+        parsed = null;
       }
-      const res = await response.json();
+
+      if (!response.ok) {
+        // prefer server-provided message, then generic fallback
+        const serverMsg =
+          (parsed && (parsed.message || parsed.error || parsed.msg)) ||
+          `HTTP error! status: ${response.status}`;
+        const err = new Error(serverMsg);
+        err.status = response.status;
+        err.body = parsed;
+        throw err;
+      }
+
+      // on success return parsed JSON (or empty object)
+      const res = parsed || {};
+      // keep existing shape compatibility (callers expect resp.client || resp)
       return res.client || res;
     } catch (error) {
       console.error("Error updating client data:", error);
