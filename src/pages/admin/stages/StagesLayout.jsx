@@ -14,6 +14,23 @@ import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 
+const formatDateForDisplay = (isoString) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+const formatDisplayDateForAPI = (displayDate) => {
+  if (!displayDate || !/^\d{2}-\d{2}-\d{4}$/.test(displayDate)) {
+    return null;
+  }
+  const [day, month, year] = displayDate.split("-");
+  return new Date(`${year}-${month}-${day}T00:00:00.000Z`).toISOString();
+};
+
 export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const api = new ClientAPI();
@@ -671,8 +688,10 @@ export default function StagesLayout() {
                         type={isSuperAdmin ? "date" : "text"}
                         value={
                           clientData?.matterDate
-                            ? clientData.matterDate.split?.("T")[0] ??
-                              clientData.matterDate
+                            ? isSuperAdmin
+                              ? clientData.matterDate.split?.("T")[0] ??
+                                clientData.matterDate // YYYY-MM-DD for date picker
+                              : formatDateForDisplay(clientData.matterDate) // DD-MM-YYYY for normal users
                             : ""
                         }
                         onChange={(e) => {

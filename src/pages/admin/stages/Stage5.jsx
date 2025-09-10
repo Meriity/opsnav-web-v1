@@ -28,8 +28,8 @@ const formConfig = {
         name: "settlementNotification",
         label: "Settlement Notification",
         type: "radio",
-        hasDate: true,
-        dateFieldName: "settlementNotificationDate",
+        // hasDate: true,
+        // dateFieldName: "settlementNotificationDate",
       },
       { name: "council", label: "Council", type: "text" },
     ],
@@ -236,7 +236,7 @@ export default function Stage5({
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey]; 
+        delete payload[group.clientCommentKey];
       });
 
       await api.upsertStageFive(payload);
@@ -270,7 +270,9 @@ export default function Stage5({
               </div>
             </div>
 
-            <div className="flex gap-4 justify-between flex-wrap items-center mb-3">
+            {/* <div className="flex gap-4 justify-between flex-wrap items-center mb-3"> */}
+            {/* tight spacing of every fields*/}
+            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
                 <label
                   key={val}

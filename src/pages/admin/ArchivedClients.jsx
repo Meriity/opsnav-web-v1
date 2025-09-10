@@ -49,7 +49,7 @@ export default function ArchivedClients() {
 
   const [clientList, setClientList] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
-  const [clientsPerPage, setClientsPerPage] = useState(10);
+  const [clientsPerPage, setClientsPerPage] = useState(100);
   const api = new ClientAPI();
 
   const [sortedColumn, setSortedColumn] = useState(null);

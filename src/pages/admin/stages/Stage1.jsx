@@ -146,7 +146,7 @@ export default function Stage1({
 
   const generateSystemNote = () => {
     const radioFields = currentFields.filter((field) => field.type === "radio");
-    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]); 
+    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]);
 
     const notReceived = radioFields
       .filter(
@@ -229,7 +229,7 @@ export default function Stage1({
         ...formData,
         noteForClient,
       };
-      delete payload.systemNote; 
+      delete payload.systemNote;
       delete payload.clientComment;
 
       await api.upsertStageOne(payload);
@@ -277,11 +277,13 @@ export default function Stage1({
                 </p>
               </div>
             </div>
-            <div
+            {/* <div
               className={`flex gap-4 ${
                 field.options.length > 2 ? "justify-between" : ""
               } flex-wrap`}
-            >
+            > */}
+            {/* tight spacing of every fields*/}
+            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
               {field.options.map((val) => (
                 <label
                   key={val}
