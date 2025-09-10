@@ -63,29 +63,29 @@ const formConfig = {
   idg: {
     fields: [
       {
-        name: "assignInstaller",
+        name: "installerAssigned",
         label: "Assign Installer / Field Staff",
-        type: "radio",
+        type: "text",
       },
       {
-        name: "performInstallation",
+        name: "installationDone",
         label: "Perform Installation / Removal On-Site",
         type: "radio",
       },
-      { name: "placePointers", label: "Place Street Pointers", type: "radio" },
+      { name: "streetPointersPlaced", label: "Place Street Pointers", type: "radio" },
       {
-        name: "applyOnSiteStickers",
+        name: "onsiteStickersApplied",
         label: "Apply On-Site Stickers",
         type: "radio",
       },
       {
-        name: "capturePhotos",
+        name: "completionPhotos",
         label: "Capture Proof of Completion Photos",
-        type: "radio",
+        type: "text",
       },
-      { name: "updateStatusExcel", label: "Update Status", type: "radio" },
+      { name: "finalStatus", label: "Update Status", type: "text" },
       {
-        name: "generateInvoice",
+        name: "invoiceGenerated",
         label: "Generate and send Invoice",
         type: "radio",
       },

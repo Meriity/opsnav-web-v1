@@ -56,6 +56,25 @@ class ClientAPI {
       throw error;
     }
   }
+  async updateIDGClientData(clientId, data={}) {
+    console.log(clientId, data);
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/${clientId}`, {
+        method: "PUT",
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const res = await response.json();
+      return res.client || res;
+    } catch (error) {
+      console.error("Error updating client data:", error);
+      throw error;
+    }
+  }
 
   // Insert/Update Stage One
   async upsertStageOne(additionalData = {}) {
@@ -67,6 +86,30 @@ class ClientAPI {
       });
 
       console.log(`${this.baseUrl}/clients/stage-one`);
+      console.log(JSON.stringify(additionalData));
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating stage one:", error);
+      throw error;
+    }
+  }
+
+    async upsertIDGStages(clientId,stage,additionalData = {}) {
+      console.log(`${this.baseUrl}/idg/stages/${stage}/${clientId}`);
+      try {
+      const response = await fetch(`${this.baseUrl}/idg/stages/${stage}/${clientId}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(additionalData),
+      });
+
+      console.log(additionalData);
+
       console.log(JSON.stringify(additionalData));
 
       if (!response.ok) {
@@ -120,6 +163,31 @@ class ClientAPI {
       throw error;
     }
   }
+
+async getIDGStages(clientId) {
+  console.log(`${this.baseUrl}/idg/orders/${clientId}`);
+  try {
+    const response = await fetch(
+      `${this.baseUrl}/idg/orders/${clientId}`,
+      {
+        method: "GET",
+        headers: this.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Fetched data:", data); 
+    return data;
+  } catch (error) {
+    console.error("Error getting stage one:", error);
+    throw error;
+  }
+}
+
 
   // Insert/Update Stage Two
   async upsertStageTwo(matterNumber, colorStatus, additionalData = {}) {

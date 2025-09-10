@@ -194,7 +194,7 @@ const ViewClientsTable = ({
                     <div className="flex flex-col items-center space-y-2">
                       <button
                         onClick={() =>
-                          navigate(`/admin/client/stages/${item.matternumber}`)
+                          localStorage.getItem("company")==="vkl" ? navigate(`/admin/client/stages/${item.matternumber}`) : navigate(`/admin/client/stages/${item.orderId}`) 
                         }
                         className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
                         title="Edit"

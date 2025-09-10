@@ -47,40 +47,30 @@ const formConfig = {
       options: ["Yes", "No", "Processing", "N/R"],
     },
     {
-      name: "validateJobAddress",
-      label: "Validate Job Address",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
+      name: "jobAddress",
+      label: "Job Address",
+      type: "text",
     },
     {
       name: "checkDistanceFeasibility",
       label: "Check Distance / Feasibility",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
+      type: "text",
     },
     {
       name: "identifyOrderType",
-      label: "Identify Order Type",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
+      label: "Order Type",
+      type: "text",
     },
     {
       name: "confirmCostingType",
       label: "Confirm Costing Type",
       type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
+      options: ["Fixed", "Variable"],
     },
     {
       name: "recordRequestedTimeline",
-      label: "Record Requested Timeline / Deadline",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
-    {
-      name: "saveOrderReadyForApproval",
-      label: "Save order as ready for approval",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
+      label: "Timeline / Deadline",
+      type: "text",
     },
   ],
 };
@@ -101,10 +91,12 @@ export default function Stage1({
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const originalData = useRef({});
-
+  console.log(data);
   const stage = 1;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
+  const { orderId } = useParams();
+
 
   // Determine the company and get its specific configuration
   const company = localStorage.getItem("company") || "vkl"; // Default to 'vkl'
@@ -223,16 +215,30 @@ export default function Stage1({
     try {
       const systemNote = generateSystemNote();
       const noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
-
-      const payload = {
+      let payload={};
+      if(localStorage.getItem("company") === "vkl") {
+       payload = {
         matterNumber,
         ...formData,
         noteForClient,
       };
+    }else if(localStorage.getItem("company") === "idg") {
+      payload = {
+        matterNumber,
+       ...formData,
+        noteForClient,
+      };
+    }
+      console.log("Updating stage 1:", payload);
       delete payload.systemNote; 
       delete payload.clientComment;
 
+      if(localStorage.getItem("company") === "vkl") {
       await api.upsertStageOne(payload);
+      } else {
+        await api.upsertIDGStages(matterNumber,1,payload);
+      }
+
 
       originalData.current = { ...formData, systemNote };
       setReloadTrigger((prev) => !prev);

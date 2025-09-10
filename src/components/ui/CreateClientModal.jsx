@@ -46,6 +46,7 @@ const getFormattedDate = () => {
   const day = String(today.getDate()).padStart(2, '0');
   const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
   const year = today.getFullYear();
+  console.log(`${day}/${month}/${year}`);
   return `${day}/${month}/${year}`;
 };
 
@@ -175,6 +176,7 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
             orderType: formData.category,
             deliveryDate: formData.settlementDate,
           };
+          console.log("Submitting New IDG Order:", payload);
           await api.createIDGOrder(payload);
 
           console.log("Submitting New IDG Order:", payload);
@@ -304,10 +306,30 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
                     <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
                   </div>
                 </div>
-                <div>
-                  <label className="block mb-1 font-medium">Billing Address*</label>
-                  <input type="text" name="billingAddress" value={formData.billingAddress} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Billing Address*</label>
+                    <input type="text" name="contact" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Country*</label>
+                    <input type="email" name="email" value={formData.country} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">State*</label>
+                    <input type="text" name="contact" value={formData.state} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <input type="email" name="text" value={formData.postcode} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                </div>
+                            <div>
+              <label className="block mb-1 font-medium">ABN</label>
+              <input type="text" value={formData.abn} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-600" />
+            </div>
               </>
             )}
 
@@ -331,7 +353,8 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
                     </select>
                   </div>
                 </div>
-                <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
                   <label className="block mb-1 font-medium">Order Type*</label>
                   <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required >
                     <option value="">Select Order Type</option>
@@ -340,11 +363,40 @@ export default function CreateClientModal({ isOpen, setIsOpen, companyName, crea
                     <option value="Commercial">Commercial</option>
                     <option value="Others">Others</option>
                   </select>
+                  </div>
+                  <div>
+                  <label className="block mb-1 font-medium">Priority*</label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required >
+                    <option value="">Select Order Type</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                  </div>
+                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Delivery Address*</label>
+                    <input type="text" name="contact" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Country*</label>
+                    <input type="email" name="email" value={formData.country} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
+                    <label className="block mb-1 font-medium">State*</label>
+                    <input type="text" name="contact" value={formData.state} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <input type="email" name="text" value={formData.postcode} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
                     <label className="block mb-1 font-medium">Order Date*</label>
-                    <input type="date" name="orderDate" value={formData.orderDate} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required readOnly />
+                    <input type="date" name="orderDate" value={new Date()} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required readOnly />
                   </div>
                   <div>
                     <label className="block mb-1 font-medium">Delivery Date*</label>
