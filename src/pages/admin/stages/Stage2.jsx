@@ -297,7 +297,9 @@ export default function Stage2({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* <div className="flex flex-wrap items-center justify-between gap-4"> */}
+      {/* tight spacing of every fields*/}
+      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label
             key={val}

@@ -166,17 +166,17 @@ export default function Stage3({
     setFormState((prev) => ({ ...prev, [key]: processedValue }));
     setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
 
-    if (hasDate) {
-      if (processedValue === "yes") {
-        setFormState((prev) => ({
-          ...prev,
-          [`${key}Date`]:
-            prev[`${key}Date`] || new Date().toISOString().split("T")[0],
-        }));
-      } else {
-        setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
-      }
-    }
+    // if (hasDate) {
+    //   if (processedValue === "yes") {
+    //     setFormState((prev) => ({
+    //       ...prev,
+    //       [`${key}Date`]:
+    //         prev[`${key}Date`] || new Date().toISOString().split("T")[0],
+    //     }));
+    //   } else {
+    //     setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
+    //   }
+    // }
   };
 
   async function handleSave() {
@@ -193,8 +193,19 @@ export default function Stage3({
         matterNumber,
         ...formState,
         noteForClient: fullNote,
-        titleSearchDate: formState.titleSearchDate || null,
+        // titleSearchDate: formState.titleSearchDate || null,
       };
+
+      fields.forEach(({ key, hasDate }) => {
+        if (hasDate) {
+          const dateKey = `${key}Date`;
+          // if date not present or empty string, send null so backend knows it's empty
+          payload[dateKey] =
+            formState[dateKey] && String(formState[dateKey]).trim() !== ""
+              ? formState[dateKey]
+              : null;
+        }
+      });
 
       await api.upsertStageThree(payload);
 
@@ -229,7 +240,9 @@ export default function Stage3({
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-between items-center gap-4">
+      {/* <div className="flex flex-wrap justify-between items-center gap-4"> */}
+      {/* tight spacing of every fields*/}
+      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
         {["Yes", "No", "Processing", "N/R"].map((val) => (
           <label
             key={val}
@@ -259,7 +272,7 @@ export default function Stage3({
                 [`${key}Date`]: e.target.value,
               }))
             }
-            className="border p-1 rounded text-sm"
+            className="ml-2 p-1 border rounded"
           />
         )}
       </div>
