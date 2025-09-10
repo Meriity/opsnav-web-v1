@@ -417,12 +417,12 @@ function Dashboard() {
             />
             <StatCard
               icon={ViewClientsIcon}
-              label="Total Active Clients"
+              label={localStorage.getItem("company") === "idg"? "Total Orders" : "Total Clients"}
               value={totalactive}
             />
             <StatCard
               icon={ArchivedChatsIcon}
-              label="Total Archived Clients"
+              label={localStorage.getItem("company") === "idg"? "Total Completed Orders" : "Total Archived Clients"}
               value={chartPeriodTotal}
             />
           </div>

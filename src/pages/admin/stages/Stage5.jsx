@@ -54,19 +54,18 @@ const formConfig = {
   },
   idg: {
     fields: [
-      { name: "order_photo", label: "Order Photo", type: "radio" },
-      { name: "photo_ready", label: "Photo Ready", type: "radio" },
-      { name: "install_complete", label: "Install Complete", type: "radio" },
-      { name: "delivery_complete", label: "Delivery Complete", type: "radio" },
-      { name: "pickup_complete", label: "Pickup Complete", type: "radio" },
+      { name: "boardsPrinted", label: "Boards Printed", type: "radio" },
+      { name: "laminationApplied", label: "Lamination Applied", type: "radio" },
+      { name: "cuttingDone", label: "Cutting Done", type: "radio" },
+      { name: "mountingDone", label: "Mounting Done", type: "radio" },
+      { name: "auctionStickersPreapplied", label: "Auction Stickers Preapplied", type: "radio" },
       {
-        name: "check_stock_levels",
-        label: "Check Stock Levels",
+        name: "packaged",
+        label: "Packaged",
         type: "radio",
       },
-      { name: "issue_invoice", label: "Issue Invoice", type: "radio" },
-      { name: "order_complete", label: "Order Complete", type: "radio" },
-      { name: "send_survey", label: "Send Survey", type: "radio" },
+      { name: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" },
+      { name: "labeled", label: "labeled", type: "radio" },
     ],
     noteGroups: [
       {
@@ -93,7 +92,7 @@ const formConfig = {
 };
 
 const normalizeValue = (v) => {
-  if (v === undefined || v === null) return "";
+  if (v === undefined || v === null ) return "";
   return String(v)
     .toLowerCase()
     .trim()
@@ -102,6 +101,7 @@ const normalizeValue = (v) => {
 
 const getStatus = (value) => {
   const val = normalizeValue(value);
+  if(val==="") return "Not Completed";
   if (!val) return "Not Completed";
   if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
   if (val === "no") return "Not Completed";

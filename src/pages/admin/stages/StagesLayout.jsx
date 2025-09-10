@@ -172,7 +172,7 @@ export default function StagesLayout() {
 
   function bgcolor(status) {
     const statusColors = {
-      "In Progress": "bg-[#FFEECF]",
+      "In Progress": "bg-[#FFEECF]", // Changed Casing  
       Completed: "bg-[#00A506]",
       "Not Completed": "bg-[#FF0000]",
       green: "bg-[#00A506]",
@@ -237,7 +237,7 @@ export default function StagesLayout() {
       case 1:
         return (
           <Stage1
-            data={clientData?.stage1}
+            data={clientData?.stage1 || clientData?.data.stage1}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -247,8 +247,7 @@ export default function StagesLayout() {
       case 2:
         return (
           <Stage2
-            data={clientData?.stage2}
-            clientType={clientData?.clientType}
+            data={clientData?.stage2 || clientData?.data.stage2}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -257,7 +256,7 @@ export default function StagesLayout() {
       case 3:
         return (
           <Stage3
-            data={clientData?.stage3}
+            data={clientData?.stage3 || clientData?.data.stage3}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -266,7 +265,7 @@ export default function StagesLayout() {
       case 4:
         return (
           <Stage4
-            data={clientData?.stage4}
+            data={clientData?.stage4 || clientData?.data.stage4}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -275,7 +274,7 @@ export default function StagesLayout() {
       case 5:
         return (
           <Stage5
-            data={clientData?.stage5}
+            data={clientData?.stage5 || clientData?.data.stage5}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -284,7 +283,7 @@ export default function StagesLayout() {
       case 6:
         return (
           <Stage6
-            data={normalizeCloseMatterForClient(clientData?.stage6)}
+            data={normalizeCloseMatterForClient(clientData?.stage6) || normalizeCloseMatterForClient(clientData?.data.stage6)}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -293,7 +292,7 @@ export default function StagesLayout() {
       case 7:
         return (
           <Cost
-            data={clientData?.costData}
+            data={clientData?.costData|| clientData?.data.costData}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -302,7 +301,7 @@ export default function StagesLayout() {
       default:
         return (
           <Stage1
-            data={clientData?.stage1}
+            data={clientData?.stage1 || clientData?.data.stage1}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -315,10 +314,9 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        const response = await api.getAllStages(matterNumber);
-        const serverRole =
-          response?.role || response?.currentUser?.role || null;
-        if (serverRole) setRole(serverRole);
+        let response = company==="vkl" ? await api.getAllStages(matterNumber) : company==="idg" ? await api.getIDGStages(matterNumber) : null;
+
+        console.log(response);
 
         const normalized = {
           ...response,
@@ -330,27 +328,9 @@ export default function StagesLayout() {
           settlementDate: response.settlementDate
             ? typeof response.settlementDate === "string"
               ? response.settlementDate
-              : new Date(response.settlementDate).toISOString()
-            : "",
-          notes:
-            response.notes !== undefined
-              ? response.notes
-              : response.notes ?? "",
-        };
+              : prev?.settlementDate || null,
+        }));
 
-        setClientData((prev) => {
-          return { ...(prev || {}), ...normalized };
-        });
-        setOriginalClientData((prev) => {
-          try {
-            if (!prev || prev.matterNumber !== normalized.matterNumber) {
-              return JSON.parse(JSON.stringify(normalized));
-            }
-            return prev;
-          } catch {
-            return normalized;
-          }
-        });
 
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
@@ -443,84 +423,43 @@ export default function StagesLayout() {
 
   async function handleupdate(e) {
     e.preventDefault();
-    if (!hasChanges) return;
-    setShowConfirmModal(true);
-  }
-
-  async function performUpdate() {
-    if (!hasChanges) {
-      setShowConfirmModal(false);
-      return;
+    console.log(clientData);
+    try {
+      let payload={};
+      if(localStorage.getItem("company") === "vkl") {
+       payload = {
+        settlementDate: clientData.settlementDate || null,
+        notes: clientData.notes || "",
+      };
+    }
+    else{
+        payload = {
+        deliveryDate: clientData.settlementDate || null,
+        notes: clientData.notes || "",
+      };
     }
 
-    setIsUpdating(true);
-    try {
-      const payload = {
-        settlementDate: clientData?.settlementDate || null,
-        notes: clientData?.notes || "",
-      };
-      if (isSuperAdmin) {
-        payload.matterDate = clientData?.matterDate || null;
-        payload.clientName = clientData?.clientName || "";
-        payload.propertyAddress = clientData?.propertyAddress || "";
-        payload.state = clientData?.state || "";
-        payload.clientType = clientData?.clientType || "";
-        payload.dataEntryBy = clientData?.dataEntryBy || "";
 
-        if (
-          clientData?.matterNumber !== undefined &&
-          String(clientData?.matterNumber) !== String(originalMatterNumber)
-        ) {
-          payload.matterNumber = clientData.matterNumber;
-        }
-      }
+      const company=localStorage.getItem("company");
+      const updatedData = company==="vkl" ? await api.updateClientData(matterNumber, payload) : company==="idg" ? await api.updateIDGClientData(matterNumber, payload) : null;
 
-      const resp = await api.updateClientData(originalMatterNumber, payload);
-      const updatedClient = resp.client || resp;
-      const normalizedUpdated = {
-        ...updatedClient,
-        matterDate: updatedClient?.matterDate
-          ? typeof updatedClient.matterDate === "string"
-            ? updatedClient.matterDate
-            : new Date(updatedClient.matterDate).toISOString()
-          : "",
-        settlementDate: updatedClient?.settlementDate
-          ? typeof updatedClient.settlementDate === "string"
-            ? updatedClient.settlementDate
-            : new Date(updatedClient.settlementDate).toISOString()
-          : "",
-      };
-      setClientData((prev) => ({ ...(prev || {}), ...normalizedUpdated }));
-      setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
-      setOriginalMatterNumber(
-        normalizedUpdated.matterNumber || originalMatterNumber
-      );
-      toast.success("Matter details updated successfully");
-      if (resp.directUrl) {
-        let direct = resp.directUrl;
-        if (!direct.startsWith("/")) direct = `/${direct}`;
-        if (!direct.match(/^\/admin/)) direct = `/admin${direct}`;
-        setTimeout(() => {
-          try {
-            navigate(direct);
-          } catch {
-            window.location.href = direct;
-          }
-        }, 450);
-        return;
-      }
-      if (
-        normalizedUpdated?.matterNumber &&
-        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
-      ) {
-        setTimeout(() => {
-          try {
-            navigate(`/admin/client/stages/${normalizedUpdated.matterNumber}`);
-          } catch {
-            window.location.href = `/admin/client/stages/${normalizedUpdated.matterNumber}`;
-          }
-        }, 450);
-      }
+
+      if(localStorage.getItem("company")==="vkl"){
+      setClientData((prev) => ({
+        ...prev,
+        settlementDate: updatedData.settlementDate ?? prev.settlementDate,
+        notes: updatedData.notes ?? prev.notes,
+      }));
+    }
+    else if(localStorage.getItem("company")==="idg"){
+      setClientData((prev) => ({
+        ...prev,
+        deliveryDate: updatedData.settlementDate ?? prev.settlementDate,
+        notes: updatedData.notes ?? prev.notes,
+      }));
+    }
+
+      alert("Updated successfully!");
     } catch (err) {
       console.error("Update error:", err);
       let msg = "Failed to update. Check console for details.";
@@ -547,6 +486,7 @@ export default function StagesLayout() {
             <Button
               label="Upload Image"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+              width="w-[140px]"
               width="w-[140px]"
               onClick={() => setIsOpen(true)}
             />
@@ -683,28 +623,11 @@ export default function StagesLayout() {
                           : ""}
                       </label>
                       <input
-                        id="matterDate"
-                        name="matterDate"
-                        type={isSuperAdmin ? "date" : "text"}
-                        value={
-                          clientData?.matterDate
-                            ? isSuperAdmin
-                              ? clientData.matterDate.split?.("T")[0] ??
-                                clientData.matterDate // YYYY-MM-DD for date picker
-                              : formatDateForDisplay(clientData.matterDate) // DD-MM-YYYY for normal users
-                            : ""
-                        }
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          const v = e.target.value
-                            ? new Date(e.target.value).toISOString()
-                            : "";
-                          setClientData((prev) => ({ ...prev, matterDate: v }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
-                        disabled={!isSuperAdmin}
+                        type="text"
+                        // value={clientData?.matterDate?.split("T")[0] || ""}
+                        value={localStorage.getItem("company")==="idg" ? clientData?.data.orderDate?.split("T")[0] :clientData?.matterDate?.split("T")[0] || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
                       />
                     </div>
 
@@ -717,28 +640,14 @@ export default function StagesLayout() {
                           ? "Order ID"
                           : ""}
                       </label>
+                      <input
+                        type="text"
+                        // value={clientData?.matterNumber || ""}
+                        value={localStorage.getItem("company")==="vkl" ? clientData?.matterNumber : clientData?.data.orderId} 
 
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={clientData?.matterNumber || ""}
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...prev,
-                              matterNumber: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={clientData?.matterNumber || ""}
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
+                      />
                     </div>
 
                     {/* Client Name */}
@@ -750,23 +659,14 @@ export default function StagesLayout() {
                         id="clientName"
                         name="clientName"
                         type="text"
-                        value={clientData?.clientName || ""}
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          setClientData((prev) => ({
-                            ...prev,
-                            clientName: e.target.value,
-                          }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
-                        disabled={!isSuperAdmin}
+                        value={localStorage.getItem("company")==="vkl" ? clientData?.clientName : clientData?.data.client.name} 
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
                       />
                     </div>
 
-                    {/* Property Address */}
-                    <div className="md:col-span-2">
+                    {/* Second Row - 2 columns */}
+                    <div className="md:col-span-3">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {localStorage.getItem("company") === "vkl"
                           ? "Property Address"
@@ -778,55 +678,23 @@ export default function StagesLayout() {
                         id="propertyAddress"
                         name="propertyAddress"
                         type="text"
-                        value={clientData?.propertyAddress || ""}
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          setClientData((prev) => ({
-                            ...prev,
-                            propertyAddress: e.target.value,
-                          }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
-                        disabled={!isSuperAdmin}
+                        value={localStorage.getItem("company")==="vkl" ? clientData?.propertyAddress : clientData?.data.client.billingAddress} 
+                        // value={clientData?.propertyAddress || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
                       />
                     </div>
-
-                    <div className="md:col-span-1">
+                   {localStorage.getItem("company")==="vkl" && <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
                       </label>
-                      {isSuperAdmin ? (
-                        <select
-                          id="state"
-                          name="state"
-                          value={clientData?.state || ""}
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...prev,
-                              state: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        >
-                          <option value="">Select state</option>
-                          {STATE_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={clientData?.state || ""}
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
-                    </div>
+                      <input
+                        type="text"
+                        value={clientData?.state || ""}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
+                      />
+                    </div>}
 
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -836,35 +704,12 @@ export default function StagesLayout() {
                           ? "Order Type"
                           : ""}
                       </label>
-                      {isSuperAdmin ? (
-                        <select
-                          id="clientType"
-                          name="clientType"
-                          value={clientData?.clientType || ""}
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...prev,
-                              clientType: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                        >
-                          <option value="">Select client type</option>
-                          {CLIENT_TYPE_OPTIONS.map((ct) => (
-                            <option key={ct} value={ct}>
-                              {ct}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={clientData?.clientType || ""}
-                          className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
+                      <input
+                        type="text"
+                        value={clientData?.clientType || clientData?.data?.orderType}
+                        className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                        disabled
+                      />
                     </div>
 
                     {/* Settlement Date */}
@@ -882,9 +727,13 @@ export default function StagesLayout() {
                         type="date"
                         value={
                           clientData?.settlementDate
-                            ? clientData.settlementDate.split?.("T")[0] ??
-                              clientData.settlementDate
-                            : ""
+                            ? new Date(clientData.settlementDate)
+                                .toISOString()
+                                .split("T")[0]
+                            : clientData?.data.deliveryDate
+                            ? new Date(clientData.data.deliveryDate)
+                                .toISOString()
+                                .split("T")[0] : ""
                         }
                         onChange={(e) => {
                           const dateValue = e.target.value
@@ -905,28 +754,12 @@ export default function StagesLayout() {
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         Data Entry By
                       </label>
-
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={clientData?.dataEntryBy || ""}
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...prev,
-                              dataEntryBy: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={clientData?.dataEntryBy || ""}
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
+                      <input
+                        type="text"
+                        value={clientData?.dataEntryBy || clientData?.data.dataEntryBy}
+                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        disabled
+                      />
                     </div>
 
                     {/* Notes */}

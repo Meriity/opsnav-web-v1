@@ -18,23 +18,52 @@ export default function CreateClientModal({
   const isIdg = (company || localStorage.getItem("company")) === "idg";
   const todayISO = new Date().toISOString().split("T")[0];
 
-  const initialFormData = {
-    matterNumber: "",
-    clientName: "",
-    state: "",
-    clientType: "",
-    propertyAddress: "",
-    matterDate: "",
-    settlementDate: "",
-    dataEntryBy: localStorage.getItem("user"),
-    // IDG-specific controlled fields
-    client: "",
-    category: "",
-    contact: "",
-    email: "",
-  };
+  if (company === "vkl") {
+    return {
+      matterNumber: "",
+      clientName: "",
+      state: "",
+      clientType: "",
+      propertyAddress: "",
+      matterDate: "",
+      settlementDate: "",
+      dataEntryBy: user,
+    };
+  } else if (company === "idg") {
+    return {
+      clientId: "", // This will be populated from the 'id' state on submit
+      clientName: "",
+      contact: "",
+      email: "",
+      billingAddress: "",
+      // Fields for 'order' type
+      client: "", // The selected client for an order
+      category: "", // Order type
+      orderDate: getFormattedDate(), // Defaults to today
+      settlementDate: "", // Delivery date
+      dataEntryBy: user,
+    };
+  }
+  return {}; // Default empty state
+};
 
-  const [formData, setFormData] = useState(initialFormData);
+// Helper function to format the date as DD/MM/YYYY
+const getFormattedDate = () => {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const year = today.getFullYear();
+  console.log(`${day}/${month}/${year}`);
+  return `${day}/${month}/${year}`;
+};
+
+
+export default function CreateClientModal({ isOpen, setIsOpen, companyName, createType }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [matterNumberError, setMatterNumberError] = useState("");
+  const navigate = useNavigate();
+
+  // State for generated IDs, specific to 'idg' company
   const [id, setId] = useState({ clientId: "", orderId: "" });
 
   useEffect(() => {
@@ -122,28 +151,59 @@ export default function CreateClientModal({
           setIsLoading(false);
           return;
         }
+
+        await api.createClient(formData);
+        toast.success("Client created successfully!");
+        navigate(`/admin/client/stages/${formData.matterNumber}`);
+        setIsOpen(false);
+
+      } else if (company === "idg") {
+        // --- IDG Submission Logic (Client or Order) ---
+        if (createType === "client") {
+          const requiredFields = ["clientName", "contact", "email", "billingAddress"];
+          if (requiredFields.some(field => !formData[field])) {
+            toast.error("Please fill all required fields");
+            return;
+          }
+
+          const payload = {
+            clientId: id.clientId,
+            name: formData.clientName,
+            contact: formData.contact,
+            email: formData.email,
+            billingAddress: formData.billingAddress,
+          };
+
+          await api.createIDGClient(payload);
+          console.log("Submitting New IDG Client:", payload);
+          // await api.createIdgClient(payload); // Replace with your actual API call
+          toast.success("Client created successfully!");
+
+        } else if (createType === "order") {
+          const requiredFields = ["client", "category", "settlementDate"];
+          if (requiredFields.some(field => !formData[field])) {
+            toast.error("Please fill all required fields");
+            return;
+          }
+
+          const payload = {
+            orderId: id.orderId,
+            clientId: formData.client,
+            orderType: formData.category,
+            deliveryDate: formData.settlementDate,
+          };
+          console.log("Submitting New IDG Order:", payload);
+          await api.createIDGOrder(payload);
+
+          console.log("Submitting New IDG Order:", payload);
+          // await api.createIdgOrder(payload); // Replace with your actual API call
+          toast.success("Order created successfully!");
+        }
+        setIsOpen(false); // Close modal on success
       }
-
-      const api = new ClientAPI();
-      const payload = { ...formData, ...id };
-      await api.createClient(payload);
-
-      toast.success("Client created successfully!", {
-        position: "bottom-center",
-      });
-
-      const navigateTo = isVkl
-        ? formData.matterNumber
-        : id.clientId || id.orderId || formData.matterNumber;
-
-      navigate(`/admin/client/stages/${navigateTo}`);
-      setIsOpen(false);
-    } catch (e) {
-      console.error("Error creating client:", e);
-      toast.error(
-        "An error occurred. Please check the details and try again.",
-        { position: "bottom-center" }
-      );
+    } catch (error) {
+      console.error("Error during submission:", error);
+      toast.error(error.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -370,66 +430,105 @@ export default function CreateClientModal({
                     required
                   />
                 </div>
-                <div>
-                  <label className="block mb-1 font-medium">Email*</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    required
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Billing Address*</label>
+                    <input type="text" name="contact" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Country*</label>
+                    <input type="email" name="email" value={formData.country} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Property / Billing Address */}
-            {createType !== "order" && (
-              <div>
-                <label className="block mb-1 font-medium">
-                  {isVkl ? "Property Address*" : "Billing Address*"}
-                </label>
-                <input
-                  type="text"
-                  name="propertyAddress"
-                  value={formData.propertyAddress}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                  required
-                />
-              </div>
-            )}
-
-            {/* Dates */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">
-                  {isVkl ? "Matter Date*" : "Order Date*"}
-                </label>
-                <input
-                  type="date"
-                  name="matterDate"
-                  value={formData.matterDate}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">
-                  {isVkl ? "Settlement Date*" : "Delivery Date*"}
-                </label>
-                <input
-                  type="date"
-                  name="settlementDate"
-                  value={formData.settlementDate}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
-                  required
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">State*</label>
+                    <input type="text" name="contact" value={formData.state} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <input type="email" name="text" value={formData.postcode} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                </div>
+                            <div>
+              <label className="block mb-1 font-medium">ABN</label>
+              <input type="text" value={formData.abn} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-600" />
             </div>
+              </div>
+            )}
+
+            {companyName === "idg" && createType === "order" && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Order ID</label>
+                    <input type="text" name="orderId" value={id.orderId} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100" disabled />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Select Client*</label>
+                    <select name="client" value={formData.client} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required >
+                      <option value="">Select a Client</option>
+                      {clients.map((client) => (
+                        <option key={client.id} value={client._id}>
+                          {client.name}
+                        </option>
+                      ))}
+
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                  <label className="block mb-1 font-medium">Order Type*</label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required >
+                    <option value="">Select Order Type</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Vehicle">Vehicle</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  </div>
+                  <div>
+                  <label className="block mb-1 font-medium">Priority*</label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required >
+                    <option value="">Select Order Type</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                  </div>
+                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Delivery Address*</label>
+                    <input type="text" name="contact" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Country*</label>
+                    <input type="email" name="email" value={formData.country} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">State*</label>
+                    <input type="text" name="contact" value={formData.state} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <input type="email" name="text" value={formData.postcode} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                  </div>
+                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Order Date*</label>
+                    <input type="date" name="orderDate" value={new Date()} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required readOnly />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-medium">Delivery Date*</label>
+                    <input type="date" name="settlementDate" value={formData.settlementDate} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required />
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Data Entry By */}
             <div>
