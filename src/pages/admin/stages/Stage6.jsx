@@ -288,7 +288,22 @@ export default function Stage6({
 
     return (
       <div key={field.name} className="mt-8">
-        <div className="flex gap-4 items-center justify-between mb-5">
+        {/* <div className="flex gap-4 items-center justify-between mb-5">
+          <label className="block mb-1 text-sm md:text-base font-bold">
+            {field.label}
+          </label>
+          <div
+            className={`w-[90px] h-[18px] ${bgcolor(
+              statuses[field.name]
+            )} flex items-center justify-center rounded-4xl`}
+          >
+            <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+              {statuses[field.name] ?? "Not Completed"}
+            </p>
+          </div>
+        </div> */}
+        {/* tight spacing of every fields*/}
+        <div className="flex gap-4 items-center justify-between mb-3">
           <label className="block mb-1 text-sm md:text-base font-bold">
             {field.label}
           </label>
@@ -302,14 +317,15 @@ export default function Stage6({
             </p>
           </div>
         </div>
-
-        <div
+        {/* <div
           className={
             isCloseMatter
               ? "flex items-center gap-4 mb-6" // tighter
               : "flex justify-between items-center gap-6 mb-6" // original wide spacing
           }
-        >
+        > */}
+        {/* tight spacing of every fields*/}
+        <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
           {options.map((val) => (
             <label
               key={val}

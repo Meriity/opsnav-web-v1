@@ -10,7 +10,7 @@ import {
   CircleUserRound,
   ChevronLeft,
   ChevronRight,
-  ListOrdered 
+  ListOrdered,
 } from "lucide-react";
 
 export default function Sidebar({
@@ -22,8 +22,9 @@ export default function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  const company=localStorage.getItem("company");
-  
+  const company = localStorage.getItem("company");
+  const userRole = localStorage.getItem("role");
+
   const menuItems = [
     {
       label: "Dashboard",
@@ -31,27 +32,29 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-      label: company === "vkl"
-  ? "View Clients"
-  : company === "idg"
-  ? "View Orders"
-  : "View"
-,
+      label:
+        company === "vkl"
+          ? "View Clients"
+          : company === "idg"
+          ? "View Orders"
+          : "View",
       icon: ViewClientsIcon,
       to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
     },
     {
-      label: company === "vkl"
-  ? "Archived Clients"
-  : company === "idg"
-  ? "Completed Orders"
-  : "Completed/Archived",
-      icon: ArchivedChatsIcon, 
+      label:
+        company === "vkl"
+          ? "Archived Clients"
+          : company === "idg"
+          ? "Completed Orders"
+          : "Completed/Archived",
+      icon: ArchivedChatsIcon,
       to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
     },
   ];
 
-  if (isAdminRoute) {
+  // if (isAdminRoute) {
+  if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
     menuItems.splice(1, 0, {
       label: "Manage Users",
       icon: ManageUsersIcon,
@@ -59,13 +62,12 @@ export default function Sidebar({
     });
   }
 
-  if(company === "idg"){
+  if (company === "idg") {
     menuItems.splice(2, 0, {
       label: "Manage Clients",
       icon: ManageUsersIcon,
       to: "/admin/manage-clients",
     });
-
   }
 
   const handleLogout = () => {
