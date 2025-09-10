@@ -206,7 +206,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGOrders() {
+  async getIDGOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/status/active`, {
         method: "GET",
@@ -238,7 +238,7 @@ class ClientAPI {
     }
   }
 
-      async getIDGClients() {
+  async getIDGClients() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/clients`, {
         method: "GET",
@@ -384,7 +384,7 @@ class ClientAPI {
     }
   }
 
-    async createIDGClient(clientData) {
+  async createIDGClient(clientData) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/clients`, {
         method: "POST",
@@ -403,7 +403,7 @@ class ClientAPI {
     }
   }
 
-      async createIDGOrder(clientData) {
+  async createIDGOrder(clientData) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders`, {
         method: "POST",
@@ -441,7 +441,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGCompletedOrders() {
+  async getIDGCompletedOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
         method: "GET",
@@ -515,7 +515,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGDashboardData() {
+  async getIDGDashboardData() {
     const fetchRange = async (range) => {
       const res = await fetch(`${this.baseUrl}/idg/dashboard?range=${range}`, {
         method: "GET",
