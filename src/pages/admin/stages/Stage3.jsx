@@ -167,17 +167,17 @@ export default function Stage3({
     setFormState((prev) => ({ ...prev, [key]: processedValue }));
     setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
 
-    if (hasDate) {
-      if (processedValue === "yes") {
-        setFormState((prev) => ({
-          ...prev,
-          [`${key}Date`]:
-            prev[`${key}Date`] || new Date().toISOString().split("T")[0],
-        }));
-      } else {
-        setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
-      }
-    }
+    // if (hasDate) {
+    //   if (processedValue === "yes") {
+    //     setFormState((prev) => ({
+    //       ...prev,
+    //       [`${key}Date`]:
+    //         prev[`${key}Date`] || new Date().toISOString().split("T")[0],
+    //     }));
+    //   } else {
+    //     setFormState((prev) => ({ ...prev, [`${key}Date`]: "" }));
+    //   }
+    // }
   };
 
   async function handleSave() {
@@ -194,8 +194,19 @@ export default function Stage3({
         matterNumber,
         ...formState,
         noteForClient: fullNote,
-        titleSearchDate: formState.titleSearchDate || null,
+        // titleSearchDate: formState.titleSearchDate || null,
       };
+
+      fields.forEach(({ key, hasDate }) => {
+        if (hasDate) {
+          const dateKey = `${key}Date`;
+          // if date not present or empty string, send null so backend knows it's empty
+          payload[dateKey] =
+            formState[dateKey] && String(formState[dateKey]).trim() !== ""
+              ? formState[dateKey]
+              : null;
+        }
+      });
 
       await api.upsertStageThree(payload);
 

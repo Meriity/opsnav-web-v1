@@ -225,7 +225,7 @@ export default function Stage4({
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey]; 
+        delete payload[group.clientCommentKey];
       });
 
       currentConfig.fields.forEach((field) => {
@@ -264,7 +264,9 @@ export default function Stage4({
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 justify-between flex-wrap items-center mb-3">
+            {/* <div className="flex gap-4 justify-between flex-wrap items-center mb-3"> */}
+            {/* tight spacing of every fields*/}
+            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
                 <label
                   key={val}

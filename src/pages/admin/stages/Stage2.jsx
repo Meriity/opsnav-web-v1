@@ -116,6 +116,7 @@ export default function Stage2({
   data,
   reloadTrigger,
   setReloadTrigger,
+  clientType,
 }) {
   console.log(data);
   const stage = 2;
@@ -169,10 +170,23 @@ export default function Stage2({
       noteGroup.fieldsForNote.includes(f.name)
     );
 
+    // const notReceived = fieldsToCheck
+    //   .filter(
+    //     (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+    //   )
+    //   .map((field) => field.label);
+
     const notReceived = fieldsToCheck
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
+      .filter((field) => {
+        // Conditionally exclude obtainDaSeller for non-sellers
+        if (
+          field.name === "obtainDaSeller" &&
+          clientType?.toLowerCase() !== "seller"
+        ) {
+          return false;
+        }
+        return !greenValues.has(normalizeValue(formData[field.name] || ""));
+      })
       .map((field) => field.label);
 
     if (notReceived.length === 0) return "Tasks completed";
@@ -219,6 +233,7 @@ export default function Stage2({
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
+    originalData.current = JSON.parse(JSON.stringify(initialFormData));
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
@@ -354,7 +369,17 @@ export default function Stage2({
 
   return (
     <div className="overflow-y-auto">
-      {currentConfig.fields.map(renderField)}
+      {/* {currentConfig.fields.map(renderField)} */}
+      {currentConfig.fields.map((field) => {
+        // Conditionally render the "Obtain DA(Seller)" field
+        if (
+          field.name === "obtainDaSeller" &&
+          clientType?.toLowerCase() !== "seller"
+        ) {
+          return null;
+        }
+        return renderField(field);
+      })}
       {currentConfig.noteGroups.map(renderNoteGroup)}
 
       <div className="flex mt-10 justify-between">
@@ -386,6 +411,7 @@ export default function Stage2({
 Stage2.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
+  clientType: PropTypes.string,
   reloadTrigger: PropTypes.bool.isRequired,
   setReloadTrigger: PropTypes.func.isRequired,
 };
