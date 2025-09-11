@@ -317,20 +317,19 @@ export default function StagesLayout() {
         let response = company==="vkl" ? await api.getAllStages(matterNumber) : company==="idg" ? await api.getIDGStages(matterNumber) : null;
 
         console.log(response);
-
-        const normalized = {
-          ...response,
-          matterDate: response.matterDate
-            ? typeof response.matterDate === "string"
-              ? response.matterDate
-              : new Date(response.matterDate).toISOString()
-            : "",
-          settlementDate: response.settlementDate
-            ? typeof response.settlementDate === "string"
-              ? response.settlementDate
-              : prev?.settlementDate || null
-        }));
-
+        
+const normalized = {
+  ...response,
+  matterDate: response.matterDate
+    ? typeof response.matterDate === "string"
+      ? response.matterDate
+      : new Date(response.matterDate).toISOString()
+    : "",
+  settlementDate: response.settlementDate
+    ? typeof response.settlementDate === "string"
+      ? response.settlementDate
+      : null
+};
 
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
