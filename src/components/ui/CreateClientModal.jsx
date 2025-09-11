@@ -4,17 +4,20 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-// Helper function to format the date as DD/MM/YYYY
-const getFormattedDate = () => {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const year = today.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+export default function CreateClientModal({
+  isOpen,
+  setIsOpen,
+  company,
+  createType,
+}) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [matterNumberError, setMatterNumberError] = useState("");
+  const navigate = useNavigate();
 
-// Get initial form data based on company
-const getInitialFormData = (company, user) => {
+  const isVkl = (company || localStorage.getItem("company")) === "vkl";
+  const isIdg = (company || localStorage.getItem("company")) === "idg";
+  const todayISO = new Date().toISOString().split("T")[0];
+
   if (company === "vkl") {
     return {
       matterNumber: "",
@@ -28,37 +31,40 @@ const getInitialFormData = (company, user) => {
     };
   } else if (company === "idg") {
     return {
-      clientId: "",
+      clientId: "", // This will be populated from the 'id' state on submit
       clientName: "",
       contact: "",
       email: "",
       billingAddress: "",
-      client: "",
-      category: "",
-      orderDate: getFormattedDate(),
-      settlementDate: "",
+      // Fields for 'order' type
+      client: "", // The selected client for an order
+      category: "", // Order type
+      orderDate: getFormattedDate(), // Defaults to today
+      settlementDate: "", // Delivery date
       dataEntryBy: user,
     };
   }
-  return {};
+  return {}; // Default empty state
 };
 
-export default function CreateClientModal({
-  isOpen,
-  setIsOpen,
-  company,
-  createType,
-}) {
+// Helper function to format the date as DD/MM/YYYY
+const getFormattedDate = () => {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const year = today.getFullYear();
+  console.log(`${day}/${month}/${year}`);
+  return `${day}/${month}/${year}`;
+};
+
+
+export default function CreateClientModal({ isOpen, setIsOpen, companyName, createType }) {
   const [isLoading, setIsLoading] = useState(false);
   const [matterNumberError, setMatterNumberError] = useState("");
   const navigate = useNavigate();
-  const api = new ClientAPI();
 
   // State for generated IDs, specific to 'idg' company
   const [id, setId] = useState({ clientId: "", orderId: "" });
-
-  // Initial form data based on company
-  const initialFormData = getInitialFormData(company, "admin");
 
   useEffect(() => {
     if (isOpen) {
