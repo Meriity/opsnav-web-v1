@@ -42,14 +42,14 @@ export default function StagesLayout() {
     try {
       const u = JSON.parse(localStorage.getItem("user") || "null");
       if (u?.role) return u.role;
-    } catch (e) {}
+    } catch (e) { }
     try {
       const t = localStorage.getItem("token");
       if (t) {
         const payload = JSON.parse(atob(t.split(".")[1] || ""));
         if (payload?.role) return payload.role;
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
 
@@ -292,7 +292,7 @@ export default function StagesLayout() {
       case 7:
         return (
           <Cost
-            data={clientData?.costData|| clientData?.data.costData}
+            data={clientData?.costData || clientData?.data.costData}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -314,23 +314,47 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        let response = company==="vkl" ? await api.getAllStages(matterNumber) : company==="idg" ? await api.getIDGStages(matterNumber) : null;
+        const response = await api.getAllStages(matterNumber);
+        const serverRole =
+          response?.role || response?.currentUser?.role || null;
+        if (serverRole) setRole(serverRole);
 
-        console.log(response);
+        // Helper function to handle date normalization
+        const normalizeDate = (dateValue) => {
+          // If the date is null, undefined, or an empty string, return ""
+          if (!dateValue) {
+            return "";
+          }
+          // If it's already a string, assume it's correctly formatted
+          if (typeof dateValue === "string") {
+            return dateValue;
+          }
+          // Otherwise, convert it to an ISO string
+          return new Date(dateValue).toISOString();
+        };
 
+        // The simplified object creation
         const normalized = {
           ...response,
-          matterDate: response.matterDate
-            ? typeof response.matterDate === "string"
-              ? response.matterDate
-              : new Date(response.matterDate).toISOString()
-            : "",
-          settlementDate: response.settlementDate
-            ? (typeof response.settlementDate === "string"
-              ? response.settlementDate
-              : new Date(response.settlementDate).toISOString()) : null,
+          matterDate: normalizeDate(response.matterDate),
+          settlementDate: normalizeDate(response.settlementDate),
+          notes: response.notes ?? "", // This single line perfectly handles the logic
         };
-        
+
+        setClientData((prev) => {
+          return { ...(prev || {}), ...normalized };
+        });
+        setOriginalClientData((prev) => {
+          try {
+            if (!prev || prev.matterNumber !== normalized.matterNumber) {
+              return JSON.parse(JSON.stringify(normalized));
+            }
+            return prev;
+          } catch {
+            return normalized;
+          }
+        });
+
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
         );
@@ -424,39 +448,39 @@ export default function StagesLayout() {
     e.preventDefault();
     console.log(clientData);
     try {
-      let payload={};
-      if(localStorage.getItem("company") === "vkl") {
-       payload = {
-        settlementDate: clientData.settlementDate || null,
-        notes: clientData.notes || "",
-      };
-    }
-    else{
+      let payload = {};
+      if (localStorage.getItem("company") === "vkl") {
         payload = {
-        deliveryDate: clientData.settlementDate || null,
-        notes: clientData.notes || "",
-      };
-    }
+          settlementDate: clientData.settlementDate || null,
+          notes: clientData.notes || "",
+        };
+      }
+      else {
+        payload = {
+          deliveryDate: clientData.settlementDate || null,
+          notes: clientData.notes || "",
+        };
+      }
 
 
-      const company=localStorage.getItem("company");
-      const updatedData = company==="vkl" ? await api.updateClientData(matterNumber, payload) : company==="idg" ? await api.updateIDGClientData(matterNumber, payload) : null;
+      const company = localStorage.getItem("company");
+      const updatedData = company === "vkl" ? await api.updateClientData(matterNumber, payload) : company === "idg" ? await api.updateIDGClientData(matterNumber, payload) : null;
 
 
-      if(localStorage.getItem("company")==="vkl"){
-      setClientData((prev) => ({
-        ...prev,
-        settlementDate: updatedData.settlementDate ?? prev.settlementDate,
-        notes: updatedData.notes ?? prev.notes,
-      }));
-    }
-    else if(localStorage.getItem("company")==="idg"){
-      setClientData((prev) => ({
-        ...prev,
-        deliveryDate: updatedData.settlementDate ?? prev.settlementDate,
-        notes: updatedData.notes ?? prev.notes,
-      }));
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        setClientData((prev) => ({
+          ...prev,
+          settlementDate: updatedData.settlementDate ?? prev.settlementDate,
+          notes: updatedData.notes ?? prev.notes,
+        }));
+      }
+      else if (localStorage.getItem("company") === "idg") {
+        setClientData((prev) => ({
+          ...prev,
+          deliveryDate: updatedData.settlementDate ?? prev.settlementDate,
+          notes: updatedData.notes ?? prev.notes,
+        }));
+      }
 
       alert("Updated successfully!");
     } catch (err) {
@@ -485,7 +509,6 @@ export default function StagesLayout() {
             <Button
               label="Upload Image"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[140px]"
               width="w-[140px]"
               onClick={() => setIsOpen(true)}
             />
@@ -521,23 +544,21 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
-                        selectedStage === stage.id
+                      className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${selectedStage === stage.id
                           ? "bg-[#FFFFFF] text-black border-gray-500"
                           : `${bgcolor(stageStatus)} border-gray-300`
-                      }`}
+                        }`}
                     >
                       <div className="flex justify-between">
                         <p className="font-bold font-poppins text-xs">
                           Stage {index + 1}
                         </p>
                         <div
-                          className={`h-[18px] ${
-                            stageStatus === "In Progress" ||
-                            stageStatus === "amber"
+                          className={`h-[18px] ${stageStatus === "In Progress" ||
+                              stageStatus === "amber"
                               ? "text-[#FF9500]"
                               : "text-black"
-                          } flex items-center justify-center rounded-4xl`}
+                            } flex items-center justify-center rounded-4xl`}
                         >
                           <p className="text-[10px] whitespace-nowrap font-bold">
                             {getStatusDisplayText(stageStatus)}
@@ -561,24 +582,22 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${
-                        selectedStage === stage.id
+                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${selectedStage === stage.id
                           ? "bg-[#FFFFFF] text-black border-gray-500"
                           : `${bgcolor(stageStatus)} border-gray-300`
-                      }`}
+                        }`}
                     >
                       <div className="flex justify-between items-start">
                         <p className="font-bold font-poppins text-xs xl:text-sm">
                           Stage {index + 1}
                         </p>
                         <div
-                          className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${
-                            stageStatus === "In Progress" ||
-                            stageStatus === "amber"
+                          className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${stageStatus === "In Progress" ||
+                              stageStatus === "amber"
                               ? "text-[#FF9500]"
                               : stageStatus === "Completed" ||
-                                stageStatus === "green"
-                          } flex items-center justify-center rounded-4xl`}
+                              stageStatus === "green"
+                            } flex items-center justify-center rounded-4xl`}
                         >
                           <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
                             {getStatusDisplayText(stageStatus)}
@@ -605,8 +624,8 @@ export default function StagesLayout() {
                     {company === "vkl"
                       ? "Matter Details"
                       : company === "idg"
-                      ? "Order Details"
-                      : ""}
+                        ? "Order Details"
+                        : ""}
                   </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
@@ -618,13 +637,13 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Matter Date"
                           : company === "idg"
-                          ? "Order Date"
-                          : ""}
+                            ? "Order Date"
+                            : ""}
                       </label>
                       <input
                         type="text"
                         // value={clientData?.matterDate?.split("T")[0] || ""}
-                        value={localStorage.getItem("company")==="idg" ? clientData?.data.orderDate?.split("T")[0] :clientData?.matterDate?.split("T")[0] || ""}
+                        value={localStorage.getItem("company") === "idg" ? clientData?.data.orderDate?.split("T")[0] : clientData?.matterDate?.split("T")[0] || ""}
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                         disabled
                       />
@@ -636,13 +655,13 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Matter Number"
                           : company === "idg"
-                          ? "Order ID"
-                          : ""}
+                            ? "Order ID"
+                            : ""}
                       </label>
                       <input
                         type="text"
                         // value={clientData?.matterNumber || ""}
-                        value={localStorage.getItem("company")==="vkl" ? clientData?.matterNumber : clientData?.data.orderId} 
+                        value={localStorage.getItem("company") === "vkl" ? clientData?.matterNumber : clientData?.data.orderId}
 
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                         disabled
@@ -658,7 +677,7 @@ export default function StagesLayout() {
                         id="clientName"
                         name="clientName"
                         type="text"
-                        value={localStorage.getItem("company")==="vkl" ? clientData?.clientName : clientData?.data.client.name} 
+                        value={localStorage.getItem("company") === "vkl" ? clientData?.clientName : clientData?.data.client.name}
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                         disabled
                       />
@@ -670,20 +689,20 @@ export default function StagesLayout() {
                         {localStorage.getItem("company") === "vkl"
                           ? "Property Address"
                           : company === "idg"
-                          ? "Billing Address"
-                          : "Address"}
+                            ? "Billing Address"
+                            : "Address"}
                       </label>
                       <input
                         id="propertyAddress"
                         name="propertyAddress"
                         type="text"
-                        value={localStorage.getItem("company")==="vkl" ? clientData?.propertyAddress : clientData?.data.client.billingAddress} 
+                        value={localStorage.getItem("company") === "vkl" ? clientData?.propertyAddress : clientData?.data.client.billingAddress}
                         // value={clientData?.propertyAddress || ""}
                         className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                         disabled
                       />
                     </div>
-                   {localStorage.getItem("company")==="vkl" && <div className="md:col-span-1">
+                    {localStorage.getItem("company") === "vkl" && <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
                       </label>
@@ -700,8 +719,8 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Client Type"
                           : company === "idg"
-                          ? "Order Type"
-                          : ""}
+                            ? "Order Type"
+                            : ""}
                       </label>
                       <input
                         type="text"
@@ -717,8 +736,8 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Settlement Date"
                           : company === "idg"
-                          ? "Delivery Date"
-                          : ""}
+                            ? "Delivery Date"
+                            : ""}
                       </label>
                       <input
                         id="settlementDate"
@@ -727,10 +746,10 @@ export default function StagesLayout() {
                         value={
                           clientData?.settlementDate
                             ? new Date(clientData.settlementDate)
-                                .toISOString()
-                                .split("T")[0]
+                              .toISOString()
+                              .split("T")[0]
                             : clientData?.data.deliveryDate
-                            ? new Date(clientData.data.deliveryDate)
+                              ? new Date(clientData.data.deliveryDate)
                                 .toISOString()
                                 .split("T")[0] : ""
                         }
@@ -783,11 +802,10 @@ export default function StagesLayout() {
                     <div className="md:col-span-3 mt-3">
                       <button
                         type="submit"
-                        className={`w-full ${
-                          hasChanges
+                        className={`w-full ${hasChanges
                             ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
                             : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                        } font-medium rounded py-2 text-base`}
+                          } font-medium rounded py-2 text-base`}
                         disabled={!hasChanges}
                       >
                         Update

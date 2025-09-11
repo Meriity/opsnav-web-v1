@@ -25,7 +25,7 @@ const useUserStore = create((set) => ({
     try {
       const response = await api.getIDGClients();
       console.log("Response:", response);
-      const formatted = response.data.map((user) => ({
+      const formatted = response.map((user) => ({
         id: user._id,
         clientId: user.clientId,
         name: user.name,
