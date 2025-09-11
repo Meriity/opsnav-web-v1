@@ -328,8 +328,7 @@ export default function StagesLayout() {
           settlementDate: response.settlementDate
             ? typeof response.settlementDate === "string"
               ? response.settlementDate
-              : prev?.settlementDate || null,
-          notes: response?.notes ?? ""
+              : prev?.settlementDate || null
         }));
 
 
