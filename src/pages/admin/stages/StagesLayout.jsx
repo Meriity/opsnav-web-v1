@@ -320,16 +320,15 @@ export default function StagesLayout() {
         
 const normalized = {
   ...response,
-  matterDate: response.matterDate 
+  matterDate: response.matterDate
     ? typeof response.matterDate === "string"
       ? response.matterDate
       : new Date(response.matterDate).toISOString()
     : "",
   settlementDate: response.settlementDate
     ? typeof response.settlementDate === "string"
-      ? response.settlementDate  
-      : new Date(response.settlementDate).toISOString()
-    : null
+      ? response.settlementDate
+      : null
 };
 
         const hasColorStatus = Object.values(response).some(
@@ -486,6 +485,7 @@ const normalized = {
             <Button
               label="Upload Image"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+              width="w-[140px]"
               width="w-[140px]"
               onClick={() => setIsOpen(true)}
             />
