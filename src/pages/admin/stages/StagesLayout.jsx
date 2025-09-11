@@ -326,12 +326,11 @@ export default function StagesLayout() {
               : new Date(response.matterDate).toISOString()
             : "",
           settlementDate: response.settlementDate
-            ? typeof response.settlementDate === "string"
+            ? (typeof response.settlementDate === "string"
               ? response.settlementDate
-              : prev?.settlementDate || null
-        }));
-
-
+              : new Date(response.settlementDate).toISOString()) : null,
+        };
+        
         const hasColorStatus = Object.values(response).some(
           (stage) => stage && stage.colorStatus
         );
