@@ -238,22 +238,26 @@ class ClientAPI {
     }
   }
 
-  async getIDGClients() {
-    try {
-      const response = await fetch(`${this.baseUrl}/idg/clients`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error getting cost:", error);
-      throw error;
-    }
-  }
+async getIDGClients() {
+  try {
+    const response = await fetch(`${this.baseUrl}/idg/clients`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return data.data;
+    
+  } catch (error) {
+    console.error("Error getting IDG clients:", error);
+    throw error;
+  }
+}
   // Get Cost data
   async getCost(matterNumber) {
     try {
