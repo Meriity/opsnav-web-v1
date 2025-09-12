@@ -252,9 +252,17 @@ export default function Stage6({
 
       await api.upsertStageSix(payload);
 
-      toast.success("Stage 6 saved successfully!");
+      toast.success("Stage 6 saved successfully!",{
+        position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
       originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
+      // setReloadTrigger((prev) => !prev);
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to save Stage 6:", err);

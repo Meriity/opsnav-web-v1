@@ -3,6 +3,8 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
+
 
 const formConfig = {
   vkl: {
@@ -237,7 +239,15 @@ export default function Stage4({
 
       await api.upsertStageFour(payload);
       originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
+      // setReloadTrigger((prev) => !prev);
+        toast.success("Stage 4 Saved Successfully!",  
+        {position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,});
     } catch (err) {
       console.error("Failed to save Stage 4:", err);
     } finally {

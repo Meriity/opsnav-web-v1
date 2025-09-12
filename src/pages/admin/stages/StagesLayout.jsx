@@ -218,7 +218,7 @@ export default function StagesLayout() {
 
   function RenderStage(newStage) {
     setSelectedStage(newStage);
-    setReloadStage((prev) => !prev);
+    // setReloadStage((prev) => !prev);
   }
 
   function Showstage(stage) {
@@ -284,7 +284,7 @@ export default function StagesLayout() {
       case 6:
         return (
           <Stage6
-            data={normalizeCloseMatterForClient(clientData?.stage6)}
+            data={localStorage.getItem("company")==="vkl" ? normalizeCloseMatterForClient(clientData?.stage6) : clientData?.data.stage6}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -535,10 +535,10 @@ export default function StagesLayout() {
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-gray-100">
+    <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
       <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      <main className="flex-grow p-4 w-full max-w-screen-xl mx-auto">
-        <div className="flex justify-between items-center mb-2">
+      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-hidden">
+        <div className="flex justify-between items-center mb-2 flex-shrink-0">
           <h2 className="text-lg md:text-xl font-semibold">
             Hello {localStorage.getItem("user")}
           </h2>
@@ -575,7 +575,7 @@ export default function StagesLayout() {
         ) : (
           <>
             {isSmallScreen ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4 flex-shrink-0">
                 {stages.map((stage, index) => {
                   const stageStatus = stageStatuses[`status${stage.id}`];
                   return (
@@ -614,7 +614,7 @@ export default function StagesLayout() {
               </div>
             ) : (
               <div
-                className={`grid grid-cols-6 gap-1 xl:gap-2 px-2 py-1 bg-[#F2FBFF] rounded mb-4`}
+                className={`grid grid-cols-6 gap-1 xl:gap-2 px-2 py-1 bg-[#F2FBFF] rounded mb-4 flex-shrink-0`}
               >
                 {stages.map((stage, index) => {
                   const stageStatus = stageStatuses[`status${stage.id}`];
@@ -655,12 +655,12 @@ export default function StagesLayout() {
               </div>
             )}
 
-            <div className="flex flex-col xl:flex-row gap-4">
-              <div className="w-full xl:w-3/4 p-4 rounded-md bg-white overflow-y-auto">
+            <div className="flex flex-col xl:flex-row gap-4 flex-grow overflow-hidden">
+              <div className="w-[1500px] p-4 rounded-md bg-white overflow-y-auto">
                 {clientData && Showstage(selectedStage)}
               </div>
 
-              <div className="w-full xl:w-1/2">
+              <div className="w-[500px] flex-shrink-0">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4">
                   <h2 className="text-lg font-bold mb-2">
                     {company === "vkl"
@@ -899,7 +899,6 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* Data Entry By */}
                     {/* Data Entry By */}
                     <div className="md:col-span-3">
                       <label className="block text-xs md:text-sm font-semibold mb-1">

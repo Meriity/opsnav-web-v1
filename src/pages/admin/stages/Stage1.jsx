@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // Configuration object for different clients
 const formConfig = {
@@ -215,33 +216,41 @@ export default function Stage1({
     try {
       const systemNote = generateSystemNote();
       const noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
-      let payload={};
-      if(localStorage.getItem("company") === "vkl") {
-       payload = {
-        matterNumber,
-        ...formData,
-        noteForClient,
-      };
-    }else if(localStorage.getItem("company") === "idg") {
-      payload = {
-        matterNumber,
-       ...formData,
-        noteForClient,
-      };
-    }
+      let payload = {};
+      if (localStorage.getItem("company") === "vkl") {
+        payload = {
+          matterNumber,
+          ...formData,
+          noteForClient,
+        };
+      } else if (localStorage.getItem("company") === "idg") {
+        payload = {
+          matterNumber,
+          ...formData,
+          noteForClient,
+        };
+      }
       console.log("Updating stage 1:", payload);
-      delete payload.systemNote; 
+      delete payload.systemNote;
       delete payload.clientComment;
 
-      if(localStorage.getItem("company") === "vkl") {
-      await api.upsertStageOne(payload);
+      if (localStorage.getItem("company") === "vkl") {
+        await api.upsertStageOne(payload);
       } else {
-        await api.upsertIDGStages(matterNumber,1,payload);
+        await api.upsertIDGStages(matterNumber, 1, payload);
       }
 
 
       originalData.current = { ...formData, systemNote };
-      setReloadTrigger((prev) => !prev);
+      // setReloadTrigger((prev) => !prev);
+        toast.success("Stage 1 Saved Successfully!",  
+        {position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,});
     } catch (error) {
       console.error("Failed to update stage 1:", error);
     } finally {

@@ -3,6 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 const formConfig = {
   vkl: {
@@ -92,7 +93,7 @@ const formConfig = {
 };
 
 const normalizeValue = (v) => {
-  if (v === undefined || v === null ) return "";
+  if (v === undefined || v === null) return "";
   return String(v)
     .toLowerCase()
     .trim()
@@ -101,7 +102,7 @@ const normalizeValue = (v) => {
 
 const getStatus = (value) => {
   const val = normalizeValue(value);
-  if(val==="") return "Not Completed";
+  if (val === "") return "Not Completed";
   if (!val) return "Not Completed";
   if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
   if (val === "no") return "Not Completed";
@@ -242,7 +243,16 @@ export default function Stage5({
       await api.upsertStageFive(payload);
 
       originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
+      // setReloadTrigger((prev) => !prev);
+      toast.success("Stage 5 Saved Successfully!", {
+        position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (err) {
       console.error("Failed to save Stage 5:", err);
     } finally {
