@@ -3,6 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 // --- Configuration Object for Stage 2 ---
 const formConfig = {
@@ -281,7 +282,15 @@ export default function Stage2({
       await api.upsertStageTwo(matterNumber, formStatus, payload);
 
       originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
+      // setReloadTrigger((prev) => !prev);
+        toast.success("Stage 2 Saved Successfully!",  
+        {position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,});
     } catch (error) {
       console.error("Failed to update stage 2:", error);
     } finally {
@@ -306,7 +315,7 @@ export default function Stage2({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
         {(
           field.name === "approveOrRejectOrder"
             ? ["Approved", "Rejected", "Pending"]

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Stage3({
   changeStage,
@@ -41,7 +42,7 @@ export default function Stage3({
       },
       { key: "priority", label: "Confirm Job Priority" },
       { key: "jobActivity", label: "Schedule Job Activity" },
-      { key: "status",label: "Confirm Job Status" },
+      { key: "status", label: "Confirm Job Status" },
       { key: "vehicleAllocated", label: "Allocate Vehicle / Installer" },
       {
         key: "draftCostSheet",
@@ -216,7 +217,15 @@ export default function Stage3({
         systemNote,
       };
 
-      setReloadTrigger?.((prev) => !prev);
+      // setReloadTrigger?.((prev) => !prev);
+        toast.success("Stage 3 Saved Successfully!",  
+        {position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,});
     } catch (err) {
       console.error("Failed to save Stage 3:", err);
     } finally {
@@ -241,7 +250,7 @@ export default function Stage3({
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-between items-center gap-4">
+      <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 items-center">
         {[
           "agent",
           "priority",
