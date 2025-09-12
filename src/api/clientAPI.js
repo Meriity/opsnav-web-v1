@@ -76,7 +76,7 @@ class ClientAPI {
       throw error;
     }
   }
-  async updateIDGClientData(clientId, data={}) {
+  async updateIDGClientData(clientId, data = {}) {
     console.log(clientId, data);
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/${clientId}`, {
@@ -119,14 +119,17 @@ class ClientAPI {
     }
   }
 
-    async upsertIDGStages(clientId,stage,additionalData = {}) {
-      console.log(`${this.baseUrl}/idg/stages/${stage}/${clientId}`);
-      try {
-      const response = await fetch(`${this.baseUrl}/idg/stages/${stage}/${clientId}`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify(additionalData),
-      });
+  async upsertIDGStages(clientId, stage, additionalData = {}) {
+    console.log(`${this.baseUrl}/idg/stages/${stage}/${clientId}`);
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/stages/${stage}/${clientId}`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(additionalData),
+        }
+      );
 
       console.log(additionalData);
 
@@ -184,30 +187,26 @@ class ClientAPI {
     }
   }
 
-async getIDGStages(clientId) {
-  console.log(`${this.baseUrl}/idg/orders/${clientId}`);
-  try {
-    const response = await fetch(
-      `${this.baseUrl}/idg/orders/${clientId}`,
-      {
+  async getIDGStages(clientId) {
+    console.log(`${this.baseUrl}/idg/orders/${clientId}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/${clientId}`, {
         method: "GET",
         headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      console.log("Fetched data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error getting stage one:", error);
+      throw error;
     }
-
-    const data = await response.json();
-    console.log("Fetched data:", data); 
-    return data;
-  } catch (error) {
-    console.error("Error getting stage one:", error);
-    throw error;
   }
-}
-
 
   // Insert/Update Stage Two
   async upsertStageTwo(matterNumber, colorStatus, additionalData = {}) {

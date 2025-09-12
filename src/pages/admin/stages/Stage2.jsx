@@ -299,7 +299,7 @@ export default function Stage2({
   }
 
   const renderField = (field) => (
-    <div key={field.name} className="py-2">
+    <div key={field.name} className="mt-5">
       <div className="flex gap-4 justify-between items-center mb-2">
         <label className="block mb-1 text-sm md:text-base font-bold">
           {field.label}
@@ -330,14 +330,14 @@ export default function Stage2({
               name={field.name}
               value={val}
               checked={
-                normalizeValue(formData[field.name] || "") === normalizeValue(val)
+                normalizeValue(formData[field.name] || "") ===
+                normalizeValue(val)
               }
               onChange={() => handleChange(field.name, val)}
             />
             {val}
           </label>
         ))}
-
 
         {field.hasDate && (
           <input
