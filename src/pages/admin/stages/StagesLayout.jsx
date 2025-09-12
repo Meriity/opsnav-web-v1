@@ -314,7 +314,13 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        const response = await api.getAllStages(matterNumber);
+        let response={};
+        if(localStorage.getItem("company") === "idg") {
+        response = await api.getIDGStages(matterNumber);
+        }
+        else{
+        response = await api.getAllStages(matterNumber);
+        }
         const serverRole =
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
@@ -822,7 +828,7 @@ export default function StagesLayout() {
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         title="Confirm update"
-        onConfirm={performUpdate}
+        // onConfirm={performUpdate}
       >
         Are you sure you want to update client data?
       </ConfirmationModal>
