@@ -66,7 +66,7 @@ const formConfig = {
         type: "text",
       },
       {
-        name: "Status",
+        name: "status",
         label: "Update Job Status",
         type: "text",
       },
@@ -215,45 +215,60 @@ export default function Stage4({
   const isChanged = () =>
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
-  async function handleSave() {
-    if (!isChanged() || isSaving) return;
-    setIsSaving(true);
+async function handleSave() {
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
-    try {
-      const payload = { matterNumber, ...formData };
+  try {
+    const company = localStorage.getItem("company");
+    let payload = { ...formData };
 
-      currentConfig.noteGroups.forEach((group) => {
-        const systemNote = generateSystemNote(group.id);
-        const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] =
-          `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey];
-      });
+    // handle note groups
+    currentConfig.noteGroups.forEach((group) => {
+      const systemNote = generateSystemNote(group.id);
+      const clientComment = formData[group.clientCommentKey] || "";
+      payload[group.noteForClientKey] =
+        `${systemNote} - ${clientComment}`.trim();
+      delete payload[group.clientCommentKey];
+    });
 
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
-        }
-      });
+    // handle number fields
+    currentConfig.fields.forEach((field) => {
+      if (field.type === "number") {
+        payload[field.name] =
+          payload[field.name] === "" ? null : Number(payload[field.name]);
+      }
+    });
 
+    // company-specific save
+    if (company === "vkl") {
+      payload.matterNumber = matterNumber;
       await api.upsertStageFour(payload);
-      originalData.current = { ...formData };
-      // setReloadTrigger((prev) => !prev);
-        toast.success("Stage 4 Saved Successfully!",  
-        {position: "bottom-left",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        progress: undefined,});
-    } catch (err) {
-      console.error("Failed to save Stage 4:", err);
-    } finally {
-      setIsSaving(false);
+    } else if (company === "idg") {
+      payload.orderId = matterNumber;
+      await api.upsertIDGStages(payload.orderId, 4, payload);
     }
+
+    // update original data
+    originalData.current = { ...formData };
+    setReloadTrigger((prev) => !prev);
+
+    toast.success("Stage 4 Saved Successfully!", {
+      position: "bottom-left",
+      autoClose: 2000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+      progress: undefined,
+    });
+  } catch (err) {
+    console.error("Failed to save Stage 4:", err);
+  } finally {
+    setIsSaving(false);
   }
+}
+
 
   const renderField = (field) => {
     switch (field.type) {

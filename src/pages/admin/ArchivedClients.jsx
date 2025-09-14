@@ -101,13 +101,13 @@ export default function ArchivedClients() {
     ];
   } else if (localStorage.getItem("company") === "idg") {
     columns = [
-      { key: "matternumber", title: "Client ID" },
-      { key: "client_name", title: "Client Name" },
-      { key: "property_address", title: "Billing Address" },
-      { key: "state", title: "State" },
-      { key: "type", title: "Client Type" },
-      { key: "matter_date", title: "Order Date" },
-      { key: "settlement_date", title: "Delivery Date" },
+      { key: "orderId", title: "Order ID" },
+      { key: "clientName", title: "Client Name" },
+      { key: "propertyAddress", title: "Billing Address" },
+      { key: "dataEntryBy", title: "State" },
+      { key: "ordertype", title: "Client Type" },
+      { key: "orderDate", title: "Order Date" },
+      { key: "deliveryDate", title: "Delivery Date" },
       { key: "status", title: "Status" },
     ];
   }

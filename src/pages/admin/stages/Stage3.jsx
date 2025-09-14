@@ -182,56 +182,66 @@ export default function Stage3({
   };
 
   async function handleSave() {
-    if (!isChanged()) return;
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
-    setIsSaving(true);
-    try {
-      const systemNote = updateNoteForClient();
-      const fullNote = clientComment
-        ? `${systemNote} - ${clientComment}`
-        : systemNote;
+  try {
+    const company = localStorage.getItem("company");
 
-      const payload = {
-        matterNumber,
-        ...formState,
-        noteForClient: fullNote,
-        // titleSearchDate: formState.titleSearchDate || null,
-      };
+    const systemNote = updateNoteForClient();
+    const fullNote = clientComment
+      ? `${systemNote} - ${clientComment}`
+      : systemNote;
 
-      fields.forEach(({ key, hasDate }) => {
-        if (hasDate) {
-          const dateKey = `${key}Date`;
-          // if date not present or empty string, send null so backend knows it's empty
-          payload[dateKey] =
-            formState[dateKey] && String(formState[dateKey]).trim() !== ""
-              ? formState[dateKey]
-              : null;
-        }
-      });
+    let payload = {
+      ...formState,
+      noteForClient: fullNote,
+    };
 
+    // handle dates: send null if empty
+    fields.forEach(({ key, hasDate }) => {
+      if (hasDate) {
+        const dateKey = `${key}Date`;
+        payload[dateKey] =
+          formState[dateKey] && String(formState[dateKey]).trim() !== ""
+            ? formState[dateKey]
+            : null;
+      }
+    });
+
+    // company-specific handling
+    if (company === "vkl") {
+      payload.matterNumber = matterNumber;
       await api.upsertStageThree(payload);
-
-      originalData.current = {
-        ...formState,
-        clientComment,
-        systemNote,
-      };
-
-      // setReloadTrigger?.((prev) => !prev);
-        toast.success("Stage 3 Saved Successfully!",  
-        {position: "bottom-left",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        progress: undefined,});
-    } catch (err) {
-      console.error("Failed to save Stage 3:", err);
-    } finally {
-      setIsSaving(false);
+    } else if (company === "idg") {
+      payload.orderId = matterNumber;
+      await api.upsertIDGStages(payload.orderId, 3, payload);
     }
+
+    // update original data
+    originalData.current = {
+      ...formState,
+      clientComment,
+      systemNote,
+    };
+
+    setReloadTrigger?.((prev) => !prev);
+    toast.success("Stage 3 Saved Successfully!", {
+      position: "bottom-left",
+      autoClose: 2000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+      progress: undefined,
+    });
+  } catch (err) {
+    console.error("Failed to save Stage 3:", err);
+  } finally {
+    setIsSaving(false);
   }
+}
+  
 
   const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>

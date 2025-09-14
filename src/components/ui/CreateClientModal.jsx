@@ -150,7 +150,7 @@ export default function CreateClientModal({
       } else if (isIdg) {
         // --- IDG Submission Logic ---
         if (createType === "client") {
-          const requiredFields = ["clientName", "contact", "email", "billingAddress", "country", "state", "postcode"];
+          const requiredFields = ["clientName", "contact", "email", "billingAddress", "country", "state", "postcode","abn"];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
@@ -172,24 +172,25 @@ export default function CreateClientModal({
           toast.success("Client created successfully!");
 
         } else if (createType === "order") {
-          const requiredFields = ["client", "category", "priority", "deliveryAddress", "country", "state", "postcode", "settlementDate"];
-          if (requiredFields.some((field) => !formData[field])) {
-            toast.error("Please fill all required fields.");
-            setIsLoading(false);
-            return;
-          }
+          // const requiredFields = ["orderId", "clientId", "orderType", "deliveryAddress","priority", "country", "state", "postCode","orderDate", "deliveryDate"];
+          // if (requiredFields.some((field) => !formData[field])) {
+          //   console.log(formData[field]);
+          //   toast.error("Please fill all required fields.");
+          //   setIsLoading(false);
+          //   return;
+          // }
 
           const payload = {
             orderId: id.orderId,
-            clientId: formData.client,
-            orderType: formData.category,
+            clientId: formData.clientId,
+            orderType: formData.orderType,
             priority: formData.priority,
             deliveryAddress: formData.deliveryAddress,
             country: formData.country,
             state: formData.state,
-            postcode: formData.postcode,
+            postcode: formData.postCode,
             orderDate: formData.orderDate,
-            deliveryDate: formData.settlementDate,
+            deliveryDate: formData.deliveryDate,
           };
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
@@ -313,13 +314,12 @@ export default function CreateClientModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block mb-1 font-medium">Order ID</label>
-                    <input type="text" value={id.orderId} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100" disabled />
+                    <input type="text" name="orderId" value={id.orderId} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100" disabled />
                   </div>
                   <div>
                     <label className="block mb-1 font-medium">Select Client*</label>
-                    <select name="client" value={formData.client || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required>
+                    <select name="clientId" value={formData.clientId || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required>
                       <option value="">Select a Client</option>
-                      {console.log(clients)}
                       {clients.map((client) => (
                         <option key={client._id} value={client._id}>{client.name}</option>
                       ))}
@@ -329,7 +329,7 @@ export default function CreateClientModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block mb-1 font-medium">Order Type*</label>
-                    <select name="category" value={formData.category || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required>
+                    <select name="orderType" value={formData.orderType || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required>
                       <option value="">Select Order Type</option>
                       <option value="Real Estate">Real Estate</option>
                       <option value="Vehicle">Vehicle</option>
@@ -361,7 +361,7 @@ export default function CreateClientModal({
                   </div>
                   <div>
                     <label className="block mb-1 font-medium">Postcode*</label>
-                    <input type="text" name="postcode" value={formData.postcode || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
+                    <input type="text" name="postCode" value={formData.postCode || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -371,7 +371,7 @@ export default function CreateClientModal({
                   </div>
                   <div>
                     <label className="block mb-1 font-medium">Delivery Date*</label>
-                    <input type="date" name="settlementDate" value={formData.settlementDate || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required />
+                    <input type="date" name="deliveryDate" value={formData.deliveryDate || ""} onChange={handleChange} className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500" required />
                   </div>
                 </div>
               </>
