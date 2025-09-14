@@ -221,7 +221,7 @@ class ClientAPI {
     }
   }
 
-  async getCompletedIDGClients() {
+  async getCompletedIDGOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
         method: "GET",
@@ -445,7 +445,7 @@ class ClientAPI {
 
   async getIDGCompletedOrders() {
     try {
-      const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
         method: "GET",
         headers: this.getHeaders(),
       });

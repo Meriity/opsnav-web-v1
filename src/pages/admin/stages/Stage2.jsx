@@ -65,22 +65,22 @@ const formConfig = {
   idg: {
     fields: [
       {
-        name: "confirmCustomerAcceptance",
+        name: "customerAcceptedQuote",
         label: "Confirm Customer Acceptance of Quote",
         type: "radio",
       },
       {
-        name: "confirmPaymentTerms",
+        name: "paymentTermsAgreed",
         label: "Confirm Payment Terms Agreed",
         type: "radio",
       },
       {
-        name: "verifyInternalCapacity",
+        name: "internalCapacityVerified",
         label: "Verify Internal Capacity",
         type: "radio",
       },
       {
-        name: "approveOrRejectOrder",
+        name: "approvalStatus",
         label: "Approve or reject order for planning",
         type: "radio",
       },
@@ -137,10 +137,10 @@ export default function Stage2({
       return "Not Completed";
     }
     const val = normalizeValue(value);
-    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+    const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
     if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "inprogress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress","pending"].includes(val)) return "In Progress";
     return "Not Completed";
   };
 
@@ -260,43 +260,63 @@ export default function Stage2({
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
   async function handleSave() {
-    if (!isChanged() || isSaving) return;
-    setIsSaving(true);
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
-    try {
-      const payload = { ...formData };
-      currentConfig.noteGroups.forEach((group) => {
-        const systemNote = generateSystemNote(group.id);
-        const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] =
-          `${systemNote} - ${clientComment}`.trim();
+  try {
+    const company = localStorage.getItem("company");
+    let payload = { ...formData };
 
-        delete payload[group.systemNoteKey];
-        delete payload[group.clientCommentKey];
-      });
+    // handle all system notes and client comments dynamically
+    currentConfig.noteGroups.forEach((group) => {
+      const systemNote = generateSystemNote(group.id);
+      const clientComment = formData[group.clientCommentKey] || "";
+      payload[group.noteForClientKey] =
+        `${systemNote} - ${clientComment}`.trim();
 
-      const allCompleted = currentConfig.fields.every(
-        (f) => getStatus(formData[f.name]) === "Completed"
-      );
-      const formStatus = allCompleted ? "green" : "amber";
+      // remove temporary fields
+      delete payload[group.systemNoteKey];
+      delete payload[group.clientCommentKey];
+    });
+
+    // status check
+    const allCompleted = currentConfig.fields.every(
+      (f) => getStatus(formData[f.name]) === "Completed"
+    );
+    const formStatus = allCompleted ? "green" : "amber";
+
+    // dynamically set the key depending on company
+    if (company === "vkl") {
+      payload.matterNumber = matterNumber; // keep matterNumber
       await api.upsertStageTwo(matterNumber, formStatus, payload);
-
-      originalData.current = { ...formData };
-      // setReloadTrigger((prev) => !prev);
-        toast.success("Stage 2 Saved Successfully!",  
-        {position: "bottom-left",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        progress: undefined,});
-    } catch (error) {
-      console.error("Failed to update stage 2:", error);
-    } finally {
-      setIsSaving(false);
+    } else if (company === "idg") {
+      payload.orderId = matterNumber; // use orderId
+      await api.upsertIDGStages(payload.orderId, 2, {
+        ...payload,
+        formStatus,
+      });
     }
+
+    // update original data
+    originalData.current = { ...formData };
+    setReloadTrigger((prev) => !prev);
+
+    toast.success("Stage 2 Saved Successfully!", {
+      position: "bottom-left",
+      autoClose: 2000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+      progress: undefined,
+    });
+  } catch (error) {
+    console.error("Failed to update stage 2:", error);
+  } finally {
+    setIsSaving(false);
   }
+}
+
 
   const renderField = (field) => (
     <div key={field.name} className="mt-5">
@@ -317,7 +337,7 @@ export default function Stage2({
 
       <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
         {(
-          field.name === "approveOrRejectOrder"
+          field.name === "approvalStatus"
             ? ["Approved", "Rejected", "Pending"]
             : ["Yes", "No", "Processing", "N/R"]
         ).map((val) => (
