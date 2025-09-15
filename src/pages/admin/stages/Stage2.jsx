@@ -94,10 +94,10 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "confirmCustomerAcceptance",
-          "confirmPaymentTerms",
-          "verifyInternalCapacity",
-          "approveOrRejectOrder",
+          "customerAcceptedQuote",
+          "paymentTermsAgreed",
+          "internalCapacityVerified",
+          "approvalStatus",
         ],
       },
     ],
@@ -166,7 +166,7 @@ export default function Stage2({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "nr", "na", "na"]);
+    const greenValues = new Set(["yes", "nr", "na", "na","approved"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );

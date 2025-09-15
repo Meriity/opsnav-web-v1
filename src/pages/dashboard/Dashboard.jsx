@@ -51,6 +51,7 @@ const useDashboardStore = create((set) => ({
         totalactive:
           data.lifetimeTotals?.totalActiveClients ||
           data.lifetimeTotals?.totalActiveOrders,
+        totalCompleted:data.lifetimeTotals.totalClosedOrders,  
         lastrecord: lastRec,
         loading: false,
       };
@@ -204,7 +205,7 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
-  const { totalusers, totalactive, lastrecord, loading, setDashboardData } =
+  const { totalusers, totalactive,totalCompleted, lastrecord, loading, setDashboardData } =
     useDashboardStore();
   const {
     archivedClients,
@@ -498,7 +499,7 @@ function Dashboard() {
                   ? "Total Completed Orders"
                   : "Total Archived Clients"
               }
-              value={chartPeriodTotal}
+              value={chartPeriodTotal||totalCompleted}
             />
           </div>
 

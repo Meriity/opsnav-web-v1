@@ -626,6 +626,28 @@ class ClientAPI {
     }
   }
 
+    async getAllIDGOutstandingTasks(page, activeMatter, matterFilter) {
+    try {
+      let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}&filter=${matterFilter}`;
+      if (activeMatter) {
+        url = `${url}&matterNumber=${activeMatter}`;
+      }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting stage one:", error);
+      throw error;
+    }
+  }
+
   // Get All Outstanding Task Report
   async getAllOutstandingTasks(page, activeMatter, matterFilter) {
     try {

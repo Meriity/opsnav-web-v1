@@ -31,24 +31,25 @@ export default function Stage3({
     ];
   } else if (localStorage.getItem("company") === "idg") {
     fields = [
-      { key: "agent", label: "Assign Agent / Team Member" },
+      { key: "agent", label: "Assign Agent / Team Member",type:"text" },
       {
-        key: " materialsInStock",
+        key: "materialsInStock",
         label: "Check if Materials Needed are in stock",
       },
       {
         key: "additionalMaterialsRequired",
         label: "Procure additional materials if required",
       },
-      { key: "priority", label: "Confirm Job Priority" },
-      { key: "jobActivity", label: "Schedule Job Activity" },
-      { key: "status", label: "Confirm Job Status" },
-      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer" },
+      { key: "priority", label: "Confirm Job Priority",type:"text"  },
+      { key: "jobActivity", label: "Schedule Job Activity",type:"text"  },
+      { key: "status", label: "Confirm Job Status",type:"text"  },
+      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer",type:"text"  },
       {
         key: "draftCostSheet",
         label: "Finalize Draft Cost Sheet (Fixed + Variable)",
+        type:"text" 
       },
-      { key: "Approve Plan", label: "Approve plan and move to preparation" },
+      // { key: "approvePlan", label: "Approve plan and move to preparation" },
     ];
   }
 
@@ -70,6 +71,7 @@ export default function Stage3({
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
+    if(val) return "Completed";
     return "Not Completed";
   };
 
@@ -87,18 +89,27 @@ export default function Stage3({
   const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
 
-  const updateNoteForClient = () => {
-    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
-    const incompleteTasks = fields
-      .filter(
-        ({ key }) => !completedValues.has(normalizeValue(formState[key] || ""))
-      )
-      .map(({ label }) => label);
+const updateNoteForClient = () => {
+  const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
 
-    if (incompleteTasks.length === 0) return "All tasks completed";
-    if (incompleteTasks.length === fields.length) return "No tasks completed";
-    return `Pending: ${incompleteTasks.join(", ")}`;
-  };
+  const incompleteTasks = fields.filter(({ key, type }) => {
+    const rawValue = formState[key] || "";
+    const value = normalizeValue(rawValue);
+
+    if (type === "text") {
+      // text fields count as completed if not empty
+      return value === "";
+    }
+
+    // non-text fields use completedValues
+    return !completedValues.has(value);
+  }).map(({ label }) => label);
+
+  if (incompleteTasks.length === 0) return "All tasks completed";
+  if (incompleteTasks.length === fields.length) return "No tasks completed";
+  return `${incompleteTasks.join(" and ")} not received`;
+};
+
 
   useEffect(() => {
     if (!data) return;
