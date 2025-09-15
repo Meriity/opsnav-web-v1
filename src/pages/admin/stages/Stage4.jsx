@@ -80,14 +80,15 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "createArtwork",
-          "approveDesign",
-          "sendProof",
-          "recordApproval",
-          "generatePrintFiles",
-          "organizeMaterials",
-          "logJobActivity",
-          "updateJobStatus",
+          "designArtwork",
+          "internalApproval",
+          "proofSentToClient",
+          "clientApprovalReceived",
+          "printReadyFiles",
+          "materialsOrganized",
+          "jobActivity",
+          "priority",
+          "status"
         ],
       },
     ],
@@ -146,26 +147,45 @@ export default function Stage4({
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
 
-  const generateSystemNote = (noteGroupId) => {
-    const noteGroup = currentConfig.noteGroups.find(
-      (ng) => ng.id === noteGroupId
-    );
-    if (!noteGroup) return "";
+const generateSystemNote = (noteGroupId) => {
+  const noteGroup = currentConfig.noteGroups.find(
+    (ng) => ng.id === noteGroupId
+  );
+  if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
-    const fieldsToCheck = currentConfig.fields.filter((f) =>
-      noteGroup.fieldsForNote.includes(f.name)
-    );
+  const greenValues = new Set(["yes", "nr", "na", "approved"]);
 
-    const incomplete = fieldsToCheck
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
-      .map((field) => field.label);
+  const fieldsToCheck = currentConfig.fields.filter((f) =>
+    noteGroup.fieldsForNote.includes(f.name)
+  );
 
-    if (incomplete.length === 0) return "All tasks completed";
-    return `Pending: ${incomplete.join(", ")}`;
-  };
+  const notReceived = fieldsToCheck
+    .filter((field) => {
+      const rawValue = formData[field.name] || "";
+      const value = normalizeValue(rawValue);
+
+      // Special case: skip obtainDaSeller if clientType is not seller
+      if (
+        field.name === "obtainDaSeller" &&
+        clientType?.toLowerCase() !== "seller"
+      ) {
+        return false;
+      }
+
+      if (field.type === "text") {
+        // text fields count as completed if not empty
+        return value === "";
+      }
+
+      // non-text fields rely on greenValues
+      return !greenValues.has(value);
+    })
+    .map((field) => field.label);
+
+  if (notReceived.length === 0) return "Tasks completed";
+  return `${notReceived.join(" and ")} not received`;
+};
+
 
   useEffect(() => {
     if (!data) return;
