@@ -19,6 +19,7 @@ import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Loader from "../../components/ui/Loader";
 
 // --- Calendar Imports ---
 import moment from "moment";
@@ -98,11 +99,9 @@ const CustomEvent = ({ event }) => {
   );
 };
 
-// --- Custom Agenda Renderer with spacing ---
 const CustomAgendaEvent = ({ event }) => (
   <div className="mb-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition shadow-sm">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      {/* Left side: Title + Date */}
       <div className="flex flex-col">
         <span className="font-semibold text-gray-800 text-sm sm:text-base">
           {event.title}
@@ -111,8 +110,6 @@ const CustomAgendaEvent = ({ event }) => (
           {moment(event.start).format("DD MMM YYYY")}
         </span>
       </div>
-
-      {/* Right side: Client type */}
       <span
         className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
           event.type === "buildingAndPest"
@@ -215,6 +212,7 @@ function Dashboard() {
   } = useArchivedClientStore();
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
+  const [isChartLoading, setIsChartLoading] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
@@ -251,6 +249,7 @@ function Dashboard() {
   // Fetch dashboard data
   useEffect(() => {
     const fetchAndSetData = async () => {
+      setIsChartLoading(true);
       try {
         const data = await (company === "vkl"
           ? clientApi.getDashboardData()
@@ -268,12 +267,13 @@ function Dashboard() {
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
         toast.error("Failed to load dashboard data.");
+      } finally {
+        setIsChartLoading(false);
       }
     };
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
 
-  // Fetch calendar events
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
@@ -475,12 +475,20 @@ function Dashboard() {
             />
             <StatCard
               icon={ViewClientsIcon}
-              label="Total Active Clients"
+              label={
+                localStorage.getItem("company") === "idg"
+                  ? "Total Orders"
+                  : "Total Clients"
+              }
               value={totalactive}
             />
             <StatCard
               icon={ArchivedChatsIcon}
-              label="Total Archived Clients"
+              label={
+                localStorage.getItem("company") === "idg"
+                  ? "Total Completed Orders"
+                  : "Total Archived Clients"
+              }
               value={chartPeriodTotal}
             />
           </div>
@@ -519,7 +527,14 @@ function Dashboard() {
                 </button>
               </div>
             </div>
-            {currentChartData && currentChartData.length > 0 ? (
+            {isChartLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-[#00AEEF]" />
+                <span className="ml-4 text-lg font-medium text-gray-600">
+                  Loading Chart...
+                </span>
+              </div>
+            ) : currentChartData && currentChartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart

@@ -30,20 +30,21 @@ export default function Stage3({
     ];
   } else if (localStorage.getItem("company") === "idg") {
     fields = [
-      { key: "assign_agent", label: "Assign Agent / Team Member" },
+      { key: "agent", label: "Assign Agent / Team Member" },
       {
-        key: "materils_needed",
+        key: " materialsInStock",
         label: "Check if Materials Needed are in stock",
       },
       {
-        key: "additional materials",
+        key: "additionalMaterialsRequired",
         label: "Procure additional materials if required",
       },
-      { key: "job_priority", label: "Confirm Job Priority" },
-      { key: "schedule_activity", label: "Schedule Job Activity" },
-      { key: "allocate_vehicle", label: "Allocate Vehicle / Installer" },
+      { key: "priority", label: "Confirm Job Priority" },
+      { key: "jobActivity", label: "Schedule Job Activity" },
+      { key: "status",label: "Confirm Job Status" },
+      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer" },
       {
-        key: "finalize",
+        key: "draftCostSheet",
         label: "Finalize Draft Cost Sheet (Fixed + Variable)",
       },
       { key: "Approve Plan", label: "Approve plan and move to preparation" },
@@ -148,7 +149,7 @@ export default function Stage3({
       ({ key, hasDate }) =>
         hasDate &&
         String(formState[`${key}Date`] || "").trim() !==
-          String(original[`${key}Date`] || "").trim()
+        String(original[`${key}Date`] || "").trim()
     );
     const commentChanged =
       String(clientComment).trim() !== String(original.clientComment).trim();
@@ -240,42 +241,55 @@ export default function Stage3({
         </div>
       </div>
 
-      {/* <div className="flex flex-wrap justify-between items-center gap-4"> */}
-      {/* tight spacing of every fields*/}
-      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-        {["Yes", "No", "Processing", "N/R"].map((val) => (
-          <label
-            key={val}
-            className="flex items-center gap-2 text-sm md:text-base"
-          >
-            <input
-              type="radio"
-              name={key}
-              value={val}
-              // compare normalized values
-              checked={
-                normalizeValue(formState[key] || "") === normalizeValue(val)
-              }
-              onChange={() => handleChange(key, val, hasDate)}
-            />
-            {val}
-          </label>
-        ))}
-
-        {hasDate && (
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        {[
+          "agent",
+          "priority",
+          "jobActivity",
+          "status",
+          "vehicleAllocated",
+          "draftCostSheet",
+        ].includes(key) ? (
           <input
-            type="date"
-            value={formState[`${key}Date`] || ""}
-            onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                [`${key}Date`]: e.target.value,
-              }))
-            }
-            className="ml-2 p-1 border rounded"
+            type="text"
+            name={key}
+            value={formState[key] || ""}
+            onChange={(e) => handleChange(key, e.target.value, hasDate)}
+            className="border rounded-md p-2 text-sm md:text-base w-full"
           />
+        ) : (
+          ["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
+              <input
+                type="radio"
+                name={key}
+                value={val}
+                checked={normalizeValue(formState[key] || "") === normalizeValue(val)}
+                onChange={() => handleChange(key, val, hasDate)}
+              />
+              {val}
+            </label>
+          ))
         )}
       </div>
+
+
+      {hasDate && (
+        <input
+          type="date"
+          value={formState[`${key}Date`] || ""}
+          onChange={(e) =>
+            setFormState((prev) => ({
+              ...prev,
+              [`${key}Date`]: e.target.value,
+            }))
+          }
+          className="border p-1 rounded text-sm"
+        />
+      )}
     </div>
   );
 

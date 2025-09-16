@@ -28,40 +28,45 @@ const formConfig = {
   idg: {
     fields: [
       {
-        name: "createArtwork",
+        name: "designArtwork",
         label: "Create / update Design Artwork",
-        type: "radio",
+        type: "text",
       },
       {
-        name: "approveDesign",
+        name: "internalApproval",
         label: "Review and internally approve design",
         type: "radio",
       },
-      { name: "sendProof", label: "Send Proof to Client", type: "radio" },
+      { name: "proofSentToClient", label: "Send Proof to Client", type: "radio" },
       {
-        name: "recordApproval",
+        name: "clientApprovalReceived",
         label: "Record Client Approval",
         type: "radio",
       },
       {
-        name: "generatePrintFiles",
+        name: "printReadyFiles",
         label: "Generate Print-Ready Files",
         type: "radio",
       },
       {
-        name: "organizeMaterials",
+        name: "materialsOrganized",
         label: "Organize Boards, Stickers, Stands, Posts",
         type: "radio",
       },
       {
-        name: "logJobActivity",
+        name: "jobActivity",
         label: "Ensure Job Activity & Priority are correctly logged",
-        type: "radio",
+        type: "text",
       },
       {
-        name: "updateJobStatus",
-        label: "Update Job Status (Excel: Status)",
-        type: "radio",
+        name: "priority",
+        label: "Job Priority",
+        type: "text",
+      },
+      {
+        name: "Status",
+        label: "Update Job Status",
+        type: "text",
       },
     ],
     noteGroups: [
@@ -126,6 +131,7 @@ export default function Stage4({
   reloadTrigger,
   setReloadTrigger,
 }) {
+  console.log("Stage 4 data:", data);
   const stage = 4;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -291,6 +297,20 @@ export default function Stage4({
             <input
               type="number"
               step="0.01"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        );
+          case "text":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
               value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
