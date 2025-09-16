@@ -232,7 +232,7 @@ export default function ManageUsers() {
                 cellWrappingClass="whitespace-normal"
                 resetLoadingEmail={resetLoadingEmail}
                 resetSuccessEmail={resetSuccessEmail}
-                // showActions={false}
+                showActions={false}
               />
             </div>
             {/* Mobile & Tablet Card View */}

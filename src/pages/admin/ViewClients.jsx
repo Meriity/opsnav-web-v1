@@ -143,13 +143,15 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
-      <CreateClientModal
-        createType="client"
-        isOpen={createuser}
-        setIsOpen={() => setcreateuser(false)}
-      />
+       <CreateClientModal
+          createType="client"
+          companyName={localStorage.getItem("company")}
+          isOpen={createuser}
+          setIsOpen={() => setcreateuser(false)}
+        />
       <CreateClientModal
         createType="order"
+        companyName={localStorage.getItem("company")}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />

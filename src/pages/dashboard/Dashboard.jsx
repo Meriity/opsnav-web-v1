@@ -27,6 +27,7 @@ import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
+import { formatDate } from "../../utils/formatters.js";
 
 const localizer = momentLocalizer(moment);
 
@@ -157,7 +158,7 @@ const ResponsiveCalendarToolbar = ({
 }) => {
   return (
     <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3">
-      <div className="flex items-center justify-center w-full sm:w-auto mb-2 sm:mb-0">
+      <div className="flex items-center justify-center gap-[10px] w-full sm:w-auto mb-2 sm:mb-0">
         <button
           type="button"
           onClick={() => onNavigate("PREV")}
@@ -344,20 +345,44 @@ function Dashboard() {
   useEffect(() => {
     if (chartView === "last10Months") {
       const ten = (allChartData.tenMonths || []).slice(-10);
-      const formattedData = ten.map((item) => ({
+      let formattedData;
+      if(localStorage.getItem("company")==="vkl"){
+       formattedData = ten.map((item) => ({
         ...item,
         name: item.month,
         closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
       }));
       setCurrentChartData(formattedData);
+    }
+    else if(localStorage.getItem("company")==="idg"){
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedOrders,
+      }));
+      setCurrentChartData(formattedData);
+    }
     } else if (chartView === "allTime") {
+      let formattedData;
+      if(localStorage.getItem("company")==="vkl"){
       const all = allChartData.allTime || [];
-      const formattedData = all.map((item) => ({
+      formattedData = all.map((item) => ({
         ...item,
         name: `${item.month} ${item.year}`,
         closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
       }));
       setCurrentChartData(formattedData);
+    }
+    else if(localStorage.getItem("company")==="idg"){
+      const all = allChartData.allTime || [];
+      formattedData = all.map((item) => ({
+          
+        ...item,
+        name: `${item.month} ${item.year}`,
+        closedMatters: item.closedOrders,
+      }));
+      setCurrentChartData(formattedData);
+    }
     }
   }, [chartView, allChartData]);
 
