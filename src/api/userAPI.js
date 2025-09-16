@@ -15,7 +15,6 @@ class ClientAPI {
     };
   }
 
-  // --- FUNCTION TO GET CALENDAR DATES ---
   async getCalendarDates() {
     try {
       // The endpoint you provided is used here
@@ -244,16 +243,19 @@ class ClientAPI {
         method: "GET",
         headers: this.getHeaders(),
       });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+
+      const data = await response.json();
+      console.log(data);
+      return data.data;
     } catch (error) {
-      console.error("Error getting cost:", error);
+      console.error("Error getting IDG clients:", error);
       throw error;
     }
   }
-
   // Get Cost data
   async getCost(matterNumber) {
     try {

@@ -19,6 +19,7 @@ import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Loader from "../../components/ui/Loader";
 
 // --- Calendar Imports ---
 import moment from "moment";
@@ -47,34 +48,60 @@ const useDashboardStore = create((set) => ({
         0;
       return {
         totalusers: data.lifetimeTotals?.totalUsers || 0,
-        totalactive: data.lifetimeTotals?.totalActiveClients || data.lifetimeTotals?.totalActiveOrders,
+        totalactive:
+          data.lifetimeTotals?.totalActiveClients ||
+          data.lifetimeTotals?.totalActiveOrders,
         lastrecord: lastRec,
         loading: false,
       };
     }),
 }));
 
+const CheckmarkIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="checkmark-icon"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={4}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+  </svg>
+);
+
 const CustomEvent = ({ event }) => {
+  let eventTypeLabel;
+  switch (event.type) {
+    case "buildingAndPest":
+      eventTypeLabel = "B&P";
+      break;
+    case "financeApproval":
+      eventTypeLabel = "Finance";
+      break;
+    case "titleSearch":
+      eventTypeLabel = "T. Search";
+      break;
+    case "settlement":
+      eventTypeLabel = "Settlement";
+      break;
+    default:
+      eventTypeLabel = "Event";
+  }
+  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : "";
+  const displayTitle = `[${event.matterNumber}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+
   return (
-    <div
-      style={{
-        wordWrap: "break-word",
-        whiteSpace: "normal",
-        lineHeight: "1.2",
-      }}
-    >
-      <div className="font-semibold text-[11.5px] text-white leading-tight">
-        {event.title} - [{event.clientType}]
-      </div>
+    <div className="custom-event-content">
+      <span className="event-title">{displayTitle}</span>
+      {event.isApproved && <CheckmarkIcon />}
     </div>
   );
 };
 
-// --- Custom Agenda Renderer with spacing ---
 const CustomAgendaEvent = ({ event }) => (
   <div className="mb-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition shadow-sm">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      {/* Left side: Title + Date */}
       <div className="flex flex-col">
         <span className="font-semibold text-gray-800 text-sm sm:text-base">
           {event.title}
@@ -83,8 +110,6 @@ const CustomAgendaEvent = ({ event }) => (
           {moment(event.start).format("DD MMM YYYY")}
         </span>
       </div>
-
-      {/* Right side: Client type */}
       <span
         className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
           event.type === "buildingAndPest"
@@ -98,9 +123,7 @@ const CustomAgendaEvent = ({ event }) => (
       </span>
     </div>
   </div>
-  
 );
-
 
 // --- Helper Hooks ---
 const useWindowSize = () => {
@@ -189,6 +212,7 @@ function Dashboard() {
   } = useArchivedClientStore();
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
+  const [isChartLoading, setIsChartLoading] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [chartView, setChartView] = useState("last10Months");
   const [allChartData, setAllChartData] = useState({
@@ -201,34 +225,38 @@ function Dashboard() {
   const isMobile = width < 768;
 
   const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    const company = localStorage.getItem("company");
-    const closedLabel = company === "idg" ? "Closed Orders" : company === "vkl" ? "Closed Matters":"Closed";
+    if (active && payload && payload.length) {
+      const company = localStorage.getItem("company");
+      const closedLabel =
+        company === "idg"
+          ? "Closed Orders"
+          : company === "vkl"
+          ? "Closed Matters"
+          : "Closed";
 
-    return (
-      <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
-        <p className="font-semibold">{label}</p>
-        <p>{`${closedLabel}: ${payload[0].value}`}</p>
-      </div>
-    );
-  }
-  return null;
-};
+      return (
+        <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
+          <p className="font-semibold">{label}</p>
+          <p>{`${closedLabel}: ${payload[0].value}`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const clientApi = useMemo(() => new ClientAPI(), []);
   let company = localStorage.getItem("company");
   // Fetch dashboard data
   useEffect(() => {
     const fetchAndSetData = async () => {
+      setIsChartLoading(true);
       try {
-        const data = await (
-           company === "vkl"
-         ? clientApi.getDashboardData()
-         : company === "idg"
-         ? clientApi.getIDGDashboardData()
-         : clientApi.getDashboardData()
-      );
-      console.log("Dashboard data:", data);
+        const data = await (company === "vkl"
+          ? clientApi.getDashboardData()
+          : company === "idg"
+          ? clientApi.getIDGDashboardData()
+          : clientApi.getDashboardData());
+        console.log("Dashboard data:", data);
         setDashboardData(data);
         setAllChartData({
           tenMonths: Array.isArray(data.last10MonthsStats)
@@ -239,12 +267,13 @@ function Dashboard() {
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
         toast.error("Failed to load dashboard data.");
+      } finally {
+        setIsChartLoading(false);
       }
     };
     fetchAndSetData();
   }, [clientApi, setDashboardData]);
 
-  // Fetch calendar events
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
@@ -253,27 +282,54 @@ function Dashboard() {
         data.forEach((item) => {
           if (item.buildingAndPestDate) {
             events.push({
-              title: `[${item.matterNumber}] - B&P`,
+              title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
               start: moment(item.buildingAndPestDate).toDate(),
               end: moment(item.buildingAndPestDate).toDate(),
               allDay: true,
               type: "buildingAndPest",
               clientType: item.clientType,
               matterNumber: item.matterNumber,
+              isApproved: item.buildingAndPest?.toLowerCase() === "yes",
             });
           }
           if (item.financeApprovalDate) {
             events.push({
-              title: `[${item.matterNumber}] - Finance`,
+              title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
               start: moment(item.financeApprovalDate).toDate(),
               end: moment(item.financeApprovalDate).toDate(),
               allDay: true,
               type: "financeApproval",
               clientType: item.clientType,
               matterNumber: item.matterNumber,
+              isApproved: item.financeApproval?.toLowerCase() === "yes",
+            });
+          }
+          if (item.titleSearchDate) {
+            events.push({
+              title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
+              start: moment(item.titleSearchDate).toDate(),
+              end: moment(item.titleSearchDate).toDate(),
+              allDay: true,
+              type: "titleSearch",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+              isApproved: item.titleSearch?.toLowerCase() === "yes",
+            });
+          }
+          if (item.settlementDate) {
+            events.push({
+              title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
+              start: moment(item.settlementDate).toDate(),
+              end: moment(item.settlementDate).toDate(),
+              allDay: true,
+              type: "settlement",
+              clientType: item.clientType,
+              matterNumber: item.matterNumber,
+              isApproved: false,
             });
           }
         });
+
         setCalendarEvents(events);
       } catch (error) {
         toast.error("Could not load calendar dates.");
@@ -322,11 +378,14 @@ function Dashboard() {
   const eventStyleGetter = useCallback((event) => {
     let backgroundColor = "#3174ad";
     if (event.type === "buildingAndPest") {
-      backgroundColor = "#B24592";
+      backgroundColor = "#B24592"; // Magenta / Deep Pink
     } else if (event.type === "financeApproval") {
-      backgroundColor = "#f83600";
+      backgroundColor = "#f83600"; // Red-Orange
+    } else if (event.type === "titleSearch") {
+      backgroundColor = "#34495E"; // Indigo
+    } else if (event.type === "settlement") {
+      backgroundColor = "#8E44AD"; // Pleasant Purple
     }
-
     return {
       style: {
         backgroundColor,
@@ -338,7 +397,6 @@ function Dashboard() {
       },
     };
   }, []);
-
   const dayPropGetter = useCallback(
     (date) => ({
       className:
@@ -397,15 +455,15 @@ function Dashboard() {
               <img src={Plus} alt="" className="w-5" />
               <span>Add New Client</span>
             </button>
-            {localStorage.getItem("company") === "idg" &&
-             <button
-              className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
-              onClick={() => setcreateOrder(true)}
-            >
-              <img src={Plus} alt="" className="w-5" />
-              <span>Add New Order</span>
-            </button>
-            }
+            {localStorage.getItem("company") === "idg" && (
+              <button
+                className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+                onClick={() => setcreateOrder(true)}
+              >
+                <img src={Plus} alt="" className="w-5" />
+                <span>Add New Order</span>
+              </button>
+            )}
           </div>
 
           {/* Stats */}
@@ -417,12 +475,20 @@ function Dashboard() {
             />
             <StatCard
               icon={ViewClientsIcon}
-              label="Total Active Clients"
+              label={
+                localStorage.getItem("company") === "idg"
+                  ? "Total Orders"
+                  : "Total Clients"
+              }
               value={totalactive}
             />
             <StatCard
               icon={ArchivedChatsIcon}
-              label="Total Archived Clients"
+              label={
+                localStorage.getItem("company") === "idg"
+                  ? "Total Completed Orders"
+                  : "Total Archived Clients"
+              }
               value={chartPeriodTotal}
             />
           </div>
@@ -431,8 +497,12 @@ function Dashboard() {
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-700">
-                {localStorage.getItem("company")==="vkl" ? "Closed Matters" : localStorage.getItem("company")==="idg" ? "Closed Orders" :"Closed"} (
-                {chartView === "last10Months" ? "Last 10 Months" : "All Time"})
+                {localStorage.getItem("company") === "vkl"
+                  ? "Closed Matters"
+                  : localStorage.getItem("company") === "idg"
+                  ? "Closed Orders"
+                  : "Closed"}{" "}
+                ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
@@ -457,7 +527,14 @@ function Dashboard() {
                 </button>
               </div>
             </div>
-            {currentChartData && currentChartData.length > 0 ? (
+            {isChartLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-[#00AEEF]" />
+                <span className="ml-4 text-lg font-medium text-gray-600">
+                  Loading Chart...
+                </span>
+              </div>
+            ) : currentChartData && currentChartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
@@ -478,7 +555,12 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord} {localStorage.getItem("company")==="vkl" ? "Matters Solved In Last Month" : localStorage.getItem("company")==="idg" ? "Orders Closed In Last Month" : "Closed"}
+                    {lastrecord}{" "}
+                    {localStorage.getItem("company") === "vkl"
+                      ? "Matters Solved In Last Month"
+                      : localStorage.getItem("company") === "idg"
+                      ? "Orders Closed In Last Month"
+                      : "Closed"}
                   </p>
                 )}
               </>

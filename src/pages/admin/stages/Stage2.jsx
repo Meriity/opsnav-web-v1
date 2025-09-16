@@ -118,6 +118,7 @@ export default function Stage2({
   setReloadTrigger,
   clientType,
 }) {
+  console.log(data);
   const stage = 2;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -131,12 +132,14 @@ export default function Stage2({
   const currentConfig = formConfig[company] || formConfig.vkl;
 
   const getStatus = (value) => {
+    if (value === undefined || value === null || value === "") {
+      return "Not Completed";
+    }
     const val = normalizeValue(value);
-    if (!val) return "Not Completed";
-    if (["yes", "nr", "na", "n/a"].includes(val)) return "Completed";
+    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+    if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "inprogress", "inprogress"].includes(val))
-      return "In Progress";
+    if (["processing", "inprogress"].includes(val)) return "In Progress";
     return "Not Completed";
   };
 
@@ -201,9 +204,14 @@ export default function Stage2({
     };
 
     currentConfig.fields.forEach((field) => {
-      if (field.type === "radio") {
+      if (field.type === "number") {
+        const rawPrice = data[field.name];
+        initialFormData[field.name] =
+          typeof rawPrice === "object" && rawPrice?.$numberDecimal
+            ? rawPrice.$numberDecimal
+            : rawPrice?.toString() || "";
+      } else if (field.type === "radio") {
         initialFormData[field.name] = normalizeValue(data[field.name] || "");
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
       } else {
         initialFormData[field.name] = data[field.name] || "";
       }
@@ -213,11 +221,12 @@ export default function Stage2({
           data[field.dateFieldName]
         );
       }
+
+      initialStatuses[field.name] = getStatus(data[field.name]);
     });
 
     currentConfig.noteGroups.forEach((group) => {
       const notes = extractNotes(data[group.noteForClientKey]);
-      initialFormData[group.systemNoteKey] = notes.systemNote;
       initialFormData[group.clientCommentKey] = notes.clientComment;
     });
 
@@ -228,9 +237,9 @@ export default function Stage2({
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
+    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     let processedValue = value;
 
-    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     if (
       fieldConfig &&
       fieldConfig.type === "radio" &&
@@ -241,8 +250,8 @@ export default function Stage2({
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
 
-    if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
+    if (fieldConfig) {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(value) }));
     }
   };
 
@@ -281,7 +290,7 @@ export default function Stage2({
   }
 
   const renderField = (field) => (
-    <div key={field.name} className="py-2">
+    <div key={field.name} className="mt-5">
       <div className="flex gap-4 justify-between items-center mb-2">
         <label className="block mb-1 text-sm md:text-base font-bold">
           {field.label}
@@ -297,10 +306,11 @@ export default function Stage2({
         </div>
       </div>
 
-      {/* <div className="flex flex-wrap items-center justify-between gap-4"> */}
-      {/* tight spacing of every fields*/}
       <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-        {["Yes", "No", "Processing", "N/R"].map((val) => (
+        {(field.name === "approveOrRejectOrder"
+          ? ["Approved", "Rejected", "Pending"]
+          : ["Yes", "No", "Processing", "N/R"]
+        ).map((val) => (
           <label
             key={val}
             className="flex items-center gap-2 text-sm md:text-base"

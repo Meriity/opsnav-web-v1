@@ -77,6 +77,7 @@ const ViewClients = () => {
     setClientList(filteredData);
   }, [settlementDate, Clients, searchQuery]);
 
+  console.log(clientList);
   let columns = [];
   if(localStorage.getItem("company")==="vkl"){
   columns = [
@@ -101,11 +102,14 @@ const ViewClients = () => {
 }else if(localStorage.getItem("company")==="idg"){
    columns = [
   { key: 'clientId', title: 'Client ID', width: '10%' },
-  { key: 'data_entry_by', title: 'Data Entry By', width: '15%' },
+  { key: 'orderId', title: 'Order ID', width: '10%' },
   { key: 'client_name', title: 'Client Name', width: '10%' },
-  { key: 'billing_address', title: 'Billing Address', width: '15%' },
-  { key: 'client_type', title: 'Client Type', width: '10%' },
-  { key: 'settlement_date', title: 'Delivery Date', width: '10%' },
+  { key: 'client_type', title: 'Client Type', width: '15%' },
+  { key: 'order_date', title: 'Order Date', width: '10%' },
+  { key: 'delivery_date', title: 'Delivery Date', width: '10%' },
+  { key: 'priority', title: 'Priority', width: '10%' },
+  { key: 'billing_address', title: 'Delivery Address', width: '15%' },
+  { key: 'postcode', title: 'Post Code', width: '10%' },
 ];
 }
 
@@ -226,7 +230,7 @@ const ViewClients = () => {
 
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            {localStorage.getItem("company") === "vkl"? "View Clients" : "Vew Orders"}
+            {localStorage.getItem("company") === "vkl"? "View Clients" : "View Orders"}
           </h3>
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
