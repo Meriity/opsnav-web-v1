@@ -4,6 +4,7 @@ import ClientAPI from "../../../api/userAPI";
 import { useParams } from "react-router-dom";
 import StageAPI from "../../../api/clientAPI";
 import CostInputRow from "../../../components/ui/CostInputRow";
+import { toast } from "react-toastify";
 
 // Helper to define initial state structures for different companies
 const getInitialState = (company) => {
@@ -141,28 +142,25 @@ export default function CostComponent({
     async function fetchData() {
       try {
         setIsLoading(true);
-        const company=localStorage.getItem("company");
-        const stageResponse = company==="vkl" ? await StagesAPI.getAllStages(matterNumber) : await StagesAPI.getIDGStages(matterNumber);
-        console.log("company", company);
-        const costData = stageResponse?.cost?.[0] || {};
+        const company = localStorage.getItem("company");
+        const stageResponse =
+          company === "vkl"
+            ? await StagesAPI.getAllStages(matterNumber)
+            : await StagesAPI.getIDGStages(matterNumber);
+        
+        const costData = stageResponse?.cost?.[0] || stageResponse?.data?.cost;
         const quoteType = stageResponse?.stage1?.quoteType || "Variable";
         const quoteAmount =
           stageResponse?.stage1?.quoteAmount?.$numberDecimal ||
-          stageResponse?.stage1?.quoteAmount ||
+          stageResponse?.data.cost.quoteAmount ||
           "";
+          console.log(quoteAmount)
+          
 
-        // --- CHANGE 4: Map fetched data conditionally ---
         let mappedData = {};
 
+        // This object contains mappings that are structurally common
         const commonMapped = {
-            "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
-            "Note 1": costData.otherFee1Note || "",
-            "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
-            "Note 2": costData.otherFee2Note || "",
-            "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
-            "Note 3": costData.otherFee3Note || "",
-            "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
-            "Note 4": costData.otherFee4Note || "",
             "Other (total)": costData.otherTotal?.$numberDecimal || "0",
             "Other (total) Note": costData.otherTotalNote || "",
             "Total Costs": costData.totalCosts?.$numberDecimal || "0",
@@ -175,25 +173,46 @@ export default function CostComponent({
         };
 
         if (company === 'vkl') {
+            // VKL mapping remains as is, using its specific API field names
             mappedData = {
-                "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
-                "VOI/CAF Note": costData.voiCafNote || "",
-                Title: costData.title?.$numberDecimal || "",
-                "Title Note": costData.titleNote || "",
-                Plan: costData.plan?.$numberDecimal || "",
-                "Plan Note": costData.planNote || "",
-                "Land Tax": costData.landTax?.$numberDecimal || "",
-                "Land Tax Note": costData.landTaxNote || "",
-                "Land Information Certificate (Rates)":
-                  costData.landInformationCertificate?.$numberDecimal || "",
-                "Land Information Note":
-                  costData.landInformationCertificateNote || "",
-                "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
-                "Water Certificate Note": costData.waterCertificateNote || "",
-                ...commonMapped
+              "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
+              "VOI/CAF Note": costData.voiCafNote || "",
+              Title: costData.title?.$numberDecimal || "",
+              "Title Note": costData.titleNote || "",
+              Plan: costData.plan?.$numberDecimal || "",
+              "Plan Note": costData.planNote || "",
+              "Land Tax": costData.landTax?.$numberDecimal || "",
+              "Land Tax Note": costData.landTaxNote || "",
+              "Land Information Certificate (Rates)":
+                costData.landInformationCertificate?.$numberDecimal || "",
+              "Land Information Note":
+                costData.landInformationCertificateNote || "",
+              "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
+              "Water Certificate Note": costData.waterCertificateNote || "",
+              "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
+              "Note 1": costData.otherFee1Note || "",
+              "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
+              "Note 2": costData.otherFee2Note || "",
+              "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
+              "Note 3": costData.otherFee3Note || "",
+              "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
+              "Note 4": costData.otherFee4Note || "",
+              ...commonMapped
             };
-        } else { // For 'idg'
-            mappedData = { ...commonMapped };
+        } else { // Corrected mapping for 'idg'
+            mappedData = {
+              // Map IDG's 'fee1' to the component's 'Other fee (1)' state
+              "Other fee (1)": costData.fee1 || "",
+              "Note 1": costData.fee1Note || "",
+              "Other fee (2)": costData.fee2 || "",
+              "Note 2": costData.fee2Note || "",
+              "Other fee (3)": costData.fee3 || "",
+              "Note 3": costData.fee3Note || "",
+              "Other fee (4)": costData.fee4 || "",
+              "Note 4": costData.fee4Note || "",
+              // Spread the rest of the common fields
+              ...commonMapped
+            };
         }
 
         const calculatedMapped = calculateTotals(mappedData);
@@ -208,7 +227,6 @@ export default function CostComponent({
 
     fetchData();
   }, [matterNumber, reloadTrigger]);
-
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
@@ -241,7 +259,9 @@ export default function CostComponent({
       };
       
       // --- CHANGE 5: Build submission payload conditionally ---
-      const commonPayload = {
+      let commonPayload;
+    if(localStorage.getItem("company")==="vkl"){
+       commonPayload = {
         matterNumber: matterNumber,
         otherFee_1: formatNumber(formValues["Other fee (1)"]),
         otherFee1Note: formValues["Note 1"],
@@ -261,6 +281,30 @@ export default function CostComponent({
         invoiceAmount: formatNumber(formValues["Invoice Amount"]),
         invoiceAmountNote: formValues["Invoice Amount Note"],
       };
+    }
+    else{
+       commonPayload = {
+        orderId: matterNumber,
+        fee1: formatNumber(formValues["Other fee (1)"]),
+        fee1Note: formValues["Note 1"],
+        fee2: formatNumber(formValues["Other fee (2)"]),
+        fee2Note: formValues["Note 2"],
+        fee3: formatNumber(formValues["Other fee (3)"]),
+        fee3Note: formValues["Note 3"],
+        fee4: formatNumber(formValues["Other fee (4)"]),
+        fee4Note: formValues["Note 4"],
+        otherTotal: formatNumber(formValues["Other (total)"]),
+        otherTotalNote: formValues["Other (total) Note"],
+        totalCosts: formatNumber(formValues["Total Costs"]),
+        totalCostsNote: formValues["Total Costs Note"],
+        quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
+        quoteAmount: formatNumber(formValues["Quote Amount"]),
+        quoteAmountNote: formValues["Quote Amount Note"],
+        invoiceAmount: formatNumber(formValues["Invoice Amount"]),
+        invoiceAmountNote: formValues["Invoice Amount Note"],
+      };
+
+    }
 
       let finalPayload;
       if (company === "vkl") {
@@ -281,14 +325,25 @@ export default function CostComponent({
             waterCertificate: formatNumber(formValues["Water Certificate"]),
             waterCertificateNote: formValues["Water Certificate Note"],
         }
-      } else { // for 'idg'
+      } else { 
         finalPayload = commonPayload;
       }
+      console.log(finalPayload);
       
-      const response = await api.upsertCost(finalPayload);
+      const response = company ==="vkl" ? await api.upsertCost(finalPayload) : api.upsertIDGCost(matterNumber,finalPayload);
       console.log("Save successful:", response);
 
-      setReloadTrigger((prev) => !prev);
+          toast.success("Cost data updated Successfully!!!", {
+            position: "bottom-left",
+            autoClose: 2000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: false,
+            draggable: false,
+            progress: undefined,
+          });
+
+      // setReloadTrigger((prev) => !prev);
     } catch (err) {
       console.error("Full error:", err);
     } finally {

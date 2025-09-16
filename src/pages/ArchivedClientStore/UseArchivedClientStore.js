@@ -39,7 +39,7 @@ export const useArchivedClientStore = create((set, get) => ({
       let mapped={};
 
 if(localStorage.getItem("company") === "vkl"){
-       mapped = res.map((client, index) => ({
+       mapped = res.clients.map((client, index) => ({
         // --- Data for Archived Clients Table ---
         id: index + 1,
         matternumber: client.matterNumber || "N/A",
@@ -71,6 +71,7 @@ if(localStorage.getItem("company") === "vkl"){
       orderDate:client.orderDate?.slice(0,10),
       deliveryDate:client.deliveryDate?.slice(0,10),
      }));
+     console.log(mapped);
       set({ archivedClients: mapped, isFetched: true, loading: false });
 
   }

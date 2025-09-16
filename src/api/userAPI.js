@@ -188,6 +188,33 @@ class ClientAPI {
     }
   }
 
+  
+  async upsertIDGCost(orderId,additionalData = {}) {
+    console.log(additionalData,orderId)
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
+        method: "PUT",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          ...additionalData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating cost:", error);
+      throw error;
+    }
+  }
+
+
+
+
+
   // get clients
   async getClients() {
     try {
