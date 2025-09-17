@@ -322,6 +322,21 @@ const ViewClients = () => {
                 >
                   <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
+                      {/* Create Client option for mobile/tablet */}
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setcreateuser(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            Create Client
+                          </button>
+                        )}
+                      </Menu.Item>
                       <Menu.Item>
                         {({ active }) => (
                           <button

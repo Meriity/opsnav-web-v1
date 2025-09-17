@@ -581,7 +581,7 @@ export default function StagesLayout() {
   return (
     <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
       <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-hidden">
+      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
         <div className="flex justify-between items-center mb-2 flex-shrink-0">
           <h2 className="text-lg md:text-xl font-semibold">
             Hello {localStorage.getItem("user")}
