@@ -10,6 +10,7 @@ export default function OutstandingTasksModal({
   open,
   onClose,
   activeMatter = null,
+  onOpen=false,
 }) {
   const api = new ClientAPI();
   const [data, setData] = useState([]);
@@ -17,6 +18,7 @@ export default function OutstandingTasksModal({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [matterFilter, setMatterFilter] = useState("none");
+  const company = localStorage.getItem("company");
 
   useEffect(() => {
     if (open) {
@@ -33,12 +35,19 @@ export default function OutstandingTasksModal({
 
   const fetchData = async (page) => {
     setLoading(true);
+      console.log(matterFilter);
+
     try {
-      const response = await api.getAllOutstandingTasks(
+      const ClientID=activeMatter;
+      const response = company === "vkl" ? await api.getAllOutstandingTasks(
         page,
         activeMatter,
         matterFilter
-      );
+      )  : await api.getIDGOutstandingTasks( page,
+        matterFilter,
+        activeMatter
+        );
+      console.log(matterFilter);
       if (activeMatter) {
         setData([response]);
         setTotalPages(1);
@@ -135,7 +144,7 @@ export default function OutstandingTasksModal({
               {!activeMatter && (
                 <div>
                   <label className="text-sm font-semibold block mb-1 text-gray-600">
-                    Matters Settling In
+                    {company==="vkl" ? "Matters Settling in":"Orders Delivery in"}
                   </label>
                   <select
                     className="w-full sm:w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -163,15 +172,17 @@ export default function OutstandingTasksModal({
                   <thead className="bg-blue-600 text-white">
                     <tr>
                       <th className="px-6 py-3 border">
-                        Matter No. and Client
+                        {company === "vkl" ? "Matter No. and Client" : "OrderId and Client"}
                       </th>
-                      <th className="px-6 py-3 border">Settlement Date</th>
+                      <th className="px-6 py-3 border">{company === "vkl" ? "Settlement Date" : "Delivery Date"}</th>
                       <th className="px-6 py-3 border">Stage</th>
                       <th className="px-6 py-3 border">Tasks</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {console.log(data)}
                     {data.length > 0 ? (
+
                       data.map((item, idx) => {
                         const allStages = Object.entries(
                           item.outstandingTasks || {}
@@ -183,7 +194,7 @@ export default function OutstandingTasksModal({
                           return (
                             <tr key={idx} className="border bg-white">
                               <td className="px-6 py-4 border align-top">
-                                {item.matterNumber} - {item.clientName}
+                                  {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
                               </td>
                               <td className="px-6 py-4 border align-top">
                                 {formatDate(item.settlementDate)}
@@ -209,13 +220,14 @@ export default function OutstandingTasksModal({
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50 font-medium"
                                   >
-                                    {item.matterNumber} - {item.clientName}
+                                    {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
+
                                   </td>
                                   <td
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50"
                                   >
-                                    {formatDate(item.settlementDate)}
+                                    {formatDate(item.settlementDate||item.deliveryDate)}
                                   </td>
                                 </>
                               )}

@@ -606,6 +606,27 @@ class ClientAPI {
     }
   }
 
+    async getIDGSearchResult(query) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/orders/search?keywords=${query}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error sending notification to client:", error);
+      throw error;
+    }
+  }
+
   // Set initial password for new users
   async setPassword(token, password) {
     try {
