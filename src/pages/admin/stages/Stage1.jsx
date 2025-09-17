@@ -97,7 +97,6 @@ export default function Stage1({
   const api = new ClientAPI();
   const { matterNumber } = useParams();
 
-
   // Determine the company and get its specific configuration
   const company = localStorage.getItem("company") || "vkl"; // Default to 'vkl'
   const currentFields = formConfig[company] || formConfig.vkl; // Fallback to 'vkl' config
@@ -158,7 +157,7 @@ export default function Stage1({
   useEffect(() => {
     if (!data) return;
 
-    const { systemNote, clientComment } =  extractNotes(data.noteForClient);
+    const { systemNote, clientComment } = extractNotes(data.noteForClient);
     const initialFormData = {};
     const initialStatuses = {};
 
@@ -209,58 +208,56 @@ export default function Stage1({
   }
 
   async function handleSave() {
-  if (!isChanged() || isSaving) return;
-  setIsSaving(true);
+    if (!isChanged() || isSaving) return;
+    setIsSaving(true);
 
-  try {
-    const systemNote = generateSystemNote();
-    let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
+    try {
+      const systemNote = generateSystemNote();
+      let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
+      const company = localStorage.getItem("company");
+      let payload = {
+        ...formData,
+      };
 
-    const company = localStorage.getItem("company");
-    let payload = {
-      ...formData,
-    };
+      // dynamically set the key
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber; // keep matterNumber
+        payload.noteForClient = noteForClient;
+      } else if (company === "idg") {
+        payload.orderId = matterNumber; // use orderId instead
+        payload.noteForClient = noteForClient;
+      }
 
-    // dynamically set the key
-    if (company === "vkl") {
-      payload.matterNumber = matterNumber;  // keep matterNumber
-      payload.noteForClient = noteForClient;
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;       // use orderId instead
-      payload.noteForClient = noteForClient;
+      console.log(`${company} payload:`, payload);
+
+      // remove temporary fields
+      delete payload.systemNote;
+      delete payload.clientComment;
+
+      if (company === "vkl") {
+        await api.upsertStageOne(payload);
+      } else if (company === "idg") {
+        await api.upsertIDGStages(payload.orderId, 1, payload);
+      }
+
+      originalData.current = { ...formData, systemNote };
+      setReloadTrigger((prev) => !prev);
+      toast.success("Stage 1 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (error) {
+      console.error("Failed to update stage 1:", error);
+    } finally {
+      setIsSaving(false);
     }
-
-    console.log(`${company} payload:`, payload);
-
-    // remove temporary fields
-    delete payload.systemNote;
-    delete payload.clientComment;
-
-    if (company === "vkl") {
-      await api.upsertStageOne(payload);
-    } else if (company === "idg") {
-      await api.upsertIDGStages(payload.orderId, 1, payload);
-    }
-
-    originalData.current = { ...formData, systemNote };
-    setReloadTrigger((prev) => !prev);
-    toast.success("Stage 1 Saved Successfully!", {
-      position: "bottom-left",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      progress: undefined,
-    });
-  } catch (error) {
-    console.error("Failed to update stage 1:", error);
-  } finally {
-    setIsSaving(false);
   }
-}
-
 
   const renderField = (field) => {
     switch (field.type) {

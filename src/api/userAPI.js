@@ -188,9 +188,8 @@ class ClientAPI {
     }
   }
 
-  
-  async upsertIDGCost(orderId,additionalData = {}) {
-    console.log(additionalData,orderId)
+  async upsertIDGCost(orderId, additionalData = {}) {
+    console.log(additionalData, orderId);
     try {
       const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
         method: "PUT",
@@ -210,10 +209,6 @@ class ClientAPI {
       throw error;
     }
   }
-
-
-
-
 
   // get clients
   async getClients() {
@@ -653,7 +648,7 @@ class ClientAPI {
     }
   }
 
-    async getAllIDGOutstandingTasks(page, activeMatter, matterFilter) {
+  async getAllIDGOutstandingTasks(page, activeMatter, matterFilter) {
     try {
       let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}&filter=${matterFilter}`;
       if (activeMatter) {

@@ -59,13 +59,21 @@ const formConfig = {
       { name: "laminationApplied", label: "Lamination Applied", type: "radio" },
       { name: "cuttingDone", label: "Cutting Done", type: "radio" },
       { name: "mountingDone", label: "Mounting Done", type: "radio" },
-      { name: "auctionStickersPreapplied", label: "Auction Stickers Preapplied", type: "radio" },
+      {
+        name: "auctionStickersPreapplied",
+        label: "Auction Stickers Preapplied",
+        type: "radio",
+      },
       {
         name: "packaged",
         label: "Packaged",
         type: "radio",
       },
-      { name: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" },
+      {
+        name: "qualityCheckPassed",
+        label: "Quality Check Passed",
+        type: "radio",
+      },
       { name: "labeled", label: "labeled", type: "radio" },
     ],
     noteGroups: [
@@ -144,30 +152,29 @@ export default function Stage5({
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
 
-const generateSystemNote = (noteGroupId) => {
-  const noteGroup = currentConfig.noteGroups.find(
-    (ng) => ng.id === noteGroupId
-  );
-  if (!noteGroup) return "";
+  const generateSystemNote = (noteGroupId) => {
+    const noteGroup = currentConfig.noteGroups.find(
+      (ng) => ng.id === noteGroupId
+    );
+    if (!noteGroup) return "";
 
-  const greenValues = new Set(["yes", "na", "n/a", "nr"]); // considered complete
+    const greenValues = new Set(["yes", "na", "n/a", "nr"]); // considered complete
 
-  const fieldsToCheck = currentConfig.fields.filter((f) =>
-    noteGroup.fieldsForNote.includes(f.name)
-  );
+    const fieldsToCheck = currentConfig.fields.filter((f) =>
+      noteGroup.fieldsForNote.includes(f.name)
+    );
 
-  const incomplete = fieldsToCheck
-    .filter((field) => {
-      const value = normalizeValue(formData[field.name] || "");
-      // anything not green is incomplete
-      return !greenValues.has(value);
-    })
-    .map((field) => field.label);
+    const incomplete = fieldsToCheck
+      .filter((field) => {
+        const value = normalizeValue(formData[field.name] || "");
+        // anything not green is incomplete
+        return !greenValues.has(value);
+      })
+      .map((field) => field.label);
 
-  if (incomplete.length === 0) return "All tasks completed";
-  return `Pending: ${incomplete.join(", ")}`;
-};
-
+    if (incomplete.length === 0) return "All tasks completed";
+    return `Pending: ${incomplete.join(", ")}`;
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -228,52 +235,51 @@ const generateSystemNote = (noteGroupId) => {
     return JSON.stringify(formData) !== JSON.stringify(originalData.current);
   };
 
-async function handleSave() {
-  if (!isChanged() || isSaving) return;
-  setIsSaving(true);
+  async function handleSave() {
+    if (!isChanged() || isSaving) return;
+    setIsSaving(true);
 
-  try {
-    const company = localStorage.getItem("company");
-    let payload = { ...formData };
+    try {
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
 
-    // handle note groups
-    currentConfig.noteGroups.forEach((group) => {
-      const systemNote = generateSystemNote(group.id);
-      const clientComment = formData[group.clientCommentKey] || "";
-      payload[group.noteForClientKey] =
-        `${systemNote} - ${clientComment}`.trim();
-      delete payload[group.clientCommentKey];
-    });
+      // handle note groups
+      currentConfig.noteGroups.forEach((group) => {
+        const systemNote = generateSystemNote(group.id);
+        const clientComment = formData[group.clientCommentKey] || "";
+        payload[group.noteForClientKey] =
+          `${systemNote} - ${clientComment}`.trim();
+        delete payload[group.clientCommentKey];
+      });
 
-    // company-specific save
-    if (company === "vkl") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStageFive(payload);
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;
-      await api.upsertIDGStages(payload.orderId, 5, payload);
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageFive(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 5, payload);
+      }
+
+      // update original data
+      originalData.current = { ...formData };
+      setReloadTrigger((prev) => !prev);
+
+      toast.success("Stage 5 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (err) {
+      console.error("Failed to save Stage 5:", err);
+    } finally {
+      setIsSaving(false);
     }
-
-    // update original data
-    originalData.current = { ...formData };
-    setReloadTrigger((prev) => !prev);
-
-    toast.success("Stage 5 Saved Successfully!", {
-      position: "bottom-left",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      progress: undefined,
-    });
-  } catch (err) {
-    console.error("Failed to save Stage 5:", err);
-  } finally {
-    setIsSaving(false);
   }
-}
-
 
   const renderField = (field) => {
     switch (field.type) {

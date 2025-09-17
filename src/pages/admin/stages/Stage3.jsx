@@ -31,7 +31,7 @@ export default function Stage3({
     ];
   } else if (localStorage.getItem("company") === "idg") {
     fields = [
-      { key: "agent", label: "Assign Agent / Team Member",type:"text" },
+      { key: "agent", label: "Assign Agent / Team Member", type: "text" },
       {
         key: "materialsInStock",
         label: "Check if Materials Needed are in stock",
@@ -40,14 +40,18 @@ export default function Stage3({
         key: "additionalMaterialsRequired",
         label: "Procure additional materials if required",
       },
-      { key: "priority", label: "Confirm Job Priority",type:"text"  },
-      { key: "jobActivity", label: "Schedule Job Activity",type:"text"  },
-      { key: "status", label: "Confirm Job Status",type:"text"  },
-      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer",type:"text"  },
+      { key: "priority", label: "Confirm Job Priority", type: "text" },
+      { key: "jobActivity", label: "Schedule Job Activity", type: "text" },
+      { key: "status", label: "Confirm Job Status", type: "text" },
+      {
+        key: "vehicleAllocated",
+        label: "Allocate Vehicle / Installer",
+        type: "text",
+      },
       {
         key: "draftCostSheet",
         label: "Finalize Draft Cost Sheet (Fixed + Variable)",
-        type:"text" 
+        type: "text",
       },
       // { key: "approvePlan", label: "Approve plan and move to preparation" },
     ];
@@ -71,7 +75,7 @@ export default function Stage3({
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
-    if(val) return "Completed";
+    if (val) return "Completed";
     return "Not Completed";
   };
 
@@ -89,27 +93,28 @@ export default function Stage3({
   const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
 
-const updateNoteForClient = () => {
-  const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
+  const updateNoteForClient = () => {
+    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
 
-  const incompleteTasks = fields.filter(({ key, type }) => {
-    const rawValue = formState[key] || "";
-    const value = normalizeValue(rawValue);
+    const incompleteTasks = fields
+      .filter(({ key, type }) => {
+        const rawValue = formState[key] || "";
+        const value = normalizeValue(rawValue);
 
-    if (type === "text") {
-      // text fields count as completed if not empty
-      return value === "";
-    }
+        if (type === "text") {
+          // text fields count as completed if not empty
+          return value === "";
+        }
 
-    // non-text fields use completedValues
-    return !completedValues.has(value);
-  }).map(({ label }) => label);
+        // non-text fields use completedValues
+        return !completedValues.has(value);
+      })
+      .map(({ label }) => label);
 
-  if (incompleteTasks.length === 0) return "All tasks completed";
-  if (incompleteTasks.length === fields.length) return "No tasks completed";
-  return `${incompleteTasks.join(" and ")} not received`;
-};
-
+    if (incompleteTasks.length === 0) return "All tasks completed";
+    if (incompleteTasks.length === fields.length) return "No tasks completed";
+    return `${incompleteTasks.join(" and ")} not received`;
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -161,7 +166,7 @@ const updateNoteForClient = () => {
       ({ key, hasDate }) =>
         hasDate &&
         String(formState[`${key}Date`] || "").trim() !==
-        String(original[`${key}Date`] || "").trim()
+          String(original[`${key}Date`] || "").trim()
     );
     const commentChanged =
       String(clientComment).trim() !== String(original.clientComment).trim();
@@ -193,66 +198,65 @@ const updateNoteForClient = () => {
   };
 
   async function handleSave() {
-  if (!isChanged() || isSaving) return;
-  setIsSaving(true);
+    if (!isChanged() || isSaving) return;
+    setIsSaving(true);
 
-  try {
-    const company = localStorage.getItem("company");
+    try {
+      const company = localStorage.getItem("company");
 
-    const systemNote = updateNoteForClient();
-    const fullNote = clientComment
-      ? `${systemNote} - ${clientComment}`
-      : systemNote;
+      const systemNote = updateNoteForClient();
+      const fullNote = clientComment
+        ? `${systemNote} - ${clientComment}`
+        : systemNote;
 
-    let payload = {
-      ...formState,
-      noteForClient: fullNote,
-    };
+      let payload = {
+        ...formState,
+        noteForClient: fullNote,
+      };
 
-    // handle dates: send null if empty
-    fields.forEach(({ key, hasDate }) => {
-      if (hasDate) {
-        const dateKey = `${key}Date`;
-        payload[dateKey] =
-          formState[dateKey] && String(formState[dateKey]).trim() !== ""
-            ? formState[dateKey]
-            : null;
+      // handle dates: send null if empty
+      fields.forEach(({ key, hasDate }) => {
+        if (hasDate) {
+          const dateKey = `${key}Date`;
+          payload[dateKey] =
+            formState[dateKey] && String(formState[dateKey]).trim() !== ""
+              ? formState[dateKey]
+              : null;
+        }
+      });
+
+      // company-specific handling
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageThree(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 3, payload);
       }
-    });
 
-    // company-specific handling
-    if (company === "vkl") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStageThree(payload);
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;
-      await api.upsertIDGStages(payload.orderId, 3, payload);
+      // update original data
+      originalData.current = {
+        ...formState,
+        clientComment,
+        systemNote,
+      };
+
+      setReloadTrigger?.((prev) => !prev);
+      toast.success("Stage 3 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (err) {
+      console.error("Failed to save Stage 3:", err);
+    } finally {
+      setIsSaving(false);
     }
-
-    // update original data
-    originalData.current = {
-      ...formState,
-      clientComment,
-      systemNote,
-    };
-
-    setReloadTrigger?.((prev) => !prev);
-    toast.success("Stage 3 Saved Successfully!", {
-      position: "bottom-left",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      progress: undefined,
-    });
-  } catch (err) {
-    console.error("Failed to save Stage 3:", err);
-  } finally {
-    setIsSaving(false);
   }
-}
-  
 
   const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
@@ -297,29 +301,29 @@ const updateNoteForClient = () => {
                 type="radio"
                 name={key}
                 value={val}
-                checked={normalizeValue(formState[key] || "") === normalizeValue(val)}
+                checked={
+                  normalizeValue(formState[key] || "") === normalizeValue(val)
+                }
                 onChange={() => handleChange(key, val, hasDate)}
               />
               {val}
             </label>
           ))
         )}
+        {hasDate && (
+          <input
+            type="date"
+            value={formState[`${key}Date`] || ""}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                [`${key}Date`]: e.target.value,
+              }))
+            }
+            className="border p-1 rounded text-md"
+          />
+        )}
       </div>
-
-
-      {hasDate && (
-        <input
-          type="date"
-          value={formState[`${key}Date`] || ""}
-          onChange={(e) =>
-            setFormState((prev) => ({
-              ...prev,
-              [`${key}Date`]: e.target.value,
-            }))
-          }
-          className="border p-1 rounded text-sm"
-        />
-      )}
     </div>
   );
 

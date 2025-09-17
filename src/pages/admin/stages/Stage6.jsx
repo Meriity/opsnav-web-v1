@@ -72,7 +72,11 @@ const formConfig = {
         label: "Perform Installation / Removal On-Site",
         type: "radio",
       },
-      { name: "streetPointersPlaced", label: "Place Street Pointers", type: "radio" },
+      {
+        name: "streetPointersPlaced",
+        label: "Place Street Pointers",
+        type: "radio",
+      },
       {
         name: "onsiteStickersApplied",
         label: "Apply On-Site Stickers",
@@ -236,69 +240,69 @@ export default function Stage6({
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
   async function proceedWithSave() {
-  setIsSaving(true);
+    setIsSaving(true);
 
-  try {
-    const company = localStorage.getItem("company");
-    let payload = { ...formData };
+    try {
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
 
-    // handle note groups
-    currentConfig.noteGroups.forEach((group) => {
-      const systemNote = generateSystemNote(group.id);
-      const clientComment = formData[group.systemNoteKey] || "";
-      payload[group.noteForClientKey] = clientComment
-        ? `${systemNote} - ${clientComment}`
-        : systemNote;
-      delete payload[group.systemNoteKey];
-    });
+      // handle note groups
+      currentConfig.noteGroups.forEach((group) => {
+        const systemNote = generateSystemNote(group.id);
+        const clientComment = formData[group.systemNoteKey] || "";
+        payload[group.noteForClientKey] = clientComment
+          ? `${systemNote} - ${clientComment}`
+          : systemNote;
+        delete payload[group.systemNoteKey];
+      });
 
-    // company-specific save
-    if (company === "vkl") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStageSix(payload);
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;
-      await api.upsertIDGStages(payload.orderId, 6, payload);
-    }
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageSix(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 6, payload);
+      }
 
-    originalData.current = { ...formData };
-    setReloadTrigger((prev) => !prev);
-    setIsModalOpen(false);
+      originalData.current = { ...formData };
+      setReloadTrigger((prev) => !prev);
+      setIsModalOpen(false);
 
-    toast.success("Stage 6 saved successfully!", {
-      position: "bottom-left",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      progress: undefined,
-    });
-  } catch (err) {
-    console.error("Failed to save Stage 6:", err);
-    toast.error("Failed to save Stage 6.");
-  } finally {
-    setIsSaving(false);
-  }
-}
-
-async function handleSave() {
-  if (!isChanged() || isSaving) return;
-
-  if (modalField) {
-    const originalValue = normalizeValue(
-      originalData.current[modalField.name] || ""
-    );
-    const currentValue = normalizeValue(formData[modalField.name] || "");
-
-    if (currentValue && originalValue !== currentValue) {
-      setIsModalOpen(true);
-      return;
+      toast.success("Stage 6 saved successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (err) {
+      console.error("Failed to save Stage 6:", err);
+      toast.error("Failed to save Stage 6.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  await proceedWithSave();
-}
+  async function handleSave() {
+    if (!isChanged() || isSaving) return;
+
+    if (modalField) {
+      const originalValue = normalizeValue(
+        originalData.current[modalField.name] || ""
+      );
+      const currentValue = normalizeValue(formData[modalField.name] || "");
+
+      if (currentValue && originalValue !== currentValue) {
+        setIsModalOpen(true);
+        return;
+      }
+    }
+
+    await proceedWithSave();
+  }
 
   const renderField = (field) => {
     const options = field.options || ["Yes", "No", "Processing", "N/R"];

@@ -42,14 +42,14 @@ export default function StagesLayout() {
     try {
       const u = JSON.parse(localStorage.getItem("user") || "null");
       if (u?.role) return u.role;
-    } catch (e) { }
+    } catch (e) {}
     try {
       const t = localStorage.getItem("token");
       if (t) {
         const payload = JSON.parse(atob(t.split(".")[1] || ""));
         if (payload?.role) return payload.role;
       }
-    } catch (e) { }
+    } catch (e) {}
     return null;
   });
 
@@ -283,7 +283,11 @@ export default function StagesLayout() {
       case 6:
         return (
           <Stage6
-            data={localStorage.getItem("company") === "vkl" ? normalizeCloseMatterForClient(clientData?.stage6) : clientData?.data.stage6}
+            data={
+              localStorage.getItem("company") === "vkl"
+                ? normalizeCloseMatterForClient(clientData?.stage6)
+                : clientData?.data.stage6
+            }
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -314,7 +318,12 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        let response = company === "vkl" ? await api.getAllStages(matterNumber) : company === "idg" ? await api.getIDGStages(matterNumber) : null;
+        let response =
+          company === "vkl"
+            ? await api.getAllStages(matterNumber)
+            : company === "idg"
+            ? await api.getIDGStages(matterNumber)
+            : null;
         console.log(response);
         const serverRole =
           response?.role || response?.currentUser?.role || null;
@@ -357,79 +366,89 @@ export default function StagesLayout() {
         );
         const section = {};
 
-        if(localStorage.getItem("company") === "vkl") {
-
-        if (hasColorStatus) {
-          section.status1 = response.stage1?.colorStatus || "Not Completed";
-          section.status2 = response.stage2?.colorStatus || "Not Completed";
-          section.status3 = response.stage3?.colorStatus || "Not Completed";
-          section.status4 = response.stage4?.colorStatus || "Not Completed";
-          section.status5 = response.stage5?.colorStatus || "Not Completed";
-          section.status6 = response.stage6?.colorStatus || "Not Completed";
-        } else {
-          section.status1 = evaluateStageStatus(response.stage1, [
-            "referral",
-            "declarationForm",
-            "contractReview",
-            "tenants",
-          ]);
-          section.status2 = evaluateStageStatus(response.stage2, [
-            "voi",
-            "caf",
-            "signedContract",
-            "sendKeyDates",
-            "depositReceipt",
-            "buildingAndPest",
-            "financeApproval",
-            "obtainDaSeller",
-            "checkCtController",
-          ]);
-          section.status3 = evaluateStageStatus(response.stage3, [
-            "titleSearch",
-            "planImage",
-            "landTax",
-            "instrument",
-            "rates",
-            "water",
-            "ownersCorp",
-            "pexa",
-            "inviteBank",
-          ]);
-          section.status4 = evaluateStageStatus(response.stage4, [
-            "dts",
-            "soa",
-            "frcgw",
-            "dutyOnline",
-          ]);
-          section.status5 = evaluateStageStatus(response.stage5, [
-            "notifySoaToClient",
-            "transferDocsOnPexa",
-            "gstWithholding",
-            "disbursementsInPexa",
-            "addAgentFee",
-            "settlementNotification",
-          ]);
-          section.status6 = evaluateStageStatus(response.stage6, [
-            "noaToCouncilWater",
-            "dutyPaid",
-            "finalLetterToClient",
-            "finalLetterToAgent",
-            "invoiced",
-            "closeMatter",
-          ]);
+        if (localStorage.getItem("company") === "vkl") {
+          if (hasColorStatus) {
+            section.status1 = response.stage1?.colorStatus || "Not Completed";
+            section.status2 = response.stage2?.colorStatus || "Not Completed";
+            section.status3 = response.stage3?.colorStatus || "Not Completed";
+            section.status4 = response.stage4?.colorStatus || "Not Completed";
+            section.status5 = response.stage5?.colorStatus || "Not Completed";
+            section.status6 = response.stage6?.colorStatus || "Not Completed";
+          } else {
+            section.status1 = evaluateStageStatus(response.stage1, [
+              "referral",
+              "declarationForm",
+              "contractReview",
+              "tenants",
+            ]);
+            const stage2Fields = [
+              "voi",
+              "caf",
+              "signedContract",
+              "sendKeyDates",
+              "depositReceipt",
+              "buildingAndPest",
+              "financeApproval",
+              "checkCtController",
+            ];
+            if (response.clientType?.toLowerCase() === "seller") {
+              stage2Fields.push("obtainDaSeller");
+            }
+            section.status2 = evaluateStageStatus(
+              response.stage2,
+              stage2Fields
+            );
+            section.status3 = evaluateStageStatus(response.stage3, [
+              "titleSearch",
+              "planImage",
+              "landTax",
+              "instrument",
+              "rates",
+              "water",
+              "ownersCorp",
+              "pexa",
+              "inviteBank",
+            ]);
+            section.status4 = evaluateStageStatus(response.stage4, [
+              "dts",
+              "soa",
+              "frcgw",
+              "dutyOnline",
+            ]);
+            section.status5 = evaluateStageStatus(response.stage5, [
+              "notifySoaToClient",
+              "transferDocsOnPexa",
+              "gstWithholding",
+              "disbursementsInPexa",
+              "addAgentFee",
+              "settlementNotification",
+            ]);
+            section.status6 = evaluateStageStatus(response.stage6, [
+              "noaToCouncilWater",
+              "dutyPaid",
+              "finalLetterToClient",
+              "finalLetterToAgent",
+              "invoiced",
+              "closeMatter",
+            ]);
+          }
+          setStageStatuses(section);
+        } else if (localStorage.getItem("company") === "idg") {
+          section.status1 =
+            response.data.stage1?.colorStatus || "Not Completed";
+          section.status2 =
+            response.data.stage2?.colorStatus || "Not Completed";
+          section.status3 =
+            response.data.stage3?.colorStatus || "Not Completed";
+          section.status4 =
+            response.data.stage4?.colorStatus || "Not Completed";
+          section.status5 =
+            response.data.stage5?.colorStatus || "Not Completed";
+          section.status6 =
+            response.data.stage6?.colorStatus || "Not Completed";
+          setStageStatuses(section);
         }
-        setStageStatuses(section);
-      }else if(localStorage.getItem("company") === "idg") {
-          section.status1 = response.data.stage1?.colorStatus || "Not Completed";
-          section.status2 = response.data.stage2?.colorStatus || "Not Completed";
-          section.status3 = response.data.stage3?.colorStatus || "Not Completed";
-          section.status4 = response.data.stage4?.colorStatus || "Not Completed";
-          section.status5 = response.data.stage5?.colorStatus || "Not Completed";
-          section.status6 = response.data.stage6?.colorStatus || "Not Completed";
-        setStageStatuses(section);
-      }
-    }
-       catch (e) {
+      } catch (e) {
         console.error("Error fetching stage details:", e);
         toast.error("Failed to fetch client details.");
       } finally {
@@ -498,8 +517,7 @@ export default function StagesLayout() {
       let resp = {};
       if (localStorage.getItem("company") === "vkl") {
         resp = await api.updateClientData(originalMatterNumber, payload);
-      }
-      else {
+      } else {
         resp = await api.updateIDGClientData(originalMatterNumber, payload);
       }
       const updatedClient = resp.client || resp;
@@ -608,21 +626,23 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${selectedStage === stage.id
-                        ? "bg-[#FFFFFF] text-black border-gray-500"
-                        : `${bgcolor(stageStatus)} border-gray-300`
-                        }`}
+                      className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
+                        selectedStage === stage.id
+                          ? "bg-[#FFFFFF] text-black border-gray-500"
+                          : `${bgcolor(stageStatus)} border-gray-300`
+                      }`}
                     >
                       <div className="flex justify-between">
                         <p className="font-bold font-poppins text-xs">
                           Stage {index + 1}
                         </p>
                         <div
-                          className={`h-[18px] ${stageStatus === "In Progress" ||
+                          className={`h-[18px] ${
+                            stageStatus === "In Progress" ||
                             stageStatus === "amber"
-                            ? "text-[#FF9500]"
-                            : "text-black"
-                            } flex items-center justify-center rounded-4xl`}
+                              ? "text-[#FF9500]"
+                              : "text-black"
+                          } flex items-center justify-center rounded-4xl`}
                         >
                           <p className="text-[10px] whitespace-nowrap font-bold">
                             {getStatusDisplayText(stageStatus)}
@@ -646,22 +666,24 @@ export default function StagesLayout() {
                     <div
                       key={stage.id}
                       onClick={() => setSelectedStage(stage.id)}
-                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${selectedStage === stage.id
-                        ? "bg-[#FFFFFF] text-black border-gray-500"
-                        : `${bgcolor(stageStatus)} border-gray-300`
-                        }`}
+                      className={`cursor-pointer p-1 rounded shadow transition-colors duration-200 h-[70px] border-2 ${
+                        selectedStage === stage.id
+                          ? "bg-[#FFFFFF] text-black border-gray-500"
+                          : `${bgcolor(stageStatus)} border-gray-300`
+                      }`}
                     >
                       <div className="flex justify-between items-start">
                         <p className="font-bold font-poppins text-xs xl:text-sm">
                           Stage {index + 1}
                         </p>
                         <div
-                          className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${stageStatus === "In Progress" ||
+                          className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] ${
+                            stageStatus === "In Progress" ||
                             stageStatus === "amber"
-                            ? "text-[#FF9500]"
-                            : stageStatus === "Completed" ||
-                            stageStatus === "green"
-                            } flex items-center justify-center rounded-4xl`}
+                              ? "text-[#FF9500]"
+                              : stageStatus === "Completed" ||
+                                stageStatus === "green"
+                          } flex items-center justify-center rounded-4xl`}
                         >
                           <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
                             {getStatusDisplayText(stageStatus)}
@@ -689,21 +711,47 @@ export default function StagesLayout() {
                     {company === "vkl"
                       ? "Matter Details"
                       : company === "idg"
-                        ? "Order Details"
-                        : ""}
+                      ? "Order Details"
+                      : ""}
                   </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
                     onSubmit={handleupdate}
                   >
                     {/* Matter Date */}
-                    <div className="md:col-span-1"> <label className="block text-xs md:text-sm font-semibold mb-1"> {company === "vkl" ? "Matter Date" : company === "idg" ? "Order Date" : ""} </label>
-                      <input id="matterDate" name="matterDate"
+                    <div className="md:col-span-1">
+                      {" "}
+                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                        {" "}
+                        {company === "vkl"
+                          ? "Matter Date"
+                          : company === "idg"
+                          ? "Order Date"
+                          : ""}{" "}
+                      </label>
+                      <input
+                        id="matterDate"
+                        name="matterDate"
                         type={isSuperAdmin ? "date" : "text"}
-                        value={clientData?.matterNumber ? formatDateForDisplay(clientData.matterDate) : clientData?.data.orderDate ? formatDateForDisplay(clientData.data.orderDate) : ""}
-                        onChange={(e) => { if (!isSuperAdmin) return; const v = e.target.value ? new Date(e.target.value).toISOString() : ""; setClientData((prev) => ({ ...prev, matterDate: v })); }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""}`}
-                        disabled={!isSuperAdmin} />
+                        value={
+                          clientData?.matterNumber
+                            ? formatDateForDisplay(clientData.matterDate)
+                            : clientData?.data.orderDate
+                            ? formatDateForDisplay(clientData.data.orderDate)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          const v = e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "";
+                          setClientData((prev) => ({ ...prev, matterDate: v }));
+                        }}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
+                      />
                     </div>
 
                     {/* Matter Number */}
@@ -712,14 +760,18 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Matter Number"
                           : company === "idg"
-                            ? "Order ID"
-                            : ""}
+                          ? "Order ID"
+                          : ""}
                       </label>
 
                       {isSuperAdmin ? (
                         <input
                           type="text"
-                          value={clientData?.matterNumber || clientData?.data.orderId || ""}
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data.orderId ||
+                            ""
+                          }
                           onChange={(e) =>
                             setClientData((prev) => ({
                               ...prev,
@@ -731,7 +783,11 @@ export default function StagesLayout() {
                       ) : (
                         <input
                           type="text"
-                          value={clientData?.matterNumber || clientData?.data.orderId || ""}
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data.orderId ||
+                            ""
+                          }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
@@ -748,7 +804,11 @@ export default function StagesLayout() {
                         id="clientName"
                         name="clientName"
                         type="text"
-                        value={clientData?.clientName || clientData?.data?.client.name || ""}
+                        value={
+                          clientData?.clientName ||
+                          clientData?.data?.client.name ||
+                          ""
+                        }
                         onChange={(e) => {
                           if (!isSuperAdmin) return;
                           setClientData((prev) => ({
@@ -756,8 +816,9 @@ export default function StagesLayout() {
                             clientName: e.target.value,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
-                          }`}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
                         disabled={!isSuperAdmin}
                       />
                     </div>
@@ -768,14 +829,18 @@ export default function StagesLayout() {
                         {localStorage.getItem("company") === "vkl"
                           ? "Property Address"
                           : company === "idg"
-                            ? "Billing Address"
-                            : "Address"}
+                          ? "Billing Address"
+                          : "Address"}
                       </label>
                       <input
                         id="propertyAddress"
                         name="propertyAddress"
                         type="text"
-                        value={clientData?.propertyAddress || clientData?.data.deliveryAddress || ""}
+                        value={
+                          clientData?.propertyAddress ||
+                          clientData?.data.deliveryAddress ||
+                          ""
+                        }
                         onChange={(e) => {
                           if (!isSuperAdmin) return;
                           setClientData((prev) => ({
@@ -783,8 +848,9 @@ export default function StagesLayout() {
                             propertyAddress: e.target.value,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
-                          }`}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
                         disabled={!isSuperAdmin}
                       />
                     </div>
@@ -797,7 +863,9 @@ export default function StagesLayout() {
                         <select
                           id="state"
                           name="state"
-                          value={clientData?.state || clientData?.data.country || ""}
+                          value={
+                            clientData?.state || clientData?.data.country || ""
+                          }
                           onChange={(e) =>
                             setClientData((prev) => ({
                               ...prev,
@@ -816,7 +884,9 @@ export default function StagesLayout() {
                       ) : (
                         <input
                           type="text"
-                          value={clientData?.state || clientData?.data.state || ""}
+                          value={
+                            clientData?.state || clientData?.data.state || ""
+                          }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
@@ -829,14 +899,17 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Client Type"
                           : company === "idg"
-                            ? "Order Type"
-                            : ""}
+                          ? "Order Type"
+                          : ""}
                       </label>
                       {isSuperAdmin ? (
                         <select
                           id="clientType"
                           name="clientType"
-                          value={clientData?.clientType || clientData?.data?.orderType}
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType
+                          }
                           onChange={(e) =>
                             setClientData((prev) => ({
                               ...prev,
@@ -855,7 +928,10 @@ export default function StagesLayout() {
                       ) : (
                         <input
                           type="text"
-                          value={clientData?.clientType || clientData?.data?.orderType}
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType
+                          }
                           className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
@@ -869,26 +945,34 @@ export default function StagesLayout() {
                         {company === "vkl"
                           ? "Settlement Date"
                           : company === "idg"
-                            ? "Delivery Date"
-                            : ""}
+                          ? "Delivery Date"
+                          : ""}
                       </label>
                       <input
-                        id={company === "vkl" ? "settlementDate" : "deliveryDate"}
-                        name={company === "vkl" ? "settlementDate" : "deliveryDate"}
+                        id={
+                          company === "vkl" ? "settlementDate" : "deliveryDate"
+                        }
+                        name={
+                          company === "vkl" ? "settlementDate" : "deliveryDate"
+                        }
                         type="date"
                         value={
                           company === "vkl"
                             ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate).toISOString().substring(0, 10)
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
                               : ""
                             : company === "idg"
-                              ? clientData?.data?.deliveryDate
-                                ? new Date(clientData.data.deliveryDate).toISOString().substring(0, 10)
-                                : ""
+                            ? clientData?.data?.deliveryDate
+                              ? new Date(clientData.data.deliveryDate)
+                                  .toISOString()
+                                  .substring(0, 10)
                               : ""
+                            : ""
                         }
                         onChange={(e) => {
-                          const dateValue = e.target.value; // ✅ use YYYY-MM-DD directly
+                          const dateValue = e.target.value; //  use YYYY-MM-DD directly
 
                           if (company === "vkl") {
                             setClientData((prev) => ({
@@ -918,7 +1002,10 @@ export default function StagesLayout() {
                       {isSuperAdmin ? (
                         <input
                           type="text"
-                          value={clientData?.dataEntryBy || clientData?.data.dataEntryBy}
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data.dataEntryBy
+                          }
                           onChange={(e) =>
                             setClientData((prev) => ({
                               ...prev,
@@ -930,7 +1017,10 @@ export default function StagesLayout() {
                       ) : (
                         <input
                           type="text"
-                          value={clientData?.dataEntryBy || clientData?.data.dataEntryBy}
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data.dataEntryBy
+                          }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
@@ -939,35 +1029,36 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Notes */}
-                      <div className="md:col-span-3">
-                        <label className="block text-xs md:text-sm font-semibold mb-1">
-                          Notes / Comments
-                        </label>
-                        <textarea
-                          rows={5}
-                          value={clientData?.notes || clientData?.data?.notes}
-                          onChange={(e) => {
-                            const newNote = e.target.value;
-                            setClientData((prev) => ({
-                              ...prev,
-                              data: {
-                                ...prev.data,
-                                  notes: newNote,
-                              },
-                            }));
-                          }}
-                          placeholder="Enter comments here..."
-                          className="w-full border border-gray-200 rounded px-2 py-1 text-xs md:text-sm resize-none"
-                        />
-                      </div>
+                    <div className="md:col-span-3">
+                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                        Notes / Comments
+                      </label>
+                      <textarea
+                        rows={5}
+                        value={clientData?.notes || clientData?.data?.notes}
+                        onChange={(e) => {
+                          const newNote = e.target.value;
+                          setClientData((prev) => ({
+                            ...prev,
+                            data: {
+                              ...prev.data,
+                              notes: newNote,
+                            },
+                          }));
+                        }}
+                        placeholder="Enter comments here..."
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-xs md:text-sm resize-none"
+                      />
+                    </div>
 
                     <div className="md:col-span-3 mt-3">
                       <button
                         type="submit"
-                        className={`w-full ${hasChanges
-                          ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
-                          : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                          } font-medium rounded py-2 text-base`}
+                        className={`w-full ${
+                          hasChanges
+                            ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
+                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                        } font-medium rounded py-2 text-base`}
                         disabled={!hasChanges}
                       >
                         Update
