@@ -21,12 +21,12 @@ export default function Home() {
 
   const handleClientLogin = () => {
     navigate("/client/login");
-  }
+  };
 
   const handleLoginlegacy = () => {
     window.location.href = "https://legacy.opsnav.com";
   };
-  
+
   return (
     <>
       <div
@@ -35,21 +35,25 @@ export default function Home() {
       >
         {/* <div className="absolute inset-0 bg-black/60" /> */}
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-24 md:py-32">
-          <h1 className="text-2xl md:text-3xl lg:text-3xl font-bold pt-20 max-w-7xl text-red-500">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 min-h-screen">
+          {/* <h1 className="text-2xl md:text-3xl lg:text-3xl font-bold pt-20 max-w-7xl text-red-500">
             Please Use legacy.opsnav.com
           </h1>
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow" onClick={handleLoginlegacy}>
                   Continue
               </button>
-          </div>
-          <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold pt-10 max-w-7xl">
-            Streamline with Precision. Scale Your Operations without bottlenecks.
+          </div> */}
+          <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold mt-0 max-w-7xl">
+            Streamline with Precision. Scale Your Operations without
+            bottlenecks.
           </h1>
 
           <p className="mt-6 text-base md:text-lg max-w-4xl">
-            OpsNav brings clarity and control to your most complex workflows — with centralised task tracking, automated processes, and real-time insights that keep your team aligned, productive, and moving forward with confidence.
+            OpsNav brings clarity and control to your most complex workflows —
+            with centralised task tracking, automated processes, and real-time
+            insights that keep your team aligned, productive, and moving forward
+            with confidence.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -63,10 +67,16 @@ export default function Home() {
         </div>
 
         <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleLogin}>
+          <button
+            className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium"
+            onClick={handleLogin}
+          >
             Login
           </button>
-          <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium" onClick={handleClientLogin}>
+          <button
+            className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium"
+            onClick={handleClientLogin}
+          >
             Client Portal
           </button>
           <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
@@ -76,7 +86,11 @@ export default function Home() {
 
         <div className="absolute top-6 left-6 z-20 text-xl font-bold">
           {/* OPSNAV */}
-          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-8 mx-auto sm:h-8 md:h-12 md:mx-0 lg:h-12" />
+          <img
+            src="/Logo.png"
+            alt="VK Lawyers Logo"
+            className="h-8 mx-auto sm:h-8 md:h-12 md:mx-0 lg:h-12"
+          />
         </div>
       </div>
 
@@ -106,7 +120,7 @@ export default function Home() {
             </p>
           </div>
           <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:hidden md:block">
-           <img
+            <img
               src={dashboard}
               alt="Role-Based Dashboard Screenshot"
               className="rounded-lg w-full lg:h-[300px] md:h-auto "

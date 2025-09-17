@@ -111,7 +111,6 @@ const CustomAgendaEvent = ({ event }) => (
         <span className="text-xs text-gray-500 mt-1">
           {moment(event.start).format("DD MMM YYYY")}
         </span>
-         
       </div>
       <span
         className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
@@ -315,7 +314,7 @@ function Dashboard() {
               allDay: true,
               type: "titleSearch",
               clientType: item.clientType,
-              matterNumber: item.matterNumber,        
+              matterNumber: item.matterNumber,
               isApproved: item.titleSearch?.toLowerCase() === "yes",
             });
           }
@@ -332,6 +331,7 @@ function Dashboard() {
             });
           }
         });
+
         setCalendarEvents(events);
       } catch (error) {
         toast.error("Could not load calendar dates.");
@@ -406,19 +406,11 @@ function Dashboard() {
     if (event.type === "buildingAndPest") {
       backgroundColor = "#B24592"; // Magenta / Deep Pink
     } else if (event.type === "financeApproval") {
-      backgroundColor = "#f83600"; //  Red-Orange
+      backgroundColor = "#f83600"; // Red-Orange
     } else if (event.type === "titleSearch") {
-      // backgroundColor = "#1a936f";  Teal / Green
-      // backgroundColor = "#2980B9";  Strong Blue
-      // backgroundColor = "#16A085";  Teal Green
-      // backgroundColor = "#3498DB";  Royal Blue
-      // backgroundColor = "#F39C12";  Amber
-      // backgroundColor = "#5D6D7E";  Graphite
-      backgroundColor = "#34495E"; //  Indigo
+      backgroundColor = "#34495E"; // Indigo
     } else if (event.type === "settlement") {
-      // backgroundColor = "#9C27B0";  Purple
-      // backgroundColor = "#4A5568";  Dark Slate
-      backgroundColor = "#8E44AD"; //  Pleasant Purple
+      backgroundColor = "#8E44AD"; // Pleasant Purple
     }
     return {
       style: {
@@ -431,7 +423,6 @@ function Dashboard() {
       },
     };
   }, []);
-
   const dayPropGetter = useCallback(
     (date) => ({
       className:

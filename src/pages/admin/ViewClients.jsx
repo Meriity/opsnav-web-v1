@@ -79,39 +79,39 @@ const ViewClients = () => {
 
   console.log(clientList);
   let columns = [];
-  if(localStorage.getItem("company")==="vkl"){
-  columns = [
-    { key: "matternumber", title: "Matter Number", width: "8%" },
-    { key: "dataentryby", title: "Data Entry By", width: "10%" },
-    { key: "client_name", title: "Client Name", width: "10%" },
-    { key: "property_address", title: "Property Address", width: "10%" },
-    { key: "state", title: "State", width: "5%" },
-    { key: "client_type", title: "Client Type", width: "7%" },
-    { key: "settlement_date", title: "Settlement Date", width: "10%" },
-    {
-      key: "finance_approval_date",
-      title: "Finance Approval Date",
-      width: "10%",
-    },
-    {
-      key: "building_and_pest_date",
-      title: "Building & Pest Date",
-      width: "10%",
-    },
-  ];
-}else if(localStorage.getItem("company")==="idg"){
-   columns = [
-  { key: 'clientId', title: 'Client ID', width: '10%' },
-  { key: 'orderId', title: 'Order ID', width: '10%' },
-  { key: 'client_name', title: 'Client Name', width: '10%' },
-  { key: 'client_type', title: 'Client Type', width: '15%' },
-  { key: 'order_date', title: 'Order Date', width: '10%' },
-  { key: 'delivery_date', title: 'Delivery Date', width: '10%' },
-  { key: 'priority', title: 'Priority', width: '10%' },
-  { key: 'billing_address', title: 'Delivery Address', width: '15%' },
-  { key: 'postcode', title: 'Post Code', width: '10%' },
-];
-}
+  if (localStorage.getItem("company") === "vkl") {
+    columns = [
+      { key: "matternumber", title: "Matter Number", width: "8%" },
+      { key: "dataentryby", title: "Data Entry By", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "property_address", title: "Property Address", width: "10%" },
+      { key: "state", title: "State", width: "5%" },
+      { key: "client_type", title: "Client Type", width: "7%" },
+      { key: "settlement_date", title: "Settlement Date", width: "10%" },
+      {
+        key: "finance_approval_date",
+        title: "Finance Approval Date",
+        width: "10%",
+      },
+      {
+        key: "building_and_pest_date",
+        title: "Building & Pest Date",
+        width: "10%",
+      },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    columns = [
+      { key: "clientId", title: "Client ID", width: "10%" },
+      { key: "orderId", title: "Order ID", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "client_type", title: "Client Type", width: "15%" },
+      { key: "order_date", title: "Order Date", width: "10%" },
+      { key: "delivery_date", title: "Delivery Date", width: "10%" },
+      { key: "priority", title: "Priority", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "15%" },
+      { key: "postcode", title: "Post Code", width: "10%" },
+    ];
+  }
 
   const api = new ClientAPI();
   async function handelReShareEmail() {
@@ -143,12 +143,12 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
-       <CreateClientModal
-          createType="client"
-          companyName={localStorage.getItem("company")}
-          isOpen={createuser}
-          setIsOpen={() => setcreateuser(false)}
-        />
+      <CreateClientModal
+        createType="client"
+        companyName={localStorage.getItem("company")}
+        isOpen={createuser}
+        setIsOpen={() => setcreateuser(false)}
+      />
       <CreateClientModal
         createType="order"
         companyName={localStorage.getItem("company")}
@@ -232,7 +232,9 @@ const ViewClients = () => {
 
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            {localStorage.getItem("company") === "vkl"? "View Clients" : "View Orders"}
+            {localStorage.getItem("company") === "vkl"
+              ? "View Clients"
+              : "View Orders"}
           </h3>
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
