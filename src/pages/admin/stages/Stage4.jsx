@@ -5,7 +5,6 @@ import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 
-
 const formConfig = {
   vkl: {
     fields: [
@@ -39,7 +38,11 @@ const formConfig = {
         label: "Review and internally approve design",
         type: "radio",
       },
-      { name: "proofSentToClient", label: "Send Proof to Client", type: "radio" },
+      {
+        name: "proofSentToClient",
+        label: "Send Proof to Client",
+        type: "radio",
+      },
       {
         name: "clientApprovalReceived",
         label: "Record Client Approval",
@@ -88,7 +91,7 @@ const formConfig = {
           "materialsOrganized",
           "jobActivity",
           "priority",
-          "status"
+          "status",
         ],
       },
     ],
@@ -147,45 +150,44 @@ export default function Stage4({
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
 
-const generateSystemNote = (noteGroupId) => {
-  const noteGroup = currentConfig.noteGroups.find(
-    (ng) => ng.id === noteGroupId
-  );
-  if (!noteGroup) return "";
+  const generateSystemNote = (noteGroupId) => {
+    const noteGroup = currentConfig.noteGroups.find(
+      (ng) => ng.id === noteGroupId
+    );
+    if (!noteGroup) return "";
 
-  const greenValues = new Set(["yes", "nr", "na", "approved"]);
+    const greenValues = new Set(["yes", "nr", "na", "approved"]);
 
-  const fieldsToCheck = currentConfig.fields.filter((f) =>
-    noteGroup.fieldsForNote.includes(f.name)
-  );
+    const fieldsToCheck = currentConfig.fields.filter((f) =>
+      noteGroup.fieldsForNote.includes(f.name)
+    );
 
-  const notReceived = fieldsToCheck
-    .filter((field) => {
-      const rawValue = formData[field.name] || "";
-      const value = normalizeValue(rawValue);
+    const notReceived = fieldsToCheck
+      .filter((field) => {
+        const rawValue = formData[field.name] || "";
+        const value = normalizeValue(rawValue);
 
-      // Special case: skip obtainDaSeller if clientType is not seller
-      if (
-        field.name === "obtainDaSeller" &&
-        clientType?.toLowerCase() !== "seller"
-      ) {
-        return false;
-      }
+        // Special case: skip obtainDaSeller if clientType is not seller
+        if (
+          field.name === "obtainDaSeller" &&
+          clientType?.toLowerCase() !== "seller"
+        ) {
+          return false;
+        }
 
-      if (field.type === "text") {
-        // text fields count as completed if not empty
-        return value === "";
-      }
+        if (field.type === "text") {
+          // text fields count as completed if not empty
+          return value === "";
+        }
 
-      // non-text fields rely on greenValues
-      return !greenValues.has(value);
-    })
-    .map((field) => field.label);
+        // non-text fields rely on greenValues
+        return !greenValues.has(value);
+      })
+      .map((field) => field.label);
 
-  if (notReceived.length === 0) return "Tasks completed";
-  return `${notReceived.join(" and ")} not received`;
-};
-
+    if (notReceived.length === 0) return "Tasks completed";
+    return `${notReceived.join(" and ")} not received`;
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -235,60 +237,59 @@ const generateSystemNote = (noteGroupId) => {
   const isChanged = () =>
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
-async function handleSave() {
-  if (!isChanged() || isSaving) return;
-  setIsSaving(true);
+  async function handleSave() {
+    if (!isChanged() || isSaving) return;
+    setIsSaving(true);
 
-  try {
-    const company = localStorage.getItem("company");
-    let payload = { ...formData };
+    try {
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
 
-    // handle note groups
-    currentConfig.noteGroups.forEach((group) => {
-      const systemNote = generateSystemNote(group.id);
-      const clientComment = formData[group.clientCommentKey] || "";
-      payload[group.noteForClientKey] =
-        `${systemNote} - ${clientComment}`.trim();
-      delete payload[group.clientCommentKey];
-    });
+      // handle note groups
+      currentConfig.noteGroups.forEach((group) => {
+        const systemNote = generateSystemNote(group.id);
+        const clientComment = formData[group.clientCommentKey] || "";
+        payload[group.noteForClientKey] =
+          `${systemNote} - ${clientComment}`.trim();
+        delete payload[group.clientCommentKey];
+      });
 
-    // handle number fields
-    currentConfig.fields.forEach((field) => {
-      if (field.type === "number") {
-        payload[field.name] =
-          payload[field.name] === "" ? null : Number(payload[field.name]);
+      // handle number fields
+      currentConfig.fields.forEach((field) => {
+        if (field.type === "number") {
+          payload[field.name] =
+            payload[field.name] === "" ? null : Number(payload[field.name]);
+        }
+      });
+
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageFour(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 4, payload);
       }
-    });
 
-    // company-specific save
-    if (company === "vkl") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStageFour(payload);
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;
-      await api.upsertIDGStages(payload.orderId, 4, payload);
+      // update original data
+      originalData.current = { ...formData };
+      setReloadTrigger((prev) => !prev);
+
+      toast.success("Stage 4 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (err) {
+      console.error("Failed to save Stage 4:", err);
+    } finally {
+      setIsSaving(false);
     }
-
-    // update original data
-    originalData.current = { ...formData };
-    setReloadTrigger((prev) => !prev);
-
-    toast.success("Stage 4 Saved Successfully!", {
-      position: "bottom-left",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-      progress: undefined,
-    });
-  } catch (err) {
-    console.error("Failed to save Stage 4:", err);
-  } finally {
-    setIsSaving(false);
   }
-}
-
 
   const renderField = (field) => {
     switch (field.type) {
@@ -348,7 +349,7 @@ async function handleSave() {
             />
           </div>
         );
-          case "text":
+      case "text":
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">

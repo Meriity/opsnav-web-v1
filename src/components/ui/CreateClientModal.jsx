@@ -55,8 +55,7 @@ export default function CreateClientModal({
   const [id, setId] = useState({ clientId: "", orderId: "" });
   const navigate = useNavigate();
 
-  // Assume user is available from context or props
-  const user = "Current User"; // Replace with actual user data logic if needed
+  const user = localStorage.getItem("user") || "";
 
   // --- DERIVED STATE & CONSTANTS ---
   const isVkl = companyName === "vkl";
@@ -65,7 +64,6 @@ export default function CreateClientModal({
   const api = new ClientAPI();
 
   // --- EFFECTS ---
-  // Effect to initialize and reset the form when the modal opens
   useEffect(() => {
     if (isOpen) {
       // Reset form data and errors
@@ -114,10 +112,19 @@ export default function CreateClientModal({
   const checkMatterNumberExists = async (number) => {
     try {
       const response = await api.checkClientExists(number);
-      return response.exists;
+
+      if (response && typeof response.exists === "boolean")
+        return response.exists;
+
+      return false;
     } catch (error) {
+      const serverMsg = error?.response?.data?.message;
+      if (serverMsg && /exist/i.test(serverMsg)) {
+        return true;
+      }
       console.error("Error checking matter number:", error);
-      return false; // Assume not exists on error to prevent blocking user
+
+      return false;
     }
   };
 
@@ -151,13 +158,36 @@ export default function CreateClientModal({
           return;
         }
 
-        await api.createClient(formData);
-        toast.success("Client created successfully!");
+        try {
+          const payload = {
+            ...formData,
+            dataentryby: localStorage.getItem("user") || user,
+          };
+          await api.createClient(payload);
+          toast.success("Client created successfully!");
+        } catch (err) {
+          const msg = err?.response?.data?.message || err?.message || "";
+          if (err?.response?.status === 400 || /exist/i.test(msg)) {
+            setMatterNumberError("This matter number already exists");
+            toast.error("A client with this matter number already exists.");
+          } else {
+            throw err; 
+          }
+        }
         navigate(`/admin/client/stages/${formData.matterNumber}`);
       } else if (isIdg) {
         // --- IDG Submission Logic ---
         if (createType === "client") {
-          const requiredFields = ["clientName", "contact", "email", "billingAddress", "country", "state", "postcode","abn"];
+          const requiredFields = [
+            "clientName",
+            "contact",
+            "email",
+            "billingAddress",
+            "country",
+            "state",
+            "postcode",
+            "abn",
+          ];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
@@ -213,7 +243,20 @@ export default function CreateClientModal({
       setIsOpen(false);
     } catch (error) {
       console.error("Error during submission:", error);
-      toast.error(error.message || "An unexpected error occurred.");
+      const serverMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        (typeof error?.message === "string" ? error.message : null);
+
+      if (serverMessage) {
+        if (/http error! status: 400/i.test(serverMessage)) {
+          toast.error("A client with this matter number already exists.");
+        } else {
+          toast.error(serverMessage);
+        }
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -640,7 +683,7 @@ export default function CreateClientModal({
               <label className="block mb-1 font-medium">Data Entry By</label>
               <input
                 type="text"
-                value={localStorage.getItem("user")}
+                value={user}
                 readOnly
                 className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
               />

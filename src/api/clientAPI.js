@@ -123,20 +123,19 @@ class ClientAPI {
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
       const response = await fetch(
-  `${this.baseUrl}/idg/orders/${clientId}/stage`,
-  {
-    method: "PATCH",
-    headers: {
-      ...this.getHeaders(),
-      "Content-Type": "application/json", 
-    },
-    body: JSON.stringify({
-      stageNumber: stage,
-      data:additionalData // Spread additionalData into the object
-    }),
-  }
-);
-
+        `${this.baseUrl}/idg/orders/${clientId}/stage`,
+        {
+          method: "PATCH",
+          headers: {
+            ...this.getHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            stageNumber: stage,
+            data: additionalData, // Spread additionalData into the object
+          }),
+        }
+      );
 
       console.log(additionalData);
 
@@ -380,7 +379,7 @@ class ClientAPI {
     }
   }
 
-    async upsertIDGCost(orderId, cost, additionalData = {}) {
+  async upsertIDGCost(orderId, cost, additionalData = {}) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
         method: "PUT",
