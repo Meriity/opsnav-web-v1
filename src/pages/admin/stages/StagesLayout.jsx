@@ -201,7 +201,7 @@ export default function StagesLayout() {
   function evaluateStageStatus(stageData, fields) {
     if (!stageData || fields.length === 0) return "Not Completed";
     let yesCount = 0,
-      noCount = 0,
+      noCount = 0, 
       emptyCount = 0;
     for (const field of fields) {
       const val = stageData[field]?.toString().toLowerCase();

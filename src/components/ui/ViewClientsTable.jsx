@@ -182,7 +182,7 @@ const ViewClientsTable = ({
                         className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
                         onClick={() => {
                           handelOTOpen();
-                          handelOT(item?.matternumber);
+                          handelOT(item?.matternumber||item.orderId);
                         }}
                       >
                         <ClipboardList size={20} />

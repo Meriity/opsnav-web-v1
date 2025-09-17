@@ -14,6 +14,7 @@ export default function Header() {
   const [loading, setLoading] = useState(false);
   const api = new ClientAPI();
   const navigate = useNavigate();
+  const company=localStorage.getItem("company");
 
   const searchBoxRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({
@@ -39,7 +40,7 @@ export default function Header() {
 
   function handelListClick(val) {
     setShowDropdown(false);
-    return navigate(`/admin/client/stages/${val.matterNumber}`, {
+    return navigate(`/admin/client/stages/${val.matterNumber||val.orderId}`, {
       state: { val },
     });
   }
@@ -48,8 +49,9 @@ export default function Header() {
     setLoading(true);
     setShowDropdown(true);
     try {
-      const response = await api.getSearchResult(value);
+      const response = company==="vkl" ? await api.getSearchResult(value) : company==="idg" ? await api.getIDGSearchResult(value) : "";
       setSearchResult(response);
+      console.log(response);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
     } finally {
@@ -127,7 +129,7 @@ export default function Header() {
             <Search className="w-4 h-4 text-gray-500 " />
             <input
               type="text"
-              placeholder="Search by Matter Number, Client Name"
+              placeholder={company==="vkl" ? "Search by Matter Number, Client Name" : "Search by OrderId, Name" }
               className="outline-none text-sm bg-transparent w-full "
               value={searchQuery}
               onChange={handleSearchOnchange}
@@ -162,7 +164,7 @@ export default function Header() {
                     onClick={() => handelListClick(item)}
                   >
                     <span className="font-medium text-gray-800">
-                      {item?.matterNumber}
+                      {item?.matterNumber || item?.orderId}
                     </span>
                     <span className="text-gray-500 ml-2">
                       — {item?.clientName}
