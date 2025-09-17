@@ -157,15 +157,7 @@ export default function CreateClientModal({
       } else if (isIdg) {
         // --- IDG Submission Logic ---
         if (createType === "client") {
-          const requiredFields = [
-            "clientName",
-            "contact",
-            "email",
-            "billingAddress",
-            "country",
-            "state",
-            "postcode",
-          ];
+          const requiredFields = ["clientName", "contact", "email", "billingAddress", "country", "state", "postcode","abn"];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
@@ -204,15 +196,15 @@ export default function CreateClientModal({
 
           const payload = {
             orderId: id.orderId,
-            clientId: formData.client,
-            orderType: formData.category,
+            clientId: formData.clientId,
+            orderType: formData.orderType,
             priority: formData.priority,
             deliveryAddress: formData.deliveryAddress,
             country: formData.country,
             state: formData.state,
-            postcode: formData.postcode,
+            postcode: formData.postCode,
             orderDate: formData.orderDate,
-            deliveryDate: formData.settlementDate,
+            deliveryDate: formData.deliveryDate,
           };
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
@@ -523,7 +515,6 @@ export default function CreateClientModal({
                       required
                     >
                       <option value="">Select a Client</option>
-                      {console.log(clients)}
                       {clients.map((client) => (
                         <option key={client._id} value={client._id}>
                           {client.name}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Stage3({
   changeStage,
@@ -30,24 +31,25 @@ export default function Stage3({
     ];
   } else if (localStorage.getItem("company") === "idg") {
     fields = [
-      { key: "agent", label: "Assign Agent / Team Member" },
+      { key: "agent", label: "Assign Agent / Team Member",type:"text" },
       {
-        key: " materialsInStock",
+        key: "materialsInStock",
         label: "Check if Materials Needed are in stock",
       },
       {
         key: "additionalMaterialsRequired",
         label: "Procure additional materials if required",
       },
-      { key: "priority", label: "Confirm Job Priority" },
-      { key: "jobActivity", label: "Schedule Job Activity" },
-      { key: "status",label: "Confirm Job Status" },
-      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer" },
+      { key: "priority", label: "Confirm Job Priority",type:"text"  },
+      { key: "jobActivity", label: "Schedule Job Activity",type:"text"  },
+      { key: "status", label: "Confirm Job Status",type:"text"  },
+      { key: "vehicleAllocated", label: "Allocate Vehicle / Installer",type:"text"  },
       {
         key: "draftCostSheet",
         label: "Finalize Draft Cost Sheet (Fixed + Variable)",
+        type:"text" 
       },
-      { key: "Approve Plan", label: "Approve plan and move to preparation" },
+      // { key: "approvePlan", label: "Approve plan and move to preparation" },
     ];
   }
 
@@ -69,6 +71,7 @@ export default function Stage3({
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
+    if(val) return "Completed";
     return "Not Completed";
   };
 
@@ -86,18 +89,27 @@ export default function Stage3({
   const [clientComment, setClientComment] = useState("");
   const originalData = useRef({});
 
-  const updateNoteForClient = () => {
-    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
-    const incompleteTasks = fields
-      .filter(
-        ({ key }) => !completedValues.has(normalizeValue(formState[key] || ""))
-      )
-      .map(({ label }) => label);
+const updateNoteForClient = () => {
+  const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
 
-    if (incompleteTasks.length === 0) return "All tasks completed";
-    if (incompleteTasks.length === fields.length) return "No tasks completed";
-    return `Pending: ${incompleteTasks.join(", ")}`;
-  };
+  const incompleteTasks = fields.filter(({ key, type }) => {
+    const rawValue = formState[key] || "";
+    const value = normalizeValue(rawValue);
+
+    if (type === "text") {
+      // text fields count as completed if not empty
+      return value === "";
+    }
+
+    // non-text fields use completedValues
+    return !completedValues.has(value);
+  }).map(({ label }) => label);
+
+  if (incompleteTasks.length === 0) return "All tasks completed";
+  if (incompleteTasks.length === fields.length) return "No tasks completed";
+  return `${incompleteTasks.join(" and ")} not received`;
+};
+
 
   useEffect(() => {
     if (!data) return;
@@ -181,48 +193,66 @@ export default function Stage3({
   };
 
   async function handleSave() {
-    if (!isChanged()) return;
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
-    setIsSaving(true);
-    try {
-      const systemNote = updateNoteForClient();
-      const fullNote = clientComment
-        ? `${systemNote} - ${clientComment}`
-        : systemNote;
+  try {
+    const company = localStorage.getItem("company");
 
-      const payload = {
-        matterNumber,
-        ...formState,
-        noteForClient: fullNote,
-        // titleSearchDate: formState.titleSearchDate || null,
-      };
+    const systemNote = updateNoteForClient();
+    const fullNote = clientComment
+      ? `${systemNote} - ${clientComment}`
+      : systemNote;
 
-      fields.forEach(({ key, hasDate }) => {
-        if (hasDate) {
-          const dateKey = `${key}Date`;
-          // if date not present or empty string, send null so backend knows it's empty
-          payload[dateKey] =
-            formState[dateKey] && String(formState[dateKey]).trim() !== ""
-              ? formState[dateKey]
-              : null;
-        }
-      });
+    let payload = {
+      ...formState,
+      noteForClient: fullNote,
+    };
 
+    // handle dates: send null if empty
+    fields.forEach(({ key, hasDate }) => {
+      if (hasDate) {
+        const dateKey = `${key}Date`;
+        payload[dateKey] =
+          formState[dateKey] && String(formState[dateKey]).trim() !== ""
+            ? formState[dateKey]
+            : null;
+      }
+    });
+
+    // company-specific handling
+    if (company === "vkl") {
+      payload.matterNumber = matterNumber;
       await api.upsertStageThree(payload);
-
-      originalData.current = {
-        ...formState,
-        clientComment,
-        systemNote,
-      };
-
-      setReloadTrigger?.((prev) => !prev);
-    } catch (err) {
-      console.error("Failed to save Stage 3:", err);
-    } finally {
-      setIsSaving(false);
+    } else if (company === "idg") {
+      payload.orderId = matterNumber;
+      await api.upsertIDGStages(payload.orderId, 3, payload);
     }
+
+    // update original data
+    originalData.current = {
+      ...formState,
+      clientComment,
+      systemNote,
+    };
+
+    setReloadTrigger?.((prev) => !prev);
+    toast.success("Stage 3 Saved Successfully!", {
+      position: "bottom-left",
+      autoClose: 2000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+      progress: undefined,
+    });
+  } catch (err) {
+    console.error("Failed to save Stage 3:", err);
+  } finally {
+    setIsSaving(false);
   }
+}
+  
 
   const renderRadioGroup = ({ key, label, hasDate }) => (
     <div className="mt-5" key={key}>
@@ -241,7 +271,7 @@ export default function Stage3({
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-between items-center gap-4">
+      <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 items-center">
         {[
           "agent",
           "priority",

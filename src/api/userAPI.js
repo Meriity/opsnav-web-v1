@@ -188,6 +188,33 @@ class ClientAPI {
     }
   }
 
+  
+  async upsertIDGCost(orderId,additionalData = {}) {
+    console.log(additionalData,orderId)
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
+        method: "PUT",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          ...additionalData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating cost:", error);
+      throw error;
+    }
+  }
+
+
+
+
+
   // get clients
   async getClients() {
     try {
@@ -221,7 +248,7 @@ class ClientAPI {
     }
   }
 
-  async getCompletedIDGClients() {
+  async getCompletedIDGOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
         method: "GET",
@@ -445,7 +472,7 @@ class ClientAPI {
 
   async getIDGCompletedOrders() {
     try {
-      const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
         method: "GET",
         headers: this.getHeaders(),
       });
@@ -622,6 +649,28 @@ class ClientAPI {
       return await response.json();
     } catch (error) {
       console.error("Error sending notification to client:", error);
+      throw error;
+    }
+  }
+
+    async getAllIDGOutstandingTasks(page, activeMatter, matterFilter) {
+    try {
+      let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}&filter=${matterFilter}`;
+      if (activeMatter) {
+        url = `${url}&matterNumber=${activeMatter}`;
+      }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting stage one:", error);
       throw error;
     }
   }

@@ -34,8 +34,12 @@ export const useArchivedClientStore = create((set, get) => ({
          ? api.getIDGCompletedOrders()
          : api.getClients()
       );
+      console.log(res);
 
-      const mapped = res.clients.map((client, index) => ({
+      let mapped={};
+
+if(localStorage.getItem("company") === "vkl"){
+       mapped = res.clients.map((client, index) => ({
         // --- Data for Archived Clients Table ---
         id: index + 1,
         matternumber: client.matterNumber || "N/A",
@@ -55,7 +59,23 @@ export const useArchivedClientStore = create((set, get) => ({
       }));
 
       set({ archivedClients: mapped, isFetched: true, loading: false });
-    } catch (err) {
+    }
+    else if(localStorage.getItem("company") === "idg"){
+     mapped = res.map((client, index) => ({ 
+      orderId:client.orderId,
+      clientName:client.client_name,
+      dataEntryBy:client.dataEntryBy,
+      propertyAddress:client.deliveryAddress,
+      ordertype:client.orderType,
+      status: client.status,
+      orderDate:client.orderDate?.slice(0,10),
+      deliveryDate:client.deliveryDate?.slice(0,10),
+     }));
+     console.log(mapped);
+      set({ archivedClients: mapped, isFetched: true, loading: false });
+
+  }
+  } catch (err) {
       console.error("Failed to fetch archived clients", err);
       toast.error("Could not load archived client data.");
       set({ archivedClients: [], isFetched: true, loading: false });

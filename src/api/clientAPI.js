@@ -84,7 +84,8 @@ class ClientAPI {
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
-
+      console.log(response);
+      console.log(`${this.baseUrl}/idg/orders/${clientId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -120,16 +121,22 @@ class ClientAPI {
   }
 
   async upsertIDGStages(clientId, stage, additionalData = {}) {
-    console.log(`${this.baseUrl}/idg/stages/${stage}/${clientId}`);
     try {
       const response = await fetch(
-        `${this.baseUrl}/idg/stages/${stage}/${clientId}`,
-        {
-          method: "POST",
-          headers: this.getHeaders(),
-          body: JSON.stringify(additionalData),
-        }
-      );
+  `${this.baseUrl}/idg/orders/${clientId}/stage`,
+  {
+    method: "PATCH",
+    headers: {
+      ...this.getHeaders(),
+      "Content-Type": "application/json", 
+    },
+    body: JSON.stringify({
+      stageNumber: stage,
+      data:additionalData // Spread additionalData into the object
+    }),
+  }
+);
+
 
       console.log(additionalData);
 
@@ -354,6 +361,29 @@ class ClientAPI {
     try {
       const response = await fetch(`${this.baseUrl}/clients/costs`, {
         method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          matterNumber,
+          cost,
+          ...additionalData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating cost:", error);
+      throw error;
+    }
+  }
+
+    async upsertIDGCost(orderId, cost, additionalData = {}) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
+        method: "PUT",
         headers: this.getHeaders(),
         body: JSON.stringify({
           matterNumber,
