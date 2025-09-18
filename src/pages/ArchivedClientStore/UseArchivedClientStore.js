@@ -65,9 +65,11 @@ if(localStorage.getItem("company") === "vkl"){
       orderId:client.orderId,
       clientName:client.client_name,
       dataEntryBy:client.dataEntryBy,
+      orderType:client.orderType,
       propertyAddress:client.deliveryAddress,
       ordertype:client.orderType,
       status: client.status,
+      state: client.state || "N/A",
       orderDate:client.orderDate?.slice(0,10),
       deliveryDate:client.deliveryDate?.slice(0,10),
      }));
