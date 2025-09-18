@@ -254,10 +254,10 @@ export default function ManageUsers() {
                     <div className="flex justify-between items-start space-x-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-bold truncate">
-                          {user.displayName}
+                          {user.displayName||user.name}
                         </h3>
                         <p className="text-sm text-gray-500 truncate">
-                          {user.email}
+                          Client ID: {user.clientId}
                         </p>
                       </div>
                       <div className="flex items-center space-x-1 flex-shrink-0">
@@ -324,21 +324,15 @@ export default function ManageUsers() {
                       <div className="flex justify-between text-sm">
                         <div>
                           <span className="font-semibold text-gray-500">
-                            Status:
+                            Address:
                           </span>{" "}
-                          {user.status}
+                          {user.address}
                         </div>
                         <div>
                           <span className="font-semibold text-gray-500">
-                            Role:
+                            Email:
                           </span>{" "}
-                          {user.role}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-500">
-                            Created:
-                          </span>{" "}
-                          {user.createdAt}
+                          {user.email}
                         </div>
                       </div>
                     </div>
