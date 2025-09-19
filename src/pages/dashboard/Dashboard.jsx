@@ -52,7 +52,7 @@ const useDashboardStore = create((set) => ({
         totalactive:
           data.lifetimeTotals?.totalActiveClients ||
           data.lifetimeTotals?.totalActiveOrders,
-        totalCompleted:data.lifetimeTotals.totalClosedOrders,  
+        totalCompleted: data.lifetimeTotals.totalClosedOrders,
         lastrecord: lastRec,
         loading: false,
       };
@@ -89,12 +89,12 @@ const CustomEvent = ({ event }) => {
       break;
     case "deliveryDate":
       eventTypeLabel = "Delivery";
-      break;  
+      break;
     default:
       eventTypeLabel = "Event";
   }
-  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : event.orderType ? event.orderType.charAt(0):"";
-  const displayTitle = `[${event.matterNumber||event.orderId}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : event.orderType ? event.orderType.charAt(0) : "";
+  const displayTitle = `[${event.matterNumber || event.orderId}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
 
   return (
     <div className="custom-event-content">
@@ -116,13 +116,12 @@ const CustomAgendaEvent = ({ event }) => (
         </span>
       </div>
       <span
-        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
-          event.type === "buildingAndPest"
-            ? "bg-purple-100 text-purple-700"
-            : event.type === "financeApproval"
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${event.type === "buildingAndPest"
+          ? "bg-purple-100 text-purple-700"
+          : event.type === "financeApproval"
             ? "bg-orange-100 text-orange-700"
             : "bg-blue-100 text-blue-700"
-        }`}
+          }`}
       >
         {event.clientType}
       </span>
@@ -193,11 +192,10 @@ const ResponsiveCalendarToolbar = ({
           <button
             key={viewName}
             onClick={() => onView(viewName)}
-            className={`capitalize px-3 py-1 rounded-md transition-colors ${
-              currentView === viewName
-                ? "bg-blue-500 text-white shadow"
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${currentView === viewName
+              ? "bg-blue-500 text-white shadow"
+              : "text-gray-600 hover:bg-gray-200"
+              }`}
           >
             {viewName}
           </button>
@@ -208,7 +206,7 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
-  const { totalusers, totalactive,totalCompleted, lastrecord, loading, setDashboardData } =
+  const { totalusers, totalactive, totalCompleted, lastrecord, loading, setDashboardData } =
     useDashboardStore();
   const {
     archivedClients,
@@ -236,8 +234,8 @@ function Dashboard() {
         company === "idg"
           ? "Closed Orders"
           : company === "vkl"
-          ? "Closed Matters"
-          : "Closed";
+            ? "Closed Matters"
+            : "Closed";
 
       return (
         <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
@@ -259,8 +257,8 @@ function Dashboard() {
         const data = await (company === "vkl"
           ? clientApi.getDashboardData()
           : company === "idg"
-          ? clientApi.getIDGDashboardData()
-          : clientApi.getDashboardData());
+            ? clientApi.getIDGDashboardData()
+            : clientApi.getDashboardData());
         console.log("Dashboard data:", data);
         setDashboardData(data);
         setAllChartData({
@@ -281,81 +279,89 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchCalendarData = async () => {
-      const company=localStorage.getItem("company");
+      const company = localStorage.getItem("company");
       try {
-        const data =  company==="vkl" ? await clientApi.getCalendarDates() : await clientApi.getIDGCalendarDates();
+        const data = company === "vkl" ? await clientApi.getCalendarDates() : await clientApi.getIDGCalendarDates();
         console.log(data);
         const events = [];
-        if (company==="vkl"){
-        data.forEach((item) => {
-          if (item.buildingAndPestDate) {
-            events.push({
-              title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
-              start: moment(item.buildingAndPestDate).toDate(),
-              end: moment(item.buildingAndPestDate).toDate(),
-              allDay: true,
-              type: "buildingAndPest",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.buildingAndPest?.toLowerCase() === "yes",
-            });
-          }
-          if (item.financeApprovalDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
-              start: moment(item.financeApprovalDate).toDate(),
-              end: moment(item.financeApprovalDate).toDate(),
-              allDay: true,
-              type: "financeApproval",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.financeApproval?.toLowerCase() === "yes",
-            });
-          }
-          if (item.titleSearchDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
-              start: moment(item.titleSearchDate).toDate(),
-              end: moment(item.titleSearchDate).toDate(),
-              allDay: true,
-              type: "titleSearch",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.titleSearch?.toLowerCase() === "yes",
-            });
-          }
-          if (item.settlementDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
-              start: moment(item.settlementDate).toDate(),
-              end: moment(item.settlementDate).toDate(),
-              allDay: true,
-              type: "settlement",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-            });
-          }
-        });
-
-        setCalendarEvents(events);
-      }else{
+        if (company === "vkl") {
           data.forEach((item) => {
-          if (item.deliveryDate) {
-            events.push({
-              title: `[${item.clientId}] - Delivery - [${item.orderType}]`,
-              start: moment(item.deliveryDate).toDate(),
-              end: moment(item.deliveryDate).toDate(),
-              allDay: true,
-              type: "deliveryDate",
-              clientType: item.orderType,
-              orderId: item.orderId,
-            });
-        setCalendarEvents(events);
+            if (item.buildingAndPestDate) {
+              events.push({
+                title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
+                start: moment(item.buildingAndPestDate).toDate(),
+                end: moment(item.buildingAndPestDate).toDate(),
+                allDay: true,
+                type: "buildingAndPest",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.buildingAndPest?.toLowerCase() === "yes",
+              });
+            }
+            if (item.financeApprovalDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
+                start: moment(item.financeApprovalDate).toDate(),
+                end: moment(item.financeApprovalDate).toDate(),
+                allDay: true,
+                type: "financeApproval",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.financeApproval?.toLowerCase() === "yes",
+              });
+            }
+            if (item.titleSearchDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
+                start: moment(item.titleSearchDate).toDate(),
+                end: moment(item.titleSearchDate).toDate(),
+                allDay: true,
+                type: "titleSearch",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.titleSearch?.toLowerCase() === "yes",
+              });
+            }
+            if (item.settlementDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
+                start: moment(item.settlementDate).toDate(),
+                end: moment(item.settlementDate).toDate(),
+                allDay: true,
+                type: "settlement",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+              });
+            }
+          });
 
-      }})}
-        
+          setCalendarEvents(events);
+        } else {
+          data.forEach((item) => {
+            if (item.deliveryDate) {
+              const displayTitle = `[${item.orderId}] - Delivery - [${item.orderType}]`;
+              events.push({
+                title: `[${item.orderId}] - ${item.orderType || "Order"}`, // ✅ safe for agenda
+                start: moment(item.deliveryDate).toDate(),
+                end: moment(item.deliveryDate).toDate(),
+                allDay: true,
+                type: "deliveryDate",
+                clientType: item.orderType,
+                orderId: item.orderId,
+              });
+            }
+          });
+          const safeEvents = events
+            .filter(e => e && e.start && e.end) // remove undefined / broken
+            .map(e => ({
+              title: e.title || `[${e.orderId || "NoID"}]`, // fallback title
+              ...e,
+            }));
 
-         } catch (error) {
+          setCalendarEvents(safeEvents);
+
+        }
+      } catch (error) {
         toast.error("Could not load calendar dates.");
         console.error("Error fetching calendar data:", error);
       }
@@ -368,43 +374,43 @@ function Dashboard() {
     if (chartView === "last10Months") {
       const ten = (allChartData.tenMonths || []).slice(-10);
       let formattedData;
-      if(localStorage.getItem("company")==="vkl"){
-       formattedData = ten.map((item) => ({
-        ...item,
-        name: item.month,
-        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-      }));
-      setCurrentChartData(formattedData);
-    }
-    else if(localStorage.getItem("company")==="idg"){
-      formattedData = ten.map((item) => ({
-        ...item,
-        name: item.month,
-        closedMatters: item.closedOrders,
-      }));
-      setCurrentChartData(formattedData);
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+        setCurrentChartData(formattedData);
+      }
+      else if (localStorage.getItem("company") === "idg") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedOrders,
+        }));
+        setCurrentChartData(formattedData);
+      }
     } else if (chartView === "allTime") {
       let formattedData;
-      if(localStorage.getItem("company")==="vkl"){
-      const all = allChartData.allTime || [];
-      formattedData = all.map((item) => ({
-        ...item,
-        name: `${item.month} ${item.year}`,
-        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-      }));
-      setCurrentChartData(formattedData);
-    }
-    else if(localStorage.getItem("company")==="idg"){
-      const all = allChartData.allTime || [];
-      formattedData = all.map((item) => ({
-          
-        ...item,
-        name: `${item.month} ${item.year}`,
-        closedMatters: item.closedOrders,
-      }));
-      setCurrentChartData(formattedData);
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        const all = allChartData.allTime || [];
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+        setCurrentChartData(formattedData);
+      }
+      else if (localStorage.getItem("company") === "idg") {
+        const all = allChartData.allTime || [];
+        formattedData = all.map((item) => ({
+
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedOrders,
+        }));
+        setCurrentChartData(formattedData);
+      }
     }
   }, [chartView, allChartData]);
 
@@ -537,7 +543,7 @@ function Dashboard() {
                   ? "Total Completed Orders"
                   : "Total Archived Clients"
               }
-              value={chartPeriodTotal||totalCompleted}
+              value={chartPeriodTotal || totalCompleted}
             />
           </div>
 
@@ -548,28 +554,26 @@ function Dashboard() {
                 {localStorage.getItem("company") === "vkl"
                   ? "Closed Matters"
                   : localStorage.getItem("company") === "idg"
-                  ? "Closed Orders"
-                  : "Closed"}{" "}
+                    ? "Closed Orders"
+                    : "Closed"}{" "}
                 ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
                   onClick={() => setChartView("last10Months")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "last10Months"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "last10Months"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   10 Months
                 </button>
                 <button
                   onClick={() => setChartView("allTime")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "allTime"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "allTime"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   All Time
                 </button>
@@ -607,8 +611,8 @@ function Dashboard() {
                     {localStorage.getItem("company") === "vkl"
                       ? "Matters Solved In Last Month"
                       : localStorage.getItem("company") === "idg"
-                      ? "Orders Closed In Last Month"
-                      : "Closed"}
+                        ? "Orders Closed In Last Month"
+                        : "Closed"}
                   </p>
                 )}
               </>
@@ -628,6 +632,7 @@ function Dashboard() {
               <Calendar
                 localizer={localizer}
                 events={calendarEvents}
+                titleAccessor={(event) => event?.title || `[${event?.orderId || "Untitled"}]`}
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: "100%" }}
