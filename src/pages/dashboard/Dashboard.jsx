@@ -87,11 +87,14 @@ const CustomEvent = ({ event }) => {
     case "settlement":
       eventTypeLabel = "Settlement";
       break;
+    case "deliveryDate":
+      eventTypeLabel = "Delivery";
+      break;  
     default:
       eventTypeLabel = "Event";
   }
-  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : "";
-  const displayTitle = `[${event.matterNumber}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : event.orderType ? event.orderType.charAt(0):"";
+  const displayTitle = `[${event.matterNumber||event.orderId}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
 
   return (
     <div className="custom-event-content">
@@ -278,9 +281,12 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchCalendarData = async () => {
+      const company=localStorage.getItem("company");
       try {
-        const data = await clientApi.getCalendarDates();
+        const data =  company==="vkl" ? await clientApi.getCalendarDates() : await clientApi.getIDGCalendarDates();
+        console.log(data);
         const events = [];
+        if (company==="vkl"){
         data.forEach((item) => {
           if (item.buildingAndPestDate) {
             events.push({
@@ -327,13 +333,29 @@ function Dashboard() {
               type: "settlement",
               clientType: item.clientType,
               matterNumber: item.matterNumber,
-              isApproved: false,
             });
           }
         });
 
         setCalendarEvents(events);
-      } catch (error) {
+      }else{
+          data.forEach((item) => {
+          if (item.deliveryDate) {
+            events.push({
+              title: `[${item.clientId}] - Delivery - [${item.orderType}]`,
+              start: moment(item.deliveryDate).toDate(),
+              end: moment(item.deliveryDate).toDate(),
+              allDay: true,
+              type: "deliveryDate",
+              clientType: item.orderType,
+              orderId: item.orderId,
+            });
+        setCalendarEvents(events);
+
+      }})}
+        
+
+         } catch (error) {
         toast.error("Could not load calendar dates.");
         console.error("Error fetching calendar data:", error);
       }
