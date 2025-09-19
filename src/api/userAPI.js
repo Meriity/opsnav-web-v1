@@ -33,6 +33,25 @@ class ClientAPI {
     }
   }
 
+    async getIDGCalendarDates() {
+    try {
+      // The endpoint you provided is used here
+      console.log(`${this.baseUrl}/idg/orders/dates`);
+      const response = await fetch(`${this.baseUrl}/idg/orders/dates`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting calendar dates:", error);
+      throw error;
+    }
+  }
+
   // Get client details by matter number
   async getClientDetails(matterNumber) {
     try {

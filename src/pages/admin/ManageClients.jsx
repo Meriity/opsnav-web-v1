@@ -140,7 +140,7 @@ export default function ManageUsers() {
 
   const handleUserUpdate = async () => {
     try {
-      await api.editUser(selectedUser);
+      await api.editIDGClient(selectedUser);
       toast.success("User updated successfully!");
       setOpenEdit(false);
       setIsFetched(false);
@@ -153,7 +153,8 @@ export default function ManageUsers() {
   const handleUserDelete = async () => {
     try {
       setDeleteLoading(true);
-      await api.deleteUser(id);
+      console.log(id.clientId);
+      await api.deleteIDGClient(id.clientId);  
       toast.success("User deleted successfully!");
       setOpenDelete(false);
       setIsFetched(false);
@@ -232,7 +233,8 @@ export default function ManageUsers() {
                 cellWrappingClass="whitespace-normal"
                 resetLoadingEmail={resetLoadingEmail}
                 resetSuccessEmail={resetSuccessEmail}
-                showActions={false}
+                showActions={true}
+                isClients={true}
               />
             </div>
             {/* Mobile & Tablet Card View */}
@@ -420,60 +422,68 @@ export default function ManageUsers() {
 
       {/* Edit Dialog */}
       <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-10">
+        {console.log(selectedUser)}
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button
-                onClick={() => setOpenEdit(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-4">Edit User</h2>
-              <input
-                value={selectedUser.displayName || ""}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    displayName: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <input
-                value={selectedUser.email || ""}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <div className="flex gap-6 mb-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    checked={selectedUser.role === "user"}
-                    onChange={() =>
-                      setSelectedUser({ ...selectedUser, role: "user" })
-                    }
-                  />
-                  User
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    checked={selectedUser.role === "admin"}
-                    onChange={() =>
-                      setSelectedUser({ ...selectedUser, role: "admin" })
-                    }
-                  />
-                  Admin
-                </label>
-              </div>
-              <Button label="Update" onClick={handleUserUpdate} />
-            </DialogPanel>
+  <button
+    onClick={() => setOpenEdit(false)}
+    className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+  >
+    &times;
+  </button>
+
+  <h2 className="text-lg font-bold mb-4">
+    Edit Client ID : {selectedUser.clientId}
+  </h2>
+
+  {/* Name */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Name
+  </label>
+  <input
+    value={selectedUser.name}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        name: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* Email */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Email
+  </label>
+  <input
+    type="email"
+    value={selectedUser.email || ""}
+    onChange={(e) =>
+      setSelectedUser({ ...selectedUser, email: e.target.value })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* Address */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Address
+  </label>
+  <input
+    value={selectedUser.address || ""}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        address: e.target.value,  // fixed to update address
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  <Button label="Edit Client" onClick={handleUserUpdate} />
+</DialogPanel>
+
           </div>
         </div>
       </Dialog>
