@@ -285,41 +285,6 @@ export default function ManageUsers() {
                           <Trash2 size={16} />
                           <span className="text-xs mt-1">Delete</span>
                         </button>
-                        <button
-                          onClick={() => handleReset(user.email)}
-                          disabled={isRowLoading}
-                          title={
-                            isRowLoading
-                              ? "Sending reset link..."
-                              : isRowSuccess
-                              ? "Reset link sent"
-                              : "Reset Password"
-                          }
-                          className={`flex flex-col items-center p-2 rounded-lg transition-colors
-                            ${
-                              isRowSuccess
-                                ? "text-green-600 hover:text-green-700 hover:bg-green-50"
-                                : "text-gray-600 hover:bg-gray-100"
-                            }
-                            ${
-                              isRowLoading
-                                ? "opacity-60 cursor-not-allowed"
-                                : ""
-                            }`}
-                        >
-                          {isRowLoading ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <RefreshCw size={16} />
-                          )}
-                          <span className="text-xs mt-1">
-                            {isRowLoading
-                              ? "Sending…"
-                              : isRowSuccess
-                              ? "Sent"
-                              : "Reset"}
-                          </span>
-                        </button>
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
