@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
@@ -11,6 +11,8 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import Loader from "../../components/ui/Loader";
 import ClientAPI from "../../api/userAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
+import { Menu, Transition } from "@headlessui/react";
+import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -42,10 +44,10 @@ export default function ArchivedClients() {
   const { searchQuery } = useSearchStore();
 
   // Modals
-  const [openExcel, setOpenExcel] = useState(false); 
+  const [openExcel, setOpenExcel] = useState(false);
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
   const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null); 
+  const [toDate, setToDate] = useState(null);
 
   const [clientList, setClientList] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -226,7 +228,13 @@ export default function ArchivedClients() {
       <main className="w-full max-w-8xl mx-auto p-5">
         {/* Toolbar */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">  {localStorage.getItem("company") === "vkl"? "Archived Clients" : "Completed Orders"} </h2>
+          <h2 className="text-2xl font-semibold">
+            {" "}
+            {localStorage.getItem("company") === "vkl"
+              ? "Archived Clients"
+              : "Completed Orders"}{" "}
+          </h2>
+          {/* --- Desktop-only Buttons --- */}
           <div className="hidden lg:flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Button
@@ -247,31 +255,13 @@ export default function ArchivedClients() {
               />
             </div>
           </div>
-
-          <div className="flex lg:hidden items-center space-x-2">
-            <Button
-              label={isExporting ? "Exporting..." : "Export"}
-              onClick={() => setOpenExcel(true)}
-              disabled={isExporting}
-              className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-            />
-            <Button
-              label="Filter"
-              onClick={() => setShowSettlementDateModal(true)}
-              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-            />
-            <Button
-              label="Select Date Range"
-              onClick={() => setShowSettlementDateModal(true)}
-              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-            />
-          </div>
         </div>
 
         {loading ? (
           <Loader />
         ) : (
           <>
+            {/* --- Desktop Table View --- */}
             <div className="hidden lg:block">
               <div className="flex justify-start mb-4">
                 <ClientsPerPage
@@ -295,13 +285,81 @@ export default function ArchivedClients() {
               />
             </div>
 
+            {/* --- Mobile & Tablet Card View --- */}
             <div className="grid grid-cols-1 gap-4 lg:hidden">
-              <div className="flex justify-start">
+              {/* Container for Dropdown and Three-Dots Menu */}
+              <div className="flex justify-between items-center mb-4">
                 <ClientsPerPage
                   value={clientsPerPage}
                   onChange={(e) => setClientsPerPage(Number(e.target.value))}
                 />
+
+                <Menu as="div" className="relative">
+                  <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <EllipsisVerticalIcon
+                      className="h-5 w-5 text-gray-600"
+                      aria-hidden="true"
+                    />
+                  </Menu.Button>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
+                  >
+                    <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => setOpenExcel(true)}
+                              disabled={isExporting}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              } ${
+                                isExporting
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              {isExporting ? "Exporting..." : "Export"}
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => setShowSettlementDateModal(true)}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              }`}
+                            >
+                              Filter
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => setShowSettlementDateModal(true)}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              }`}
+                            >
+                              Select Date Range
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
               </div>
+
+              {/* Mobile Client Cards */}
               {sortedClientList.slice(0, clientsPerPage).map((client) => (
                 <div key={client.id} className="bg-white p-4 rounded-lg shadow">
                   <div className="flex justify-between items-center mb-2">
@@ -361,7 +419,7 @@ export default function ArchivedClients() {
         handelSubmitFun={async (from, to) => {
           setFromDate(from);
           setToDate(to);
-          await handleExcelExport(from, to); 
+          await handleExcelExport(from, to);
           setOpenExcel(false);
         }}
         onReset={() => {

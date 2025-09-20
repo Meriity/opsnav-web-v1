@@ -242,7 +242,14 @@ export default function Stage2({
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
     originalData.current = JSON.parse(JSON.stringify(initialFormData));
-  }, [data, reloadTrigger, company]);
+  }, [
+    data,
+    reloadTrigger,
+    company,
+    clientType,
+    currentConfig.fields,
+    currentConfig.noteGroups,
+  ]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
@@ -263,9 +270,34 @@ export default function Stage2({
     }
   };
 
-  const isChanged = () =>
-    JSON.stringify(formData) !== JSON.stringify(originalData.current);
+  const isChanged = () => {
+    // 1. Check if any form values have been modified by the user.
+    const valuesHaveChanged =
+      JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
+    if (valuesHaveChanged) {
+      return true;
+    }
+
+    // 2. If values are the same, check if the status needs updating.
+    // This allows saving a completed form that was wrongly marked as "In Progress".
+    const relevantFields = currentConfig.fields.filter((field) => {
+      if (
+        field.name === "obtainDaSeller" &&
+        clientType?.toLowerCase() !== "seller"
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const allCompleted = relevantFields.every(
+      (f) => getStatus(formData[f.name]) === "Completed"
+    );
+
+    const calculatedStatus = allCompleted ? "green" : "amber";
+    return calculatedStatus !== data?.colorStatus;
+  };
   async function handleSave() {
     if (!isChanged() || isSaving) return;
     setIsSaving(true);

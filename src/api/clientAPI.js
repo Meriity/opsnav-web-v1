@@ -52,7 +52,7 @@ class ClientAPI {
       let parsed = null;
       try {
         parsed = text ? JSON.parse(text) : null;
-      } catch (e) {
+      } catch {
         parsed = null;
       }
 

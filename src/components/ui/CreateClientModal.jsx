@@ -279,7 +279,7 @@ export default function CreateClientModal({
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
+            className="absolute top-6 sm:top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
           >
             &times;
           </button>

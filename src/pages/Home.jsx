@@ -33,18 +33,37 @@ export default function Home() {
         className="relative min-h-screen bg-cover bg-center text-black"
         style={{ backgroundImage: "url('/home_bg.jpg')" }}
       >
-        {/* <div className="absolute inset-0 bg-black/60" /> */}
+        <header className="absolute top-2 left-2 right-0 z-20 flex flex-col items-center gap-3 p-4 sm:flex-row sm:justify-between">
+          {/* Logo */}
+          <div className="flex-shrink-0 mb-2">
+            <img src="/Logo.png" alt="OpsNav Logo" className="h-12 md:h-14" />
+          </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 min-h-screen">
-          {/* <h1 className="text-2xl md:text-3xl lg:text-3xl font-bold pt-20 max-w-7xl text-red-500">
-            Please Use legacy.opsnav.com
-          </h1>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow" onClick={handleLoginlegacy}>
-                  Continue
+          {/* Action Buttons */}
+          <div className="flex items-center gap-4">
+            <div>
+              <button
+                className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white text-md px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 rounded-md font-medium"
+                onClick={handleClientLogin}
+              >
+                Client Portal
               </button>
-          </div> */}
-          <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold mt-0 max-w-7xl">
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white text-md px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 rounded-md font-medium"
+                onClick={handleLogin}
+              >
+                Login
+              </button>
+              <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white text-md px-2.5 py-[5px] sm:text-sm sm:px-4 sm:py-2 rounded-md font-medium">
+                Signup
+              </button>
+            </div>
+          </div>
+        </header>
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 min-h-screen pt-32 sm:pt-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold max-w-7xl">
             Streamline with Precision. Scale Your Operations without
             bottlenecks.
           </h1>
@@ -57,46 +76,19 @@ export default function Home() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-6 py-3 rounded-md shadow">
+            <button className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white font-semibold px-5 py-2 rounded-md shadow">
               Get Started For Free
             </button>
-            <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-semibold px-6 py-3 rounded-md">
+            <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-semibold px-5 py-1.5 rounded-md">
               Book A Demo
             </button>
           </div>
-        </div>
-
-        <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button
-            className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium"
-            onClick={handleLogin}
-          >
-            Login
-          </button>
-          <button
-            className="cursor-pointer bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md font-medium"
-            onClick={handleClientLogin}
-          >
-            Client Portal
-          </button>
-          <button className="border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-md font-medium">
-            Signup
-          </button>
-        </div>
-
-        <div className="absolute top-6 left-6 z-20 text-xl font-bold">
-          {/* OPSNAV */}
-          <img
-            src="/Logo.png"
-            alt="VK Lawyers Logo"
-            className="h-8 mx-auto sm:h-8 md:h-12 md:mx-0 lg:h-12"
-          />
         </div>
       </div>
 
       {/* features section */}
       <div className="flex flex-col items-center px-4 py-16 md:py-16">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           KEY FEATURES
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
@@ -128,7 +120,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-26">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
             <h3 className="text-xl md:text-2xl font-semibold mb-2">
               Matter Management
@@ -146,7 +138,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-26">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:block hidden">
             <img
               src={clientDetails}
@@ -173,7 +165,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-26">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
             <h3 className="text-xl md:text-2xl font-semibold mb-2">
               Wills Module
@@ -191,7 +183,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-26">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:block hidden">
             <img
               src={clientDetails}
@@ -218,7 +210,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-26">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
             <h3 className="text-xl md:text-2xl font-semibold mb-2">
               Fully Cloud Hosted on GCP
@@ -237,11 +229,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Key Features */}
-
+      {/* Who is it for? section */}
       <div className="flex flex-col items-center px-4 py-16 md:py-16">
         <div className="w-full flex flex-col items-center">
-          <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
             WHO IS IT FOR ?
           </h2>
           <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
@@ -283,9 +274,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Why Choose */}
+      {/* Why Choose section */}
       <div className="mt-24 w-full flex flex-col items-center px-4">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           WHY CHOOSE OPSNAV ?
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
@@ -344,8 +335,9 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Security & Compliance section */}
       <div className="mt-24 w-full flex flex-col items-center px-4">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           SECURITY & COMPLIANCE
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />

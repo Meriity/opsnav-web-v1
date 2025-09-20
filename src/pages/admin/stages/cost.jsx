@@ -50,12 +50,7 @@ const getInitialState = (company) => {
   return commonState;
 };
 
-
-export default function CostComponent({
-  changeStage,
-  reloadTrigger,
-  setReloadTrigger,
-}) {
+export default function CostComponent({ changeStage, reloadTrigger }) {
   // --- CHANGE 1: Get the company from localStorage ---
   const company = localStorage.getItem("company") || "idg"; // Default to 'idg' if not set
 
@@ -84,11 +79,11 @@ export default function CostComponent({
         (parseFloat(values["Other fee (3)"]) || 0) +
         (parseFloat(values["Other fee (4)"]) || 0)
     );
-    
+
     let totalCosts = "0.00";
     // For VKL, total includes all specific costs + other costs
     if (company === "vkl") {
-       totalCosts = formatNum(
+      totalCosts = formatNum(
         (parseFloat(values["VOI/CAF"]) || 0) +
           (parseFloat(values["Title"]) || 0) +
           (parseFloat(values["Plan"]) || 0) +
@@ -101,7 +96,6 @@ export default function CostComponent({
       // For IDG, total costs are just the sum of the fees
       totalCosts = otherTotal;
     }
-
 
     const quoteType = values["Quote Type"]?.toLowerCase() || "variable";
     const quoteAmount = parseFloat(values["Quote Amount"]) || 0;
@@ -147,72 +141,92 @@ export default function CostComponent({
           company === "vkl"
             ? await StagesAPI.getAllStages(matterNumber)
             : await StagesAPI.getIDGStages(matterNumber);
-        
-        const costData = stageResponse?.cost?.[0] || stageResponse?.data?.cost;
-        const quoteType = stageResponse?.stage1?.quoteType || "Variable";
+        if (!stageResponse || (company === "idg" && !stageResponse.data)) {
+          toast.error("Failed to fetch stage data. The client may not exist.");
+          setIsLoading(false);
+          return;
+        }
+
+        // const costData = stageResponse?.cost?.[0] || stageResponse?.data?.cost;
+        const costData =
+          stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
+        // const quoteType = stageResponse?.stage1?.quoteType || "Variable";
+        const stage1Data = stageResponse?.stage1 || {};
+        const quoteType =
+          (stage1Data.quoteType &&
+            (stage1Data.quoteType.$numberDecimal ?? stage1Data.quoteType)) ||
+          "Variable";
+
+        const getDecimalValue = (v) => {
+          if (v === undefined || v === null) return "";
+          if (typeof v === "object" && v.$numberDecimal !== undefined)
+            return v.$numberDecimal;
+          return v;
+        };
+
         const quoteAmount =
-          stageResponse?.stage1?.quoteAmount?.$numberDecimal ||
-          stageResponse?.data.cost.quoteAmount ||
+          getDecimalValue(stage1Data.quoteAmount) ||
+          getDecimalValue(costData.quoteAmount) ||
           "";
-          console.log(quoteAmount)
-          
 
         let mappedData = {};
 
         // This object contains mappings that are structurally common
         const commonMapped = {
-            "Other (total)": costData.otherTotal?.$numberDecimal || "0",
-            "Other (total) Note": costData.otherTotalNote || "",
-            "Total Costs": costData.totalCosts?.$numberDecimal || "0",
-            "Total Costs Note": costData.totalCostsNote || "",
-            "Quote Amount": quoteAmount,
-            "Quote Amount Note": costData.quoteAmountNote || "",
-            "Invoice Amount": costData.invoiceAmount?.$numberDecimal || "",
-            "Invoice Amount Note": costData.invoiceAmountNote || "",
-            "Quote Type": quoteType,
+          "Other (total)": costData.otherTotal?.$numberDecimal || "0",
+          "Other (total) Note": costData.otherTotalNote || "",
+          "Total Costs": costData.totalCosts?.$numberDecimal || "0",
+          "Total Costs Note": costData.totalCostsNote || "",
+          "Quote Amount": quoteAmount === "" ? "" : parseFloat(quoteAmount),
+          "Quote Amount Note": costData.quoteAmountNote || "",
+          "Invoice Amount": costData.invoiceAmount?.$numberDecimal || "",
+          "Invoice Amount Note": costData.invoiceAmountNote || "",
+          "Quote Type": quoteType,
         };
 
-        if (company === 'vkl') {
-            // VKL mapping remains as is, using its specific API field names
-            mappedData = {
-              "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
-              "VOI/CAF Note": costData.voiCafNote || "",
-              Title: costData.title?.$numberDecimal || "",
-              "Title Note": costData.titleNote || "",
-              Plan: costData.plan?.$numberDecimal || "",
-              "Plan Note": costData.planNote || "",
-              "Land Tax": costData.landTax?.$numberDecimal || "",
-              "Land Tax Note": costData.landTaxNote || "",
-              "Land Information Certificate (Rates)":
-                costData.landInformationCertificate?.$numberDecimal || "",
-              "Land Information Note":
-                costData.landInformationCertificateNote || "",
-              "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
-              "Water Certificate Note": costData.waterCertificateNote || "",
-              "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
-              "Note 1": costData.otherFee1Note || "",
-              "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
-              "Note 2": costData.otherFee2Note || "",
-              "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
-              "Note 3": costData.otherFee3Note || "",
-              "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
-              "Note 4": costData.otherFee4Note || "",
-              ...commonMapped
-            };
-        } else { // Corrected mapping for 'idg'
-            mappedData = {
-              // Map IDG's 'fee1' to the component's 'Other fee (1)' state
-              "Other fee (1)": costData.fee1 || "",
-              "Note 1": costData.fee1Note || "",
-              "Other fee (2)": costData.fee2 || "",
-              "Note 2": costData.fee2Note || "",
-              "Other fee (3)": costData.fee3 || "",
-              "Note 3": costData.fee3Note || "",
-              "Other fee (4)": costData.fee4 || "",
-              "Note 4": costData.fee4Note || "",
-              // Spread the rest of the common fields
-              ...commonMapped
-            };
+        if (company === "vkl") {
+          // VKL mapping remains as is, using its specific API field names
+          mappedData = {
+            "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
+            "VOI/CAF Note": costData.voiCafNote || "",
+            Title: costData.title?.$numberDecimal || "",
+            "Title Note": costData.titleNote || "",
+            Plan: costData.plan?.$numberDecimal || "",
+            "Plan Note": costData.planNote || "",
+            "Land Tax": costData.landTax?.$numberDecimal || "",
+            "Land Tax Note": costData.landTaxNote || "",
+            "Land Information Certificate (Rates)":
+              costData.landInformationCertificate?.$numberDecimal || "",
+            "Land Information Note":
+              costData.landInformationCertificateNote || "",
+            "Water Certificate":
+              costData.waterCertificate?.$numberDecimal || "",
+            "Water Certificate Note": costData.waterCertificateNote || "",
+            "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
+            "Note 1": costData.otherFee1Note || "",
+            "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
+            "Note 2": costData.otherFee2Note || "",
+            "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
+            "Note 3": costData.otherFee3Note || "",
+            "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
+            "Note 4": costData.otherFee4Note || "",
+            ...commonMapped,
+          };
+        } else {
+          // Corrected mapping for 'idg'
+          mappedData = {
+            // Map IDG's 'fee1' to the component's 'Other fee (1)' state
+            "Other fee (1)": costData.fee1 || "",
+            "Note 1": costData.fee1Note || "",
+            "Other fee (2)": costData.fee2 || "",
+            "Note 2": costData.fee2Note || "",
+            "Other fee (3)": costData.fee3 || "",
+            "Note 3": costData.fee3Note || "",
+            "Other fee (4)": costData.fee4 || "",
+            "Note 4": costData.fee4Note || "",
+            // Spread the rest of the common fields
+            ...commonMapped,
+          };
         }
 
         const calculatedMapped = calculateTotals(mappedData);
@@ -257,91 +271,92 @@ export default function CostComponent({
         const num = parseFloat(value);
         return isNaN(num) ? 0 : parseFloat(num.toFixed(2));
       };
-      
+
       // --- CHANGE 5: Build submission payload conditionally ---
       let commonPayload;
-    if(localStorage.getItem("company")==="vkl"){
-       commonPayload = {
-        matterNumber: matterNumber,
-        otherFee_1: formatNumber(formValues["Other fee (1)"]),
-        otherFee1Note: formValues["Note 1"],
-        otherFee_2: formatNumber(formValues["Other fee (2)"]),
-        otherFee2Note: formValues["Note 2"],
-        otherFee_3: formatNumber(formValues["Other fee (3)"]),
-        otherFee3Note: formValues["Note 3"],
-        otherFee_4: formatNumber(formValues["Other fee (4)"]),
-        otherFee4Note: formValues["Note 4"],
-        otherTotal: formatNumber(formValues["Other (total)"]),
-        otherTotalNote: formValues["Other (total) Note"],
-        totalCosts: formatNumber(formValues["Total Costs"]),
-        totalCostsNote: formValues["Total Costs Note"],
-        quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
-        quoteAmount: formatNumber(formValues["Quote Amount"]),
-        quoteAmountNote: formValues["Quote Amount Note"],
-        invoiceAmount: formatNumber(formValues["Invoice Amount"]),
-        invoiceAmountNote: formValues["Invoice Amount Note"],
-      };
-    }
-    else{
-       commonPayload = {
-        orderId: matterNumber,
-        fee1: formatNumber(formValues["Other fee (1)"]),
-        fee1Note: formValues["Note 1"],
-        fee2: formatNumber(formValues["Other fee (2)"]),
-        fee2Note: formValues["Note 2"],
-        fee3: formatNumber(formValues["Other fee (3)"]),
-        fee3Note: formValues["Note 3"],
-        fee4: formatNumber(formValues["Other fee (4)"]),
-        fee4Note: formValues["Note 4"],
-        otherTotal: formatNumber(formValues["Other (total)"]),
-        otherTotalNote: formValues["Other (total) Note"],
-        totalCosts: formatNumber(formValues["Total Costs"]),
-        totalCostsNote: formValues["Total Costs Note"],
-        quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
-        quoteAmount: formatNumber(formValues["Quote Amount"]),
-        quoteAmountNote: formValues["Quote Amount Note"],
-        invoiceAmount: formatNumber(formValues["Invoice Amount"]),
-        invoiceAmountNote: formValues["Invoice Amount Note"],
-      };
-
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        commonPayload = {
+          matterNumber: matterNumber,
+          otherFee_1: formatNumber(formValues["Other fee (1)"]),
+          otherFee1Note: formValues["Note 1"],
+          otherFee_2: formatNumber(formValues["Other fee (2)"]),
+          otherFee2Note: formValues["Note 2"],
+          otherFee_3: formatNumber(formValues["Other fee (3)"]),
+          otherFee3Note: formValues["Note 3"],
+          otherFee_4: formatNumber(formValues["Other fee (4)"]),
+          otherFee4Note: formValues["Note 4"],
+          otherTotal: formatNumber(formValues["Other (total)"]),
+          otherTotalNote: formValues["Other (total) Note"],
+          totalCosts: formatNumber(formValues["Total Costs"]),
+          totalCostsNote: formValues["Total Costs Note"],
+          quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
+          quoteAmount: formatNumber(formValues["Quote Amount"]),
+          quoteAmountNote: formValues["Quote Amount Note"],
+          invoiceAmount: formatNumber(formValues["Invoice Amount"]),
+          invoiceAmountNote: formValues["Invoice Amount Note"],
+        };
+      } else {
+        commonPayload = {
+          orderId: matterNumber,
+          fee1: formatNumber(formValues["Other fee (1)"]),
+          fee1Note: formValues["Note 1"],
+          fee2: formatNumber(formValues["Other fee (2)"]),
+          fee2Note: formValues["Note 2"],
+          fee3: formatNumber(formValues["Other fee (3)"]),
+          fee3Note: formValues["Note 3"],
+          fee4: formatNumber(formValues["Other fee (4)"]),
+          fee4Note: formValues["Note 4"],
+          otherTotal: formatNumber(formValues["Other (total)"]),
+          otherTotalNote: formValues["Other (total) Note"],
+          totalCosts: formatNumber(formValues["Total Costs"]),
+          totalCostsNote: formValues["Total Costs Note"],
+          quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
+          quoteAmount: formatNumber(formValues["Quote Amount"]),
+          quoteAmountNote: formValues["Quote Amount Note"],
+          invoiceAmount: formatNumber(formValues["Invoice Amount"]),
+          invoiceAmountNote: formValues["Invoice Amount Note"],
+        };
+      }
 
       let finalPayload;
       if (company === "vkl") {
         finalPayload = {
-            ...commonPayload,
-            voiCaf: formatNumber(formValues["VOI/CAF"]),
-            voiCafNote: formValues["VOI/CAF Note"],
-            title: formatNumber(formValues["Title"]),
-            titleNote: formValues["Title Note"],
-            plan: formatNumber(formValues["Plan"]),
-            planNote: formValues["Plan Note"],
-            landTax: formatNumber(formValues["Land Tax"]),
-            landTaxNote: formValues["Land Tax Note"],
-            landInformationCertificate: formatNumber(
-              formValues["Land Information Certificate (Rates)"]
-            ),
-            landInformationCertificateNote: formValues["Land Information Note"],
-            waterCertificate: formatNumber(formValues["Water Certificate"]),
-            waterCertificateNote: formValues["Water Certificate Note"],
-        }
-      } else { 
+          ...commonPayload,
+          voiCaf: formatNumber(formValues["VOI/CAF"]),
+          voiCafNote: formValues["VOI/CAF Note"],
+          title: formatNumber(formValues["Title"]),
+          titleNote: formValues["Title Note"],
+          plan: formatNumber(formValues["Plan"]),
+          planNote: formValues["Plan Note"],
+          landTax: formatNumber(formValues["Land Tax"]),
+          landTaxNote: formValues["Land Tax Note"],
+          landInformationCertificate: formatNumber(
+            formValues["Land Information Certificate (Rates)"]
+          ),
+          landInformationCertificateNote: formValues["Land Information Note"],
+          waterCertificate: formatNumber(formValues["Water Certificate"]),
+          waterCertificateNote: formValues["Water Certificate Note"],
+        };
+      } else {
         finalPayload = commonPayload;
       }
       console.log(finalPayload);
-      
-      const response = company ==="vkl" ? await api.upsertCost(finalPayload) : api.upsertIDGCost(matterNumber,finalPayload);
+
+      const response =
+        company === "vkl"
+          ? await api.upsertCost(finalPayload)
+          : api.upsertIDGCost(matterNumber, finalPayload);
       console.log("Save successful:", response);
 
-          toast.success("Cost data updated Successfully!!!", {
-            position: "bottom-left",
-            autoClose: 2000,
-            hideProgressBar: true,
-            closeOnClick: true,
-            pauseOnHover: false,
-            draggable: false,
-            progress: undefined,
-          });
+      toast.success("Cost data updated Successfully!!!", {
+        position: "bottom-left",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
 
       // setReloadTrigger((prev) => !prev);
     } catch (err) {
@@ -365,14 +380,18 @@ export default function CostComponent({
               label="VOI/CAF"
               amountValue={formValues["VOI/CAF"]}
               noteValue={formValues["VOI/CAF Note"]}
-              onAmountChange={(e) => handleNumberChange("VOI/CAF", e.target.value)}
+              onAmountChange={(e) =>
+                handleNumberChange("VOI/CAF", e.target.value)
+              }
               onNoteChange={(e) => handleChange("VOI/CAF Note", e.target.value)}
             />
             <CostInputRow
               label="Title"
               amountValue={formValues["Title"]}
               noteValue={formValues["Title Note"]}
-              onAmountChange={(e) => handleNumberChange("Title", e.target.value)}
+              onAmountChange={(e) =>
+                handleNumberChange("Title", e.target.value)
+              }
               onNoteChange={(e) => handleChange("Title Note", e.target.value)}
             />
             <CostInputRow
@@ -386,8 +405,12 @@ export default function CostComponent({
               label="Land Tax"
               amountValue={formValues["Land Tax"]}
               noteValue={formValues["Land Tax Note"]}
-              onAmountChange={(e) => handleNumberChange("Land Tax", e.target.value)}
-              onNoteChange={(e) => handleChange("Land Tax Note", e.target.value)}
+              onAmountChange={(e) =>
+                handleNumberChange("Land Tax", e.target.value)
+              }
+              onNoteChange={(e) =>
+                handleChange("Land Tax Note", e.target.value)
+              }
             />
             <CostInputRow
               label="Land Information Certificate (Rates)"
@@ -468,19 +491,23 @@ export default function CostComponent({
           isReadOnly={true}
         />
         {company === "vkl" && ( // Only show Total Costs for VKL, as it's redundant for IDG
-            <CostInputRow
-              label="Total Costs"
-              amountValue={formValues["Total Costs"]}
-              noteValue={formValues["Total Costs Note"]}
-              onNoteChange={(e) => handleChange("Total Costs Note", e.target.value)}
-              isReadOnly={true}
-            />
+          <CostInputRow
+            label="Total Costs"
+            amountValue={formValues["Total Costs"]}
+            noteValue={formValues["Total Costs Note"]}
+            onNoteChange={(e) =>
+              handleChange("Total Costs Note", e.target.value)
+            }
+            isReadOnly={true}
+          />
         )}
         <CostInputRow
           label="Quote Amount"
           amountValue={formValues["Quote Amount"]}
           noteValue={formValues["Quote Amount Note"]}
-          onAmountChange={(e) => handleNumberChange("Quote Amount", e.target.value)}
+          onAmountChange={(e) =>
+            handleNumberChange("Quote Amount", e.target.value)
+          }
           onNoteChange={(e) =>
             handleChange("Quote Amount Note", e.target.value)
           }

@@ -236,7 +236,7 @@ const ViewClients = () => {
               ? "View Clients"
               : "View Orders"}
           </h3>
-          <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
+          <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
               <label

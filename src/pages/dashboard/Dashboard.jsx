@@ -52,7 +52,7 @@ const useDashboardStore = create((set) => ({
         totalactive:
           data.lifetimeTotals?.totalActiveClients ||
           data.lifetimeTotals?.totalActiveOrders,
-        totalCompleted:data.lifetimeTotals.totalClosedOrders,  
+        totalCompleted: data.lifetimeTotals.totalClosedOrders,
         lastrecord: lastRec,
         loading: false,
       };
@@ -205,8 +205,14 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
-  const { totalusers, totalactive,totalCompleted, lastrecord, loading, setDashboardData } =
-    useDashboardStore();
+  const {
+    totalusers,
+    totalactive,
+    totalCompleted,
+    lastrecord,
+    loading,
+    setDashboardData,
+  } = useDashboardStore();
   const {
     archivedClients,
     isFetched: isArchivedFetched,
@@ -223,8 +229,16 @@ function Dashboard() {
   });
   const [currentChartData, setCurrentChartData] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [calendarView, setCalendarView] = useState(Views.MONTH);
+  const [agendaPage, setAgendaPage] = useState(1);
+  const [agendaPageSize, setAgendaPageSize] = useState(10);
   const { width } = useWindowSize();
   const isMobile = width < 768;
+
+  useEffect(() => {
+    // when device size changes, reset calendar view to the preferred default
+    setCalendarView(isMobile ? Views.AGENDA : Views.MONTH);
+  }, [isMobile]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -346,43 +360,40 @@ function Dashboard() {
     if (chartView === "last10Months") {
       const ten = (allChartData.tenMonths || []).slice(-10);
       let formattedData;
-      if(localStorage.getItem("company")==="vkl"){
-       formattedData = ten.map((item) => ({
-        ...item,
-        name: item.month,
-        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-      }));
-      setCurrentChartData(formattedData);
-    }
-    else if(localStorage.getItem("company")==="idg"){
-      formattedData = ten.map((item) => ({
-        ...item,
-        name: item.month,
-        closedMatters: item.closedOrders,
-      }));
-      setCurrentChartData(formattedData);
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+        setCurrentChartData(formattedData);
+      } else if (localStorage.getItem("company") === "idg") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedOrders,
+        }));
+        setCurrentChartData(formattedData);
+      }
     } else if (chartView === "allTime") {
       let formattedData;
-      if(localStorage.getItem("company")==="vkl"){
-      const all = allChartData.allTime || [];
-      formattedData = all.map((item) => ({
-        ...item,
-        name: `${item.month} ${item.year}`,
-        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-      }));
-      setCurrentChartData(formattedData);
-    }
-    else if(localStorage.getItem("company")==="idg"){
-      const all = allChartData.allTime || [];
-      formattedData = all.map((item) => ({
-          
-        ...item,
-        name: `${item.month} ${item.year}`,
-        closedMatters: item.closedOrders,
-      }));
-      setCurrentChartData(formattedData);
-    }
+      if (localStorage.getItem("company") === "vkl") {
+        const all = allChartData.allTime || [];
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+        setCurrentChartData(formattedData);
+      } else if (localStorage.getItem("company") === "idg") {
+        const all = allChartData.allTime || [];
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedOrders,
+        }));
+        setCurrentChartData(formattedData);
+      }
     }
   }, [chartView, allChartData]);
 
@@ -515,7 +526,7 @@ function Dashboard() {
                   ? "Total Completed Orders"
                   : "Total Archived Clients"
               }
-              value={chartPeriodTotal||totalCompleted}
+              value={chartPeriodTotal || totalCompleted}
             />
           </div>
 
@@ -603,24 +614,133 @@ function Dashboard() {
               Important Dates
             </h2>
             <div className="h-[65vh] min-h-[500px]">
-              <Calendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: "100%" }}
-                popup
-                onNavigate={handleNavigate}
-                dayPropGetter={dayPropGetter}
-                views={views}
-                defaultView={defaultView}
-                eventPropGetter={eventStyleGetter}
-                components={{
-                  event: CustomEvent,
-                  agenda: { event: CustomAgendaEvent },
-                  toolbar: ResponsiveCalendarToolbar,
-                }}
-              />
+              {calendarView === Views.AGENDA ? (
+                // Paginated Agenda list
+                <div className="h-full overflow-auto p-2">
+                  {/* Controls */}
+                  <div className="flex flex-col items-center gap-3">
+                    {/* Arrows + Today row */}
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        className="px-3 py-2 rounded border bg-white hover:bg-gray-50"
+                        onClick={() =>
+                          setAgendaPage((p) =>
+                            p === 1
+                              ? Math.max(
+                                  1,
+                                  Math.ceil(
+                                    calendarEvents.length / agendaPageSize
+                                  )
+                                )
+                              : p - 1
+                          )
+                        }
+                        aria-label="Previous page"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+
+                      <button
+                        className="mx-1 px-4 py-2 rounded bg-gray-100 text-sm font-semibold border"
+                        onClick={() => {
+                          setCalendarDate(new Date());
+                          setAgendaPage(1);
+                        }}
+                      >
+                        Today
+                      </button>
+
+                      <button
+                        className="px-3 py-2 rounded border bg-white hover:bg-gray-50"
+                        onClick={() =>
+                          setAgendaPage((p) => {
+                            const total = Math.max(
+                              1,
+                              Math.ceil(calendarEvents.length / agendaPageSize)
+                            );
+                            return p === total ? 1 : p + 1;
+                          })
+                        }
+                        aria-label="Next page"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+
+                    {/* Per page selector on its own line */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-gray-600">Per page</label>
+                      <select
+                        value={agendaPageSize}
+                        onChange={(e) => {
+                          setAgendaPageSize(Number(e.target.value));
+                          setAgendaPage(1);
+                        }}
+                        className="border rounded px-2 py-1"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={20}>50</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* compute events for agenda sorted by start */}
+                  {(() => {
+                    const sorted = [...calendarEvents].sort(
+                      (a, b) => new Date(a.start) - new Date(b.start)
+                    );
+                    // optional: filter to a date range around calendarDate (e.g., month)
+                    // const filtered = sorted.filter(e => moment(e.start).isSame(calendarDate, 'month'));
+                    // we'll show all events paginated
+
+                    const startIndex = (agendaPage - 1) * agendaPageSize;
+                    const pageItems = sorted.slice(
+                      startIndex,
+                      startIndex + agendaPageSize
+                    );
+                    return pageItems.length ? (
+                      <div>
+                        {pageItems.map((evt, idx) => (
+                          <CustomAgendaEvent
+                            key={idx + "-" + evt.title}
+                            event={evt}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 py-12">
+                        No events for the agenda.
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <Calendar
+                  localizer={localizer}
+                  events={calendarEvents}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: "100%" }}
+                  popup
+                  onNavigate={handleNavigate}
+                  dayPropGetter={dayPropGetter}
+                  views={views}
+                  defaultView={defaultView}
+                  eventPropGetter={eventStyleGetter}
+                  onView={(v) => {
+                    setCalendarView(v);
+                    if (v === Views.AGENDA) setAgendaPage(1);
+                  }}
+                  view={calendarView}
+                  components={{
+                    event: CustomEvent,
+                    agenda: { event: CustomAgendaEvent },
+                    toolbar: ResponsiveCalendarToolbar,
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
