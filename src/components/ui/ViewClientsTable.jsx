@@ -53,7 +53,6 @@ const ViewClientsTable = ({
 
   useEffect(() => {
     setCurrentData(sortedData.slice(0, itemsPerPage));
-    console.log(currentData);
   }, [sortedData, itemsPerPage]);
 
   return (
@@ -68,8 +67,9 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm text-black ${colIndex === 0 ? "rounded-l-2xl" : ""
-                    } cursor-pointer select-none`}
+                  className={`px-2 py-3 text-center text-sm text-black ${
+                    colIndex === 0 ? "rounded-l-2xl" : ""
+                  } cursor-pointer select-none`}
                 >
                   <div className="flex flex-col items-center">
                     <span>{column.title}</span>
@@ -121,8 +121,9 @@ const ViewClientsTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${colIndex === 0 ? "rounded-l-2xl" : ""
-                        }`}
+                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      }`}
                     >
                       <div
                         className="lg:font-normal 2xl:text-center"
@@ -136,8 +137,8 @@ const ViewClientsTable = ({
                           "delivery_date"
                         ].includes(column.key) ? (
                           item[column.key] &&
-                            item[column.key] !== "-" &&
-                            item[column.key] !== "N/A" ? (
+                          item[column.key] !== "-" &&
+                          item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
                             <span className="text-sm font-bold text-gray-700">
@@ -155,10 +156,11 @@ const ViewClientsTable = ({
                       {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
-                            href={`/admin/client/stages/${localStorage.getItem("company") === "vkl"
-                              ? item.matternumber
-                              : item?.orderId
-                              }/${index + 1}`}
+                            href={`/admin/client/stages/${
+                              localStorage.getItem("company") === "vkl"
+                                ? item.matternumber
+                                : item?.orderId
+                            }/${index + 1}`}
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs cursor-pointer"
                             style={{
@@ -195,7 +197,11 @@ const ViewClientsTable = ({
                     <div className="flex flex-col items-center space-y-2">
                       <button
                         onClick={() =>
-                          localStorage.getItem("company") === "vkl" ? navigate(`/admin/client/stages/${item.matternumber}`) : navigate(`/admin/client/stages/${item.orderId}`)
+                          localStorage.getItem("company") === "vkl"
+                            ? navigate(
+                                `/admin/client/stages/${item.matternumber}`
+                              )
+                            : navigate(`/admin/client/stages/${item.orderId}`)
                         }
                         className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
                         title="Edit"
@@ -291,23 +297,25 @@ const ViewClientsTable = ({
               <p className="text-xs text-gray-500 mb-1">Stages</p>
               <div className="flex flex-wrap gap-1">
                 {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
-                  <a
-                    href={`/admin/client/stages/${localStorage.getItem("company") === "vkl"
-                      ? item.matterNumber
-                      : item?.orderId
-                      }/${index + 1}`}
+                  <button
+                    onClick={() => {
+                      const path = `/admin/client/stages/${
+                        localStorage.getItem("company") === "vkl"
+                          ? item.matternumber // Corrected from matterNumber to matternumber
+                          : item?.orderId
+                      }/${index + 1}`;
+                      navigate(path);
+                    }}
                     key={keyName}
-                    className="px-2 py-1 text-white rounded text-xs "
+                    className="px-2 py-1 text-white rounded text-xs"
                     style={{
                       backgroundColor:
                         stageColorMap[item?.stages?.[0]?.[keyName]] ||
                         stageColorMap["default"],
                     }}
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     {keyName.toUpperCase()}
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>

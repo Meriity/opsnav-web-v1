@@ -13,6 +13,7 @@ const getInitialFormData = (company, user) => {
       state: "",
       clientType: "",
       propertyAddress: "",
+      postcode: "",
       matterDate: "",
       settlementDate: "",
       dataEntryBy: user,
@@ -141,6 +142,7 @@ export default function CreateClientModal({
           "state",
           "clientType",
           "propertyAddress",
+          "postcode",
           "matterDate",
           "settlementDate",
         ];
@@ -171,7 +173,7 @@ export default function CreateClientModal({
             setMatterNumberError("This matter number already exists");
             toast.error("A client with this matter number already exists.");
           } else {
-            throw err; 
+            throw err;
           }
         }
         navigate(`/admin/client/stages/${formData.matterNumber}`);
@@ -271,11 +273,14 @@ export default function CreateClientModal({
       className="relative z-10"
     >
       <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-      <div className="fixed inset-0 z-10 flex items-center justify-center p-4 overflow-y-auto">
-        <DialogPanel className="max-w-500 relative transform overflow-hidden rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl p-6">
+      <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+        <DialogPanel
+          className="max-w-500 relative transform rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl p-6
+             overflow-y-auto max-h-[90vh] xl:overflow-visible xl:max-h-none"
+        >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
+            className="absolute top-6 sm:top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
           >
             &times;
           </button>
@@ -385,6 +390,22 @@ export default function CreateClientModal({
                     name="propertyAddress"
                     value={formData.propertyAddress || ""}
                     onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                    required
+                  />
+                </div>
+
+                {/* Post code (Australian, 4 digits) */}
+                <div>
+                  <label className="block mb-1 font-medium">Post code*</label>
+                  <input
+                    type="text"
+                    name="postcode"
+                    value={formData.postcode || ""}
+                    onChange={handleChange}
+                    pattern="^[0-9]{4}$"
+                    maxLength={4}
+                    inputMode="numeric"
                     className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                     required
                   />

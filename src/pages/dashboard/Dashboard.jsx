@@ -224,8 +224,16 @@ function Dashboard() {
   });
   const [currentChartData, setCurrentChartData] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [calendarView, setCalendarView] = useState(Views.MONTH);
+  const [agendaPage, setAgendaPage] = useState(1);
+  const [agendaPageSize, setAgendaPageSize] = useState(10);
   const { width } = useWindowSize();
   const isMobile = width < 768;
+
+  useEffect(() => {
+    // when device size changes, reset calendar view to the preferred default
+    setCalendarView(isMobile ? Views.AGENDA : Views.MONTH);
+  }, [isMobile]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
