@@ -133,6 +133,8 @@ const ViewClientsTable = ({
                           "settlement_date",
                           "finance_approval_date",
                           "building_and_pest_date",
+                          "order_date",
+                          "delivery_date"
                         ].includes(column.key) ? (
                           item[column.key] &&
                           item[column.key] !== "-" &&
@@ -184,7 +186,7 @@ const ViewClientsTable = ({
                         className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
                         onClick={() => {
                           handelOTOpen();
-                          handelOT(item?.matternumber);
+                          handelOT(item?.matternumber||item.orderId);
                         }}
                       >
                         <ClipboardList size={20} />
@@ -236,14 +238,8 @@ const ViewClientsTable = ({
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-gray-500">
-                  {localStorage.getItem("company") === "vkl"
-                    ? "Matter Number"
-                    : localStorage.getItem("company") === "idg"
-                    ? "Client ID"
-                    : "Reg Number"}
-                </p>
-                <p className=" text-blue-600">{item.matternumber}</p>
+                <p className="text-xs text-gray-500">{localStorage.getItem("company") === "vkl" ? "Matter Number" : localStorage.getItem("company") === "idg" ? "Client ID" : "Reg Number"}</p>
+                <p className=" text-blue-600">{item.matternumber || item.orderId}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -252,14 +248,14 @@ const ViewClientsTable = ({
                   className="p-1 text-gray-700"
                   onClick={() => {
                     handelOTOpen();
-                    handelOT(item?.matternumber);
+                    handelOT(item?.matternumber|| item.orderId);
                   }}
                 >
                   <ClipboardList size={20} />
                 </button>
                 <button
                   onClick={() =>
-                    navigate(`/admin/client/stages/${item.matternumber}`)
+                    navigate(`/admin/client/stages/${item.matternumber||item.orderId}`)
                   }
                   className="p-1 text-blue-600"
                   title="Edit"
@@ -282,30 +278,18 @@ const ViewClientsTable = ({
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">
-                {localStorage.getItem("company") === "vkl"
-                  ? "Property Address"
-                  : localStorage.getItem("company") === "idg"
-                  ? "Billing Address"
-                  : "Address"}
-              </p>
-              <p className="text-sm break-words">{item.property_address}</p>
+              <p className="text-xs text-gray-500">{localStorage.getItem("company") === "vkl" ? "Property Address" : localStorage.getItem("company") === "idg" ? "Billing Address" : "Address"}</p>
+              <p className="text-sm break-words">{item.property_address||item.billing_address}</p>
             </div>
 
             <div className="flex justify-between text-xs pt-2">
               <div>
-                <p className="text-gray-500">
-                  {localStorage.getItem("company") === "vkl"
-                    ? "Settlement Date"
-                    : localStorage.getItem("company") === "idg"
-                    ? "Delivery Date"
-                    : "Date"}
-                </p>
-                <p>{formatDate(item.settlement_date)}</p>
+                <p className="text-gray-500">{localStorage.getItem("company") === "vkl" ? "Settlement Date" : localStorage.getItem("company") === "idg" ? "Delivery Date" : "Date"}</p>
+                <p>{formatDate(item.settlement_date || item.delivery_date)}</p>
               </div>
               <div>
                 <p className="text-gray-500">Entered By</p>
-                <p>{item.dataentryby}</p>
+                <p>{item.dataentryby|| item.data_entry_by}</p>
               </div>
             </div>
 

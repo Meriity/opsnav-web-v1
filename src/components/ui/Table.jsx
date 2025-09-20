@@ -32,6 +32,7 @@ const Table = ({
   handleSort,
   resetLoadingEmail,
   resetSuccessEmail,
+  isClients = false,
 }) => {
   const [currentData, setCurrentData] = useState([]);
 
@@ -133,7 +134,7 @@ const Table = ({
                           <span className="text-xs">Delete</span>
                         </button>
                       )}
-                      {showReset && onReset && (
+                      {!isClients && showReset && onReset && localStorage.getItem("company")==="vkl" && (
                         <button
                           onClick={() => onReset(item.email)}
                           type="button"

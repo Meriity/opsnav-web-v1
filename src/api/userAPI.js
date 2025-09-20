@@ -33,6 +33,25 @@ class ClientAPI {
     }
   }
 
+    async getIDGCalendarDates() {
+    try {
+      // The endpoint you provided is used here
+      console.log(`${this.baseUrl}/idg/orders/dates`);
+      const response = await fetch(`${this.baseUrl}/idg/orders/dates`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting calendar dates:", error);
+      throw error;
+    }
+  }
+
   // Get client details by matter number
   async getClientDetails(matterNumber) {
     try {
@@ -648,27 +667,61 @@ class ClientAPI {
     }
   }
 
-  async getAllIDGOutstandingTasks(page, activeMatter, matterFilter) {
-    try {
-      let url = `${this.baseUrl}/user/tasks/outstanding?page=${page}&filter=${matterFilter}`;
-      if (activeMatter) {
-        url = `${url}&matterNumber=${activeMatter}`;
-      }
-      const response = await fetch(url, {
+
+  async getIDGOutstandingTasks(page = 1, matterFilter = null, ClientID = null) {
+  console.log("Inputs =>", { page, matterFilter, ClientID });
+
+  let url = `${this.baseUrl}/idg/orders/outstanding`;
+  let params = {};
+
+  if (ClientID) {
+    // Case 1: If ClientID is provided → filter by orderId
+    params.orderId = ClientID;
+  } else if (matterFilter) {
+    // Case 2: If matterFilter is provided → calculate date range
+    const today = new Date();
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    params.fromDate = formatDate(today);
+
+    if (matterFilter === "two_weeks") {
+      const endDate = new Date(today);
+      endDate.setDate(today.getDate() + 14);
+      params.toDate = formatDate(endDate);
+    } else if (matterFilter === "four_weeks") {
+      const endDate = new Date(today);
+      endDate.setDate(today.getDate() + 28);
+      params.toDate = formatDate(endDate);
+    }
+
+    params.page = page;
+    params.limit = 20;
+  }
+
+  try {
+    console.log(`${url}?${new URLSearchParams(params).toString()}`);
+    const response = await fetch(
+      `${url}?${new URLSearchParams(params).toString()}`,
+      {
         method: "GET",
         headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error getting stage one:", error);
-      throw error;
+    );
+ 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching IDG outstanding tasks:", error);
+    throw error;
   }
+}
+
+
+
+
 
   // Get All Outstanding Task Report
   async getAllOutstandingTasks(page, activeMatter, matterFilter) {

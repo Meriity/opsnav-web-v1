@@ -10,6 +10,8 @@ import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import CreateClientModal from "../../components/ui/CreateClientModal";
+import userplus from "../../icons/Button icons/Group 313 (1).png";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -30,7 +32,12 @@ const useUserStore = create((set) => ({
         clientId: user.clientId,
         name: user.name,
         email: user.email,
+        contact:user.contact,
         address: user.billingAddress,
+        country:user.country,
+        state:user.state,
+        postcode:user.postcode,
+        abn:user.abn,
       }));
       set({ users: formatted, isFetched: true });
     } catch (err) {
@@ -80,7 +87,7 @@ export default function ManageUsers() {
   const [resetLoadingEmail, setResetLoadingEmail] = useState("");
   const [resetSuccessEmail, setResetSuccessEmail] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
-
+  const [createuser, setcreateuser] = useState(false);
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -112,7 +119,12 @@ export default function ManageUsers() {
     { key: "clientId", title: "Client ID" },
     { key: "name", title: "Name" },
     { key: "email", title: "Email" },
+    { key: "contact", title: "Contact" },
     { key: "address", title: "Address" },
+    { key: "country", title: "Country" },
+    { key: "state", title: "State" },
+    { key: "postcode", title: "PostCode" },
+    { key: "abn", title: "ABN" },
   ];
 
   const handleUserCreation = async (display_name, email, role) => {
@@ -140,7 +152,8 @@ export default function ManageUsers() {
 
   const handleUserUpdate = async () => {
     try {
-      await api.editUser(selectedUser);
+      console.log(selectedUser);
+      await api.editIDGClient(selectedUser);
       toast.success("User updated successfully!");
       setOpenEdit(false);
       setIsFetched(false);
@@ -153,7 +166,8 @@ export default function ManageUsers() {
   const handleUserDelete = async () => {
     try {
       setDeleteLoading(true);
-      await api.deleteUser(id);
+      console.log(id.clientId);
+      await api.deleteIDGClient(id.clientId);  
       toast.success("User deleted successfully!");
       setOpenDelete(false);
       setIsFetched(false);
@@ -193,13 +207,20 @@ export default function ManageUsers() {
 
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
+                
+                <CreateClientModal
+                  createType="client"
+                  companyName={localStorage.getItem("company")}
+                  isOpen={createuser}
+                  setIsOpen={() => setcreateuser(false)}
+                />
           <h2 className="text-2xl font-semibold">Manage Clients</h2>
-          {/* <Button
-            label="Create User"
-            icon={Plus}
-            onClick={() => setOpenUser(true)}
-            className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-          /> */}
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
         </div>
 
         {/* Table or Loader */}
@@ -219,6 +240,7 @@ export default function ManageUsers() {
                 data={userList}
                 columns={columns}
                 onEdit={(u) => {
+                  console.log(u);
                   setSelectedUser(u);
                   setOpenEdit(true);
                 }}
@@ -232,7 +254,8 @@ export default function ManageUsers() {
                 cellWrappingClass="whitespace-normal"
                 resetLoadingEmail={resetLoadingEmail}
                 resetSuccessEmail={resetSuccessEmail}
-                showActions={false}
+                showActions={true}
+                isClients={true}
               />
             </div>
             {/* Mobile & Tablet Card View */}
@@ -254,10 +277,10 @@ export default function ManageUsers() {
                     <div className="flex justify-between items-start space-x-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-bold truncate">
-                          {user.displayName}
+                          {user.displayName||user.name}
                         </h3>
                         <p className="text-sm text-gray-500 truncate">
-                          {user.email}
+                          Client ID: {user.clientId}
                         </p>
                       </div>
                       <div className="flex items-center space-x-1 flex-shrink-0">
@@ -283,62 +306,21 @@ export default function ManageUsers() {
                           <Trash2 size={16} />
                           <span className="text-xs mt-1">Delete</span>
                         </button>
-                        <button
-                          onClick={() => handleReset(user.email)}
-                          disabled={isRowLoading}
-                          title={
-                            isRowLoading
-                              ? "Sending reset link..."
-                              : isRowSuccess
-                              ? "Reset link sent"
-                              : "Reset Password"
-                          }
-                          className={`flex flex-col items-center p-2 rounded-lg transition-colors
-                            ${
-                              isRowSuccess
-                                ? "text-green-600 hover:text-green-700 hover:bg-green-50"
-                                : "text-gray-600 hover:bg-gray-100"
-                            }
-                            ${
-                              isRowLoading
-                                ? "opacity-60 cursor-not-allowed"
-                                : ""
-                            }`}
-                        >
-                          {isRowLoading ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <RefreshCw size={16} />
-                          )}
-                          <span className="text-xs mt-1">
-                            {isRowLoading
-                              ? "Sending…"
-                              : isRowSuccess
-                              ? "Sent"
-                              : "Reset"}
-                          </span>
-                        </button>
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex justify-between text-sm">
                         <div>
                           <span className="font-semibold text-gray-500">
-                            Status:
+                            Address:
                           </span>{" "}
-                          {user.status}
+                          {user.address}
                         </div>
                         <div>
                           <span className="font-semibold text-gray-500">
-                            Role:
+                            Email:
                           </span>{" "}
-                          {user.role}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-500">
-                            Created:
-                          </span>{" "}
-                          {user.createdAt}
+                          {user.email}
                         </div>
                       </div>
                     </div>
@@ -426,60 +408,126 @@ export default function ManageUsers() {
 
       {/* Edit Dialog */}
       <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-10">
+        {console.log(selectedUser)}
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button
-                onClick={() => setOpenEdit(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-4">Edit User</h2>
-              <input
-                value={selectedUser.displayName || ""}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    displayName: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <input
-                value={selectedUser.email || ""}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <div className="flex gap-6 mb-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    checked={selectedUser.role === "user"}
-                    onChange={() =>
-                      setSelectedUser({ ...selectedUser, role: "user" })
-                    }
-                  />
-                  User
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    checked={selectedUser.role === "admin"}
-                    onChange={() =>
-                      setSelectedUser({ ...selectedUser, role: "admin" })
-                    }
-                  />
-                  Admin
-                </label>
-              </div>
-              <Button label="Update" onClick={handleUserUpdate} />
-            </DialogPanel>
+  <button
+    onClick={() => setOpenEdit(false)}
+    className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+  >
+    &times;
+  </button>
+
+  <h2 className="text-lg font-bold mb-4">
+    Edit Client ID : {selectedUser.clientId}
+  </h2>
+
+  {/* Name */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Name
+  </label>
+  <input
+    value={selectedUser.name}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        name: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* Email */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Email
+  </label>
+  <input
+    type="email"
+    value={selectedUser.email || ""}
+    onChange={(e) =>
+      setSelectedUser({ ...selectedUser, email: e.target.value })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* Address */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Address
+  </label>
+  <input
+    value={selectedUser.address || ""}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        address: e.target.value,  // fixed to update address
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+  {/* Country */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Country
+  </label>
+  <input
+    value={selectedUser.country}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        country: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* State */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    State
+  </label>
+  <input
+    value={selectedUser.state}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        state: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+    {/* Postcode */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Postcode
+  </label>
+  <input
+    value={selectedUser.postcode}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        postcode: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+      {/* ABN */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    ABN
+  </label>
+  <input
+    value={selectedUser.abn}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        abn: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  <Button label="Edit Client" onClick={handleUserUpdate} />
+</DialogPanel>
+
           </div>
         </div>
       </Dialog>

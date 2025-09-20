@@ -87,11 +87,14 @@ const CustomEvent = ({ event }) => {
     case "settlement":
       eventTypeLabel = "Settlement";
       break;
+    case "deliveryDate":
+      eventTypeLabel = "Delivery";
+      break;
     default:
       eventTypeLabel = "Event";
   }
-  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : "";
-  const displayTitle = `[${event.matterNumber}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : event.orderType ? event.orderType.charAt(0) : "";
+  const displayTitle = `[${event.matterNumber || event.orderId}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
 
   return (
     <div className="custom-event-content">
@@ -113,13 +116,12 @@ const CustomAgendaEvent = ({ event }) => (
         </span>
       </div>
       <span
-        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
-          event.type === "buildingAndPest"
-            ? "bg-purple-100 text-purple-700"
-            : event.type === "financeApproval"
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${event.type === "buildingAndPest"
+          ? "bg-purple-100 text-purple-700"
+          : event.type === "financeApproval"
             ? "bg-orange-100 text-orange-700"
             : "bg-blue-100 text-blue-700"
-        }`}
+          }`}
       >
         {event.clientType}
       </span>
@@ -190,11 +192,10 @@ const ResponsiveCalendarToolbar = ({
           <button
             key={viewName}
             onClick={() => onView(viewName)}
-            className={`capitalize px-3 py-1 rounded-md transition-colors ${
-              currentView === viewName
-                ? "bg-blue-500 text-white shadow"
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${currentView === viewName
+              ? "bg-blue-500 text-white shadow"
+              : "text-gray-600 hover:bg-gray-200"
+              }`}
           >
             {viewName}
           </button>
@@ -205,14 +206,8 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
-  const {
-    totalusers,
-    totalactive,
-    totalCompleted,
-    lastrecord,
-    loading,
-    setDashboardData,
-  } = useDashboardStore();
+  const { totalusers, totalactive, totalCompleted, lastrecord, loading, setDashboardData } =
+    useDashboardStore();
   const {
     archivedClients,
     isFetched: isArchivedFetched,
@@ -247,8 +242,8 @@ function Dashboard() {
         company === "idg"
           ? "Closed Orders"
           : company === "vkl"
-          ? "Closed Matters"
-          : "Closed";
+            ? "Closed Matters"
+            : "Closed";
 
       return (
         <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
@@ -270,8 +265,8 @@ function Dashboard() {
         const data = await (company === "vkl"
           ? clientApi.getDashboardData()
           : company === "idg"
-          ? clientApi.getIDGDashboardData()
-          : clientApi.getDashboardData());
+            ? clientApi.getIDGDashboardData()
+            : clientApi.getDashboardData());
         console.log("Dashboard data:", data);
         setDashboardData(data);
         setAllChartData({
@@ -292,61 +287,88 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchCalendarData = async () => {
+      const company = localStorage.getItem("company");
       try {
-        const data = await clientApi.getCalendarDates();
+        const data = company === "vkl" ? await clientApi.getCalendarDates() : await clientApi.getIDGCalendarDates();
+        console.log(data);
         const events = [];
-        data.forEach((item) => {
-          if (item.buildingAndPestDate) {
-            events.push({
-              title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
-              start: moment(item.buildingAndPestDate).toDate(),
-              end: moment(item.buildingAndPestDate).toDate(),
-              allDay: true,
-              type: "buildingAndPest",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.buildingAndPest?.toLowerCase() === "yes",
-            });
-          }
-          if (item.financeApprovalDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
-              start: moment(item.financeApprovalDate).toDate(),
-              end: moment(item.financeApprovalDate).toDate(),
-              allDay: true,
-              type: "financeApproval",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.financeApproval?.toLowerCase() === "yes",
-            });
-          }
-          if (item.titleSearchDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
-              start: moment(item.titleSearchDate).toDate(),
-              end: moment(item.titleSearchDate).toDate(),
-              allDay: true,
-              type: "titleSearch",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: item.titleSearch?.toLowerCase() === "yes",
-            });
-          }
-          if (item.settlementDate) {
-            events.push({
-              title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
-              start: moment(item.settlementDate).toDate(),
-              end: moment(item.settlementDate).toDate(),
-              allDay: true,
-              type: "settlement",
-              clientType: item.clientType,
-              matterNumber: item.matterNumber,
-              isApproved: false,
-            });
-          }
-        });
+        if (company === "vkl") {
+          data.forEach((item) => {
+            if (item.buildingAndPestDate) {
+              events.push({
+                title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
+                start: moment(item.buildingAndPestDate).toDate(),
+                end: moment(item.buildingAndPestDate).toDate(),
+                allDay: true,
+                type: "buildingAndPest",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.buildingAndPest?.toLowerCase() === "yes",
+              });
+            }
+            if (item.financeApprovalDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
+                start: moment(item.financeApprovalDate).toDate(),
+                end: moment(item.financeApprovalDate).toDate(),
+                allDay: true,
+                type: "financeApproval",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.financeApproval?.toLowerCase() === "yes",
+              });
+            }
+            if (item.titleSearchDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
+                start: moment(item.titleSearchDate).toDate(),
+                end: moment(item.titleSearchDate).toDate(),
+                allDay: true,
+                type: "titleSearch",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.titleSearch?.toLowerCase() === "yes",
+              });
+            }
+            if (item.settlementDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
+                start: moment(item.settlementDate).toDate(),
+                end: moment(item.settlementDate).toDate(),
+                allDay: true,
+                type: "settlement",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+              });
+            }
+          });
 
-        setCalendarEvents(events);
+          setCalendarEvents(events);
+        } else {
+          data.forEach((item) => {
+            if (item.deliveryDate) {
+              const displayTitle = `[${item.orderId}] - Delivery - [${item.orderType}]`;
+              events.push({
+                title: `[${item.orderId}] - ${item.orderType || "Order"}`, // ✅ safe for agenda
+                start: moment(item.deliveryDate).toDate(),
+                end: moment(item.deliveryDate).toDate(),
+                allDay: true,
+                type: "deliveryDate",
+                clientType: item.orderType,
+                orderId: item.orderId,
+              });
+            }
+          });
+          const safeEvents = events
+            .filter(e => e && e.start && e.end) // remove undefined / broken
+            .map(e => ({
+              title: e.title || `[${e.orderId || "NoID"}]`, // fallback title
+              ...e,
+            }));
+
+          setCalendarEvents(safeEvents);
+
+        }
       } catch (error) {
         toast.error("Could not load calendar dates.");
         console.error("Error fetching calendar data:", error);
@@ -367,7 +389,8 @@ function Dashboard() {
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
         }));
         setCurrentChartData(formattedData);
-      } else if (localStorage.getItem("company") === "idg") {
+      }
+      else if (localStorage.getItem("company") === "idg") {
         formattedData = ten.map((item) => ({
           ...item,
           name: item.month,
@@ -385,9 +408,11 @@ function Dashboard() {
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
         }));
         setCurrentChartData(formattedData);
-      } else if (localStorage.getItem("company") === "idg") {
+      }
+      else if (localStorage.getItem("company") === "idg") {
         const all = allChartData.allTime || [];
         formattedData = all.map((item) => ({
+
           ...item,
           name: `${item.month} ${item.year}`,
           closedMatters: item.closedOrders,
@@ -537,28 +562,26 @@ function Dashboard() {
                 {localStorage.getItem("company") === "vkl"
                   ? "Closed Matters"
                   : localStorage.getItem("company") === "idg"
-                  ? "Closed Orders"
-                  : "Closed"}{" "}
+                    ? "Closed Orders"
+                    : "Closed"}{" "}
                 ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
                   onClick={() => setChartView("last10Months")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "last10Months"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "last10Months"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   10 Months
                 </button>
                 <button
                   onClick={() => setChartView("allTime")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "allTime"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "allTime"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   All Time
                 </button>
@@ -596,8 +619,8 @@ function Dashboard() {
                     {localStorage.getItem("company") === "vkl"
                       ? "Matters Solved In Last Month"
                       : localStorage.getItem("company") === "idg"
-                      ? "Orders Closed In Last Month"
-                      : "Closed"}
+                        ? "Orders Closed In Last Month"
+                        : "Closed"}
                   </p>
                 )}
               </>
@@ -614,133 +637,25 @@ function Dashboard() {
               Important Dates
             </h2>
             <div className="h-[65vh] min-h-[500px]">
-              {calendarView === Views.AGENDA ? (
-                // Paginated Agenda list
-                <div className="h-full overflow-auto p-2">
-                  {/* Controls */}
-                  <div className="flex flex-col items-center gap-3">
-                    {/* Arrows + Today row */}
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        className="px-3 py-2 rounded border bg-white hover:bg-gray-50"
-                        onClick={() =>
-                          setAgendaPage((p) =>
-                            p === 1
-                              ? Math.max(
-                                  1,
-                                  Math.ceil(
-                                    calendarEvents.length / agendaPageSize
-                                  )
-                                )
-                              : p - 1
-                          )
-                        }
-                        aria-label="Previous page"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-
-                      <button
-                        className="mx-1 px-4 py-2 rounded bg-gray-100 text-sm font-semibold border"
-                        onClick={() => {
-                          setCalendarDate(new Date());
-                          setAgendaPage(1);
-                        }}
-                      >
-                        Today
-                      </button>
-
-                      <button
-                        className="px-3 py-2 rounded border bg-white hover:bg-gray-50"
-                        onClick={() =>
-                          setAgendaPage((p) => {
-                            const total = Math.max(
-                              1,
-                              Math.ceil(calendarEvents.length / agendaPageSize)
-                            );
-                            return p === total ? 1 : p + 1;
-                          })
-                        }
-                        aria-label="Next page"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-
-                    {/* Per page selector on its own line */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-600">Per page</label>
-                      <select
-                        value={agendaPageSize}
-                        onChange={(e) => {
-                          setAgendaPageSize(Number(e.target.value));
-                          setAgendaPage(1);
-                        }}
-                        className="border rounded px-2 py-1"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={20}>50</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* compute events for agenda sorted by start */}
-                  {(() => {
-                    const sorted = [...calendarEvents].sort(
-                      (a, b) => new Date(a.start) - new Date(b.start)
-                    );
-                    // optional: filter to a date range around calendarDate (e.g., month)
-                    // const filtered = sorted.filter(e => moment(e.start).isSame(calendarDate, 'month'));
-                    // we'll show all events paginated
-
-                    const startIndex = (agendaPage - 1) * agendaPageSize;
-                    const pageItems = sorted.slice(
-                      startIndex,
-                      startIndex + agendaPageSize
-                    );
-                    return pageItems.length ? (
-                      <div>
-                        {pageItems.map((evt, idx) => (
-                          <CustomAgendaEvent
-                            key={idx + "-" + evt.title}
-                            event={evt}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 py-12">
-                        No events for the agenda.
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <Calendar
-                  localizer={localizer}
-                  events={calendarEvents}
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: "100%" }}
-                  popup
-                  onNavigate={handleNavigate}
-                  dayPropGetter={dayPropGetter}
-                  views={views}
-                  defaultView={defaultView}
-                  eventPropGetter={eventStyleGetter}
-                  onView={(v) => {
-                    setCalendarView(v);
-                    if (v === Views.AGENDA) setAgendaPage(1);
-                  }}
-                  view={calendarView}
-                  components={{
-                    event: CustomEvent,
-                    agenda: { event: CustomAgendaEvent },
-                    toolbar: ResponsiveCalendarToolbar,
-                  }}
-                />
-              )}
+              <Calendar
+                localizer={localizer}
+                events={calendarEvents}
+                titleAccessor={(event) => event?.title || `[${event?.orderId || "Untitled"}]`}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: "100%" }}
+                popup
+                onNavigate={handleNavigate}
+                dayPropGetter={dayPropGetter}
+                views={views}
+                defaultView={defaultView}
+                eventPropGetter={eventStyleGetter}
+                components={{
+                  event: CustomEvent,
+                  agenda: { event: CustomAgendaEvent },
+                  toolbar: ResponsiveCalendarToolbar,
+                }}
+              />
             </div>
           </div>
         </div>

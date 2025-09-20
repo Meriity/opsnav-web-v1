@@ -380,15 +380,15 @@ export default function ArchivedClients() {
                     </div>
                     <div>
                       <span className="font-semibold">Type: </span>
-                      {client.type}
+                      {client.type||client.orderType}
                     </div>
                     <div>
-                      <span className="font-semibold">Matter Date: </span>
-                      {client.matter_date}
+                      <span className="font-semibold">{localStorage.getItem("company")==="vkl" ? "Matter Date:":"Order Date"} </span>
+                      {client.matter_date|| client.orderDate}
                     </div>
                     <div>
-                      <span className="font-semibold">Settlement Date: </span>
-                      {client.settlement_date}
+                      <span className="font-semibold">{localStorage.getItem("company")==="vkl" ? "Settlement Date::":"Delivery Date"} </span>
+                      {client.settlement_date||client.deliveryDate}
                     </div>
                     <div>
                       <span className="font-semibold">Status: </span>

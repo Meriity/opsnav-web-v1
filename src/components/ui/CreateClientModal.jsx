@@ -212,13 +212,13 @@ export default function CreateClientModal({
         } else if (createType === "order") {
           const requiredFields = [
             "client",
-            "category",
+            "orderType",
             "priority",
             "deliveryAddress",
             "country",
             "state",
             "postcode",
-            "settlementDate",
+            "deliveryDate",
           ];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
@@ -228,16 +228,17 @@ export default function CreateClientModal({
 
           const payload = {
             orderId: id.orderId,
-            clientId: formData.clientId,
+            clientId: formData.client,
             orderType: formData.orderType,
             priority: formData.priority,
             deliveryAddress: formData.deliveryAddress,
             country: formData.country,
             state: formData.state,
-            postcode: formData.postCode,
+            postcode: formData.postcode,
             orderDate: formData.orderDate,
             deliveryDate: formData.deliveryDate,
           };
+          console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
         }
@@ -593,8 +594,8 @@ export default function CreateClientModal({
                       Order Type*
                     </label>
                     <select
-                      name="category"
-                      value={formData.category || ""}
+                      name="orderType"
+                      value={formData.orderType || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                       required
@@ -688,8 +689,8 @@ export default function CreateClientModal({
                     </label>
                     <input
                       type="date"
-                      name="settlementDate"
-                      value={formData.settlementDate || ""}
+                      name="deliveryDate"
+                      value={formData.deliveryDate || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
                       required

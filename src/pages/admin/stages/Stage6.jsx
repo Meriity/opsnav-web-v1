@@ -116,6 +116,7 @@ const formConfig = {
           "capturePhotos",
           "updateStatusExcel",
           "generateInvoice",
+          "archiveOrder"
         ],
       },
     ],
