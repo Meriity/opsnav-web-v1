@@ -89,8 +89,8 @@ export default function OutstandingTasksModal({
       } else {
         nonEmptyStages.forEach(([stage, tasks], index) => {
           rows.push([
-            index === 0 ? `${item.matterNumber} - ${item.clientName}` : "",
-            index === 0 ? formatDate(item.settlementDate) : "",
+            index === 0 ? `${item.matterNumber||item.orderId} - ${item.clientName}` : "",
+            index === 0 ? formatDate(item.settlementDate||item.deliveryDate) : "",
             stage,
             tasks.join("\n"),
           ]);
@@ -98,39 +98,52 @@ export default function OutstandingTasksModal({
       }
     });
 
-    autoTable(doc, {
-      startY: 22,
-      head: [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [0, 123, 255] },
-      didDrawCell: (data) => {
-        if (
-          data.section === "body" &&
-          (data.column.index === 0 || data.column.index === 1)
-        ) {
-          if (data.cell.raw === "") {
-            let i = data.row.index - 1;
-            let startCell = null;
-            while (i >= 0) {
-              const prevCell = data.table.body[i].cells[data.column.index];
-              if (prevCell.raw !== "") {
-                startCell = prevCell;
-                break;
-              }
-              i--;
-            }
-            if (startCell) {
-              startCell.rowSpan = (startCell.rowSpan || 1) + 1;
-              data.cell.styles.lineWidth = 0;
-            }
-          }
-        }
-      },
-    });
+const company = localStorage.getItem("company");
 
-    doc.save("Outstanding_Tasks_Report.pdf");
-  };
+// dynamic head
+const head =
+  company === "idg"
+    ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
+    : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
+
+autoTable(doc, {
+  startY: 22,
+  head,
+  body: rows,
+  styles: { fontSize: 9, cellPadding: 2 },
+  headStyles: { fillColor: [0, 123, 255] },
+  didDrawCell: (data) => {
+    if (
+      data.section === "body" &&
+      (data.column.index === 0 || data.column.index === 1)
+    ) {
+      if (data.cell.raw === "") {
+        let i = data.row.index - 1;
+        let startCell = null;
+        while (i >= 0) {
+          const prevCell = data.table.body[i].cells[data.column.index];
+          if (prevCell.raw !== "") {
+            startCell = prevCell;
+            break;
+          }
+          i--;
+        }
+        if (startCell) {
+          startCell.rowSpan = (startCell.rowSpan || 1) + 1;
+          data.cell.styles.lineWidth = 0;
+        }
+      }
+    }
+  },
+});
+
+doc.save(
+  company === "idg"
+    ? "IDG_Outstanding_Tasks_Report.pdf"
+    : "VKL_Outstanding_Tasks_Report.pdf"
+);
+  }
+
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">

@@ -134,7 +134,7 @@ const Table = ({
                           <span className="text-xs">Delete</span>
                         </button>
                       )}
-                      {!isClients && showReset && onReset && (
+                      {!isClients && showReset && onReset && localStorage.getItem("company")==="vkl" && (
                         <button
                           onClick={() => onReset(item.email)}
                           type="button"

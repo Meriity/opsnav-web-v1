@@ -168,7 +168,12 @@ class AdminAPI {
         body: JSON.stringify({
           name: ClientData.name,
           email: ClientData.email,
+          contact:ClientData.contact,
           billingAddress:ClientData.address,
+          country:ClientData.country,
+          state:ClientData.state,
+          postcode:ClientData.postcode,
+          abn:ClientData.abn
         }),
       });
 

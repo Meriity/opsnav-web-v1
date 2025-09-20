@@ -198,14 +198,16 @@ export default function ManageUsers() {
       <main className="w-full max-w-8xl mx-auto p-5">
 
         {/* Manage Users Header */}
+       
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">Manage Users</h2>
+           {localStorage.getItem("company")==="vkl" &&
           <Button
             label="Create User"
             icon={Plus}
             onClick={() => setOpenUser(true)}
             className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-          />
+          />}
         </div>
 
         {/* Table or Loader */}
