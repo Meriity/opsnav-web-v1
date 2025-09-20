@@ -271,6 +271,11 @@ const ViewClients = () => {
                     width="w-[150px]"
                   />
                   <Button
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
                     label="Select Date Range"
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
@@ -288,11 +293,6 @@ const ViewClients = () => {
                   <Button
                     label="Create Order"
                     onClick={() => setcreateOrder(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Outstanding Tasks"
-                    onClick={() => setShowOutstandingTask(true)}
                     width="w-[150px]"
                   />
                   <Button

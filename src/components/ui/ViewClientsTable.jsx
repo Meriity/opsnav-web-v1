@@ -132,6 +132,8 @@ const ViewClientsTable = ({
                           "settlement_date",
                           "finance_approval_date",
                           "building_and_pest_date",
+                          "order_date",
+                          "delivery_date"
                         ].includes(column.key) ? (
                           item[column.key] &&
                             item[column.key] !== "-" &&

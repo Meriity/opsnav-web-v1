@@ -10,6 +10,8 @@ import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import CreateClientModal from "../../components/ui/CreateClientModal";
+import userplus from "../../icons/Button icons/Group 313 (1).png";
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -30,7 +32,12 @@ const useUserStore = create((set) => ({
         clientId: user.clientId,
         name: user.name,
         email: user.email,
+        contact:user.contact,
         address: user.billingAddress,
+        country:user.country,
+        state:user.state,
+        postcode:user.postcode,
+        abn:user.abn,
       }));
       set({ users: formatted, isFetched: true });
     } catch (err) {
@@ -80,7 +87,7 @@ export default function ManageUsers() {
   const [resetLoadingEmail, setResetLoadingEmail] = useState("");
   const [resetSuccessEmail, setResetSuccessEmail] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
-
+  const [createuser, setcreateuser] = useState(false);
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -112,7 +119,12 @@ export default function ManageUsers() {
     { key: "clientId", title: "Client ID" },
     { key: "name", title: "Name" },
     { key: "email", title: "Email" },
+    { key: "contact", title: "Contact" },
     { key: "address", title: "Address" },
+    { key: "country", title: "Country" },
+    { key: "state", title: "State" },
+    { key: "postcode", title: "PostCode" },
+    { key: "abn", title: "ABN" },
   ];
 
   const handleUserCreation = async (display_name, email, role) => {
@@ -140,6 +152,7 @@ export default function ManageUsers() {
 
   const handleUserUpdate = async () => {
     try {
+      console.log(selectedUser);
       await api.editIDGClient(selectedUser);
       toast.success("User updated successfully!");
       setOpenEdit(false);
@@ -194,13 +207,20 @@ export default function ManageUsers() {
 
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
+                
+                <CreateClientModal
+                  createType="client"
+                  companyName={localStorage.getItem("company")}
+                  isOpen={createuser}
+                  setIsOpen={() => setcreateuser(false)}
+                />
           <h2 className="text-2xl font-semibold">Manage Clients</h2>
-          {/* <Button
-            label="Create User"
-            icon={Plus}
-            onClick={() => setOpenUser(true)}
-            className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-          /> */}
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
         </div>
 
         {/* Table or Loader */}
@@ -220,6 +240,7 @@ export default function ManageUsers() {
                 data={userList}
                 columns={columns}
                 onEdit={(u) => {
+                  console.log(u);
                   setSelectedUser(u);
                   setOpenEdit(true);
                 }}
@@ -441,6 +462,64 @@ export default function ManageUsers() {
       setSelectedUser({
         ...selectedUser,
         address: e.target.value,  // fixed to update address
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+  {/* Country */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Country
+  </label>
+  <input
+    value={selectedUser.country}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        country: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+  {/* State */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    State
+  </label>
+  <input
+    value={selectedUser.state}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        state: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+    {/* Postcode */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Postcode
+  </label>
+  <input
+    value={selectedUser.postcode}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        postcode: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-4 px-4 py-3 border rounded"
+  />
+
+      {/* ABN */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    ABN
+  </label>
+  <input
+    value={selectedUser.abn}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        abn: e.target.value,   // changed to update name, not displayName
       })
     }
     className="w-full mb-4 px-4 py-3 border rounded"
