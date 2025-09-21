@@ -1,0 +1,18 @@
+@media only screen and (max-width: 768px) {
+  .Toastify__toast-container {
+    width: 90vw;
+    max-width: 400px;
+    margin: 20px auto;
+    left: 5vw;
+    transform: translateX(0);
+  }
+
+  .Toastify__toast-body {
+    font-size: 14px;
+  }
+
+  .Toastify__toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+}

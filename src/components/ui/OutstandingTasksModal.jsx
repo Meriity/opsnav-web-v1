@@ -10,6 +10,7 @@ export default function OutstandingTasksModal({
   open,
   onClose,
   activeMatter = null,
+  onOpen=false,
 }) {
   const api = new ClientAPI();
   const [data, setData] = useState([]);
@@ -17,6 +18,7 @@ export default function OutstandingTasksModal({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [matterFilter, setMatterFilter] = useState("none");
+  const company = localStorage.getItem("company");
 
   useEffect(() => {
     if (open) {
@@ -33,12 +35,19 @@ export default function OutstandingTasksModal({
 
   const fetchData = async (page) => {
     setLoading(true);
+      console.log(matterFilter);
+
     try {
-      const response = await api.getAllOutstandingTasks(
+      const ClientID=activeMatter;
+      const response = company === "vkl" ? await api.getAllOutstandingTasks(
         page,
         activeMatter,
         matterFilter
-      );
+      )  : await api.getIDGOutstandingTasks( page,
+        matterFilter,
+        activeMatter
+        );
+      console.log(matterFilter);
       if (activeMatter) {
         setData([response]);
         setTotalPages(1);
@@ -80,8 +89,8 @@ export default function OutstandingTasksModal({
       } else {
         nonEmptyStages.forEach(([stage, tasks], index) => {
           rows.push([
-            index === 0 ? `${item.matterNumber} - ${item.clientName}` : "",
-            index === 0 ? formatDate(item.settlementDate) : "",
+            index === 0 ? `${item.matterNumber||item.orderId} - ${item.clientName}` : "",
+            index === 0 ? formatDate(item.settlementDate||item.deliveryDate) : "",
             stage,
             tasks.join("\n"),
           ]);
@@ -89,39 +98,52 @@ export default function OutstandingTasksModal({
       }
     });
 
-    autoTable(doc, {
-      startY: 22,
-      head: [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [0, 123, 255] },
-      didDrawCell: (data) => {
-        if (
-          data.section === "body" &&
-          (data.column.index === 0 || data.column.index === 1)
-        ) {
-          if (data.cell.raw === "") {
-            let i = data.row.index - 1;
-            let startCell = null;
-            while (i >= 0) {
-              const prevCell = data.table.body[i].cells[data.column.index];
-              if (prevCell.raw !== "") {
-                startCell = prevCell;
-                break;
-              }
-              i--;
-            }
-            if (startCell) {
-              startCell.rowSpan = (startCell.rowSpan || 1) + 1;
-              data.cell.styles.lineWidth = 0;
-            }
-          }
-        }
-      },
-    });
+const company = localStorage.getItem("company");
 
-    doc.save("Outstanding_Tasks_Report.pdf");
-  };
+// dynamic head
+const head =
+  company === "idg"
+    ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
+    : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
+
+autoTable(doc, {
+  startY: 22,
+  head,
+  body: rows,
+  styles: { fontSize: 9, cellPadding: 2 },
+  headStyles: { fillColor: [0, 123, 255] },
+  didDrawCell: (data) => {
+    if (
+      data.section === "body" &&
+      (data.column.index === 0 || data.column.index === 1)
+    ) {
+      if (data.cell.raw === "") {
+        let i = data.row.index - 1;
+        let startCell = null;
+        while (i >= 0) {
+          const prevCell = data.table.body[i].cells[data.column.index];
+          if (prevCell.raw !== "") {
+            startCell = prevCell;
+            break;
+          }
+          i--;
+        }
+        if (startCell) {
+          startCell.rowSpan = (startCell.rowSpan || 1) + 1;
+          data.cell.styles.lineWidth = 0;
+        }
+      }
+    }
+  },
+});
+
+doc.save(
+  company === "idg"
+    ? "IDG_Outstanding_Tasks_Report.pdf"
+    : "VKL_Outstanding_Tasks_Report.pdf"
+);
+  }
+
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -135,7 +157,7 @@ export default function OutstandingTasksModal({
               {!activeMatter && (
                 <div>
                   <label className="text-sm font-semibold block mb-1 text-gray-600">
-                    Matters Settling In
+                    {company==="vkl" ? "Matters Settling in":"Orders Delivery in"}
                   </label>
                   <select
                     className="w-full sm:w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -163,15 +185,17 @@ export default function OutstandingTasksModal({
                   <thead className="bg-blue-600 text-white">
                     <tr>
                       <th className="px-6 py-3 border">
-                        Matter No. and Client
+                        {company === "vkl" ? "Matter No. and Client" : "OrderId and Client"}
                       </th>
-                      <th className="px-6 py-3 border">Settlement Date</th>
+                      <th className="px-6 py-3 border">{company === "vkl" ? "Settlement Date" : "Delivery Date"}</th>
                       <th className="px-6 py-3 border">Stage</th>
                       <th className="px-6 py-3 border">Tasks</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {console.log(data)}
                     {data.length > 0 ? (
+
                       data.map((item, idx) => {
                         const allStages = Object.entries(
                           item.outstandingTasks || {}
@@ -183,7 +207,7 @@ export default function OutstandingTasksModal({
                           return (
                             <tr key={idx} className="border bg-white">
                               <td className="px-6 py-4 border align-top">
-                                {item.matterNumber} - {item.clientName}
+                                  {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
                               </td>
                               <td className="px-6 py-4 border align-top">
                                 {formatDate(item.settlementDate)}
@@ -209,13 +233,14 @@ export default function OutstandingTasksModal({
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50 font-medium"
                                   >
-                                    {item.matterNumber} - {item.clientName}
+                                    {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
+
                                   </td>
                                   <td
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50"
                                   >
-                                    {formatDate(item.settlementDate)}
+                                    {formatDate(item.settlementDate||item.deliveryDate)}
                                   </td>
                                 </>
                               )}

@@ -3,6 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 // --- Configuration Object for Stage 2 ---
 const formConfig = {
@@ -64,22 +65,22 @@ const formConfig = {
   idg: {
     fields: [
       {
-        name: "confirmCustomerAcceptance",
+        name: "customerAcceptedQuote",
         label: "Confirm Customer Acceptance of Quote",
         type: "radio",
       },
       {
-        name: "confirmPaymentTerms",
+        name: "paymentTermsAgreed",
         label: "Confirm Payment Terms Agreed",
         type: "radio",
       },
       {
-        name: "verifyInternalCapacity",
+        name: "internalCapacityVerified",
         label: "Verify Internal Capacity",
         type: "radio",
       },
       {
-        name: "approveOrRejectOrder",
+        name: "approvalStatus",
         label: "Approve or reject order for planning",
         type: "radio",
       },
@@ -93,10 +94,10 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "confirmCustomerAcceptance",
-          "confirmPaymentTerms",
-          "verifyInternalCapacity",
-          "approveOrRejectOrder",
+          "customerAcceptedQuote",
+          "paymentTermsAgreed",
+          "internalCapacityVerified",
+          "approvalStatus",
         ],
       },
     ],
@@ -136,10 +137,18 @@ export default function Stage2({
       return "Not Completed";
     }
     const val = normalizeValue(value);
-    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+    const completed = new Set([
+      "yes",
+      "nr",
+      "na",
+      "variable",
+      "fixed",
+      "approved",
+    ]);
     if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "inprogress"].includes(val)) return "In Progress";
+    if (["processing", "inprogress", "pending"].includes(val))
+      return "In Progress";
     return "Not Completed";
   };
 
@@ -165,7 +174,7 @@ export default function Stage2({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "nr", "na", "na"]);
+    const greenValues = new Set(["yes", "nr", "na", "na", "approved"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
@@ -178,7 +187,6 @@ export default function Stage2({
 
     const notReceived = fieldsToCheck
       .filter((field) => {
-        // Conditionally exclude obtainDaSeller for non-sellers
         if (
           field.name === "obtainDaSeller" &&
           clientType?.toLowerCase() !== "seller"
@@ -234,7 +242,14 @@ export default function Stage2({
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
     originalData.current = JSON.parse(JSON.stringify(initialFormData));
-  }, [data, reloadTrigger, company]);
+  }, [
+    data,
+    reloadTrigger,
+    company,
+    clientType,
+    currentConfig.fields,
+    currentConfig.noteGroups,
+  ]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
@@ -255,33 +270,98 @@ export default function Stage2({
     }
   };
 
-  const isChanged = () =>
-    JSON.stringify(formData) !== JSON.stringify(originalData.current);
+  const isChanged = () => {
+    // 1. Check if any form values have been modified by the user.
+    const valuesHaveChanged =
+      JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
+    if (valuesHaveChanged) {
+      return true;
+    }
+
+    // 2. If values are the same, check if the status needs updating.
+    // This allows saving a completed form that was wrongly marked as "In Progress".
+    const relevantFields = currentConfig.fields.filter((field) => {
+      if (
+        field.name === "obtainDaSeller" &&
+        clientType?.toLowerCase() !== "seller"
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const allCompleted = relevantFields.every(
+      (f) => getStatus(formData[f.name]) === "Completed"
+    );
+
+    const calculatedStatus = allCompleted ? "green" : "amber";
+    return calculatedStatus !== data?.colorStatus;
+  };
   async function handleSave() {
     if (!isChanged() || isSaving) return;
     setIsSaving(true);
 
     try {
-      const payload = { ...formData };
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
+
+      // handle all system notes and client comments dynamically
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
 
+        // remove temporary fields
         delete payload[group.systemNoteKey];
         delete payload[group.clientCommentKey];
       });
 
-      const allCompleted = currentConfig.fields.every(
+      // status check
+      const relevantFields = currentConfig.fields.filter((field) => {
+        if (
+          field.name === "obtainDaSeller" &&
+          clientType?.toLowerCase() !== "seller"
+        ) {
+          return false;
+        }
+        return true;
+      });
+
+      const allCompleted = relevantFields.every(
         (f) => getStatus(formData[f.name]) === "Completed"
       );
       const formStatus = allCompleted ? "green" : "amber";
-      await api.upsertStageTwo(matterNumber, formStatus, payload);
+      if ((clientType || "").toLowerCase() !== "seller") {
+        delete payload.obtainDaSeller;
+        delete payload.obtainDaSellerDate;
+      }
+      // dynamically set the key depending on company
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber; // keep matterNumber
+        await api.upsertStageTwo(matterNumber, formStatus, payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber; // use orderId
+        await api.upsertIDGStages(payload.orderId, 2, {
+          ...payload,
+          formStatus,
+        });
+      }
 
+      // update original data
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
+
+      toast.success("Stage 2 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (error) {
       console.error("Failed to update stage 2:", error);
     } finally {
@@ -307,7 +387,7 @@ export default function Stage2({
       </div>
 
       <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-        {(field.name === "approveOrRejectOrder"
+        {(field.name === "approvalStatus"
           ? ["Approved", "Rejected", "Pending"]
           : ["Yes", "No", "Processing", "N/R"]
         ).map((val) => (

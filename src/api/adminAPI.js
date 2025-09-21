@@ -115,6 +115,26 @@ class AdminAPI {
     }
   }
 
+    // Delete a user
+  async deleteIDGClient(clientId) {
+    console.log(clientId);
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients/${clientId}`, {
+        method: "DELETE",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
+  }
+
   // Edit/Update a user
   async editUser(user) {
     console.log(user);
@@ -125,6 +145,35 @@ class AdminAPI {
         body: JSON.stringify({
           displayName: user.displayName,
           role: user.role,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error editing user:", error);
+      throw error;
+    }
+  }
+
+    async editIDGClient(ClientData) {
+    console.log(ClientData);
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients/${ClientData.clientId}`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          name: ClientData.name,
+          email: ClientData.email,
+          contact:ClientData.contact,
+          billingAddress:ClientData.address,
+          country:ClientData.country,
+          state:ClientData.state,
+          postcode:ClientData.postcode,
+          abn:ClientData.abn
         }),
       });
 

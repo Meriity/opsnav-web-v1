@@ -3,6 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 const formConfig = {
   vkl: {
@@ -37,7 +38,11 @@ const formConfig = {
         label: "Review and internally approve design",
         type: "radio",
       },
-      { name: "proofSentToClient", label: "Send Proof to Client", type: "radio" },
+      {
+        name: "proofSentToClient",
+        label: "Send Proof to Client",
+        type: "radio",
+      },
       {
         name: "clientApprovalReceived",
         label: "Record Client Approval",
@@ -64,7 +69,7 @@ const formConfig = {
         type: "text",
       },
       {
-        name: "Status",
+        name: "status",
         label: "Update Job Status",
         type: "text",
       },
@@ -78,14 +83,15 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "createArtwork",
-          "approveDesign",
-          "sendProof",
-          "recordApproval",
-          "generatePrintFiles",
-          "organizeMaterials",
-          "logJobActivity",
-          "updateJobStatus",
+          "designArtwork",
+          "internalApproval",
+          "proofSentToClient",
+          "clientApprovalReceived",
+          "printReadyFiles",
+          "materialsOrganized",
+          "jobActivity",
+          "priority",
+          "status",
         ],
       },
     ],
@@ -150,19 +156,37 @@ export default function Stage4({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
+    const greenValues = new Set(["yes", "nr", "na", "approved"]);
+
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
 
-    const incomplete = fieldsToCheck
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
+    const notReceived = fieldsToCheck
+      .filter((field) => {
+        const rawValue = formData[field.name] || "";
+        const value = normalizeValue(rawValue);
+
+        // Special case: skip obtainDaSeller if clientType is not seller
+        if (
+          field.name === "obtainDaSeller" &&
+          clientType?.toLowerCase() !== "seller"
+        ) {
+          return false;
+        }
+
+        if (field.type === "text") {
+          // text fields count as completed if not empty
+          return value === "";
+        }
+
+        // non-text fields rely on greenValues
+        return !greenValues.has(value);
+      })
       .map((field) => field.label);
 
-    if (incomplete.length === 0) return "All tasks completed";
-    return `Pending: ${incomplete.join(", ")}`;
+    if (notReceived.length === 0) return "Tasks completed";
+    return `${notReceived.join(" and ")} not received`;
   };
 
   useEffect(() => {
@@ -218,8 +242,10 @@ export default function Stage4({
     setIsSaving(true);
 
     try {
-      const payload = { matterNumber, ...formData };
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
 
+      // handle note groups
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
@@ -228,6 +254,7 @@ export default function Stage4({
         delete payload[group.clientCommentKey];
       });
 
+      // handle number fields
       currentConfig.fields.forEach((field) => {
         if (field.type === "number") {
           payload[field.name] =
@@ -235,9 +262,28 @@ export default function Stage4({
         }
       });
 
-      await api.upsertStageFour(payload);
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageFour(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 4, payload);
+      }
+
+      // update original data
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
+
+      toast.success("Stage 4 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (err) {
       console.error("Failed to save Stage 4:", err);
     } finally {
@@ -303,7 +349,7 @@ export default function Stage4({
             />
           </div>
         );
-          case "text":
+      case "text":
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">

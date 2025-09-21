@@ -63,19 +63,19 @@ export const useClientStore = create(
           } else if (company === "idg") {
             formattedClients = response.map((client, index) => ({
               id: client._id || "N/A",
-              clientId: `IDG${String(index + 1).padStart(3, "0")}`, // e.g. IDG001, IDG002
+              clientId: client.clientId,
               orderId: client.orderId || "N/A",
               data_entry_by: client.dataEntryBy || "N/A",
               client_name: client.client_name || "N/A",
-              billing_address: client.property_address || "N/A",
+              billing_address: client.deliveryAddress || "N/A",
               client_type: client.orderType || "N/A",
               stages: Array.isArray(client.stages) ? client.stages : [],
               order_date: client.orderDate ? client.orderDate.split("T")[0] : "N/A",
               delivery_date: client.deliveryDate
                 ? client.deliveryDate.split("T")[0]
                 : "2025-09-25",
-              priority:"Standard",
-              postcode:"52478"  
+              priority:client.priority || "N/A",
+              postcode:client.postCode || "N/A",
             }));
 
           }

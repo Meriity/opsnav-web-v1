@@ -72,7 +72,11 @@ const formConfig = {
         label: "Perform Installation / Removal On-Site",
         type: "radio",
       },
-      { name: "streetPointersPlaced", label: "Place Street Pointers", type: "radio" },
+      {
+        name: "streetPointersPlaced",
+        label: "Place Street Pointers",
+        type: "radio",
+      },
       {
         name: "onsiteStickersApplied",
         label: "Apply On-Site Stickers",
@@ -105,14 +109,14 @@ const formConfig = {
         systemNoteKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "assignInstaller",
-          "performInstallation",
-          "placePointers",
-          "applyOnSiteStickers",
+          "installerAssigned",
+          "installationDone",
+          "streetPointersPlaced",
+          "onsiteStickersApplied",
           "capturePhotos",
           "updateStatusExcel",
           "generateInvoice",
-          "archiveOrder",
+          "archiveOrder"
         ],
       },
     ],
@@ -238,9 +242,12 @@ export default function Stage6({
 
   async function proceedWithSave() {
     setIsSaving(true);
-    try {
-      const payload = { matterNumber, ...formData };
 
+    try {
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
+
+      // handle note groups
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.systemNoteKey] || "";
@@ -250,12 +257,28 @@ export default function Stage6({
         delete payload[group.systemNoteKey];
       });
 
-      await api.upsertStageSix(payload);
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageSix(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 6, payload);
+      }
 
-      toast.success("Stage 6 saved successfully!");
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
       setIsModalOpen(false);
+
+      toast.success("Stage 6 saved successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (err) {
       console.error("Failed to save Stage 6:", err);
       toast.error("Failed to save Stage 6.");
@@ -265,13 +288,14 @@ export default function Stage6({
   }
 
   async function handleSave() {
-    if (!isChanged()) return;
+    if (!isChanged() || isSaving) return;
 
     if (modalField) {
       const originalValue = normalizeValue(
         originalData.current[modalField.name] || ""
       );
       const currentValue = normalizeValue(formData[modalField.name] || "");
+
       if (currentValue && originalValue !== currentValue) {
         setIsModalOpen(true);
         return;

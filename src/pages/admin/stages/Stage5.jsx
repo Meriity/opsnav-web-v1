@@ -3,6 +3,7 @@ import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 const formConfig = {
   vkl: {
@@ -58,13 +59,21 @@ const formConfig = {
       { name: "laminationApplied", label: "Lamination Applied", type: "radio" },
       { name: "cuttingDone", label: "Cutting Done", type: "radio" },
       { name: "mountingDone", label: "Mounting Done", type: "radio" },
-      { name: "auctionStickersPreapplied", label: "Auction Stickers Preapplied", type: "radio" },
+      {
+        name: "auctionStickersPreapplied",
+        label: "Auction Stickers Preapplied",
+        type: "radio",
+      },
       {
         name: "packaged",
         label: "Packaged",
         type: "radio",
       },
-      { name: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" },
+      {
+        name: "qualityCheckPassed",
+        label: "Quality Check Passed",
+        type: "radio",
+      },
       { name: "labeled", label: "labeled", type: "radio" },
     ],
     noteGroups: [
@@ -76,15 +85,14 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "order_photo",
-          "photo_ready",
-          "install_complete",
-          "delivery_complete",
-          "pickup_complete",
-          "check_stock_levels",
-          "issue_invoice",
-          "order_complete",
-          "send_survey",
+          "boardsPrinted",
+          "laminationApplied",
+          "cuttingDone",
+          "mountingDone",
+          "auctionStickersPreapplied",
+          "packaged",
+          "qualityCheckPassed",
+          "labeled",
         ],
       },
     ],
@@ -92,7 +100,7 @@ const formConfig = {
 };
 
 const normalizeValue = (v) => {
-  if (v === undefined || v === null ) return "";
+  if (v === undefined || v === null) return "";
   return String(v)
     .toLowerCase()
     .trim()
@@ -101,7 +109,7 @@ const normalizeValue = (v) => {
 
 const getStatus = (value) => {
   const val = normalizeValue(value);
-  if(val==="") return "Not Completed";
+  if (val === "") return "Not Completed";
   if (!val) return "Not Completed";
   if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
   if (val === "no") return "Not Completed";
@@ -150,15 +158,18 @@ export default function Stage5({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
+    const greenValues = new Set(["yes", "na", "n/a", "nr"]); // considered complete
+
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
 
     const incomplete = fieldsToCheck
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
+      .filter((field) => {
+        const value = normalizeValue(formData[field.name] || "");
+        // anything not green is incomplete
+        return !greenValues.has(value);
+      })
       .map((field) => field.label);
 
     if (incomplete.length === 0) return "All tasks completed";
@@ -229,8 +240,10 @@ export default function Stage5({
     setIsSaving(true);
 
     try {
-      const payload = { matterNumber, ...formData };
+      const company = localStorage.getItem("company");
+      let payload = { ...formData };
 
+      // handle note groups
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
@@ -239,10 +252,28 @@ export default function Stage5({
         delete payload[group.clientCommentKey];
       });
 
-      await api.upsertStageFive(payload);
+      // company-specific save
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStageFive(payload);
+      } else if (company === "idg") {
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 5, payload);
+      }
 
+      // update original data
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
+
+      toast.success("Stage 5 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (err) {
       console.error("Failed to save Stage 5:", err);
     } finally {

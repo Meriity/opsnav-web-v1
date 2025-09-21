@@ -23,16 +23,13 @@ function LoginForm() {
         localStorage.setItem("user", response.user.displayName);
         localStorage.setItem("access", response.user.access);
         localStorage.setItem("role", response.user.role);
-        localStorage.setItem("company",response.user.company);
+        localStorage.setItem("company", response.user.company);
         localStorage.setItem("logo", response.user.logo);
 
-
-        // Show success toast
         toast.success("Logging in...", {
           position: "bottom-center",
         });
 
-        // Redirect after short delay
         setTimeout(() => {
           if (response.role === "admin") {
             navigate("/admin/work-selection");
@@ -51,19 +48,19 @@ function LoginForm() {
   };
 
   return (
-    // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
     <div
-      className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center"
+      className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center p-4"
       style={{ backgroundImage: "url('/home_bg.jpg')" }}
     >
-      <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
+      <div className="max-w-6xl w-full flex flex-col md:flex-row items-center justify-center md:justify-between">
+        {/* Text/Logo Content */}
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img
             src="/Logo.png"
-            alt="VK Lawyers Logo"
-            className="h-24 mx-auto md:mx-0"
+            alt="OpsNav Logo"
+            className="h-16 sm:h-24 mx-auto md:mx-0"
           />
-          <h1 className="text-3xl font-bold mt-4 font-poppins">
+          <h1 className="text-2xl sm:text-3xl font-bold mt-4 font-poppins">
             WELCOME TO Opsnav
           </h1>
           <p className="text-gray-600 mt-2 font-poppins">
@@ -72,12 +69,12 @@ function LoginForm() {
           </p>
         </div>
 
-        <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
+        {/* Form Card */}
+        <div className="w-full md:w-1/2  max-w-md bg-white shadow-md rounded-xl p-6 sm:p-6">
           <h2 className="text-xl font-semibold text-center mb-6">SIGN IN</h2>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block mb-1 font-medium text-sm text-gray-700">
+              <label className="block font-medium text-sm text-gray-700">
                 Email ID
               </label>
               <input
@@ -85,7 +82,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border border-gray-300 px-2 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
             <div>
@@ -103,7 +100,7 @@ function LoginForm() {
             <button
               type={isLoading ? "button" : "submit"}
               disabled={isLoading}
-              className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition cursor-pointer"
+              className="w-full bg-sky-600 text-white py-2 rounded-md hover:bg-sky-700 transition cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -137,7 +134,7 @@ function LoginForm() {
         </div>
       </div>
 
-      <div className="absolute bottom-4 text-sm text-center w-full text-gray-700 font-semibold">
+      <div className="absolute bottom-1 md:text-md text-xs text-center w-full text-gray-700 font-semibold">
         Powered By Opsnav™
       </div>
     </div>

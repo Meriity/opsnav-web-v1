@@ -52,7 +52,7 @@ class ClientAPI {
       let parsed = null;
       try {
         parsed = text ? JSON.parse(text) : null;
-      } catch (e) {
+      } catch {
         parsed = null;
       }
 
@@ -84,7 +84,8 @@ class ClientAPI {
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
-
+      console.log(response);
+      console.log(`${this.baseUrl}/idg/orders/${clientId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -120,14 +121,19 @@ class ClientAPI {
   }
 
   async upsertIDGStages(clientId, stage, additionalData = {}) {
-    console.log(`${this.baseUrl}/idg/stages/${stage}/${clientId}`);
     try {
       const response = await fetch(
-        `${this.baseUrl}/idg/stages/${stage}/${clientId}`,
+        `${this.baseUrl}/idg/orders/${clientId}/stage`,
         {
-          method: "POST",
-          headers: this.getHeaders(),
-          body: JSON.stringify(additionalData),
+          method: "PATCH",
+          headers: {
+            ...this.getHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            stageNumber: stage,
+            data: additionalData, // Spread additionalData into the object
+          }),
         }
       );
 
@@ -373,6 +379,29 @@ class ClientAPI {
     }
   }
 
+  async upsertIDGCost(orderId, cost, additionalData = {}) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/costs/${orderId}`, {
+        method: "PUT",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          matterNumber,
+          cost,
+          ...additionalData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating cost:", error);
+      throw error;
+    }
+  }
+
   // Get Cost data
   async getCost(matterNumber) {
     try {
@@ -560,6 +589,27 @@ class ClientAPI {
     try {
       const response = await fetch(
         `${this.baseUrl}/clients/search?keywords=${query}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error sending notification to client:", error);
+      throw error;
+    }
+  }
+
+    async getIDGSearchResult(query) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/orders/search?keywords=${query}`,
         {
           method: "GET",
           headers: this.getHeaders(),

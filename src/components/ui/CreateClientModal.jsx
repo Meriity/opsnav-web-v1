@@ -13,6 +13,7 @@ const getInitialFormData = (company, user) => {
       state: "",
       clientType: "",
       propertyAddress: "",
+      postcode: "",
       matterDate: "",
       settlementDate: "",
       dataEntryBy: user,
@@ -55,8 +56,7 @@ export default function CreateClientModal({
   const [id, setId] = useState({ clientId: "", orderId: "" });
   const navigate = useNavigate();
 
-  // Assume user is available from context or props
-  const user = "Current User"; // Replace with actual user data logic if needed
+  const user = localStorage.getItem("user") || "";
 
   // --- DERIVED STATE & CONSTANTS ---
   const isVkl = companyName === "vkl";
@@ -65,7 +65,6 @@ export default function CreateClientModal({
   const api = new ClientAPI();
 
   // --- EFFECTS ---
-  // Effect to initialize and reset the form when the modal opens
   useEffect(() => {
     if (isOpen) {
       // Reset form data and errors
@@ -114,10 +113,19 @@ export default function CreateClientModal({
   const checkMatterNumberExists = async (number) => {
     try {
       const response = await api.checkClientExists(number);
-      return response.exists;
+
+      if (response && typeof response.exists === "boolean")
+        return response.exists;
+
+      return false;
     } catch (error) {
+      const serverMsg = error?.response?.data?.message;
+      if (serverMsg && /exist/i.test(serverMsg)) {
+        return true;
+      }
       console.error("Error checking matter number:", error);
-      return false; // Assume not exists on error to prevent blocking user
+
+      return false;
     }
   };
 
@@ -134,6 +142,7 @@ export default function CreateClientModal({
           "state",
           "clientType",
           "propertyAddress",
+          "postcode",
           "matterDate",
           "settlementDate",
         ];
@@ -151,8 +160,22 @@ export default function CreateClientModal({
           return;
         }
 
-        await api.createClient(formData);
-        toast.success("Client created successfully!");
+        try {
+          const payload = {
+            ...formData,
+            dataentryby: localStorage.getItem("user") || user,
+          };
+          await api.createClient(payload);
+          toast.success("Client created successfully!");
+        } catch (err) {
+          const msg = err?.response?.data?.message || err?.message || "";
+          if (err?.response?.status === 400 || /exist/i.test(msg)) {
+            setMatterNumberError("This matter number already exists");
+            toast.error("A client with this matter number already exists.");
+          } else {
+            throw err;
+          }
+        }
         navigate(`/admin/client/stages/${formData.matterNumber}`);
       } else if (isIdg) {
         // --- IDG Submission Logic ---
@@ -165,6 +188,7 @@ export default function CreateClientModal({
             "country",
             "state",
             "postcode",
+            "abn",
           ];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
@@ -188,13 +212,13 @@ export default function CreateClientModal({
         } else if (createType === "order") {
           const requiredFields = [
             "client",
-            "category",
+            "orderType",
             "priority",
             "deliveryAddress",
             "country",
             "state",
             "postcode",
-            "settlementDate",
+            "deliveryDate",
           ];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
@@ -205,15 +229,16 @@ export default function CreateClientModal({
           const payload = {
             orderId: id.orderId,
             clientId: formData.client,
-            orderType: formData.category,
+            orderType: formData.orderType,
             priority: formData.priority,
             deliveryAddress: formData.deliveryAddress,
             country: formData.country,
             state: formData.state,
             postcode: formData.postcode,
             orderDate: formData.orderDate,
-            deliveryDate: formData.settlementDate,
+            deliveryDate: formData.deliveryDate,
           };
+          console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
         }
@@ -221,7 +246,20 @@ export default function CreateClientModal({
       setIsOpen(false);
     } catch (error) {
       console.error("Error during submission:", error);
-      toast.error(error.message || "An unexpected error occurred.");
+      const serverMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        (typeof error?.message === "string" ? error.message : null);
+
+      if (serverMessage) {
+        if (/http error! status: 400/i.test(serverMessage)) {
+          toast.error("A client with this matter number already exists.");
+        } else {
+          toast.error(serverMessage);
+        }
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -235,11 +273,14 @@ export default function CreateClientModal({
       className="relative z-10"
     >
       <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-      <div className="fixed inset-0 z-10 flex items-center justify-center p-4 overflow-y-auto">
-        <DialogPanel className="max-w-500 relative transform overflow-hidden rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl p-6">
+      <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+        <DialogPanel
+          className="max-w-500 relative transform rounded-lg bg-[#F3F4FB] text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl p-6
+             overflow-y-auto max-h-[90vh] xl:overflow-visible xl:max-h-none"
+        >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
+            className="absolute top-6 sm:top-4 right-5 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
           >
             &times;
           </button>
@@ -349,6 +390,22 @@ export default function CreateClientModal({
                     name="propertyAddress"
                     value={formData.propertyAddress || ""}
                     onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                    required
+                  />
+                </div>
+
+                {/* Post code (Australian, 4 digits) */}
+                <div>
+                  <label className="block mb-1 font-medium">Post code*</label>
+                  <input
+                    type="text"
+                    name="postcode"
+                    value={formData.postcode || ""}
+                    onChange={handleChange}
+                    pattern="^[0-9]{4}$"
+                    maxLength={4}
+                    inputMode="numeric"
                     className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                     required
                   />
@@ -523,7 +580,6 @@ export default function CreateClientModal({
                       required
                     >
                       <option value="">Select a Client</option>
-                      {console.log(clients)}
                       {clients.map((client) => (
                         <option key={client._id} value={client._id}>
                           {client.name}
@@ -538,8 +594,8 @@ export default function CreateClientModal({
                       Order Type*
                     </label>
                     <select
-                      name="category"
-                      value={formData.category || ""}
+                      name="orderType"
+                      value={formData.orderType || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                       required
@@ -633,8 +689,8 @@ export default function CreateClientModal({
                     </label>
                     <input
                       type="date"
-                      name="settlementDate"
-                      value={formData.settlementDate || ""}
+                      name="deliveryDate"
+                      value={formData.deliveryDate || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
                       required
@@ -649,7 +705,7 @@ export default function CreateClientModal({
               <label className="block mb-1 font-medium">Data Entry By</label>
               <input
                 type="text"
-                value={localStorage.getItem("user")}
+                value={user}
                 readOnly
                 className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
               />

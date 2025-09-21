@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // Configuration object for different clients
 const formConfig = {
@@ -41,7 +42,7 @@ const formConfig = {
   ],
   idg: [
     {
-      name: "verifyCustomerDetails",
+      name: "customerDetailsVerified",
       label: "Verify Customer Details",
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
@@ -52,23 +53,23 @@ const formConfig = {
       type: "text",
     },
     {
-      name: "checkDistanceFeasibility",
+      name: "distanceFeasibility",
       label: "Check Distance / Feasibility",
       type: "text",
     },
     {
-      name: "identifyOrderType",
+      name: "orderType",
       label: "Order Type",
       type: "text",
     },
     {
-      name: "confirmCostingType",
+      name: "costingType",
       label: "Confirm Costing Type",
       type: "radio",
       options: ["Fixed", "Variable"],
     },
     {
-      name: "recordRequestedTimeline",
+      name: "timeline",
       label: "Timeline / Deadline",
       type: "text",
     },
@@ -95,30 +96,35 @@ export default function Stage1({
   const stage = 1;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
-  const { orderId } = useParams();
 
+  // Stabilize company + fields so they can be safely used in hooks' deps
+  const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
 
-  // Determine the company and get its specific configuration
-  const company = localStorage.getItem("company") || "vkl"; // Default to 'vkl'
-  const currentFields = formConfig[company] || formConfig.vkl; // Fallback to 'vkl' config
+  const currentFields = useMemo(
+    () => formConfig[company] || formConfig.vkl,
+    [company]
+  );
 
   // Helper to normalize/standardize values for comparison and storage
-  const normalizeValue = (v) => {
+  const normalizeValue = useCallback((v) => {
     if (v === undefined || v === null) return "";
     return String(v)
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]/g, "");
-  };
+  }, []);
 
-  const getStatus = (value) => {
-    const val = normalizeValue(value);
-    const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
-    if (completed.has(val)) return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "inprogress"].includes(val)) return "In Progress";
-    return "Not Completed";
-  };
+  const getStatus = useCallback(
+    (value) => {
+      const val = normalizeValue(value);
+      const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+      if (completed.has(val)) return "Completed";
+      if (val === "no") return "Not Completed";
+      if (["processing", "inprogress"].includes(val)) return "In Progress";
+      return "Not Completed";
+    },
+    [normalizeValue]
+  );
 
   function bgcolor(status) {
     const statusColors = {
@@ -185,7 +191,8 @@ export default function Stage1({
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
-  }, [data, reloadTrigger, company]);
+    // include currentFields and getStatus (both stable via useMemo/useCallback)
+  }, [data, reloadTrigger, company, currentFields, getStatus, normalizeValue]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
@@ -214,34 +221,45 @@ export default function Stage1({
 
     try {
       const systemNote = generateSystemNote();
-      const noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
-      let payload={};
-      if(localStorage.getItem("company") === "vkl") {
-       payload = {
-        matterNumber,
-        ...formData,
-        noteForClient,
-      };
-    }else if(localStorage.getItem("company") === "idg") {
-      payload = {
-        matterNumber,
-       ...formData,
-        noteForClient,
-      };
-    }
-      console.log("Updating stage 1:", payload);
-      delete payload.systemNote; 
-      delete payload.clientComment;
+      let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
-      if(localStorage.getItem("company") === "vkl") {
-      await api.upsertStageOne(payload);
-      } else {
-        await api.upsertIDGStages(matterNumber,1,payload);
+      const company = localStorage.getItem("company");
+      let payload = {
+        ...formData,
+      };
+
+      // dynamically set the key
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber; // keep matterNumber
+        payload.noteForClient = noteForClient;
+      } else if (company === "idg") {
+        payload.orderId = matterNumber; // use orderId instead
+        payload.noteForClient = noteForClient;
       }
 
+      console.log(`${company} payload:`, payload);
+
+      // remove temporary fields
+      delete payload.systemNote;
+      delete payload.clientComment;
+
+      if (company === "vkl") {
+        await api.upsertStageOne(payload);
+      } else if (company === "idg") {
+        await api.upsertIDGStages(payload.orderId, 1, payload);
+      }
 
       originalData.current = { ...formData, systemNote };
       setReloadTrigger((prev) => !prev);
+      toast.success("Stage 1 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
     } catch (error) {
       console.error("Failed to update stage 1:", error);
     } finally {
@@ -261,7 +279,7 @@ export default function Stage1({
               type="text"
               value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base"
             />
           </div>
         );
@@ -274,26 +292,21 @@ export default function Stage1({
                 {field.label}
               </label>
               <div
-                className={`w-[90px] h-[18px] ${bgcolor(
+                className={`w-auto sm:w-[90px] h-[18px] ${bgcolor(
                   statuses[field.name]
-                )} flex items-center justify-center rounded-4xl`}
+                )} flex items-center justify-center rounded-4xl px-2`}
               >
                 <p className="text-[10px] md:text-[12px] whitespace-nowrap">
                   {statuses[field.name]}
                 </p>
               </div>
             </div>
-            {/* <div
-              className={`flex gap-4 ${
-                field.options.length > 2 ? "justify-between" : ""
-              } flex-wrap`}
-            > */}
-            {/* tight spacing of every fields*/}
-            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+
+            <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2">
               {field.options.map((val) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 text-sm md:text-base"
+                  className="flex items-center gap-2 text-sm md:text-base min-w-0"
                 >
                   <input
                     type="radio"
@@ -305,7 +318,7 @@ export default function Stage1({
                     }
                     onChange={() => handleChange(field.name, val)}
                   />
-                  {val}
+                  <span className="truncate">{val}</span>
                 </label>
               ))}
             </div>
@@ -322,7 +335,7 @@ export default function Stage1({
               type="text"
               value={generateSystemNote()}
               disabled
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full rounded p-2 bg-gray-100 text-sm md:text-base"
             />
           </div>
         );
@@ -336,7 +349,7 @@ export default function Stage1({
             <textarea
               value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none"
             />
           </div>
         );
@@ -347,32 +360,84 @@ export default function Stage1({
   };
 
   return (
-    <div className="overflow-y-auto">
+    <div className="overflow-y-auto p-2 stage1-responsive">
       {currentFields.map((field) => renderField(field))}
       {commonFields.map((field) => renderField(field))}
 
-      <div className="flex mt-10 justify-between">
+      <div className="flex mt-10 justify-between items-center gap-2 flex-wrap stage1-btn-row">
         <Button
           label="Back"
-          width="w-[70px] md:w-[100px]"
+          width="w-auto sm:w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 stage1-btn-group">
           <Button
             label={isSaving ? "Saving" : "Save"}
-            width="w-[70px] md:w-[100px]"
+            width="w-auto sm:w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
-            width="w-[70px] md:w-[100px]"
+            width="w-auto sm:w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>
       </div>
+
+      {/* Responsive styles for mobile & tablet only */}
+      <style>{`
+        @media (max-width: 768px) {
+          .stage1-responsive {
+            padding: 1rem 0.5rem;
+          }
+          .stage1-btn-row {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+          }
+          .stage1-btn-group {
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+          }
+          .stage1-btn-row button,
+          .stage1-btn-group button {
+            width: 100% !important;
+            min-width: 0 !important;
+            font-size: 1rem !important;
+          }
+          .stage1-responsive label {
+            font-size: 0.95rem !important;
+          }
+          .stage1-responsive input,
+          .stage1-responsive textarea {
+            font-size: 0.95rem !important;
+            padding: 0.5rem !important;
+          }
+        }
+        @media (max-width: 425px) {
+          .stage1-responsive {
+            padding: 0.5rem 0.25rem;
+          }
+          .stage1-btn-row {
+            gap: 0.75rem;
+          }
+          .stage1-btn-group {
+            gap: 0.5rem;
+          }
+          .stage1-responsive label {
+            font-size: 0.9rem !important;
+          }
+          .stage1-responsive input,
+          .stage1-responsive textarea {
+            font-size: 0.9rem !important;
+            padding: 0.4rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
