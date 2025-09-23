@@ -204,7 +204,7 @@ export default function StagesLayout() {
   function evaluateStageStatus(stageData, fields) {
     if (!stageData || fields.length === 0) return "Not Completed";
     let yesCount = 0,
-      noCount = 0, 
+      noCount = 0,
       emptyCount = 0;
     for (const field of fields) {
       const val = stageData[field]?.toString().toLowerCase();
@@ -509,8 +509,11 @@ export default function StagesLayout() {
         payload.clientName = clientData?.clientName || "";
         payload.propertyAddress = clientData?.propertyAddress || "";
         payload.state = clientData?.state || "";
+        payload.postcode =
+          clientData?.postcode || clientData?.data?.postcode || "";
         payload.clientType = clientData?.clientType || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
+        payload.postcode = clientData?.postcode || "";
 
         if (
           clientData?.matterNumber !== undefined &&
@@ -822,7 +825,6 @@ export default function StagesLayout() {
                         disabled={!isSuperAdmin}
                       />
                     </div>
-
                     {/* Matter Number */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -863,7 +865,6 @@ export default function StagesLayout() {
                         />
                       )}
                     </div>
-
                     {/* Client Name */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -891,7 +892,6 @@ export default function StagesLayout() {
                         disabled={!isSuperAdmin}
                       />
                     </div>
-
                     {/* Property Address */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -923,7 +923,6 @@ export default function StagesLayout() {
                         disabled={!isSuperAdmin}
                       />
                     </div>
-
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
@@ -962,7 +961,6 @@ export default function StagesLayout() {
                         />
                       )}
                     </div>
-
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {company === "vkl"
@@ -1007,7 +1005,6 @@ export default function StagesLayout() {
                         />
                       )}
                     </div>
-
                     {/* Settlement Date */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -1060,42 +1057,82 @@ export default function StagesLayout() {
                         className="w-full rounded p-2 border border-gray-200 text-xs md:text-sm"
                       />
                     </div>
-
-                    {/* Data Entry By */}
                     <div className="md:col-span-3">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Data Entry By
-                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Data Entry By */}
+                        <div>
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            Data Entry By
+                          </label>
+                          {isSuperAdmin ? (
+                            <input
+                              type="text"
+                              value={
+                                clientData?.dataEntryBy ||
+                                clientData?.data.dataEntryBy ||
+                                ""
+                              }
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  dataEntryBy: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={
+                                clientData?.dataEntryBy ||
+                                clientData?.data.dataEntryBy ||
+                                ""
+                              }
+                              className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
 
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data.dataEntryBy
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              dataEntryBy: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data.dataEntryBy
-                          }
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
+                        {/* Postcode */}
+                        <div>
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            Post Code
+                          </label>
+                          {isSuperAdmin ? (
+                            <input
+                              type="text"
+                              id="postcode"
+                              name="postcode"
+                              value={clientData?.postcode || ""}
+                              onChange={(e) => {
+                                if (!isSuperAdmin) return;
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  postcode: e.target.value,
+                                }));
+                              }}
+                              pattern="^[0-9]{4}$"
+                              maxLength={4}
+                              inputMode="numeric"
+                              className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                                !isSuperAdmin ? "bg-gray-100" : ""
+                              }`}
+                              disabled={!isSuperAdmin}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={clientData?.postcode || ""}
+                              className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
-
                     {/* Notes */}
                     <div className="md:col-span-3">
                       <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -1118,7 +1155,6 @@ export default function StagesLayout() {
                         className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
                       />
                     </div>
-
                     <div className="md:col-span-3 mt-2">
                       <div className="mt-2">
                         <button
@@ -1337,6 +1373,29 @@ export default function StagesLayout() {
                     )}
                   </div>
 
+                  {/* Postcode - Mobile */}
+                  <div>
+                    <label className="block text-xs md:text-sm font-semibold mb-1">
+                      Postcode
+                    </label>
+                    <input
+                      id="postcode-mobile"
+                      name="postcode"
+                      type="text"
+                      value={
+                        clientData?.postcode ?? clientData?.data?.postcode ?? ""
+                      }
+                      onChange={(e) => {
+                        if (!isSuperAdmin) return;
+                        setClientData((prev) => ({
+                          ...(prev || {}),
+                          postcode: e.target.value,
+                        }));
+                      }}
+                      className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                    />
+                  </div>
+
                   {/* Client Type */}
                   <div>
                     <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -1432,39 +1491,42 @@ export default function StagesLayout() {
                     />
                   </div>
 
-                  {/* Data Entry By */}
-                  <div>
-                    <label className="block text-xs md:text-sm font-semibold mb-1">
-                      Data Entry By
-                    </label>
-
-                    {isSuperAdmin ? (
-                      <input
-                        type="text"
-                        value={
-                          clientData?.dataEntryBy ||
-                          clientData?.data.dataEntryBy
-                        }
-                        onChange={(e) =>
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            dataEntryBy: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={
-                          clientData?.dataEntryBy ||
-                          clientData?.data.dataEntryBy
-                        }
-                        className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        disabled
-                        readOnly
-                      />
-                    )}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Data Entry By - Mobile */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                        Data Entry By
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data.dataEntryBy ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              dataEntryBy: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data.dataEntryBy ||
+                            ""
+                          }
+                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Notes */}

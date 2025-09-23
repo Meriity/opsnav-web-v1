@@ -1,7 +1,4 @@
-html,
-body {
-  overflow: hidden !important;
-}
+
 
 .rbc-event {
   padding: 2px 5px !important;
@@ -34,7 +31,8 @@ body {
 }
 
 .off-month-day .rbc-button-link {
-  color: transparent !important;
+
+  color: #9ca3af !important; 
 }
 
 .off-month-day {
