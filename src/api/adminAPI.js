@@ -56,7 +56,6 @@ class AdminAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error creating user:", error);
-      s;
       throw error;
     }
   }
