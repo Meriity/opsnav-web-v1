@@ -240,7 +240,7 @@ export default function StagesLayout() {
       case 1:
         return (
           <Stage1
-            data={clientData?.stage1}
+            data={clientData?.stage1 || clientData?.data.stage1}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -249,7 +249,7 @@ export default function StagesLayout() {
       case 2:
         return (
           <Stage2
-            data={clientData?.stage2}
+            data={clientData?.stage2||clientData?.data.stage2}
             clientType={clientData?.clientType}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
@@ -259,7 +259,7 @@ export default function StagesLayout() {
       case 3:
         return (
           <Stage3
-            data={clientData?.stage3}
+            data={clientData?.stage3 || clientData?.data.stage3}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -268,7 +268,7 @@ export default function StagesLayout() {
       case 4:
         return (
           <Stage4
-            data={clientData?.stage4}
+            data={clientData?.stage4 || clientData?.data.stage4}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
@@ -277,7 +277,7 @@ export default function StagesLayout() {
       case 5:
         return (
           <Stage5
-            data={clientData?.stage5}
+            data={clientData?.stage5 || clientData?.data.stage5}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
