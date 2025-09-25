@@ -7,7 +7,7 @@ import { HomeIcon } from "lucide-react";
 function LoginForm() {
   const api = new AuthAPI();
   const [matterNumber, setmatterNumber] = useState("");
-  const [password, setPassword] = useState("");
+  const [postcode, setPostcode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ function LoginForm() {
     setError("");
     setIsLoading(true)
     try {
-      const response = await api.signInClient(matterNumber, password);
+      const response = await api.signInClient(matterNumber, postcode);
       console.log(response);
       if (response.matterNumber) {
         localStorage.removeItem("matterNumber");
@@ -73,12 +73,12 @@ function LoginForm() {
             </div>
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
-                Password
+                Postcode
               </label>
               <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="text"
+                value={postcode}
+                onChange={(e) => setPostcode(e.target.value)}
                 required
                 className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
