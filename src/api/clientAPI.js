@@ -76,6 +76,30 @@ class ClientAPI {
       throw error;
     }
   }
+
+    // Get client details by matter number
+    async getIDGUsers() {
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/idg/users`,
+                {
+                    method: "GET",
+                    headers: this.getHeaders(),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Error getting client details:", error);
+            throw error;
+        }
+    }
+
+
   async updateIDGClientData(clientId, data = {}) {
     console.log(clientId, data);
     try {

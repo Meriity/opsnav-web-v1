@@ -68,10 +68,28 @@ const formConfig = {
       type: "radio",
       options: ["Fixed", "Variable"],
     },
+
+      {
+          name: "costing_amount",
+          label: "Costing Amount",
+          type: "text",
+      },
     {
       name: "timeline",
       label: "Timeline / Deadline",
       type: "text",
+    },
+    {
+      name: "customerAcceptedQuote",
+      label: "Confirm Customer Acceptance of Quote",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "approvalStatus",
+      label: "Approve or reject order for planning",
+      type: "radio",
+      options: ["Approved", "Rejected", "Pending"],
     },
   ],
 };
@@ -117,10 +135,10 @@ export default function Stage1({
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
-      const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+      const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
-      if (["processing", "inprogress"].includes(val)) return "In Progress";
+      if (["processing", "inprogress","pending"].includes(val)) return "In Progress";
       return "Not Completed";
     },
     [normalizeValue]
@@ -141,25 +159,37 @@ export default function Stage1({
       .map((str) => str.trim());
     return { systemNote, clientComment };
   }
+    const generateSystemNote = () => {
+        const radioFields = currentFields.filter((field) => field.type === "radio");
+        const textFields = currentFields.filter((field) => field.type === "text");
+        const greenValues = new Set(["yes", "nr", "na", "variable", "fixed", "approved"]);
 
-  const generateSystemNote = () => {
-    const radioFields = currentFields.filter((field) => field.type === "radio");
-    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]);
+        // radio fields not received
+        const notReceivedRadio = radioFields
+            .filter(
+                (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+            )
+            .map((field) => field.label);
 
-    const notReceived = radioFields
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
-      .map((field) => field.label);
+        // text fields not received (empty or whitespace)
+        const notReceivedText = textFields
+            .filter(
+                (field) =>
+                    !formData[field.name] || formData[field.name].toString().trim() === ""
+            )
+            .map((field) => field.label);
 
-    if (notReceived.length === 0) {
-      return "Tasks completed";
-    }
-    if (notReceived.length === 1) {
-      return `${notReceived[0]} not received`;
-    }
-    return `${notReceived.join(", ")} not received`;
-  };
+        const notReceived = [...notReceivedRadio, ...notReceivedText];
+
+        if (notReceived.length === 0) {
+            return "Tasks completed";
+        }
+        if (notReceived.length === 1) {
+            return `${notReceived[0]} not received`;
+        }
+        return `${notReceived.join(", ")} not received`;
+    };
+
 
   useEffect(() => {
     if (!data) return;
@@ -270,6 +300,7 @@ export default function Stage1({
   const renderField = (field) => {
     switch (field.type) {
       case "text":
+          console.log(field);
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">

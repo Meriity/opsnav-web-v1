@@ -65,24 +65,54 @@ const formConfig = {
   idg: {
     fields: [
       {
-        name: "customerAcceptedQuote",
-        label: "Confirm Customer Acceptance of Quote",
+        name: "agent",
+        label: "Assign Agent / Team Member",
+        type: "text",
+      },
+      {
+        name: "materialsInStock",
+        label: "Check if Materials Needed are in stock",
         type: "radio",
       },
       {
-        name: "paymentTermsAgreed",
-        label: "Confirm Payment Terms Agreed",
+        name: "additionalMaterialsRequired",
+        label: "Procure additional materials if required",
         type: "radio",
       },
       {
-        name: "internalCapacityVerified",
-        label: "Verify Internal Capacity",
+        name: "vehicleAllocated",
+        label: "Allocate Vehicle / Installer",
+        type: "text",
+      },
+      {
+        name: "designArtwork",
+        label: "Create / update Design Artwork",
+        type: "text",
+      },
+      {
+        name: "internalApproval",
+        label: "Review and internally approve design",
         type: "radio",
       },
       {
-        name: "approvalStatus",
-        label: "Approve or reject order for planning",
+        name: "proofSentToClient",
+        label: "Send Proof to Client",
         type: "radio",
+      },
+      {
+        name: "clientApprovalReceived",
+        label: "Record Client Approval",
+        type: "radio",
+      },
+      {
+        name: "printReadyFiles",
+        label: "Generate Print-Ready Files",
+        type: "radio",
+      },
+      {
+        name: "jobActivity",
+        label: "Ensure Job Activity & Priority are correctly logged",
+        type: "text",
       },
     ],
     noteGroups: [
@@ -94,10 +124,15 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "customerAcceptedQuote",
-          "paymentTermsAgreed",
-          "internalCapacityVerified",
-          "approvalStatus",
+            "designArtwork",
+            "jobActivity",
+            "vehicleAllocated",
+            "materialsInStock",
+            "additionalMaterialsRequired",
+            "internalApproval",
+            "proofSentToClient",
+            "clientApprovalReceived",
+            "printReadyFiles",
         ],
       },
     ],
@@ -118,8 +153,10 @@ export default function Stage2({
   reloadTrigger,
   setReloadTrigger,
   clientType,
+  user
 }) {
   console.log(data);
+  console.log(user);
   const stage = 2;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -128,6 +165,7 @@ export default function Stage2({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const[users,setUsers]=useState([]);
 
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
@@ -305,6 +343,7 @@ export default function Stage2({
     try {
       const company = localStorage.getItem("company");
       let payload = { ...formData };
+      console.log(payload);
 
       // handle all system notes and client comments dynamically
       currentConfig.noteGroups.forEach((group) => {
@@ -333,6 +372,7 @@ export default function Stage2({
         (f) => getStatus(formData[f.name]) === "Completed"
       );
       const formStatus = allCompleted ? "green" : "amber";
+      const colorStatus = allCompleted ? "green" : "amber";
       if ((clientType || "").toLowerCase() !== "seller") {
         delete payload.obtainDaSeller;
         delete payload.obtainDaSellerDate;
@@ -345,12 +385,13 @@ export default function Stage2({
         payload.orderId = matterNumber; // use orderId
         await api.upsertIDGStages(payload.orderId, 2, {
           ...payload,
-          formStatus,
+          colorStatus,
         });
       }
 
       // update original data
       originalData.current = { ...formData };
+      console.log(originalData);
       setReloadTrigger((prev) => !prev);
 
       toast.success("Stage 2 Saved Successfully!", {
@@ -370,27 +411,46 @@ export default function Stage2({
   }
 
   const renderField = (field) => (
-    <div key={field.name} className="mt-5">
-      <div className="flex gap-4 justify-between items-center mb-2">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          {field.label}
-        </label>
-        <div
-          className={`w-[90px] h-[18px] ${bgcolor(
-            statuses[field.name]
-          )} flex items-center justify-center rounded-4xl`}
-        >
-          <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-            {statuses[field.name]}
-          </p>
-        </div>
-      </div>
+<div key={field.name} className="mt-5">
+  <div className="flex gap-4 justify-between items-center mb-2">
+    <label className="block mb-1 text-sm md:text-base font-bold">
+      {field.label}
+    </label>
 
-      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-        {(field.name === "approvalStatus"
-          ? ["Approved", "Rejected", "Pending"]
-          : ["Yes", "No", "Processing", "N/R"]
-        ).map((val) => (
+    {field.name !== "agent" && (
+      <div
+        className={`w-[90px] h-[18px] ${bgcolor(
+          statuses[field.name]
+        )} flex items-center justify-center rounded-4xl`}
+      >
+        <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+          {statuses[field.name]}
+        </p>
+      </div>
+    )}
+  </div>
+
+
+    <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+      {field.name === "agent" ? (
+        // ✅ Dropdown for agents
+        <select
+          name={field.name}
+          className={localStorage.getItem("role")!=="admin" ? "bg-gray-600 p-2 border rounded w-full" : "bg-white p-2 border rounded w-full"}
+          value={formData[field.name] || ""}
+          onChange={(e) => handleChange(field.name, e.target.value)}
+          disabled={localStorage.getItem("role")!=="admin"}
+        >
+          <option value="">Select Agent</option>
+          {user.map((agent) => (
+            <option key={agent._id} value={agent.displayName}>
+              {agent.displayName}
+            </option>
+          ))}
+        </select>
+      ) : (
+        // ✅ Radios for everything else
+        (["Yes", "No", "Processing","N/R"]).map((val) => (
           <label
             key={val}
             className="flex items-center gap-2 text-sm md:text-base"
@@ -407,19 +467,22 @@ export default function Stage2({
             />
             {val}
           </label>
-        ))}
+        ))
+      )}
 
-        {field.hasDate && (
-          <input
-            type="date"
-            value={formData[field.dateFieldName] || ""}
-            onChange={(e) => handleChange(field.dateFieldName, e.target.value)}
-            className="ml-2 p-1 border rounded"
-          />
-        )}
-      </div>
+      {/* ✅ If the field has an associated date */}
+      {field.hasDate && (
+        <input
+          type="date"
+          value={formData[field.dateFieldName] || ""}
+          onChange={(e) => handleChange(field.dateFieldName, e.target.value)}
+          className="ml-2 p-1 border rounded"
+        />
+      )}
     </div>
-  );
+  </div>
+);
+
 
   const renderNoteGroup = (group) => (
     <div key={group.id}>
