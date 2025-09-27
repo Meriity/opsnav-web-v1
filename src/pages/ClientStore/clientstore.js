@@ -76,6 +76,7 @@ export const useClientStore = create(
                 : "2025-09-25",
               priority:client.priority || "N/A",
               postcode:client.postCode || "N/A",
+                orderDetails:client.order_details||"N/A"
             }));
 
           }
