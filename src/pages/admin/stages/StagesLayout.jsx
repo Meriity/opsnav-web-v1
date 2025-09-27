@@ -164,12 +164,12 @@ export default function StagesLayout() {
     ];
   } else if (localStorage.getItem("company") === "idg") {
     stages = [
-      { id: 1, title: "Initiate" },
-      { id: 2, title: "Approve" },
-      { id: 3, title: "Plan" },
-      { id: 4, title: "Prepare" },
-      { id: 5, title: "Process" },
-      { id: 6, title: "Final Deliver" },
+      { id: 1, title: "Initiate and Approve" },
+      { id: 2, title: "Plan and Prepare" },
+      { id: 3, title: "Process and Deliver" },
+      // { id: 4, title: "Prepare" },
+      // { id: 5, title: "Process" },
+      // { id: 6, title: "Final Deliver" },
     ];
   }
 
@@ -250,6 +250,7 @@ export default function StagesLayout() {
         return (
           <Stage2
             data={clientData?.stage2||clientData?.data.stage2}
+            user={clientData?.users}
             clientType={clientData?.clientType}
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
@@ -317,151 +318,156 @@ export default function StagesLayout() {
     }
   }
 
-  useEffect(() => {
-    async function fetchDetails() {
-      try {
-        setLoading(true);
-        const localCompany = localStorage.getItem("company");
-        let response =
-          localCompany === "vkl"
-            ? await apiRef.current.getAllStages(matterNumber)
-            : localCompany === "idg"
-            ? await apiRef.current.getIDGStages(matterNumber)
-            : null;
+    useEffect(() => {
+        async function fetchDetails() {
+            try {
+                setLoading(true);
+                const localCompany = localStorage.getItem("company");
+                let response =
+                    localCompany === "vkl"
+                        ? await apiRef.current.getAllStages(matterNumber)
+                        : localCompany === "idg"
+                            ? await apiRef.current.getIDGStages(matterNumber)
+                            : null;
 
-        const serverRole =
-          response?.role || response?.currentUser?.role || null;
-        if (serverRole) setRole(serverRole);
+                const serverRole =
+                    response?.role || response?.currentUser?.role || null;
+                if (serverRole) setRole(serverRole);
 
-        const normalized = {
-          ...response,
-          matterDate: response.matterDate
-            ? typeof response.matterDate === "string"
-              ? response.matterDate
-              : new Date(response.matterDate).toISOString()
-            : "",
-          settlementDate: response.settlementDate
-            ? typeof response.settlementDate === "string"
-              ? response.settlementDate
-              : new Date(response.settlementDate).toISOString()
-            : "",
-          notes:
-            response.notes !== undefined
-              ? response.notes
-              : response.notes ?? "",
-        };
+                const normalized = {
+                    ...response,
+                    matterDate: response.matterDate
+                        ? typeof response.matterDate === "string"
+                            ? response.matterDate
+                            : new Date(response.matterDate).toISOString()
+                        : "",
+                    settlementDate: response.settlementDate
+                        ? typeof response.settlementDate === "string"
+                            ? response.settlementDate
+                            : new Date(response.settlementDate).toISOString()
+                        : "",
+                    notes:
+                        response.notes !== undefined
+                            ? response.notes
+                            : response.notes ?? "",
+                };
 
-        setClientData((prev) => {
-          return { ...(prev || {}), ...normalized };
-        });
-        setOriginalClientData((prev) => {
-          try {
-            if (!prev || prev.matterNumber !== normalized.matterNumber) {
-              return JSON.parse(JSON.stringify(normalized));
+                setClientData((prev) => {
+                    return { ...(prev || {}), ...normalized };
+                });
+
+                // ✅ FIX: Log from the 'normalized' variable which holds the current data,
+                // not the stale 'clientData' state.
+                console.log(normalized.users);
+
+                setOriginalClientData((prev) => {
+                    try {
+                        if (!prev || prev.matterNumber !== normalized.matterNumber) {
+                            return JSON.parse(JSON.stringify(normalized));
+                        }
+                        return prev;
+                    } catch {
+                        return normalized;
+                    }
+                });
+
+                const hasColorStatus = Object.values(response).some(
+                    (stage) => stage && stage.colorStatus
+                );
+                const section = {};
+
+                if (localStorage.getItem("company") === "vkl") {
+                    if (hasColorStatus) {
+                        section.status1 = response.stage1?.colorStatus || "Not Completed";
+                        section.status2 = response.stage2?.colorStatus || "Not Completed";
+                        section.status3 = response.stage3?.colorStatus || "Not Completed";
+                        section.status4 = response.stage4?.colorStatus || "Not Completed";
+                        section.status5 = response.stage5?.colorStatus || "Not Completed";
+                        section.status6 = response.stage6?.colorStatus || "Not Completed";
+                    } else {
+                        section.status1 = evaluateStageStatus(response.stage1, [
+                            "referral",
+                            "declarationForm",
+                            "contractReview",
+                            "tenants",
+                        ]);
+                        const stage2Fields = [
+                            "voi",
+                            "caf",
+                            "signedContract",
+                            "sendKeyDates",
+                            "depositReceipt",
+                            "buildingAndPest",
+                            "financeApproval",
+                            "checkCtController",
+                        ];
+                        if (response.clientType?.toLowerCase() === "seller") {
+                            stage2Fields.push("obtainDaSeller");
+                        }
+                        section.status2 = evaluateStageStatus(
+                            response.stage2,
+                            stage2Fields
+                        );
+                        section.status3 = evaluateStageStatus(response.stage3, [
+                            "titleSearch",
+                            "planImage",
+                            "landTax",
+                            "instrument",
+                            "rates",
+                            "water",
+                            "ownersCorp",
+                            "pexa",
+                            "inviteBank",
+                        ]);
+                        section.status4 = evaluateStageStatus(response.stage4, [
+                            "dts",
+                            "soa",
+                            "frcgw",
+                            "dutyOnline",
+                        ]);
+                        section.status5 = evaluateStageStatus(response.stage5, [
+                            "notifySoaToClient",
+                            "transferDocsOnPexa",
+                            "gstWithholding",
+                            "disbursementsInPexa",
+                            "addAgentFee",
+                            "settlementNotification",
+                        ]);
+                        section.status6 = evaluateStageStatus(response.stage6, [
+                            "noaToCouncilWater",
+                            "dutyPaid",
+                            "finalLetterToClient",
+                            "finalLetterToAgent",
+                            "invoiced",
+                            "closeMatter",
+                        ]);
+                    }
+                    setStageStatuses(section);
+                } else if (localStorage.getItem("company") === "idg") {
+                    section.status1 =
+                        response.data.stage1?.colorStatus || "Not Completed";
+                    section.status2 =
+                        response.data.stage2?.colorStatus || "Not Completed";
+                    section.status3 =
+                        response.data.stage3?.colorStatus || "Not Completed";
+                    section.status4 =
+                        response.data.stage4?.colorStatus || "Not Completed";
+                    section.status5 =
+                        response.data.stage5?.colorStatus || "Not Completed";
+                    section.status6 =
+                        response.data.stage6?.colorStatus || "Not Completed";
+                    setStageStatuses(section);
+                }
+            } catch (e) {
+                console.error("Error fetching stage details:", e);
+                toast.error("Failed to fetch client details.");
+            } finally {
+                setLoading(false);
             }
-            return prev;
-          } catch {
-            return normalized;
-          }
-        });
-
-        const hasColorStatus = Object.values(response).some(
-          (stage) => stage && stage.colorStatus
-        );
-        const section = {};
-
-        if (localStorage.getItem("company") === "vkl") {
-          if (hasColorStatus) {
-            section.status1 = response.stage1?.colorStatus || "Not Completed";
-            section.status2 = response.stage2?.colorStatus || "Not Completed";
-            section.status3 = response.stage3?.colorStatus || "Not Completed";
-            section.status4 = response.stage4?.colorStatus || "Not Completed";
-            section.status5 = response.stage5?.colorStatus || "Not Completed";
-            section.status6 = response.stage6?.colorStatus || "Not Completed";
-          } else {
-            section.status1 = evaluateStageStatus(response.stage1, [
-              "referral",
-              "declarationForm",
-              "contractReview",
-              "tenants",
-            ]);
-            const stage2Fields = [
-              "voi",
-              "caf",
-              "signedContract",
-              "sendKeyDates",
-              "depositReceipt",
-              "buildingAndPest",
-              "financeApproval",
-              "checkCtController",
-            ];
-            if (response.clientType?.toLowerCase() === "seller") {
-              stage2Fields.push("obtainDaSeller");
-            }
-            section.status2 = evaluateStageStatus(
-              response.stage2,
-              stage2Fields
-            );
-            section.status3 = evaluateStageStatus(response.stage3, [
-              "titleSearch",
-              "planImage",
-              "landTax",
-              "instrument",
-              "rates",
-              "water",
-              "ownersCorp",
-              "pexa",
-              "inviteBank",
-            ]);
-            section.status4 = evaluateStageStatus(response.stage4, [
-              "dts",
-              "soa",
-              "frcgw",
-              "dutyOnline",
-            ]);
-            section.status5 = evaluateStageStatus(response.stage5, [
-              "notifySoaToClient",
-              "transferDocsOnPexa",
-              "gstWithholding",
-              "disbursementsInPexa",
-              "addAgentFee",
-              "settlementNotification",
-            ]);
-            section.status6 = evaluateStageStatus(response.stage6, [
-              "noaToCouncilWater",
-              "dutyPaid",
-              "finalLetterToClient",
-              "finalLetterToAgent",
-              "invoiced",
-              "closeMatter",
-            ]);
-          }
-          setStageStatuses(section);
-        } else if (localStorage.getItem("company") === "idg") {
-          section.status1 =
-            response.data.stage1?.colorStatus || "Not Completed";
-          section.status2 =
-            response.data.stage2?.colorStatus || "Not Completed";
-          section.status3 =
-            response.data.stage3?.colorStatus || "Not Completed";
-          section.status4 =
-            response.data.stage4?.colorStatus || "Not Completed";
-          section.status5 =
-            response.data.stage5?.colorStatus || "Not Completed";
-          section.status6 =
-            response.data.stage6?.colorStatus || "Not Completed";
-          setStageStatuses(section);
         }
-      } catch (e) {
-        console.error("Error fetching stage details:", e);
-        toast.error("Failed to fetch client details.");
-      } finally {
-        setLoading(false);
-      }
-    }
 
-    if (matterNumber) fetchDetails();
-  }, [matterNumber, reloadStage]);
+        if (matterNumber) fetchDetails();
+    }, [matterNumber, reloadStage]);
 
   useEffect(() => {
     if (!clientData || !originalClientData) {
@@ -500,6 +506,7 @@ export default function StagesLayout() {
       } else if (localStorage.getItem("company") === "idg") {
         payload = {
           deliveryDate: clientData?.data.deliveryDate || null,
+          order_details:clientData?.data.order_details|| null,
           notes: clientData?.data.notes || "",
         };
       }
@@ -550,7 +557,12 @@ export default function StagesLayout() {
       setOriginalMatterNumber(
         normalizedUpdated.matterNumber || originalMatterNumber
       );
+      if(company==="vkl"){
       toast.success("Matter details updated successfully");
+      }
+      else{
+      toast.success("Order details updated successfully");
+      }
       if (resp.directUrl) {
         let direct = resp.directUrl;
         if (!direct.startsWith("/")) direct = `/${direct}`;
@@ -599,12 +611,12 @@ export default function StagesLayout() {
             Hello {localStorage.getItem("user")}
           </h2>
           <div className="flex items-center gap-1">
-            <Button
-              label="Upload Image"
-              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[120px]"
-              onClick={() => setIsOpen(true)}
-            />
+            {/*<Button*/}
+            {/*  label="Upload Image"*/}
+            {/*  bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"*/}
+            {/*  width="w-[120px]"*/}
+            {/*  onClick={() => setIsOpen(true)}*/}
+            {/*/>*/}
             <Button
               label="Back"
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
@@ -616,12 +628,14 @@ export default function StagesLayout() {
                 localStorage.removeItem("client-storage");
               }}
             />
-            <Button
-              label="Cost"
-              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[60px] md:w-[70px]"
-              onClick={() => setSelectedStage(7)}
-            />
+              {(localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin") && (
+                  <Button
+                      label="Cost"
+                      bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+                      width="w-[60px] md:w-[70px]"
+                      onClick={() => setSelectedStage(7)}
+                  />
+              )}
           </div>
         </div>
 
@@ -1097,27 +1111,78 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Notes */}
-                    <div className="md:col-span-3">
-                      <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                        Notes / Comments
-                      </label>
-                      <textarea
-                        rows={5}
-                        value={clientData?.notes || clientData?.data?.notes}
-                        onChange={(e) => {
-                          const newNote = e.target.value;
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            data: {
-                              ...((prev && prev.data) || {}),
-                              notes: newNote,
-                            },
-                          }));
-                        }}
-                        placeholder="Enter comments here..."
-                        className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
-                      />
-                    </div>
+<div className="md:col-span-3">
+  {company === "idg" ? (
+    // IDG: Show both Order Details and Notes side by side
+    <div className="flex gap-1 w-full">
+      <div className="flex-1">
+        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+          Order Details
+        </label>
+        <textarea
+          rows={5}
+          value={clientData?.data?.order_details || ""}
+          onChange={(e) => {
+            const newOrderDetails = e.target.value;
+            setClientData((prev) => ({
+              ...(prev || {}),
+              data: {
+                ...((prev && prev.data) || {}),
+                order_details: newOrderDetails,
+              },
+            }));
+          }}
+          placeholder="Enter order details here..."
+          className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+        />
+      </div>
+      <div className="flex-1">
+        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+          Notes / Comments
+        </label>
+        <textarea
+          rows={5}
+          value={clientData?.notes || clientData?.data?.notes || ""}
+          onChange={(e) => {
+            const newNote = e.target.value;
+            setClientData((prev) => ({
+              ...(prev || {}),
+              data: {
+                ...((prev && prev.data) || {}),
+                notes: newNote,
+              },
+            }));
+          }}
+          placeholder="Enter comments here..."
+          className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+        />
+      </div>
+    </div>
+  ) : (
+    // Non-IDG: Show only Notes taking full width
+    <div>
+      <label className="block text-xs md:text-sm font-semibold mb-0.5">
+        Notes / Comments
+      </label>
+      <textarea
+        rows={5}
+        value={clientData?.notes || clientData?.data?.notes || ""}
+        onChange={(e) => {
+          const newNote = e.target.value;
+          setClientData((prev) => ({
+            ...(prev || {}),
+            data: {
+              ...((prev && prev.data) || {}),
+              notes: newNote,
+            },
+          }));
+        }}
+        placeholder="Enter comments here..."
+        className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+      />
+    </div>
+  )}
+  </div>
 
                     <div className="md:col-span-3 mt-2">
                       <div className="mt-2">

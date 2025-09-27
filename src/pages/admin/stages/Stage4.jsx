@@ -54,23 +54,8 @@ const formConfig = {
         type: "radio",
       },
       {
-        name: "materialsOrganized",
-        label: "Organize Boards, Stickers, Stands, Posts",
-        type: "radio",
-      },
-      {
         name: "jobActivity",
         label: "Ensure Job Activity & Priority are correctly logged",
-        type: "text",
-      },
-      {
-        name: "priority",
-        label: "Job Priority",
-        type: "text",
-      },
-      {
-        name: "status",
-        label: "Update Job Status",
         type: "text",
       },
     ],
