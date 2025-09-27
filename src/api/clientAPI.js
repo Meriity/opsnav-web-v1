@@ -630,7 +630,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGSearchResult(query) {
+  async getIDGSearchResult(query) {
     try {
       const response = await fetch(
         `${this.baseUrl}/idg/orders/search?keywords=${query}`,

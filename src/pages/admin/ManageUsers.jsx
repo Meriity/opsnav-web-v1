@@ -82,8 +82,8 @@ export default function ManageUsers() {
   const [role, setRole] = useState("user");
   const [userList, setUserList] = useState([]);
   const [usersPerPage, setUsersPerPage] = useState(5);
-  const [resetLoadingEmail, setResetLoadingEmail] = useState("");
-  const [resetSuccessEmail, setResetSuccessEmail] = useState("");
+  // const [resetLoadingEmail, setResetLoadingEmail] = useState("");
+  // const [resetSuccessEmail, setResetSuccessEmail] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [sortedColumn, setSortedColumn] = useState(null);
@@ -171,26 +171,26 @@ export default function ManageUsers() {
     }
   };
 
-  const handleReset = async (email) => {
-    try {
-      setResetSuccessEmail("");
-      setResetLoadingEmail(email);
-      setIsLoading(true);
+  // const handleReset = async (email) => {
+  //   try {
+  //     setResetSuccessEmail("");
+  //     setResetLoadingEmail(email);
+  //     setIsLoading(true);
 
-      await api.resetPassword(email);
+  //     await api.resetPassword(email);
 
-      setResetSuccessEmail(email); 
-      toast.success("Reset password link sent successfully!");
-    } catch (err) {
-      toast.error("Something went wrong!");
-    } finally {
-      setIsLoading(false);
-      setResetLoadingEmail("");
-      setOpenUser(false);
-      setIsFetched(false);
-      setTimeout(() => setResetSuccessEmail(""), 2000);
-    }
-  };
+  //     setResetSuccessEmail(email); 
+  //     toast.success("Reset password link sent successfully!");
+  //   } catch (err) {
+  //     toast.error("Something went wrong!");
+  //   } finally {
+  //     setIsLoading(false);
+  //     setResetLoadingEmail("");
+  //     setOpenUser(false);
+  //     setIsFetched(false);
+  //     setTimeout(() => setResetSuccessEmail(""), 2000);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
@@ -230,7 +230,7 @@ export default function ManageUsers() {
                   setSelectedUser(u);
                   setOpenEdit(true);
                 }}
-                onReset={handleReset}
+                // onReset={handleReset}
                 onDelete={(id) => {
                   setId(id);
                   setOpenDelete(true);
@@ -238,8 +238,8 @@ export default function ManageUsers() {
                 itemsPerPage={usersPerPage}
                 headerBgColor="bg-[#A6E7FF]"
                 cellWrappingClass="whitespace-normal"
-                resetLoadingEmail={resetLoadingEmail}
-                resetSuccessEmail={resetSuccessEmail}
+                // resetLoadingEmail={resetLoadingEmail}
+                // resetSuccessEmail={resetSuccessEmail}
               />
             </div>
             {/* Mobile & Tablet Card View */}
@@ -251,15 +251,15 @@ export default function ManageUsers() {
                 />
               </div>
               {userList.slice(0, usersPerPage).map((user) => {
-                const isRowLoading = resetLoadingEmail === user.email;
-                const isRowSuccess = resetSuccessEmail === user.email;
+                // const isRowLoading = resetLoadingEmail === user.email;
+                // const isRowSuccess = resetSuccessEmail === user.email;
                 return (
                   <div
                     key={user.id}
                     className="bg-white p-4 rounded-2xl shadow space-y-3"
                   >
                     <div className="flex justify-between items-start space-x-4">
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">  
                         <h3 className="text-lg font-bold truncate">
                           {user.displayName}
                         </h3>
@@ -267,7 +267,7 @@ export default function ManageUsers() {
                           {user.email}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-1 flex-shrink-0">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
@@ -290,7 +290,7 @@ export default function ManageUsers() {
                           <Trash2 size={16} />
                           <span className="text-xs mt-1">Delete</span>
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => handleReset(user.email)}
                           disabled={isRowLoading}
                           title={
@@ -324,7 +324,7 @@ export default function ManageUsers() {
                               ? "Sent"
                               : "Reset"}
                           </span>
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
@@ -525,10 +525,10 @@ export default function ManageUsers() {
       </Dialog>
 
       {/* a11y live announcements (non-visual) */}
-      <div className="sr-only" aria-live="polite">
+      {/* <div className="sr-only" aria-live="polite">
         {resetLoadingEmail && `Sending reset link to ${resetLoadingEmail}`}
         {resetSuccessEmail && `Reset link sent to ${resetSuccessEmail}`}
-      </div>
+      </div> */}
     </div>
   );
 }
