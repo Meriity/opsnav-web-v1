@@ -1,4 +1,4 @@
-import Plus from "../../icons/Button icons/Icon-Color.png";
+import  Plus from "../../icons/Button icons/Icon-Color.png";
 import {
   BarChart,
   Bar,
@@ -657,7 +657,7 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord}{" "}
+                    {lastrecord||totalCompleted}{" "}
                     {localStorage.getItem("company") === "vkl"
                       ? "Matters Solved In Last Month"
                       : localStorage.getItem("company") === "idg"
