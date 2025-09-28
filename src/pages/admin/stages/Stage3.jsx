@@ -42,20 +42,15 @@ export default function Stage3({
         label: "Quality Check Passed",
         type: "radio",
       },
-            {
-        key: "installerAssigned",
-        label: "Assign Installer / Field Staff",
-        type: "text",
-      },
+      //       {
+      //   key: "installerAssigned",
+      //   label: "Assign Installer / Field Staff",
+      //   type: "text",
+      // },
       {
         key: "onsiteStickersApplied",
         label: "Apply On-Site Stickers",
         type: "radio",
-      },
-      {
-        key: "completionPhotos",
-        label: "Capture Proof of Completion Photos",
-        type: "image",
       },
       { key: "finalStatus", label: "Update Status", type: "text" },
       {
@@ -63,13 +58,13 @@ export default function Stage3({
         label: "Generate and send Invoice",
         type: "radio",
       },
-      {
-        key: "archiveOrder",
-        label: "Move order to Archived Orders",
-        type: "radio",
-        options: ["Completed", "Cancelled"],
-        triggersModal: true,
-      },
+      // {
+      //   key: "archiveOrder",
+      //   label: "Move order to Archived Orders",
+      //   type: "radio",
+      //   options: ["Completed", "Cancelled"],
+      //   triggersModal: true,
+      // },
 
      
     ];
@@ -287,7 +282,7 @@ export default function Stage3({
                     <div
                         className={`w-[90px] h-[18px] ${bgcolor(
                             statusState[key]
-                        )} flex items-center justify-center rounded-4xl`}
+                         )} flex items-center justify-center rounded-4xl`}
                     >
                         <p className="text-[10px] md:text-[12px] whitespace-nowrap">
                             {statusState[key]}

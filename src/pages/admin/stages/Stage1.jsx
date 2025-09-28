@@ -138,7 +138,7 @@ export default function Stage1({
       const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
-      if (["processing", "inprogress","pending"].includes(val)) return "In Progress";
+      if (["processing", "inprogress"].includes(val)) return "In Progress";
       return "Not Completed";
     },
     [normalizeValue]
