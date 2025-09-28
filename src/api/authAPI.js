@@ -62,7 +62,7 @@ class AuthAPI {
     return data;
   }
 
-  async signInClient(matterNumber, password) {
+  async signInClient(matterNumber, postcode) {
     try {
       const response = await fetch(
         `${BASE_URL}/client-view/signin`,
@@ -73,14 +73,14 @@ class AuthAPI {
           },
           body: JSON.stringify({
             matterNumber,
-            password,
+            postcode,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message);
+        throw new Error(errorData.message || errorData.error);
       }
 
       const data = await response.json();

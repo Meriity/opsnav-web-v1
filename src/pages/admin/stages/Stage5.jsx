@@ -56,14 +56,6 @@ const formConfig = {
   idg: {
     fields: [
       { name: "boardsPrinted", label: "Boards Printed", type: "radio" },
-      { name: "laminationApplied", label: "Lamination Applied", type: "radio" },
-      { name: "cuttingDone", label: "Cutting Done", type: "radio" },
-      { name: "mountingDone", label: "Mounting Done", type: "radio" },
-      {
-        name: "auctionStickersPreapplied",
-        label: "Auction Stickers Preapplied",
-        type: "radio",
-      },
       {
         name: "packaged",
         label: "Packaged",
@@ -74,7 +66,6 @@ const formConfig = {
         label: "Quality Check Passed",
         type: "radio",
       },
-      { name: "labeled", label: "labeled", type: "radio" },
     ],
     noteGroups: [
       {

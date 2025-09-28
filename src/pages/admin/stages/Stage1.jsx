@@ -68,10 +68,28 @@ const formConfig = {
       type: "radio",
       options: ["Fixed", "Variable"],
     },
+
+      {
+          name: "costing_amount",
+          label: "Costing Amount",
+          type: "text",
+      },
     {
       name: "timeline",
       label: "Timeline / Deadline",
       type: "text",
+    },
+    {
+      name: "customerAcceptedQuote",
+      label: "Confirm Customer Acceptance of Quote",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "approvalStatus",
+      label: "Approve or reject order for planning",
+      type: "radio",
+      options: ["Approved", "Rejected", "Pending"],
     },
   ],
 };
@@ -117,7 +135,7 @@ export default function Stage1({
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
-      const completed = new Set(["yes", "nr", "na", "variable", "fixed"]);
+      const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
       if (["processing", "inprogress"].includes(val)) return "In Progress";
@@ -141,25 +159,37 @@ export default function Stage1({
       .map((str) => str.trim());
     return { systemNote, clientComment };
   }
+    const generateSystemNote = () => {
+        const radioFields = currentFields.filter((field) => field.type === "radio");
+        const textFields = currentFields.filter((field) => field.type === "text");
+        const greenValues = new Set(["yes", "nr", "na", "variable", "fixed", "approved"]);
 
-  const generateSystemNote = () => {
-    const radioFields = currentFields.filter((field) => field.type === "radio");
-    const greenValues = new Set(["yes", "nr", "na", "variable", "fixed"]);
+        // radio fields not received
+        const notReceivedRadio = radioFields
+            .filter(
+                (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+            )
+            .map((field) => field.label);
 
-    const notReceived = radioFields
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
-      .map((field) => field.label);
+        // text fields not received (empty or whitespace)
+        const notReceivedText = textFields
+            .filter(
+                (field) =>
+                    !formData[field.name] || formData[field.name].toString().trim() === ""
+            )
+            .map((field) => field.label);
 
-    if (notReceived.length === 0) {
-      return "Tasks completed";
-    }
-    if (notReceived.length === 1) {
-      return `${notReceived[0]} not received`;
-    }
-    return `${notReceived.join(", ")} not received`;
-  };
+        const notReceived = [...notReceivedRadio, ...notReceivedText];
+
+        if (notReceived.length === 0) {
+            return "Tasks completed";
+        }
+        if (notReceived.length === 1) {
+            return `${notReceived[0]} not received`;
+        }
+        return `${notReceived.join(", ")} not received`;
+    };
+
 
   useEffect(() => {
     if (!data) return;
@@ -270,6 +300,7 @@ export default function Stage1({
   const renderField = (field) => {
     switch (field.type) {
       case "text":
+          console.log(field);
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">
@@ -364,78 +395,39 @@ export default function Stage1({
       {currentFields.map((field) => renderField(field))}
       {commonFields.map((field) => renderField(field))}
 
-      <div className="flex mt-10 justify-between items-center gap-2 flex-wrap stage1-btn-row">
+      <div className="flex mt-10 justify-between items-center gap-2">
         <Button
           label="Back"
-          width="w-auto sm:w-[70px] md:w-[100px]"
+          width="w-[70px] md:w-[100px]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
-        <div className="flex gap-2 stage1-btn-group">
+        <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving" : "Save"}
-            width="w-auto sm:w-[70px] md:w-[100px]"
+            width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
-            width="w-auto sm:w-[70px] md:w-[100px]"
+            width="w-[70px] md:w-[100px]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>
       </div>
 
-      {/* Responsive styles for mobile & tablet only */}
       <style>{`
         @media (max-width: 768px) {
-          .stage1-responsive {
-            padding: 1rem 0.5rem;
-          }
-          .stage1-btn-row {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-          }
-          .stage1-btn-group {
-            flex-direction: column;
-            gap: 0.75rem;
-            width: 100%;
-          }
-          .stage1-btn-row button,
-          .stage1-btn-group button {
-            width: 100% !important;
-            min-width: 0 !important;
-            font-size: 1rem !important;
-          }
-          .stage1-responsive label {
-            font-size: 0.95rem !important;
-          }
-          .stage1-responsive input,
-          .stage1-responsive textarea {
-            font-size: 0.95rem !important;
-            padding: 0.5rem !important;
-          }
+          .stage1-responsive { padding: 1rem 0.5rem; }
+          .stage1-responsive label { font-size: 0.95rem !important; }
+          .stage1-responsive input, .stage1-responsive textarea { font-size: 0.95rem !important; padding: 0.5rem !important; }
         }
         @media (max-width: 425px) {
-          .stage1-responsive {
-            padding: 0.5rem 0.25rem;
-          }
-          .stage1-btn-row {
-            gap: 0.75rem;
-          }
-          .stage1-btn-group {
-            gap: 0.5rem;
-          }
-          .stage1-responsive label {
-            font-size: 0.9rem !important;
-          }
-          .stage1-responsive input,
-          .stage1-responsive textarea {
-            font-size: 0.9rem !important;
-            padding: 0.4rem !important;
-          }
+          .stage1-responsive { padding: 0.5rem 0.25rem; }
+          .stage1-responsive label { font-size: 0.9rem !important; }
+          .stage1-responsive input, .stage1-responsive textarea { font-size: 0.9rem !important; padding: 0.4rem !important; }
         }
       `}</style>
     </div>

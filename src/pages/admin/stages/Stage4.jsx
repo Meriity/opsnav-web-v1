@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
+import ImageUploadField from "@/components/ui/ImageUploadField.jsx";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
+import {CloudArrowUpIcon} from "@heroicons/react/24/outline/index.js";
 
 const formConfig = {
   vkl: {
@@ -28,51 +30,11 @@ const formConfig = {
   },
   idg: {
     fields: [
-      {
-        name: "designArtwork",
-        label: "Create / update Design Artwork",
-        type: "text",
-      },
-      {
-        name: "internalApproval",
-        label: "Review and internally approve design",
-        type: "radio",
-      },
-      {
-        name: "proofSentToClient",
-        label: "Send Proof to Client",
-        type: "radio",
-      },
-      {
-        name: "clientApprovalReceived",
-        label: "Record Client Approval",
-        type: "radio",
-      },
-      {
-        name: "printReadyFiles",
-        label: "Generate Print-Ready Files",
-        type: "radio",
-      },
-      {
-        name: "materialsOrganized",
-        label: "Organize Boards, Stickers, Stands, Posts",
-        type: "radio",
-      },
-      {
-        name: "jobActivity",
-        label: "Ensure Job Activity & Priority are correctly logged",
-        type: "text",
-      },
-      {
-        name: "priority",
-        label: "Job Priority",
-        type: "text",
-      },
-      {
-        name: "status",
-        label: "Update Job Status",
-        type: "text",
-      },
+        {
+            name: "completionPhotos",
+            label: "Capture Proof of Completion Photos",
+            type: "image",
+        },
     ],
     noteGroups: [
       {
@@ -83,15 +45,7 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "designArtwork",
-          "internalApproval",
-          "proofSentToClient",
-          "clientApprovalReceived",
-          "printReadyFiles",
-          "materialsOrganized",
-          "jobActivity",
-          "priority",
-          "status",
+          "completionPhotos"
         ],
       },
     ],
@@ -146,6 +100,14 @@ export default function Stage4({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+    const [preview, setPreview] = useState(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setPreview(URL.createObjectURL(file));
+        }
+    };
 
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
@@ -363,6 +325,72 @@ export default function Stage4({
             />
           </div>
         );
+        case "image":
+        return(
+            <div className="w-full">
+                <label className="block mb-1 text-sm md:text-base font-bold">
+                    {field.label}
+                </label>
+
+                <div className="relative w-full">
+                    {!preview ? (
+                        // Empty state with cloud
+                        <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                            <CloudArrowUpIcon className="w-10 h-10 text-gray-400" />
+                            <p className="mt-2 text-sm text-gray-500">
+                                <span className="font-semibold text-blue-600">Click to upload</span>{" "}
+                                or drag & drop
+                            </p>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                            />
+                        </label>
+                    ) : (
+                        // Image preview
+                        <div className="relative">
+                            <img
+                                src={preview}
+                                alt="Uploaded preview"
+                                className="w-full h-40 object-cover rounded-lg border"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setPreview(null)}
+                                className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+
+
+            //     <div className="w-full">
+            //         <label className="block mb-1 text-sm md:text-base font-bold">
+            //             {field.label}
+            //         </label>
+            //         <input
+            //             type="file"
+            //             accept="image/*"
+            //             // onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
+            //             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
+            //         />
+            //         {/*/!* Display current image if it exists *!/*/}
+            //         {/*{formState.completionPhotos && (*/}
+            //         {/*    <div className="mt-2">*/}
+            //         {/*        <p className="text-xs font-semibold">Current Photo:</p>*/}
+            //         {/*        <a href={"/"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">*/}
+            //         {/*            View Uploaded Photo*/}
+            //         {/*        </a>*/}
+            //         {/*    </div>*/}
+            //         {/*)}*/}
+            //     </div>
+
       default:
         return null;
     }

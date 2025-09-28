@@ -68,16 +68,6 @@ const formConfig = {
         type: "text",
       },
       {
-        name: "installationDone",
-        label: "Perform Installation / Removal On-Site",
-        type: "radio",
-      },
-      {
-        name: "streetPointersPlaced",
-        label: "Place Street Pointers",
-        type: "radio",
-      },
-      {
         name: "onsiteStickersApplied",
         label: "Apply On-Site Stickers",
         type: "radio",
@@ -402,19 +392,7 @@ export default function Stage6({
 
   return (
     <>
-      <ConfirmationModal
-        isOpen={isModalOpen}
-        onClose={() => !isSaving && setIsModalOpen(false)}
-        onConfirm={proceedWithSave}
-        title="Are you sure?"
-      >
-        You are about to finalize this matter as{" "}
-        <strong className="text-gray-900">
-          "{modalField && formData[modalField.name]}"
-        </strong>
-        . This action may be irreversible.
-      </ConfirmationModal>
-
+ 
       <div className="overflow-y-auto">
         {currentConfig.fields.map(renderField)}
         {currentConfig.noteGroups.map(renderNoteGroup)}

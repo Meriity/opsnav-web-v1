@@ -31,29 +31,42 @@ export default function Stage3({
     ];
   } else if (localStorage.getItem("company") === "idg") {
     fields = [
-      { key: "agent", label: "Assign Agent / Team Member", type: "text" },
+      { key: "boardsPrinted", label: "Boards Printed", type: "radio" },
       {
-        key: "materialsInStock",
-        label: "Check if Materials Needed are in stock",
+        key: "packaged",
+        label: "Packaged",
+        type: "radio",
       },
       {
-        key: "additionalMaterialsRequired",
-        label: "Procure additional materials if required",
+        key: "qualityCheckPassed",
+        label: "Quality Check Passed",
+        type: "radio",
       },
-      { key: "priority", label: "Confirm Job Priority", type: "text" },
-      { key: "jobActivity", label: "Schedule Job Activity", type: "text" },
-      { key: "status", label: "Confirm Job Status", type: "text" },
+      //       {
+      //   key: "installerAssigned",
+      //   label: "Assign Installer / Field Staff",
+      //   type: "text",
+      // },
       {
-        key: "vehicleAllocated",
-        label: "Allocate Vehicle / Installer",
-        type: "text",
+        key: "onsiteStickersApplied",
+        label: "Apply On-Site Stickers",
+        type: "radio",
       },
+      { key: "finalStatus", label: "Update Status", type: "text" },
       {
-        key: "draftCostSheet",
-        label: "Finalize Draft Cost Sheet (Fixed + Variable)",
-        type: "text",
+        key: "invoiceGenerated",
+        label: "Generate and send Invoice",
+        type: "radio",
       },
-      // { key: "approvePlan", label: "Approve plan and move to preparation" },
+      // {
+      //   key: "archiveOrder",
+      //   label: "Move order to Archived Orders",
+      //   type: "radio",
+      //   options: ["Completed", "Cancelled"],
+      //   triggersModal: true,
+      // },
+
+     
     ];
   }
 
@@ -130,6 +143,7 @@ export default function Stage3({
       if (hasDate) {
         newFormState[`${key}Date`] = data[`${key}Date`]
           ? data[`${key}Date`].split("T")[0]
+
           : "";
       }
     });
@@ -258,74 +272,85 @@ export default function Stage3({
     }
   }
 
-  const renderRadioGroup = ({ key, label, hasDate }) => (
-    <div className="mt-5" key={key}>
-      <div className="flex gap-4 items-center justify-between mb-3">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          {label}
-        </label>
-        <div
-          className={`w-[90px] h-[18px] ${bgcolor(
-            statusState[key]
-          )} flex items-center justify-center rounded-4xl`}
-        >
-          <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-            {statusState[key]}
-          </p>
-        </div>
-      </div>
+    const renderRadioGroup = ({ key, label, hasDate, type }) => (
+        <div className="mt-5" key={key}>
+            <div className="flex gap-4 items-center justify-between mb-3">
+                <label className="block mb-1 text-sm md:text-base font-bold">
+                    {label}
+                </label>
+                {type !== 'text' && type !== 'image' && (
+                    <div
+                        className={`w-[90px] h-[18px] ${bgcolor(
+                            statusState[key]
+                         )} flex items-center justify-center rounded-4xl`}
+                    >
+                        <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                            {statusState[key]}
+                        </p>
+                    </div>
+                )}
+            </div>
 
-      <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 items-center">
-        {[
-          "agent",
-          "priority",
-          "jobActivity",
-          "status",
-          "vehicleAllocated",
-          "draftCostSheet",
-        ].includes(key) ? (
-          <input
-            type="text"
-            name={key}
-            value={formState[key] || ""}
-            onChange={(e) => handleChange(key, e.target.value, hasDate)}
-            className="border rounded-md p-2 text-sm md:text-base w-full"
-          />
-        ) : (
-          ["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name={key}
-                value={val}
-                checked={
-                  normalizeValue(formState[key] || "") === normalizeValue(val)
-                }
-                onChange={() => handleChange(key, val, hasDate)}
-              />
-              {val}
-            </label>
-          ))
-        )}
-        {hasDate && (
-          <input
-            type="date"
-            value={formState[`${key}Date`] || ""}
-            onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                [`${key}Date`]: e.target.value,
-              }))
-            }
-            className="border p-1 rounded text-md"
-          />
-        )}
-      </div>
-    </div>
-  );
+            <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 items-center">
+                {type === 'image' ? (
+                    <div className="w-full">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        {/* Display current image if it exists */}
+                        {formState.completionPhotos && (
+                            <div className="mt-2">
+                                <p className="text-xs font-semibold">Current Photo:</p>
+                                <a href={formState.completionPhotos} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                                    View Uploaded Photo
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                ) : type === "text" ? (
+                    <input
+                        type="text"
+                        name={key}
+                        value={formState[key] || ""}
+                        onChange={(e) => handleChange(key, e.target.value)}
+                        className="border rounded-md p-2 text-sm md:text-base w-full"
+                    />
+                ) : (
+                    ["Yes", "No", "Processing", "N/R"].map((val) => (
+                        <label
+                            key={val}
+                            className="flex items-center gap-2 text-sm md:text-base"
+                        >
+                            <input
+                                type="radio"
+                                name={key}
+                                value={val}
+                                checked={normalizeValue(formState[key] || "") === normalizeValue(val)}
+                                onChange={() => handleChange(key, val)}
+                            />
+                            {val}
+                        </label>
+                    ))
+                )}
+                {hasDate && (
+                    <input
+                        type="date"
+                        value={formState[`${key}Date`] || ""}
+                        onChange={(e) =>
+                            setFormState((prev) => ({
+                                ...prev,
+                                [`${key}Date`]: e.target.value,
+                            }))
+                        }
+                        className="border p-1 rounded text-md"
+                    />
+                )}
+            </div>
+        </div>
+    );
 
   return (
     <div className="overflow-y-auto">

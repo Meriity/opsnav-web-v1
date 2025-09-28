@@ -76,6 +76,30 @@ class ClientAPI {
       throw error;
     }
   }
+
+    // Get client details by matter number
+    async getIDGUsers() {
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/idg/users`,
+                {
+                    method: "GET",
+                    headers: this.getHeaders(),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Error getting client details:", error);
+            throw error;
+        }
+    }
+
+
   async updateIDGClientData(clientId, data = {}) {
     console.log(clientId, data);
     try {
@@ -122,6 +146,7 @@ class ClientAPI {
 
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
+      console.log(additionalData,clientId);
       const response = await fetch(
         `${this.baseUrl}/idg/orders/${clientId}/stage`,
         {
@@ -606,7 +631,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGSearchResult(query) {
+  async getIDGSearchResult(query) {
     try {
       const response = await fetch(
         `${this.baseUrl}/idg/orders/search?keywords=${query}`,

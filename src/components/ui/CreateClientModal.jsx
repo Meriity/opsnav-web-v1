@@ -215,10 +215,9 @@ export default function CreateClientModal({
             "orderType",
             "priority",
             "deliveryAddress",
-            "country",
-            "state",
-            "postcode",
+            "orderDate",
             "deliveryDate",
+            "order_details"
           ];
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
@@ -232,11 +231,12 @@ export default function CreateClientModal({
             orderType: formData.orderType,
             priority: formData.priority,
             deliveryAddress: formData.deliveryAddress,
-            country: formData.country,
-            state: formData.state,
-            postcode: formData.postcode,
+            country: formData.country||"",
+            state: formData.state||"",
+            postcode: formData.postcode||"",
             orderDate: formData.orderDate,
             deliveryDate: formData.deliveryDate,
+            order_details:formData.order_details
           };
           console.log(payload);
           await api.createIDGOrder(payload);
@@ -304,9 +304,8 @@ export default function CreateClientModal({
                       onChange={handleChange}
                       pattern="[0-9]*"
                       inputMode="numeric"
-                      className={`w-full px-4 py-2 rounded-md border ${
-                        matterNumberError ? "border-red-500" : "border-gray-300"
-                      } bg-white`}
+                      className={`w-full px-4 py-2 rounded-md border ${matterNumberError ? "border-red-500" : "border-gray-300"
+                        } bg-white`}
                       required
                     />
                     {matterNumberError && (
@@ -509,36 +508,33 @@ export default function CreateClientModal({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block mb-1 font-medium">Country*</label>
+                    <label className="block mb-1 font-medium">Country</label>
                     <input
                       type="text"
                       name="country"
                       value={formData.country || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">State*</label>
+                    <label className="block mb-1 font-medium">State</label>
                     <input
                       type="text"
                       name="state"
                       value={formData.state || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <label className="block mb-1 font-medium">Postcode</label>
                     <input
                       type="text"
                       name="postcode"
                       value={formData.postcode || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                 </div>
@@ -637,36 +633,33 @@ export default function CreateClientModal({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block mb-1 font-medium">Country*</label>
+                    <label className="block mb-1 font-medium">Country</label>
                     <input
                       type="text"
                       name="country"
                       value={formData.country || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">State*</label>
+                    <label className="block mb-1 font-medium">State</label>
                     <input
                       type="text"
                       name="state"
                       value={formData.state || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">Postcode*</label>
+                    <label className="block mb-1 font-medium">Postcode</label>
                     <input
                       type="text"
                       name="postcode"
                       value={formData.postcode || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
                     />
                   </div>
                 </div>
@@ -678,9 +671,9 @@ export default function CreateClientModal({
                     <input
                       type="date"
                       name="orderDate"
-                      value={formData.orderDate || todayISO}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-500"
-                      readOnly
+                      value={formData.orderDate || ""}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-500"
                     />
                   </div>
                   <div>
@@ -697,11 +690,36 @@ export default function CreateClientModal({
                     />
                   </div>
                 </div>
+                  <div>
+                <div>
+                  <label className="block mb-1 font-medium">Order Details</label>
+                  <textarea
+                    name="order_details"
+                    value={formData.order_details || ""}
+                    onChange={handleChange}
+                    maxLength={200}
+                    rows={2} 
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                    required
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    {formData.order_details?.length || 0}/200 characters
+                  </p>
+                </div>
+                      <div className="w-full mb-3">
+                          <input
+                              type="file"
+                              accept="image/*"
+                              // onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
+                              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                      </div>
+                  </div>
               </>
             )}
 
             {/* Shared Fields */}
-            <div>
+            {/* <div>
               <label className="block mb-1 font-medium">Data Entry By</label>
               <input
                 type="text"
@@ -709,24 +727,23 @@ export default function CreateClientModal({
                 readOnly
                 className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-600"
               />
-            </div>
+            </div> */}
 
             {/* Submit Button */}
             <div className="pt-4">
               <button
                 type="submit"
                 disabled={isLoading || !!matterNumberError}
-                className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-opacity ${
-                  isLoading || matterNumberError
+                className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-opacity ${isLoading || matterNumberError
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-sky-600"
-                }`}
+                  }`}
               >
                 {isLoading
                   ? "Creating..."
                   : createType === "order"
-                  ? "Create Order"
-                  : "Create Client"}
+                    ? "Create Order"
+                    : "Create Client"}
               </button>
             </div>
           </form>

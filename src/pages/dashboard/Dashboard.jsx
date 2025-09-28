@@ -1,4 +1,4 @@
-import Plus from "../../icons/Button icons/Icon-Color.png";
+import  Plus from "../../icons/Button icons/Icon-Color.png";
 import {
   BarChart,
   Bar,
@@ -11,7 +11,7 @@ import {
 import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
 import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
 import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import ClientAPI from "../../api/userAPI";
@@ -27,7 +27,7 @@ import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
-import { formatDate } from "../../utils/formatters.js";
+// import { formatDate } from "../../utils/formatters.js"; // unused
 
 const localizer = momentLocalizer(moment);
 
@@ -93,8 +93,14 @@ const CustomEvent = ({ event }) => {
     default:
       eventTypeLabel = "Event";
   }
-  const clientTypeInitial = event.clientType ? event.clientType.charAt(0) : event.orderType ? event.orderType.charAt(0) : "";
-  const displayTitle = `[${event.matterNumber || event.orderId}] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+  const clientTypeInitial = event.clientType
+    ? event.clientType.charAt(0)
+    : event.orderType
+    ? event.orderType.charAt(0)
+    : "";
+  const displayTitle = `[${
+    event.matterNumber || event.orderId
+  }] - ${eventTypeLabel} - [${clientTypeInitial}]`;
 
   return (
     <div className="custom-event-content">
@@ -109,25 +115,49 @@ const CustomAgendaEvent = ({ event }) => (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col">
         <span className="font-semibold text-gray-800 text-sm sm:text-base">
-          {event.title}
+          {event?.title || "Untitled"}
         </span>
         <span className="text-xs text-gray-500 mt-1">
-          {moment(event.start).format("DD MMM YYYY")}
+          {event?.start ? moment(event.start).format("DD MMM YYYY") : ""}
         </span>
       </div>
       <span
-        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${event.type === "buildingAndPest"
-          ? "bg-purple-100 text-purple-700"
-          : event.type === "financeApproval"
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
+          event.type === "buildingAndPest"
+            ? "bg-purple-100 text-purple-700"
+            : event.type === "financeApproval"
             ? "bg-orange-100 text-orange-700"
             : "bg-blue-100 text-blue-700"
-          }`}
+        }`}
       >
-        {event.clientType}
+        {event?.clientType}
       </span>
     </div>
   </div>
 );
+
+class CalendarErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Calendar rendering error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+          Something went wrong loading the calendar.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // --- Helper Hooks ---
 const useWindowSize = () => {
@@ -192,10 +222,11 @@ const ResponsiveCalendarToolbar = ({
           <button
             key={viewName}
             onClick={() => onView(viewName)}
-            className={`capitalize px-3 py-1 rounded-md transition-colors ${currentView === viewName
-              ? "bg-blue-500 text-white shadow"
-              : "text-gray-600 hover:bg-gray-200"
-              }`}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${
+              currentView === viewName
+                ? "bg-blue-500 text-white shadow"
+                : "text-gray-600 hover:bg-gray-200"
+            }`}
           >
             {viewName}
           </button>
@@ -206,8 +237,14 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
-  const { totalusers, totalactive, totalCompleted, lastrecord, loading, setDashboardData } =
-    useDashboardStore();
+  const {
+    totalusers,
+    totalactive,
+    totalCompleted,
+    lastrecord,
+    loading,
+    setDashboardData,
+  } = useDashboardStore();
   const {
     archivedClients,
     isFetched: isArchivedFetched,
@@ -242,8 +279,8 @@ function Dashboard() {
         company === "idg"
           ? "Closed Orders"
           : company === "vkl"
-            ? "Closed Matters"
-            : "Closed";
+          ? "Closed Matters"
+          : "Closed";
 
       return (
         <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
@@ -265,8 +302,8 @@ function Dashboard() {
         const data = await (company === "vkl"
           ? clientApi.getDashboardData()
           : company === "idg"
-            ? clientApi.getIDGDashboardData()
-            : clientApi.getDashboardData());
+          ? clientApi.getIDGDashboardData()
+          : clientApi.getDashboardData());
         console.log("Dashboard data:", data);
         setDashboardData(data);
         setAllChartData({
@@ -289,7 +326,10 @@ function Dashboard() {
     const fetchCalendarData = async () => {
       const company = localStorage.getItem("company");
       try {
-        const data = company === "vkl" ? await clientApi.getCalendarDates() : await clientApi.getIDGCalendarDates();
+        const data =
+          company === "vkl"
+            ? await clientApi.getCalendarDates()
+            : await clientApi.getIDGCalendarDates();
         console.log(data);
         const events = [];
         if (company === "vkl") {
@@ -360,8 +400,8 @@ function Dashboard() {
             }
           });
           const safeEvents = events
-            .filter(e => e && e.start && e.end) // remove undefined / broken
-            .map(e => ({
+            .filter((e) => e && e.start && e.end) // remove undefined / broken
+            .map((e) => ({
               title: e.title || `[${e.orderId || "NoID"}]`, // fallback title
               ...e,
             }));
@@ -562,26 +602,28 @@ function Dashboard() {
                 {localStorage.getItem("company") === "vkl"
                   ? "Closed Matters"
                   : localStorage.getItem("company") === "idg"
-                    ? "Closed Orders"
-                    : "Closed"}{" "}
+                  ? "Closed Orders"
+                  : "Closed"}{" "}
                 ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
                   onClick={() => setChartView("last10Months")}
-                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "last10Months"
-                    ? "bg-blue-500 text-white shadow"
-                    : "text-gray-600 hover:bg-gray-200"
-                    }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    chartView === "last10Months"
+                      ? "bg-blue-500 text-white shadow"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
                 >
                   10 Months
                 </button>
                 <button
                   onClick={() => setChartView("allTime")}
-                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "allTime"
-                    ? "bg-blue-500 text-white shadow"
-                    : "text-gray-600 hover:bg-gray-200"
-                    }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    chartView === "allTime"
+                      ? "bg-blue-500 text-white shadow"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
                 >
                   All Time
                 </button>
@@ -615,12 +657,12 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord}{" "}
+                    {lastrecord||totalCompleted}{" "}
                     {localStorage.getItem("company") === "vkl"
                       ? "Matters Solved In Last Month"
                       : localStorage.getItem("company") === "idg"
-                        ? "Orders Closed In Last Month"
-                        : "Closed"}
+                      ? "Orders Closed In Last Month"
+                      : "Closed"}
                   </p>
                 )}
               </>
@@ -637,25 +679,29 @@ function Dashboard() {
               Important Dates
             </h2>
             <div className="h-[65vh] min-h-[500px]">
-              <Calendar
-                localizer={localizer}
-                events={calendarEvents}
-                titleAccessor={(event) => event?.title || `[${event?.orderId || "Untitled"}]`}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: "100%" }}
-                popup
-                onNavigate={handleNavigate}
-                dayPropGetter={dayPropGetter}
-                views={views}
-                defaultView={defaultView}
-                eventPropGetter={eventStyleGetter}
-                components={{
-                  event: CustomEvent,
-                  agenda: { event: CustomAgendaEvent },
-                  toolbar: ResponsiveCalendarToolbar,
-                }}
-              />
+              <CalendarErrorBoundary>
+                <Calendar
+                  localizer={localizer}
+                  events={Array.isArray(calendarEvents) ? calendarEvents : []}
+                  titleAccessor={(event) =>
+                    event?.title || `[${event?.orderId || "Untitled"}]`
+                  }
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: "100%" }}
+                  popup
+                  onNavigate={handleNavigate}
+                  dayPropGetter={dayPropGetter}
+                  views={views}
+                  defaultView={defaultView}
+                  eventPropGetter={eventStyleGetter}
+                  components={{
+                    event: CustomEvent,
+                    agenda: { event: CustomAgendaEvent },
+                    toolbar: ResponsiveCalendarToolbar,
+                  }}
+                />
+              </CalendarErrorBoundary>
             </div>
           </div>
         </div>
