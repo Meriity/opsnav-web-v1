@@ -146,6 +146,7 @@ class ClientAPI {
 
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
+      console.log(additionalData,clientId);
       const response = await fetch(
         `${this.baseUrl}/idg/orders/${clientId}/stage`,
         {
