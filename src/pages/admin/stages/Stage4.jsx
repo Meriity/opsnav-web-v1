@@ -5,7 +5,7 @@ import ImageUploadField from "@/components/ui/ImageUploadField.jsx";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
-import {CloudArrowUpIcon} from "@heroicons/react/24/outline/index.js";
+import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 
 const formConfig = {
   vkl: {
@@ -30,11 +30,12 @@ const formConfig = {
   },
   idg: {
     fields: [
-        {
-            name: "completionPhotos",
-            label: "Capture Proof of Completion Photos",
-            type: "image",
-        },
+      { name: "uploadImageConfirmation", label: "Image Uploaded Correctly", type: "radio" },
+      {
+        name: "completionPhotos",
+        label: "Capture Proof of Completion Photos",
+        type: "image",
+      },
     ],
     noteGroups: [
       {
@@ -45,7 +46,8 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "completionPhotos"
+          "completionPhotos",
+          "uploadImageConfirmation"
         ],
       },
     ],
@@ -71,7 +73,7 @@ const getStatus = (value) => {
 
 function bgcolor(status) {
   const statusColors = {
-    Completed: "bg-[#00A506] text-white",
+    "Completed": "bg-[#00A506] text-white",
     "Not Completed": "bg-[#FF0000] text-white",
     "In Progress": "bg-[#FFEECF] text-[#FF9500]",
   };
@@ -100,14 +102,14 @@ export default function Stage4({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-    const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(null);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPreview(URL.createObjectURL(file));
-        }
-    };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
@@ -156,7 +158,6 @@ export default function Stage4({
 
     const initialFormData = {};
     const initialStatuses = {};
-
     currentConfig.fields.forEach((field) => {
       if (field.type === "number") {
         const rawPrice = data[field.name];
@@ -195,7 +196,6 @@ export default function Stage4({
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
   };
-
   const isChanged = () =>
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
@@ -267,9 +267,9 @@ export default function Stage4({
                   statuses[field.name]
                 )} flex items-center justify-center rounded-4xl`}
               >
-                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                  {statuses[field.name]}
-                </p>
+                  <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                    {statuses[field.name] || "Not Completed"}
+                  </p>
               </div>
             </div>
             {/* <div className="flex gap-4 justify-between flex-wrap items-center mb-3"> */}
@@ -325,71 +325,71 @@ export default function Stage4({
             />
           </div>
         );
-        case "image":
-        return(
-            <div className="w-full">
-                <label className="block mb-1 text-sm md:text-base font-bold">
-                    {field.label}
-                </label>
+      case "image":
+        return (
+          <div className="w-full mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
 
-                <div className="relative w-full">
-                    {!preview ? (
-                        // Empty state with cloud
-                        <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-                            <CloudArrowUpIcon className="w-10 h-10 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">
-                                <span className="font-semibold text-blue-600">Click to upload</span>{" "}
-                                or drag & drop
-                            </p>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="hidden"
-                            />
-                        </label>
-                    ) : (
-                        // Image preview
-                        <div className="relative">
-                            <img
-                                src={preview}
-                                alt="Uploaded preview"
-                                className="w-full h-40 object-cover rounded-lg border"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setPreview(null)}
-                                className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    )}
+            <div className="relative w-full">
+              {!preview ? (
+                // Empty state with cloud
+                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                  <CloudArrowUpIcon className="w-10 h-10 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">
+                    <span className="font-semibold text-blue-600">Click to upload</span>{" "}
+                    or drag & drop
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              ) : (
+                // Image preview
+                <div className="relative">
+                  <img
+                    src={preview}
+                    alt="Uploaded preview"
+                    className="w-full h-40 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPreview(null)}
+                    className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50"
+                  >
+                    ✕
+                  </button>
                 </div>
+              )}
             </div>
+          </div>
         );
 
 
-            //     <div className="w-full">
-            //         <label className="block mb-1 text-sm md:text-base font-bold">
-            //             {field.label}
-            //         </label>
-            //         <input
-            //             type="file"
-            //             accept="image/*"
-            //             // onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
-            //             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
-            //         />
-            //         {/*/!* Display current image if it exists *!/*/}
-            //         {/*{formState.completionPhotos && (*/}
-            //         {/*    <div className="mt-2">*/}
-            //         {/*        <p className="text-xs font-semibold">Current Photo:</p>*/}
-            //         {/*        <a href={"/"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">*/}
-            //         {/*            View Uploaded Photo*/}
-            //         {/*        </a>*/}
-            //         {/*    </div>*/}
-            //         {/*)}*/}
-            //     </div>
+      //     <div className="w-full">
+      //         <label className="block mb-1 text-sm md:text-base font-bold">
+      //             {field.label}
+      //         </label>
+      //         <input
+      //             type="file"
+      //             accept="image/*"
+      //             // onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
+      //             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
+      //         />
+      //         {/*/!* Display current image if it exists *!/*/}
+      //         {/*{formState.completionPhotos && (*/}
+      //         {/*    <div className="mt-2">*/}
+      //         {/*        <p className="text-xs font-semibold">Current Photo:</p>*/}
+      //         {/*        <a href={"/"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">*/}
+      //         {/*            View Uploaded Photo*/}
+      //         {/*        </a>*/}
+      //         {/*    </div>*/}
+      //         {/*)}*/}
+      //     </div>
 
       default:
         return null;

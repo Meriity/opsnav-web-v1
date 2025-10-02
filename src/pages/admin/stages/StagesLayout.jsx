@@ -626,7 +626,7 @@ export default function StagesLayout() {
                                 localStorage.removeItem("client-storage");
                             }}
                         />
-                        {(localStorage.getItem("company") === "vkl" || (localStorage.getItem("company") === "idg" && ["admin", "superadmin"].includes(localStorage.getItem("role")))) && 
+                       {(localStorage.getItem("company") === "vkl" || (localStorage.getItem("company") === "idg" && ["admin", "superadmin"].includes(localStorage.getItem("role")))) && 
                         (
                         <Button
                         label="Cost"

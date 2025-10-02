@@ -79,11 +79,11 @@ const formConfig = {
         label: "Procure additional materials if required",
         type: "radio",
       },
-      {
-        name: "vehicleAllocated",
-        label: "Allocate Vehicle / Installer",
-        type: "text",
-      },
+      // {
+      //   name: "vehicleAllocated",
+      //   label: "Allocate Vehicle / Installer",
+      //   type: "text",
+      // },
       {
         name: "designArtwork",
         label: "Create / update Design Artwork",

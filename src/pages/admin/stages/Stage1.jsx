@@ -47,33 +47,21 @@ const formConfig = {
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
     },
-    {
-      name: "jobAddress",
-      label: "Job Address",
-      type: "text",
-    },
+    // {
+    //   name: "jobAddress",
+    //   label: "Job Address",
+    //   type: "text",
+    // },
     {
       name: "distanceFeasibility",
       label: "Check Distance / Feasibility",
       type: "text",
     },
-    {
-      name: "orderType",
-      label: "Order Type",
-      type: "text",
-    },
-    {
-      name: "costingType",
-      label: "Confirm Costing Type",
-      type: "radio",
-      options: ["Fixed", "Variable"],
-    },
-
-      {
-          name: "costing_amount",
-          label: "Costing Amount",
-          type: "text",
-      },
+    // {
+    //   name: "orderType",
+    //   label: "Order Type",
+    //   type: "text",
+    // },
     {
       name: "timeline",
       label: "Timeline / Deadline",
@@ -192,6 +180,30 @@ export default function Stage1({
 
 
   useEffect(() => {
+    if (
+  localStorage.getItem("company") === "idg" &&
+  (localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin")
+) {
+  const hasCostingFields = formConfig.idg.some(
+    (field) => field.name === "costing_amount"
+  );
+
+  if (!hasCostingFields) {
+    formConfig.idg.push(
+      {
+        name: "costingType",
+        label: "Confirm Costing Type",
+        type: "radio",
+        options: ["Fixed", "Variable"],
+      },
+      {
+        name: "costing_amount",
+        label: "Costing Amount",
+        type: "text",
+      }
+    );
+  }
+}
     if (!data) return;
 
     const { systemNote, clientComment } = extractNotes(data.noteForClient);

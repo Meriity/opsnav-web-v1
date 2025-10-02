@@ -104,7 +104,7 @@ const ViewClients = () => {
       { key: "clientId", title: "Client ID", width: "10%" },
       { key: "orderId", title: "Order ID", width: "10%" },
       { key: "client_name", title: "Client Name", width: "10%" },
-      { key: "client_type", title: "Client Type", width: "15%" },
+      { key: "client_type", title: "Order Type", width: "15%" },
       { key: "order_date", title: "Order Date", width: "10%" },
       { key: "delivery_date", title: "Delivery Date", width: "10%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
