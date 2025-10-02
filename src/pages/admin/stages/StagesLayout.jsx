@@ -626,14 +626,15 @@ export default function StagesLayout() {
                                 localStorage.removeItem("client-storage");
                             }}
                         />
-                        {(localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin") && (
-                            <Button
-                                label="Cost"
-                                bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-                                width="w-[60px] md:w-[70px]"
-                                onClick={() => setSelectedStage(7)}
-                            />
-                        )}
+                       {(localStorage.getItem("company") === "vkl" || (localStorage.getItem("company") === "idg" && ["admin", "superadmin"].includes(localStorage.getItem("role")))) && 
+                        (
+                        <Button
+                        label="Cost"
+                        bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+                        width="w-[60px] md:w-[70px]"
+                        onClick={() => setSelectedStage(7)}
+                        />
+                       )}
                     </div>
                 </div>
 
