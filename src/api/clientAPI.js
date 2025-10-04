@@ -176,6 +176,32 @@ class ClientAPI {
       throw error;
     }
   }
+  async uploadImageForOrder(orderId, file) {
+  const stageNumber = 4;
+  const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`;
+  const formData = new FormData();
+  formData.append('image', file);
+  console.log(`Sending file to: ${apiUrl}`);
+  const headers = this.getHeaders();
+  delete headers['Content-Type'];
+  try {
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    body: formData, 
+    headers: headers, 
+  });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log('Upload successful! ✅', result);
+    return result;
+
+  } catch (error) {
+    console.error('Error during image upload: ❌', error);
+    throw error; 
+  }
+}
 
   async upsertStage(stage, additionalData = {}) {
     try {
