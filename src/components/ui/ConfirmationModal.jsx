@@ -75,7 +75,6 @@ export default function ConfirmationModal({
                   label="Cancel"
                   onClick={onClose}
                   disabled={isConfirming}
-                  bg="bg-blue-400" // CHANGED from bg-transparent
                   textColor="text-gray-700"
                   border="border border-gray-300"
                   width="w-24"
@@ -84,7 +83,6 @@ export default function ConfirmationModal({
                   label={isConfirming ? "Saving..." : "Confirm"}
                   onClick={handleConfirm}
                   disabled={isConfirming}
-                  bg="bg-blue-600"
                   textColor="text-white"
                   width="w-24"
                 />
