@@ -516,6 +516,7 @@ export default function StagesLayout() {
                 payload.state = clientData?.state || "";
                 payload.clientType = clientData?.clientType || "";
                 payload.dataEntryBy = clientData?.dataEntryBy || "";
+                payload.postcode = clientData?.postcode || clientData?.data?.postcode || "";
 
                 if (
                     clientData?.matterNumber !== undefined &&
@@ -1051,9 +1052,46 @@ export default function StagesLayout() {
                                                 />
                                             )}
                                         </div>
+                                                                                <div>
+                        <div>
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            Post Code
+                          </label>
+                          {isSuperAdmin ? (
+                            <input
+                              type="text"
+                              id="postcode"
+                              name="postcode"
+                              value={clientData?.postcode || clientData?.data?.postcode||""}
+                              onChange={(e) => {
+                                if (!isSuperAdmin) return;
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  postcode: e.target.value,
+                                }));
+                              }}
+                              pattern="^[0-9]{4}$"
+                              maxLength={4}
+                              inputMode="numeric"
+                              className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                                !isSuperAdmin ? "bg-gray-100" : ""
+                              }`}
+                              disabled={!isSuperAdmin}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={clientData?.postcode ||clientData?.data?.postcode || ""}
+                              className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                      </div>
 
                                         {/* Settlement Date */}
-                                        <div className="md:col-span-2">
+                                        <div className="md:col-span-1">
                                             <label className="block text-xs md:text-sm font-semibold mb-1">
                                                 {company === "vkl"
                                                     ? "Settlement Date"
