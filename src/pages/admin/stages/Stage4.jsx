@@ -214,9 +214,10 @@ export default function Stage4({
 
     setFormData(initialFormData);
     setStatuses(initialStatuses);
-    const count=data?.images.length;
-    setPreview(data?.images[data.images.length - 1]?.url || null);
-    setfileName(data?.images[0]?.filename||" ");
+    if(company==="idg"){
+      setPreview(data?.images[data?.images?.length - 1]?.url || null);
+      setfileName(data?.images[0]?.filename||" ");
+    }
     originalData.current = initialFormData;
   }, [data, reloadTrigger, company]);
 
