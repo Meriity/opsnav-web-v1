@@ -59,104 +59,104 @@ const StageCard = ({ stage, stageIndex }) => {
   let statusLabel = "Not Started";
   let statusColor = "bg-gray-200 text-gray-700";
 
-  if (stage.stagecolor==="amber") {
+  if (stage.stagecolor === "amber") {
     statusLabel = "In Progress";
     statusColor = "bg-yellow-100 text-yellow-800";
-  } else if (stage.stagecolor==="green") {
+  } else if (stage.stagecolor === "green") {
     statusLabel = "Stage Completed";
     statusColor = "bg-green-100 text-green-800";
   }
 
   return (
-<motion.div
-  className="relative group overflow-hidden p-6 rounded-xl border border-white/40 
+    <motion.div
+      className="relative group overflow-hidden p-6 rounded-xl border border-white/40 
              bg-white/30 shadow-sm mb-5 
              hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
-  variants={{
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  }}
-  transition={{ duration: 0.5 }}
->
- 
-  <div
-    className="absolute top-1/2 left-1/2 
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 },
+      }}
+      transition={{ duration: 0.5 }}
+    >
+
+      <div
+        className="absolute top-1/2 left-1/2 
                -translate-x-1/2 -translate-y-1/2 
                w-3/4 h-3/4 
                bg-sky-400 opacity-20 blur-3xl rounded-full 
                hidden group-hover:block z-0 transition duration-500"
-  ></div>
+      ></div>
 
-  {/* Card Content */}
-  <div className="relative z-10">
-    <div className="flex justify-between items-start mb-4">
-      <div>
-        <h3 className="text-lg font-bold text-slate-800">
-          {stage.stageName}
-        </h3>
-        <p
-          className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
-        >
-          {statusLabel}
-        </p>
-      </div>
-      <div className="text-3xl font-light text-slate-400">
-        0{getNextStageIndex(stageIndex)}
-      </div>
-    </div>
+      {/* Card Content */}
+      <div className="relative z-10">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">
+              {stage.stageName}
+            </h3>
+            <p
+              className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mt-1 ${statusColor}`}
+            >
+              {statusLabel}
+            </p>
+          </div>
+          <div className="text-3xl font-light text-slate-400">
+            0{getNextStageIndex(stageIndex)}
+          </div>
+        </div>
 
-    <div className="space-y-3 mb-5 flex">
-      <div className="w-full">
-        {allTasks.map((task) => {
-          const status = task.status?.toLowerCase();
-          let icon = (
-            <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
-          );
-          if (status === "yes" || status === "n/r") {
-            icon = (
-              <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-            );
-          } else if (status === "no") {
-            icon = (
-              <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
-            );
-          } else if (status === "processing") {
-            icon = (
-              <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
-            );
-          }
-          return (
-            <div
-  key={task.title}
-  className="flex items-center text-sm text-slate-700 mt-2 w-40 sm:w-auto"
->
-              {icon}
-              <span>{task.title}</span>
-            </div>
-          );
-        })}
-      </div>
-     <div className="absolute right-5 sm:right-2">
-  <img src={stage.svg} alt="" className="h-15 sm:w-auto" />
-</div>
-    </div>
+        <div className="space-y-3 mb-5 flex">
+          <div className="w-full">
+            {allTasks.map((task) => {
+              const status = task.status?.toLowerCase();
+              let icon = (
+                <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
+              );
+              if (status === "yes" || status === "n/r") {
+                icon = (
+                  <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                );
+              } else if (status === "no") {
+                icon = (
+                  <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+                );
+              } else if (status === "processing") {
+                icon = (
+                  <Clock className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
+                );
+              }
+              return (
+                <div
+                  key={task.title}
+                  className="flex items-center text-sm text-slate-700 mt-2 w-40 sm:w-auto"
+                >
+                  {icon}
+                  <span>{task.title}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="absolute right-5 sm:right-2">
+            <img src={stage.svg} alt="" className="h-15 sm:w-auto" />
+          </div>
+        </div>
 
-    {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-      <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
-        <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
-          <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
-            <NotepadText className="w-4 h-4" />
-            Notes
-          </p>
-          {stage.data.noteText && <p>{stage.data.noteText}</p>}
-          {stage.data.rows[0]?.noteText && (
-            <p>{stage.data.rows[0].noteText}</p>
-          )}
-        </blockquote>
+        {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
+          <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
+            <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
+              <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
+                <NotepadText className="w-4 h-4" />
+                Notes
+              </p>
+              {stage.data.noteText && <p>{stage.data.noteText}</p>}
+              {stage.data.rows[0]?.noteText && (
+                <p>{stage.data.rows[0].noteText}</p>
+              )}
+            </blockquote>
+          </div>
+        )}
       </div>
-    )}
-  </div>
-</motion.div>
+    </motion.div>
   );
 };
 
@@ -178,11 +178,11 @@ export default function ClientDashboard() {
     address: "",
     state: "",
   });
-    const formatDate = (dateString) => {
-  return dateString
-    ? new Date(dateString).toLocaleDateString("en-GB")
-    : "Not Set";
-};
+  const formatDate = (dateString) => {
+    return dateString
+      ? new Date(dateString).toLocaleDateString("en-GB")
+      : "Not Set";
+  };
   function formatMatterDetails(apiResponse) {
     // // // console.log(apiResponse);
 
@@ -195,7 +195,7 @@ export default function ClientDashboard() {
       type:
         apiResponse.clientType.charAt(0).toUpperCase() +
         apiResponse.clientType.slice(1),
-        settlement_date: formatDate(apiResponse.settlementDate),
+      settlement_date: formatDate(apiResponse.settlementDate),
     }
   }
 
@@ -208,7 +208,7 @@ export default function ClientDashboard() {
     };
   }
 
-  function mapStagesFromDB(response) {
+  function mapStagesFromDB(response,clientType) {
     const stages = [];
     // // // console.log(response);
     const createStage = (stageName, stageData, noteKey) => {
@@ -237,8 +237,8 @@ export default function ClientDashboard() {
     if (response.stage1)
       stages.push({
         stageName: "Initialisation",
-        svg : "/stage 1.svg",
-        stagecolor:response.stage1.colorStatus,
+        svg: "/stage 1.svg",
+        stagecolor: response.stage1.colorStatus,
         data: {
           sections: [
             { title: "Retainer", status: response.stage1.retainer },
@@ -266,9 +266,9 @@ export default function ClientDashboard() {
     if (response.stage2) {
       stages.push({
         stageName: "Contract Confirmation",
-        svg : "/stage 2A.svg",
-        stagecolor:response.stage2.colorStatus,
-        financeApproval:formatDate(response.stage2.financeApprovalDate),
+        svg: "/stage 2A.svg",
+        stagecolor: response.stage2.colorStatus,
+        financeApproval: formatDate(response.stage2.financeApprovalDate),
         data: {
           sections: [
 
@@ -289,12 +289,12 @@ export default function ClientDashboard() {
                 },
                 {
                   title: "Identity Verification and Client Authorisation",
-                 status :
-  response.stage2.voi === "Yes" && response.stage2.caf === "Yes"
-    ? "Yes"
-    : response.stage2.voi === "Processing" && response.stage2.caf === "Processing"
-    ? "Processing"
-    : "No"
+                  status:
+                    response.stage2.voi === "Yes" || "yes" && response.stage2.caf === "Yes" || "yes"
+                      ? "Yes"
+                      : response.stage2.voi === "Processing" && response.stage2.caf === "Processing"
+                        ? "Processing"
+                        : "No"
                 },
               ],
               noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -305,8 +305,8 @@ export default function ClientDashboard() {
       });
       stages.push({
         stageName: "Approvals",
-        svg : "/stage 2B.svg",
-        stagecolor:response.stage2.colorStatus,
+        svg: "/stage 2B.svg",
+        stagecolor: response.stage2.colorStatus,
         data: {
           sections: [
             {
@@ -325,13 +325,16 @@ export default function ClientDashboard() {
           rows: [
             {
               sections: [
-                {
-                  title: "Discharge Authority",
-                  status: response.stage2.obtainDaSeller,
-                },
+                ...(clientType?.toLowerCase() === "seller"
+                  ? [
+                    {
+                      title: "Discharge Authority",
+                      status: response.stage2.obtainDaSeller,
+                    },
+                  ]
+                  : []),
               ],
-              noteText: splitNoteParts(response.stage2.noteForClientB)
-                .afterHyphen,
+              noteText: splitNoteParts(response.stage2.noteForClientB).afterHyphen,
             },
           ],
         },
@@ -340,8 +343,8 @@ export default function ClientDashboard() {
     if (response.stage3)
       stages.push({
         stageName: "Searches & Due Diligence",
-        svg : "/stage 3.svg",
-        stagecolor:response.stage3.colorStatus,
+        svg: "/stage 3.svg",
+        stagecolor: response.stage3.colorStatus,
         data: {
           sections: [
             { title: "Title & Plan Search", status: response.stage3.titleSearch },
@@ -363,8 +366,8 @@ export default function ClientDashboard() {
     if (response.stage4)
       stages.push({
         stageName: "Duty & Settlement Adjustment",
-        svg : "/stage 4.svg",
-        stagecolor:response.stage4.colorStatus,
+        svg: "/stage 4.svg",
+        stagecolor: response.stage4.colorStatus,
         data: {
           sections: [
             { title: "Dutiable statement", status: response.stage4.dts },
@@ -386,8 +389,8 @@ export default function ClientDashboard() {
     if (response.stage5)
       stages.push({
         stageName: "Finalisation & notifications",
-        svg : "/stage 5.svg",
-        stagecolor:response.stage5.colorStatus,
+        svg: "/stage 5.svg",
+        stagecolor: response.stage5.colorStatus,
         data: {
           sections: [
 
@@ -419,7 +422,6 @@ export default function ClientDashboard() {
 
     return stages;
   }
-
   useEffect(() => {
     async function fetchMatter() {
       try {
@@ -427,7 +429,7 @@ export default function ClientDashboard() {
         const formatted = formatMatterDetails(response);
         setMatterDetails(formatted);
         const stagedetails = await api.getAllStages(matterNumber);
-        const stageformatted = mapStagesFromDB(stagedetails);
+        const stageformatted = mapStagesFromDB(stagedetails, formatted.type);
         // // // console.log(stageformatted);
         setStageDetails(stageformatted);
       } catch (error) {
@@ -542,7 +544,7 @@ export default function ClientDashboard() {
                     <div>
                       <p className="text-x font-medium text-slate-600">Unconditional Date</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {stageDetails[1].financeApproval}
+                        {stageDetails[1]?.financeApproval}
                       </p>
                     </div>
                   </div>
@@ -596,45 +598,45 @@ export default function ClientDashboard() {
       </aside>
 
       <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
-<div className="p-6 sm:p-6">
-  <div
-    className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]"
-  >      
-  
-    {/* LEFT SECTION: Glassmorphism card */}
-    <motion.div
-      className="flex-1 min-w-0 gap-2"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-         
-      <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
-      
-       <button
-        onClick={() => setIsOpen(true)}
-        className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
-      > 
-        <ChevronsRight className="w-8 h-8  text-[#00AEEF]"  />
-        <span>Matter Details</span>
-      </button>
+        <div className="p-6 sm:p-6">
+          <div
+            className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]"
+          >
 
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-        />
-      )}
-        <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
-         Hello, {matterDetails.Clientname} 👋
-        </h1>
-        <p className="text-gray-100">
-          Welcome back. Here is the latest status of your matter.
-        </p>
+            {/* LEFT SECTION: Glassmorphism card */}
+            <motion.div
+              className="flex-1 min-w-0 gap-2"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
 
-        {/* Show progress chart only on mobile */}
-        {/* <div className="mt-4 block md:hidden">
+              <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
+
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
+                >
+                  <ChevronsRight className="w-8 h-8  text-[#00AEEF]" />
+                  <span>Matter Details</span>
+                </button>
+
+                {/* Overlay for mobile */}
+                {isOpen && (
+                  <div
+                    onClick={() => setIsOpen(false)}
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                  />
+                )}
+                <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
+                  Hello, {matterDetails.Clientname} 👋
+                </h1>
+                <p className="text-gray-100">
+                  Welcome back. Here is the latest status of your matter.
+                </p>
+
+                {/* Show progress chart only on mobile */}
+                {/* <div className="mt-4 block md:hidden">
           {overallProgress && (
             <ProgressChart
               completed={overallProgress.completed}
@@ -643,42 +645,42 @@ export default function ClientDashboard() {
             />
           )}
         </div> */}
-      </div>
-    </motion.div>
+              </div>
+            </motion.div>
 
-    {/* RIGHT SECTION: Full image box */}
-    <motion.div
-      className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-[#B9F3FC]"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-     <div 
-  style={{
-    padding: "20px 20px",
-  }}
-  className="h-full sm:block md:flex"
->
-   <div>
-          {overallProgress && (
-            <ProgressChart
-              completed={overallProgress.completed}
-              total={overallProgress.total}
-              processing={overallProgress.processingTask}
-            />
-          )}
-        </div>
-  <img
-    src="/Home.svg"
-    alt="Home"
-    width={450}
-    height={400}
-    style={{ objectFit:"fill" }}
-  />
+            {/* RIGHT SECTION: Full image box */}
+            <motion.div
+              className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-[#B9F3FC]"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div
+                style={{
+                  padding: "20px 20px",
+                }}
+                className="h-full sm:block md:flex"
+              >
+                <div>
+                  {overallProgress && (
+                    <ProgressChart
+                      completed={overallProgress.completed}
+                      total={overallProgress.total}
+                      processing={overallProgress.processingTask}
+                    />
+                  )}
+                </div>
+                <img
+                  src="/Home.svg"
+                  alt="Home"
+                  width={450}
+                  height={400}
+                  style={{ objectFit: "fill" }}
+                />
 
-      </div>
-    </motion.div>
-  </div>
+              </div>
+            </motion.div>
+          </div>
 
 
 
@@ -689,7 +691,7 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-5">
                 {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
                  */}
-                 <img src="/stage-by-stage.svg" style={{height:"60px"}} alt="" />
+                <img src="/stage-by-stage.svg" style={{ height: "60px" }} alt="" />
                 <h2 className="text-2xl font-bold text-slate-800">
                   Stage-by-Stage Progress
                 </h2>
