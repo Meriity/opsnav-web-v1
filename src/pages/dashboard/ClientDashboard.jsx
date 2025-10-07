@@ -201,7 +201,8 @@ export default function ClientDashboard() {
 
   function splitNoteParts(note) {
     if (!note) return { beforeHyphen: "", afterHyphen: "" };
-    const [before, ...after] = note.split("-");
+    const cleanedNote = note.replace(/SOA/g, "Adjustment Statement");
+    const [before, ...after] = cleanedNote.split("-");
     return {
       beforeHyphen: before?.trim() || "",
       afterHyphen: after.join("-").trim() || "",

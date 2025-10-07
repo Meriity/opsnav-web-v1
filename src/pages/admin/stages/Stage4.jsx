@@ -184,7 +184,7 @@ export default function Stage4({
       .map((field) => field.label);
 
     if (notReceived.length === 0) return "Tasks completed";
-    return `${notReceived.join(" and ")} not received`;
+    return `${notReceived.join(" and ")} not completed`;
   };
 
   useEffect(() => {
