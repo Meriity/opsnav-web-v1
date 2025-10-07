@@ -1225,7 +1225,7 @@ export default function StagesLayout() {
                               className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
                             />
                           </div>
-                          <div className="flex-1">
+                          <div>
                             <label className="block text-xs md:text-sm font-semibold mb-0.5">
                               Notes / Comments
                             </label>
@@ -1238,13 +1238,17 @@ export default function StagesLayout() {
                               }
                               onChange={(e) => {
                                 const newNote = e.target.value;
-                                setClientData((prev) => ({
-                                  ...(prev || {}),
-                                  data: {
-                                    ...((prev && prev.data) || {}),
-                                    notes: newNote,
-                                  },
-                                }));
+                                setClientData((prev) => {
+                                  const updated = { ...(prev || {}) };
+                                  updated.notes = newNote;
+                                  if (updated.data) {
+                                    updated.data.notes = newNote;
+                                  } else {
+                                    updated.data = { notes: newNote };
+                                  }
+
+                                  return updated;
+                                });
                               }}
                               placeholder="Enter comments here..."
                               className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
@@ -1264,13 +1268,17 @@ export default function StagesLayout() {
                             }
                             onChange={(e) => {
                               const newNote = e.target.value;
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                data: {
-                                  ...((prev && prev.data) || {}),
-                                  notes: newNote,
-                                },
-                              }));
+                              setClientData((prev) => {
+                                const updated = { ...(prev || {}) };
+                                updated.notes = newNote;
+                                if (updated.data) {
+                                  updated.data.notes = newNote;
+                                } else {
+                                  updated.data = { notes: newNote };
+                                }
+
+                                return updated;
+                              });
                             }}
                             placeholder="Enter comments here..."
                             className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
@@ -1634,16 +1642,20 @@ export default function StagesLayout() {
                     </label>
                     <textarea
                       rows={3}
-                      value={clientData?.notes || clientData?.data?.notes}
+                      value={clientData?.notes || clientData?.data?.notes || ""}
                       onChange={(e) => {
                         const newNote = e.target.value;
-                        setClientData((prev) => ({
-                          ...(prev || {}),
-                          data: {
-                            ...((prev && prev.data) || {}),
-                            notes: newNote,
-                          },
-                        }));
+                        setClientData((prev) => {
+                          const updated = { ...(prev || {}) };
+                          updated.notes = newNote;
+                          if (updated.data) {
+                            updated.data.notes = newNote;
+                          } else {
+                            updated.data = { notes: newNote };
+                          }
+
+                          return updated;
+                        });
                       }}
                       placeholder="Enter comments here..."
                       className="w-full border border-gray-200 rounded px-2 py-1 text-xs md:text-sm resize-none"
