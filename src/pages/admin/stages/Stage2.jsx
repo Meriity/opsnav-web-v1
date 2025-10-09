@@ -443,7 +443,7 @@ export default function Stage2({
         >
           <option value="">Select Agent</option>
           {user.map((agent) => (
-            <option key={agent._id} value={agent.displayName}>
+            <option key={agent._id} value={agent._id}>
               {agent.displayName}
             </option>
           ))}

@@ -76,6 +76,7 @@ export default function ManageUsers() {
   const [selectedUser, setSelectedUser] = useState({});
   const [id, setId] = useState("");
   const [openUser, setOpenUser] = useState(false);
+  const [openUserIDG, setOpenUserIDG] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,6 +128,29 @@ export default function ManageUsers() {
       await api.createUser(email, role, display_name);
       toast.success("User created successfully!");
       setOpenUser(false);
+      setIsFetched(false);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        toast.error(
+          err.response.data?.message || "This email is already registered!"
+        );
+      } else {
+        toast.error(
+          err.response?.data?.message ||
+            "Something went wrong. Please try again!"
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+    const handleUserCreationIDG = async (display_name, email, role,password) => {
+    try {
+      setIsLoading(true);
+      await api.createUserIDG(email, role, display_name,password);
+      toast.success("User created successfully!");
+      setOpenUserIDG(false);
       setIsFetched(false);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -206,6 +230,13 @@ export default function ManageUsers() {
             label="Create User"
             icon={Plus}
             onClick={() => setOpenUser(true)}
+            className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+          />}
+          {localStorage.getItem("company")==="idg" &&
+          <Button
+            label="Create User"
+            icon={Plus}
+            onClick={() => setOpenUserIDG(true)}
             className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
           />}
         </div>
@@ -422,7 +453,88 @@ export default function ManageUsers() {
               <button
                 type={isLoading ? "button" : "submit"}
                 disabled={isLoading}
-                className="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded hover:bg-blue-600"
+                className="w-full bg-[#00AEEF] text-white font-bold py-3 px-4 rounded hover:bg-blue-600"
+              >
+                {isLoading ? "Creating..." : "Create User"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </Dialog>
+
+        <Dialog open={openUserIDG} onClose={setOpenUserIDG} className="relative z-10">
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = new FormData(e.target);
+                const email = form.get("email");
+                const display_name = form.get("name");
+                const password = form.get("password");
+                handleUserCreationIDG(display_name, email, role,password);
+              }}
+              className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenUserIDG(false)}
+                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
+              >
+                &times;
+              </button>
+              <h2 className="text-lg font-bold mb-4">Create User</h2>
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="Email"
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
+              <input
+                name="name"
+                type="text"
+                required
+                placeholder="Display Name"
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
+               <input
+                name="password"
+                type="text"
+                required
+                placeholder="Password"
+                className="w-full mb-4 px-4 py-3 border rounded"
+              />
+              <label className="block font-medium mb-2">Role</label>
+              <div className="flex gap-6 mb-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={role === "user"}
+                    onChange={handleChange}
+                    className="form-radio text-blue-600"
+                  />
+                  User
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={role === "admin"}
+                    onChange={handleChange}
+                    className="form-radio text-pink-600"
+                  />
+                  Admin
+                </label>
+              </div>
+              <button
+                type={isLoading ? "button" : "submit"}
+                disabled={isLoading}
+                className="w-full bg-[#00AEEF] text-white font-bold py-3 px-4 rounded hover:bg-blue-600"
               >
                 {isLoading ? "Creating..." : "Create User"}
               </button>
