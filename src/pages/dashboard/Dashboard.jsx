@@ -1,4 +1,4 @@
-import  Plus from "../../icons/Button icons/Icon-Color.png";
+import Plus from "../../icons/Button icons/Icon-Color.png";
 import {
   BarChart,
   Bar,
@@ -407,7 +407,6 @@ function Dashboard() {
             }));
 
           setCalendarEvents(safeEvents);
-
         }
       } catch (error) {
         toast.error("Could not load calendar dates.");
@@ -429,8 +428,7 @@ function Dashboard() {
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
         }));
         setCurrentChartData(formattedData);
-      }
-      else if (localStorage.getItem("company") === "idg") {
+      } else if (localStorage.getItem("company") === "idg") {
         formattedData = ten.map((item) => ({
           ...item,
           name: item.month,
@@ -448,11 +446,9 @@ function Dashboard() {
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
         }));
         setCurrentChartData(formattedData);
-      }
-      else if (localStorage.getItem("company") === "idg") {
+      } else if (localStorage.getItem("company") === "idg") {
         const all = allChartData.allTime || [];
         formattedData = all.map((item) => ({
-
           ...item,
           name: `${item.month} ${item.year}`,
           closedMatters: item.closedOrders,
@@ -545,6 +541,7 @@ function Dashboard() {
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-4">
+          {/* Welcome Banner */}
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
             <p className="text-sm mt-1 text-gray-800 max-w-5xl">
@@ -566,6 +563,38 @@ function Dashboard() {
                 <span>Add New Order</span>
               </button>
             )}
+          </div>
+
+          {/* Calendar - MOVED TO TOP */}
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 text-gray-700">
+              Important Dates
+            </h2>
+            <div className="h-[65vh] min-h-[500px]">
+              <CalendarErrorBoundary>
+                <Calendar
+                  localizer={localizer}
+                  events={Array.isArray(calendarEvents) ? calendarEvents : []}
+                  titleAccessor={(event) =>
+                    event?.title || `[${event?.orderId || "Untitled"}]`
+                  }
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: "100%" }}
+                  popup
+                  onNavigate={handleNavigate}
+                  dayPropGetter={dayPropGetter}
+                  views={views}
+                  defaultView={defaultView}
+                  eventPropGetter={eventStyleGetter}
+                  components={{
+                    event: CustomEvent,
+                    agenda: { event: CustomAgendaEvent },
+                    toolbar: ResponsiveCalendarToolbar,
+                  }}
+                />
+              </CalendarErrorBoundary>
+            </div>
           </div>
 
           {/* Stats */}
@@ -657,7 +686,7 @@ function Dashboard() {
                 </ResponsiveContainer>
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
-                    {lastrecord||totalCompleted}{" "}
+                    {lastrecord || totalCompleted}{" "}
                     {localStorage.getItem("company") === "vkl"
                       ? "Matters Solved In Last Month"
                       : localStorage.getItem("company") === "idg"
@@ -671,38 +700,6 @@ function Dashboard() {
                 No chart data to display.
               </div>
             )}
-          </div>
-
-          {/* Calendar */}
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold mb-4 text-gray-700">
-              Important Dates
-            </h2>
-            <div className="h-[65vh] min-h-[500px]">
-              <CalendarErrorBoundary>
-                <Calendar
-                  localizer={localizer}
-                  events={Array.isArray(calendarEvents) ? calendarEvents : []}
-                  titleAccessor={(event) =>
-                    event?.title || `[${event?.orderId || "Untitled"}]`
-                  }
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: "100%" }}
-                  popup
-                  onNavigate={handleNavigate}
-                  dayPropGetter={dayPropGetter}
-                  views={views}
-                  defaultView={defaultView}
-                  eventPropGetter={eventStyleGetter}
-                  components={{
-                    event: CustomEvent,
-                    agenda: { event: CustomAgendaEvent },
-                    toolbar: ResponsiveCalendarToolbar,
-                  }}
-                />
-              </CalendarErrorBoundary>
-            </div>
           </div>
         </div>
       </main>
