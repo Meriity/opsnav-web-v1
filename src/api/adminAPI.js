@@ -60,6 +60,38 @@ class AdminAPI {
     }
   }
 
+    // Create new User
+  async createUserIDG(email, role, displayName,password) {
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/idg/users`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          email,
+          role,
+          display_name: displayName,
+          password
+        }),
+      });
+
+      // Handle non-200 responses
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || "Request failed");
+        error.response = {
+          status: response.status,
+          data: errorData,
+        };
+        throw error;
+      }
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
+  }
+
   // Reset password
   async resetPassword(email) {
     try {

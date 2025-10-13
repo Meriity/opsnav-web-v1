@@ -436,14 +436,14 @@ export default function Stage2({
         // ✅ Dropdown for agents
         <select
           name={field.name}
-          className={localStorage.getItem("role")!=="admin" ? "bg-gray-600 p-2 border rounded w-full" : "bg-white p-2 border rounded w-full"}
+          className={localStorage.getItem("role")!=="admin" ? "bg-gray-100 p-2 text-gray-500 rounded w-full" : "bg-white p-2 border rounded w-full"}
           value={formData[field.name] || ""}
           onChange={(e) => handleChange(field.name, e.target.value)}
           disabled={localStorage.getItem("role")!=="admin"}
         >
           <option value="">Select Agent</option>
           {user.map((agent) => (
-            <option key={agent._id} value={agent.displayName}>
+            <option key={agent._id} value={agent._id}>
               {agent.displayName}
             </option>
           ))}

@@ -62,7 +62,7 @@
         });
       }
 
-      if (company === "idg") {
+      if (company==="idg"&&isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
         menuItems.splice(2, 0, {
           label: "Manage Clients",
           icon: ManageUsersIcon,
