@@ -106,7 +106,7 @@ const formConfig = {
           "capturePhotos",
           "updateStatusExcel",
           "generateInvoice",
-          "archiveOrder"
+          "archiveOrder",
         ],
       },
     ],
@@ -218,15 +218,21 @@ export default function Stage6({
   }, [data, reloadTrigger, company]);
 
   const handleChange = (field, value) => {
-    const processed = typeof value === "string" ? normalizeValue(value) : value;
-    setFormData((prev) => ({ ...prev, [field]: processed }));
-
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
-    if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
-    }
-  };
 
+    let processedValue = value;
+
+    // Only normalize radio fields, leave other fields as-is
+    if (fieldConfig && fieldConfig.type === "radio") {
+      if (typeof processedValue === "string") {
+        processedValue = normalizeValue(processedValue);
+      }
+
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+  };
   const isChanged = () =>
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
@@ -392,7 +398,6 @@ export default function Stage6({
 
   return (
     <>
- 
       <div className="overflow-y-auto">
         {currentConfig.fields.map(renderField)}
         {currentConfig.noteGroups.map(renderNoteGroup)}
