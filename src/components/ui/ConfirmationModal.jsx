@@ -8,6 +8,7 @@ export default function ConfirmationModal({
   onConfirm,
   title,
   children,
+  message,
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -67,7 +68,7 @@ export default function ConfirmationModal({
                 {title}
               </Dialog.Title>
               <div className="mt-2">
-                <p className="text-sm text-gray-600">{children}</p>
+                <p className="text-sm text-gray-600">{message || children}</p>
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">

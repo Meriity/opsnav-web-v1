@@ -8,10 +8,7 @@ import PropTypes from "prop-types";
 
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
-  return String(v)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]/g, "");
+  return String(v).toLowerCase().trim();
 };
 
 const formConfig = {
@@ -189,14 +186,14 @@ export default function Stage6({
             norm
           )
         ) {
-          initialFormData[field.name] = "completed";
+          initialFormData[field.name] = "Completed";
         } else if (["cancel", "cancelled", "canceled", "void"].includes(norm)) {
-          initialFormData[field.name] = "cancelled";
+          initialFormData[field.name] = "Cancelled";
         } else {
-          initialFormData[field.name] = normalizeValue(rawVal);
+          initialFormData[field.name] = rawVal;
         }
       } else {
-        initialFormData[field.name] = normalizeValue(rawVal);
+        initialFormData[field.name] = rawVal;
       }
 
       initialStatuses[field.name] = getStatus(initialFormData[field.name]);
@@ -224,9 +221,7 @@ export default function Stage6({
 
     // Only normalize radio fields, leave other fields as-is
     if (fieldConfig && fieldConfig.type === "radio") {
-      if (typeof processedValue === "string") {
-        processedValue = normalizeValue(processedValue);
-      }
+      processedValue = normalizeValue(processedValue);
 
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
@@ -424,6 +419,17 @@ export default function Stage6({
           </div>
         </div>
       </div>
+      {isModalOpen && modalField && (
+        <ConfirmationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={proceedWithSave}
+          title="Confirm Action"
+          message={`Are you sure you want to ${formData[
+            modalField.name
+          ]?.toLowerCase()} this matter? This action may be irreversible.`}
+        />
+      )}
     </>
   );
 }
