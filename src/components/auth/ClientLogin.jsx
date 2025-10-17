@@ -12,26 +12,42 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true)
-    try {
-      const response = await api.signInClient(matterNumber, postcode);
-      console.log(response);
-      if (response.matterNumber) {
-        localStorage.removeItem("matterNumber");
-        localStorage.removeItem("logo");
-        localStorage.setItem("matterNumber", response.matterNumber);
-        localStorage.setItem("logo", response.logo);
-        navigate(`/client/dashboard/${btoa(response.matterNumber)}`);
-      }
-    } catch (err) {
-      toast.error(err.message || "Authentication failed! Please check your credentials and try again.")
-    } finally {
-      setIsLoading(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setIsLoading(true);
+  try {
+    const response = await api.signInClient(matterNumber, postcode);
+    console.log("API Response:", response); // Good to log the whole response for debugging
+
+    // Prioritize checking for orderId first
+    if (response.orderId) {
+      localStorage.removeItem("orderId");
+      localStorage.removeItem("logo");
+      localStorage.setItem("orderId", response.orderId);
+      localStorage.setItem("logo", response.logo);
+      localStorage.setItem("company",response.company);
+      localStorage.setItem("authToken",response.token);
+      console.log('Navigating with orderId:', response.orderId);
+      navigate(`/client/dashboard/${btoa(String(response.orderId))}`);
+    } 
+    // Fallback to matterNumber if orderId is not present
+    else if (response.matterNumber) {
+      localStorage.removeItem("matterNumber");
+      localStorage.removeItem("logo");
+      localStorage.setItem("matterNumber", response.matterNumber);
+      localStorage.setItem("logo", response.logo);
+      localStorage.setItem("company",response.company);
+      navigate(`/client/dashboard/${btoa(String(response.matterNumber))}`);
+    } else {
+      throw new Error("Login failed: No valid identifier found in the response.");
     }
-  };
+  } catch (err) {
+    toast.error(err.message || "Authentication failed! Please check your credentials and try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleHome = async (e) => {
     navigate("/");
@@ -61,7 +77,7 @@ function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
-                Matter Number
+                Matter Number / Order ID
               </label>
               <input
                 type="matternumber"
@@ -84,7 +100,7 @@ function LoginForm() {
               />
             </div>
             <button
-              type={isLoading ? "button" : "submit"}
+              type="submit"
               disabled={isLoading}
               className="w-full bg-sky-600 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition"
             >
