@@ -36,26 +36,6 @@ class ClientAPI {
       throw error;
     }
   }
-  async getIDGClientDetails(orderId) {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/idg/clients/client-view/${orderId}`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error getting client details:", error);
-      throw error;
-    }
-  }
 
   // Update client data
   // clientAPI.js — improved updateClientData
@@ -97,27 +77,27 @@ class ClientAPI {
     }
   }
 
-  // Get client details by matter number
-  async getIDGUsers() {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/idg/users`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
+    // Get client details by matter number
+    async getIDGUsers() {
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/idg/users`,
+                {
+                    method: "GET",
+                    headers: this.getHeaders(),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Error getting client details:", error);
+            throw error;
         }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error getting client details:", error);
-      throw error;
     }
-  }
 
 
   async updateIDGClientData(clientId, data = {}) {
@@ -166,7 +146,7 @@ class ClientAPI {
 
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
-      console.log(additionalData, clientId);
+      console.log(additionalData,clientId);
       const response = await fetch(
         `${this.baseUrl}/idg/orders/${clientId}/stage`,
         {
@@ -197,31 +177,31 @@ class ClientAPI {
     }
   }
   async uploadImageForOrder(orderId, file) {
-    const stageNumber = 4;
-    const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`;
-    const formData = new FormData();
-    formData.append('image', file);
-    console.log(`Sending file to: ${apiUrl}`);
-    const headers = this.getHeaders();
-    delete headers['Content-Type'];
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
-        headers: headers,
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const result = await response.json();
-      console.log('Upload successful! ✅', result);
-      return result;
-
-    } catch (error) {
-      console.error('Error during image upload: ❌', error);
-      throw error;
+  const stageNumber = 4;
+  const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`;
+  const formData = new FormData();
+  formData.append('image', file);
+  console.log(`Sending file to: ${apiUrl}`);
+  const headers = this.getHeaders();
+  delete headers['Content-Type'];
+  try {
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    body: formData, 
+    headers: headers, 
+  });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
+    const result = await response.json();
+    console.log('Upload successful! ✅', result);
+    return result;
+
+  } catch (error) {
+    console.error('Error during image upload: ❌', error);
+    throw error; 
   }
+}
 
   async upsertStage(stage, additionalData = {}) {
     try {
