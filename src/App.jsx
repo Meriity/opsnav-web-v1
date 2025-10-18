@@ -36,10 +36,9 @@ function RequireAuth({ children }) {
 
 function RequireAuthClient({ children }) {
   const matterNumber = localStorage.getItem("matterNumber"); // <- ✅ Match your login token key
-  const orderId = localStorage.getItem("orderId"); // <- ✅ Match your login token key
   const location = useLocation();
 
-  if (!matterNumber && !orderId) {
+  if (!matterNumber) {
     return <Navigate to="/client/login" state={{ from: location }} replace />;
   }
 

@@ -1,5 +1,3 @@
-import dashboard from "../assets/images/dashboard.png";
-import clientDetails from "../assets/images/clientDetails.png";
 import {
   Lock,
   User,
@@ -9,6 +7,12 @@ import {
   Instagram,
   Twitter,
   Bitcoin,
+  Zap,
+  Users,
+  Shield,
+  Cloud,
+  Building,
+  CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -88,143 +92,376 @@ export default function Home() {
 
       {/* features section */}
       <div className="flex flex-col items-center px-4 py-16 md:py-16">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-4">
           KEY FEATURES
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
 
-        <div className="mt-8 flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl">
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 hidden lg:block">
-            <img
-              src={dashboard}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+        {/* Role-Based Dashboards */}
+        <div className="mt-8 flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%202025-10-18%20113423.png"
+                alt="Role-Based Dashboard Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/dashboard-tablet.png"
+                alt="Role-Based Dashboard Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
 
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Role-Based Dashboards
             </h3>
-            <p className="text-md md:text-base text-gray-700">
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
               Tailored views and permissions for Super Admins, Staff, and
               Clients.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">
+                  Customized views for different user roles
+                </span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">
+                  Granular permission controls
+                </span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Role-specific workflows</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:hidden md:block">
-            <img
-              src={dashboard}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto "
-            />
+
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/dashboards-mobile.png"
+                alt="Role-Based Dashboard Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
+        {/* Matter Management */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Matter Management
             </h3>
-            <p className="text-md md:text-base text-gray-700">
-              Track every case and it's 5-Stage progress with visual indicators.
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
+              Track every case and its 5-Stage progress with visual indicators.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">5-stage progress tracking</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">
+                  Visual progress indicators
+                </span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Real-time status updates</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+          <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png"
+                alt="Matter Management Desktop Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png"
+                alt="Matter Management Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png"
+                alt="Matter Management Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:block hidden">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+        {/* Shareable Client Status */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl mt-16 sm:mt-24">
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png"
+                alt="Shareable Client Status Desktop Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png"
+                alt="Shareable Client Status Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
 
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Shareable Client Status
             </h3>
-            <p className="text-md md:text-base text-gray-700">
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
               Tailored views and permissions for Super Admins, Staff, and
               Clients.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Real-time status sharing</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Secure client portals</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Automated status updates</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:hidden md:block">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png"
+                alt="Shareable Client Status Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
+        {/* Wills Module */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Wills Module
             </h3>
-            <p className="text-md md:text-base text-gray-700">
-              Track every case and it's 5-Stage progress with visual indicators.
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
+              Track every case and its 5-Stage progress with visual indicators.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Specialized will tracking</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Document management</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Beneficiary tracking</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png"
+                alt="Wills Module Desktop Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png"
+                alt="Wills Module Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png"
+                alt="Wills Module Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:block hidden">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+        {/* Automated Reporting & Notifications */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl mt-16 sm:mt-24">
+          <div className="bg-gradient-to-br from-rose-50 to-pink-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png"
+                alt="Automated Reporting Desktop Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-rose-50 to-pink-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png"
+                alt="Automated Reporting Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
 
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Automated Reporting & Notifications
             </h3>
-            <p className="text-md md:text-base text-gray-700">
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
               Tailored views and permissions for Super Admins, Staff, and
               Clients.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">
+                  Automated report generation
+                </span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Real-time notifications</span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Customizable alerts</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2 lg:hidden md:block">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+
+          <div className="bg-gradient-to-br from-rose-50 to-pink-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png"
+                alt="Automated Reporting Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 w-full max-w-6xl mt-16 sm:mt-24">
+        {/* Fully Cloud Hosted on GCP */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl mt-16 sm:mt-24">
           <div className="text-center lg:text-left w-full lg:w-1/2">
-            <h3 className="text-xl md:text-2xl font-semibold mb-2">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 lg:text-left">
               Fully Cloud Hosted on GCP
             </h3>
-            <p className="text-md md:text-base text-gray-700">
-              Track every case and it's 5-Stage progress with visual indicators.
+            <p className="text-md md:text-lg text-gray-700 leading-relaxed lg:text-left">
+              Track every case and its 5-Stage progress with visual indicators.
             </p>
+            <div className="mt-6 space-y-3 lg:text-left">
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">
+                  Google Cloud Platform hosting
+                </span>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-sky-500 rounded-full p-1 mt-1 mr-3">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-gray-700">Enterprise-grade security</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-sky-100 p-4 rounded-xl shadow-lg w-full lg:w-1/2">
-            <img
-              src={clientDetails}
-              alt="Role-Based Dashboard Screenshot"
-              className="rounded-lg w-full lg:h-[300px] md:h-auto"
-            />
+          <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-6 rounded-2xl shadow-lg w-full lg:w-1/2 hidden lg:block">
+            <div className="bg-white rounded-xl p-4 shadow-inner h-full min-h-[350px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png"
+                alt="GCP Hosting Desktop Screenshot"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 hidden md:block lg:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[150px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png"
+                alt="GCP Hosting Tablet Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-3 rounded-lg shadow-lg w-full lg:w-1/2 md:hidden">
+            <div className="bg-white rounded-lg p-2 shadow-inner h-full min-h-[120px] flex items-center justify-center">
+              <img
+                src="https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png"
+                alt="GCP Hosting Mobile Screenshot"
+                className="w-full h-full object-contain rounded"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -237,37 +474,139 @@ export default function Home() {
           </h2>
           <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl w-full">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img
-                src="/s3-1.png"
-                alt="Law Firms"
-                className="w-full h-64 object-cover"
-              />
-              <div className="bg-black text-white text-sm p-4">
-                Law Firms handling property & estate transactions
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-7xl w-full">
+            {/* Law Firms Card */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-sky-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Law Firms
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Handling property & estate transactions
+                  </p>
+                </div>
+              </div>
+              <div className="bg-black text-white p-6">
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-sky-400 rounded-full mr-3"></div>
+                    Property law specialists
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-sky-400 rounded-full mr-3"></div>
+                    Estate transaction management
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-sky-400 rounded-full mr-3"></div>
+                    Legal documentation handling
+                  </li>
+                </ul>
               </div>
             </div>
 
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img
-                src="/s3-2.png"
-                alt="Legal Ops Teams"
-                className="w-full h-64 object-cover"
-              />
-              <div className="bg-black text-white text-sm p-4">
-                Legal Ops teams seeking clarity and control
+            {/* Legal Ops Teams Card */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Legal Ops Teams
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Seeking clarity and control
+                  </p>
+                </div>
+              </div>
+              <div className="bg-black text-white p-6">
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                    Process optimization
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                    Workflow automation
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                    Performance tracking
+                  </li>
+                </ul>
               </div>
             </div>
 
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img
-                src="/s3-3.png"
-                alt="Firms Scaling Digital Ops"
-                className="w-full h-64 object-cover"
-              />
-              <div className="bg-black text-white text-sm p-4">
-                Firms ready to scale their digital operations securely
+            {/* Scaling Digital Ops Card */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Scaling Digital Ops
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Ready to scale securely
+                  </p>
+                </div>
+              </div>
+              <div className="bg-black text-white p-6">
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                    Digital transformation
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                    Secure cloud operations
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                    Scalable infrastructure
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -281,55 +620,99 @@ export default function Home() {
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl w-full justify-items-center">
-          <div className="bg-gray-100 p-6 rounded-lg text-center shadow w-full max-w-xs">
-            <img
-              src="/s4-1.png"
-              alt="No More Chaos"
-              className="mx-auto mb-4 h-16"
-            />
-            <p className="text-sm font-medium">
-              No more spreadsheets, emails, and tracking chaos
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl w-full">
+          {/* No More Chaos */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              No More Chaos
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Eliminate spreadsheets, emails, and tracking chaos with our
+              streamlined platform
             </p>
           </div>
-          <div className="bg-gray-100 p-6 rounded-lg text-center shadow w-full max-w-xs">
-            <img
-              src="/s4-2.png"
-              alt="Collaboration"
-              className="mx-auto mb-4 h-16"
-            />
-            <p className="text-sm font-medium">
-              Enable seamless collaboration between staff and clients
+
+          {/* Collaboration */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Seamless Collaboration
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Enable seamless collaboration between staff and clients with
+              real-time updates
             </p>
           </div>
-          <div className="bg-gray-100 p-6 rounded-lg text-center shadow w-full max-w-xs">
-            <img
-              src="/s4-3.png"
-              alt="Compliance"
-              className="mx-auto mb-4 h-16"
-            />
-            <p className="text-sm font-medium">
-              Stay on top of compliance with clear progress indicators
+
+          {/* Compliance */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Stay Compliant
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Stay on top of compliance with clear progress indicators and
+              automated tracking
             </p>
           </div>
-          <div className="bg-gray-100 p-6 rounded-lg text-center shadow w-full max-w-xs">
-            <img
-              src="/s4-4.png"
-              alt="Work From Anywhere"
-              className="mx-auto mb-4 h-16"
-            />
-            <p className="text-sm font-medium">
-              Work from anywhere — securely hosted on GCP
+
+          {/* Work From Anywhere */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
+                <Cloud className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Work Anywhere
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Work from anywhere — securely hosted on Google Cloud Platform with
+              99.9% uptime
             </p>
           </div>
-          <div className="bg-gray-100 p-6 rounded-lg text-center shadow w-full max-w-xs">
-            <img
-              src="/s4-5.png"
-              alt="Legal Built"
-              className="mx-auto mb-4 h-16"
-            />
-            <p className="text-sm font-medium">
-              Built by legal teams, for legal teams
+
+          {/* Legal Built */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center">
+                <Building className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Built by Experts
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Built by legal teams, for legal teams with deep industry expertise
+            </p>
+          </div>
+
+          {/* Lightning Fast */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 flex flex-col items-center text-center border border-gray-100">
+            <div className="w-32 h-32 mb-6 rounded-2xl bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center p-4">
+              <div className="w-16 h-16 bg-sky-500 rounded-full flex items-center justify-center">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Lightning Fast
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Get started in minutes with our intuitive interface and rapid
+              setup process
             </p>
           </div>
         </div>
@@ -342,22 +725,28 @@ export default function Home() {
         </h2>
         <div className="w-24 h-1 bg-sky-500 mb-12 border-b-4 border-black rounded-full" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl w-full">
-          <div className="bg-blue-100 p-6 rounded-lg text-center shadow">
-            <Lock className="mx-auto mb-4 h-10 w-10" />
-            <p className="text-sm font-semibold">END TO END ENCRYPTED</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-4xl w-full">
+          <div className="bg-blue-100 p-4 sm:p-6 rounded-lg text-center shadow">
+            <Lock className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10" />
+            <p className="text-xs sm:text-sm font-semibold">
+              END TO END ENCRYPTED
+            </p>
           </div>
-          <div className="bg-blue-100 p-6 rounded-lg text-center shadow">
-            <User className="mx-auto mb-4 h-10 w-10" />
-            <p className="text-sm font-semibold">ROLE-BASED ACCESS CONTROL</p>
+          <div className="bg-blue-100 p-4 sm:p-6 rounded-lg text-center shadow">
+            <User className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10" />
+            <p className="text-xs sm:text-sm font-semibold">
+              ROLE-BASED ACCESS CONTROL
+            </p>
           </div>
-          <div className="bg-blue-100 p-6 rounded-lg text-center shadow">
-            <RefreshCw className="mx-auto mb-4 h-10 w-10" />
-            <p className="text-sm font-semibold">DAILY AUTOMATED BACKUPS</p>
+          <div className="bg-blue-100 p-4 sm:p-6 rounded-lg text-center shadow">
+            <RefreshCw className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10" />
+            <p className="text-xs sm:text-sm font-semibold">
+              DAILY AUTOMATED BACKUPS
+            </p>
           </div>
-          <div className="bg-blue-100 p-6 rounded-lg text-center shadow">
-            <BadgeCheck className="mx-auto mb-4 h-10 w-10" />
-            <p className="text-sm font-semibold">
+          <div className="bg-blue-100 p-4 sm:p-6 rounded-lg text-center shadow">
+            <BadgeCheck className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10" />
+            <p className="text-xs sm:text-sm font-semibold">
               GDPR & INDUSTRY-STANDARD COMPLIANT
             </p>
           </div>
