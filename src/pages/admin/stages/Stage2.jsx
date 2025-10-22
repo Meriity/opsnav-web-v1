@@ -165,7 +165,7 @@ export default function Stage2({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const[users,setUsers]=useState([]);
+  // const[user,setUser]=useState([]);
 
   const company = localStorage.getItem("company") || "vkl";
   const currentConfig = formConfig[company] || formConfig.vkl;
@@ -443,7 +443,7 @@ export default function Stage2({
         >
           <option value="">Select Agent</option>
           {user.map((agent) => (
-            <option key={agent._id} value={agent._id}>
+            <option key={agent._id} value={agent._id+"-"+agent.displayName}>
               {agent.displayName}
             </option>
           ))}

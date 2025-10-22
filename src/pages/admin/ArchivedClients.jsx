@@ -106,7 +106,7 @@ export default function ArchivedClients() {
       { key: "orderId", title: "Order ID" },
       { key: "clientName", title: "Client Name" },
       { key: "propertyAddress", title: "Billing Address" },
-      { key: "dataEntryBy", title: "State" },
+      { key: "state", title: "State" },
       { key: "ordertype", title: "Client Type" },
       { key: "orderDate", title: "Order Date" },
       { key: "deliveryDate", title: "Delivery Date" },

@@ -20,6 +20,7 @@ import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -105,6 +106,7 @@ const ViewClients = () => {
       { key: "orderId", title: "Order ID", width: "10%" },
       { key: "client_name", title: "Client Name", width: "10%" },
       { key: "client_type", title: "Order Type", width: "15%" },
+      { key: "allocatedUser", title: "Allocated User", width: "10%" },
       { key: "order_date", title: "Order Date", width: "10%" },
       { key: "delivery_date", title: "Delivery Date", width: "10%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
@@ -285,6 +287,22 @@ const ViewClients = () => {
               {localStorage.getItem("company") === "idg" && (
                 <>
                   <Button
+                    label="Task Allocation Report"
+                    onClick={() =>{
+                      toast.success("Report Generating Download will start soon", {
+                        position: "top-right",
+                        autoClose: 2000,
+                        hideProgressBar: true,
+                        closeOnClick: true,
+                        pauseOnHover: false,
+                        draggable: false,
+                        progress: undefined,
+                      })
+                      generateTaskAllocationPDF(localStorage.getItem("client-storage"))}
+                    }
+                  width="w-[200px]"
+                  />
+                  <Button
                     label="Create Client"
                     Icon1={userplus}
                     onClick={() => setcreateuser(true)}
@@ -327,11 +345,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Create Client
                           </button>
@@ -341,11 +358,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Outstanding Tasks
                           </button>
@@ -355,11 +371,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Select Date Range
                           </button>
