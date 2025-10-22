@@ -41,6 +41,11 @@ const formConfig = {
         label: "Capture Proof of Completion Photos",
         type: "image",
       },
+      {
+        name: "closeOrder",
+        label: "Close Order",
+        type: "radio",
+      },
     ],
     noteGroups: [
       {
@@ -50,7 +55,7 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["uploadImageConfirmation"],
+        fieldsForNote: ["uploadImageConfirmation", "closeOrder"],
       },
     ],
   },
@@ -67,7 +72,7 @@ const normalizeValue = (v) => {
 const getStatus = (value) => {
   const val = normalizeValue(value);
   if (!val) return "Not Completed";
-  if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
+  if (["yes", "na", "n/a", "nr","cancelled","completed"].includes(val)) return "Completed";
   if (val === "no") return "Not Completed";
   if (["processing", "inprogress"].includes(val)) return "In Progress";
   return "Not Completed";
@@ -107,7 +112,6 @@ export default function Stage4({
   const [preview, setPreview] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [fileName, setfileName] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -273,6 +277,7 @@ export default function Stage4({
         payload.matterNumber = matterNumber;
         await api.upsertStageFour(payload);
       } else if (company === "idg") {
+        console.log(payload);
         payload.orderId = matterNumber;
         await api.upsertIDGStages(payload.orderId, 4, payload);
       }
@@ -300,46 +305,41 @@ export default function Stage4({
   const renderField = (field) => {
     switch (field.type) {
       case "radio":
-        return (
-          <div key={field.name} className="mt-5">
-            <div className="flex gap-4 items-center justify-between mb-2">
-              <label className="block mb-1 text-sm md:text-base font-bold">
-                {field.label}
-              </label>
-              <div
-                className={`w-[90px] h-[18px] ${bgcolor(
-                  statuses[field.name]
-                )} flex items-center justify-center rounded-4xl`}
-              >
-                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                  {statuses[field.name] || "Not Completed"}
-                </p>
-              </div>
-            </div>
-            {/* <div className="flex gap-4 justify-between flex-wrap items-center mb-3"> */}
-            {/* tight spacing of every fields*/}
-            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-              {["Yes", "No", "Processing", "N/R"].map((val) => (
-                <label
-                  key={val}
-                  className="flex items-center gap-2 text-sm md:text-base"
-                >
-                  <input
-                    type="radio"
-                    name={field.name}
-                    value={val}
-                    checked={
-                      normalizeValue(formData[field.name]) ===
-                      normalizeValue(val)
-                    }
-                    onChange={() => handleChange(field.name, val)}
-                  />
-                  {val}
-                </label>
-              ))}
+        return <div key={field.name} className="mt-5">
+          <div className="flex gap-4 items-center justify-between mb-2">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <div
+              className={`w-[90px] h-[18px] ${bgcolor(statuses[field.name])} flex items-center justify-center rounded-4xl`}
+            >
+              <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                {statuses[field.name] || "Not Completed"}
+              </p>
             </div>
           </div>
-        );
+
+          <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+            {(field.name !== "closeOrder"
+              ? ["Yes", "No", "Processing", "N/R"]
+              : ["Completed", "Cancelled"]
+            ).map((val) => (
+              <label key={val} className="flex items-center gap-2 text-sm md:text-base">
+                <input
+                  type="radio"
+                  name={field.name}
+                  value={val}
+                  checked={
+                    normalizeValue(formData[field.name]) === normalizeValue(val)
+                  }
+                  onChange={() => handleChange(field.name, val)}
+                />
+                {val}
+              </label>
+            ))}
+          </div>
+        </div>
+
       case "number":
         return (
           <div key={field.name} className="mt-5">
