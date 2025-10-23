@@ -94,13 +94,13 @@ const ViewClientsTable = ({
               </th>
               <th
                 className="py-3 pl-6 text-center text-sm text-black"
-                style={{ width: "6%" }}
+                style={{ width: "6.5%" }}
               >
                 OT
               </th>
               <th
                 className="pl-2 pr-2 py-3 text-center text-sm text-black rounded-r-2xl"
-                style={{ width: "6%" }}
+                style={{ width: "6.5%" }}
               >
                 Action
               </th>
@@ -115,7 +115,7 @@ const ViewClientsTable = ({
               return (
                 <tr
                   key={item.id}
-                  className="bg-white rounded-2xl transition-all hover:bg-sky-50"
+                  className="bg-white rounded-2xl transition-all hover:shadow-xl"
                 >
                   {columns.map((column, colIndex) => (
                     <td
@@ -213,7 +213,7 @@ const ViewClientsTable = ({
                         <Edit size={12} />
                         <span className="text-xs">Edit</span>
                       </button>
-                      <button
+                      {/* <button
                         onClick={() =>
                           onShare(item.matternumber, item.client_email)
                         }
@@ -222,7 +222,7 @@ const ViewClientsTable = ({
                       >
                         <Share2 size={12} />
                         <span className="text-xs">Share</span>
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
