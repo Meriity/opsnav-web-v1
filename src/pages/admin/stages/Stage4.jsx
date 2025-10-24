@@ -128,7 +128,7 @@ export default function Stage4({
         matterNumber,
         fileToUpload
       );
-      console.log(response);
+      // console.log(response);
     } catch (e) {
       console.error(e);
     }
@@ -379,12 +379,12 @@ export default function Stage4({
             <div className="relative w-full">
               {!preview ? (
                 <label
-                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition border-gray-300 bg-gray-50 hover:bg-gray-100`}
+                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition border-gray-300 bg-gray-50 hover:bg-gray-100 h-120`}
                 >
-                  <CloudArrowUpIcon className="w-10 h-10 text-gray-400" />
+                  <CloudArrowUpIcon className="w-10 h-10 text-gray-400 hover:text-[#00AEEF]" />
                   <p className="mt-2 text-sm text-gray-500">
-                    <span className="font-semibold text-blue-600">
-                      Click to upload
+                    <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
+                      Click here to upload
                     </span>
                   </p>
                   <input
@@ -396,11 +396,11 @@ export default function Stage4({
                 </label>
               ) : (
                 // Image preview (no changes needed here)
-                <div className="relative">
+                <div className="relative w-full text-center">
                   <img
                     src={preview}
                     alt="Uploaded preview"
-                    className="w-full h-40 object-cover rounded-lg border"
+                    className="inline-block rounded-lg border max-w-full"
                   />
                   <button
                     type="button"
