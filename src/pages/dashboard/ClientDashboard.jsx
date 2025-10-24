@@ -18,6 +18,7 @@ import {
   Clock,
   NotepadText,
   ChevronsRight,
+
 } from "lucide-react";
 
 // Original API and Components
@@ -31,7 +32,9 @@ ChartJS.register(ArcElement, Tooltip);
 const StageCard = ({ stage, stageIndex }) => {
   // // // // console.log(stage);
   const getNextStageIndex = (index) => {
-    const stageMap = {
+    let stageMap={};
+    if(localStorage.getItem("company")==="vkl"){
+    stageMap = {
       0: "1",
       1: "2A",
       2: "2B",
@@ -39,6 +42,17 @@ const StageCard = ({ stage, stageIndex }) => {
       4: "4",
       5: "5",
     };
+  }
+    else{
+      stageMap = {
+      0: "1",
+      1: "2",
+      2: "3",
+      3: "4",
+    };
+
+    }
+  
     return stageMap[index] ?? index;
   };
 
@@ -77,6 +91,7 @@ const StageCard = ({ stage, stageIndex }) => {
       }}
       transition={{ duration: 0.5 }}
     >
+
       <div
         className="absolute top-1/2 left-1/2 
                -translate-x-1/2 -translate-y-1/2 
@@ -110,11 +125,11 @@ const StageCard = ({ stage, stageIndex }) => {
               let icon = (
                 <Circle className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />
               );
-              if (status === "yes" || status === "n/r") {
+              if (status === "yes" || status === "n/r" || status === "approved") {
                 icon = (
                   <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                 );
-              } else if (status === "no") {
+              } else if (status === "no" || status === "rejected") {
                 icon = (
                   <XCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
                 );
@@ -165,6 +180,7 @@ export default function ClientDashboard() {
   const api = new ClientAPI();
   let { matterNumber } = useParams();
   matterNumber = atob(matterNumber);
+  const company=localStorage.getItem("company");
 
   const [loading, setLoading] = useState(true);
   const [stageDetails, setStageDetails] = useState([]);
@@ -175,6 +191,15 @@ export default function ClientDashboard() {
     settlement_date: "",
     address: "",
     state: "",
+  });
+    const [orderDetails, setOrderDetails] = useState({
+    Clientname: "",
+    orderId: "",
+    order_date: "",
+    delivery_date: "",
+    address: "",
+    state: "",
+    type:""
   });
   const formatDate = (dateString) => {
     return dateString
@@ -194,7 +219,19 @@ export default function ClientDashboard() {
         apiResponse.clientType.charAt(0).toUpperCase() +
         apiResponse.clientType.slice(1),
       settlement_date: formatDate(apiResponse.settlementDate),
-    };
+    }
+  }
+
+    function formatOrderDetails(apiResponse) {
+    return {
+      order_date: formatDate(apiResponse.data[0].orderDetails.orderDate),
+      orderId: apiResponse.data[0].orderDetails.orderId,
+      Clientname: apiResponse.data[0].clientDetails.name,
+      delivery_address: apiResponse.data[0].orderDetails.deliveryAddress,
+      state: apiResponse.data[0].orderDetails.state, 
+      type: apiResponse.data[0].orderDetails.orderType,
+      delivery_date: formatDate(apiResponse.data[0].orderDetails.orderDate),
+    }
   }
 
   function splitNoteParts(note) {
@@ -207,7 +244,7 @@ export default function ClientDashboard() {
     };
   }
 
-  function mapStagesFromDB(response, clientType) {
+  function mapStagesFromDB(response,clientType) {
     const stages = [];
     // // // console.log(response);
     const createStage = (stageName, stageData, noteKey) => {
@@ -223,7 +260,9 @@ export default function ClientDashboard() {
           noteText: note.beforeHyphen,
           rows: [
             {
-              sections: isDualRow ? stageData.sectionsB : stageData.sections2,
+              sections: isDualRow
+                ? stageData.sectionsB
+                : stageData.sections2,
               noteText: note.afterHyphen,
             },
           ],
@@ -267,9 +306,12 @@ export default function ClientDashboard() {
         stagecolor: response.stage2.colorStatus,
         financeApproval: formatDate(response.stage2.financeApprovalDate),
         data: {
-          sections: [],
+          sections: [
+
+          ],
           noteTitle: "System Note for Client",
-          noteText: splitNoteParts(response.stage2.noteForClientA).beforeHyphen,
+          noteText: splitNoteParts(response.stage2.noteForClientA)
+            .beforeHyphen,
           rows: [
             {
               sections: [
@@ -284,14 +326,11 @@ export default function ClientDashboard() {
                 {
                   title: "Identity Verification and Client Authorisation",
                   status:
-                    response.stage2.voi === "Yes" ||
-                    ("yes" && response.stage2.caf === "Yes") ||
-                    "yes"
+                    response.stage2.voi === "Yes" || "yes" && response.stage2.caf === "Yes" || "yes"
                       ? "Yes"
-                      : response.stage2.voi === "Processing" &&
-                        response.stage2.caf === "Processing"
-                      ? "Processing"
-                      : "No",
+                      : response.stage2.voi === "Processing" && response.stage2.caf === "Processing"
+                        ? "Processing"
+                        : "No"
                 },
               ],
               noteText: splitNoteParts(response.stage2.noteForClientA)
@@ -309,6 +348,7 @@ export default function ClientDashboard() {
             {
               title: "Building & Pest Inspection",
               status: response.stage2.buildingAndPest,
+
             },
             {
               title: "Finance Approval",
@@ -316,21 +356,21 @@ export default function ClientDashboard() {
             },
           ],
           noteTitle: "System Note for Client",
-          noteText: splitNoteParts(response.stage2.noteForClientB).beforeHyphen,
+          noteText: splitNoteParts(response.stage2.noteForClientB)
+            .beforeHyphen,
           rows: [
             {
               sections: [
                 ...(clientType?.toLowerCase() === "seller"
                   ? [
-                      {
-                        title: "Discharge Authority",
-                        status: response.stage2.obtainDaSeller,
-                      },
-                    ]
+                    {
+                      title: "Discharge Authority",
+                      status: response.stage2.obtainDaSeller,
+                    },
+                  ]
                   : []),
               ],
-              noteText: splitNoteParts(response.stage2.noteForClientB)
-                .afterHyphen,
+              noteText: splitNoteParts(response.stage2.noteForClientB).afterHyphen,
             },
           ],
         },
@@ -343,20 +383,14 @@ export default function ClientDashboard() {
         stagecolor: response.stage3.colorStatus,
         data: {
           sections: [
-            {
-              title: "Title & Plan Search",
-              status: response.stage3.titleSearch,
-            },
+            { title: "Title & Plan Search", status: response.stage3.titleSearch },
           ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage3.noteForClient).beforeHyphen,
           rows: [
             {
               sections: [
-                {
-                  title: "PEXA & Invite Bank",
-                  status: response.stage3.inviteBank,
-                },
+                { title: "PEXA & Invite Bank", status: response.stage3.inviteBank },
                 { title: "Rates & Water", status: response.stage3.rates },
               ],
               noteText: splitNoteParts(response.stage3.noteForClient)
@@ -394,7 +428,9 @@ export default function ClientDashboard() {
         svg: "/stage 5.svg",
         stagecolor: response.stage5.colorStatus,
         data: {
-          sections: [],
+          sections: [
+
+          ],
           noteTitle: "System Note for Client",
           noteText: splitNoteParts(response.stage5.noteForClient).beforeHyphen,
           rows: [
@@ -422,9 +458,127 @@ export default function ClientDashboard() {
 
     return stages;
   }
+
+
+function mapIDGStagesFromDB(response) {
+  const stages = [];
+  const order = response?.data?.[0];
+
+  const splitNoteParts = (note = "") => {
+    const [beforeHyphen, afterHyphen] = note.split(" - ");
+    return {
+      beforeHyphen: beforeHyphen?.trim() || "",
+      afterHyphen: afterHyphen?.trim() || "",
+    };
+  };
+
+  if (order?.s1) {
+    const note = splitNoteParts(order.s1.noteForClient || "");
+    stages.push({
+      stageName: "Stage 1: Verification & Approval",
+      svg: "/stage 1.svg",
+      stagecolor: order.s1.colorStatus,
+      data: {
+        sections: [
+          { title: "Customer Details Verified", status: order.s1.customerDetailsVerified || "Not Provided" },
+          { title: "Customer Accepted Quote", status: order.s1.customerAcceptedQuote || "Not Provided" },
+          { title: "Approval Status", status: order.s1.approvalStatus || "Not Provided" },
+        ],
+        noteTitle: "System Note for Client",
+        noteText: note.beforeHyphen,
+        rows: [
+          {
+            sections: [],
+            noteText: note.afterHyphen,
+          },
+        ],
+      },
+    });
+  }
+
+  if (order?.s2) {
+    const note = splitNoteParts(order.s2.noteForClient || "");
+    stages.push({
+      stageName: "Stage 2: Design & Material Planning",
+      svg: "/stage 2B.svg",
+      stagecolor: order.s2.colorStatus,
+      data: {
+        sections: [
+        ],
+        noteTitle: "System Note for Client",
+        noteText: note.beforeHyphen,
+        rows: [
+          {
+            sections: [
+              { title: "Design Artwork", status: order.s2.designArtwork || "Not Provided" },
+              { title: "Internal Approval", status: order.s2.internalApproval || "Not Provided" },
+              { title: "Proof Sent To Client", status: order.s2.proofSentToClient || "Not Provided" },
+            ],
+            noteText: note.afterHyphen,
+          },
+        ],
+      },
+    });
+  }
+
+  if (order?.s3) {
+    const note = splitNoteParts(order.s3.noteForClient || "");
+    stages.push({
+      stageName: "Stage 3: Production & Installation",
+      svg: "/stage 3.svg",
+      stagecolor: order.s3.colorStatus,
+      data: {
+        sections: [
+          { title: "Boards Printed", status: order.s3.boardsPrinted || "Not Provided" },
+          { title: "Packaged", status: order.s3.packaged || "Not Provided" },
+          { title: "Quality Check Passed", status: order.s3.qualityCheckPassed || "Not Provided" },
+        ],
+        noteTitle: "System Note for Client",
+        noteText: note.beforeHyphen,
+        rows: [
+          {
+            sections: [
+            ],
+            noteText: note.afterHyphen,
+          },
+        ],
+      },
+    });
+  }
+
+  if (order?.s4) {
+    const note = splitNoteParts(order.s4.noteForClient || "");
+    stages.push({
+      stageName: "Stage 4: Proof & Completion",
+      svg: "/stage 5.svg",
+      stagecolor: order.s4.colorStatus,
+      data: {
+        sections: [],
+        noteTitle: "System Note for Client",
+        noteText: note.beforeHyphen,
+        rows: [
+          {
+            sections: [
+              {
+                title: "Images Uploaded",
+                status: (order.s4.images?.length ?? 0) > 0 ? "Yes" : "No",
+              },
+            ],
+            noteText: note.afterHyphen,
+          },
+        ],
+      },
+    });
+  }
+
+  return stages;
+}
+
+
   useEffect(() => {
     async function fetchMatter() {
       try {
+        if(localStorage.getItem("company")==="vkl"){
         const response = await api.getClientDetails(matterNumber);
         const formatted = formatMatterDetails(response);
         setMatterDetails(formatted);
@@ -432,6 +586,15 @@ export default function ClientDashboard() {
         const stageformatted = mapStagesFromDB(stagedetails, formatted.type);
         // // // console.log(stageformatted);
         setStageDetails(stageformatted);
+        }
+        else if(localStorage.getItem("company")==="idg"){
+          const response=await api.getIDGClientDetails(matterNumber); // It is Order Only(Due to the above params function it looks like this)
+          console.log(response);
+          const formatted = formatOrderDetails(response);
+          setOrderDetails(formatted);
+          const stageformatted = mapIDGStagesFromDB(response);
+          setStageDetails(stageformatted);
+        }
       } catch (error) {
         console.error("Failed to fetch matter details:", error);
       } finally {
@@ -489,7 +652,11 @@ export default function ClientDashboard() {
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative">
-            <img className="h-auto w-[120px]" alt="Logo" src={logo} />
+            <img
+              className="h-auto w-[120px]"
+              alt="Logo"
+              src={logo}
+            />
             {/* Close button in mobile */}
             <button
               onClick={() => setIsOpen(false)}
@@ -505,30 +672,24 @@ export default function ClientDashboard() {
               {/* Matter Overview */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Matter Overview
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">{company==="vkl"?"Matter Overview" :"Order Overview"}</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <User className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Client
-                      </p>
+                      <p className="text-x font-medium text-slate-600">Client Name</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.Clientname}
+                        {matterDetails.Clientname || orderDetails.Clientname}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Matter Number
-                      </p>
+                      <p className="text-x font-medium text-slate-600">{company==="vkl"?"Matter Number" :"Order ID"}</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.matter_number}
+                        {matterDetails.matter_number || orderDetails.orderId}
                       </p>
                     </div>
                   </div>
@@ -538,30 +699,24 @@ export default function ClientDashboard() {
               {/* Key Dates */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Key Dates
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Key Dates</span>
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Unconditional Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">{company==="vkl"?"Unconditional Date" :"Order Date"}</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {stageDetails[1]?.financeApproval}
+                        {stageDetails[1]?.financeApproval || orderDetails.order_date}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-x font-medium text-slate-600">
-                        Settlement Date
-                      </p>
+                      <p className="text-x font-medium text-slate-600">{company==="vkl"?"Settlement Date" :"Delivery Date"}</p>
                       <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.settlement_date}
+                        {matterDetails.settlement_date|| orderDetails.delivery_date}
                       </p>
                     </div>
                   </div>
@@ -571,19 +726,17 @@ export default function ClientDashboard() {
               {/* Property */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
-                    Property
-                  </span>
+                  <span className="border-b-2 border-b-[#00AEEF]">Property</span>
                 </h4>
                 <div className="flex items-start gap-3">
                   <Home className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-x font-medium text-slate-600">Address</p>
                     <p className="text-sm text-slate-800 font-semibold">
-                      {matterDetails.address}
+                      {matterDetails.address || orderDetails.delivery_address}
                     </p>
                     <p className="text-sm text-slate-800 font-semibold mt-1">
-                      {matterDetails.state}
+                      {matterDetails.state || orderDetails.state}
                     </p>
                   </div>
                 </div>
@@ -609,7 +762,10 @@ export default function ClientDashboard() {
 
       <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
         <div className="p-6 sm:p-6">
-          <div className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]">
+          <div
+            className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]"
+          >
+
             {/* LEFT SECTION: Glassmorphism card */}
             <motion.div
               className="flex-1 min-w-0 gap-2"
@@ -617,7 +773,9 @@ export default function ClientDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
+
               <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
+
                 <button
                   onClick={() => setIsOpen(true)}
                   className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
@@ -634,10 +792,10 @@ export default function ClientDashboard() {
                   />
                 )}
                 <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
-                  Hello, {matterDetails.Clientname} 👋
+                  Hello, {matterDetails.Clientname || orderDetails.Clientname} 👋
                 </h1>
                 <p className="text-gray-100">
-                  Welcome. Here is the latest status of your matter.
+                  Welcome back. Here is the latest status of your matter.
                 </p>
 
                 {/* Show progress chart only on mobile */}
@@ -655,7 +813,7 @@ export default function ClientDashboard() {
 
             {/* RIGHT SECTION: Full image box */}
             <motion.div
-              className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-[#B9F3FC]"
+              className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-white" // bg-[#B9F3FC]
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -675,16 +833,49 @@ export default function ClientDashboard() {
                     />
                   )}
                 </div>
+                {company==="vkl" ? 
                 <img
                   src="/Home.svg"
-                  alt="Home"
+                  alt="Image"
                   width={450}
                   height={400}
                   style={{ objectFit: "fill" }}
                 />
+              : orderDetails.type==="Vehicle"?  
+              <img
+                  src="/IDG_Vehicle.png"
+                  alt="Image"
+                  width={400}
+                  height={400}
+                  style={{ objectFit: "fill" }}
+                /> : orderDetails.type==="Commercial" ?
+                <img
+                  src="/IDG_Commercial.png"
+                  alt="Image"
+                  width={400}
+                  height={400}
+                  style={{ objectFit: "fill" }}
+                /> : orderDetails.type==="Real Estate" ?
+                <img
+                  src="/IDG_RealEstate.png"
+                  alt="Image"
+                  width={400}
+                  height={400}
+                  style={{ objectFit: "fill" }}
+                /> :
+                <img
+                  src="/IDG_Services.png"
+                  alt="Image"
+                  width={400}
+                  height={400}
+                  style={{ objectFit: "fill" }}
+                /> 
+              }
               </div>
             </motion.div>
           </div>
+
+
 
           {/* Stage Cards Section */}
           <div>
@@ -693,11 +884,7 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-5">
                 {/* <ChevronsRight className="w-7 h-7 text-sky-500 mr-2" />
                  */}
-                <img
-                  src="/stage-by-stage.svg"
-                  style={{ height: "60px" }}
-                  alt=""
-                />
+                <img src="/stage-by-stage.svg" style={{ height: "60px" }} alt="" />
                 <h2 className="text-2xl font-bold text-slate-800">
                   Stage-by-Stage Progress
                 </h2>
@@ -756,3 +943,4 @@ export default function ClientDashboard() {
     </div>
   );
 }
+
