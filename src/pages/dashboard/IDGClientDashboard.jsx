@@ -413,6 +413,11 @@ export default function IDGClientDashboard() {
                                                 />
                                             </div>
                                         </div>
+                                        <div className='text-center mt-10'>
+                                        <p className="text-gray-700 text-lg">
+                                            ⭐ Love using our service? <a href="https://share.google/COJKas8ABk3zOKCuC" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] hover:underline">Rate us on Google!</a> 💙
+                                        </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -508,7 +513,7 @@ export default function IDGClientDashboard() {
                             <h2 className="ml-5 text-2xl font-bold text-gray-800 mb-2 underline decoration-[#00AEEF]">
                                 Order History
                             </h2>
-                            {orders.filter((job) => job.status === "completed" ).length === 0 ? (
+                            {orders.filter((job) => job.status === "completed").length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-10">
                                     <img
                                         src="/undraw_no-data_ig65.svg"
