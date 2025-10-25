@@ -311,6 +311,7 @@ export default function CreateClientModal({
           const requiredFields = [
             "clientName",
             "contact",
+            "password",
             "email",
             "billingAddress",
             "country",
@@ -329,6 +330,7 @@ export default function CreateClientModal({
             name: formData.clientName,
             contact: formData.contact,
             email: formData.email,
+            password: formData.password,
             billingAddress: formData.billingAddress,
             country: formData.country,
             state: formData.state,
@@ -566,7 +568,7 @@ export default function CreateClientModal({
             {/* IDG Client Fields */}
             {isIdg && createType === "client" && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block mb-1 font-medium">Client ID</label>
                     <input
@@ -589,6 +591,19 @@ export default function CreateClientModal({
                       required
                     />
                   </div>
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      Password*
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password || ""}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      required
+                    />
+                    </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

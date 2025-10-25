@@ -57,6 +57,27 @@ class ClientAPI {
     }
   }
 
+    async getIDGClients(clientId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/clients/details/${clientId}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting client details:", error);
+      throw error;
+    }
+  }
+
   // Update client data
   // clientAPI.js — improved updateClientData
   async updateClientData(matterNumber, data) {
