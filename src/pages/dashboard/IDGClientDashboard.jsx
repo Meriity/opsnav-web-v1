@@ -32,13 +32,7 @@ export default function IDGClientDashboard() {
                     console.error("No orderId provided");
                     return;
                 }
-
-                console.log('1. Encoded orderId:', encodedOrderId);
-                console.log('2. Type:', typeof encodedOrderId);
-
                 const decodedOrderId = atob(String(encodedOrderId).trim());
-                console.log('3. Decoded orderId:', decodedOrderId);
-                console.log('4. Decoded length:', decodedOrderId?.length);
 
                 if (!decodedOrderId || decodedOrderId.trim() === '') {
                     console.error("Decoded orderId is empty");
@@ -230,11 +224,11 @@ export default function IDGClientDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="min-h-screen bg-gradient-to-br from-[#ffe2df] to-blue-200">
             <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="mb-8 bg-gradient-to-r from-[#00AEEF] to-[#0088CC] rounded-2xl shadow-lg border border-[#00AEEF]/30 p-8 fixed z-10 top-5 left-20 right-20 overflow-hidden">
                     {/* Subtle Pattern Background */}
-                    <div className="absolute inset-0 opacity-5">
+                    <div className="absolute inset-0 opacity-60">
                         <div className="absolute inset-0" style={{
                             backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
                             backgroundSize: '40px 40px'
@@ -414,9 +408,9 @@ export default function IDGClientDashboard() {
                                             </div>
                                         </div>
                                         <div className='text-center mt-10'>
-                                        <p className="text-gray-700 text-lg">
-                                            ⭐ Love using our service? <a href="https://share.google/COJKas8ABk3zOKCuC" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] hover:underline">Rate us on Google!</a> 💙
-                                        </p>
+                                            <p className="text-gray-700 text-lg">
+                                                ⭐ Love using our service? <a href="https://share.google/COJKas8ABk3zOKCuC" target="_blank" rel="noopener noreferrer" className="text-[#00AEEF] hover:underline">Rate us on Google!</a> 💙
+                                            </p>
                                         </div>
                                     </div>
                                 )}
@@ -442,71 +436,146 @@ export default function IDGClientDashboard() {
                                 <div className="grid grid-cols-1 gap-6">
                                     {orders
                                         .filter((job) => job.status === "booked" || job.status === "ordered")
-                                        .map((job, index) => (
-                                            <div
-                                                key={job.id}
-                                                className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
-                                                onClick={() => setSelectedJob(job)}
-                                                style={{
-                                                    animation: `slideIn 0.5s ease-out ${index * 0.1}s backwards`
-                                                }}
-                                            >
-                                                <div className="p-6">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
-                                                                <Package className="text-white" size={28} />
+                                        .map((job, index) => {
+                                            const stages = ["ordered", "booked", "completed"];
+                                            const currentStageIndex = stages.indexOf(job.status);
+
+                                            return (
+                                                <div
+                                                    key={job.id}
+                                                    className="bg-white/90 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
+                                                    onClick={() => setSelectedJob(job)}
+                                                    style={{
+                                                        animation: `slideIn 0.5s ease-out ${index * 0.1}s backwards`,
+                                                    }}
+                                                >
+                                                    <div className="p-6">
+                                                        {/* Header Section */}
+                                                        <div className="flex items-start justify-between mb-6">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
+                                                                    <Package className="text-white" size={28} />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#00AEEF] transition-colors">
+                                                                        {job.orderId}
+                                                                    </h3>
+                                                                    <p className="text-gray-600">Delivery Address: {job.
+                                                                        deliveryAddress
+                                                                    }</p>
+                                                                    <p className="text-gray-600">Order Details: {job.order_details}</p>
+
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#00AEEF] transition-colors">
-                                                                    {job.orderId}
-                                                                </h3>
-                                                                <p className="text-gray-600">{job.order_details}</p>
+
+                                                            <div className="flex flex-col items-center">
+                                                                <span
+                                                                    className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === "completed"
+                                                                        ? "bg-green-100 text-green-700"
+                                                                        : job.status === "booked"
+                                                                            ? "bg-yellow-100 text-yellow-700"
+                                                                            : "bg-orange-100 text-orange-700"
+                                                                        }`}
+                                                                >
+                                                                    {job.status === "ordered"
+                                                                        ? "Ordered"
+                                                                        : job.status === "booked"
+                                                                            ? "Booked"
+                                                                            : "Completed"}
+                                                                </span>
+                                                                <img
+                                                                    src="/undraw_booked_bb22.svg"
+                                                                    className="mt-4 w-[90px]"
+                                                                    alt="Order Illustration"
+                                                                />
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <span
-                                                                className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === 'completed'
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : job.status === 'booked'
-                                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                                        : 'bg-orange-100 text-orange-700'
-                                                                    }`}
-                                                            >
-                                                                {job.status === 'ordered' ? 'Ordered' : job.status === 'booked' ? 'Booked' : 'Completed'}
-                                                            </span>
-                                                            <img src="/undraw_booked_bb22.svg" className='mt-5 w-[100px]' alt="" />
-                                                        </div>
-                                                    </div>
 
+                                                        {/* Progress Tracker */}
+                                                        <div className="flex items-center justify-between">
+                                                            {stages.map((stage, i) => {
+                                                                const stageActive = i <= currentStageIndex;
 
-                                                    <div className="flex items-center gap-8 mb-4">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <Calendar size={16} />
-                                                            <span>Ordered: {formatDate(job.orderDate)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <Calendar size={16} />
-                                                            <span>Booked: {formatDate(job.deliveryDate)}</span>
-                                                        </div>
-                                                    </div>
+                                                                return (
+                                                                    <div key={stage} className="flex items-center flex-1">
+                                                                        {/* Stage Circle */}
+                                                                        <div className="flex flex-col items-center flex-1">
+                                                                            <div
+                                                                                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                                                                    ? "bg-green-500 shadow-lg shadow-[#00AEEF]/30 scale-100"
+                                                                                    : "bg-yellow-500 scale-90"
+                                                                                    }`}
+                                                                            >
+                                                                                {stage === "ordered" && (
+                                                                                    <Package
+                                                                                        className={`transition-all duration-300 ${stageActive ? "text-white" : "text-gray-400"
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                                {stage === "booked" && (
+                                                                                    <Calendar
+                                                                                        className={`transition-all duration-300 ${stageActive ? "text-white" : "text-gray-400"
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                                {stage === "completed" && (
+                                                                                    <CheckCircle2
+                                                                                        className={`transition-all duration-300 text-white
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                            </div>
 
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                                            <div
-                                                                className="bg-gradient-to-r from-[#00AEEF] to-[#0088CC] h-full transition-all duration-1000 rounded-full"
-                                                                style={{
-                                                                    width: job.status === 'completed' ? '100%' : job.status === 'booked' ? '66%' : '33%'
-                                                                }}
-                                                            ></div>
+                                                                            {/* Stage Label */}
+                                                                            <p
+                                                                                className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive ? "text-gray-900" : "text-gray-400"
+                                                                                    }`}
+                                                                            >
+                                                                                {stage === "ordered"
+                                                                                    ? "Job Ordered"
+                                                                                    : stage === "booked"
+                                                                                        ? "Job Booked"
+                                                                                        : "Job Completed"}
+                                                                            </p>
+
+                                                                            {/* Date Display */}
+                                                                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                                                                <Calendar size={14} />
+                                                                                <span>
+                                                                                    {stage === "ordered" && formatDate(job.orderDate)}
+                                                                                    {stage === "booked" && formatDate(job.deliveryDate)}
+                                                                                    {stage === "completed" &&
+                                                                                        formatDate(job.deliveryDate)}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Connector Line */}
+                                                                        {i < stages.length - 1 && (
+                                                                            <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
+                                                                                <div
+                                                                                    className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                                                                        ? "bg-green-500 w-full"
+                                                                                        : "bg-yellow-500 w-full"
+                                                                                        }`}
+                                                                                ></div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
                             )}
                         </div>
+
 
 
                         <div className="mt-10 space-y-6">
@@ -525,71 +594,152 @@ export default function IDGClientDashboard() {
                                     </p>
                                 </div>
                             ) : (
-
                                 <div className="grid grid-cols-1 gap-6">
                                     {orders
                                         .filter((job) => job.status === "completed")
-                                        .map((job, index) => (
-                                            <div
-                                                key={job.id}
-                                                className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
-                                                onClick={() => setSelectedJob(job)}
-                                                style={{
-                                                    animation: `slideIn 0.5s ease-out ${index * 0.1}s backwards`
-                                                }}
-                                            >
-                                                <div className="p-6">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
-                                                                <Package className="text-white" size={28} />
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#00AEEF] transition-colors">
-                                                                    {job.orderId}
-                                                                </h3>
-                                                                <p className="text-gray-600">{job.order_details}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <span
-                                                                className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === 'completed'
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : job.status === 'booked'
-                                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                                        : 'bg-orange-100 text-orange-700'
-                                                                    }`}
-                                                            >
-                                                                {job.status === 'ordered' ? 'Ordered' : job.status === 'booked' ? 'Booked' : 'Completed'}
-                                                            </span>
-                                                            <img src="/undraw_order-delivered_puaw.svg" className='mt-5 w-[100px]' alt="" />
-                                                        </div>
-                                                    </div>
+                                        .map((job, index) => {
+                                            const stages = ["ordered", "booked", "completed"];
+                                            const currentStageIndex = stages.indexOf(job.status);
 
-                                                    <div className="flex items-center gap-8 mb-4">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <Calendar size={16} />
-                                                            <span>Ordered: {formatDate(job.orderDate)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <Calendar size={16} />
-                                                            <span>Delivered: {formatDate(job.deliveryDate)}</span>
-                                                        </div>
-                                                    </div>
+                                            return (
+                                                <div
+                                                    key={job.id}
+                                                    className="bg-white/90 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
+                                                    onClick={() => setSelectedJob(job)}
+                                                    style={{
+                                                        animation: `slideIn 0.5s ease-out ${index * 0.1}s backwards`,
+                                                    }}
+                                                >
+                                                    <div className="p-6">
+                                                        {/* Header Section */}
+                                                        <div className="flex items-start justify-between mb-6">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
+                                                                    <Package className="text-white" size={28} />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#00AEEF] transition-colors">
+                                                                        {job.orderId}
+                                                                    </h3>
+                                                                    <p className="text-gray-600">Delivery Address: {job.
+                                                                        deliveryAddress
+                                                                    }</p>
+                                                                    <p className="text-gray-600">Order Details: {job.order_details}</p>
 
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                                            <div
-                                                                className="bg-gradient-to-r from-[#00AEEF] to-[#0088CC] h-full transition-all duration-1000 rounded-full"
-                                                                style={{
-                                                                    width: job.status === 'completed' ? '100%' : job.status === 'booked' ? '66%' : '33%'
-                                                                }}
-                                                            ></div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-col items-center">
+                                                                <span
+                                                                    className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === "completed"
+                                                                        ? "bg-green-100 text-green-700"
+                                                                        : job.status === "booked"
+                                                                            ? "bg-yellow-100 text-yellow-700"
+                                                                            : "bg-orange-100 text-orange-700"
+                                                                        }`}
+                                                                >
+                                                                    {job.status === "ordered"
+                                                                        ? "Ordered"
+                                                                        : job.status === "booked"
+                                                                            ? "Booked"
+                                                                            : "Completed"}
+                                                                </span>
+                                                                <img
+                                                                    src={job.imageUrl[0]}
+                                                                    onClick={() => window.open(selectedJob.imageUrl[0], "_blank")}
+                                                                    className="mt-4 w-[90px]"
+                                                                    alt="Order Illustration"
+                                                                />
+                                                                <p className="text-gray-600 text-[12px]">Click to open</p>
+
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Progress Tracker */}
+                                                        <div className="flex items-center justify-between">
+                                                            {stages.map((stage, i) => {
+                                                                const stageActive = i <= currentStageIndex;
+
+                                                                return (
+                                                                    <div key={stage} className="flex items-center flex-1">
+                                                                        {/* Stage Circle */}
+                                                                        <div className="flex flex-col items-center flex-1">
+                                                                            <div
+                                                                                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                                                                    ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
+                                                                                    : "bg-gray-200 scale-90"
+                                                                                    }`}
+                                                                            >
+                                                                                {stage === "ordered" && (
+                                                                                    <Package
+                                                                                        className={`transition-all duration-300 ${stageActive ? "text-white" : "text-gray-400"
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                                {stage === "booked" && (
+                                                                                    <Calendar
+                                                                                        className={`transition-all duration-300 ${stageActive ? "text-white" : "text-gray-400"
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                                {stage === "completed" && (
+                                                                                    <CheckCircle2
+                                                                                        className={`transition-all duration-300 ${stageActive ? "text-white" : "text-gray-400"
+                                                                                            }`}
+                                                                                        size={32}
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Stage Label */}
+                                                                            <p
+                                                                                className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive ? "text-gray-900" : "text-gray-400"
+                                                                                    }`}
+                                                                            >
+                                                                                {stage === "ordered"
+                                                                                    ? "Job Ordered"
+                                                                                    : stage === "booked"
+                                                                                        ? "Job Booked"
+                                                                                        : "Job Completed"}
+                                                                            </p>
+
+                                                                            {/* Date Display */}
+                                                                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                                                                <Calendar size={14} />
+                                                                                <span>
+                                                                                    {stage === "ordered" && formatDate(job.orderDate)}
+                                                                                    {stage === "booked" && formatDate(job.deliveryDate)}
+                                                                                    {stage === "completed" &&
+                                                                                        formatDate(job.deliveryDate)}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Connector Line */}
+                                                                        {i < stages.length - 1 && (
+                                                                            <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
+                                                                                <div
+                                                                                    className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                                                                        ? "bg-[#00AEEF] w-full"
+                                                                                        : "bg-gray-200 w-0"
+                                                                                        }`}
+                                                                                ></div>
+                                                                            </div>
+                                                                        )}
+
+                                                                    </div>
+
+                                                                );
+
+
+                                                            })}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
                             )}
                         </div>
