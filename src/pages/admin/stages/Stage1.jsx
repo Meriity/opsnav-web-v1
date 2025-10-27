@@ -47,21 +47,11 @@ const formConfig = {
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
     },
-    // {
-    //   name: "jobAddress",
-    //   label: "Job Address",
-    //   type: "text",
-    // },
     {
       name: "distanceFeasibility",
       label: "Check Distance / Feasibility",
       type: "text",
     },
-    // {
-    //   name: "orderType",
-    //   label: "Order Type",
-    //   type: "text",
-    // },
     {
       name: "timeline",
       label: "Timeline / Deadline",
@@ -80,6 +70,43 @@ const formConfig = {
       options: ["Approved", "Rejected", "Pending"],
     },
   ],
+  commercial: [
+    {
+      name: "clientEngagement",
+      label: "Client Engagement",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "scopeReview",
+      label: "Scope Review",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "contractReview",
+      label: "Contract Review",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "feeProposal",
+      label: "Fee Proposal",
+      type: "radio",
+      options: ["Variable", "Fixed"],
+    },
+    {
+      name: "proposalAmount",
+      label: "Proposal Amount (incl GST)",
+      type: "text",
+    },
+    {
+      name: "conflictCheck",
+      label: "Conflict Check",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+  ],
 };
 
 // Common fields for all clients
@@ -87,6 +114,37 @@ const commonFields = [
   { name: "systemNote", label: "System note for client", type: "system-note" },
   { name: "clientComment", label: "Comment for client", type: "textarea" },
 ];
+
+// Admin-only fields for different modules
+const adminFields = {
+  idg: [
+    {
+      name: "costingType",
+      label: "Confirm Costing Type",
+      type: "radio",
+      options: ["Fixed", "Variable"],
+    },
+    {
+      name: "costing_amount",
+      label: "Costing Amount",
+      type: "text",
+    },
+  ],
+  commercial: [
+    {
+      name: "budgetApproval",
+      label: "Budget Approval",
+      type: "radio",
+      options: ["Approved", "Pending", "Rejected"],
+    },
+    {
+      name: "budgetAmount",
+      label: "Budget Amount",
+      type: "text",
+    },
+  ],
+  vkl: [], // No additional admin fields for VKL
+};
 
 export default function Stage1({
   changeStage,
@@ -105,11 +163,35 @@ export default function Stage1({
 
   // Stabilize company + fields so they can be safely used in hooks' deps
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
-
-  const currentFields = useMemo(
-    () => formConfig[company] || formConfig.vkl,
-    [company]
+  const currentModule = useMemo(
+    () => localStorage.getItem("currentModule") || "default",
+    []
   );
+  const userRole = useMemo(() => localStorage.getItem("role") || "user", []);
+
+  // Get base fields based on company and module
+  const baseFields = useMemo(() => {
+    if (currentModule === "commercial") {
+      return formConfig.commercial || formConfig.vkl;
+    }
+    return formConfig[company] || formConfig.vkl;
+  }, [company, currentModule]);
+
+  // Get admin fields if user is admin/superadmin
+  const additionalAdminFields = useMemo(() => {
+    const isAdmin = userRole === "admin" || userRole === "superadmin";
+    if (!isAdmin) return [];
+
+    if (currentModule === "commercial") {
+      return adminFields.commercial || [];
+    }
+    return adminFields[company] || [];
+  }, [company, currentModule, userRole]);
+
+  // Combine base fields with admin fields
+  const currentFields = useMemo(() => {
+    return [...baseFields, ...additionalAdminFields];
+  }, [baseFields, additionalAdminFields]);
 
   // Helper to normalize/standardize values for comparison and storage
   const normalizeValue = useCallback((v) => {
@@ -123,10 +205,18 @@ export default function Stage1({
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
-      const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
+      const completed = new Set([
+        "yes",
+        "nr",
+        "na",
+        "variable",
+        "fixed",
+        "approved",
+      ]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
-      if (["processing", "inprogress"].includes(val)) return "In Progress";
+      if (["processing", "inprogress", "pending"].includes(val))
+        return "In Progress";
       return "Not Completed";
     },
     [normalizeValue]
@@ -147,63 +237,46 @@ export default function Stage1({
       .map((str) => str.trim());
     return { systemNote, clientComment };
   }
-    const generateSystemNote = () => {
-        const radioFields = currentFields.filter((field) => field.type === "radio");
-        const textFields = currentFields.filter((field) => field.type === "text");
-        const greenValues = new Set(["yes", "nr", "na", "variable", "fixed", "approved"]);
 
-        // radio fields not received
-        const notReceivedRadio = radioFields
-            .filter(
-                (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-            )
-            .map((field) => field.label);
+  const generateSystemNote = () => {
+    const radioFields = currentFields.filter((field) => field.type === "radio");
+    const textFields = currentFields.filter((field) => field.type === "text");
+    const greenValues = new Set([
+      "yes",
+      "nr",
+      "na",
+      "variable",
+      "fixed",
+      "approved",
+    ]);
 
-        // text fields not received (empty or whitespace)
-        const notReceivedText = textFields
-            .filter(
-                (field) =>
-                    !formData[field.name] || formData[field.name].toString().trim() === ""
-            )
-            .map((field) => field.label);
+    // radio fields not received
+    const notReceivedRadio = radioFields
+      .filter(
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+      )
+      .map((field) => field.label);
 
-        const notReceived = [...notReceivedRadio, ...notReceivedText];
+    // text fields not received (empty or whitespace)
+    const notReceivedText = textFields
+      .filter(
+        (field) =>
+          !formData[field.name] || formData[field.name].toString().trim() === ""
+      )
+      .map((field) => field.label);
 
-        if (notReceived.length === 0) {
-            return "Tasks completed";
-        }
-        if (notReceived.length === 1) {
-            return `${notReceived[0]} not received`;
-        }
-        return `${notReceived.join(", ")} not received`;
-    };
+    const notReceived = [...notReceivedRadio, ...notReceivedText];
 
+    if (notReceived.length === 0) {
+      return "Tasks completed";
+    }
+    if (notReceived.length === 1) {
+      return `${notReceived[0]} not received`;
+    }
+    return `${notReceived.join(", ")} not received`;
+  };
 
   useEffect(() => {
-    if (
-  localStorage.getItem("company") === "idg" &&
-  (localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin")
-) {
-  const hasCostingFields = formConfig.idg.some(
-    (field) => field.name === "costing_amount"
-  );
-
-  if (!hasCostingFields) {
-    formConfig.idg.push(
-      {
-        name: "costingType",
-        label: "Confirm Costing Type",
-        type: "radio",
-        options: ["Fixed", "Variable"],
-      },
-      {
-        name: "costing_amount",
-        label: "Costing Amount",
-        type: "text",
-      }
-    );
-  }
-}
     if (!data) return;
 
     const { systemNote, clientComment } = extractNotes(data.noteForClient);
@@ -211,7 +284,12 @@ export default function Stage1({
     const initialStatuses = {};
 
     currentFields.forEach((field) => {
-      if (field.name === "quoteAmount") {
+      if (
+        field.name === "quoteAmount" ||
+        field.name === "proposalAmount" ||
+        field.name === "costing_amount" ||
+        field.name === "budgetAmount"
+      ) {
         initialFormData[field.name] =
           data[field.name]?.$numberDecimal || data[field.name] || "";
       } else {
@@ -233,8 +311,7 @@ export default function Stage1({
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
-    // include currentFields and getStatus (both stable via useMemo/useCallback)
-  }, [data, reloadTrigger, company, currentFields, getStatus, normalizeValue]);
+  }, [data, reloadTrigger, currentFields, getStatus, normalizeValue]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
@@ -266,26 +343,33 @@ export default function Stage1({
       let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
       const company = localStorage.getItem("company");
+      const currentModule = localStorage.getItem("currentModule");
       let payload = {
         ...formData,
       };
 
-      // dynamically set the key
-      if (company === "vkl") {
-        payload.matterNumber = matterNumber; // keep matterNumber
+      // Set the appropriate identifier based on module
+      if (currentModule === "commercial") {
+        payload.matterNumber = matterNumber; // Commercial uses matterNumber
+        payload.noteForClient = noteForClient;
+      } else if (company === "vkl") {
+        payload.matterNumber = matterNumber;
         payload.noteForClient = noteForClient;
       } else if (company === "idg") {
-        payload.orderId = matterNumber; // use orderId instead
+        payload.orderId = matterNumber; // IDG uses orderId
         payload.noteForClient = noteForClient;
       }
 
-      console.log(`${company} payload:`, payload);
+      console.log(`${currentModule || company} payload:`, payload);
 
       // remove temporary fields
       delete payload.systemNote;
       delete payload.clientComment;
 
-      if (company === "vkl") {
+      // Use appropriate API method based on module
+      if (currentModule === "commercial") {
+        await api.upsertStageOne(payload); // Commercial uses same as VKL
+      } else if (company === "vkl") {
         await api.upsertStageOne(payload);
       } else if (company === "idg") {
         await api.upsertIDGStages(payload.orderId, 1, payload);
@@ -304,6 +388,7 @@ export default function Stage1({
       });
     } catch (error) {
       console.error("Failed to update stage 1:", error);
+      toast.error("Failed to save stage 1");
     } finally {
       setIsSaving(false);
     }
@@ -312,7 +397,6 @@ export default function Stage1({
   const renderField = (field) => {
     switch (field.type) {
       case "text":
-          console.log(field);
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">
