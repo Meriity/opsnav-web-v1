@@ -10,6 +10,8 @@ import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 
+import NotificationAPI from "../../api/notificationAPI";
+
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
   users: [],
@@ -83,12 +85,13 @@ export default function ManageUsers() {
   const [role, setRole] = useState("user");
   const [userList, setUserList] = useState([]);
   const [usersPerPage, setUsersPerPage] = useState(5);
-  // const [resetLoadingEmail, setResetLoadingEmail] = useState("");
-  // const [resetSuccessEmail, setResetSuccessEmail] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
+
+  const currentModule = localStorage.getItem("currentModule");
+  const company = localStorage.getItem("company");
 
   const handleChange = (e) => {
     setRole(e.target.value);
@@ -126,6 +129,20 @@ export default function ManageUsers() {
     try {
       setIsLoading(true);
       await api.createUser(email, role, display_name);
+
+      // Create notification
+      const notificationAPI = new NotificationAPI();
+      await notificationAPI.createNotification({
+        type: "user",
+        message: `New user created: ${display_name} (${email})`,
+        metadata: {
+          userEmail: email,
+          userName: display_name,
+          role: role,
+          route: "/admin/manage-users",
+        },
+      });
+
       toast.success("User created successfully!");
       setOpenUser(false);
       setIsFetched(false);
@@ -145,10 +162,10 @@ export default function ManageUsers() {
     }
   };
 
-    const handleUserCreationIDG = async (display_name, email, role,password) => {
+  const handleUserCreationIDG = async (display_name, email, role, password) => {
     try {
       setIsLoading(true);
-      await api.createUserIDG(email, role, display_name,password);
+      await api.createUserIDG(email, role, display_name, password);
       toast.success("User created successfully!");
       setOpenUserIDG(false);
       setIsFetched(false);
@@ -184,6 +201,21 @@ export default function ManageUsers() {
     try {
       setDeleteLoading(true);
       await api.deleteUser(id);
+
+      const userToDelete = users.find((user) => user.id === id);
+      if (userToDelete) {
+        const notificationAPI = new NotificationAPI();
+        await notificationAPI.createNotification({
+          type: "user",
+          message: `User deleted: ${userToDelete.displayName} (${userToDelete.email})`,
+          metadata: {
+            userEmail: userToDelete.email,
+            userName: userToDelete.displayName,
+            route: "/admin/manage-users",
+          },
+        });
+      }
+
       toast.success("User deleted successfully!");
       setOpenDelete(false);
       setIsFetched(false);
@@ -191,54 +223,53 @@ export default function ManageUsers() {
       toast.error("Failed to delete user.");
       console.error("Delete Error:", err);
     } finally {
-      setDeleteLoading(false); 
+      setDeleteLoading(false);
     }
   };
 
-  // const handleReset = async (email) => {
-  //   try {
-  //     setResetSuccessEmail("");
-  //     setResetLoadingEmail(email);
-  //     setIsLoading(true);
+  const shouldShowCreateButton = () => {
+    if (currentModule === "commercial") {
+      return true;
+    }
+    return company === "vkl" || company === "idg";
+  };
 
-  //     await api.resetPassword(email);
+  const handleCreateUserClick = () => {
+    if (currentModule === "commercial") {
+      setOpenUser(true);
+    } else if (company === "vkl") {
+      setOpenUser(true);
+    } else if (company === "idg") {
+      setOpenUserIDG(true);
+    }
+  };
 
-  //     setResetSuccessEmail(email); 
-  //     toast.success("Reset password link sent successfully!");
-  //   } catch (err) {
-  //     toast.error("Something went wrong!");
-  //   } finally {
-  //     setIsLoading(false);
-  //     setResetLoadingEmail("");
-  //     setOpenUser(false);
-  //     setIsFetched(false);
-  //     setTimeout(() => setResetSuccessEmail(""), 2000);
-  //   }
-  // };
+  const getCreateButtonLabel = () => {
+    if (currentModule === "commercial") {
+      return "Create User";
+    }
+    return "Create User";
+  };
 
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
-        <Header />
+      <Header />
       <main className="w-full max-w-8xl mx-auto p-5">
-
         {/* Manage Users Header */}
-       
         <div className="flex justify-between items-center mb-[15px]">
-          <h2 className="text-2xl font-semibold">Manage Users</h2>
-           {localStorage.getItem("company")==="vkl" &&
-          <Button
-            label="Create User"
-            icon={Plus}
-            onClick={() => setOpenUser(true)}
-            className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-          />}
-          {localStorage.getItem("company")==="idg" &&
-          <Button
-            label="Create User"
-            icon={Plus}
-            onClick={() => setOpenUserIDG(true)}
-            className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-          />}
+          <h2 className="text-2xl font-semibold">
+            {currentModule === "commercial"
+              ? "Manage Users - Commercial"
+              : "Manage Users"}
+          </h2>
+          {shouldShowCreateButton() && (
+            <Button
+              label={getCreateButtonLabel()}
+              icon={Plus}
+              onClick={handleCreateUserClick}
+              className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
+            />
+          )}
         </div>
 
         {/* Table or Loader */}
@@ -290,7 +321,7 @@ export default function ManageUsers() {
                     className="bg-white p-4 rounded-2xl shadow space-y-3"
                   >
                     <div className="flex justify-between items-start space-x-4">
-                      <div className="flex-1 min-w-0">  
+                      <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-bold truncate">
                           {user.displayName}
                         </h3>
@@ -388,7 +419,7 @@ export default function ManageUsers() {
         )}
       </main>
 
-      {/* Create User Dialog */}
+      {/* Create User Dialog - For VKL and Commercial */}
       <Dialog open={openUser} onClose={setOpenUser} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -462,7 +493,12 @@ export default function ManageUsers() {
         </div>
       </Dialog>
 
-        <Dialog open={openUserIDG} onClose={setOpenUserIDG} className="relative z-10">
+      {/* Create User Dialog - For IDG */}
+      <Dialog
+        open={openUserIDG}
+        onClose={setOpenUserIDG}
+        className="relative z-10"
+      >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
@@ -473,7 +509,7 @@ export default function ManageUsers() {
                 const email = form.get("email");
                 const display_name = form.get("name");
                 const password = form.get("password");
-                handleUserCreationIDG(display_name, email, role,password);
+                handleUserCreationIDG(display_name, email, role, password);
               }}
               className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
             >
@@ -499,7 +535,7 @@ export default function ManageUsers() {
                 placeholder="Display Name"
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
-               <input
+              <input
                 name="password"
                 type="text"
                 required

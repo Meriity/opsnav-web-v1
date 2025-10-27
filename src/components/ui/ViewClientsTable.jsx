@@ -67,8 +67,9 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm text-black ${colIndex === 0 ? "rounded-l-2xl" : ""
-                    } cursor-pointer select-none`}
+                  className={`px-2 py-3 text-center text-sm text-black ${
+                    colIndex === 0 ? "rounded-l-2xl" : ""
+                  } cursor-pointer select-none`}
                 >
                   <div className="flex flex-col items-center">
                     <span>{column.title}</span>
@@ -120,8 +121,9 @@ const ViewClientsTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${colIndex === 0 ? "rounded-l-2xl" : ""
-                        }`}
+                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      }`}
                     >
                       <div
                         className="lg:font-normal 2xl:text-center"
@@ -132,14 +134,19 @@ const ViewClientsTable = ({
                           "finance_approval_date",
                           "building_and_pest_date",
                           "order_date",
-                          "delivery_date"
+                          "delivery_date",
                         ].includes(column.key) ? (
-                          item[column.key] && item[column.key] !== "-" && item[column.key] !== "N/A" ? (
+                          item[column.key] &&
+                          item[column.key] !== "-" &&
+                          item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
-                            <span className="text-sm font-bold text-gray-700">—</span>
+                            <span className="text-sm font-bold text-gray-700">
+                              —
+                            </span>
                           )
-                        ) : column.key === "billing_address" && item[column.key] ? (
+                        ) : column.key === "billing_address" &&
+                          item[column.key] ? (
                           <a
                             href={`https://www.google.com/maps?q=${encodeURIComponent(
                               item[column.key]
@@ -161,10 +168,11 @@ const ViewClientsTable = ({
                       {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
-                            href={`/admin/client/stages/${localStorage.getItem("company") === "vkl"
+                            href={`/admin/client/stages/${
+                              localStorage.getItem("company") === "vkl"
                                 ? item.matternumber
                                 : item?.orderId
-                              }/${index + 1}`}
+                            }/${index + 1}`}
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs cursor-pointer"
                             style={{
@@ -203,8 +211,8 @@ const ViewClientsTable = ({
                         onClick={() =>
                           localStorage.getItem("company") === "vkl"
                             ? navigate(
-                              `/admin/client/stages/${item.matternumber}`
-                            )
+                                `/admin/client/stages/${item.matternumber}`
+                              )
                             : navigate(`/admin/client/stages/${item.orderId}`)
                         }
                         className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
@@ -242,8 +250,16 @@ const ViewClientsTable = ({
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-gray-500">{localStorage.getItem("company") === "vkl" ? "Matter Number" : localStorage.getItem("company") === "idg" ? "Client ID" : "Reg Number"}</p>
-                <p className=" text-blue-600">{item.matternumber || item.orderId}</p>
+                <p className="text-xs text-gray-500">
+                  {localStorage.getItem("company") === "vkl"
+                    ? "Matter Number"
+                    : localStorage.getItem("company") === "idg"
+                    ? "Client ID"
+                    : "Reg Number"}
+                </p>
+                <p className=" text-blue-600">
+                  {item.matternumber || item.orderId}
+                </p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -259,7 +275,11 @@ const ViewClientsTable = ({
                 </button>
                 <button
                   onClick={() =>
-                    navigate(`/admin/client/stages/${item.matternumber || item.orderId}`)
+                    navigate(
+                      `/admin/client/stages/${
+                        item.matternumber || item.orderId
+                      }`
+                    )
                   }
                   className="p-1 text-blue-600"
                   title="Edit"
@@ -282,13 +302,27 @@ const ViewClientsTable = ({
             </div>
 
             <div>
-              <p className="text-xs text-gray-500">{localStorage.getItem("company") === "vkl" ? "Property Address" : localStorage.getItem("company") === "idg" ? "Billing Address" : "Address"}</p>
-              <p className="text-sm break-words">{item.property_address || item.billing_address}</p>
+              <p className="text-xs text-gray-500">
+                {localStorage.getItem("company") === "vkl"
+                  ? "Property Address"
+                  : localStorage.getItem("company") === "idg"
+                  ? "Billing Address"
+                  : "Address"}
+              </p>
+              <p className="text-sm break-words">
+                {item.property_address || item.billing_address}
+              </p>
             </div>
 
             <div className="flex justify-between text-xs pt-2">
               <div>
-                <p className="text-gray-500">{localStorage.getItem("company") === "vkl" ? "Settlement Date" : localStorage.getItem("company") === "idg" ? "Delivery Date" : "Date"}</p>
+                <p className="text-gray-500">
+                  {localStorage.getItem("company") === "vkl"
+                    ? "Settlement Date"
+                    : localStorage.getItem("company") === "idg"
+                    ? "Delivery Date"
+                    : "Date"}
+                </p>
                 <p>{formatDate(item.settlement_date || item.delivery_date)}</p>
               </div>
               <div>
@@ -303,10 +337,11 @@ const ViewClientsTable = ({
                 {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
                   <button
                     onClick={() => {
-                      const path = `/admin/client/stages/${localStorage.getItem("company") === "vkl"
+                      const path = `/admin/client/stages/${
+                        localStorage.getItem("company") === "vkl"
                           ? item.matternumber // Corrected from matterNumber to matternumber
                           : item?.orderId
-                        }/${index + 1}`;
+                      }/${index + 1}`;
                       navigate(path);
                     }}
                     key={keyName}

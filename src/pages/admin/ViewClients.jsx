@@ -9,8 +9,9 @@ import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState, Fragment, useMemo } from "react";
 import ClientAPI from "../../api/userAPI";
+import CommercialAPI from "../../api/commercialAPI";
 import Header from "../../components/layout/Header";
 import { toast } from "react-toastify";
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
@@ -20,11 +21,11 @@ import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
+  const [createProject, setCreateProject] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareDetails, setShareDetails] = useState({
@@ -40,19 +41,93 @@ const ViewClients = () => {
   const { clients: Clients, fetchClients, loading, error } = useClientStore();
   const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [commercialLoading, setCommercialLoading] = useState(false);
+  const [commercialClients, setCommercialClients] = useState([]);
+
+  const currentModule = localStorage.getItem("currentModule");
+  const company = localStorage.getItem("company");
+
+  const api = useMemo(() => {
+    if (currentModule === "commercial") {
+      return new CommercialAPI();
+    } else {
+      return new ClientAPI();
+    }
+  }, [currentModule]);
+
+  // Fetch clients based on module
+  useEffect(() => {
+    // In the fetchData function, improve commercial data handling:
+    const fetchData = async () => {
+      if (currentModule === "commercial") {
+        setCommercialLoading(true);
+        try {
+          const response = await api.getActiveProjects();
+          console.log("Commercial clients response:", response);
+
+          let data = [];
+          if (Array.isArray(response)) {
+            data = response;
+          } else if (response && Array.isArray(response.data)) {
+            data = response.data;
+          } else if (response && Array.isArray(response.clients)) {
+            data = response.clients;
+          } else if (response && Array.isArray(response.projects)) {
+            data = response.projects;
+          } else {
+            // Handle empty or null response
+            console.warn("Empty or unexpected response format:", response);
+            data = [];
+          }
+
+          const transformedData = data.map((client) => ({
+            ...client,
+            id: client.id || client.matterNumber || client._id,
+            matternumber: client.matterNumber || client.id || client._id,
+            client_name: client.clientName || client.client_name,
+            businessAddress: client.businessAddress || client.business_address,
+            state: client.state || "",
+            client_type: client.clientType || client.type,
+            settlement_date: client.settlementDate || client.settlement_date,
+            finance_approval_date: client.financeApprovalDate,
+            building_and_pest_date: client.buildingAndPestDate,
+            dataentryby: client.dataEntryBy || "",
+            status: client.status || "active",
+          }));
+
+          setCommercialClients(transformedData);
+        } catch (error) {
+          console.error("Error fetching commercial clients:", error);
+          // Don't show error toast for empty responses, just set empty array
+          if (error.response?.status !== 404) {
+            toast.error("Failed to load commercial projects");
+          }
+          setCommercialClients([]);
+        } finally {
+          setCommercialLoading(false);
+        }
+      } else {
+        fetchClients();
+      }
+    };
+
+    fetchData();
+  }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  useEffect(() => {
-    let filteredData = Clients;
+    let filteredData =
+      currentModule === "commercial" ? commercialClients : Clients;
 
     // Apply date range filter first
     const [startDate, endDate] = settlementDate;
     if (startDate && endDate) {
       filteredData = filteredData.filter((client) => {
-        const clientDate = moment(client.settlement_date);
+        let clientDate;
+        if (currentModule === "commercial") {
+          clientDate = moment(client.settlement_date || client.settlementDate);
+        } else {
+          clientDate = moment(client.settlement_date);
+        }
         return clientDate.isBetween(
           moment(startDate),
           moment(endDate),
@@ -67,16 +142,20 @@ const ViewClients = () => {
       const lowercasedQuery = searchQuery.toLowerCase();
       filteredData = filteredData.filter(
         (client) =>
-          String(client.client_name).toLowerCase().includes(lowercasedQuery) ||
-          String(client.matternumber).toLowerCase().includes(lowercasedQuery) ||
-          String(client.property_address)
+          String(client.client_name || client.clientName)
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.matternumber || client.matterNumber || client.orderId)
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.businessAddress || client.business_address)
             .toLowerCase()
             .includes(lowercasedQuery)
       );
     }
 
     setClientList(filteredData);
-  }, [settlementDate, Clients, searchQuery]);
+  }, [settlementDate, Clients, commercialClients, searchQuery, currentModule]);
 
   console.log(clientList);
   let columns = [];
@@ -102,20 +181,18 @@ const ViewClients = () => {
     ];
   } else if (localStorage.getItem("company") === "idg") {
     columns = [
-      { key: "clientId", title: "Client ID", width: "8%" },
+      { key: "clientId", title: "Client ID", width: "10%" },
       { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "9%" },
-      { key: "client_type", title: "Order Type", width: "12%" },
-      { key: "allocatedUser", title: "Allocated User", width: "10%" },
-      { key: "order_date", title: "Order Date", width: "12%" },
-      { key: "delivery_date", title: "Delivery Date", width: "12%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "client_type", title: "Order Type", width: "15%" },
+      { key: "order_date", title: "Order Date", width: "10%" },
+      { key: "delivery_date", title: "Delivery Date", width: "10%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "10%" },
-      { key: "postcode", title: "Post Code", width: "6.5%" },
+      { key: "billing_address", title: "Delivery Address", width: "15%" },
+      { key: "postcode", title: "Post Code", width: "10%" },
     ];
   }
 
-  const api = new ClientAPI();
   async function handelReShareEmail() {
     try {
       setIsClicked(true);
@@ -135,6 +212,39 @@ const ViewClients = () => {
     setShareDetails({ matterNumber: "", reshareEmail: "" });
   };
 
+  const getPageTitle = () => {
+    if (currentModule === "commercial") return "View Projects";
+    if (company === "idg") return "View Orders";
+    return "View Clients";
+  };
+
+  const getCreateButtonLabel = () => {
+    if (currentModule === "commercial") return "Create Project";
+    if (company === "idg") return "Create Client";
+    return "Create Client";
+  };
+
+  const handleCreateButtonClick = () => {
+    if (currentModule === "commercial") {
+      setCreateProject(true);
+    } else if (company === "idg") {
+      setcreateuser(true);
+    } else {
+      setcreateuser(true);
+    }
+  };
+
+  const shouldShowOutstandingTasks = () => {
+    return currentModule === "commercial" || company === "vkl";
+  };
+
+  const shouldShowCreateOrder = () => {
+    return company === "idg";
+  };
+
+  const isLoading =
+    currentModule === "commercial" ? commercialLoading : loading;
+
   return (
     <>
       <OutstandingTasksModal
@@ -146,21 +256,26 @@ const ViewClients = () => {
         activeMatter={otActiveMatterNumber}
       />
       <CreateClientModal
-        createType="client"
-        companyName={localStorage.getItem("company")}
-        isOpen={createuser}
-        setIsOpen={() => setcreateuser(false)}
+        createType={currentModule === "commercial" ? "project" : "client"}
+        companyName={company}
+        isOpen={createuser || createProject}
+        setIsOpen={() => {
+          setcreateuser(false);
+          setCreateProject(false);
+        }}
       />
       <CreateClientModal
         createType="order"
-        companyName={localStorage.getItem("company")}
+        companyName={company}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle="Select the date range to filter clients."
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial" ? "projects" : "clients"
+        }.`}
         handelSubmitFun={(fromDate, toDate) => {
           setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
@@ -186,7 +301,8 @@ const ViewClients = () => {
               Share to Client
             </h2>
             <p className="text-sm text-center text-gray-700 mb-4">
-              Please enter the client email for matter No. :{" "}
+              Please enter the client email for{" "}
+              {currentModule === "commercial" ? "project" : "matter"} No. :{" "}
               <span className="text-blue-500 underline cursor-pointer">
                 {shareDetails?.matterNumber}
               </span>
@@ -234,9 +350,7 @@ const ViewClients = () => {
 
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            {localStorage.getItem("company") === "vkl"
-              ? "View Clients"
-              : "View Orders"}
+            {getPageTitle()}
           </h3>
           <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
@@ -245,7 +359,8 @@ const ViewClients = () => {
                 htmlFor="items-per-page"
                 className="text-sm font-medium text-gray-700"
               >
-                Clients per page:
+                {currentModule === "commercial" ? "Projects" : "Clients"} per
+                page:
               </label>
               <select
                 id="items-per-page"
@@ -263,6 +378,7 @@ const ViewClients = () => {
               </select>
             </div>
 
+            {/* Consolidated Desktop Buttons */}
             <div className="hidden lg:flex items-center gap-4">
               {localStorage.getItem("company") === "vkl" && (
                 <>
@@ -287,22 +403,6 @@ const ViewClients = () => {
               {localStorage.getItem("company") === "idg" && (
                 <>
                   <Button
-                    label="Task Allocation Report"
-                    onClick={() =>{
-                      toast.success("Report Generating Download will start soon", {
-                        position: "top-right",
-                        autoClose: 2000,
-                        hideProgressBar: true,
-                        closeOnClick: true,
-                        pauseOnHover: false,
-                        draggable: false,
-                        progress: undefined,
-                      })
-                      generateTaskAllocationPDF(localStorage.getItem("client-storage"))}
-                    }
-                  width="w-[200px]"
-                  />
-                  <Button
                     label="Create Client"
                     Icon1={userplus}
                     onClick={() => setcreateuser(true)}
@@ -321,6 +421,8 @@ const ViewClients = () => {
                 </>
               )}
             </div>
+
+            {/* Mobile Menu */}
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
                 <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -340,17 +442,18 @@ const ViewClients = () => {
                 >
                   <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
-                      {/* Create Client option for mobile/tablet */}
+                      {/* Create Client/Project option */}
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
                               }`}
                           >
-                            Create Client
+                            {getCreateButtonLabel()}
                           </button>
                         )}
                       </Menu.Item>
@@ -358,10 +461,11 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             Outstanding Tasks
                           </button>
@@ -397,10 +501,14 @@ const ViewClients = () => {
           </div>
         )}
 
-        {loading || !clientList ? (
+        {isLoading || !clientList ? (
           <Loader />
         ) : clientList.length === 0 ? (
-          <div className="py-10 text-center text-gray-500">Data not found</div>
+          <div className="py-10 text-center text-gray-500">
+            {currentModule === "commercial"
+              ? "No projects found"
+              : "No clients found"}
+          </div>
         ) : (
           <div className="px-5">
             <ViewClientsTable
@@ -413,7 +521,7 @@ const ViewClients = () => {
               }}
               itemsPerPage={itemsPerPage}
               status={true}
-              ot={true}
+              ot={shouldShowOutstandingTasks()}
               handelOTOpen={() => setShowOutstandingTask(true)}
               handelOT={setOTActiveMatterNumber}
             />

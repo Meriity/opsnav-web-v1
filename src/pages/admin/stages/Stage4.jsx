@@ -59,6 +59,46 @@ const formConfig = {
       },
     ],
   },
+  commercial: {
+    fields: [
+      {
+        name: "finalDocumentation",
+        label: "Final Documentation Review",
+        type: "radio",
+      },
+      {
+        name: "clientSettlement",
+        label: "Client Settlement Statement",
+        type: "radio",
+      },
+      {
+        name: "disbursements",
+        label: "Disbursements Finalization",
+        type: "radio",
+      },
+      {
+        name: "feesCalculation",
+        label: "Professional Fees Calculation",
+        type: "radio",
+      },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for Client",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: [
+          "finalDocumentation",
+          "clientSettlement",
+          "disbursements",
+          "feesCalculation",
+        ],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {
@@ -253,6 +293,7 @@ export default function Stage4({
 
     try {
       const company = localStorage.getItem("company");
+      const currentModule = localStorage.getItem("currentModule");
       let payload = { ...formData };
 
       // handle note groups
@@ -272,8 +313,10 @@ export default function Stage4({
         }
       });
 
-      // company-specific save
-      if (company === "vkl") {
+      if (currentModule === "commercial") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStage(payload.matterNumber, 4, payload);
+      } else if (company === "vkl") {
         payload.matterNumber = matterNumber;
         await api.upsertStageFour(payload);
       } else if (company === "idg") {
