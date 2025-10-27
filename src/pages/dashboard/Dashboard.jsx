@@ -15,11 +15,13 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import ClientAPI from "../../api/userAPI";
+import CommercialAPI from "../../api/commercialAPI";
 import { create } from "zustand";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Loader from "../../components/ui/Loader";
+import { useNavigate } from "react-router-dom";
 
 // --- Calendar Imports ---
 import moment from "moment";
@@ -27,7 +29,6 @@ import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
-// import { formatDate } from "../../utils/formatters.js"; // unused
 
 const localizer = momentLocalizer(moment);
 
@@ -35,6 +36,7 @@ const localizer = momentLocalizer(moment);
 const useDashboardStore = create((set) => ({
   totalusers: 0,
   totalactive: 0,
+  totalCompleted: 0,
   lastrecord: 0,
   loading: true,
   setDashboardData: (data) =>
@@ -44,15 +46,24 @@ const useDashboardStore = create((set) => ({
         : [];
       const lastRec =
         arr[arr.length - 1]?.closedMatters ??
+        arr[arr.length - 1]?.closedProjects ??
+        arr[arr.length - 1]?.closedOrders ??
         arr[arr.length - 1]?.count ??
         arr[arr.length - 1]?.total ??
         0;
+
       return {
         totalusers: data.lifetimeTotals?.totalUsers || 0,
         totalactive:
           data.lifetimeTotals?.totalActiveClients ||
-          data.lifetimeTotals?.totalActiveOrders,
-        totalCompleted: data.lifetimeTotals.totalClosedOrders,
+          data.lifetimeTotals?.totalActiveProjects ||
+          data.lifetimeTotals?.totalActiveOrders ||
+          0,
+        totalCompleted:
+          data.lifetimeTotals?.totalClosedOrders ||
+          data.lifetimeTotals?.totalClosedProjects ||
+          data.lifetimeTotals?.totalClosedMatters ||
+          0,
         lastrecord: lastRec,
         loading: false,
       };
@@ -74,33 +85,42 @@ const CheckmarkIcon = () => (
 
 const CustomEvent = ({ event }) => {
   let eventTypeLabel;
-  switch (event.type) {
-    case "buildingAndPest":
-      eventTypeLabel = "B&P";
-      break;
-    case "financeApproval":
-      eventTypeLabel = "Finance";
-      break;
-    case "titleSearch":
-      eventTypeLabel = "T. Search";
-      break;
-    case "settlement":
-      eventTypeLabel = "Settlement";
-      break;
-    case "deliveryDate":
-      eventTypeLabel = "Delivery";
-      break;
-    default:
-      eventTypeLabel = "Event";
+  const currentModule = localStorage.getItem("currentModule");
+
+  if (currentModule === "commercial") {
+    eventTypeLabel = event.type || "Event";
+  } else {
+    switch (event.type) {
+      case "buildingAndPest":
+        eventTypeLabel = "B&P";
+        break;
+      case "financeApproval":
+        eventTypeLabel = "Finance";
+        break;
+      case "titleSearch":
+        eventTypeLabel = "T. Search";
+        break;
+      case "settlement":
+        eventTypeLabel = "Settlement";
+        break;
+      case "deliveryDate":
+        eventTypeLabel = "Delivery";
+        break;
+      default:
+        eventTypeLabel = "Event";
+    }
   }
-  const clientTypeInitial = event.clientType
+
+  const identifier = event.matterNumber || event.orderId || event.projectCode;
+  const typeInitial = event.clientType
     ? event.clientType.charAt(0)
+    : event.projectType
+    ? event.projectType.charAt(0)
     : event.orderType
     ? event.orderType.charAt(0)
     : "";
-  const displayTitle = `[${
-    event.matterNumber || event.orderId
-  }] - ${eventTypeLabel} - [${clientTypeInitial}]`;
+
+  const displayTitle = `[${identifier}] - ${eventTypeLabel} - [${typeInitial}]`;
 
   return (
     <div className="custom-event-content">
@@ -127,10 +147,12 @@ const CustomAgendaEvent = ({ event }) => (
             ? "bg-purple-100 text-purple-700"
             : event.type === "financeApproval"
             ? "bg-orange-100 text-orange-700"
+            : event.type === "commercial"
+            ? "bg-green-100 text-green-700"
             : "bg-blue-100 text-blue-700"
         }`}
       >
-        {event?.clientType}
+        {event?.clientType || event?.projectType || "Event"}
       </span>
     </div>
   </div>
@@ -237,6 +259,7 @@ const ResponsiveCalendarToolbar = ({
 };
 
 function Dashboard() {
+  const navigate = useNavigate();
   const {
     totalusers,
     totalactive,
@@ -252,6 +275,7 @@ function Dashboard() {
   } = useArchivedClientStore();
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
+  const [createProject, setCreateProject] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [chartView, setChartView] = useState("last10Months");
@@ -262,25 +286,96 @@ function Dashboard() {
   const [currentChartData, setCurrentChartData] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarView, setCalendarView] = useState(Views.MONTH);
-  const [agendaPage, setAgendaPage] = useState(1);
-  const [agendaPageSize, setAgendaPageSize] = useState(10);
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
+  const currentModule = localStorage.getItem("currentModule");
+  const company = localStorage.getItem("company");
+  const userRole = localStorage.getItem("userRole") || "admin";
+
   useEffect(() => {
-    // when device size changes, reset calendar view to the preferred default
     setCalendarView(isMobile ? Views.AGENDA : Views.MONTH);
   }, [isMobile]);
 
+  // ✅ ADDED: Handle event selection from calendar
+  const handleEventSelect = (event) => {
+    const currentModule = localStorage.getItem("currentModule");
+    const company = localStorage.getItem("company");
+    const userRole = localStorage.getItem("userRole") || "admin";
+
+    console.log("Selected event:", event);
+
+    let matterNumber = "";
+
+    // Determine matter number based on module and available data
+    if (currentModule === "commercial") {
+      matterNumber = event.projectCode || event.matterNumber || event.id;
+    } else if (company === "idg") {
+      matterNumber = event.orderId || event.clientId || event.id;
+    } else {
+      matterNumber = event.matterNumber || event.clientId || event.id;
+    }
+
+    if (
+      matterNumber &&
+      matterNumber !== "Untitled" &&
+      matterNumber !== "NoID"
+    ) {
+      // Store event context for the stages page
+      sessionStorage.setItem("lastSelectedEvent", JSON.stringify(event));
+
+      // Navigate to existing StagesLayout with the matter number
+      navigate(`/${userRole}/client/stages/${matterNumber}`);
+    } else {
+      toast.warning("Cannot navigate: Invalid matter identifier");
+    }
+  };
+
+  // ✅ UPDATED: Enhanced event styling with clickable cursor
+  const eventStyleGetter = useCallback(
+    (event) => {
+      let backgroundColor = "#00aeef"; // Using your existing blue color
+
+      if (currentModule === "commercial") {
+        backgroundColor = "#10B981"; // Green for commercial
+      } else if (event.type === "buildingAndPest") {
+        backgroundColor = "#B24592"; // Magenta / Deep Pink
+      } else if (event.type === "financeApproval") {
+        backgroundColor = "#f83600"; // Red-Orange
+      } else if (event.type === "titleSearch") {
+        backgroundColor = "#34495E"; // Indigo
+      } else if (event.type === "settlement") {
+        backgroundColor = "#8E44AD"; // Pleasant Purple
+      } else if (event.type === "deliveryDate") {
+        backgroundColor = "#F39C12"; // Orange for IDG
+      }
+
+      return {
+        style: {
+          backgroundColor,
+          borderRadius: "4px",
+          opacity: 0.9,
+          color: "white",
+          border: "none",
+          padding: "2px 5px",
+          cursor: "pointer", // ✅ Added clickable cursor
+          transition: "all 0.2s ease",
+        },
+      };
+    },
+    [currentModule]
+  );
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const company = localStorage.getItem("company");
-      const closedLabel =
-        company === "idg"
-          ? "Closed Orders"
-          : company === "vkl"
-          ? "Closed Matters"
-          : "Closed";
+      let closedLabel;
+      if (currentModule === "commercial") {
+        closedLabel = "Completed Projects";
+      } else if (company === "idg") {
+        closedLabel = "Closed Orders";
+      } else {
+        closedLabel = "Closed Matters";
+      }
 
       return (
         <div className="bg-white border border-[#00AEEF] p-2 rounded shadow text-xs">
@@ -293,208 +388,8 @@ function Dashboard() {
   };
 
   const clientApi = useMemo(() => new ClientAPI(), []);
-  let company = localStorage.getItem("company");
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchAndSetData = async () => {
-      setIsChartLoading(true);
-      try {
-        const data = await (company === "vkl"
-          ? clientApi.getDashboardData()
-          : company === "idg"
-          ? clientApi.getIDGDashboardData()
-          : clientApi.getDashboardData());
-        console.log("Dashboard data:", data);
-        setDashboardData(data);
-        setAllChartData({
-          tenMonths: Array.isArray(data.last10MonthsStats)
-            ? data.last10MonthsStats
-            : [],
-          allTime: Array.isArray(data.allTimeStats) ? data.allTimeStats : [],
-        });
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-        toast.error("Failed to load dashboard data.");
-      } finally {
-        setIsChartLoading(false);
-      }
-    };
-    fetchAndSetData();
-  }, [clientApi, setDashboardData]);
+  const commercialApi = useMemo(() => new CommercialAPI(), []);
 
-  useEffect(() => {
-    const fetchCalendarData = async () => {
-      const company = localStorage.getItem("company");
-      try {
-        const data =
-          company === "vkl"
-            ? await clientApi.getCalendarDates()
-            : await clientApi.getIDGCalendarDates();
-        console.log(data);
-        const events = [];
-        if (company === "vkl") {
-          data.forEach((item) => {
-            if (item.buildingAndPestDate) {
-              events.push({
-                title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
-                start: moment(item.buildingAndPestDate).toDate(),
-                end: moment(item.buildingAndPestDate).toDate(),
-                allDay: true,
-                type: "buildingAndPest",
-                clientType: item.clientType,
-                matterNumber: item.matterNumber,
-                isApproved: item.buildingAndPest?.toLowerCase() === "yes",
-              });
-            }
-            if (item.financeApprovalDate) {
-              events.push({
-                title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
-                start: moment(item.financeApprovalDate).toDate(),
-                end: moment(item.financeApprovalDate).toDate(),
-                allDay: true,
-                type: "financeApproval",
-                clientType: item.clientType,
-                matterNumber: item.matterNumber,
-                isApproved: item.financeApproval?.toLowerCase() === "yes",
-              });
-            }
-            if (item.titleSearchDate) {
-              events.push({
-                title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
-                start: moment(item.titleSearchDate).toDate(),
-                end: moment(item.titleSearchDate).toDate(),
-                allDay: true,
-                type: "titleSearch",
-                clientType: item.clientType,
-                matterNumber: item.matterNumber,
-                isApproved: item.titleSearch?.toLowerCase() === "yes",
-              });
-            }
-            if (item.settlementDate) {
-              events.push({
-                title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
-                start: moment(item.settlementDate).toDate(),
-                end: moment(item.settlementDate).toDate(),
-                allDay: true,
-                type: "settlement",
-                clientType: item.clientType,
-                matterNumber: item.matterNumber,
-              });
-            }
-          });
-
-          setCalendarEvents(events);
-        } else {
-          data.forEach((item) => {
-            if (item.deliveryDate) {
-              const displayTitle = `[${item.orderId}] - Delivery - [${item.orderType}]`;
-              events.push({
-                title: `[${item.orderId}] - ${item.orderType || "Order"}`, // ✅ safe for agenda
-                start: moment(item.deliveryDate).toDate(),
-                end: moment(item.deliveryDate).toDate(),
-                allDay: true,
-                type: "deliveryDate",
-                clientType: item.orderType,
-                orderId: item.orderId,
-              });
-            }
-          });
-          const safeEvents = events
-            .filter((e) => e && e.start && e.end) // remove undefined / broken
-            .map((e) => ({
-              title: e.title || `[${e.orderId || "NoID"}]`, // fallback title
-              ...e,
-            }));
-
-          setCalendarEvents(safeEvents);
-        }
-      } catch (error) {
-        toast.error("Could not load calendar dates.");
-        console.error("Error fetching calendar data:", error);
-      }
-    };
-    fetchCalendarData();
-  }, [clientApi]);
-
-  // Handle chart view switch
-  useEffect(() => {
-    if (chartView === "last10Months") {
-      const ten = (allChartData.tenMonths || []).slice(-10);
-      let formattedData;
-      if (localStorage.getItem("company") === "vkl") {
-        formattedData = ten.map((item) => ({
-          ...item,
-          name: item.month,
-          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-        }));
-        setCurrentChartData(formattedData);
-      } else if (localStorage.getItem("company") === "idg") {
-        formattedData = ten.map((item) => ({
-          ...item,
-          name: item.month,
-          closedMatters: item.closedOrders,
-        }));
-        setCurrentChartData(formattedData);
-      }
-    } else if (chartView === "allTime") {
-      let formattedData;
-      if (localStorage.getItem("company") === "vkl") {
-        const all = allChartData.allTime || [];
-        formattedData = all.map((item) => ({
-          ...item,
-          name: `${item.month} ${item.year}`,
-          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-        }));
-        setCurrentChartData(formattedData);
-      } else if (localStorage.getItem("company") === "idg") {
-        const all = allChartData.allTime || [];
-        formattedData = all.map((item) => ({
-          ...item,
-          name: `${item.month} ${item.year}`,
-          closedMatters: item.closedOrders,
-        }));
-        setCurrentChartData(formattedData);
-      }
-    }
-  }, [chartView, allChartData]);
-
-  // Archived fetch
-  useEffect(() => {
-    if (!isArchivedFetched) {
-      fetchArchivedClients();
-    }
-  }, [isArchivedFetched, fetchArchivedClients]);
-
-  const chartPeriodTotal = useMemo(() => {
-    if (!currentChartData || currentChartData.length === 0) return 0;
-    return currentChartData.reduce(
-      (sum, item) => sum + (item.closedMatters || 0),
-      0
-    );
-  }, [currentChartData]);
-
-  const eventStyleGetter = useCallback((event) => {
-    let backgroundColor = "#3174ad";
-    if (event.type === "buildingAndPest") {
-      backgroundColor = "#B24592"; // Magenta / Deep Pink
-    } else if (event.type === "financeApproval") {
-      backgroundColor = "#f83600"; // Red-Orange
-    } else if (event.type === "titleSearch") {
-      backgroundColor = "#34495E"; // Indigo
-    } else if (event.type === "settlement") {
-      backgroundColor = "#8E44AD"; // Pleasant Purple
-    }
-    return {
-      style: {
-        backgroundColor,
-        borderRadius: "6px",
-        opacity: 0.9,
-        color: "white",
-        border: "0px",
-        padding: "2px 6px",
-      },
-    };
-  }, []);
   const dayPropGetter = useCallback(
     (date) => ({
       className:
@@ -517,6 +412,231 @@ function Dashboard() {
     };
   }, [isMobile]);
 
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchAndSetData = async () => {
+      setIsChartLoading(true);
+      try {
+        let data;
+
+        if (currentModule === "commercial") {
+          data = await commercialApi.getDashboardData();
+        } else if (company === "vkl") {
+          data = await clientApi.getDashboardData();
+        } else if (company === "idg") {
+          data = await clientApi.getIDGDashboardData();
+        } else {
+          data = await clientApi.getDashboardData();
+        }
+
+        console.log("Dashboard data:", data);
+        setDashboardData(data);
+        setAllChartData({
+          tenMonths: Array.isArray(data.last10MonthsStats)
+            ? data.last10MonthsStats
+            : [],
+          allTime: Array.isArray(data.allTimeStats) ? data.allTimeStats : [],
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        toast.error("Failed to load dashboard data.");
+      } finally {
+        setIsChartLoading(false);
+      }
+    };
+    fetchAndSetData();
+  }, [clientApi, commercialApi, setDashboardData, currentModule, company]);
+
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      try {
+        let data;
+
+        if (currentModule === "commercial") {
+          data = await commercialApi.getCalendarDates();
+        } else if (company === "vkl") {
+          data = await clientApi.getCalendarDates();
+        } else {
+          data = await clientApi.getIDGCalendarDates();
+        }
+
+        console.log("Calendar data:", data);
+        const events = [];
+
+        if (currentModule === "commercial") {
+          data.forEach((item) => {
+            if (item.eventDate) {
+              events.push({
+                title: `[${item.projectCode}] - ${item.eventType} - [${item.projectType}]`,
+                start: moment(item.eventDate).toDate(),
+                end: moment(item.eventDate).toDate(),
+                allDay: true,
+                type: item.eventType,
+                projectType: item.projectType,
+                projectCode: item.projectCode,
+                id: item.projectCode,
+              });
+            }
+          });
+        } else if (company === "vkl") {
+          data.forEach((item) => {
+            if (item.buildingAndPestDate) {
+              events.push({
+                title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
+                start: moment(item.buildingAndPestDate).toDate(),
+                end: moment(item.buildingAndPestDate).toDate(),
+                allDay: true,
+                type: "buildingAndPest",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.buildingAndPest?.toLowerCase() === "yes",
+                id: item.matterNumber,
+              });
+            }
+            if (item.financeApprovalDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
+                start: moment(item.financeApprovalDate).toDate(),
+                end: moment(item.financeApprovalDate).toDate(),
+                allDay: true,
+                type: "financeApproval",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.financeApproval?.toLowerCase() === "yes",
+                id: item.matterNumber,
+              });
+            }
+            if (item.titleSearchDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
+                start: moment(item.titleSearchDate).toDate(),
+                end: moment(item.titleSearchDate).toDate(),
+                allDay: true,
+                type: "titleSearch",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                isApproved: item.titleSearch?.toLowerCase() === "yes",
+                id: item.matterNumber,
+              });
+            }
+            if (item.settlementDate) {
+              events.push({
+                title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
+                start: moment(item.settlementDate).toDate(),
+                end: moment(item.settlementDate).toDate(),
+                allDay: true,
+                type: "settlement",
+                clientType: item.clientType,
+                matterNumber: item.matterNumber,
+                id: item.matterNumber,
+              });
+            }
+          });
+        } else {
+          data.forEach((item) => {
+            if (item.deliveryDate) {
+              events.push({
+                title: `[${item.orderId}] - ${item.orderType || "Order"}`,
+                start: moment(item.deliveryDate).toDate(),
+                end: moment(item.deliveryDate).toDate(),
+                allDay: true,
+                type: "deliveryDate",
+                clientType: item.orderType,
+                orderId: item.orderId,
+                id: item.orderId,
+              });
+            }
+          });
+        }
+
+        const safeEvents = events
+          .filter((e) => e && e.start && e.end)
+          .map((e) => ({
+            title:
+              e.title ||
+              `[${e.orderId || e.projectCode || e.matterNumber || "NoID"}]`,
+            ...e,
+          }));
+
+        setCalendarEvents(safeEvents);
+      } catch (error) {
+        toast.error("Could not load calendar dates.");
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+    fetchCalendarData();
+  }, [clientApi, commercialApi, currentModule, company]);
+
+  // Handle chart view switch
+  useEffect(() => {
+    if (chartView === "last10Months") {
+      const ten = (allChartData.tenMonths || []).slice(-10);
+      let formattedData;
+
+      if (currentModule === "commercial") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedProjects ?? item.count ?? item.total ?? 0,
+        }));
+      } else if (company === "vkl") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+      } else if (company === "idg") {
+        formattedData = ten.map((item) => ({
+          ...item,
+          name: item.month,
+          closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
+        }));
+      }
+
+      setCurrentChartData(formattedData || []);
+    } else if (chartView === "allTime") {
+      const all = allChartData.allTime || [];
+      let formattedData;
+
+      if (currentModule === "commercial") {
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedProjects ?? item.count ?? item.total ?? 0,
+        }));
+      } else if (company === "vkl") {
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+        }));
+      } else if (company === "idg") {
+        formattedData = all.map((item) => ({
+          ...item,
+          name: `${item.month} ${item.year}`,
+          closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
+        }));
+      }
+
+      setCurrentChartData(formattedData || []);
+    }
+  }, [chartView, allChartData, currentModule, company]);
+
+  // Archived fetch
+  useEffect(() => {
+    if (!isArchivedFetched && currentModule !== "commercial") {
+      fetchArchivedClients();
+    }
+  }, [isArchivedFetched, fetchArchivedClients, currentModule]);
+
+  const chartPeriodTotal = useMemo(() => {
+    if (!currentChartData || currentChartData.length === 0) return 0;
+    return currentChartData.reduce(
+      (sum, item) => sum + (item.closedMatters || 0),
+      0
+    );
+  }, [currentChartData]);
+
   const StatCard = ({ icon, label, value }) => (
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm w-full">
       <img src={icon} alt={label} className="h-10 w-10 mr-4" />
@@ -526,6 +646,22 @@ function Dashboard() {
       </div>
     </div>
   );
+
+  const getAddButtonLabel = () => {
+    if (currentModule === "commercial") return "Add New Project";
+    if (company === "idg") return "Add New Order";
+    return "Add New Client";
+  };
+
+  const handleAddButtonClick = () => {
+    if (currentModule === "commercial") {
+      setCreateProject(true);
+    } else if (company === "idg") {
+      setcreateOrder(true);
+    } else {
+      setcreateuser(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -549,23 +685,14 @@ function Dashboard() {
             </p>
             <button
               className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
-              onClick={() => setcreateuser(true)}
+              onClick={handleAddButtonClick}
             >
               <img src={Plus} alt="" className="w-5" />
-              <span>Add New Client</span>
+              <span>{getAddButtonLabel()}</span>
             </button>
-            {localStorage.getItem("company") === "idg" && (
-              <button
-                className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
-                onClick={() => setcreateOrder(true)}
-              >
-                <img src={Plus} alt="" className="w-5" />
-                <span>Add New Order</span>
-              </button>
-            )}
           </div>
 
-          {/* Calendar - MOVED TO TOP */}
+          {/* Calendar */}
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
               Important Dates
@@ -576,7 +703,13 @@ function Dashboard() {
                   localizer={localizer}
                   events={Array.isArray(calendarEvents) ? calendarEvents : []}
                   titleAccessor={(event) =>
-                    event?.title || `[${event?.orderId || "Untitled"}]`
+                    event?.title ||
+                    `[${
+                      event?.orderId ||
+                      event?.projectCode ||
+                      event?.matterNumber ||
+                      "Untitled"
+                    }]`
                   }
                   startAccessor="start"
                   endAccessor="end"
@@ -585,8 +718,12 @@ function Dashboard() {
                   onNavigate={handleNavigate}
                   dayPropGetter={dayPropGetter}
                   views={views}
-                  defaultView={defaultView}
+                  view={calendarView}
+                  onView={setCalendarView}
+                  date={calendarDate}
                   eventPropGetter={eventStyleGetter}
+                  // ✅ ADDED: Event click handler
+                  onSelectEvent={handleEventSelect}
                   components={{
                     event: CustomEvent,
                     agenda: { event: CustomAgendaEvent },
@@ -607,7 +744,9 @@ function Dashboard() {
             <StatCard
               icon={ViewClientsIcon}
               label={
-                localStorage.getItem("company") === "idg"
+                currentModule === "commercial"
+                  ? "Total Projects"
+                  : company === "idg"
                   ? "Total Orders"
                   : "Total Clients"
               }
@@ -616,7 +755,9 @@ function Dashboard() {
             <StatCard
               icon={ArchivedChatsIcon}
               label={
-                localStorage.getItem("company") === "idg"
+                currentModule === "commercial"
+                  ? "Completed Projects"
+                  : company === "idg"
                   ? "Total Completed Orders"
                   : "Total Archived Clients"
               }
@@ -628,9 +769,11 @@ function Dashboard() {
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-700">
-                {localStorage.getItem("company") === "vkl"
+                {currentModule === "commercial"
+                  ? "Completed Projects"
+                  : company === "vkl"
                   ? "Closed Matters"
-                  : localStorage.getItem("company") === "idg"
+                  : company === "idg"
                   ? "Closed Orders"
                   : "Closed"}{" "}
                 ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
@@ -687,11 +830,13 @@ function Dashboard() {
                 {chartView === "last10Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
                     {lastrecord || totalCompleted}{" "}
-                    {localStorage.getItem("company") === "vkl"
+                    {currentModule === "commercial"
+                      ? "Projects Completed In Last Month"
+                      : company === "vkl"
                       ? "Matters Solved In Last Month"
-                      : localStorage.getItem("company") === "idg"
+                      : company === "idg"
                       ? "Orders Closed In Last Month"
-                      : "Closed"}
+                      : "Completed"}
                   </p>
                 )}
               </>
@@ -703,15 +848,20 @@ function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Modals */}
       <CreateClientModal
-        createType="client"
-        companyName={localStorage.getItem("company")}
-        isOpen={createuser}
-        setIsOpen={() => setcreateuser(false)}
+        createType={currentModule === "commercial" ? "project" : "client"}
+        companyName={company}
+        isOpen={createuser || createProject}
+        setIsOpen={() => {
+          setcreateuser(false);
+          setCreateProject(false);
+        }}
       />
       <CreateClientModal
         createType="order"
-        companyName={localStorage.getItem("company")}
+        companyName={company}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
