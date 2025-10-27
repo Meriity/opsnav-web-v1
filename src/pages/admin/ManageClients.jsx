@@ -436,7 +436,7 @@ export default function ManageUsers() {
         name: e.target.value,   // changed to update name, not displayName
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
 
   {/* Email */}
@@ -449,7 +449,21 @@ export default function ManageUsers() {
     onChange={(e) =>
       setSelectedUser({ ...selectedUser, email: e.target.value })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
+
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Password
+  </label>
+  <input
+    placeholder="Update new password here and click edit"
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        password: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
 
   {/* Address */}
@@ -464,7 +478,7 @@ export default function ManageUsers() {
         address: e.target.value,  // fixed to update address
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
   {/* Country */}
   <label className="block mb-1 font-medium text-sm text-gray-700">
@@ -478,7 +492,7 @@ export default function ManageUsers() {
         country: e.target.value,   // changed to update name, not displayName
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
 
   {/* State */}
@@ -493,7 +507,7 @@ export default function ManageUsers() {
         state: e.target.value,   // changed to update name, not displayName
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
     {/* Postcode */}
   <label className="block mb-1 font-medium text-sm text-gray-700">
@@ -507,7 +521,7 @@ export default function ManageUsers() {
         postcode: e.target.value,   // changed to update name, not displayName
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
 
       {/* ABN */}
@@ -522,7 +536,7 @@ export default function ManageUsers() {
         abn: e.target.value,   // changed to update name, not displayName
       })
     }
-    className="w-full mb-4 px-4 py-3 border rounded"
+    className="w-full mb-2 px-4 py-3 border rounded"
   />
 
   <Button label="Edit Client" onClick={handleUserUpdate} />

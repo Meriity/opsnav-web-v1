@@ -204,7 +204,8 @@ class AdminAPI {
           country:ClientData.country,
           state:ClientData.state,
           postcode:ClientData.postcode,
-          abn:ClientData.abn
+          abn:ClientData.abn,
+          password:ClientData.password
         }),
       });
 
