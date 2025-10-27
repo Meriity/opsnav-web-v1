@@ -108,6 +108,54 @@ const formConfig = {
       },
     ],
   },
+
+  commercial: {
+    fields: [
+      {
+        name: "matterCompletion",
+        label: "Matter Completion Review",
+        type: "radio",
+      },
+      {
+        name: "billingFinalization",
+        label: "Billing Finalization",
+        type: "radio",
+      },
+      {
+        name: "clientSatisfaction",
+        label: "Client Satisfaction Survey",
+        type: "radio",
+      },
+      {
+        name: "archiving",
+        label: "File Archiving",
+        type: "radio",
+      },
+      {
+        name: "closeMatter",
+        label: "Close Matter",
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+        triggersModal: true,
+      },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for Client",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: [
+          "matterCompletion",
+          "billingFinalization",
+          "clientSatisfaction",
+          "archiving",
+          "closeMatter",
+        ],
+      },
+    ],
+  },
 };
 
 const getStatus = (value) => {
@@ -236,6 +284,7 @@ export default function Stage6({
 
     try {
       const company = localStorage.getItem("company");
+      const currentModule = localStorage.getItem("currentModule");
       let payload = { ...formData };
 
       // handle note groups
@@ -248,8 +297,10 @@ export default function Stage6({
         delete payload[group.systemNoteKey];
       });
 
-      // company-specific save
-      if (company === "vkl") {
+      if (currentModule === "commercial") {
+        payload.matterNumber = matterNumber;
+        await api.upsertStage(payload.matterNumber, 6, payload);
+      } else if (company === "vkl") {
         payload.matterNumber = matterNumber;
         await api.upsertStageSix(payload);
       } else if (company === "idg") {
