@@ -89,6 +89,7 @@ try {
       priority: client.priority || "N/A",
       postcode: client.postCode || "N/A",
       orderDetails: client.order_details || "N/A",
+      allocatedUser: client?.allocatedUserID ? client.allocatedUserID.split("-")[1] || "N/A" : "N/A"
     }));
   }
           console.log("Formatted Clients:", formattedClients);

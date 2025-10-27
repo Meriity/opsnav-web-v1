@@ -566,56 +566,44 @@ export default function Stage2({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-        {field.name === "agent" ? (
-          // ✅ Dropdown for agents
-          <select
-            name={field.name}
-            className={
-              localStorage.getItem("role") !== "admin"
-                ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
-                : "bg-white p-2 border rounded w-full"
-            }
-            value={formData[field.name] || ""}
-            onChange={(e) => handleChange(field.name, e.target.value)}
-            disabled={
-              localStorage.getItem("role") !== "admin" || user.length === 0
-            }
+    <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+      {field.name === "agent" ? (
+        // ✅ Dropdown for agents
+        <select
+          name={field.name}
+          className={localStorage.getItem("role")!=="admin" ? "bg-gray-100 p-2 text-gray-500 rounded w-full" : "bg-white p-2 border rounded w-full"}
+          value={formData[field.name] || ""}
+          onChange={(e) => handleChange(field.name, e.target.value)}
+          disabled={localStorage.getItem("role")!=="admin"}
+        >
+          <option value="">Select Agent</option>
+          {user.map((agent) => (
+            <option key={agent._id} value={agent._id}>
+              {agent.displayName}
+            </option>
+          ))}
+        </select>
+      ) : (
+        // ✅ Radios for everything else
+        (["Yes", "No", "Processing","N/R"]).map((val) => (
+          <label
+            key={val}
+            className="flex items-center gap-2 text-sm md:text-base"
           >
-            <option value="">Select Agent</option>
-            {user && user.length > 0 ? (
-              user.map((agent) => (
-                <option key={agent._id} value={agent._id}>
-                  {agent.displayName}
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>
-                No agents available
-              </option>
-            )}
-          </select>
-        ) : (
-          // ✅ Radios for everything else
-          ["Yes", "No", "Processing", "N/R"].map((val) => (
-            <label
-              key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
-            >
-              <input
-                type="radio"
-                name={field.name}
-                value={val}
-                checked={
-                  normalizeValue(formData[field.name] || "") ===
-                  normalizeValue(val)
-                }
-                onChange={() => handleChange(field.name, val)}
-              />
-              {val}
-            </label>
-          ))
-        )}
+            <input
+              type="radio"
+              name={field.name}
+              value={val}
+              checked={
+                normalizeValue(formData[field.name] || "") ===
+                normalizeValue(val)
+              }
+              onChange={() => handleChange(field.name, val)}
+            />
+            {val}
+          </label>
+        ))
+      )}
 
         {/* ✅ If the field has an associated date */}
         {field.hasDate && (

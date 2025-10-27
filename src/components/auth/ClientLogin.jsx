@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
-import { HomeIcon, Eye, EyeOff } from "lucide-react";
+import { HomeIcon } from "lucide-react";
 
 function LoginForm() {
   const api = new AuthAPI();
   const [matterNumber, setmatterNumber] = useState("");
   const [postcode, setPostcode] = useState("");
-  const [showPostcode, setShowPostcode] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -19,19 +18,32 @@ function LoginForm() {
     setIsLoading(true);
     try {
       const response = await api.signInClient(matterNumber, postcode);
-      console.log(response);
-      if (response.matterNumber) {
+      console.log("API Response:", response); // Good to log the whole response for debugging
+
+      // Prioritize checking for orderId first
+      if (response.clientId) {
+        localStorage.removeItem("logo");
+        localStorage.setItem("name", response.clientName);
+        localStorage.setItem("orders", JSON.stringify(response.orders));
+        localStorage.setItem("logo", response.logo);
+        localStorage.setItem("company", response.company);
+        localStorage.setItem("authToken", response.token);
+        console.log('Navigating with orderId:', response.orderId);
+        navigate(`/idg/client/dashboard/${encodeURIComponent(btoa(String(response.clientId)))}`);
+      }
+      // Fallback to matterNumber if orderId is not present
+      else if (response.matterNumber) {
         localStorage.removeItem("matterNumber");
         localStorage.removeItem("logo");
         localStorage.setItem("matterNumber", response.matterNumber);
         localStorage.setItem("logo", response.logo);
-        navigate(`/client/dashboard/${btoa(response.matterNumber)}`);
+        localStorage.setItem("company", response.company);
+        navigate(`/client/dashboard/${btoa(String(response.matterNumber))}`);
+      } else {
+        throw new Error("Login failed: No valid identifier found in the response.");
       }
     } catch (err) {
-      toast.error(
-        err.message ||
-          "Authentication failed! Please check your credentials and try again."
-      );
+      toast.error(err.message || "Authentication failed! Please check your credentials and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -39,9 +51,10 @@ function LoginForm() {
 
   const handleHome = async (e) => {
     navigate("/");
-  };
+  }
 
   return (
+    // <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 to-white">
     <div
       className="min-h-screen flex items-center justify-center from-sky-200 to-white bg-cover bg-center"
       style={{ backgroundImage: "url('/home_bg.jpg')" }}
@@ -49,63 +62,45 @@ function LoginForm() {
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         {/* Left Section - Welcome Message */}
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
-          <img
-            src="/Logo.png"
-            alt="VK Lawyers Logo"
-            className="h-24 mx-auto md:mx-0"
-          />
-          <h1 className="text-3xl font-bold mt-4 font-poppins">
-            WELCOME TO OPSNAV
-          </h1>
-          <button
-            onClick={handleHome}
-            className="w-[80px] mt-2 bg-sky-600 mx-auto cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"
-          >
-            <HomeIcon />
-            Home
-          </button>
+          <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
+          <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
+          <button onClick={handleHome} className="w-[80px] mt-2 bg-sky-600 mx-auto cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"><HomeIcon />
+            Home</button>
         </div>
 
         {/* Right Section - Login Box */}
         <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
-          <h2 className="text-xl font-semibold text-center mb-6">
-            CLIENT PORTAL LOGIN
-          </h2>
+          <h2 className="text-xl font-semibold text-center mb-6">CLIENT PORTAL LOGIN</h2>
+
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
-                Matter Number
+                Matter Number / Email
               </label>
               <input
-                type="text"
+                type="matternumber"
                 value={matterNumber}
                 onChange={(e) => setmatterNumber(e.target.value)}
                 required
                 className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-            <div className="relative">
+            <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
-                Postcode
+                Postcode / Password
               </label>
               <input
-                type={showPostcode ? "text" : "password"}
+                type="text"
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value)}
                 required
-                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
+                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
-              <button
-                type="button"
-                className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
-                onClick={() => setShowPostcode(!showPostcode)}
-              >
-                {showPostcode ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
             </div>
             <button
-              type={isLoading ? "button" : "submit"}
+              type="submit"
               disabled={isLoading}
               className="w-full bg-sky-600 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition"
             >

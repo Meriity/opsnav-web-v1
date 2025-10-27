@@ -17,7 +17,7 @@ import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
-
+import IDGClientDashboard from "./pages/dashboard/IDGClientDashboard";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../src/components/ui/custom-toast.css";
@@ -36,9 +36,10 @@ function RequireAuth({ children }) {
 
 function RequireAuthClient({ children }) {
   const matterNumber = localStorage.getItem("matterNumber"); // <- ✅ Match your login token key
+  const orderId = localStorage.getItem("orderId"); // <- ✅ Match your login token key
   const location = useLocation();
 
-  if (!matterNumber) {
+  if (!matterNumber && !orderId) {
     return <Navigate to="/client/login" state={{ from: location }} replace />;
   }
 
@@ -90,6 +91,17 @@ function App() {
                 <WorkSelection />
               </AutoLogoutWrapper>
             </RequireAuth>
+          }
+        />
+
+        <Route
+          path="idg/client/dashboard/:orderId"
+          element={
+          <RequireAuth>
+            <AutoLogoutWrapper>
+              <IDGClientDashboard />
+            </AutoLogoutWrapper>
+          </RequireAuth>
           }
         />
 

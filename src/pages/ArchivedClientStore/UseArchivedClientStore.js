@@ -68,7 +68,7 @@ if(localStorage.getItem("company") === "vkl"){
       orderType:client.orderType,
       propertyAddress:client.deliveryAddress,
       ordertype:client.orderType,
-      status: client.status,
+      status: client.closeOrder,
       state: client.state || "N/A",
       orderDate:client.orderDate?.slice(0,10),
       deliveryDate:client.deliveryDate?.slice(0,10),

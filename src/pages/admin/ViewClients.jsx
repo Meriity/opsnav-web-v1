@@ -22,8 +22,6 @@ import moment from "moment";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 
-import NotificationAPI from "../../api/notificationAPI";
-
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
@@ -160,65 +158,40 @@ const ViewClients = () => {
   }, [settlementDate, Clients, commercialClients, searchQuery, currentModule]);
 
   console.log(clientList);
-
-  const getColumns = () => {
-    if (currentModule === "commercial") {
-      return [
-        { key: "matternumber", title: "Project Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "businessAddress", title: "Business Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Completion Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    } else if (company === "vkl") {
-      return [
-        { key: "matternumber", title: "Matter Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "property_address", title: "Property Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Settlement Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    } else if (company === "idg") {
-      return [
-        { key: "clientId", title: "Client ID", width: "10%" },
-        { key: "orderId", title: "Order ID", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "client_type", title: "Order Type", width: "15%" },
-        { key: "order_date", title: "Order Date", width: "10%" },
-        { key: "delivery_date", title: "Delivery Date", width: "10%" },
-        { key: "orderDetails", title: "Order Details", width: "10%" },
-        { key: "billing_address", title: "Delivery Address", width: "15%" },
-        { key: "postcode", title: "Post Code", width: "10%" },
-      ];
-    }
-    return [];
-  };
-
-  const columns = getColumns();
+  let columns = [];
+  if (localStorage.getItem("company") === "vkl") {
+    columns = [
+      { key: "matternumber", title: "Matter Number", width: "8%" },
+      { key: "dataentryby", title: "Data Entry By", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "property_address", title: "Property Address", width: "10%" },
+      { key: "state", title: "State", width: "5%" },
+      { key: "client_type", title: "Client Type", width: "7%" },
+      { key: "settlement_date", title: "Settlement Date", width: "10%" },
+      {
+        key: "finance_approval_date",
+        title: "Finance Approval Date",
+        width: "10%",
+      },
+      {
+        key: "building_and_pest_date",
+        title: "Building & Pest Date",
+        width: "10%",
+      },
+    ];
+  } else if (localStorage.getItem("company") === "idg") {
+    columns = [
+      { key: "clientId", title: "Client ID", width: "10%" },
+      { key: "orderId", title: "Order ID", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "client_type", title: "Order Type", width: "15%" },
+      { key: "order_date", title: "Order Date", width: "10%" },
+      { key: "delivery_date", title: "Delivery Date", width: "10%" },
+      { key: "orderDetails", title: "Order Details", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "15%" },
+      { key: "postcode", title: "Post Code", width: "10%" },
+    ];
+  }
 
   async function handelReShareEmail() {
     try {
@@ -407,38 +380,46 @@ const ViewClients = () => {
 
             {/* Consolidated Desktop Buttons */}
             <div className="hidden lg:flex items-center gap-4">
-              {/* Create Button */}
-              <Button
-                label={getCreateButtonLabel()}
-                Icon1={userplus}
-                onClick={handleCreateButtonClick}
-                width="w-[150px]"
-              />
-
-              {/* Create Order Button (IDG only) */}
-              {shouldShowCreateOrder() && (
-                <Button
-                  label="Create Order"
-                  onClick={() => setcreateOrder(true)}
-                  width="w-[150px]"
-                />
+              {localStorage.getItem("company") === "vkl" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
               )}
-
-              {/* Outstanding Tasks Button (Commercial and VKL only) */}
-              {shouldShowOutstandingTasks() && (
-                <Button
-                  label="Outstanding Tasks"
-                  onClick={() => setShowOutstandingTask(true)}
-                  width="w-[150px]"
-                />
+              {localStorage.getItem("company") === "idg" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Create Order"
+                    onClick={() => setcreateOrder(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  />
+                </>
               )}
-
-              {/* Date Range Button (All modules) */}
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowDateRange(true)}
-                width="w-[150px]"
-              />
             </div>
 
             {/* Mobile Menu */}
@@ -465,64 +446,39 @@ const ViewClients = () => {
                       <Menu.Item>
                         {({ active }) => (
                           <button
-                            onClick={handleCreateButtonClick}
+                            onClick={() => setcreateuser(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                              }`}
+                          >
+                            {getCreateButtonLabel()}
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowOutstandingTask(true)}
                             className={`block w-full text-left px-4 py-2 text-sm ${
                               active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
                             }`}
                           >
-                            {getCreateButtonLabel()}
+                            Outstanding Tasks
                           </button>
                         )}
                       </Menu.Item>
-
-                      {/* Create Order (IDG only) */}
-                      {shouldShowCreateOrder() && (
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setcreateOrder(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active
-                                  ? "bg-sky-50 text-sky-700"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              Create Order
-                            </button>
-                          )}
-                        </Menu.Item>
-                      )}
-
-                      {/* Outstanding Tasks (Commercial and VKL only) */}
-                      {shouldShowOutstandingTasks() && (
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setShowOutstandingTask(true)}
-                              className={`block w-full text-left px-4py-2 text-sm ${
-                                active
-                                  ? "bg-sky-50 text-sky-700"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              Outstanding Tasks
-                            </button>
-                          )}
-                        </Menu.Item>
-                      )}
-
-                      {/* Date Range (All modules) */}
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Select Date Range
                           </button>
