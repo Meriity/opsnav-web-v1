@@ -5,11 +5,11 @@ import { Search } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
-import NotificationBell from "../ui/NotificationBell.jsx";
-import ModuleSwitcher from "../ui/ModuleSwitcher.jsx";
-import ModernModuleSwitcher from "../ui/ModernModuleSwitcher.jsx";
+// import NotificationBell from "../ui/NotificationBell.jsx";
+// import ModuleSwitcher from "../ui/ModuleSwitcher.jsx";
+// import ModernModuleSwitcher from "../ui/ModernModuleSwitcher.jsx";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
-import FloatingModuleSwitcher from "../ui/FloatingModuleSwitcher.jsx";
+// import FloatingModuleSwitcher from "../ui/FloatingModuleSwitcher.jsx";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -125,7 +125,7 @@ export default function Header() {
 
   return (
     <>
-      <div className="sticky top-0 p-4 bg-white mb-2 block md:flex justify-between items-center rounded-lg z-40">
+      <div className="top-0 p-4 bg-white mb-2 block md:flex justify-between items-center rounded-lg z-40">
         <h2 className="text-xl font-semibold py-3">
           Hello {localStorage.getItem("user")}
         </h2>
@@ -207,7 +207,7 @@ export default function Header() {
               )}
             </div>
           </div>
-            <NotificationBell />
+            {/* <NotificationBell /> */}
         </div>
       </div>
 

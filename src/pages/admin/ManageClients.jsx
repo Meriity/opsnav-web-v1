@@ -611,110 +611,120 @@ export default function ManageUsers() {
                 : {selectedUser.clientId}
               </h2>
 
-              {/* Name */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Name
-              </label>
-              <input
-                value={selectedUser.name}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    name: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+  {/* Name */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Name
+  </label>
+  <input
+    value={selectedUser.name}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        name: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
-              {/* Email */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                value={selectedUser.email || ""}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+  {/* Email */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Email
+  </label>
+  <input
+    type="email"
+    value={selectedUser.email || ""}
+    onChange={(e) =>
+      setSelectedUser({ ...selectedUser, email: e.target.value })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
-              {/* Address */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                {currentModule === "commercial"
-                  ? "Property Address"
-                  : "Address"}
-              </label>
-              <input
-                value={selectedUser.address || ""}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    address: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Password
+  </label>
+  <input
+    placeholder="Update new password here and click edit"
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        password: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
-              {/* Country */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Country
-              </label>
-              <input
-                value={selectedUser.country}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    country: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+  {/* Address */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Address
+  </label>
+  <input
+    value={selectedUser.address || ""}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        address: e.target.value,  // fixed to update address
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
+  {/* Country */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Country
+  </label>
+  <input
+    value={selectedUser.country}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        country: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
-              {/* State */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                State
-              </label>
-              <input
-                value={selectedUser.state}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    state: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+  {/* State */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    State
+  </label>
+  <input
+    value={selectedUser.state}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        state: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
+    {/* Postcode */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    Postcode
+  </label>
+  <input
+    value={selectedUser.postcode}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        postcode: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
-              {/* Postcode */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Postcode
-              </label>
-              <input
-                value={selectedUser.postcode}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    postcode: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-
-              {/* ABN */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                ABN
-              </label>
-              <input
-                value={selectedUser.abn}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    abn: e.target.value,
-                  })
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
+      {/* ABN */}
+  <label className="block mb-1 font-medium text-sm text-gray-700">
+    ABN
+  </label>
+  <input
+    value={selectedUser.abn}
+    onChange={(e) =>
+      setSelectedUser({
+        ...selectedUser,
+        abn: e.target.value,   // changed to update name, not displayName
+      })
+    }
+    className="w-full mb-2 px-4 py-3 border rounded"
+  />
 
               <Button
                 label={`Edit ${
