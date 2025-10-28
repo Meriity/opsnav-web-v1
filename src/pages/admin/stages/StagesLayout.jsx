@@ -538,7 +538,7 @@ export default function StagesLayout() {
                 `Stage ${stage.stageNumber} status: ${stage.colorStatus}`
               );
             });
-          } 
+          }
         } else if (localStorage.getItem("company") === "vkl") {
           // VKL stage status logic
           section.status1 = response.stage1?.colorStatus || "Not Completed";
@@ -1112,37 +1112,39 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Business Name */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                        Business Name
-                      </label>
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={clientData?.businessName || ""}
-                          onChange={(e) => {
-                            console.log(
-                              "Setting businessName to:",
-                              e.target.value
-                            );
+                    {currentModule === "commercial" && (
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                          Business Name
+                        </label>
+                        {isSuperAdmin ? (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            onChange={(e) => {
+                              console.log(
+                                "Setting businessName to:",
+                                e.target.value
+                              );
 
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              businessName: e.target.value,
-                            }));
-                          }}
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={clientData?.businessName || ""}
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
-                    </div>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                businessName: e.target.value,
+                              }));
+                            }}
+                            className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    )}
 
                     {/* Address Field */}
                     <div className="md:col-span-2">
