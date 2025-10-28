@@ -18,6 +18,7 @@ const ViewClientsTable = ({
   itemsPerPage = 5,
   handelOTOpen,
   handelOT,
+  currentModule,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -135,6 +136,8 @@ const ViewClientsTable = ({
                           "building_and_pest_date",
                           "order_date",
                           "delivery_date",
+                          "settlementDate",
+                          "matterDate",
                         ].includes(column.key) ? (
                           item[column.key] &&
                           item[column.key] !== "-" &&
@@ -145,7 +148,9 @@ const ViewClientsTable = ({
                               —
                             </span>
                           )
-                        ) : column.key === "billing_address" &&
+                        ) : (column.key === "billing_address" ||
+                            column.key === "businessAddress" ||
+                            column.key === "property_address") &&
                           item[column.key] ? (
                           <a
                             href={`https://www.google.com/maps?q=${encodeURIComponent(
@@ -169,9 +174,9 @@ const ViewClientsTable = ({
                         (keyName, index) => (
                           <a
                             href={`/admin/client/stages/${
-                              localStorage.getItem("company") === "vkl"
-                                ? item.matternumber
-                                : item?.orderId
+                              currentModule === "commercial"
+                                ? item.matterNumber
+                                : item.matternumber || item.orderId
                             }/${index + 1}`}
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs cursor-pointer"
@@ -198,7 +203,11 @@ const ViewClientsTable = ({
                         className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
                         onClick={() => {
                           handelOTOpen();
-                          handelOT(item?.matternumber || item.orderId);
+                          handelOT(
+                            currentModule === "commercial"
+                              ? item.matterNumber
+                              : item.matternumber || item.orderId
+                          );
                         }}
                       >
                         <ClipboardList size={20} />
@@ -208,14 +217,14 @@ const ViewClientsTable = ({
                   <td className="pl-3 pr-2 rounded-r-2xl align-middle">
                     <div className="flex flex-col items-center space-y-2">
                       <button
-                        onClick={() =>
-                          localStorage.getItem("company") === "vkl"
-                            ? navigate(
-                                `/admin/client/stages/${item.matternumber}`
-                              )
-                            : navigate(`/admin/client/stages/${item.orderId}`)
-                        }
-                        className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors cursor-pointer"
+                        onClick={() => {
+                          const id =
+                            currentModule === "commercial"
+                              ? item.matterNumber
+                              : item.matternumber || item.orderId;
+                          navigate(`/admin/client/stages/${id}`);
+                        }}
+                        className="flex flex-col items-center space-y-1 p-1 text-blue-600"
                         title="Edit"
                       >
                         <Edit size={12} />
@@ -251,14 +260,37 @@ const ViewClientsTable = ({
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs text-gray-500">
-                  {localStorage.getItem("company") === "vkl"
-                    ? "Matter Number"
+                  {currentModule === "commercial"
+                    ? "Business Address"
+                    : localStorage.getItem("company") === "vkl"
+                    ? "Property Address"
                     : localStorage.getItem("company") === "idg"
-                    ? "Client ID"
-                    : "Reg Number"}
+                    ? "Billing Address"
+                    : "Address"}
                 </p>
-                <p className=" text-blue-600">
-                  {item.matternumber || item.orderId}
+                <p className="text-sm break-words">
+                  {item.businessAddress ||
+                  item.property_address ||
+                  item.billing_address ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${encodeURIComponent(
+                        item.businessAddress ||
+                          item.property_address ||
+                          item.billing_address
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {item.businessAddress ||
+                        item.property_address ||
+                        item.billing_address}
+                    </a>
+                  ) : (
+                    item.businessAddress ||
+                    item.property_address ||
+                    item.billing_address
+                  )}
                 </p>
               </div>
               <div className="flex items-center space-x-2">
@@ -268,26 +300,37 @@ const ViewClientsTable = ({
                   className="p-1 text-gray-700"
                   onClick={() => {
                     handelOTOpen();
-                    handelOT(item?.matternumber || item.orderId);
+                    handelOT(
+                      currentModule === "commercial"
+                        ? item.matterNumber
+                        : item.matternumber || item.orderId
+                    );
                   }}
                 >
                   <ClipboardList size={20} />
                 </button>
                 <button
-                  onClick={() =>
-                    navigate(
-                      `/admin/client/stages/${
-                        item.matternumber || item.orderId
-                      }`
-                    )
-                  }
+                  onClick={() => {
+                    const id =
+                      currentModule === "commercial"
+                        ? item.matterNumber
+                        : item.matternumber || item.orderId;
+                    navigate(`/admin/client/stages/${id}`);
+                  }}
                   className="p-1 text-blue-600"
                   title="Edit"
                 >
                   <Edit size={16} />
                 </button>
                 <button
-                  onClick={() => onShare(item.matternumber, item.client_email)}
+                  onClick={() =>
+                    onShare(
+                      currentModule === "commercial"
+                        ? item.matterNumber
+                        : item.matternumber,
+                      item.client_email
+                    )
+                  }
                   className="p-1 text-gray-600"
                   title="Share"
                 >
@@ -298,36 +341,52 @@ const ViewClientsTable = ({
 
             <div>
               <p className="text-xs text-gray-500">Client Name</p>
-              <p className="font-semibold break-words">{item.client_name}</p>
+              <p className="font-semibold break-words">
+                {item.clientName || item.client_name}
+              </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                {localStorage.getItem("company") === "vkl"
+                {currentModule === "commercial"
+                  ? "Business Address"
+                  : localStorage.getItem("company") === "vkl"
                   ? "Property Address"
                   : localStorage.getItem("company") === "idg"
                   ? "Billing Address"
                   : "Address"}
               </p>
               <p className="text-sm break-words">
-                {item.property_address || item.billing_address}
+                {item.businessAddress ||
+                  item.property_address ||
+                  item.billing_address}
               </p>
             </div>
 
             <div className="flex justify-between text-xs pt-2">
               <div>
                 <p className="text-gray-500">
-                  {localStorage.getItem("company") === "vkl"
+                  {currentModule === "commercial"
+                    ? "Completion Date"
+                    : localStorage.getItem("company") === "vkl"
                     ? "Settlement Date"
                     : localStorage.getItem("company") === "idg"
                     ? "Delivery Date"
                     : "Date"}
                 </p>
-                <p>{formatDate(item.settlement_date || item.delivery_date)}</p>
+                <p>
+                  {formatDate(
+                    item.settlementDate ||
+                      item.settlement_date ||
+                      item.delivery_date
+                  )}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500">Entered By</p>
-                <p>{item.dataentryby || item.data_entry_by}</p>
+                <p>
+                  {item.dataEntryBy || item.dataentryby || item.data_entry_by}
+                </p>
               </div>
             </div>
 
@@ -338,9 +397,9 @@ const ViewClientsTable = ({
                   <button
                     onClick={() => {
                       const path = `/admin/client/stages/${
-                        localStorage.getItem("company") === "vkl"
-                          ? item.matternumber // Corrected from matterNumber to matternumber
-                          : item?.orderId
+                        currentModule === "commercial"
+                          ? item.matterNumber
+                          : item.matternumber || item.orderId
                       }/${index + 1}`;
                       navigate(path);
                     }}

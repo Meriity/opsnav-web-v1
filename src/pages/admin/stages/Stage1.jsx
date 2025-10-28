@@ -326,24 +326,23 @@ export default function Stage1({
 
       const company = localStorage.getItem("company");
       const currentModule = localStorage.getItem("currentModule");
+
       let payload = {
         ...formData,
       };
 
-      // Set the appropriate identifier based on module
       if (currentModule === "commercial") {
         payload.matterNumber = matterNumber;
         payload.noteForSystem = noteForSystem;
         payload.noteForClient = noteForClient;
       } else if (company === "vkl") {
         payload.matterNumber = matterNumber;
-        // For VKL, maintain the existing note structure
+
         const combinedNoteForClient =
           `${noteForSystem} - ${noteForClient}`.trim();
         payload.noteForClient = combinedNoteForClient;
       } else if (company === "idg") {
-        payload.orderId = matterNumber; // IDG uses orderId
-        // For IDG, maintain the existing note structure
+        payload.orderId = matterNumber;
         const combinedNoteForClient =
           `${noteForSystem} - ${noteForClient}`.trim();
         payload.noteForClient = combinedNoteForClient;
@@ -351,29 +350,13 @@ export default function Stage1({
 
       console.log(`${currentModule || company} payload:`, payload);
 
-      // remove temporary fields that don't exist in the model
-      if (currentModule === "commercial") {
-        // For commercial, we don't need to remove noteForSystem and noteForClient
-        // as they are part of the model
-      } else {
-        // For other modules, remove the commercial-specific fields
+      if (currentModule !== "commercial") {
         delete payload.noteForSystem;
       }
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
-      // FIXED: Use correct API for commercial
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 1");
-        const wrapped = {
-          stageNumber: 1,
-          data: payload,
-        };
-        await commercialApi.upsertStage(1, matterNumber, wrapped);
+        await commercialApi.upsertStage(1, matterNumber, payload);
       } else if (company === "vkl") {
         console.log("Using VKL API for stage 1");
         await api.upsertStageOne(payload);
@@ -396,10 +379,6 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to update stage 1:", error);
-      console.error("Error response:", error.response);
-      console.error("Error message:", error.message);
 
       let errorMessage = "Failed to save stage 1. Please try again.";
       if (error.response?.data?.message) {
