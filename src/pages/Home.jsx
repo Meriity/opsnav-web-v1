@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const ScrollIndicator = "/down-arrow.png";
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -31,12 +33,85 @@ export default function Home() {
     window.location.href = "https://legacy.opsnav.com";
   };
 
+  const handleScrollToFeatures = () => {
+    const el = document.getElementById("features");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+    }
+  };
+
+  const handleKeyDownIndicator = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleScrollToFeatures();
+    }
+  };
+
   return (
     <>
       <div
         className="relative min-h-screen bg-cover bg-center text-black"
         style={{ backgroundImage: "url('/home_bg.jpg')" }}
       >
+        <style>{`
+  /* gentle vertical float for the arrow itself */
+  @keyframes floatUpDown {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    50%  { transform: translateY(-10px) scale(1.03); opacity: 0.98; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  /* soft scale + opacity pulse for the wrapper (no box-shadow to avoid artifacts) */
+  @keyframes softPulse {
+    0%   { transform: scale(1); opacity: 1; }
+    50%  { transform: scale(1.08); opacity: 0.98; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* arrow image */
+  .scroll-indicator {
+    animation: floatUpDown 2.6s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform .18s ease, opacity .18s ease;
+    display: block;
+    will-change: transform, opacity;
+    -webkit-backface-visibility: hidden; /* avoids blurry rendering on some mobile browsers */
+    backface-visibility: hidden;
+  }
+  .scroll-indicator:active {
+    transform: translateY(2px) scale(.98);
+  }
+
+  /* wrapper around the arrow */
+  .scroll-indicator-wrapper {
+    animation: softPulse 2.6s ease-in-out infinite;
+    border-radius: 9999px;
+    padding: 6px;
+    background: transparent;        /* ensure no background bleed */
+    box-shadow: none !important;    /* explicitly remove any shadow that might create a line */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity;
+  }
+
+  /* accessible focus ring when keyboard navigating */
+  .scroll-indicator-wrapper:focus-visible {
+    outline: 3px solid rgba(59,130,246,0.18);
+    outline-offset: 4px;
+    border-radius: 9999px;
+  }
+
+  /* size helpers (keeps arrow smaller) */
+  .scroll-indicator-small { width: 2.5rem; height: 2.5rem; } /* ~40px */
+  .scroll-indicator-medium { width: 3rem; height: 3rem; }   /* ~48px */
+
+  /* optional: remove image smoothing artifacts on some devices */
+  img.scroll-indicator { image-rendering: -webkit-optimize-contrast; }
+`}</style>
+
         <header className="absolute top-2 left-2 right-0 z-20 flex flex-col items-center gap-3 p-4 sm:flex-row sm:justify-between">
           {/* Logo */}
           <div className="flex-shrink-0 mb-2">
@@ -86,6 +161,27 @@ export default function Home() {
             <button className="cursor-pointer border border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-semibold px-5 py-1.5 rounded-md">
               Book A Demo
             </button>
+          </div>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Scroll to features"
+            onClick={handleScrollToFeatures}
+            onKeyDown={handleKeyDownIndicator}
+            className="absolute right-4 bottom-6 z-30 md:left-1/2 md:transform md:-translate-x-1/2"
+            title="Scroll down"
+          >
+            <div
+              className="scroll-indicator-wrapper rounded-full flex items-center justify-center"
+              aria-hidden
+            >
+              <img
+                src={ScrollIndicator}
+                alt="Scroll down"
+                className="w-8 h-8 md:w-10 md:h-10 scroll-indicator" /* reduced arrow size */
+                style={{ display: "block", pointerEvents: "none" }}
+              />
+            </div>
           </div>
         </div>
       </div>
