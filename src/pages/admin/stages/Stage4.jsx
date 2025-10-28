@@ -162,6 +162,9 @@ export default function Stage4({
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
+  // Add Zustland retrigger
+  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
+
   // FIXED: Proper field configuration logic - check module first
   let currentConfig;
   if (currentModule === "commercial") {
@@ -389,7 +392,7 @@ export default function Stage4({
     // --- Update local state & reload ---
     originalData.current = { ...formData };
     setReloadTrigger((prev) => !prev);
-
+      reloadArchivedClients();
       toast.success("Stage 4 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,
