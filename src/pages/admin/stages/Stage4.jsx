@@ -8,6 +8,7 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
+import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
 const formConfig = {
   vkl: {
@@ -142,7 +143,6 @@ export default function Stage4({
   reloadTrigger,
   setReloadTrigger,
 }) {
-  console.log("Stage 4 data:", data);
   const stage = 4;
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -161,6 +161,9 @@ export default function Stage4({
   // Get company and module
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
+
+  // Add Zustland retrigger
+  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
 
   // FIXED: Proper field configuration logic - check module first
   let currentConfig;
@@ -334,8 +337,8 @@ export default function Stage4({
   };
 
   async function handleSave() {
-    if (!isChanged() || isSaving) return;
-    setIsSaving(true);
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
     try {
       let payload = { ...formData };
@@ -356,13 +359,13 @@ export default function Stage4({
         });
       }
 
-      // handle number fields
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
-        }
-      });
+    // --- Convert number fields properly ---
+    currentConfig.fields.forEach((field) => {
+      if (field.type === "number") {
+        payload[field.name] =
+          payload[field.name] === "" ? null : Number(payload[field.name]);
+      }
+    });
 
       console.log("=== SAVE DEBUG ===");
       console.log("Current module:", currentModule);
@@ -386,10 +389,10 @@ export default function Stage4({
 
       console.log("API call successful");
 
-      // update original data
-      originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
-
+    // --- Update local state & reload ---
+    originalData.current = { ...formData };
+    setReloadTrigger((prev) => !prev);
+      reloadArchivedClients();
       toast.success("Stage 4 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,
