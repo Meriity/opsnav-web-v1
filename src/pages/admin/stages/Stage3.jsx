@@ -120,11 +120,8 @@ export default function Stage3({
         const value = normalizeValue(rawValue);
 
         if (type === "text") {
-          // text fields count as completed if not empty
           return value === "";
         }
-
-        // non-text fields use completedValues
         return !completedValues.has(value);
       })
       .map(({ label }) => label);
@@ -137,18 +134,12 @@ export default function Stage3({
   useEffect(() => {
     if (!data) return;
 
-    console.log("=== STAGE 3 INITIALIZATION ===");
-    console.log("Company:", company);
-    console.log("Current Module:", currentModule);
-    console.log("Fields configured:", fields);
-    console.log("Raw data:", data);
-
     const newFormState = {};
     const newStatusState = {};
+    let systemNotePart = "";
+    let clientCommentPart = "";
 
-    // FIXED: Initialize ALL commercial fields with empty values if not present in data
     fields.forEach(({ key, hasDate }) => {
-      // For commercial, ensure all fields are initialized even if not in data
       const rawValue = data[key] || "";
       newFormState[key] = normalizeValue(rawValue);
       newStatusState[key] = getStatus(newFormState[key]);
@@ -160,15 +151,15 @@ export default function Stage3({
       }
     });
 
-    // For commercial, handle separate note fields
     if (currentModule === "commercial") {
       setNoteForSystem(data.noteForSystem || "");
       setNoteForClient(data.noteForClient || "");
+      systemNotePart = data.noteForSystem || "";
+      clientCommentPart = data.noteForClient || "";
     } else {
-      // For other modules, use the existing combined note structure
       const noteParts = (data.noteForClient || "").split(" - ");
-      const systemNotePart = noteParts[0]?.trim() || updateNoteForSystem();
-      const clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
+      systemNotePart = noteParts[0]?.trim() || updateNoteForSystem();
+      clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
 
       setNoteForSystem(systemNotePart);
       setNoteForClient(clientCommentPart);
@@ -179,14 +170,8 @@ export default function Stage3({
 
     originalData.current = {
       ...newFormState,
-      noteForSystem:
-        currentModule === "commercial"
-          ? data.noteForSystem || ""
-          : updateNoteForSystem(),
-      noteForClient:
-        currentModule === "commercial"
-          ? data.noteForClient || ""
-          : clientCommentPart,
+      noteForSystem: systemNotePart,
+      noteForClient: clientCommentPart,
     };
 
     console.log("Initialized form state:", newFormState);
