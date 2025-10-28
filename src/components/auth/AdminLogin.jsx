@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 
 function LoginForm() {
   const api = new AuthAPI();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -86,17 +88,25 @@ function LoginForm() {
                 className="w-full border border-gray-300 px-2 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-            <div>
+            <div className="relative">
               <label className="block mb-1 font-medium text-sm text-gray-700">
                 Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
               />
+
+              <button
+                type="button"
+                className="absolute right-3 top-8 text-gray-500 hover:text-sky-600 transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             <button
               type={isLoading ? "button" : "submit"}
