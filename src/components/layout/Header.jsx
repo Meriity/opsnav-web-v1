@@ -60,8 +60,25 @@ export default function Header() {
           : company === "idg"
           ? await api.getIDGSearchResult(value)
           : "";
-      setSearchResult(response);
-      console.log(response);
+
+      // If API doesn't support extended search, filter client-side
+      const lowercasedValue = value.toLowerCase();
+      const filteredResults = response.filter(
+        (item) =>
+          String(item.matterNumber || item.orderId)
+            .toLowerCase()
+            .includes(lowercasedValue) ||
+          String(item.clientName).toLowerCase().includes(lowercasedValue) ||
+          String(item.propertyAddress || item.property_address)
+            .toLowerCase()
+            .includes(lowercasedValue) ||
+          String(item.state).toLowerCase().includes(lowercasedValue) ||
+          String(item.referral || item.referralName)
+            .toLowerCase()
+            .includes(lowercasedValue)
+      );
+
+      setSearchResult(filteredResults);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
     } finally {
@@ -207,7 +224,7 @@ export default function Header() {
               )}
             </div>
           </div>
-            {/* <NotificationBell /> */}
+          {/* <NotificationBell /> */}
         </div>
       </div>
 

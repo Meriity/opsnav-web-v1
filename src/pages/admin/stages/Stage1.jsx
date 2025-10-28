@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
-import CommercialAPI from "../../../api/commercialAPI"; // Import CommercialAPI
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -48,11 +47,21 @@ const formConfig = {
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
     },
+    // {
+    //   name: "jobAddress",
+    //   label: "Job Address",
+    //   type: "text",
+    // },
     {
       name: "distanceFeasibility",
       label: "Check Distance / Feasibility",
       type: "text",
     },
+    // {
+    //   name: "orderType",
+    //   label: "Order Type",
+    //   type: "text",
+    // },
     {
       name: "timeline",
       label: "Timeline / Deadline",
@@ -71,58 +80,13 @@ const formConfig = {
       options: ["Approved", "Rejected", "Pending"],
     },
   ],
-  commercial: [
-    { name: "referral", label: "Referral", type: "text" },
-    {
-      name: "retainer",
-      label: "Retainer",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
-    {
-      name: "contractReview",
-      label: "Contract Review",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
-    {
-      name: "quoteType",
-      label: "Quote Type",
-      type: "radio",
-      options: ["Fixed", "Variable"],
-    },
-    { name: "quoteAmount", label: "Quote Amount (incl GST)", type: "text" },
-  ],
 };
 
 // Common fields for all clients
 const commonFields = [
-  {
-    name: "noteForSystem",
-    label: "System note for client",
-    type: "system-note",
-  },
-  { name: "noteForClient", label: "Comment for client", type: "textarea" },
+  { name: "systemNote", label: "System note for client", type: "system-note" },
+  { name: "clientComment", label: "Comment for client", type: "textarea" },
 ];
-
-// Admin-only fields for different modules
-const adminFields = {
-  idg: [
-    {
-      name: "costingType",
-      label: "Confirm Costing Type",
-      type: "radio",
-      options: ["Fixed", "Variable"],
-    },
-    {
-      name: "costing_amount",
-      label: "Costing Amount",
-      type: "text",
-    },
-  ],
-  commercial: [],
-  vkl: [], // No additional admin fields for VKL
-};
 
 export default function Stage1({
   changeStage,
@@ -137,40 +101,15 @@ export default function Stage1({
   console.log(data);
   const stage = 1;
   const api = new ClientAPI();
-  const commercialApi = new CommercialAPI(); // Initialize CommercialAPI
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
-  const currentModule = useMemo(
-    () => localStorage.getItem("currentModule") || "default",
-    []
+
+  const currentFields = useMemo(
+    () => formConfig[company] || formConfig.vkl,
+    [company]
   );
-  const userRole = useMemo(() => localStorage.getItem("role") || "user", []);
-
-  // Get base fields based on company and module
-  const baseFields = useMemo(() => {
-    if (currentModule === "commercial") {
-      return formConfig.commercial || formConfig.vkl;
-    }
-    return formConfig[company] || formConfig.vkl;
-  }, [company, currentModule]);
-
-  // Get admin fields if user is admin/superadmin
-  const additionalAdminFields = useMemo(() => {
-    const isAdmin = userRole === "admin" || userRole === "superadmin";
-    if (!isAdmin) return [];
-
-    if (currentModule === "commercial") {
-      return adminFields.commercial || [];
-    }
-    return adminFields[company] || [];
-  }, [company, currentModule, userRole]);
-
-  // Combine base fields with admin fields
-  const currentFields = useMemo(() => {
-    return [...baseFields, ...additionalAdminFields];
-  }, [baseFields, additionalAdminFields]);
 
   // Helper to normalize/standardize values for comparison and storage
   const normalizeValue = useCallback((v) => {
@@ -184,18 +123,10 @@ export default function Stage1({
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
-      const completed = new Set([
-        "yes",
-        "nr",
-        "na",
-        "variable",
-        "fixed",
-        "approved",
-      ]);
+      const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
-      if (["processing", "inprogress", "pending"].includes(val))
-        return "In Progress";
+      if (["processing", "inprogress"].includes(val)) return "In Progress";
       return "Not Completed";
     },
     [normalizeValue]
@@ -210,68 +141,77 @@ export default function Stage1({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
-  function extractNotes(noteForSystem = "", noteForClient = "") {
-    return {
-      systemNote: noteForSystem || "",
-      clientComment: noteForClient || "",
-    };
+  function extractNotes(note = "") {
+    const [systemNote = "", clientComment = ""] = note
+      .split(" - ")
+      .map((str) => str.trim());
+    return { systemNote, clientComment };
   }
+    const generateSystemNote = () => {
+        const radioFields = currentFields.filter((field) => field.type === "radio");
+        const textFields = currentFields.filter((field) => field.type === "text");
+        const greenValues = new Set(["yes", "nr", "na", "variable", "fixed", "approved"]);
 
-  const generateSystemNote = () => {
-    const radioFields = currentFields.filter((field) => field.type === "radio");
-    const textFields = currentFields.filter((field) => field.type === "text");
-    const greenValues = new Set([
-      "yes",
-      "nr",
-      "na",
-      "variable",
-      "fixed",
-      "approved",
-    ]);
+        // radio fields not received
+        const notReceivedRadio = radioFields
+            .filter(
+                (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+            )
+            .map((field) => field.label);
 
-    // radio fields not received
-    const notReceivedRadio = radioFields
-      .filter(
-        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-      )
-      .map((field) => field.label);
+        // text fields not received (empty or whitespace)
+        const notReceivedText = textFields
+            .filter(
+                (field) =>
+                    !formData[field.name] || formData[field.name].toString().trim() === ""
+            )
+            .map((field) => field.label);
 
-    // text fields not received (empty or whitespace)
-    const notReceivedText = textFields
-      .filter(
-        (field) =>
-          !formData[field.name] || formData[field.name].toString().trim() === ""
-      )
-      .map((field) => field.label);
+        const notReceived = [...notReceivedRadio, ...notReceivedText];
 
-    const notReceived = [...notReceivedRadio, ...notReceivedText];
+        if (notReceived.length === 0) {
+            return "Tasks completed";
+        }
+        if (notReceived.length === 1) {
+            return `${notReceived[0]} not received`;
+        }
+        return `${notReceived.join(", ")} not received`;
+    };
 
-    if (notReceived.length === 0) {
-      return "Tasks completed";
-    }
-    if (notReceived.length === 1) {
-      return `${notReceived[0]} not received`;
-    }
-    return `${notReceived.join(", ")} not received`;
-  };
 
   useEffect(() => {
+    if (
+  localStorage.getItem("company") === "idg" &&
+  (localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin")
+) {
+  const hasCostingFields = formConfig.idg.some(
+    (field) => field.name === "costing_amount"
+  );
+
+  if (!hasCostingFields) {
+    formConfig.idg.push(
+      {
+        name: "costingType",
+        label: "Confirm Costing Type",
+        type: "radio",
+        options: ["Fixed", "Variable"],
+      },
+      {
+        name: "costing_amount",
+        label: "Costing Amount",
+        type: "text",
+      }
+    );
+  }
+}
     if (!data) return;
 
-    const { systemNote, clientComment } = extractNotes(
-      data.noteForSystem,
-      data.noteForClient
-    );
+    const { systemNote, clientComment } = extractNotes(data.noteForClient);
     const initialFormData = {};
     const initialStatuses = {};
 
     currentFields.forEach((field) => {
-      if (
-        field.name === "quoteAmount" ||
-        field.name === "proposalAmount" ||
-        field.name === "costing_amount" ||
-        field.name === "budgetAmount"
-      ) {
+      if (field.name === "quoteAmount") {
         initialFormData[field.name] =
           data[field.name]?.$numberDecimal || data[field.name] || "";
       } else {
@@ -287,13 +227,14 @@ export default function Stage1({
       }
     });
 
-    initialFormData.noteForSystem = systemNote;
-    initialFormData.noteForClient = clientComment;
+    initialFormData.systemNote = systemNote;
+    initialFormData.clientComment = clientComment;
 
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
-  }, [data, reloadTrigger, currentFields, getStatus, normalizeValue]);
+    // include currentFields and getStatus (both stable via useMemo/useCallback)
+  }, [data, reloadTrigger, company, currentFields, getStatus, normalizeValue]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
@@ -321,70 +262,36 @@ export default function Stage1({
     setIsSaving(true);
 
     try {
-      const noteForSystem = generateSystemNote();
-      const noteForClient = formData.noteForClient || "";
+      const systemNote = generateSystemNote();
+      let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
       const company = localStorage.getItem("company");
-      const currentModule = localStorage.getItem("currentModule");
       let payload = {
         ...formData,
       };
 
-      // Set the appropriate identifier based on module
-      if (currentModule === "commercial") {
-        payload.matterNumber = matterNumber;
-        payload.noteForSystem = noteForSystem;
+      // dynamically set the key
+      if (company === "vkl") {
+        payload.matterNumber = matterNumber; // keep matterNumber
         payload.noteForClient = noteForClient;
-      } else if (company === "vkl") {
-        payload.matterNumber = matterNumber;
-        // For VKL, maintain the existing note structure
-        const combinedNoteForClient =
-          `${noteForSystem} - ${noteForClient}`.trim();
-        payload.noteForClient = combinedNoteForClient;
       } else if (company === "idg") {
-        payload.orderId = matterNumber; // IDG uses orderId
-        // For IDG, maintain the existing note structure
-        const combinedNoteForClient =
-          `${noteForSystem} - ${noteForClient}`.trim();
-        payload.noteForClient = combinedNoteForClient;
+        payload.orderId = matterNumber; // use orderId instead
+        payload.noteForClient = noteForClient;
       }
 
-      console.log(`${currentModule || company} payload:`, payload);
+      console.log(`${company} payload:`, payload);
 
-      // remove temporary fields that don't exist in the model
-      if (currentModule === "commercial") {
-        // For commercial, we don't need to remove noteForSystem and noteForClient
-        // as they are part of the model
-      } else {
-        // For other modules, remove the commercial-specific fields
-        delete payload.noteForSystem;
-      }
+      // remove temporary fields
+      delete payload.systemNote;
+      delete payload.clientComment;
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
-      // FIXED: Use correct API for commercial
-      if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 1");
-        const wrapped = {
-          stageNumber: 1,
-          data: payload,
-        };
-        await commercialApi.upsertStage(1, matterNumber, wrapped);
-      } else if (company === "vkl") {
-        console.log("Using VKL API for stage 1");
+      if (company === "vkl") {
         await api.upsertStageOne(payload);
       } else if (company === "idg") {
-        console.log("Using IDG API for stage 1");
         await api.upsertIDGStages(payload.orderId, 1, payload);
       }
 
-      console.log("API call successful");
-
-      originalData.current = { ...formData, noteForSystem };
+      originalData.current = { ...formData, systemNote };
       setReloadTrigger((prev) => !prev);
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
@@ -396,19 +303,7 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
-      console.error("=== SAVE ERROR ===");
       console.error("Failed to update stage 1:", error);
-      console.error("Error response:", error.response);
-      console.error("Error message:", error.message);
-
-      let errorMessage = "Failed to save stage 1. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -417,6 +312,7 @@ export default function Stage1({
   const renderField = (field) => {
     switch (field.type) {
       case "text":
+          console.log(field);
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">

@@ -86,9 +86,13 @@ const ViewClients = () => {
             matternumber: client.matterNumber || client.id || client._id,
             client_name: client.clientName || client.client_name,
             businessAddress: client.businessAddress || client.business_address,
+            businessName: client.businessName,
             state: client.state || "",
             client_type: client.clientType || client.type,
             settlement_date: client.settlementDate || client.settlement_date,
+            matterDate: client.matterDate,
+            dataEntryBy: client.dataEntryBy || "",
+            postcode: client.postcode || "",
             finance_approval_date: client.financeApprovalDate,
             building_and_pest_date: client.buildingAndPestDate,
             dataentryby: client.dataEntryBy || "",
@@ -140,18 +144,41 @@ const ViewClients = () => {
     // Apply search query filter
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
-      filteredData = filteredData.filter(
-        (client) =>
-          String(client.client_name || client.clientName)
-            .toLowerCase()
-            .includes(lowercasedQuery) ||
-          String(client.matternumber || client.matterNumber || client.orderId)
-            .toLowerCase()
-            .includes(lowercasedQuery) ||
-          String(client.businessAddress || client.business_address)
-            .toLowerCase()
-            .includes(lowercasedQuery)
-      );
+      filteredData = filteredData.filter((client) => {
+        // For commercial projects
+        if (currentModule === "commercial") {
+          const searchableFields = [
+            client.matterNumber,
+            client.clientName,
+            client.businessName,
+            client.businessAddress,
+            client.state,
+            client.clientType,
+            client.dataEntryBy,
+            client.postcode,
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
+          );
+        } else {
+          // For regular clients
+          const searchableFields = [
+            client.client_name || client.clientName,
+            client.matternumber || client.matterNumber || client.orderId,
+            client.businessAddress || client.business_address,
+            client.property_address || client.propertyAddress,
+            client.state,
+            client.referral || client.referralName,
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
+          );
+        }
+      });
     }
 
     setClientList(filteredData);
@@ -160,36 +187,54 @@ const ViewClients = () => {
   console.log(clientList);
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
-    columns = [
-      { key: "matternumber", title: "Matter Number", width: "8%" },
-      { key: "dataentryby", title: "Data Entry By", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "10%" },
-      { key: "property_address", title: "Property Address", width: "10%" },
-      { key: "state", title: "State", width: "5%" },
-      { key: "client_type", title: "Client Type", width: "7%" },
-      { key: "settlement_date", title: "Settlement Date", width: "10%" },
-      {
-        key: "finance_approval_date",
-        title: "Finance Approval Date",
-        width: "10%",
-      },
-      {
-        key: "building_and_pest_date",
-        title: "Building & Pest Date",
-        width: "10%",
-      },
-    ];
+    if (currentModule === "commercial") {
+      // Commercial projects columns
+      columns = [
+        { key: "matterNumber", title: "Project Number", width: "10%" },
+        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
+        { key: "clientName", title: "Client Name", width: "12%" },
+        { key: "businessName", title: "Business Name", width: "12%" },
+        { key: "businessAddress", title: "Business Address", width: "15%" },
+        { key: "state", title: "State", width: "6%" },
+        { key: "clientType", title: "Client Type", width: "8%" },
+        { key: "settlementDate", title: "Completion Date", width: "10%" },
+        { key: "matterDate", title: "Project Date", width: "10%" },
+        // { key: "postcode", title: "Postcode", width: "7%" },
+      ];
+    } else {
+      // Regular VKL clients
+      columns = [
+        { key: "matternumber", title: "Matter Number", width: "8%" },
+        { key: "dataentryby", title: "Data Entry By", width: "10%" },
+        { key: "client_name", title: "Client Name", width: "10%" },
+        { key: "property_address", title: "Property Address", width: "10%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "client_type", title: "Client Type", width: "7%" },
+        { key: "settlement_date", title: "Settlement Date", width: "10%" },
+        {
+          key: "finance_approval_date",
+          title: "Finance Approval Date",
+          width: "10%",
+        },
+        {
+          key: "building_and_pest_date",
+          title: "Building & Pest Date",
+          width: "10%",
+        },
+      ];
+    }
   } else if (localStorage.getItem("company") === "idg") {
     columns = [
-      { key: "clientId", title: "Client ID", width: "10%" },
+      { key: "clientId", title: "Client ID", width: "8%" },
       { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "10%" },
-      { key: "client_type", title: "Order Type", width: "15%" },
-      { key: "order_date", title: "Order Date", width: "10%" },
-      { key: "delivery_date", title: "Delivery Date", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "9%" },
+      { key: "client_type", title: "Order Type", width: "12%" },
+      { key: "allocatedUser", title: "Allocated User", width: "10%" },
+      { key: "order_date", title: "Order Date", width: "12%" },
+      { key: "delivery_date", title: "Delivery Date", width: "12%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "15%" },
-      { key: "postcode", title: "Post Code", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "10%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" },
     ];
   }
 
@@ -451,7 +496,7 @@ const ViewClients = () => {
                               active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
@@ -475,10 +520,11 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             Select Date Range
                           </button>
@@ -524,6 +570,7 @@ const ViewClients = () => {
               ot={shouldShowOutstandingTasks()}
               handelOTOpen={() => setShowOutstandingTask(true)}
               handelOT={setOTActiveMatterNumber}
+              currentModule={currentModule}
             />
           </div>
         )}

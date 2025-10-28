@@ -357,11 +357,7 @@ export default function Stage5({
       // API CALL SECTION
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 5");
-        const wrapped = {
-          stageNumber: 5,
-          data: payload,
-        };
-        await commercialApi.upsertStage(5, matterNumber, wrapped);
+        await commercialApi.upsertStage(5, matterNumber, payload);
       } else if (company === "vkl") {
         console.log("Using VKL API for stage 5");
         payload.matterNumber = matterNumber;

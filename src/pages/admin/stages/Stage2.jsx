@@ -476,11 +476,7 @@ export default function Stage2({
       let apiResponse;
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 2");
-        const wrapped = {
-          stageNumber: 2,
-          data: payload,
-        };
-        apiResponse = await commercialApi.upsertStage(2, matterNumber, wrapped);
+        apiResponse = await commercialApi.upsertStage(2, matterNumber, payload);
         console.log("Commercial API response:", apiResponse);
       } else if (company === "vkl") {
         console.log("Using VKL API for stage 2");
@@ -581,7 +577,7 @@ export default function Stage2({
           >
             <option value="">Select Agent</option>
             {user.map((agent) => (
-              <option key={agent._id} value={agent._id}>
+                <option key={agent._id} value={agent._id+"-"+agent.displayName}>
                 {agent.displayName}
               </option>
             ))}
