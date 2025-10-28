@@ -80,11 +80,6 @@ const formConfig = {
         label: "Procure additional materials if required",
         type: "radio",
       },
-      // {
-      //   name: "vehicleAllocated",
-      //   label: "Allocate Vehicle / Installer",
-      //   type: "text",
-      // },
       {
         name: "designArtwork",
         label: "Create / update Design Artwork",
@@ -141,28 +136,18 @@ const formConfig = {
   commercial: {
     fields: [
       {
-        name: "dueDiligence",
-        label: "Due Diligence Review",
+        name: "voi",
+        label: "VOI",
         type: "radio",
       },
       {
-        name: "contractNegotiation",
-        label: "Contract Negotiation",
+        name: "leaseTransfer",
+        label: "Lease Transfer",
         type: "radio",
       },
       {
-        name: "clientApproval",
-        label: "Client Approval",
-        type: "radio",
-      },
-      {
-        name: "documentPreparation",
-        label: "Document Preparation",
-        type: "radio",
-      },
-      {
-        name: "executionArrangements",
-        label: "Execution Arrangements",
+        name: "contractOfSale",
+        label: "Contract of Sale",
         type: "radio",
       },
     ],
@@ -174,13 +159,7 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: [
-          "dueDiligence",
-          "contractNegotiation",
-          "clientApproval",
-          "documentPreparation",
-          "executionArrangements",
-        ],
+        fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
       },
     ],
   },
@@ -248,11 +227,11 @@ export default function Stage2({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
-  const extractNotes = (note = "") => {
-    const [systemNote = "", clientComment = ""] = (note || "")
-      .split(" - ")
-      .map((str) => str.trim());
-    return { systemNote, clientComment };
+  const extractNotes = (noteForSystem = "", noteForClient = "") => {
+    return {
+      systemNote: noteForSystem || "",
+      clientComment: noteForClient || "",
+    };
   };
 
   const generateSystemNote = (noteGroupId) => {
@@ -297,7 +276,6 @@ export default function Stage2({
     console.log("=== END DEBUG INFO ===");
   }, [data, formData, matterNumber, currentConfig]);
 
-  // DATA INITIALIZATION EFFECT
   // DATA INITIALIZATION EFFECT
   useEffect(() => {
     if (!data) return;
@@ -354,10 +332,22 @@ export default function Stage2({
       initialStatuses[field.name] = getStatus(stageData[field.name]);
     });
 
-    currentConfig.noteGroups.forEach((group) => {
-      const notes = extractNotes(stageData[group.noteForClientKey]);
-      initialFormData[group.clientCommentKey] = notes.clientComment;
-    });
+    // Handle notes differently for commercial vs other modules
+    if (currentModule === "commercial") {
+      // For commercial, use separate noteForSystem and noteForClient fields
+      const { systemNote, clientComment } = extractNotes(
+        stageData.noteForSystem,
+        stageData.noteForClient
+      );
+      initialFormData.noteForSystem = systemNote;
+      initialFormData.noteForClient = clientComment;
+    } else {
+      // For other modules, use the existing note structure
+      currentConfig.noteGroups.forEach((group) => {
+        const notes = extractNotes(stageData[group.noteForClientKey]);
+        initialFormData[group.clientCommentKey] = notes.clientComment;
+      });
+    }
 
     console.log("Initial form data:", initialFormData);
     console.log("Initial statuses:", initialStatuses);
@@ -372,7 +362,7 @@ export default function Stage2({
     clientType,
     currentConfig.fields,
     currentConfig.noteGroups,
-    currentModule, // ADD THIS DEPENDENCY
+    currentModule,
   ]);
 
   const handleChange = (field, value) => {
@@ -437,17 +427,26 @@ export default function Stage2({
       console.log("Company:", company);
       console.log("Matter number:", matterNumber);
 
-      // handle all system notes and client comments dynamically
-      currentConfig.noteGroups.forEach((group) => {
-        const systemNote = generateSystemNote(group.id);
-        const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] =
-          `${systemNote} - ${clientComment}`.trim();
+      // Handle notes differently for commercial vs other modules
+      if (currentModule === "commercial") {
+        // For commercial, use separate noteForSystem and noteForClient
+        const noteForSystem = generateSystemNote("main");
+        const noteForClient = formData.noteForClient || "";
+        payload.noteForSystem = noteForSystem;
+        payload.noteForClient = noteForClient;
+      } else {
+        // For other modules, use the existing note structure
+        currentConfig.noteGroups.forEach((group) => {
+          const systemNote = generateSystemNote(group.id);
+          const clientComment = formData[group.clientCommentKey] || "";
+          payload[group.noteForClientKey] =
+            `${systemNote} - ${clientComment}`.trim();
 
-        // remove temporary fields
-        delete payload[group.systemNoteKey];
-        delete payload[group.clientCommentKey];
-      });
+          // remove temporary fields
+          delete payload[group.systemNoteKey];
+          delete payload[group.clientCommentKey];
+        });
+      }
 
       // status check
       const relevantFields = currentConfig.fields.filter((field) => {
@@ -566,44 +565,48 @@ export default function Stage2({
         )}
       </div>
 
-    <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-      {field.name === "agent" ? (
-        // ✅ Dropdown for agents
-        <select
-          name={field.name}
-          className={localStorage.getItem("role")!=="admin" ? "bg-gray-100 p-2 text-gray-500 rounded w-full" : "bg-white p-2 border rounded w-full"}
-          value={formData[field.name] || ""}
-          onChange={(e) => handleChange(field.name, e.target.value)}
-          disabled={localStorage.getItem("role")!=="admin"}
-        >
-          <option value="">Select Agent</option>
-          {user.map((agent) => (
-            <option key={agent._id} value={agent._id}>
-              {agent.displayName}
-            </option>
-          ))}
-        </select>
-      ) : (
-        // ✅ Radios for everything else
-        (["Yes", "No", "Processing","N/R"]).map((val) => (
-          <label
-            key={val}
-            className="flex items-center gap-2 text-sm md:text-base"
+      <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+        {field.name === "agent" ? (
+          // ✅ Dropdown for agents
+          <select
+            name={field.name}
+            className={
+              localStorage.getItem("role") !== "admin"
+                ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
+                : "bg-white p-2 border rounded w-full"
+            }
+            value={formData[field.name] || ""}
+            onChange={(e) => handleChange(field.name, e.target.value)}
+            disabled={localStorage.getItem("role") !== "admin"}
           >
-            <input
-              type="radio"
-              name={field.name}
-              value={val}
-              checked={
-                normalizeValue(formData[field.name] || "") ===
-                normalizeValue(val)
-              }
-              onChange={() => handleChange(field.name, val)}
-            />
-            {val}
-          </label>
-        ))
-      )}
+            <option value="">Select Agent</option>
+            {user.map((agent) => (
+              <option key={agent._id} value={agent._id}>
+                {agent.displayName}
+              </option>
+            ))}
+          </select>
+        ) : (
+          // ✅ Radios for everything else
+          ["Yes", "No", "Processing", "N/R"].map((val) => (
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
+              <input
+                type="radio"
+                name={field.name}
+                value={val}
+                checked={
+                  normalizeValue(formData[field.name] || "") ===
+                  normalizeValue(val)
+                }
+                onChange={() => handleChange(field.name, val)}
+              />
+              {val}
+            </label>
+          ))
+        )}
 
         {/* ✅ If the field has an associated date */}
         {field.hasDate && (
@@ -643,9 +646,33 @@ export default function Stage2({
     </div>
   );
 
+  const renderCommercialNotes = () => (
+    <div>
+      <div className="mt-5">
+        <label className="font-bold text-sm md:text-base mb-1 block">
+          System Note for Client
+        </label>
+        <input
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+          value={generateSystemNote("main")}
+        />
+      </div>
+      <div className="mt-5">
+        <label className="font-bold text-sm md:text-base mb-1 block">
+          Comment for Client
+        </label>
+        <textarea
+          className="w-full rounded p-2 bg-gray-100"
+          value={formData.noteForClient || ""}
+          onChange={(e) => handleChange("noteForClient", e.target.value)}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="overflow-y-auto">
-      {/* {currentConfig.fields.map(renderField)} */}
       {currentConfig.fields.map((field) => {
         // Conditionally render the "Obtain DA(Seller)" field
         if (
@@ -656,7 +683,11 @@ export default function Stage2({
         }
         return renderField(field);
       })}
-      {currentConfig.noteGroups.map(renderNoteGroup)}
+
+      {/* Render notes based on module */}
+      {currentModule === "commercial"
+        ? renderCommercialNotes()
+        : currentConfig.noteGroups.map(renderNoteGroup)}
 
       <div className="flex mt-10 justify-between">
         <Button
