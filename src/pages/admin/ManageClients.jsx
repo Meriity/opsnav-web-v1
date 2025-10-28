@@ -292,21 +292,21 @@ export default function ManageUsers() {
       }
 
       // Create notification
-      const notificationAPI = new NotificationAPI();
-      await notificationAPI.createNotification({
-        type: "client",
-        message: `${
-          currentModule === "commercial" ? "Project" : "Client"
-        } updated: ${selectedUser.name}`,
-        metadata: {
-          clientName: selectedUser.name,
-          clientId: selectedUser.clientId,
-          route:
-            currentModule === "commercial"
-              ? "/admin/view-clients"
-              : "/admin/manage-clients",
-        },
-      });
+      // const notificationAPI = new NotificationAPI();
+      // await notificationAPI.createNotification({
+      //   type: "client",
+      //   message: `${
+      //     currentModule === "commercial" ? "Project" : "Client"
+      //   } updated: ${selectedUser.name}`,
+      //   metadata: {
+      //     clientName: selectedUser.name,
+      //     clientId: selectedUser.clientId,
+      //     route:
+      //       currentModule === "commercial"
+      //         ? "/admin/view-clients"
+      //         : "/admin/manage-clients",
+      //   },
+      // });
 
       toast.success(
         `${

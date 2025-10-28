@@ -685,11 +685,20 @@ function Dashboard() {
             </p>
             <button
               className="mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
-              onClick={handleAddButtonClick}
+              onClick={() => setcreateuser(true)}
             >
               <img src={Plus} alt="" className="w-5" />
-              <span>{getAddButtonLabel()}</span>
+              <span>Add New Client</span>
             </button>
+            {localStorage.getItem("company") === "idg" && (
+              <button
+                className="ml-4 mt-4 px-4 py-2 bg-white rounded-md font-medium hover:bg-sky-100 transition inline-flex items-center gap-2"
+                onClick={() => setcreateOrder(true)}
+              >
+                <img src={Plus} alt="" className="w-5" />
+                <span>Add New Order</span>
+              </button>
+            )}
           </div>
 
           {/* Calendar */}
@@ -851,13 +860,10 @@ function Dashboard() {
 
       {/* Modals */}
       <CreateClientModal
-        createType={currentModule === "commercial" ? "project" : "client"}
-        companyName={company}
-        isOpen={createuser || createProject}
-        setIsOpen={() => {
-          setcreateuser(false);
-          setCreateProject(false);
-        }}
+        createType="client"
+        companyName={localStorage.getItem("company")}
+        isOpen={createuser}
+        setIsOpen={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
