@@ -313,11 +313,15 @@ export default function CreateClientModal({
         if (error.response?.status === 400) {
           // 400 might mean "already exists" in some APIs
           const message = error.response.data?.message || error.message || "";
-          return message.includes("exists") || message.includes("already");
+          const exists =
+            message.includes("exists") || message.includes("already");
+          console.log("400 error - client exists:", exists);
+          return exists;
         }
 
+        console.log("Other error - assuming client doesn't exist to be safe");
         // For other errors, be conservative and assume it exists
-        return true;
+        return false;
       }
     }
   };
@@ -626,19 +630,21 @@ export default function CreateClientModal({
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block mb-1 font-medium">
-                      Business Name*
-                    </label>
-                    <input
-                      type="text"
-                      name="businessName"
-                      value={formData.businessName || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
-                      required={isCommercial}
-                    />
-                  </div>
+                  {isCommercial && (
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Business Name*
+                      </label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={formData.businessName || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -756,127 +762,129 @@ export default function CreateClientModal({
                 </>
               )}
 
-            {/* IDG Client Fields */}
-            {isIdg && createType === "client" && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block mb-1 font-medium">Client ID</label>
-                    <input
-                      type="text"
-                      value={id.clientId}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100"
-                      disabled
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-1 font-medium">
-                      Client Name*
-                    </label>
-                    <input
-                      type="text"
-                      name="clientName"
-                      value={formData.clientName || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-1 font-medium">
-                      Password*
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
-                    />
+              {/* IDG Client Fields */}
+              {isIdg && createType === "client" && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Client ID
+                      </label>
+                      <input
+                        type="text"
+                        value={id.clientId}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100"
+                        disabled
+                      />
                     </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Client Name*
+                      </label>
+                      <input
+                        type="text"
+                        name="clientName"
+                        value={formData.clientName || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Password*
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block mb-1 font-medium">Contact*</label>
+                      <input
+                        type="text"
+                        name="contact"
+                        value={formData.contact || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">Email*</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <label className="block mb-1 font-medium">Contact*</label>
+                    <label className="block mb-1 font-medium">
+                      Billing Address*
+                    </label>
                     <input
                       type="text"
-                      name="contact"
-                      value={formData.contact || ""}
+                      name="billingAddress"
+                      value={formData.billingAddress || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block mb-1 font-medium">Email*</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">
-                    Billing Address*
-                  </label>
-                  <input
-                    type="text"
-                    name="billingAddress"
-                    value={formData.billingAddress || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block mb-1 font-medium">Country</label>
-                    <input
-                      type="text"
-                      name="country"
-                      value={formData.country || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-1 font-medium">Country</label>
+                      <input
+                        type="text"
+                        name="country"
+                        value={formData.country || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">State</label>
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.state || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">Postcode</label>
+                      <input
+                        type="text"
+                        name="postcode"
+                        value={formData.postcode || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">State</label>
+                    <label className="block mb-1 font-medium">ABN</label>
                     <input
                       type="text"
-                      name="state"
-                      value={formData.state || ""}
+                      name="abn"
+                      value={formData.abn || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                     />
                   </div>
-                  <div>
-                    <label className="block mb-1 font-medium">Postcode</label>
-                    <input
-                      type="text"
-                      name="postcode"
-                      value={formData.postcode || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">ABN</label>
-                  <input
-                    type="text"
-                    name="abn"
-                    value={formData.abn || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                  />
-                </div>
-              </>
-            )}
+                </>
+              )}
 
               {/* IDG ORDER FIELDS */}
               {isIdg && createType === "order" && (

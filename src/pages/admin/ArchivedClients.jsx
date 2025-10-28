@@ -160,6 +160,10 @@ export default function ArchivedClients() {
             .includes(lowercasedQuery) ||
           String(client.property_address || client.propertyAddress)
             .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.state).toLowerCase().includes(lowercasedQuery) ||
+          String(client.referral || client.referralName)
+            .toLowerCase()
             .includes(lowercasedQuery)
       );
     }

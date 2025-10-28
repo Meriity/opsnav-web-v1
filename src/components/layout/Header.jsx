@@ -5,11 +5,11 @@ import { Search } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
-import NotificationBell from "../ui/NotificationBell.jsx";
-import ModuleSwitcher from "../ui/ModuleSwitcher.jsx";
-import ModernModuleSwitcher from "../ui/ModernModuleSwitcher.jsx";
+// import NotificationBell from "../ui/NotificationBell.jsx";
+// import ModuleSwitcher from "../ui/ModuleSwitcher.jsx";
+// import ModernModuleSwitcher from "../ui/ModernModuleSwitcher.jsx";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
-import FloatingModuleSwitcher from "../ui/FloatingModuleSwitcher.jsx";
+// import FloatingModuleSwitcher from "../ui/FloatingModuleSwitcher.jsx";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -60,8 +60,25 @@ export default function Header() {
           : company === "idg"
           ? await api.getIDGSearchResult(value)
           : "";
-      setSearchResult(response);
-      console.log(response);
+
+      // If API doesn't support extended search, filter client-side
+      const lowercasedValue = value.toLowerCase();
+      const filteredResults = response.filter(
+        (item) =>
+          String(item.matterNumber || item.orderId)
+            .toLowerCase()
+            .includes(lowercasedValue) ||
+          String(item.clientName).toLowerCase().includes(lowercasedValue) ||
+          String(item.propertyAddress || item.property_address)
+            .toLowerCase()
+            .includes(lowercasedValue) ||
+          String(item.state).toLowerCase().includes(lowercasedValue) ||
+          String(item.referral || item.referralName)
+            .toLowerCase()
+            .includes(lowercasedValue)
+      );
+
+      setSearchResult(filteredResults);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
     } finally {
@@ -207,7 +224,7 @@ export default function Header() {
               )}
             </div>
           </div>
-            <NotificationBell />
+          {/* <NotificationBell /> */}
         </div>
       </div>
 

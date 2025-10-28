@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
+import CommercialAPI from "../../../api/commercialAPI";
 import ImageUploadField from "@/components/ui/ImageUploadField.jsx";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
@@ -63,23 +64,23 @@ const formConfig = {
   commercial: {
     fields: [
       {
-        name: "finalDocumentation",
-        label: "Final Documentation Review",
+        name: "employeesEntitlements",
+        label: "Employees Entitlements",
         type: "radio",
       },
       {
-        name: "clientSettlement",
-        label: "Client Settlement Statement",
+        name: "purchaseContracts",
+        label: "Purchase Contracts",
         type: "radio",
       },
       {
-        name: "disbursements",
-        label: "Disbursements Finalization",
+        name: "customerContracts",
+        label: "Customer Contracts",
         type: "radio",
       },
       {
-        name: "feesCalculation",
-        label: "Professional Fees Calculation",
+        name: "leaseAgreement",
+        label: "Lease Agreement",
         type: "radio",
       },
     ],
@@ -92,10 +93,10 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "finalDocumentation",
-          "clientSettlement",
-          "disbursements",
-          "feesCalculation",
+          "employeesEntitlements",
+          "purchaseContracts",
+          "customerContracts",
+          "leaseAgreement",
         ],
       },
     ],
@@ -113,7 +114,8 @@ const normalizeValue = (v) => {
 const getStatus = (value) => {
   const val = normalizeValue(value);
   if (!val) return "Not Completed";
-  if (["yes", "na", "n/a", "nr","cancelled","completed"].includes(val)) return "Completed";
+  if (["yes", "na", "n/a", "nr", "cancelled", "completed"].includes(val))
+    return "Completed";
   if (val === "no") return "Not Completed";
   if (["processing", "inprogress"].includes(val)) return "In Progress";
   return "Not Completed";
@@ -128,11 +130,11 @@ function bgcolor(status) {
   return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
-const extractNotes = (note = "") => {
-  const [systemNote = "", clientComment = ""] = (note || "")
-    .split(" - ")
-    .map((str) => str.trim());
-  return { systemNote, clientComment };
+const extractNotes = (noteForSystem = "", noteForClient = "") => {
+  return {
+    systemNote: noteForSystem || "",
+    clientComment: noteForClient || "",
+  };
 };
 
 export default function Stage4({
@@ -143,6 +145,7 @@ export default function Stage4({
 }) {
   const stage = 4;
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
   const originalData = useRef({});
 
@@ -152,8 +155,29 @@ export default function Stage4({
   const [preview, setPreview] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [fileName, setfileName] = useState("");
-  // Add a trigger
-  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
+  const [noteForSystem, setNoteForSystem] = useState("");
+  const [noteForClient, setNoteForClient] = useState("");
+
+  // Get company and module
+  const company = localStorage.getItem("company") || "vkl";
+  const currentModule = localStorage.getItem("currentModule");
+
+  // FIXED: Proper field configuration logic - check module first
+  let currentConfig;
+  if (currentModule === "commercial") {
+    currentConfig = formConfig.commercial;
+  } else if (company === "vkl") {
+    currentConfig = formConfig.vkl;
+  } else if (company === "idg") {
+    currentConfig = formConfig.idg;
+  } else {
+    currentConfig = formConfig.vkl; // default fallback
+  }
+
+  console.log("=== STAGE 4 CONFIG ===");
+  console.log("Company:", company);
+  console.log("Current Module:", currentModule);
+  console.log("Selected Config:", currentConfig);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -180,6 +204,7 @@ export default function Stage4({
     const prefixToRemove = "idg-stage-images/";
     return fullPath.replace(prefixToRemove, "");
   }
+
   const handleImagedelete = async (filename) => {
     setPreview(null);
     setShowConfirmModal(false);
@@ -193,9 +218,6 @@ export default function Stage4({
     //   console.error(e);
     // }
   };
-
-  const company = localStorage.getItem("company") || "vkl";
-  const currentConfig = formConfig[company] || formConfig.vkl;
 
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
@@ -214,14 +236,6 @@ export default function Stage4({
         const rawValue = formData[field.name] || "";
         const value = normalizeValue(rawValue);
 
-        // Special case: skip obtainDaSeller if clientType is not seller
-        if (
-          field.name === "obtainDaSeller" &&
-          clientType?.toLowerCase() !== "seller"
-        ) {
-          return false;
-        }
-
         if (field.type === "text") {
           // text fields count as completed if not empty
           return value === "";
@@ -239,8 +253,12 @@ export default function Stage4({
   useEffect(() => {
     if (!data) return;
 
+    console.log("=== STAGE 4 INITIALIZATION ===");
+    console.log("Using config:", currentConfig);
+
     const initialFormData = {};
     const initialStatuses = {};
+
     currentConfig.fields.forEach((field) => {
       if (field.type === "number") {
         const rawPrice = data[field.name];
@@ -256,19 +274,33 @@ export default function Stage4({
       }
     });
 
-    currentConfig.noteGroups.forEach((group) => {
-      const notes = extractNotes(data[group.noteForClientKey]);
-      initialFormData[group.clientCommentKey] = notes.clientComment;
-    });
+    // Handle notes differently for commercial vs other modules
+    if (currentModule === "commercial") {
+      const { systemNote, clientComment } = extractNotes(
+        data.noteForSystem,
+        data.noteForClient
+      );
+      setNoteForSystem(systemNote);
+      setNoteForClient(clientComment);
+    } else {
+      currentConfig.noteGroups.forEach((group) => {
+        const notes = extractNotes(data[group.noteForClientKey]);
+        initialFormData[group.clientCommentKey] = notes.clientComment;
+      });
+    }
 
     setFormData(initialFormData);
     setStatuses(initialStatuses);
+
     if (company === "idg") {
       setPreview(data?.images[data?.images?.length - 1]?.url || null);
       setfileName(data?.images[0]?.filename || " ");
     }
+
     originalData.current = initialFormData;
-  }, [data, reloadTrigger, company]);
+
+    console.log("Initialized form data:", initialFormData);
+  }, [data, reloadTrigger, company, currentModule, currentConfig]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
@@ -286,25 +318,43 @@ export default function Stage4({
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
   };
-  const isChanged = () =>
-    JSON.stringify(formData) !== JSON.stringify(originalData.current);
+
+  const isChanged = () => {
+    const currentSystemNote = generateSystemNote("main");
+
+    if (currentModule === "commercial") {
+      return (
+        JSON.stringify(formData) !== JSON.stringify(originalData.current) ||
+        noteForSystem !== (data?.noteForSystem || "") ||
+        noteForClient !== (data?.noteForClient || "")
+      );
+    } else {
+      return JSON.stringify(formData) !== JSON.stringify(originalData.current);
+    }
+  };
 
   async function handleSave() {
   if (!isChanged() || isSaving) return;
   setIsSaving(true);
 
-  try {
-    const company = localStorage.getItem("company");
-    const currentModule = localStorage.getItem("currentModule");
-    let payload = { ...formData };
+    try {
+      let payload = { ...formData };
 
-    // --- Combine notes ---
-    currentConfig.noteGroups.forEach((group) => {
-      const systemNote = generateSystemNote(group.id);
-      const clientComment = formData[group.clientCommentKey] || "";
-      payload[group.noteForClientKey] = `${systemNote} - ${clientComment}`.trim();
-      delete payload[group.clientCommentKey];
-    });
+      // Handle notes differently for commercial vs other modules
+      if (currentModule === "commercial") {
+        // For commercial, use separate note fields
+        payload.noteForSystem = noteForSystem;
+        payload.noteForClient = noteForClient;
+      } else {
+        // For other modules, use combined note structure
+        currentConfig.noteGroups.forEach((group) => {
+          const systemNote = generateSystemNote(group.id);
+          const clientComment = formData[group.clientCommentKey] || "";
+          payload[group.noteForClientKey] =
+            `${systemNote} - ${clientComment}`.trim();
+          delete payload[group.clientCommentKey];
+        });
+      }
 
     // --- Convert number fields properly ---
     currentConfig.fields.forEach((field) => {
@@ -314,78 +364,105 @@ export default function Stage4({
       }
     });
 
-    // --- API call based on company/module ---
-    if (currentModule === "commercial") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStage(payload.matterNumber, 4, payload);
-    } else if (company === "vkl") {
-      payload.matterNumber = matterNumber;
-      await api.upsertStageFour(payload);
-    } else if (company === "idg") {
-      payload.orderId = matterNumber;
-      await api.upsertIDGStages(payload.orderId, 4, payload);
-    }
+      console.log("=== SAVE DEBUG ===");
+      console.log("Current module:", currentModule);
+      console.log("Company:", company);
+      console.log("Matter number:", matterNumber);
+      console.log("Payload:", payload);
+
+      // API CALL SECTION
+      if (currentModule === "commercial") {
+        console.log("Using Commercial API for stage 4");
+        await commercialApi.upsertStage(4, matterNumber, payload);
+      } else if (company === "vkl") {
+        console.log("Using VKL API for stage 4");
+        payload.matterNumber = matterNumber;
+        await api.upsertStageFour(payload);
+      } else if (company === "idg") {
+        console.log("Using IDG API for stage 4");
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 4, payload);
+      }
+
+      console.log("API call successful");
 
     // --- Update local state & reload ---
     originalData.current = { ...formData };
     setReloadTrigger((prev) => !prev);
 
-    // 🔥 Trigger table refresh (Zustand)
-    reloadArchivedClients();
+      toast.success("Stage 4 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+      });
+    } catch (err) {
+      console.error("=== SAVE ERROR ===");
+      console.error("Failed to save Stage 4:", err);
+      console.error("Error response:", err.response);
+      console.error("Error message:", err.message);
 
-    toast.success("Stage 4 saved successfully!", {
-      position: "top-right",
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
-    });
-  } catch (err) {
-    console.error("❌ Failed to save Stage 4:", err);
-    toast.error("Failed to save Stage 4. Please try again.");
-  } finally {
-    setIsSaving(false);
+      let errorMessage = "Failed to save Stage 4. Please try again.";
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   }
-}
 
   const renderField = (field) => {
     switch (field.type) {
       case "radio":
-        return <div key={field.name} className="mt-5">
-          <div className="flex gap-4 items-center justify-between mb-2">
-            <label className="block mb-1 text-sm md:text-base font-bold">
-              {field.label}
-            </label>
-            <div
-              className={`w-[90px] h-[18px] ${bgcolor(statuses[field.name])} flex items-center justify-center rounded-4xl`}
-            >
-              <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                {statuses[field.name] || "Not Completed"}
-              </p>
+        return (
+          <div key={field.name} className="mt-5">
+            <div className="flex gap-4 items-center justify-between mb-2">
+              <label className="block mb-1 text-sm md:text-base font-bold">
+                {field.label}
+              </label>
+              <div
+                className={`w-[90px] h-[18px] ${bgcolor(
+                  statuses[field.name]
+                )} flex items-center justify-center rounded-4xl`}
+              >
+                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                  {statuses[field.name] || "Not Completed"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
+              {(field.name !== "closeOrder"
+                ? ["Yes", "No", "Processing", "N/R"]
+                : ["Completed", "Cancelled"]
+              ).map((val) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 text-sm md:text-base"
+                >
+                  <input
+                    type="radio"
+                    name={field.name}
+                    value={val}
+                    checked={
+                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(val)
+                    }
+                    onChange={() => handleChange(field.name, val)}
+                  />
+                  {val}
+                </label>
+              ))}
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-            {(field.name !== "closeOrder"
-              ? ["Yes", "No", "Processing", "N/R"]
-              : ["Completed", "Cancelled"]
-            ).map((val) => (
-              <label key={val} className="flex items-center gap-2 text-sm md:text-base">
-                <input
-                  type="radio"
-                  name={field.name}
-                  value={val}
-                  checked={
-                    normalizeValue(formData[field.name]) === normalizeValue(val)
-                  }
-                  onChange={() => handleChange(field.name, val)}
-                />
-                {val}
-              </label>
-            ))}
-          </div>
-        </div>
+        );
 
       case "number":
         return (
@@ -426,7 +503,7 @@ export default function Stage4({
             <div className="relative w-full">
               {!preview ? (
                 <label
-                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition border-gray-300 bg-gray-50 hover:bg-gray-100 h-120`}
+                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition border-gray-300 bg-gray-50 hover:bg-gray-100 `}
                 >
                   <CloudArrowUpIcon className="w-10 h-10 text-gray-400 hover:text-[#00AEEF]" />
                   <p className="mt-2 text-sm text-gray-500">
@@ -477,27 +554,6 @@ export default function Stage4({
           </div>
         );
 
-      //     <div className="w-full">
-      //         <label className="block mb-1 text-sm md:text-base font-bold">
-      //             {field.label}
-      //         </label>
-      //         <input
-      //             type="file"
-      //             accept="image/*"
-      //             // onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
-      //             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
-      //         />
-      //         {/*/!* Display current image if it exists *!/*/}
-      //         {/*{formState.completionPhotos && (*/}
-      //         {/*    <div className="mt-2">*/}
-      //         {/*        <p className="text-xs font-semibold">Current Photo:</p>*/}
-      //         {/*        <a href={"/"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">*/}
-      //         {/*            View Uploaded Photo*/}
-      //         {/*        </a>*/}
-      //         {/*    </div>*/}
-      //         {/*)}*/}
-      //     </div>
-
       default:
         return null;
     }
@@ -529,10 +585,39 @@ export default function Stage4({
     </div>
   );
 
+  const renderCommercialNotes = () => (
+    <div>
+      <div className="mt-5">
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          System Note for Client
+        </label>
+        <textarea
+          value={noteForSystem}
+          onChange={(e) => setNoteForSystem(e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+      <div className="mt-5">
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          Comment for Client
+        </label>
+        <textarea
+          value={noteForClient}
+          onChange={(e) => setNoteForClient(e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="overflow-y-auto">
       {currentConfig.fields.map(renderField)}
-      {currentConfig.noteGroups.map(renderNoteGroup)}
+
+      {/* Render notes based on module */}
+      {currentModule === "commercial"
+        ? renderCommercialNotes()
+        : currentConfig.noteGroups.map(renderNoteGroup)}
 
       <div className="flex mt-10 justify-between">
         <Button

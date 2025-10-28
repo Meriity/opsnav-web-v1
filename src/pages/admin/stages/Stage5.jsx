@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
+import CommercialAPI from "../../../api/commercialAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
@@ -29,8 +30,6 @@ const formConfig = {
         name: "settlementNotification",
         label: "Settlement Notification",
         type: "radio",
-        // hasDate: true,
-        // dateFieldName: "settlementNotificationDate",
       },
       { name: "council", label: "Council", type: "text" },
     ],
@@ -91,23 +90,28 @@ const formConfig = {
   commercial: {
     fields: [
       {
-        name: "finalReview",
-        label: "Final Matter Review",
+        name: "statementOfAdjustment",
+        label: "Statement of Adjustment",
         type: "radio",
       },
       {
-        name: "clientFeedback",
-        label: "Client Feedback Collection",
+        name: "contractPrice",
+        label: "Contract Price",
+        type: "number",
+      },
+      {
+        name: "liquorLicence",
+        label: "Liquor Licence",
         type: "radio",
       },
       {
-        name: "fileAudit",
-        label: "File Audit and Compliance",
+        name: "transferBusinessName",
+        label: "Transfer Business Name",
         type: "radio",
       },
       {
-        name: "knowledgeManagement",
-        label: "Knowledge Management",
+        name: "leaseTransfer",
+        label: "Lease Transfer",
         type: "radio",
       },
     ],
@@ -120,10 +124,10 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-          "finalReview",
-          "clientFeedback",
-          "fileAudit",
-          "knowledgeManagement",
+          "statementOfAdjustment",
+          "liquorLicence",
+          "transferBusinessName",
+          "leaseTransfer",
         ],
       },
     ],
@@ -158,11 +162,11 @@ function bgcolor(status) {
   return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
-const extractNotes = (note = "") => {
-  const [systemNote = "", clientComment = ""] = (note || "")
-    .split(" - ")
-    .map((s) => s.trim());
-  return { systemNote, clientComment };
+const extractNotes = (noteForSystem = "", noteForClient = "") => {
+  return {
+    systemNote: noteForSystem || "",
+    clientComment: noteForClient || "",
+  };
 };
 
 export default function Stage5({
@@ -173,15 +177,36 @@ export default function Stage5({
 }) {
   const stage = 5;
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
   const originalData = useRef({});
 
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [noteForSystem, setNoteForSystem] = useState("");
+  const [noteForClient, setNoteForClient] = useState("");
 
+  // Get company and module
   const company = localStorage.getItem("company") || "vkl";
-  const currentConfig = formConfig[company] || formConfig.vkl;
+  const currentModule = localStorage.getItem("currentModule");
+
+  // FIXED: Proper field configuration logic - check module first
+  let currentConfig;
+  if (currentModule === "commercial") {
+    currentConfig = formConfig.commercial;
+  } else if (company === "vkl") {
+    currentConfig = formConfig.vkl;
+  } else if (company === "idg") {
+    currentConfig = formConfig.idg;
+  } else {
+    currentConfig = formConfig.vkl; // default fallback
+  }
+
+  console.log("=== STAGE 5 CONFIG ===");
+  console.log("Company:", company);
+  console.log("Current Module:", currentModule);
+  console.log("Selected Config:", currentConfig);
 
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
@@ -189,7 +214,7 @@ export default function Stage5({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "na", "n/a", "nr"]); // considered complete
+    const greenValues = new Set(["yes", "na", "n/a", "nr"]);
 
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
@@ -198,7 +223,6 @@ export default function Stage5({
     const incomplete = fieldsToCheck
       .filter((field) => {
         const value = normalizeValue(formData[field.name] || "");
-        // anything not green is incomplete
         return !greenValues.has(value);
       })
       .map((field) => field.label);
@@ -210,11 +234,20 @@ export default function Stage5({
   useEffect(() => {
     if (!data) return;
 
+    console.log("=== STAGE 5 INITIALIZATION ===");
+    console.log("Using config:", currentConfig);
+
     const initialFormData = {};
     const initialStatuses = {};
 
     currentConfig.fields.forEach((field) => {
-      if (field.type === "radio") {
+      if (field.type === "number") {
+        const rawPrice = data[field.name];
+        initialFormData[field.name] =
+          typeof rawPrice === "object" && rawPrice?.$numberDecimal
+            ? rawPrice.$numberDecimal
+            : rawPrice?.toString() || "";
+      } else if (field.type === "radio") {
         initialFormData[field.name] = normalizeValue(data[field.name] || "");
         initialStatuses[field.name] = getStatus(initialFormData[field.name]);
       } else if (field.type === "text") {
@@ -230,19 +263,27 @@ export default function Stage5({
       }
     });
 
-    currentConfig.noteGroups.forEach((group) => {
-      const notes = extractNotes(data[group.noteForClientKey]);
-      initialFormData[group.clientCommentKey] = notes.clientComment;
-    });
+    // Handle notes differently for commercial vs other modules
+    if (currentModule === "commercial") {
+      const { systemNote, clientComment } = extractNotes(
+        data.noteForSystem,
+        data.noteForClient
+      );
+      setNoteForSystem(systemNote);
+      setNoteForClient(clientComment);
+    } else {
+      currentConfig.noteGroups.forEach((group) => {
+        const notes = extractNotes(data[group.noteForClientKey]);
+        initialFormData[group.clientCommentKey] = notes.clientComment;
+      });
+    }
 
     setFormData(initialFormData);
     setStatuses(initialStatuses);
     originalData.current = initialFormData;
-    currentConfig.noteGroups.forEach((group) => {
-      originalData.current[group.clientCommentKey] =
-        initialFormData[group.clientCommentKey] || "";
-    });
-  }, [data, reloadTrigger, company]);
+
+    console.log("Initialized form data:", initialFormData);
+  }, [data, reloadTrigger, company, currentModule, currentConfig]);
 
   const handleChange = (field, value) => {
     let processedValue = value;
@@ -263,7 +304,17 @@ export default function Stage5({
   };
 
   const isChanged = () => {
-    return JSON.stringify(formData) !== JSON.stringify(originalData.current);
+    const currentSystemNote = generateSystemNote("main");
+
+    if (currentModule === "commercial") {
+      return (
+        JSON.stringify(formData) !== JSON.stringify(originalData.current) ||
+        noteForSystem !== (data?.noteForSystem || "") ||
+        noteForClient !== (data?.noteForClient || "")
+      );
+    } else {
+      return JSON.stringify(formData) !== JSON.stringify(originalData.current);
+    }
   };
 
   async function handleSave() {
@@ -271,29 +322,53 @@ export default function Stage5({
     setIsSaving(true);
 
     try {
-      const company = localStorage.getItem("company");
-      const currentModule = localStorage.getItem("currentModule");
       let payload = { ...formData };
 
-      // handle note groups
-      currentConfig.noteGroups.forEach((group) => {
-        const systemNote = generateSystemNote(group.id);
-        const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] =
-          `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey];
+      // Handle notes differently for commercial vs other modules
+      if (currentModule === "commercial") {
+        // For commercial, use separate note fields
+        payload.noteForSystem = noteForSystem;
+        payload.noteForClient = noteForClient;
+      } else {
+        // For other modules, use combined note structure
+        currentConfig.noteGroups.forEach((group) => {
+          const systemNote = generateSystemNote(group.id);
+          const clientComment = formData[group.clientCommentKey] || "";
+          payload[group.noteForClientKey] =
+            `${systemNote} - ${clientComment}`.trim();
+          delete payload[group.clientCommentKey];
+        });
+      }
+
+      // handle number fields
+      currentConfig.fields.forEach((field) => {
+        if (field.type === "number") {
+          payload[field.name] =
+            payload[field.name] === "" ? null : Number(payload[field.name]);
+        }
       });
 
+      console.log("=== SAVE DEBUG ===");
+      console.log("Current module:", currentModule);
+      console.log("Company:", company);
+      console.log("Matter number:", matterNumber);
+      console.log("Payload:", payload);
+
+      // API CALL SECTION
       if (currentModule === "commercial") {
-        payload.matterNumber = matterNumber;
-        await api.upsertStage(payload.matterNumber, 5, payload);
+        console.log("Using Commercial API for stage 5");
+        await commercialApi.upsertStage(5, matterNumber, payload);
       } else if (company === "vkl") {
+        console.log("Using VKL API for stage 5");
         payload.matterNumber = matterNumber;
         await api.upsertStageFive(payload);
       } else if (company === "idg") {
+        console.log("Using IDG API for stage 5");
         payload.orderId = matterNumber;
         await api.upsertIDGStages(payload.orderId, 5, payload);
       }
+
+      console.log("API call successful");
 
       // update original data
       originalData.current = { ...formData };
@@ -309,7 +384,19 @@ export default function Stage5({
         progress: undefined,
       });
     } catch (err) {
+      console.error("=== SAVE ERROR ===");
       console.error("Failed to save Stage 5:", err);
+      console.error("Error response:", err.response);
+      console.error("Error message:", err.message);
+
+      let errorMessage = "Failed to save Stage 5. Please try again.";
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -335,8 +422,6 @@ export default function Stage5({
               </div>
             </div>
 
-            {/* <div className="flex gap-4 justify-between flex-wrap items-center mb-3"> */}
-            {/* tight spacing of every fields*/}
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
                 <label
@@ -368,6 +453,21 @@ export default function Stage5({
                 />
               )}
             </div>
+          </div>
+        );
+      case "number":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
           </div>
         );
       case "text":
@@ -425,10 +525,39 @@ export default function Stage5({
     </div>
   );
 
+  const renderCommercialNotes = () => (
+    <div>
+      <div className="mt-5">
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          System Note for Client
+        </label>
+        <textarea
+          value={noteForSystem}
+          onChange={(e) => setNoteForSystem(e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+      <div className="mt-5">
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          Comment for Client
+        </label>
+        <textarea
+          value={noteForClient}
+          onChange={(e) => setNoteForClient(e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="overflow-y-auto">
       {currentConfig.fields.map(renderField)}
-      {currentConfig.noteGroups.map(renderNoteGroup)}
+
+      {/* Render notes based on module */}
+      {currentModule === "commercial"
+        ? renderCommercialNotes()
+        : currentConfig.noteGroups.map(renderNoteGroup)}
 
       <div className="flex mt-10 justify-between">
         <Button

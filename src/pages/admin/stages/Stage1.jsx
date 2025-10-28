@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
+import CommercialAPI from "../../../api/commercialAPI"; // Import CommercialAPI
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -71,15 +72,10 @@ const formConfig = {
     },
   ],
   commercial: [
+    { name: "referral", label: "Referral", type: "text" },
     {
-      name: "clientEngagement",
-      label: "Client Engagement",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
-    {
-      name: "scopeReview",
-      label: "Scope Review",
+      name: "retainer",
+      label: "Retainer",
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
     },
@@ -90,29 +86,23 @@ const formConfig = {
       options: ["Yes", "No", "Processing", "N/R"],
     },
     {
-      name: "feeProposal",
-      label: "Fee Proposal",
+      name: "quoteType",
+      label: "Quote Type",
       type: "radio",
-      options: ["Variable", "Fixed"],
+      options: ["Fixed", "Variable"],
     },
-    {
-      name: "proposalAmount",
-      label: "Proposal Amount (incl GST)",
-      type: "text",
-    },
-    {
-      name: "conflictCheck",
-      label: "Conflict Check",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
+    { name: "quoteAmount", label: "Quote Amount (incl GST)", type: "text" },
   ],
 };
 
 // Common fields for all clients
 const commonFields = [
-  { name: "systemNote", label: "System note for client", type: "system-note" },
-  { name: "clientComment", label: "Comment for client", type: "textarea" },
+  {
+    name: "noteForSystem",
+    label: "System note for client",
+    type: "system-note",
+  },
+  { name: "noteForClient", label: "Comment for client", type: "textarea" },
 ];
 
 // Admin-only fields for different modules
@@ -130,19 +120,7 @@ const adminFields = {
       type: "text",
     },
   ],
-  commercial: [
-    {
-      name: "budgetApproval",
-      label: "Budget Approval",
-      type: "radio",
-      options: ["Approved", "Pending", "Rejected"],
-    },
-    {
-      name: "budgetAmount",
-      label: "Budget Amount",
-      type: "text",
-    },
-  ],
+  commercial: [],
   vkl: [], // No additional admin fields for VKL
 };
 
@@ -159,6 +137,7 @@ export default function Stage1({
   console.log(data);
   const stage = 1;
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI(); // Initialize CommercialAPI
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
@@ -231,11 +210,11 @@ export default function Stage1({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
-  function extractNotes(note = "") {
-    const [systemNote = "", clientComment = ""] = note
-      .split(" - ")
-      .map((str) => str.trim());
-    return { systemNote, clientComment };
+  function extractNotes(noteForSystem = "", noteForClient = "") {
+    return {
+      systemNote: noteForSystem || "",
+      clientComment: noteForClient || "",
+    };
   }
 
   const generateSystemNote = () => {
@@ -279,7 +258,10 @@ export default function Stage1({
   useEffect(() => {
     if (!data) return;
 
-    const { systemNote, clientComment } = extractNotes(data.noteForClient);
+    const { systemNote, clientComment } = extractNotes(
+      data.noteForSystem,
+      data.noteForClient
+    );
     const initialFormData = {};
     const initialStatuses = {};
 
@@ -305,8 +287,8 @@ export default function Stage1({
       }
     });
 
-    initialFormData.systemNote = systemNote;
-    initialFormData.clientComment = clientComment;
+    initialFormData.noteForSystem = systemNote;
+    initialFormData.noteForClient = clientComment;
 
     setFormData(initialFormData);
     setStatuses(initialStatuses);
@@ -339,43 +321,53 @@ export default function Stage1({
     setIsSaving(true);
 
     try {
-      const systemNote = generateSystemNote();
-      let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
+      const noteForSystem = generateSystemNote();
+      const noteForClient = formData.noteForClient || "";
 
       const company = localStorage.getItem("company");
       const currentModule = localStorage.getItem("currentModule");
+
       let payload = {
         ...formData,
       };
 
-      // Set the appropriate identifier based on module
       if (currentModule === "commercial") {
-        payload.matterNumber = matterNumber; // Commercial uses matterNumber
+        payload.matterNumber = matterNumber;
+        payload.noteForSystem = noteForSystem;
         payload.noteForClient = noteForClient;
       } else if (company === "vkl") {
         payload.matterNumber = matterNumber;
-        payload.noteForClient = noteForClient;
+
+        const combinedNoteForClient =
+          `${noteForSystem} - ${noteForClient}`.trim();
+        payload.noteForClient = combinedNoteForClient;
       } else if (company === "idg") {
-        payload.orderId = matterNumber; // IDG uses orderId
-        payload.noteForClient = noteForClient;
+        payload.orderId = matterNumber;
+        const combinedNoteForClient =
+          `${noteForSystem} - ${noteForClient}`.trim();
+        payload.noteForClient = combinedNoteForClient;
       }
 
       console.log(`${currentModule || company} payload:`, payload);
 
-      // remove temporary fields
-      delete payload.systemNote;
-      delete payload.clientComment;
+      if (currentModule !== "commercial") {
+        delete payload.noteForSystem;
+      }
 
-      // Use appropriate API method based on module
       if (currentModule === "commercial") {
-        await api.upsertStageOne(payload); // Commercial uses same as VKL
+        console.log("Using Commercial API for stage 1");
+        await commercialApi.upsertStage(1, matterNumber, payload);
       } else if (company === "vkl") {
+        console.log("Using VKL API for stage 1");
         await api.upsertStageOne(payload);
       } else if (company === "idg") {
+        console.log("Using IDG API for stage 1");
         await api.upsertIDGStages(payload.orderId, 1, payload);
       }
 
-      originalData.current = { ...formData, systemNote };
+      console.log("API call successful");
+
+      originalData.current = { ...formData, noteForSystem };
       setReloadTrigger((prev) => !prev);
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
@@ -387,8 +379,15 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
-      console.error("Failed to update stage 1:", error);
-      toast.error("Failed to save stage 1");
+
+      let errorMessage = "Failed to save stage 1. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
