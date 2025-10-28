@@ -181,15 +181,16 @@ const ViewClients = () => {
     ];
   } else if (localStorage.getItem("company") === "idg") {
     columns = [
-      { key: "clientId", title: "Client ID", width: "10%" },
+      { key: "clientId", title: "Client ID", width: "8%" },
       { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "10%" },
-      { key: "client_type", title: "Order Type", width: "15%" },
-      { key: "order_date", title: "Order Date", width: "10%" },
-      { key: "delivery_date", title: "Delivery Date", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "9%" },
+      { key: "client_type", title: "Order Type", width: "12%" },
+      { key: "allocatedUser", title: "Allocated User", width: "10%" },
+      { key: "order_date", title: "Order Date", width: "12%" },
+      { key: "delivery_date", title: "Delivery Date", width: "12%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "15%" },
-      { key: "postcode", title: "Post Code", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "10%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" },
     ];
   }
 

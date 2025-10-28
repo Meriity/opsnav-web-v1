@@ -487,13 +487,11 @@ export default function ArchivedClients() {
                             <button
                               onClick={() => setOpenExcel(true)}
                               disabled={isExporting}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              } ${
-                                isExporting
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                } ${isExporting
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                              }`}
+                                }`}
                             >
                               {isExporting ? "Exporting..." : "Export"}
                             </button>
@@ -503,9 +501,8 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                }`}
                             >
                               Filter
                             </button>
@@ -515,9 +512,8 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                }`}
                             >
                               Select Date Range
                             </button>
@@ -563,8 +559,8 @@ export default function ArchivedClients() {
                           {currentModule === "commercial"
                             ? "Project Date:"
                             : company === "vkl"
-                            ? "Matter Date:"
-                            : "Order Date"}
+                              ? "Matter Date:"
+                              : "Order Date"}
                         </span>
                         {client.matter_date || client.orderDate}
                       </div>
@@ -605,9 +601,8 @@ export default function ArchivedClients() {
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial" ? "projects" : "clients"
-        }.`}
+        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+          }.`}
         handelSubmitFun={(from, to) => {
           handleDataFilter(from, to);
           setShowSettlementDateModal(false);

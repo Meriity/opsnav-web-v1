@@ -22,8 +22,6 @@ const ViewClientsTable = ({
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
-  console.log(data);
-  console.log(columns);
   const stageColorMap = {
     green: "green",
     red: "red",
@@ -109,10 +107,6 @@ const ViewClientsTable = ({
           </thead>
           <tbody>
             {currentData.map((item) => {
-              // 🔍 Debug log for each row
-              console.log("Row data:", item);
-              console.log("Row keys:", Object.keys(item));
-
               return (
                 <tr
                   key={item.id}

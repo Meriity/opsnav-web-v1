@@ -7,6 +7,7 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
+import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
 const formConfig = {
   vkl: {
@@ -140,7 +141,6 @@ export default function Stage4({
   reloadTrigger,
   setReloadTrigger,
 }) {
-  console.log("Stage 4 data:", data);
   const stage = 4;
   const api = new ClientAPI();
   const { matterNumber } = useParams();
@@ -152,6 +152,8 @@ export default function Stage4({
   const [preview, setPreview] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [fileName, setfileName] = useState("");
+  // Add a trigger
+  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -288,62 +290,64 @@ export default function Stage4({
     JSON.stringify(formData) !== JSON.stringify(originalData.current);
 
   async function handleSave() {
-    if (!isChanged() || isSaving) return;
-    setIsSaving(true);
+  if (!isChanged() || isSaving) return;
+  setIsSaving(true);
 
-    try {
-      const company = localStorage.getItem("company");
-      const currentModule = localStorage.getItem("currentModule");
-      let payload = { ...formData };
+  try {
+    const company = localStorage.getItem("company");
+    const currentModule = localStorage.getItem("currentModule");
+    let payload = { ...formData };
 
-      // handle note groups
-      currentConfig.noteGroups.forEach((group) => {
-        const systemNote = generateSystemNote(group.id);
-        const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] =
-          `${systemNote} - ${clientComment}`.trim();
-        delete payload[group.clientCommentKey];
-      });
+    // --- Combine notes ---
+    currentConfig.noteGroups.forEach((group) => {
+      const systemNote = generateSystemNote(group.id);
+      const clientComment = formData[group.clientCommentKey] || "";
+      payload[group.noteForClientKey] = `${systemNote} - ${clientComment}`.trim();
+      delete payload[group.clientCommentKey];
+    });
 
-      // handle number fields
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
-        }
-      });
-
-      if (currentModule === "commercial") {
-        payload.matterNumber = matterNumber;
-        await api.upsertStage(payload.matterNumber, 4, payload);
-      } else if (company === "vkl") {
-        payload.matterNumber = matterNumber;
-        await api.upsertStageFour(payload);
-      } else if (company === "idg") {
-        console.log(payload);
-        payload.orderId = matterNumber;
-        await api.upsertIDGStages(payload.orderId, 4, payload);
+    // --- Convert number fields properly ---
+    currentConfig.fields.forEach((field) => {
+      if (field.type === "number") {
+        payload[field.name] =
+          payload[field.name] === "" ? null : Number(payload[field.name]);
       }
+    });
 
-      // update original data
-      originalData.current = { ...formData };
-      setReloadTrigger((prev) => !prev);
-
-      toast.success("Stage 4 Saved Successfully!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        progress: undefined,
-      });
-    } catch (err) {
-      console.error("Failed to save Stage 4:", err);
-    } finally {
-      setIsSaving(false);
+    // --- API call based on company/module ---
+    if (currentModule === "commercial") {
+      payload.matterNumber = matterNumber;
+      await api.upsertStage(payload.matterNumber, 4, payload);
+    } else if (company === "vkl") {
+      payload.matterNumber = matterNumber;
+      await api.upsertStageFour(payload);
+    } else if (company === "idg") {
+      payload.orderId = matterNumber;
+      await api.upsertIDGStages(payload.orderId, 4, payload);
     }
+
+    // --- Update local state & reload ---
+    originalData.current = { ...formData };
+    setReloadTrigger((prev) => !prev);
+
+    // 🔥 Trigger table refresh (Zustand)
+    reloadArchivedClients();
+
+    toast.success("Stage 4 saved successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+    });
+  } catch (err) {
+    console.error("❌ Failed to save Stage 4:", err);
+    toast.error("Failed to save Stage 4. Please try again.");
+  } finally {
+    setIsSaving(false);
   }
+}
 
   const renderField = (field) => {
     switch (field.type) {
