@@ -11,6 +11,8 @@ export const COMMERCIAL_ENDPOINTS = {
   CLIENT_DATES: "/user/clients/dates",
   CLIENT_BY_ID: "/user/clients", // Use with /:id
 
+  CLIENT_ALL_DATA: "/clients/alldata", // Use with /:matterNumber
+
   // Stage Operations
   STAGE_ONE: "/clients/stage-one",
   STAGE_ONE_BY_ID: "/clients/stage-one", // Use with /:matterNumber
