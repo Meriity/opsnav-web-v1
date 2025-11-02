@@ -212,17 +212,16 @@ export default function Stage4({
   }
 
   const handleImagedelete = async (filename) => {
-    setPreview(null);
-    setShowConfirmModal(false);
-    // try {
-    //   console.log(matterNumber);
-    //   console.log(getCleanImageName(fileName));
-    //   const response = await api.deleteImageForOrder(matterNumber, getCleanImageName(filename));
-    //   console.log(response);
-    // }
-    // catch (e) {
-    //   console.error(e);
-    // }
+    
+    try {
+      console.log(matterNumber);
+      const response = await api.deleteImageForOrder(matterNumber);
+      setPreview(null);
+      setShowConfirmModal(false);
+    }
+    catch (e) {
+      console.error(e);
+    }
   };
 
   const generateSystemNote = (noteGroupId) => {

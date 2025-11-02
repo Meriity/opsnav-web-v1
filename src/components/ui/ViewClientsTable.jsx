@@ -19,6 +19,8 @@ const ViewClientsTable = ({
   handelOTOpen,
   handelOT,
   currentModule,
+  users,
+  handleChangeUser
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -31,6 +33,7 @@ const ViewClientsTable = ({
     blue: "#3b82f6",
     default: "red",
   };
+  const [, setRefresh] = useState(false);
 
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return data;
@@ -66,9 +69,8 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm text-black ${
-                    colIndex === 0 ? "rounded-l-2xl" : ""
-                  } cursor-pointer select-none`}
+                  className={`px-2 py-3 text-center text-sm text-black ${colIndex === 0 ? "rounded-l-2xl" : ""
+                    } cursor-pointer select-none`}
                 >
                   <div className="flex flex-col items-center">
                     <span>{column.title}</span>
@@ -116,9 +118,8 @@ const ViewClientsTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
-                        colIndex === 0 ? "rounded-l-2xl" : ""
-                      }`}
+                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${colIndex === 0 ? "rounded-l-2xl" : ""
+                        }`}
                     >
                       <div
                         className="lg:font-normal 2xl:text-center"
@@ -134,8 +135,8 @@ const ViewClientsTable = ({
                           "matterDate",
                         ].includes(column.key) ? (
                           item[column.key] &&
-                          item[column.key] !== "-" &&
-                          item[column.key] !== "N/A" ? (
+                            item[column.key] !== "-" &&
+                            item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
                             <span className="text-sm font-bold text-gray-700">
@@ -143,8 +144,8 @@ const ViewClientsTable = ({
                             </span>
                           )
                         ) : (column.key === "billing_address" ||
-                            column.key === "businessAddress" ||
-                            column.key === "property_address") &&
+                          column.key === "businessAddress" ||
+                          column.key === "property_address") &&
                           item[column.key] ? (
                           <a
                             href={`https://www.google.com/maps?q=${encodeURIComponent(
@@ -156,6 +157,39 @@ const ViewClientsTable = ({
                           >
                             {item[column.key]}
                           </a>
+                        ) : ["allocatedUser"].includes(column.key) ? (
+                          <div>
+                            {["allocatedUser"].includes(column.key) ? (
+                              <select
+                                name="allocatedUser"
+                                className={
+                                  localStorage.getItem("role") !== "admin"
+                                    ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
+                                    : "bg-white p-2 border rounded w-full"
+                                }
+                                value={item.allocatedUser || ""}
+                                onChange={(e) => {
+                                  handleChangeUser(e.target.value, item.orderId);
+                                  item.allocatedUser = e.target.value; 
+                                  setRefresh((prev) => !prev); 
+                                }}
+                                disabled={localStorage.getItem("role") !== "admin"}
+                              >
+                                <option value="">
+                                  {item?.allocatedUser || "Select User"}
+                                </option>
+
+                                {users.map((user) => (
+                                  <option key={user.id} value={`${user.id}-${user.name}`}>
+                                    {user.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                            ) : (
+                              ""
+                            )}
+                          </div>
                         ) : (
                           item[column.key]
                         )}
@@ -167,11 +201,10 @@ const ViewClientsTable = ({
                       {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
-                            href={`/admin/client/stages/${
-                              currentModule === "commercial"
-                                ? item.matterNumber
-                                : item.matternumber || item.orderId
-                            }/${index + 1}`}
+                            href={`/admin/client/stages/${currentModule === "commercial"
+                              ? item.matterNumber
+                              : item.matternumber || item.orderId
+                              }/${index + 1}`}
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs cursor-pointer"
                             style={{
@@ -257,20 +290,20 @@ const ViewClientsTable = ({
                   {currentModule === "commercial"
                     ? "Business Address"
                     : localStorage.getItem("company") === "vkl"
-                    ? "Property Address"
-                    : localStorage.getItem("company") === "idg"
-                    ? "Billing Address"
-                    : "Address"}
+                      ? "Property Address"
+                      : localStorage.getItem("company") === "idg"
+                        ? "Billing Address"
+                        : "Address"}
                 </p>
                 <p className="text-sm break-words">
                   {item.businessAddress ||
-                  item.property_address ||
-                  item.billing_address ? (
+                    item.property_address ||
+                    item.billing_address ? (
                     <a
                       href={`https://www.google.com/maps?q=${encodeURIComponent(
                         item.businessAddress ||
-                          item.property_address ||
-                          item.billing_address
+                        item.property_address ||
+                        item.billing_address
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -345,10 +378,10 @@ const ViewClientsTable = ({
                 {currentModule === "commercial"
                   ? "Business Address"
                   : localStorage.getItem("company") === "vkl"
-                  ? "Property Address"
-                  : localStorage.getItem("company") === "idg"
-                  ? "Billing Address"
-                  : "Address"}
+                    ? "Property Address"
+                    : localStorage.getItem("company") === "idg"
+                      ? "Billing Address"
+                      : "Address"}
               </p>
               <p className="text-sm break-words">
                 {item.businessAddress ||
@@ -363,16 +396,16 @@ const ViewClientsTable = ({
                   {currentModule === "commercial"
                     ? "Completion Date"
                     : localStorage.getItem("company") === "vkl"
-                    ? "Settlement Date"
-                    : localStorage.getItem("company") === "idg"
-                    ? "Delivery Date"
-                    : "Date"}
+                      ? "Settlement Date"
+                      : localStorage.getItem("company") === "idg"
+                        ? "Delivery Date"
+                        : "Date"}
                 </p>
                 <p>
                   {formatDate(
                     item.settlementDate ||
-                      item.settlement_date ||
-                      item.delivery_date
+                    item.settlement_date ||
+                    item.delivery_date
                   )}
                 </p>
               </div>
@@ -390,11 +423,10 @@ const ViewClientsTable = ({
                 {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
                   <button
                     onClick={() => {
-                      const path = `/admin/client/stages/${
-                        currentModule === "commercial"
-                          ? item.matterNumber
-                          : item.matternumber || item.orderId
-                      }/${index + 1}`;
+                      const path = `/admin/client/stages/${currentModule === "commercial"
+                        ? item.matterNumber
+                        : item.matternumber || item.orderId
+                        }/${index + 1}`;
                       navigate(path);
                     }}
                     key={keyName}

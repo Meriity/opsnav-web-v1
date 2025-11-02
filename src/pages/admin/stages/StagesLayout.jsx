@@ -481,7 +481,7 @@ export default function StagesLayout() {
         if (serverRole) setRole(serverRole);
 
         console.log("Raw API response:", response);
-        console.log("Available fields in response:", Object.keys(response));
+        console.log("Available fields in response:", Object.keys(response))
 
         console.log("=== DEBUG STAGES ARRAY ===");
         if (response.stages && Array.isArray(response.stages)) {
