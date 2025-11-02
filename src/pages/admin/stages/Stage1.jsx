@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
+import CommercialAPI from "../../../api/commercialAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -47,21 +48,11 @@ const formConfig = {
       type: "radio",
       options: ["Yes", "No", "Processing", "N/R"],
     },
-    // {
-    //   name: "jobAddress",
-    //   label: "Job Address",
-    //   type: "text",
-    // },
     {
       name: "distanceFeasibility",
       label: "Check Distance / Feasibility",
       type: "text",
     },
-    // {
-    //   name: "orderType",
-    //   label: "Order Type",
-    //   type: "text",
-    // },
     {
       name: "timeline",
       label: "Timeline / Deadline",
@@ -80,6 +71,28 @@ const formConfig = {
       options: ["Approved", "Rejected", "Pending"],
     },
   ],
+  commercial: [
+    { name: "referral", label: "Referral", type: "text" },
+    {
+      name: "retainer",
+      label: "Retainer",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "contractReview",
+      label: "Contract Review",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "quoteType",
+      label: "Quote Type",
+      type: "radio",
+      options: ["Fixed", "Variable"],
+    },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+  ],
 };
 
 // Common fields for all clients
@@ -97,19 +110,28 @@ export default function Stage1({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const originalData = useRef({});
-  console.log(data);
+
+  console.log("Initial data prop:", data);
   const stage = 1;
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
-
-  const currentFields = useMemo(
-    () => formConfig[company] || formConfig.vkl,
-    [company]
+  const currentModule = useMemo(
+    () => localStorage.getItem("currentModule"),
+    []
   );
+
+  const currentFields = useMemo(() => {
+    if (currentModule === "commercial") {
+      return formConfig.commercial || formConfig.vkl;
+    }
+    return formConfig[company] || formConfig.vkl;
+  }, [company, currentModule]);
 
   // Helper to normalize/standardize values for comparison and storage
   const normalizeValue = useCallback((v) => {
@@ -123,7 +145,14 @@ export default function Stage1({
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
-      const completed = new Set(["yes", "nr", "na", "variable", "fixed","approved"]);
+      const completed = new Set([
+        "yes",
+        "nr",
+        "na",
+        "variable",
+        "fixed",
+        "approved",
+      ]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
       if (["processing", "inprogress"].includes(val)) return "In Progress";
@@ -147,94 +176,164 @@ export default function Stage1({
       .map((str) => str.trim());
     return { systemNote, clientComment };
   }
-    const generateSystemNote = () => {
-        const radioFields = currentFields.filter((field) => field.type === "radio");
-        const textFields = currentFields.filter((field) => field.type === "text");
-        const greenValues = new Set(["yes", "nr", "na", "variable", "fixed", "approved"]);
 
-        // radio fields not received
-        const notReceivedRadio = radioFields
-            .filter(
-                (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
-            )
-            .map((field) => field.label);
+  const generateSystemNote = () => {
+    const radioFields = currentFields.filter((field) => field.type === "radio");
+    const textFields = currentFields.filter((field) => field.type === "text");
+    const greenValues = new Set([
+      "yes",
+      "nr",
+      "na",
+      "variable",
+      "fixed",
+      "approved",
+    ]);
 
-        // text fields not received (empty or whitespace)
-        const notReceivedText = textFields
-            .filter(
-                (field) =>
-                    !formData[field.name] || formData[field.name].toString().trim() === ""
-            )
-            .map((field) => field.label);
+    // radio fields not received
+    const notReceivedRadio = radioFields
+      .filter(
+        (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
+      )
+      .map((field) => field.label);
 
-        const notReceived = [...notReceivedRadio, ...notReceivedText];
+    // text fields not received (empty or whitespace)
+    const notReceivedText = textFields
+      .filter(
+        (field) =>
+          !formData[field.name] || formData[field.name].toString().trim() === ""
+      )
+      .map((field) => field.label);
 
-        if (notReceived.length === 0) {
-            return "Tasks completed";
+    const notReceived = [...notReceivedRadio, ...notReceivedText];
+
+    if (notReceived.length === 0) {
+      return "Tasks completed";
+    }
+    if (notReceived.length === 1) {
+      return `${notReceived[0]} not received`;
+    }
+    return `${notReceived.join(", ")} not received`;
+  };
+
+  // UPDATED: Data initialization effect
+  useEffect(() => {
+    const initializeData = async () => {
+      if (!matterNumber) return;
+
+      setIsLoading(true);
+      try {
+        let stageData = data;
+
+        // For commercial stage 1, fetch the actual stage data from API
+        if (currentModule === "commercial") {
+          console.log("Commercial stage 1 - fetching actual stage data");
+          try {
+            const stageResponse = await commercialApi.getStageData(
+              1,
+              matterNumber
+            );
+            console.log("Commercial stage 1 API response:", stageResponse);
+
+            if (stageResponse && stageResponse.data) {
+              stageData = { ...data, ...stageResponse.data };
+            } else if (stageResponse) {
+              stageData = { ...data, ...stageResponse };
+            }
+            console.log("Combined stage data for commercial:", stageData);
+          } catch (error) {
+            console.log("No existing stage 1 data found, using default data");
+            stageData = data;
+          }
         }
-        if (notReceived.length === 1) {
-            return `${notReceived[0]} not received`;
-        }
-        return `${notReceived.join(", ")} not received`;
+
+        // Process the data for stage 1
+        console.log("Processing stage data:", stageData);
+
+        const { systemNote, clientComment } = extractNotes(
+          stageData.noteForClient
+        );
+        const initialFormData = {};
+        const initialStatuses = {};
+
+        currentFields.forEach((field) => {
+          if (field.name === "quoteAmount") {
+            initialFormData[field.name] =
+              stageData[field.name]?.$numberDecimal ||
+              stageData[field.name] ||
+              "";
+          } else {
+            if (field.type === "radio") {
+              initialFormData[field.name] = normalizeValue(
+                stageData[field.name] || ""
+              );
+            } else {
+              initialFormData[field.name] = stageData[field.name] || "";
+            }
+          }
+
+          if (field.type === "radio") {
+            initialStatuses[field.name] = getStatus(
+              initialFormData[field.name]
+            );
+          }
+        });
+
+        initialFormData.systemNote = systemNote;
+        initialFormData.clientComment = clientComment;
+
+        setFormData(initialFormData);
+        setStatuses(initialStatuses);
+        originalData.current = initialFormData;
+
+        console.log("Initialized form data:", initialFormData);
+      } catch (error) {
+        console.error("Error initializing form data:", error);
+        toast.error("Failed to load stage data");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
+    initializeData();
+  }, [
+    data,
+    matterNumber,
+    currentModule,
+    company,
+    reloadTrigger,
+    currentFields,
+    getStatus,
+    normalizeValue,
+  ]);
 
+  // Add costing fields for IDG admins
   useEffect(() => {
     if (
-  localStorage.getItem("company") === "idg" &&
-  (localStorage.getItem("role") === "admin" || localStorage.getItem("role") === "superadmin")
-) {
-  const hasCostingFields = formConfig.idg.some(
-    (field) => field.name === "costing_amount"
-  );
+      localStorage.getItem("company") === "idg" &&
+      (localStorage.getItem("role") === "admin" ||
+        localStorage.getItem("role") === "superadmin")
+    ) {
+      const hasCostingFields = formConfig.idg.some(
+        (field) => field.name === "costing_amount"
+      );
 
-  if (!hasCostingFields) {
-    formConfig.idg.push(
-      {
-        name: "costingType",
-        label: "Confirm Costing Type",
-        type: "radio",
-        options: ["Fixed", "Variable"],
-      },
-      {
-        name: "costing_amount",
-        label: "Costing Amount",
-        type: "text",
+      if (!hasCostingFields) {
+        formConfig.idg.push(
+          {
+            name: "costingType",
+            label: "Confirm Costing Type",
+            type: "radio",
+            options: ["Fixed", "Variable"],
+          },
+          {
+            name: "costing_amount",
+            label: "Costing Amount",
+            type: "text",
+          }
+        );
       }
-    );
-  }
-}
-    if (!data) return;
-
-    const { systemNote, clientComment } = extractNotes(data.noteForClient);
-    const initialFormData = {};
-    const initialStatuses = {};
-
-    currentFields.forEach((field) => {
-      if (field.name === "quoteAmount") {
-        initialFormData[field.name] =
-          data[field.name]?.$numberDecimal || data[field.name] || "";
-      } else {
-        if (field.type === "radio") {
-          initialFormData[field.name] = normalizeValue(data[field.name] || "");
-        } else {
-          initialFormData[field.name] = data[field.name] || "";
-        }
-      }
-
-      if (field.type === "radio") {
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
-      }
-    });
-
-    initialFormData.systemNote = systemNote;
-    initialFormData.clientComment = clientComment;
-
-    setFormData(initialFormData);
-    setStatuses(initialStatuses);
-    originalData.current = initialFormData;
-    // include currentFields and getStatus (both stable via useMemo/useCallback)
-  }, [data, reloadTrigger, company, currentFields, getStatus, normalizeValue]);
+    }
+  }, []);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
@@ -265,33 +364,76 @@ export default function Stage1({
       const systemNote = generateSystemNote();
       let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
-      const company = localStorage.getItem("company");
       let payload = {
         ...formData,
       };
 
-      // dynamically set the key
-      if (company === "vkl") {
-        payload.matterNumber = matterNumber; // keep matterNumber
+      // FIXED: Filter commercial fields and ensure correct payload structure
+      if (currentModule === "commercial") {
+        // Only include fields that exist in the commercial schema
+        const commercialFields = [
+          "referral",
+          "retainer",
+          "contractReview",
+          "quoteType",
+          "quoteAmount",
+          "noteForSystem",
+          "noteForClient",
+          "colorStatus",
+          "matterNumber",
+        ];
+        const filteredPayload = {};
+
+        commercialFields.forEach((field) => {
+          if (payload[field] !== undefined) {
+            filteredPayload[field] = payload[field];
+          }
+        });
+
+        payload = filteredPayload;
+
+        // Generate system note
+        payload.noteForSystem = systemNote;
         payload.noteForClient = noteForClient;
-      } else if (company === "idg") {
-        payload.orderId = matterNumber; // use orderId instead
+
+        // Calculate and add color status
+        const allCompleted = currentFields.every(
+          (field) => getStatus(formData[field.name]) === "Completed"
+        );
+        payload.colorStatus = allCompleted ? "green" : "amber";
+      } else {
+        // For other modules, use combined note structure
         payload.noteForClient = noteForClient;
       }
-
-      console.log(`${company} payload:`, payload);
 
       // remove temporary fields
       delete payload.systemNote;
       delete payload.clientComment;
 
-      if (company === "vkl") {
+      console.log("=== SAVE DEBUG ===");
+      console.log("Current module:", currentModule);
+      console.log("Company:", company);
+      console.log("Matter number:", matterNumber);
+      console.log("Payload:", payload);
+
+      // API CALL SECTION
+      if (currentModule === "commercial") {
+        console.log("Using Commercial API for stage 1");
+        payload.matterNumber = matterNumber;
+        await commercialApi.upsertStage(1, matterNumber, payload);
+      } else if (company === "vkl") {
+        console.log("Using VKL API for stage 1");
+        payload.matterNumber = matterNumber;
         await api.upsertStageOne(payload);
       } else if (company === "idg") {
+        console.log("Using IDG API for stage 1");
+        payload.orderId = matterNumber;
         await api.upsertIDGStages(payload.orderId, 1, payload);
       }
 
-      originalData.current = { ...formData, systemNote };
+      console.log("API call successful");
+
+      originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
@@ -303,7 +445,19 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
+      console.error("=== SAVE ERROR ===");
       console.error("Failed to update stage 1:", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
+
+      let errorMessage = "Failed to save Stage 1. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -312,7 +466,6 @@ export default function Stage1({
   const renderField = (field) => {
     switch (field.type) {
       case "text":
-          console.log(field);
         return (
           <div key={field.name} className="mt-5">
             <label className="block mb-1 text-sm md:text-base font-bold">
@@ -402,6 +555,17 @@ export default function Stage1({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading client data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-y-auto p-2 stage1-responsive">
       {currentFields.map((field) => renderField(field))}
@@ -416,7 +580,7 @@ export default function Stage1({
         />
         <div className="flex gap-2">
           <Button
-            label={isSaving ? "Saving" : "Save"}
+            label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
