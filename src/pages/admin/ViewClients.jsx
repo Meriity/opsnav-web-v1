@@ -19,6 +19,8 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
+import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 
@@ -36,13 +38,18 @@ const ViewClients = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-  const [settlementDate, setSettlementDate] = useState(["", ""]);
+  const [dateFilter, setDateFilter] = useState({
+    type: "delivery_date",
+    range: ["", ""],
+  });
   const [showDateRange, setShowDateRange] = useState(false);
-  const { clients: Clients, fetchClients, loading, error } = useClientStore();
+  const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
   const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [commercialLoading, setCommercialLoading] = useState(false);
   const [commercialClients, setCommercialClients] = useState([]);
+  const [selectedClientName, setSelectedClientName] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(true);
 
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
@@ -119,12 +126,47 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-    let filteredData =
-      currentModule === "commercial" ? commercialClients : Clients;
+  let filteredData =
+    currentModule === "commercial" ? commercialClients : Clients;
 
-    // Apply date range filter first
-    const [startDate, endDate] = settlementDate;
-    if (startDate && endDate) {
+  const [startDate, endDate] = Array.isArray(dateFilter?.range)
+    ? dateFilter.range
+    : ["", ""];
+
+  // Fix: Use lowercase comparison to match localStorage value
+  if (company?.toLowerCase() === "idg" && startDate && endDate) {
+    filteredData = filteredData.filter((client) => {
+      let deliveryDateObj = moment(client.delivery_date);
+      let orderDateObj = moment(client.order_date || client.orderDate);
+
+      // Check if delivery or order date falls within range
+      const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
+        moment(startDate),
+        moment(endDate),
+        "day",
+        "[]"
+      );
+
+      const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
+        moment(startDate),
+        moment(endDate),
+        "day",
+        "[]"
+      );
+
+      if (dateFilter.type === "delivery_date") {
+        return inDeliveryRange;
+      } else if (dateFilter.type === "order_date") {
+        return inOrderRange;
+      } else if (dateFilter.type === "both_date") {
+        return inDeliveryRange && inOrderRange;
+      }
+
+      return;
+    });
+  }
+  else {
+      if (startDate && endDate) {
       filteredData = filteredData.filter((client) => {
         let clientDate;
         if (currentModule === "commercial") {
@@ -140,51 +182,49 @@ const ViewClients = () => {
         );
       });
     }
+  }
 
-    // Apply search query filter
-    if (searchQuery) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      filteredData = filteredData.filter((client) => {
-        // For commercial projects
-        if (currentModule === "commercial") {
-          const searchableFields = [
-            client.matterNumber,
-            client.clientName,
-            client.businessName,
-            client.businessAddress,
-            client.state,
-            client.clientType,
-            client.dataEntryBy,
-            client.postcode,
-          ];
+  // Apply search query filter
+  if (searchQuery) {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    filteredData = filteredData.filter((client) => {
+      if (currentModule === "commercial") {
+        const searchableFields = [
+          client.matterNumber,
+          client.clientName,
+          client.businessName,
+          client.businessAddress,
+          client.state,
+          client.clientType,
+          client.dataEntryBy,
+          client.postcode,
+        ];
 
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
-          );
-        } else {
-          // For regular clients
-          const searchableFields = [
-            client.client_name || client.clientName,
-            client.matternumber || client.matterNumber || client.orderId,
-            client.businessAddress || client.business_address,
-            client.property_address || client.propertyAddress,
-            client.state,
-            client.referral || client.referralName,
-          ];
+        return searchableFields.some(
+          (field) =>
+            field && String(field).toLowerCase().includes(lowercasedQuery)
+        );
+      } else {
+        const searchableFields = [
+          client.client_name || client.clientName,
+          client.matternumber || client.matterNumber || client.orderId,
+          client.businessAddress || client.business_address,
+          client.property_address || client.propertyAddress,
+          client.state,
+          client.referral || client.referralName,
+        ];
 
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
-          );
-        }
-      });
-    }
+        return searchableFields.some(
+          (field) =>
+            field && String(field).toLowerCase().includes(lowercasedQuery)
+        );
+      }
+    });
+  }
 
-    setClientList(filteredData);
-  }, [settlementDate, Clients, commercialClients, searchQuery, currentModule]);
+  setClientList(filteredData);
+}, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
 
-  console.log(clientList);
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
     if (currentModule === "commercial") {
@@ -229,7 +269,7 @@ const ViewClients = () => {
       { key: "orderId", title: "Order ID", width: "10%" },
       { key: "client_name", title: "Client Name", width: "9%" },
       { key: "client_type", title: "Order Type", width: "12%" },
-      { key: "allocatedUser", title: "Allocated User", width: "10%" },
+      { key: "allocatedUser", title: "Allocated User", width: "15%" },
       { key: "order_date", title: "Order Date", width: "12%" },
       { key: "delivery_date", title: "Delivery Date", width: "12%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
@@ -249,6 +289,31 @@ const ViewClients = () => {
       handelShareEmailModalClose();
     }
   }
+
+  async function changeUser(user, orderId) {
+    console.log(user, orderId);
+    try {
+      const res = api.changeUser(user, orderId);
+    } catch (error) {
+      console.log("Error occured!!", error);
+    }
+  }
+
+  const handleClientFilterChange = (selectedName) => {
+    setSelectedClientName(selectedName);
+
+    if (!selectedName) {
+      setClientList(
+        currentModule === "commercial" ? commercialClients : Clients
+      );
+    } else {
+      const filtered = (currentModule === "commercial" ? commercialClients : Clients)
+        .filter(client => client.client_name === selectedName);
+
+      setClientList(filtered);
+    }
+  };
+
 
   const handelShareEmailModalClose = () => {
     setShowShareDialog(false);
@@ -315,17 +380,17 @@ const ViewClients = () => {
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
+
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial" ? "projects" : "clients"
-        }.`}
-        handelSubmitFun={(fromDate, toDate) => {
-          setSettlementDate([fromDate, toDate]);
+        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+          }.`}
+        handelSubmitFun={(fromDate, toDate, dateType) => {
+          setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
         }}
-        onReset={() => setSettlementDate(["", ""])}
+        onReset={() => setDateFilter({ type: "settlement_date", range: ["", ""] })}
       />
 
       <Dialog
@@ -422,9 +487,33 @@ const ViewClients = () => {
                 <option value={500}>500</option>
               </select>
             </div>
+            {localStorage.getItem("company")=="idg" &&
+            <div className="flex items-center gap-2">
+              {/* <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by clients
+              </label> */}
+              <select
+                name="Client"
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={selectedClientName}
+                onChange={(e) => handleClientFilterChange(e.target.value)}
+                disabled={localStorage.getItem("role") !== "admin"}
+              >
+                <option value="">All Clients</option>
+                {list.map((client) => (
+                  <option key={client.name} value={client.name}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            }
 
             {/* Consolidated Desktop Buttons */}
-            <div className="hidden lg:flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-1.5">
               {localStorage.getItem("company") === "vkl" && (
                 <>
                   <Button
@@ -463,6 +552,22 @@ const ViewClients = () => {
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
                   />
+                  <Button
+                    label="Task Report"
+                    onClick={() =>{
+                      toast.success("Report Generating Download will start soon", {
+                        position: "top-right",
+                        autoClose: 2000,
+                        hideProgressBar: true,
+                        closeOnClick: true,
+                        pauseOnHover: false,
+                        draggable: false,
+                        progress: undefined,
+                      })
+                      generateTaskAllocationPDF(localStorage.getItem("client-storage"))}
+                    }
+                  width="w-[100px]"
+                  />
                 </>
               )}
             </div>
@@ -492,11 +597,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
-                                ? "bg-sky-50 text-sky-700"
-                                : "text-gray-700"
-                            }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
+                              }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
@@ -506,11 +610,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
-                                ? "bg-sky-50 text-sky-700"
-                                : "text-gray-700"
-                            }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
+                              }`}
                           >
                             Outstanding Tasks
                           </button>
@@ -520,11 +623,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
-                                ? "bg-sky-50 text-sky-700"
-                                : "text-gray-700"
-                            }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
+                              }`}
                           >
                             Select Date Range
                           </button>
@@ -539,12 +641,14 @@ const ViewClients = () => {
         </div>
 
         {error && (
-          <div
-            className="p-4 text-red-700 bg-red-100 border-l-4 border-red-500"
-            role="alert"
+          <ConfirmationModal
+            isOpen={showConfirmModal}
+            onClose={() => console.log("")}
+            title="Session Expired!"
+            isLogout={true}
           >
-            <p>{error}</p>
-          </div>
+            Please Login Again
+          </ConfirmationModal>
         )}
 
         {isLoading || !clientList ? (
@@ -560,6 +664,8 @@ const ViewClients = () => {
             <ViewClientsTable
               data={clientList}
               columns={columns}
+              users={user}
+              handleChangeUser={changeUser}
               onEdit={true}
               onShare={(matterNumber, reshareEmail) => {
                 setShareDetails({ matterNumber, reshareEmail });

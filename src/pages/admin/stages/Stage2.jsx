@@ -181,8 +181,6 @@ export default function Stage2({
   clientType,
   user,
 }) {
-  console.log(data);
-  console.log("User data:", user);
   const stage = 2;
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();

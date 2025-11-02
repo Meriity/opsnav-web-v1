@@ -14,6 +14,7 @@ import CommercialAPI from "../../api/commercialAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -40,7 +41,7 @@ function ClientsPerPage({ value, onChange }) {
 
 export default function ArchivedClients() {
   const navigate = useNavigate();
-  const { archivedClients, loading, isFetched, fetchArchivedClients } =
+  const { archivedClients, loading, isFetched, isError, fetchArchivedClients } =
     useArchivedClientStore();
   const { searchQuery } = useSearchStore();
 
@@ -443,7 +444,8 @@ export default function ArchivedClients() {
                   showActions={true}
                   cellWrappingClass="whitespace-normal"
                   headerBgColor="bg-[#A6E7FF]"
-                  OnEye={handleViewClient}
+                  // OnEye={handleViewClient}
+                  EditOrder={true}
                   sortedColumn={sortedColumn}
                   sortDirection={sortDirection}
                   handleSort={handleSort}
@@ -629,6 +631,16 @@ export default function ArchivedClients() {
           setToDate(null);
         }}
       />
+
+      <ConfirmationModal
+        isOpen={isError}
+        onClose={() => console.log("")}
+        title="Session Expired!"
+        isLogout={true}
+      >
+        Please Login Again
+      </ConfirmationModal>
+
     </div>
   );
 }

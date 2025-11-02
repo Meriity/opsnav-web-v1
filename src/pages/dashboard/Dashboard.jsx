@@ -29,6 +29,7 @@ import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../ArchivedClientStore/styles/calendar.css";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
 
 const localizer = momentLocalizer(moment);
 
@@ -104,7 +105,7 @@ const CustomEvent = ({ event }) => {
         eventTypeLabel = "Settlement";
         break;
       case "deliveryDate":
-        eventTypeLabel = "Delivery";
+        eventTypeLabel = event.client_name;
         break;
       default:
         eventTypeLabel = "Event";
@@ -115,10 +116,11 @@ const CustomEvent = ({ event }) => {
   const typeInitial = event.clientType
     ? event.clientType.charAt(0)
     : event.projectType
-    ? event.projectType.charAt(0)
-    : event.orderType
-    ? event.orderType.charAt(0)
-    : "";
+      ? event.projectType.charAt(0)
+      : event.orderType
+        ? event.orderType.charAt(0)
+        : event.allocatedUser ?
+        event.allocatedUser : "";  
 
   const displayTitle = `[${identifier}] - ${eventTypeLabel} - [${typeInitial}]`;
 
@@ -142,15 +144,14 @@ const CustomAgendaEvent = ({ event }) => (
         </span>
       </div>
       <span
-        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
-          event.type === "buildingAndPest"
-            ? "bg-purple-100 text-purple-700"
-            : event.type === "financeApproval"
+        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${event.type === "buildingAndPest"
+          ? "bg-purple-100 text-purple-700"
+          : event.type === "financeApproval"
             ? "bg-orange-100 text-orange-700"
             : event.type === "commercial"
-            ? "bg-green-100 text-green-700"
-            : "bg-blue-100 text-blue-700"
-        }`}
+              ? "bg-green-100 text-green-700"
+              : "bg-blue-100 text-blue-700"
+          }`}
       >
         {event?.clientType || event?.projectType || "Event"}
       </span>
@@ -210,8 +211,8 @@ const ResponsiveCalendarToolbar = ({
   view: currentView,
 }) => {
   return (
-    <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3">
-      <div className="flex items-center justify-center gap-[10px] w-full sm:w-auto mb-2 sm:mb-0">
+    <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3 gap-5">
+      <div className="flex items-center justify-center gap-[5px] w-full sm:w-auto mb-2 sm:mb-0">
         <button
           type="button"
           onClick={() => onNavigate("PREV")}
@@ -244,11 +245,10 @@ const ResponsiveCalendarToolbar = ({
           <button
             key={viewName}
             onClick={() => onView(viewName)}
-            className={`capitalize px-3 py-1 rounded-md transition-colors ${
-              currentView === viewName
-                ? "bg-blue-500 text-white shadow"
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`capitalize px-3 py-1 rounded-md transition-colors ${currentView === viewName
+              ? "bg-blue-500 text-white shadow"
+              : "text-gray-600 hover:bg-gray-200"
+              }`}
           >
             {viewName}
           </button>
@@ -288,7 +288,7 @@ function Dashboard() {
   const [calendarView, setCalendarView] = useState(Views.MONTH);
   const { width } = useWindowSize();
   const isMobile = width < 768;
-
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
   const userRole = localStorage.getItem("userRole") || "admin";
@@ -439,7 +439,7 @@ function Dashboard() {
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-        toast.error("Failed to load dashboard data.");
+        setShowConfirmModal(true);
       } finally {
         setIsChartLoading(false);
       }
@@ -534,15 +534,17 @@ function Dashboard() {
           });
         } else {
           data.forEach((item) => {
+            console.log(item);
             if (item.deliveryDate) {
               events.push({
-                title: `[${item.orderId}] - ${item.orderType || "Order"}`,
+                title: `[${item.client_name}] - [${item.orderId}] - [${item.allocatedUser}]`,
                 start: moment(item.deliveryDate).toDate(),
                 end: moment(item.deliveryDate).toDate(),
                 allDay: true,
                 type: "deliveryDate",
-                clientType: item.orderType,
+                client_name: item.client_name,
                 orderId: item.orderId,
+                allocatedUser: item.allocatedUser,
                 id: item.orderId,
               });
             }
@@ -675,7 +677,7 @@ function Dashboard() {
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-100 p-2">
       <Header />
-      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-4">
           {/* Welcome Banner */}
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
@@ -713,11 +715,10 @@ function Dashboard() {
                   events={Array.isArray(calendarEvents) ? calendarEvents : []}
                   titleAccessor={(event) =>
                     event?.title ||
-                    `[${
-                      event?.orderId ||
-                      event?.projectCode ||
-                      event?.matterNumber ||
-                      "Untitled"
+                    `[${event?.orderId ||
+                    event?.projectCode ||
+                    event?.matterNumber ||
+                    "Untitled"
                     }]`
                   }
                   startAccessor="start"
@@ -756,8 +757,8 @@ function Dashboard() {
                 currentModule === "commercial"
                   ? "Total Projects"
                   : company === "idg"
-                  ? "Total Orders"
-                  : "Total Clients"
+                    ? "Total Orders"
+                    : "Total Clients"
               }
               value={totalactive}
             />
@@ -767,8 +768,8 @@ function Dashboard() {
                 currentModule === "commercial"
                   ? "Completed Projects"
                   : company === "idg"
-                  ? "Total Completed Orders"
-                  : "Total Archived Clients"
+                    ? "Total Completed Orders"
+                    : "Total Archived Clients"
               }
               value={chartPeriodTotal || totalCompleted}
             />
@@ -781,30 +782,28 @@ function Dashboard() {
                 {currentModule === "commercial"
                   ? "Completed Projects"
                   : company === "vkl"
-                  ? "Closed Matters"
-                  : company === "idg"
-                  ? "Closed Orders"
-                  : "Closed"}{" "}
+                    ? "Closed Matters"
+                    : company === "idg"
+                      ? "Closed Orders"
+                      : "Closed"}{" "}
                 ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
                   onClick={() => setChartView("last10Months")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "last10Months"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "last10Months"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   10 Months
                 </button>
                 <button
                   onClick={() => setChartView("allTime")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "allTime"
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-colors ${chartView === "allTime"
+                    ? "bg-blue-500 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   All Time
                 </button>
@@ -842,10 +841,10 @@ function Dashboard() {
                     {currentModule === "commercial"
                       ? "Projects Completed In Last Month"
                       : company === "vkl"
-                      ? "Matters Solved In Last Month"
-                      : company === "idg"
-                      ? "Orders Closed In Last Month"
-                      : "Completed"}
+                        ? "Matters Solved In Last Month"
+                        : company === "idg"
+                          ? "Orders Closed In Last Month"
+                          : "Completed"}
                   </p>
                 )}
               </>
@@ -871,6 +870,14 @@ function Dashboard() {
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => console.log("")}
+        title="Session Expired!"
+        isLogout={true}
+      >
+        Please Login Again
+      </ConfirmationModal>
     </div>
   );
 }
