@@ -14,12 +14,14 @@ export default function DateRangeModal({
   const [isLoading, setIsLoading] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [dateType, setDateType] = useState("settlement_date"); // default
 
   const handelSubmit = async () => {
     setIsLoading(true);
     if (fromDate && toDate) {
       try {
-        await handelSubmitFun(fromDate, toDate);
+        // Pass dateType along with range
+        await handelSubmitFun(fromDate, toDate, dateType);
       } catch (error) {
         toast.error(error.message);
       } finally {
@@ -35,6 +37,7 @@ export default function DateRangeModal({
   const handelDateReset = () => {
     setFromDate("");
     setToDate("");
+    setDateType("settlement_date");
     if (onReset) {
       onReset();
     }
@@ -46,12 +49,10 @@ export default function DateRangeModal({
       onClose={() => setIsOpen(false)}
       className="relative z-[100]"
     >
-      {/* Glass morphism backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
 
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-7 text-center">
-          {/* Glass morphism modal panel */}
           <DialogPanel className="relative transform overflow-hidden rounded-xl bg-white/90 backdrop-blur-md text-left shadow-2xl border border-white/20 sm:my-8 sm:w-full sm:max-w-lg p-6">
             <button
               onClick={() => setIsOpen(false)}
@@ -65,6 +66,25 @@ export default function DateRangeModal({
             </h2>
             <p className="text-sm text-gray-600 mb-5">{subTitle}</p>
 
+            {/* Select which date type */}
+            {localStorage.getItem("company")==="idg" && 
+            <div className="space-y-2 mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Filter By
+              </label>
+              <select
+                value={dateType}
+                onChange={(e) => setDateType(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="delivery_date">Delivery Date</option>
+                <option value="order_date">Order Date</option>
+                <option value="both_date">Both date</option>
+              </select>
+            </div>
+            }
+
+            {/* From / To Dates */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 From Date

@@ -260,27 +260,34 @@ export default function StagesLayout() {
     if (!clientData) return null;
 
     console.log(`=== GET STAGE ${stageNumber} DATA ===`);
+    console.log("Client data structure:", clientData);
 
     // For commercial projects
     if (currentModule === "commercial") {
-      // For stage 2, return the clientData itself since stage 2 fields are mixed in
-      if (stageNumber === 2) {
-        console.log(
-          "Commercial stage 2 - returning full clientData with mixed stage fields"
-        );
-        return clientData;
-      }
-
-      // For other stages, check stages array or individual stage properties
-      if (clientData.stages && Array.isArray(clientData.stages)) {
-        const stageData = clientData.stages.find(
-          (stage) => stage.stageNumber === stageNumber
-        );
-        return stageData || null;
+      if (
+        clientData.stages &&
+        Array.isArray(clientData.stages) &&
+        clientData.stages.length > 0
+      ) {
+        const stageObject = clientData.stages[0];
+        const stageKey = `S${stageNumber}`;
+        if (stageObject[stageKey]) {
+          console.log(
+            `Found stage ${stageNumber} in stages array as ${stageKey}:`,
+            stageObject[stageKey]
+          );
+          // Return a mock stage object with the colorStatus
+          return { colorStatus: stageObject[stageKey] };
+        }
       }
 
       // Check for individual stage properties (stage1, stage2, etc.)
-      return clientData[`stage${stageNumber}`] || null;
+      const stageData = clientData[`stage${stageNumber}`] || null;
+      console.log(
+        `Found stage ${stageNumber} as individual property:`,
+        stageData
+      );
+      return stageData;
     }
 
     // For other modules, use the existing structure
@@ -290,6 +297,7 @@ export default function StagesLayout() {
 
     return clientData[`stage${stageNumber}`] || null;
   };
+
   function Showstage(stage) {
     function normalizeCloseMatterForClient(client) {
       if (!client || typeof client !== "object") return client;
@@ -473,7 +481,17 @@ export default function StagesLayout() {
         if (serverRole) setRole(serverRole);
 
         console.log("Raw API response:", response);
-        console.log("Available fields in response:", Object.keys(response));
+        console.log("Available fields in response:", Object.keys(response))
+
+        console.log("=== DEBUG STAGES ARRAY ===");
+        if (response.stages && Array.isArray(response.stages)) {
+          response.stages.forEach((stage, index) => {
+            console.log(`Stage ${index}:`, stage);
+            console.log(`Stage ${index} keys:`, Object.keys(stage));
+          });
+        } else {
+          console.log("No stages array found in response");
+        }
 
         // Normalize dates for the response AND ensure business fields are included
         const normalized = {
@@ -517,28 +535,76 @@ export default function StagesLayout() {
         if (currentModule === "commercial") {
           console.log("Setting commercial stage statuses");
 
+          // Initialize all stages as "Not Completed"
           for (let i = 1; i <= 6; i++) {
             section[`status${i}`] = "Not Completed";
           }
 
-          if (response.colorStatus) {
-            console.log(
-              "Found stage 2 colorStatus directly on response:",
-              response.colorStatus
-            );
-            section.status2 = response.colorStatus;
+          // Use colorStatus from stages array with S1, S2, etc. structure
+          if (
+            response.stages &&
+            Array.isArray(response.stages) &&
+            response.stages.length > 0
+          ) {
+            console.log("Found stages array:", response.stages);
+            const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
+
+            // Process each stage (S1, S2, S3, S4, S5, S6)
+            for (let i = 1; i <= 6; i++) {
+              const stageKey = `S${i}`;
+              if (stageObject[stageKey]) {
+                const statusMap = {
+                  green: "Completed",
+                  red: "Not Completed",
+                  amber: "In Progress",
+                };
+                section[`status${i}`] =
+                  statusMap[stageObject[stageKey]] || "Not Completed";
+                console.log(
+                  `Stage ${i} (${stageKey}) status: ${
+                    stageObject[stageKey]
+                  } -> ${section[`status${i}`]}`
+                );
+              }
+            }
           }
 
-          if (response.stages && Array.isArray(response.stages)) {
-            console.log("Found stages array:", response.stages);
-            response.stages.forEach((stage) => {
-              section[`status${stage.stageNumber}`] =
-                stage.colorStatus || "Not Completed";
+          // Check individual stage properties (stage1, stage2, etc.) as fallback
+          for (let i = 1; i <= 6; i++) {
+            const stageKey = `stage${i}`;
+            if (response[stageKey] && response[stageKey].colorStatus) {
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+              section[`status${i}`] =
+                statusMap[response[stageKey].colorStatus] || "Not Completed";
               console.log(
-                `Stage ${stage.stageNumber} status: ${stage.colorStatus}`
+                `Found ${stageKey} colorStatus:`,
+                response[stageKey].colorStatus,
+                "->",
+                section[`status${i}`]
               );
-            });
+            }
           }
+
+          // Also check for global colorStatus on the main response object
+          if (response.colorStatus) {
+            const statusMap = {
+              green: "Completed",
+              red: "Not Completed",
+              amber: "In Progress",
+            };
+            // If there's a global colorStatus, apply it to stage 1
+            section.status1 =
+              statusMap[response.colorStatus] || section.status1;
+            console.log(
+              `Found global colorStatus: ${response.colorStatus} -> Stage 1: ${section.status1}`
+            );
+          }
+
+          // REMOVED: The field evaluation logic that was overriding the API colorStatus
         } else if (localStorage.getItem("company") === "vkl") {
           // VKL stage status logic
           section.status1 = response.stage1?.colorStatus || "Not Completed";

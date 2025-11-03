@@ -16,6 +16,7 @@ export default function Stage3({
   const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get company and module
   const company = localStorage.getItem("company") || "vkl";
@@ -111,78 +112,112 @@ export default function Stage3({
   const [noteForSystem, setNoteForSystem] = useState("");
   const originalData = useRef({});
 
-  const updateNoteForSystem = () => {
-    const completedValues = new Set(["yes", "na", "n/a", "nr", "n/r"]);
-
-    const incompleteTasks = fields
-      .filter(({ key, type }) => {
-        const rawValue = formState[key] || "";
-        const value = normalizeValue(rawValue);
-
-        if (type === "text") {
-          return value === "";
-        }
-        return !completedValues.has(value);
+  // NEW: Generate system note for commercial
+  const generateSystemNote = () => {
+    const greenValues = new Set(["yes", "nr", "na", "approved"]);
+    const notReceived = fields
+      .filter((field) => {
+        return !greenValues.has(normalizeValue(formState[field.key] || ""));
       })
-      .map(({ label }) => label);
+      .map((field) => field.label);
 
-    if (incompleteTasks.length === 0) return "All tasks completed";
-    if (incompleteTasks.length === fields.length) return "No tasks completed";
-    return `${incompleteTasks.join(" and ")} not received`;
+    if (notReceived.length === 0) return "Tasks completed";
+    return `${notReceived.join(" and ")} not received`;
   };
 
+  // UPDATED: Data initialization effect
   useEffect(() => {
     if (!data) return;
 
-    const newFormState = {};
-    const newStatusState = {};
-    let systemNotePart = "";
-    let clientCommentPart = "";
+    console.log("=== INITIALIZING STAGE 3 FORM DATA ===");
+    console.log("Raw data received:", data);
 
-    fields.forEach(({ key, hasDate }) => {
-      const rawValue = data[key] || "";
-      newFormState[key] = normalizeValue(rawValue);
-      newStatusState[key] = getStatus(newFormState[key]);
+    setIsLoading(true);
 
-      if (hasDate) {
-        newFormState[`${key}Date`] = data[`${key}Date`]
-          ? data[`${key}Date`].split("T")[0]
-          : "";
+    const initializeData = async () => {
+      try {
+        let stageData = data;
+
+        // For commercial stage 3, fetch the actual stage data from API
+        if (currentModule === "commercial") {
+          console.log("Commercial stage 3 - fetching actual stage data");
+          try {
+            const stageResponse = await commercialApi.getStageData(
+              3,
+              matterNumber
+            );
+            console.log("Commercial stage 3 API response:", stageResponse);
+
+            if (stageResponse && stageResponse.data) {
+              stageData = { ...data, ...stageResponse.data };
+            } else if (stageResponse) {
+              stageData = { ...data, ...stageResponse };
+            }
+            console.log("Combined stage data for commercial:", stageData);
+          } catch (error) {
+            console.log("No existing stage 3 data found, using default data");
+            stageData = data;
+          }
+        }
+
+        const newFormState = {};
+        const newStatusState = {};
+        let systemNotePart = "";
+        let clientCommentPart = "";
+
+        fields.forEach(({ key, hasDate }) => {
+          const rawValue = stageData[key] || "";
+          newFormState[key] = normalizeValue(rawValue);
+          newStatusState[key] = getStatus(newFormState[key]);
+
+          if (hasDate) {
+            newFormState[`${key}Date`] = stageData[`${key}Date`]
+              ? stageData[`${key}Date`].split("T")[0]
+              : "";
+          }
+        });
+
+        if (currentModule === "commercial") {
+          setNoteForSystem(stageData.noteForSystem || "");
+          setNoteForClient(stageData.noteForClient || "");
+          systemNotePart = stageData.noteForSystem || "";
+          clientCommentPart = stageData.noteForClient || "";
+        } else {
+          const noteParts = (stageData.noteForClient || "").split(" - ");
+          systemNotePart = noteParts[0]?.trim() || generateSystemNote();
+          clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
+
+          setNoteForSystem(systemNotePart);
+          setNoteForClient(clientCommentPart);
+        }
+
+        setFormState(newFormState);
+        setStatusState(newStatusState);
+
+        originalData.current = {
+          ...newFormState,
+          noteForSystem: systemNotePart,
+          noteForClient: clientCommentPart,
+        };
+
+        console.log("Initialized form state:", newFormState);
+      } catch (error) {
+        console.error("Error initializing form data:", error);
+        toast.error("Failed to load stage data");
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    if (currentModule === "commercial") {
-      setNoteForSystem(data.noteForSystem || "");
-      setNoteForClient(data.noteForClient || "");
-      systemNotePart = data.noteForSystem || "";
-      clientCommentPart = data.noteForClient || "";
-    } else {
-      const noteParts = (data.noteForClient || "").split(" - ");
-      systemNotePart = noteParts[0]?.trim() || updateNoteForSystem();
-      clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
-
-      setNoteForSystem(systemNotePart);
-      setNoteForClient(clientCommentPart);
-    }
-
-    setFormState(newFormState);
-    setStatusState(newStatusState);
-
-    originalData.current = {
-      ...newFormState,
-      noteForSystem: systemNotePart,
-      noteForClient: clientCommentPart,
     };
 
-    console.log("Initialized form state:", newFormState);
-  }, [data, reloadTrigger, company, currentModule]);
+    initializeData();
+  }, [data, reloadTrigger, company, currentModule, matterNumber]);
 
   function isChanged() {
-    const currentSystemNote = updateNoteForSystem();
+    const currentSystemNote =
+      currentModule === "commercial" ? noteForSystem : generateSystemNote();
     const current = {
       ...formState,
-      noteForSystem:
-        currentModule === "commercial" ? noteForSystem : currentSystemNote,
+      noteForSystem: currentSystemNote,
       noteForClient,
     };
     const original = originalData.current;
@@ -207,7 +242,7 @@ export default function Stage3({
       noteForSystemChanged =
         String(noteForSystem).trim() !== String(original.noteForSystem).trim();
     } else {
-      noteForSystemChanged = currentSystemNote !== original.noteForSystem;
+      noteForSystemChanged = generateSystemNote() !== original.noteForSystem;
     }
 
     return (
@@ -234,24 +269,37 @@ export default function Stage3({
         ...formState,
       };
 
-      // FIXED: Ensure ALL commercial fields are included in payload
+      // FIXED: Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // Make sure all commercial fields are present in payload
-        fields.forEach(({ key }) => {
-          if (payload[key] === undefined) {
-            payload[key] = ""; // Set empty string for missing fields
+        // Only include fields that exist in the commercial schema
+        const commercialFields = [
+          "ppsrSearch",
+          "asicSearch",
+          "ratesSearch",
+          "waterSearch",
+          "title",
+          "noteForSystem",
+          "noteForClient",
+          "colorStatus",
+          "matterNumber",
+        ];
+        const filteredPayload = {};
+
+        commercialFields.forEach((field) => {
+          if (payload[field] !== undefined) {
+            filteredPayload[field] = payload[field];
           }
         });
-      }
 
-      // Handle notes differently for commercial vs other modules
-      if (currentModule === "commercial") {
-        // For commercial, use separate note fields
-        payload.noteForSystem = noteForSystem;
-        payload.noteForClient = noteForClient;
+        payload = filteredPayload;
+
+        // Generate system note
+        const systemNote = generateSystemNote();
+        payload.noteForSystem = systemNote;
+        payload.noteForClient = noteForClient || "";
       } else {
         // For other modules, use combined note structure
-        const systemNote = updateNoteForSystem();
+        const systemNote = generateSystemNote();
         const fullNote = noteForClient
           ? `${systemNote} - ${noteForClient}`
           : systemNote;
@@ -275,9 +323,21 @@ export default function Stage3({
       console.log("Matter number:", matterNumber);
       console.log("Payload:", payload);
 
+      // Calculate color status based on field completion
+      const allCompleted = fields.every(
+        (field) => getStatus(formState[field.key]) === "Completed"
+      );
+      const colorStatus = allCompleted ? "green" : "amber";
+
+      // Add colorStatus to payload for commercial
+      if (currentModule === "commercial") {
+        payload.colorStatus = colorStatus;
+      }
+
       // API CALL SECTION
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 3");
+        payload.matterNumber = matterNumber;
         await commercialApi.upsertStage(3, matterNumber, payload);
       } else if (company === "vkl") {
         console.log("Using VKL API for stage 3");
@@ -295,9 +355,7 @@ export default function Stage3({
       originalData.current = {
         ...formState,
         noteForSystem:
-          currentModule === "commercial"
-            ? noteForSystem
-            : updateNoteForSystem(),
+          currentModule === "commercial" ? noteForSystem : generateSystemNote(),
         noteForClient,
       };
 
@@ -416,6 +474,17 @@ export default function Stage3({
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading stage data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-y-auto">
       {fields.map(renderRadioGroup)}
@@ -425,15 +494,16 @@ export default function Stage3({
           System Note for Client
         </label>
         {currentModule === "commercial" ? (
-          <textarea
-            value={noteForSystem}
-            onChange={(e) => setNoteForSystem(e.target.value)}
+          <input
+            type="text"
+            value={generateSystemNote()}
+            disabled
             className="w-full rounded p-2 bg-gray-100"
           />
         ) : (
           <input
             type="text"
-            value={updateNoteForSystem()}
+            value={generateSystemNote()}
             disabled
             className="w-full rounded p-2 bg-gray-100"
           />
@@ -460,7 +530,7 @@ export default function Stage3({
         />
         <div className="flex gap-2">
           <Button
-            label={isSaving ? "Saving " : "Save"}
+            label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
             onClick={handleSave}
