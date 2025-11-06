@@ -140,7 +140,9 @@ class ClientAPI {
     }
   }
 
+
   async updateIDGClientData(clientId, data = {}) {
+    console.log(clientId, data);
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/${clientId}`, {
         method: "PUT",
@@ -180,21 +182,6 @@ class ClientAPI {
     } catch (error) {
       console.error("Error updating stage one:", error);
       throw error;
-    }
-  }
-
-  async deleteImageForOrder(orderId){
-    try {
-      const response = await fetch(`${this.baseUrl}/idg/clients/deleteImage/${orderId}`, {
-        method: "DELETE",
-        headers: this.getHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-        console.log("Error Occured",error);
     }
   }
 
