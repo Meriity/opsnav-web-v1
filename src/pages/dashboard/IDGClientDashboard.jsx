@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import Loader from '../../components/ui/smallLoader';
 import {
     Package,
     CheckCircle2,
@@ -11,7 +12,8 @@ import {
     Phone,
     MapPin,
     ChevronRight,
-    Info
+    Info,
+    FileText
 } from 'lucide-react';
 
 import ClientAPI from "../../api/clientAPI";
@@ -22,9 +24,12 @@ export default function IDGClientDashboard() {
     const LogoUrl = localStorage.getItem("logo");
     const { orderId: encodedOrderId } = useParams();
     const [orders, setOrders] = useState([]);
+    const [unitNumber, setunitNumber] = useState();
+    const [isClicked,setIsClicked]=useState(false);
+    const[btn,setbtn]=useState("Update");
+    const api = new ClientAPI();
 
     useEffect(() => {
-        const api = new ClientAPI();
 
         async function fetchData() {
             try {
@@ -39,9 +44,7 @@ export default function IDGClientDashboard() {
                     return;
                 }
 
-                console.log('5. Calling API with:', decodedOrderId);
                 const response = await api.getIDGClients(decodedOrderId);
-                console.log('6. Response:', response);
 
                 if (response && response.orders) {
                     setOrders(response.orders);
@@ -64,8 +67,11 @@ export default function IDGClientDashboard() {
     useEffect(() => {
         if (selectedJob) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            setunitNumber(selectedJob.unitNumber || "");
         }
     }, [selectedJob]);
+
+
 
     const getStageStatus = (job, stage) => {
         const stages = ['ordered', 'booked', 'completed'];
@@ -85,6 +91,25 @@ export default function IDGClientDashboard() {
             year: 'numeric'
         });
     };
+
+    const handleuploadUnitNumber = (unitNumber, orderId) => {
+        try {
+            setIsClicked(true);
+            setbtn("Updating")
+            const res = api.updateUnitNumberOrder(unitNumber, orderId);
+            console.log(res);
+            setunitNumber(unitNumber);
+            setTimeout(()=>{
+                setIsClicked(false);
+                setbtn("Updated Successfully ✅");
+                setTimeout(()=> setbtn("Update"),2000);
+            },2000);
+        }
+        catch (e) {
+            console.log("Error Occured!!", e);
+        }
+
+    }
 
     if (viewingImage && selectedJob?.thumbnail) {
         return (
@@ -317,6 +342,28 @@ export default function IDGClientDashboard() {
                                         <div>
                                             <p className="text-sm text-gray-500 mb-1">Address</p>
                                             <p className="font-semibold text-gray-900">{selectedJob.deliveryAddress}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                        <div className="w-12 h-12 bg-[#00AEEF] rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <FileText className="text-white" size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Unit Number</p>
+                                            <div className='flex gap-3'>
+                                                <input
+                                                    type="text"
+                                                    name="unitNumber"
+                                                    value={unitNumber ?? ""} 
+                                                    onChange={(e) => setunitNumber(e.target.value)}
+                                                    className="bg-white border border-gray-200 rounded-2xl p-1 text-xl"
+                                                />
+                                                <div className='flex gap-2'>
+                                                    <button type='submit' className='border border-gray-200 rounded-2xl p-2 bg-[#00AEEF] text-white transition-colors flex gap-2'
+                                                    onClick={() => handleuploadUnitNumber(unitNumber, selectedJob.orderId)}>{btn} {isClicked && <Loader></Loader>}</button>
+                                                    
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

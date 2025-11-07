@@ -57,7 +57,7 @@ class ClientAPI {
     }
   }
 
-    async getIDGClients(clientId) {
+  async getIDGClients(clientId) {
     try {
       const response = await fetch(
         `${this.baseUrl}/idg/clients/details/${clientId}`,
@@ -117,6 +117,34 @@ class ClientAPI {
       throw error;
     }
   }
+
+  // Update Client Unit Number
+  async updateUnitNumberOrder(unitNumber, orderId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/unitNumber/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...this.getHeaders(),
+        },
+        body: JSON.stringify({unitNumber}),
+      });
+
+      const text = await response.text();
+      const parsed = text ? JSON.parse(text) : null;
+
+      if (!response.ok) {
+        const msg = parsed?.message || `HTTP error ${response.status}`;
+        throw new Error(msg);
+      }
+
+      return parsed.order;
+    } catch (error) {
+      console.error("Error updating order:", error);
+      throw error;
+    }
+  }
+
 
   // Get client details by matter number
   async getIDGUsers() {
@@ -183,7 +211,7 @@ class ClientAPI {
     }
   }
 
-  async deleteImageForOrder(orderId){
+  async deleteImageForOrder(orderId) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/clients/deleteImage/${orderId}`, {
         method: "DELETE",
@@ -194,7 +222,7 @@ class ClientAPI {
       }
       return await response.json();
     } catch (error) {
-        console.log("Error Occured",error);
+      console.log("Error Occured", error);
     }
   }
 
@@ -235,7 +263,6 @@ class ClientAPI {
     const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`;
     const formData = new FormData();
     formData.append('image', file);
-    console.log(`Sending file to: ${apiUrl}`);
     const headers = this.getHeaders();
     delete headers['Content-Type'];
     try {
