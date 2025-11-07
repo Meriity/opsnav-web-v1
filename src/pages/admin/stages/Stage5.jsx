@@ -184,6 +184,7 @@ export default function Stage5({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [noteForSystem, setNoteForSystem] = useState("");
   const [noteForClient, setNoteForClient] = useState("");
 
@@ -231,59 +232,112 @@ export default function Stage5({
     return `Pending: ${incomplete.join(", ")}`;
   };
 
+  // UPDATED: Data initialization effect
   useEffect(() => {
     if (!data) return;
 
     console.log("=== STAGE 5 INITIALIZATION ===");
     console.log("Using config:", currentConfig);
 
-    const initialFormData = {};
-    const initialStatuses = {};
+    setIsLoading(true);
 
-    currentConfig.fields.forEach((field) => {
-      if (field.type === "number") {
-        const rawPrice = data[field.name];
-        initialFormData[field.name] =
-          typeof rawPrice === "object" && rawPrice?.$numberDecimal
-            ? rawPrice.$numberDecimal
-            : rawPrice?.toString() || "";
-      } else if (field.type === "radio") {
-        initialFormData[field.name] = normalizeValue(data[field.name] || "");
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
-      } else if (field.type === "text") {
-        initialFormData[field.name] = data[field.name] || "";
-      } else {
-        initialFormData[field.name] = data[field.name] || "";
+    const initializeData = async () => {
+      try {
+        let stageData = data;
+
+        // For commercial stage 5, fetch the actual stage data from API
+        if (currentModule === "commercial") {
+          console.log("Commercial stage 5 - fetching actual stage data");
+          try {
+            const stageResponse = await commercialApi.getStageData(
+              5,
+              matterNumber
+            );
+            console.log("Commercial stage 5 API response:", stageResponse);
+
+            if (stageResponse && stageResponse.data) {
+              stageData = { ...data, ...stageResponse.data };
+            } else if (stageResponse) {
+              stageData = { ...data, ...stageResponse };
+            }
+            console.log("Combined stage data for commercial:", stageData);
+          } catch (error) {
+            console.log("No existing stage 5 data found, using default data");
+            stageData = data;
+          }
+        }
+
+        const initialFormData = {};
+        const initialStatuses = {};
+
+        currentConfig.fields.forEach((field) => {
+          if (field.type === "number") {
+            const rawPrice = stageData[field.name];
+            initialFormData[field.name] =
+              typeof rawPrice === "object" && rawPrice?.$numberDecimal
+                ? rawPrice.$numberDecimal
+                : rawPrice?.toString() || "";
+          } else if (field.type === "radio") {
+            initialFormData[field.name] = normalizeValue(
+              stageData[field.name] || ""
+            );
+            initialStatuses[field.name] = getStatus(
+              initialFormData[field.name]
+            );
+          } else if (field.type === "text") {
+            initialFormData[field.name] = stageData[field.name] || "";
+          } else {
+            initialFormData[field.name] = stageData[field.name] || "";
+          }
+
+          if (field.hasDate) {
+            initialFormData[field.dateFieldName] = stageData[
+              field.dateFieldName
+            ]
+              ? new Date(stageData[field.dateFieldName])
+                  .toISOString()
+                  .split("T")[0]
+              : "";
+          }
+        });
+
+        // Handle notes differently for commercial vs other modules
+        if (currentModule === "commercial") {
+          const { systemNote, clientComment } = extractNotes(
+            stageData.noteForSystem,
+            stageData.noteForClient
+          );
+          setNoteForSystem(systemNote);
+          setNoteForClient(clientComment);
+        } else {
+          currentConfig.noteGroups.forEach((group) => {
+            const notes = extractNotes(stageData[group.noteForClientKey]);
+            initialFormData[group.clientCommentKey] = notes.clientComment;
+          });
+        }
+
+        setFormData(initialFormData);
+        setStatuses(initialStatuses);
+        originalData.current = initialFormData;
+
+        console.log("Initialized form data:", initialFormData);
+      } catch (error) {
+        console.error("Error initializing form data:", error);
+        toast.error("Failed to load stage data");
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (field.hasDate) {
-        initialFormData[field.dateFieldName] = data[field.dateFieldName]
-          ? new Date(data[field.dateFieldName]).toISOString().split("T")[0]
-          : "";
-      }
-    });
-
-    // Handle notes differently for commercial vs other modules
-    if (currentModule === "commercial") {
-      const { systemNote, clientComment } = extractNotes(
-        data.noteForSystem,
-        data.noteForClient
-      );
-      setNoteForSystem(systemNote);
-      setNoteForClient(clientComment);
-    } else {
-      currentConfig.noteGroups.forEach((group) => {
-        const notes = extractNotes(data[group.noteForClientKey]);
-        initialFormData[group.clientCommentKey] = notes.clientComment;
-      });
-    }
-
-    setFormData(initialFormData);
-    setStatuses(initialStatuses);
-    originalData.current = initialFormData;
-
-    console.log("Initialized form data:", initialFormData);
-  }, [data, reloadTrigger, company, currentModule, currentConfig]);
+    initializeData();
+  }, [
+    data,
+    reloadTrigger,
+    company,
+    currentModule,
+    currentConfig,
+    matterNumber,
+  ]);
 
   const handleChange = (field, value) => {
     let processedValue = value;
@@ -324,11 +378,40 @@ export default function Stage5({
     try {
       let payload = { ...formData };
 
-      // Handle notes differently for commercial vs other modules
+      // FIXED: Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // For commercial, use separate note fields
-        payload.noteForSystem = noteForSystem;
-        payload.noteForClient = noteForClient;
+        // Only include fields that exist in the commercial schema
+        const commercialFields = [
+          "statementOfAdjustment",
+          "contractPrice",
+          "liquorLicence",
+          "transferBusinessName",
+          "leaseTransfer",
+          "noteForSystem",
+          "noteForClient",
+          "colorStatus",
+          "matterNumber",
+        ];
+        const filteredPayload = {};
+
+        commercialFields.forEach((field) => {
+          if (payload[field] !== undefined) {
+            filteredPayload[field] = payload[field];
+          }
+        });
+
+        payload = filteredPayload;
+
+        // Generate system note
+        const systemNote = generateSystemNote("main");
+        payload.noteForSystem = systemNote;
+        payload.noteForClient = noteForClient || "";
+
+        // Calculate and add color status
+        const allCompleted = currentConfig.fields.every(
+          (field) => getStatus(formData[field.name]) === "Completed"
+        );
+        payload.colorStatus = allCompleted ? "green" : "amber";
       } else {
         // For other modules, use combined note structure
         currentConfig.noteGroups.forEach((group) => {
@@ -357,6 +440,7 @@ export default function Stage5({
       // API CALL SECTION
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 5");
+        payload.matterNumber = matterNumber;
         await commercialApi.upsertStage(5, matterNumber, payload);
       } else if (company === "vkl") {
         console.log("Using VKL API for stage 5");
@@ -531,9 +615,10 @@ export default function Stage5({
         <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
-        <textarea
-          value={noteForSystem}
-          onChange={(e) => setNoteForSystem(e.target.value)}
+        <input
+          type="text"
+          value={generateSystemNote("main")}
+          disabled
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
@@ -549,6 +634,17 @@ export default function Stage5({
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading stage data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-y-auto">

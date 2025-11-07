@@ -376,6 +376,24 @@ class CommercialAPI {
     }
   }
 
+  // Get Commercial Client All Data
+  async getClientAllData(matterNumber) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CLIENT_ALL_DATA}/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting commercial client all data:", error);
+      throw error;
+    }
+  }
+
   // Get Cost Data
   async getCostData(matterNumber) {
     try {

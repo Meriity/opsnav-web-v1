@@ -30,7 +30,7 @@ export const getApiHeaders = () => {
   const currentModule = localStorage.getItem("currentModule");
 
   const headers = {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json", 
   };
 
   if (token) {

@@ -162,6 +162,17 @@ const formConfig = {
         fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
       },
     ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for Client",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
+      },
+    ],
   },
 };
 
@@ -181,6 +192,8 @@ export default function Stage2({
   clientType,
   user,
 }) {
+  console.log("Stage2 data:", data);
+  console.log("User data:", user);
   const stage = 2;
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -190,11 +203,14 @@ export default function Stage2({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
-  const currentConfig = formConfig[company] || formConfig.vkl;
+  const currentConfig =
+    currentModule === "commercial"
+      ? formConfig.commercial
+      : formConfig[company] || formConfig.vkl;
 
   const getStatus = (value) => {
     if (value === undefined || value === null || value === "") {
@@ -238,7 +254,7 @@ export default function Stage2({
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "nr", "na", "na", "approved"]);
+    const greenValues = new Set(["yes", "nr", "na", "approved"]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
@@ -259,100 +275,117 @@ export default function Stage2({
     return `${notReceived.join(" and ")} not received`;
   };
 
-  // DEBUG EFFECT - SEPARATE FROM DATA INITIALIZATION
-  useEffect(() => {
-    console.log("=== STAGE 2 DEBUG INFO ===");
-    console.log("LocalStorage company:", localStorage.getItem("company"));
-    console.log(
-      "LocalStorage currentModule:",
-      localStorage.getItem("currentModule")
-    );
-    console.log("matterNumber:", matterNumber);
-    console.log("Data received:", data);
-    console.log("Form data state:", formData);
-    console.log("Current config:", currentConfig);
-    console.log("=== END DEBUG INFO ===");
-  }, [data, formData, matterNumber, currentConfig]);
-
   // DATA INITIALIZATION EFFECT
   useEffect(() => {
     if (!data) return;
 
-    console.log("=== INITIALIZING FORM DATA ===");
+    console.log("=== INITIALIZING STAGE 2 FORM DATA ===");
     console.log("Raw data received:", data);
 
-    const initialFormData = {};
-    const initialStatuses = {};
-    const formatDate = (dateString) => {
-      if (!dateString) return "";
-      return new Date(dateString).toISOString().split("T")[0];
+    setIsLoading(true);
+
+    const initializeData = async () => {
+      try {
+        const initialFormData = {};
+        const initialStatuses = {};
+        const formatDate = (dateString) => {
+          if (!dateString) return "";
+          return new Date(dateString).toISOString().split("T")[0];
+        };
+
+        let stageData = data;
+
+        // For commercial stage 2, fetch the actual stage data from API
+        if (currentModule === "commercial") {
+          console.log("Commercial stage 2 - fetching actual stage data");
+          try {
+            const stageResponse = await commercialApi.getStageData(
+              2,
+              matterNumber
+            );
+            console.log("Commercial stage 2 API response:", stageResponse);
+
+            if (stageResponse && stageResponse.data) {
+              stageData = { ...data, ...stageResponse.data };
+            } else if (stageResponse) {
+              stageData = { ...data, ...stageResponse };
+            }
+            console.log("Combined stage data for commercial:", stageData);
+          } catch (error) {
+            console.log("No existing stage 2 data found, using default data");
+            stageData = data;
+          }
+        } else if (data.stages && Array.isArray(data.stages)) {
+          console.log("Data has stages array:", data.stages);
+          const stage2Data = data.stages.find(
+            (stage) => stage.stageNumber === 2
+          );
+          console.log("Stage 2 data from stages array:", stage2Data);
+
+          if (stage2Data) {
+            stageData = stage2Data;
+          }
+        }
+
+        console.log("Using this data for initialization:", stageData);
+
+        // Process fields
+        currentConfig.fields.forEach((field) => {
+          if (field.type === "number") {
+            const rawPrice = stageData[field.name];
+            initialFormData[field.name] =
+              typeof rawPrice === "object" && rawPrice?.$numberDecimal
+                ? rawPrice.$numberDecimal
+                : rawPrice?.toString() || "";
+          } else if (field.type === "radio") {
+            initialFormData[field.name] = normalizeValue(
+              stageData[field.name] || ""
+            );
+          } else {
+            initialFormData[field.name] = stageData[field.name] || "";
+          }
+
+          if (field.hasDate) {
+            initialFormData[field.dateFieldName] = formatDate(
+              stageData[field.dateFieldName]
+            );
+          }
+
+          initialStatuses[field.name] = getStatus(stageData[field.name]);
+        });
+
+        // Handle notes differently for commercial vs other modules
+        if (currentModule === "commercial") {
+          // For commercial, use separate noteForSystem and noteForClient fields
+          const { systemNote, clientComment } = extractNotes(
+            stageData.noteForSystem,
+            stageData.noteForClient
+          );
+          initialFormData.noteForSystem = systemNote;
+          initialFormData.noteForClient = clientComment;
+        } else {
+          // For other modules, use the existing note structure
+          currentConfig.noteGroups.forEach((group) => {
+            const notes = extractNotes(stageData[group.noteForClientKey]);
+            initialFormData[group.clientCommentKey] = notes.clientComment;
+          });
+        }
+
+        console.log("Initial form data:", initialFormData);
+        console.log("Initial statuses:", initialStatuses);
+
+        setFormData(initialFormData);
+        setStatuses(initialStatuses);
+        originalData.current = JSON.parse(JSON.stringify(initialFormData));
+      } catch (error) {
+        console.error("Error initializing form data:", error);
+        toast.error("Failed to load stage data");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // For commercial modules, check if data has stages array
-    let stageData = data;
-    if (
-      currentModule === "commercial" &&
-      data.stages &&
-      Array.isArray(data.stages)
-    ) {
-      console.log("Commercial data has stages array:", data.stages);
-      const stage2Data = data.stages.find((stage) => stage.stageNumber === 2);
-      console.log("Stage 2 data from stages array:", stage2Data);
-
-      if (stage2Data) {
-        stageData = stage2Data;
-      }
-    }
-
-    console.log("Using this data for initialization:", stageData);
-
-    currentConfig.fields.forEach((field) => {
-      if (field.type === "number") {
-        const rawPrice = stageData[field.name];
-        initialFormData[field.name] =
-          typeof rawPrice === "object" && rawPrice?.$numberDecimal
-            ? rawPrice.$numberDecimal
-            : rawPrice?.toString() || "";
-      } else if (field.type === "radio") {
-        initialFormData[field.name] = normalizeValue(
-          stageData[field.name] || ""
-        );
-      } else {
-        initialFormData[field.name] = stageData[field.name] || "";
-      }
-
-      if (field.hasDate) {
-        initialFormData[field.dateFieldName] = formatDate(
-          stageData[field.dateFieldName]
-        );
-      }
-
-      initialStatuses[field.name] = getStatus(stageData[field.name]);
-    });
-
-    // Handle notes differently for commercial vs other modules
-    if (currentModule === "commercial") {
-      // For commercial, use separate noteForSystem and noteForClient fields
-      const { systemNote, clientComment } = extractNotes(
-        stageData.noteForSystem,
-        stageData.noteForClient
-      );
-      initialFormData.noteForSystem = systemNote;
-      initialFormData.noteForClient = clientComment;
-    } else {
-      // For other modules, use the existing note structure
-      currentConfig.noteGroups.forEach((group) => {
-        const notes = extractNotes(stageData[group.noteForClientKey]);
-        initialFormData[group.clientCommentKey] = notes.clientComment;
-      });
-    }
-
-    console.log("Initial form data:", initialFormData);
-    console.log("Initial statuses:", initialStatuses);
-
-    setFormData(initialFormData);
-    setStatuses(initialStatuses);
-    originalData.current = JSON.parse(JSON.stringify(initialFormData));
+    initializeData();
   }, [
     data,
     reloadTrigger,
@@ -361,6 +394,7 @@ export default function Stage2({
     currentConfig.fields,
     currentConfig.noteGroups,
     currentModule,
+    matterNumber,
   ]);
 
   const handleChange = (field, value) => {
@@ -383,32 +417,7 @@ export default function Stage2({
   };
 
   const isChanged = () => {
-    // 1. Check if any form values have been modified by the user.
-    const valuesHaveChanged =
-      JSON.stringify(formData) !== JSON.stringify(originalData.current);
-
-    if (valuesHaveChanged) {
-      return true;
-    }
-
-    // 2. If values are the same, check if the status needs updating.
-    // This allows saving a completed form that was wrongly marked as "In Progress".
-    const relevantFields = currentConfig.fields.filter((field) => {
-      if (
-        field.name === "obtainDaSeller" &&
-        clientType?.toLowerCase() !== "seller"
-      ) {
-        return false;
-      }
-      return true;
-    });
-
-    const allCompleted = relevantFields.every(
-      (f) => getStatus(formData[f.name]) === "Completed"
-    );
-
-    const calculatedStatus = allCompleted ? "green" : "amber";
-    return calculatedStatus !== data?.colorStatus;
+    return JSON.stringify(formData) !== JSON.stringify(originalData.current);
   };
 
   async function handleSave() {
@@ -419,6 +428,7 @@ export default function Stage2({
       const company = localStorage.getItem("company");
       const currentModule = localStorage.getItem("currentModule");
       let payload = { ...formData };
+
       console.log("=== SAVE DEBUG ===");
       console.log("Saving payload:", payload);
       console.log("Current module:", currentModule);
@@ -427,11 +437,32 @@ export default function Stage2({
 
       // Handle notes differently for commercial vs other modules
       if (currentModule === "commercial") {
-        // For commercial, use separate noteForSystem and noteForClient
+        const commercialFields = [
+          "voi",
+          "leaseTransfer",
+          "contractOfSale",
+          "noteForSystem",
+          "noteForClient",
+        ];
+        const filteredPayload = {};
+
+        commercialFields.forEach((field) => {
+          if (payload[field] !== undefined) {
+            filteredPayload[field] = payload[field];
+          }
+        });
+
+        payload = filteredPayload;
+
+        // Generate system note
         const noteForSystem = generateSystemNote("main");
         const noteForClient = formData.noteForClient || "";
         payload.noteForSystem = noteForSystem;
         payload.noteForClient = noteForClient;
+
+        // Remove temporary fields
+        delete payload.systemNote;
+        delete payload.clientComment;
       } else {
         // For other modules, use the existing note structure
         currentConfig.noteGroups.forEach((group) => {
@@ -446,7 +477,7 @@ export default function Stage2({
         });
       }
 
-      // status check
+      // Calculate color status based on field completion
       const relevantFields = currentConfig.fields.filter((field) => {
         if (
           field.name === "obtainDaSeller" &&
@@ -460,7 +491,6 @@ export default function Stage2({
       const allCompleted = relevantFields.every(
         (f) => getStatus(formData[f.name]) === "Completed"
       );
-      const formStatus = allCompleted ? "green" : "amber";
       const colorStatus = allCompleted ? "green" : "amber";
 
       if ((clientType || "").toLowerCase() !== "seller") {
@@ -474,6 +504,9 @@ export default function Stage2({
       let apiResponse;
       if (currentModule === "commercial") {
         console.log("Using Commercial API for stage 2");
+        // For commercial, include matterNumber and colorStatus in payload
+        payload.matterNumber = matterNumber;
+        payload.colorStatus = colorStatus;
         apiResponse = await commercialApi.upsertStage(2, matterNumber, payload);
         console.log("Commercial API response:", apiResponse);
       } else if (company === "vkl") {
@@ -481,7 +514,7 @@ export default function Stage2({
         payload.matterNumber = matterNumber;
         apiResponse = await api.upsertStageTwo(
           matterNumber,
-          formStatus,
+          colorStatus,
           payload
         );
         console.log("VKL API response:", apiResponse);
@@ -493,15 +526,6 @@ export default function Stage2({
           colorStatus,
         });
         console.log("IDG API response:", apiResponse);
-      } else {
-        console.log("No matching API found, using default");
-        payload.matterNumber = matterNumber;
-        apiResponse = await api.upsertStageTwo(
-          matterNumber,
-          formStatus,
-          payload
-        );
-        console.log("Default API response:", apiResponse);
       }
 
       console.log("API call successful");
@@ -561,7 +585,6 @@ export default function Stage2({
 
       <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
         {field.name === "agent" ? (
-          // ✅ Dropdown for agents
           <select
             name={field.name}
             className={
@@ -575,13 +598,15 @@ export default function Stage2({
           >
             <option value="">Select Agent</option>
             {user.map((agent) => (
-              <option key={agent._id} value={agent._id}>
+              <option
+                key={agent._id}
+                value={agent._id + "-" + agent.displayName}
+              >
                 {agent.displayName}
               </option>
             ))}
           </select>
         ) : (
-          // ✅ Radios for everything else
           ["Yes", "No", "Processing", "N/R"].map((val) => (
             <label
               key={val}
@@ -602,7 +627,6 @@ export default function Stage2({
           ))
         )}
 
-        {/* ✅ If the field has an associated date */}
         {field.hasDate && (
           <input
             type="date"
@@ -665,10 +689,20 @@ export default function Stage2({
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading stage data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-y-auto">
       {currentConfig.fields.map((field) => {
-        // Conditionally render the "Obtain DA(Seller)" field
         if (
           field.name === "obtainDaSeller" &&
           clientType?.toLowerCase() !== "seller"
