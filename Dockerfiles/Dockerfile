@@ -10,7 +10,7 @@ ENV MODE=$MODE
 
 # Install dependencies
 RUN rm -rf node_modules package-lock.json
-RUN npm install
+RUN npm install --ignore-platform
 RUN npm install @rollup/rollup-linux-x64-gnu
 
 # Build with specified mode
