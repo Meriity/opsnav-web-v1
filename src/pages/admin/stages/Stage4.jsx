@@ -200,6 +200,7 @@ export default function Stage4({
         matterNumber,
         fileToUpload
       );
+      setReloadTrigger((prev) => !prev);
       // console.log(response);
     } catch (e) {
       console.error(e);

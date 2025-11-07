@@ -678,7 +678,7 @@ function Dashboard() {
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-100 p-2">
       <Header />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto space-y-4">
+        <div className="max-w-8xl mx-auto space-y-4">
           {/* Welcome Banner */}
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
