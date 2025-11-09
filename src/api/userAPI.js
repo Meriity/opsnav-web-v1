@@ -446,24 +446,6 @@ class ClientAPI {
     }
   }
 
-    async changeUser(user,orderId){
-    try{
-      const response = await fetch(
-        `${this.baseUrl}/idg/orders/changeuser/${orderId}`,
-        {
-          method: "POST",
-          headers: this.getHeaders(),
-          body:JSON.stringify({
-              user
-            })
-        }
-      );
-    }
-    catch(error){
-      console.log("Error occured!!",error);
-    }
-  }
-
   async createIDGOrder(clientData) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders`, {
@@ -736,10 +718,6 @@ class ClientAPI {
       throw error;
     }
   }
-
-
-
-
 
   // Get All Outstanding Task Report
   async getAllOutstandingTasks(page, activeMatter, matterFilter) {

@@ -10,7 +10,7 @@ import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useEffect, useState, Fragment, useMemo } from "react";
+import { useState, Fragment, useMemo, useCallback } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import Header from "../../components/layout/Header";
@@ -20,11 +20,8 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
-import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
-import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
-import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import { delay } from "framer-motion";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -37,24 +34,12 @@ const ViewClients = () => {
     reshareEmail: "",
   });
   const [email, setemail] = useState("");
-  const [isClicked, setIsClicked] = useState(false);
-  const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-  const [dateFilter, setDateFilter] = useState({
-    type: "delivery_date",
-    range: ["", ""],
-  });
+  const [settlementDate, setSettlementDate] = useState(["", ""]);
   const [showDateRange, setShowDateRange] = useState(false);
-  const [showTAR, setShowTar] = useState(false);
-  const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
-  const [allocatedUser,setallocatedUser]=useState("");
-  const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
-  const [commercialLoading, setCommercialLoading] = useState(false);
-  const [commercialClients, setCommercialClients] = useState([]);
-  const [selectedClientName, setSelectedClientName] = useState("");
-  const [showConfirmModal, setShowConfirmModal] = useState(true);
 
+  const { searchQuery } = useSearchStore();
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
 
@@ -66,267 +51,208 @@ const ViewClients = () => {
     }
   }, [currentModule]);
 
-  // Fetch clients based on module
-  useEffect(() => {
-    // In the fetchData function, improve commercial data handling:
-    const fetchData = async () => {
+  // React Query Mutation for Resharing Email
+  const { mutate: handelReShareEmail, isPending: isSendingEmail } = useMutation(
+    {
+      mutationFn: () =>
+        api.resendLinkToClient(email, shareDetails?.matterNumber),
+      onSuccess: () => {
+        toast.success("Email sent successfully.");
+        handelShareEmailModalClose();
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to send email.");
+        handelShareEmailModalClose();
+      },
+    }
+  );
+
+  // Optimized Fetcher Functions
+  const fetchCommercialProjects = useCallback(async () => {
+    const response = await api.getActiveProjects();
+
+    let data =
+      response?.data ||
+      response?.clients ||
+      response?.projects ||
+      response ||
+      [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.matterNumber || client._id,
+      matternumber: client.matterNumber || client.id || client._id,
+      client_name: client.clientName || client.client_name,
+      businessAddress: client.businessAddress || client.business_address,
+      businessName: client.businessName,
+      state: client.state || "",
+      client_type: client.clientType || client.type,
+      settlement_date: client.settlementDate || client.settlement_date,
+      matterDate: client.matterDate,
+      dataEntryBy: client.dataEntryBy || "",
+      postcode: client.postcode || "",
+      finance_approval_date: client.financeApprovalDate,
+      building_and_pest_date: client.buildingAndPestDate,
+      dataentryby: client.dataEntryBy || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  const fetchVKLClients = useCallback(async () => {
+    const response = await api.getClients();
+
+    let data = response?.data || response?.clients || response || [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.matterNumber || client._id,
+      matternumber: client.matterNumber || client.id || client._id,
+      client_name: client.clientName || client.client_name,
+      businessAddress: client.businessAddress || client.business_address,
+      property_address: client.propertyAddress || client.property_address,
+      state: client.state || "",
+      client_type: client.clientType || client.type,
+      settlement_date: client.settlementDate || client.settlement_date,
+      matterDate: client.matterDate,
+      dataEntryBy: client.dataEntryBy || "",
+      postcode: client.postcode || "",
+      finance_approval_date: client.financeApprovalDate,
+      building_and_pest_date: client.buildingAndPestDate,
+      dataentryby: client.dataEntryBy || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  const fetchIDGOrders = useCallback(async () => {
+    const response = await api.getIDGOrders();
+
+    let data =
+      response?.data || response?.orders || response?.clients || response || [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.orderId || client.clientId || client._id,
+      clientId: client.clientId || client.id,
+      orderId: client.orderId || client.id,
+      client_name: client.clientName || client.client_name,
+      client_type: client.orderType || client.client_type,
+      allocatedUser: client.allocatedUser || client.allocated_user,
+      order_date: client.orderDate || client.order_date,
+      delivery_date: client.deliveryDate || client.delivery_date,
+      orderDetails: client.orderDetails || client.order_details,
+      billing_address: client.billingAddress || client.billing_address,
+      postcode: client.postcode || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  // React Query Configuration
+  const {
+    data: clientData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["clients", currentModule, company],
+    queryFn: async () => {
       if (currentModule === "commercial") {
-        setCommercialLoading(true);
-        try {
-          const response = await api.getActiveProjects();
-          console.log("Commercial clients response:", response);
-
-          let data = [];
-          if (Array.isArray(response)) {
-            data = response;
-          } else if (response && Array.isArray(response.data)) {
-            data = response.data;
-          } else if (response && Array.isArray(response.clients)) {
-            data = response.clients;
-          } else if (response && Array.isArray(response.projects)) {
-            data = response.projects;
-          } else {
-            // Handle empty or null response
-            console.warn("Empty or unexpected response format:", response);
-            data = [];
-          }
-
-          const transformedData = data.map((client) => ({
-            ...client,
-            id: client.id || client.matterNumber || client._id,
-            matternumber: client.matterNumber || client.id || client._id,
-            client_name: client.clientName || client.client_name,
-            businessAddress: client.businessAddress || client.business_address,
-            businessName: client.businessName,
-            state: client.state || "",
-            client_type: client.clientType || client.type,
-            settlement_date: client.settlementDate || client.settlement_date,
-            matterDate: client.matterDate,
-            dataEntryBy: client.dataEntryBy || "",
-            postcode: client.postcode || "",
-            finance_approval_date: client.financeApprovalDate,
-            building_and_pest_date: client.buildingAndPestDate,
-            dataentryby: client.dataEntryBy || "",
-            status: client.status || "active",
-          }));
-
-          setCommercialClients(transformedData);
-        } catch (error) {
-          console.error("Error fetching commercial clients:", error);
-          // Don't show error toast for empty responses, just set empty array
-          if (error.response?.status !== 404) {
-            toast.error("Failed to load commercial projects");
-          }
-          setCommercialClients([]);
-        } finally {
-          setCommercialLoading(false);
-        }
+        return await fetchCommercialProjects();
+      } else if (company === "idg") {
+        return await fetchIDGOrders();
       } else {
-        fetchClients();
+        return await fetchVKLClients();
       }
-    };
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
 
-    fetchData();
-  }, [currentModule, api, fetchClients]);
+  // Use the React Query data directly
+  const activeData = clientData || [];
 
-  useEffect(() => {
-    console.log(user);
-  let filteredData =
-    currentModule === "commercial" ? commercialClients : Clients;
+  // Optimized Filtering
+  const clientList = useMemo(() => {
+    if (!activeData.length) return [];
 
-  const [startDate, endDate] = Array.isArray(dateFilter?.range)
-    ? dateFilter.range
-    : ["", ""];
+    let filteredData = [...activeData];
 
-  // Fix: Use lowercase comparison to match localStorage value
-  if (company?.toLowerCase() === "idg" && startDate && endDate) {
-    filteredData = filteredData.filter((client) => {
-      let deliveryDateObj = moment(client.delivery_date);
-      let orderDateObj = moment(client.order_date || client.orderDate);
+    // Apply date range filter
+    const [startDate, endDate] = settlementDate;
+    if (startDate && endDate) {
+      const startMoment = moment(startDate);
+      const endMoment = moment(endDate);
 
-      // Check if delivery or order date falls within range
-      const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
-        moment(startDate),
-        moment(endDate),
-        "day",
-        "[]"
-      );
-
-      const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
-        moment(startDate),
-        moment(endDate),
-        "day",
-        "[]"
-      );
-
-      if (dateFilter.type === "delivery_date") {
-        return inDeliveryRange;
-      } else if (dateFilter.type === "order_date") {
-        return inOrderRange;
-      } else if (dateFilter.type === "both_date") {
-        return inDeliveryRange && inOrderRange;
-      }
-
-      return;
-    });
-  }
-  else {
-      if (startDate && endDate) {
       filteredData = filteredData.filter((client) => {
         let clientDate;
         if (currentModule === "commercial") {
           clientDate = moment(client.settlement_date || client.settlementDate);
+        } else if (company === "idg") {
+          clientDate = moment(client.delivery_date || client.order_date);
         } else {
           clientDate = moment(client.settlement_date);
         }
-        return clientDate.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
+        return clientDate.isBetween(startMoment, endMoment, "day", "[]");
+      });
+    }
+
+    // Apply search query filter
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const lowercasedQuery = searchQuery.toLowerCase().trim();
+
+      filteredData = filteredData.filter((client) => {
+        const searchableFields = [];
+
+        if (currentModule === "commercial") {
+          searchableFields.push(
+            client.matterNumber,
+            client.clientName,
+            client.businessName,
+            client.businessAddress,
+            client.state,
+            client.clientType,
+            client.dataEntryBy,
+            client.postcode
+          );
+        } else if (company === "idg") {
+          searchableFields.push(
+            client.clientId,
+            client.orderId,
+            client.client_name,
+            client.client_type,
+            client.allocatedUser,
+            client.orderDetails,
+            client.billing_address,
+            client.postcode
+          );
+        } else {
+          searchableFields.push(
+            client.client_name || client.clientName,
+            client.matternumber || client.matterNumber || client.orderId,
+            client.businessAddress || client.business_address,
+            client.property_address || client.propertyAddress,
+            client.state,
+            client.referral || client.referralName
+          );
+        }
+
+        return searchableFields.some(
+          (field) =>
+            field && String(field).toLowerCase().includes(lowercasedQuery)
         );
       });
     }
-  }
 
-  // Apply search query filter
-  if (searchQuery) {
-    const lowercasedQuery = searchQuery.toLowerCase();
-    filteredData = filteredData.filter((client) => {
-      if (currentModule === "commercial") {
-        const searchableFields = [
-          client.matterNumber,
-          client.clientName,
-          client.businessName,
-          client.businessAddress,
-          client.state,
-          client.clientType,
-          client.dataEntryBy,
-          client.postcode,
-        ];
+    return filteredData;
+  }, [settlementDate, activeData, searchQuery, currentModule, company]);
 
-        return searchableFields.some(
-          (field) =>
-            field && String(field).toLowerCase().includes(lowercasedQuery)
-        );
-      } else {
-        const searchableFields = [
-          client.client_name || client.clientName,
-          client.matternumber || client.matterNumber || client.orderId,
-          client.businessAddress || client.business_address,
-          client.property_address || client.propertyAddress,
-          client.state,
-          client.referral || client.referralName,
-        ];
-
-        return searchableFields.some(
-          (field) =>
-            field && String(field).toLowerCase().includes(lowercasedQuery)
-        );
-      }
-    });
-  }
-
-  setClientList(filteredData);
-}, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
-
-  let columns = [];
-  if (localStorage.getItem("company") === "vkl") {
-    if (currentModule === "commercial") {
-      // Commercial projects columns
-      columns = [
-        { key: "matterNumber", title: "Project Number", width: "10%" },
-        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
-        { key: "clientName", title: "Client Name", width: "12%" },
-        { key: "businessName", title: "Business Name", width: "12%" },
-        { key: "businessAddress", title: "Business Address", width: "15%" },
-        { key: "state", title: "State", width: "6%" },
-        { key: "clientType", title: "Client Type", width: "8%" },
-        { key: "settlementDate", title: "Completion Date", width: "10%" },
-        { key: "matterDate", title: "Project Date", width: "10%" },
-        // { key: "postcode", title: "Postcode", width: "7%" },
-      ];
-    } else {
-      // Regular VKL clients
-      columns = [
-        { key: "matternumber", title: "Matter Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "property_address", title: "Property Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Settlement Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    }
-  } else if (localStorage.getItem("company") === "idg") {
-    columns = [
-      { key: "clientId", title: "Client ID", width: "8%" },
-      { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "9%" },
-      { key: "client_type", title: "Order Type", width: "12%" },
-      { key: "allocatedUser", title: "Allocated User", width: "15%" },
-      { key: "order_date", title: "Order Date", width: "12%" },
-      { key: "delivery_date", title: "Delivery Date", width: "12%" },
-      { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "10%" },
-      { key: "postcode", title: "Post Code", width: "6.5%" },
-    ];
-  }
-
-  async function handelReShareEmail() {
-    try {
-      setIsClicked(true);
-      await api.resendLinkToClient(email, shareDetails?.matterNumber);
-      toast.success("Email sent successfully.");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      handelShareEmailModalClose();
-    }
-  }
-
-  async function changeUser(user, orderId) {
-    console.log(user, orderId);
-    try {
-      const res = api.changeUser(user, orderId);
-    } catch (error) {
-      console.log("Error occured!!", error);
-    }
-  }
-
-  const handleClientFilterChange = (selectedName) => {
-    setSelectedClientName(selectedName);
-
-    if (!selectedName) {
-      setClientList(
-        currentModule === "commercial" ? commercialClients : Clients
-      );
-    } else {
-      const filtered = (currentModule === "commercial" ? commercialClients : Clients)
-        .filter(client => client.client_name === selectedName);
-
-      setClientList(filtered);
-    }
-  };
-
-
-  const handelShareEmailModalClose = () => {
-    setShowShareDialog(false);
-    setIsClicked(false);
-    setemail("");
-    setShareDetails({ matterNumber: "", reshareEmail: "" });
-  };
-
+  // Helper Functions
   const getPageTitle = () => {
     if (currentModule === "commercial") return "View Projects";
     if (company === "idg") return "View Orders";
@@ -357,8 +283,63 @@ const ViewClients = () => {
     return company === "idg";
   };
 
-  const isLoading =
-    currentModule === "commercial" ? commercialLoading : loading;
+  // Modal Close Handlers
+  const handelShareEmailModalClose = () => {
+    setShowShareDialog(false);
+    setemail("");
+    setShareDetails({ matterNumber: "", reshareEmail: "" });
+  };
+
+  // Column Definitions
+  let columns = [];
+  if (company === "vkl") {
+    if (currentModule === "commercial") {
+      columns = [
+        { key: "matterNumber", title: "Project Number", width: "10%" },
+        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
+        { key: "clientName", title: "Client Name", width: "12%" },
+        { key: "businessName", title: "Business Name", width: "12%" },
+        { key: "businessAddress", title: "Business Address", width: "15%" },
+        { key: "state", title: "State", width: "6%" },
+        { key: "clientType", title: "Client Type", width: "8%" },
+        { key: "settlementDate", title: "Completion Date", width: "10%" },
+        { key: "matterDate", title: "Project Date", width: "10%" },
+      ];
+    } else {
+      columns = [
+        { key: "matternumber", title: "Matter Number", width: "8%" },
+        { key: "dataentryby", title: "Data Entry By", width: "10%" },
+        { key: "client_name", title: "Client Name", width: "10%" },
+        { key: "property_address", title: "Property Address", width: "10%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "client_type", title: "Client Type", width: "7%" },
+        { key: "settlement_date", title: "Settlement Date", width: "10%" },
+        {
+          key: "finance_approval_date",
+          title: "Finance Approval Date",
+          width: "10%",
+        },
+        {
+          key: "building_and_pest_date",
+          title: "Building & Pest Date",
+          width: "10%",
+        },
+      ];
+    }
+  } else if (company === "idg") {
+    columns = [
+      { key: "clientId", title: "Client ID", width: "8%" },
+      { key: "orderId", title: "Order ID", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "9%" },
+      { key: "client_type", title: "Order Type", width: "12%" },
+      { key: "allocatedUser", title: "Allocated User", width: "10%" },
+      { key: "order_date", title: "Order Date", width: "12%" },
+      { key: "delivery_date", title: "Delivery Date", width: "12%" },
+      { key: "orderDetails", title: "Order Details", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "10%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" },
+    ];
+  }
 
   return (
     <>
@@ -385,17 +366,21 @@ const ViewClients = () => {
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
-
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
-          }.`}
-        handelSubmitFun={(fromDate, toDate, dateType) => {
-          setDateFilter({ type: dateType, range: [fromDate, toDate] });
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial"
+            ? "projects"
+            : company === "idg"
+            ? "orders"
+            : "clients"
+        }.`}
+        handelSubmitFun={(fromDate, toDate) => {
+          setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
         }}
-        onReset={() => setDateFilter({ type: "settlement_date", range: ["", ""] })}
+        onReset={() => setSettlementDate(["", ""])}
       />
 
       <Dialog
@@ -417,7 +402,12 @@ const ViewClients = () => {
             </h2>
             <p className="text-sm text-center text-gray-700 mb-4">
               Please enter the client email for{" "}
-              {currentModule === "commercial" ? "project" : "matter"} No. :{" "}
+              {currentModule === "commercial"
+                ? "project"
+                : company === "idg"
+                ? "order"
+                : "matter"}{" "}
+              No. :{" "}
               <span className="text-blue-500 underline cursor-pointer">
                 {shareDetails?.matterNumber}
               </span>
@@ -441,18 +431,13 @@ const ViewClients = () => {
                 </svg>
               </span>
             </div>
-            {isClicked ? (
-              <button className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3">
-                Sending...
-              </button>
-            ) : (
-              <button
-                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
-                onClick={handelReShareEmail}
-              >
-                Send Link
-              </button>
-            )}
+            <button
+              className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3 disabled:opacity-50"
+              onClick={handelReShareEmail}
+              disabled={isSendingEmail}
+            >
+              {isSendingEmail ? "Sending..." : "Send Link"}
+            </button>
             <button className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition">
               Manage Access
             </button>
@@ -513,14 +498,17 @@ const ViewClients = () => {
             {getPageTitle()}
           </h3>
           <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
-            {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
               <label
                 htmlFor="items-per-page"
                 className="text-sm font-medium text-gray-700"
               >
-                {currentModule === "commercial" ? "Projects" : "Clients"} per
-                page:
+                {currentModule === "commercial"
+                  ? "Projects"
+                  : company === "idg"
+                  ? "Orders"
+                  : "Clients"}{" "}
+                per page:
               </label>
               <select
                 id="items-per-page"
@@ -528,48 +516,21 @@ const ViewClients = () => {
                 onChange={(e) => setItemsPerPage(Number(e.target.value))}
                 className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
                 <option value={500}>500</option>
+                <option value={1000}>1000</option>
               </select>
             </div>
-            {localStorage.getItem("company")=="idg" &&
-            <div className="flex items-center gap-2">
-              {/* <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                Select by clients
-              </label> */}
-              <select
-                name="Client"
-                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={selectedClientName}
-                onChange={(e) => handleClientFilterChange(e.target.value)}
-                disabled={localStorage.getItem("role") !== "admin"}
-              >
-                <option value="">All Clients</option>
-                {list.map((client) => (
-                  <option key={client.name} value={client.name}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            }
 
-            {/* Consolidated Desktop Buttons */}
-            <div className="hidden lg:flex items-center gap-1.5">
-              {localStorage.getItem("company") === "vkl" && (
+            <div className="hidden lg:flex items-center gap-4">
+              {company === "vkl" && (
                 <>
                   <Button
-                    label="Create Client"
+                    label={getCreateButtonLabel()}
                     Icon1={userplus}
-                    onClick={() => setcreateuser(true)}
+                    onClick={handleCreateButtonClick}
                     width="w-[150px]"
                   />
                   <Button
@@ -584,7 +545,7 @@ const ViewClients = () => {
                   />
                 </>
               )}
-              {localStorage.getItem("company") === "idg" && (
+              {company === "idg" && (
                 <>
                   <Button
                     label="Create Client"
@@ -601,11 +562,6 @@ const ViewClients = () => {
                     label="Select Date Range"
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
-                  />
-                  <Button
-                    label="Task Report"
-                    onClick={()=>setShowTar(true)}
-                  width="w-[100px]"
                   />
                 </>
               )}
@@ -632,41 +588,61 @@ const ViewClients = () => {
                 >
                   <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
-                      {/* Create Client/Project option */}
                       <Menu.Item>
                         {({ active }) => (
                           <button
-                            onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
+                            onClick={handleCreateButtonClick}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
                         )}
                       </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
+                      {shouldShowCreateOrder() && (
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => setcreateOrder(true)}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active
+                                  ? "bg-sky-50 text-sky-700"
+                                  : "text-gray-700"
                               }`}
-                          >
-                            Outstanding Tasks
-                          </button>
-                        )}
-                      </Menu.Item>
+                            >
+                              Create Order
+                            </button>
+                          )}
+                        </Menu.Item>
+                      )}
+                      {shouldShowOutstandingTasks() && (
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => setShowOutstandingTask(true)}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active
+                                  ? "bg-sky-50 text-sky-700"
+                                  : "text-gray-700"
+                              }`}
+                            >
+                              Outstanding Tasks
+                            </button>
+                          )}
+                        </Menu.Item>
+                      )}
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
                           >
                             Select Date Range
                           </button>
@@ -681,22 +657,31 @@ const ViewClients = () => {
         </div>
 
         {error && (
-          <ConfirmationModal
-            isOpen={showConfirmModal}
-            onClose={() => console.log("")}
-            title="Session Expired!"
-            isLogout={true}
+          <div
+            className="p-4 text-red-700 bg-red-100 border-l-4 border-red-500"
+            role="alert"
           >
-            Please Login Again
-          </ConfirmationModal>
+            <p>{error.message || "Error loading data"}</p>
+            <button
+              onClick={handleRefresh}
+              className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
-        {isLoading || !clientList ? (
-          <Loader />
-        ) : clientList.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-10">
+            <Loader />
+            <p className="mt-2 text-gray-600">Loading data...</p>
+          </div>
+        ) : !clientList || clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">
             {currentModule === "commercial"
               ? "No projects found"
+              : company === "idg"
+              ? "No orders found"
               : "No clients found"}
           </div>
         ) : (
@@ -704,8 +689,6 @@ const ViewClients = () => {
             <ViewClientsTable
               data={clientList}
               columns={columns}
-              users={user}
-              handleChangeUser={changeUser}
               onEdit={true}
               onShare={(matterNumber, reshareEmail) => {
                 setShareDetails({ matterNumber, reshareEmail });

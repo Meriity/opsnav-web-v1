@@ -1,20 +1,20 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../../components/ui/Button";
-import Table from "../../components/ui/Table";
-import Header from "../../components/layout/Header";
+import Button from "@/components/ui/Button";
+import Table from "@/components/ui/Table";
+import Header from "@/components/layout/Header";
 import * as XLSX from "xlsx-js-style";
 import moment from "moment";
-import DateRangeModal from "../../components/ui/DateRangeModal";
+import DateRangeModal from "@/components/ui/DateRangeModal";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import Loader from "../../components/ui/Loader";
-import ClientAPI from "../../api/userAPI";
-import CommercialAPI from "../../api/commercialAPI";
+import Loader from "@/components/ui/Loader";
+import ClientAPI from "@/api/userAPI";
+import CommercialAPI from "@/api/commercialAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
-import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
+import { useQuery } from "@tanstack/react-query";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -41,8 +41,12 @@ function ClientsPerPage({ value, onChange }) {
 
 export default function ArchivedClients() {
   const navigate = useNavigate();
-  const { archivedClients, loading, isFetched, isError, fetchArchivedClients } =
-    useArchivedClientStore();
+  const {
+    archivedClients,
+    loading: zustandLoading,
+    isFetched,
+    fetchArchivedClients,
+  } = useArchivedClientStore();
   const { searchQuery } = useSearchStore();
 
   // Modals
@@ -51,10 +55,8 @@ export default function ArchivedClients() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
-  const [clientList, setClientList] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(100);
-  const [commercialLoading, setCommercialLoading] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
@@ -70,70 +72,80 @@ export default function ArchivedClients() {
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-  useEffect(() => {
-    if (!isFetched && currentModule !== "commercial") {
-      fetchArchivedClients();
+  // --- React Query Data Fetching ---
+
+  // 1. useQuery for VKL/IDG Clients (triggers Zustand fetch)
+  const { isLoading: vklLoading, error: vklError } = useQuery({
+    queryKey: ["archivedClients", currentModule],
+    queryFn: fetchArchivedClients,
+    enabled: currentModule !== "commercial" && !isFetched, // Only run if not commercial and not already fetched
+  });
+
+  // 2. Fetcher function for Commercial Archived Projects
+  const fetchCommercialArchivedClients = async () => {
+    console.log("Fetching commercial archived projects...");
+    const response = await api.getArchivedProjects();
+    console.log("Commercial archived projects response:", response);
+
+    let data = [];
+    if (Array.isArray(response)) {
+      data = response;
+    } else if (response && Array.isArray(response.data)) {
+      data = response.data;
+    } else if (response && Array.isArray(response.clients)) {
+      data = response.clients;
+    } else if (response && Array.isArray(response.projects)) {
+      data = response.projects;
+    } else {
+      console.warn("Unexpected response format:", response);
+      toast.error("Unexpected data format received");
+      return []; // Return empty array on bad format
     }
-  }, [isFetched, fetchArchivedClients, currentModule]);
 
-  // Fetch commercial archived clients if in commercial module
-  useEffect(() => {
-    const fetchCommercialArchivedClients = async () => {
-      if (currentModule === "commercial") {
-        setCommercialLoading(true);
-        try {
-          const response = await api.getArchivedProjects();
-          console.log("Commercial archived projects response:", response);
+    // Transform the data
+    return data.map((client) => ({
+      ...client,
+      id: client.id || client.matterNumber || client.orderId,
+      matternumber: client.matterNumber || client.id || client.orderId,
+      client_name: client.clientName || client.client_name,
+      property_address: client.propertyAddress || client.property_address,
+      matter_date: client.matterDate || client.matter_date,
+      settlement_date: client.settlementDate || client.settlement_date,
+      state: client.state || "",
+      clientType: client.clientType || client.type,
+      status: client.status || "archived",
+    }));
+  };
 
-          // Handle different response structures
-          let data = [];
-          if (Array.isArray(response)) {
-            data = response;
-          } else if (response && Array.isArray(response.data)) {
-            data = response.data;
-          } else if (response && Array.isArray(response.clients)) {
-            data = response.clients;
-          } else if (response && Array.isArray(response.projects)) {
-            data = response.projects;
-          } else {
-            console.warn("Unexpected response format:", response);
-            toast.error("Unexpected data format received");
-            return;
-          }
+  // 3. useQuery for Commercial Projects
+  const {
+    data: commercialData,
+    isLoading: commercialLoading,
+    error: commercialError,
+  } = useQuery({
+    queryKey: ["archivedClients", currentModule],
+    queryFn: fetchCommercialArchivedClients,
+    enabled: currentModule === "commercial", // Only run if in commercial module
+    onError: (error) => {
+      console.error("Error fetching commercial archived clients:", error);
+      toast.error("Failed to load archived projects");
+    },
+  });
 
-          // Transform the data to match the expected format
-          const transformedData = data.map((client) => ({
-            ...client,
-            id: client.id || client.matterNumber || client.orderId,
-            matternumber: client.matterNumber || client.id || client.orderId,
-            client_name: client.clientName || client.client_name,
-            property_address: client.propertyAddress || client.property_address,
-            matter_date: client.matterDate || client.matter_date,
-            settlement_date: client.settlementDate || client.settlement_date,
-            state: client.state || "",
-            clientType: client.clientType || client.type,
-            status: client.status || "archived",
-          }));
+  // 4. Consolidate loading, error, and data
+  const isLoading =
+    currentModule === "commercial"
+      ? commercialLoading
+      : vklLoading || zustandLoading;
+  const error = currentModule === "commercial" ? commercialError : vklError;
+  const activeData =
+    currentModule === "commercial"
+      ? commercialData || []
+      : archivedClients || [];
 
-          setClientList(transformedData);
-        } catch (error) {
-          console.error("Error fetching commercial archived clients:", error);
-          toast.error("Failed to load archived projects");
-        } finally {
-          setCommercialLoading(false);
-        }
-      }
-    };
-
-    if (currentModule === "commercial") {
-      fetchCommercialArchivedClients();
-    }
-  }, [currentModule, api]);
-
-  // Apply date & search filters to list
-  useEffect(() => {
-    let filteredData =
-      currentModule === "commercial" ? clientList : archivedClients;
+  // 5. Apply date & search filters using useMemo
+  const filteredClientList = useMemo(() => {
+    let filteredData = activeData;
 
     if (fromDate && toDate) {
       filteredData = filteredData.filter((client) => {
@@ -169,17 +181,8 @@ export default function ArchivedClients() {
       );
     }
 
-    if (currentModule !== "commercial") {
-      setClientList(filteredData);
-    }
-  }, [
-    archivedClients,
-    clientList,
-    fromDate,
-    toDate,
-    searchQuery,
-    currentModule,
-  ]);
+    return filteredData;
+  }, [activeData, fromDate, toDate, searchQuery, currentModule]);
 
   const getColumns = () => {
     if (currentModule === "commercial") {
@@ -227,8 +230,9 @@ export default function ArchivedClients() {
     setSortedColumn(columnKey);
   };
 
+  // Sort the *filtered* list
   const sortedClientList = useMemo(() => {
-    let sortableItems = [...clientList];
+    let sortableItems = [...filteredClientList]; // Use filteredClientList
     if (sortedColumn !== null) {
       sortableItems.sort((a, b) => {
         const aVal = a[sortedColumn];
@@ -259,7 +263,7 @@ export default function ArchivedClients() {
       });
     }
     return sortableItems;
-  }, [clientList, sortedColumn, sortDirection]);
+  }, [filteredClientList, sortedColumn, sortDirection]); // Use filteredClientList
 
   // ----- Export helpers -----
   async function handleExcelExport(withFrom, withTo) {
@@ -275,8 +279,8 @@ export default function ArchivedClients() {
 
       let data;
       if (currentModule === "commercial") {
-        // For commercial, we'll filter the existing data since we don't have a specific endpoint
-        data = clientList.filter((client) => {
+        // For commercial, filter the already-fetched list
+        data = filteredClientList.filter((client) => {
           const clientDate = moment(
             new Date(client.settlement_date || client.settlementDate)
           );
@@ -391,9 +395,6 @@ export default function ArchivedClients() {
     }
   };
 
-  const isLoading =
-    currentModule === "commercial" ? commercialLoading : loading;
-
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
       <Header />
@@ -424,6 +425,7 @@ export default function ArchivedClients() {
           </div>
         </div>
 
+        {/* Use consolidated isLoading */}
         {isLoading ? (
           <Loader />
         ) : (
@@ -436,6 +438,7 @@ export default function ArchivedClients() {
                   onChange={(e) => setClientsPerPage(Number(e.target.value))}
                 />
               </div>
+              {/* Use sortedClientList */}
               {sortedClientList.length > 0 ? (
                 <Table
                   data={sortedClientList}
@@ -444,8 +447,7 @@ export default function ArchivedClients() {
                   showActions={true}
                   cellWrappingClass="whitespace-normal"
                   headerBgColor="bg-[#A6E7FF]"
-                  // OnEye={handleViewClient}
-                  EditOrder={true}
+                  OnEye={handleViewClient}
                   sortedColumn={sortedColumn}
                   sortDirection={sortDirection}
                   handleSort={handleSort}
@@ -493,11 +495,13 @@ export default function ArchivedClients() {
                             <button
                               onClick={() => setOpenExcel(true)}
                               disabled={isExporting}
-                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
-                                } ${isExporting
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              } ${
+                                isExporting
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                                }`}
+                              }`}
                             >
                               {isExporting ? "Exporting..." : "Export"}
                             </button>
@@ -507,8 +511,9 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
-                                }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              }`}
                             >
                               Filter
                             </button>
@@ -518,8 +523,9 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
-                                }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active ? "bg-gray-100" : "text-gray-700"
+                              }`}
                             >
                               Select Date Range
                             </button>
@@ -532,65 +538,68 @@ export default function ArchivedClients() {
               </div>
 
               {/* Mobile Client Cards */}
+              {/* Use sortedClientList */}
               {sortedClientList.length > 0 ? (
-                sortedClientList.slice(0, clientsPerPage).map((client) => (
-                  <div
-                    key={client.id || client.matterNumber || client.orderId}
-                    className="bg-white p-4 rounded-lg shadow"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-bold truncate">
-                        {client.client_name || client.clientName}
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {client.matternumber ||
-                          client.matterNumber ||
-                          client.orderId}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {client.property_address || client.propertyAddress}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="font-semibold">State: </span>
-                        {client.state || client.dataEntryBy}
+                sortedClientList
+                  .slice(0, clientsPerPage)
+                  .map((client) => (
+                    <div
+                      key={client.id || client.matterNumber || client.orderId}
+                      className="bg-white p-4 rounded-lg shadow"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-lg font-bold truncate">
+                          {client.client_name || client.clientName}
+                        </h3>
+                        <span className="text-sm text-gray-500">
+                          {client.matternumber ||
+                            client.matterNumber ||
+                            client.orderId}
+                        </span>
                       </div>
-                      <div>
-                        <span className="font-semibold">Type: </span>
-                        {client.type || client.clientType || client.ordertype}
-                      </div>
-                      <div>
-                        <span className="font-semibold">
-                          {currentModule === "commercial"
-                            ? "Project Date:"
-                            : company === "vkl"
+                      <p className="text-sm text-gray-600 mb-2">
+                        {client.property_address || client.propertyAddress}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-semibold">State: </span>
+                          {client.state || client.dataEntryBy}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Type: </span>
+                          {client.type || client.clientType || client.ordertype}
+                        </div>
+                        <div>
+                          <span className="font-semibold">
+                            {currentModule === "commercial"
+                              ? "Project Date:"
+                              : company === "vkl"
                               ? "Matter Date:"
                               : "Order Date"}
-                        </span>
-                        {client.matter_date || client.orderDate}
+                          </span>
+                          {client.matter_date || client.orderDate}
+                        </div>
+                        <div>
+                          <span className="font-semibold">
+                            {getDateFieldLabel()}:{" "}
+                          </span>
+                          {client.settlement_date || client.deliveryDate}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Status: </span>
+                          {client.status}
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-semibold">
-                          {getDateFieldLabel()}:{" "}
-                        </span>
-                        {client.settlement_date || client.deliveryDate}
-                      </div>
-                      <div>
-                        <span className="font-semibold">Status: </span>
-                        {client.status}
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={() => handleViewClient(client)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        onClick={() => handleViewClient(client)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   No{" "}
@@ -607,8 +616,9 @@ export default function ArchivedClients() {
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
-        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
-          }.`}
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial" ? "projects" : "clients"
+        }.`}
         handelSubmitFun={(from, to) => {
           handleDataFilter(from, to);
           setShowSettlementDateModal(false);
@@ -631,16 +641,8 @@ export default function ArchivedClients() {
           setToDate(null);
         }}
       />
-
-      <ConfirmationModal
-        isOpen={isError}
-        onClose={() => console.log("")}
-        title="Session Expired!"
-        isLogout={true}
-      >
-        Please Login Again
-      </ConfirmationModal>
-
     </div>
   );
 }
+
+

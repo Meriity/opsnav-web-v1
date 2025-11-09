@@ -19,7 +19,6 @@ export const useArchivedClientStore = create((set, get) => ({
   loading: false,
   isFetched: false,
   refreshKey: 0, 
-  isError:false,
 
   // --- Fetch archived clients ---
   fetchArchivedClients: async () => {
@@ -70,7 +69,7 @@ export const useArchivedClientStore = create((set, get) => ({
     } catch (err) {
       console.error("Failed to fetch archived clients", err);
       toast.error("Could not load archived client data.");
-      set({ archivedClients: [], isFetched: true, loading: false,isError:true });
+      set({ archivedClients: [], isFetched: true, loading: false });
     }
   },
 

@@ -258,9 +258,7 @@ export default function ManageUsers() {
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">
-            {currentModule === "commercial"
-              ? "Manage Users - Commercial"
-              : "Manage Users"}
+            {currentModule === "commercial" ? "Manage Users" : "Manage Users"}
           </h2>
           {shouldShowCreateButton() && (
             <Button

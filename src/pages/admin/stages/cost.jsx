@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import Button from "../../../components/ui/Button";
-import ClientAPI from "../../../api/userAPI";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import Button from "@/components/ui/Button";
+import ClientAPI from "@/api/userAPI";
 import { useParams } from "react-router-dom";
-import StageAPI from "../../../api/clientAPI";
-import CommercialAPI from "../../../api/commercialAPI";
-import CostInputRow from "../../../components/ui/CostInputRow";
+import StageAPI from "@/api/clientAPI";
+import CommercialAPI from "@/api/commercialAPI";
+import CostInputRow from "@/components/ui/CostInputRow";
 import { toast } from "react-toastify";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Helper to define initial state structures for different companies
 const getInitialState = (company, currentModule) => {
@@ -69,87 +70,267 @@ const getInitialState = (company, currentModule) => {
   return commonState;
 };
 
-export default function CostComponent({ changeStage, reloadTrigger }) {
-  const company = localStorage.getItem("company") || "idg";
-  const currentModule = localStorage.getItem("currentModule");
+export default function CostComponent({ changeStage }) {
+  const { matterNumber } = useParams();
+  const queryClient = useQueryClient();
+
+  // --- Memoized Values ---
+  const company = useMemo(() => localStorage.getItem("company") || "idg", []);
+  const currentModule = useMemo(
+    () => localStorage.getItem("currentModule"),
+    []
+  );
 
   const stage = 7;
-  const api = new ClientAPI();
-  const StagesAPI = new StageAPI();
-  const commercialApi = new CommercialAPI();
-  const { matterNumber } = useParams();
+  const api = useMemo(() => new ClientAPI(), []);
+  const StagesAPI = useMemo(() => new StageAPI(), []);
+  const commercialApi = useMemo(() => new CommercialAPI(), []);
 
-  // Initialize state based on the company and module
+  // --- State ---
   const [formValues, setFormValues] = useState(
     getInitialState(company, currentModule)
   );
-
   const originalData = useRef({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  // isLoading and isSaving are now handled by React Query
 
-  // Update calculation logic to be conditional
-  const calculateTotals = (values = formValues) => {
-    const formatNum = (num) => {
-      if (isNaN(num)) return "0.00";
-      return parseFloat(num).toFixed(2);
-    };
+  // --- Calculation Logic ---
+  const calculateTotals = useCallback(
+    (values) => {
+      const formatNum = (num) => {
+        if (isNaN(num)) return "0.00";
+        return parseFloat(num).toFixed(2);
+      };
 
-    const otherTotal = formatNum(
-      (parseFloat(values["Other fee (1)"]) || 0) +
-        (parseFloat(values["Other fee (2)"]) || 0) +
-        (parseFloat(values["Other fee (3)"]) || 0) +
-        (parseFloat(values["Other fee (4)"]) || 0)
-    );
-
-    let totalCosts = "0.00";
-
-    if (currentModule === "commercial") {
-      totalCosts = formatNum(
-        (parseFloat(values["VOI"]) || 0) +
-          (parseFloat(values["Title"]) || 0) +
-          (parseFloat(values["Land Tax"]) || 0) +
-          (parseFloat(values["Owners Corporation"]) || 0) +
-          (parseFloat(values["PPSR"]) || 0) +
-          (parseFloat(values["Water"]) || 0) +
-          (parseFloat(values["Rates"]) || 0) +
-          (parseFloat(otherTotal) || 0)
+      const otherTotal = formatNum(
+        (parseFloat(values["Other fee (1)"]) || 0) +
+          (parseFloat(values["Other fee (2)"]) || 0) +
+          (parseFloat(values["Other fee (3)"]) || 0) +
+          (parseFloat(values["Other fee (4)"]) || 0)
       );
-    } else if (company === "vkl") {
-      totalCosts = formatNum(
-        (parseFloat(values["VOI/CAF"]) || 0) +
-          (parseFloat(values["Title"]) || 0) +
-          (parseFloat(values["Plan"]) || 0) +
-          (parseFloat(values["Land Tax"]) || 0) +
-          (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
-          (parseFloat(values["Water Certificate"]) || 0) +
-          (parseFloat(otherTotal) || 0)
-      );
-    } else {
-      totalCosts = otherTotal;
+
+      let totalCosts = "0.00";
+
+      if (currentModule === "commercial") {
+        totalCosts = formatNum(
+          (parseFloat(values["VOI"]) || 0) +
+            (parseFloat(values["Title"]) || 0) +
+            (parseFloat(values["Land Tax"]) || 0) +
+            (parseFloat(values["Owners Corporation"]) || 0) +
+            (parseFloat(values["PPSR"]) || 0) +
+            (parseFloat(values["Water"]) || 0) +
+            (parseFloat(values["Rates"]) || 0) +
+            (parseFloat(otherTotal) || 0)
+        );
+      } else if (company === "vkl") {
+        totalCosts = formatNum(
+          (parseFloat(values["VOI/CAF"]) || 0) +
+            (parseFloat(values["Title"]) || 0) +
+            (parseFloat(values["Plan"]) || 0) +
+            (parseFloat(values["Land Tax"]) || 0) +
+            (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
+            (parseFloat(values["Water Certificate"]) || 0) +
+            (parseFloat(otherTotal) || 0)
+        );
+      } else {
+        totalCosts = otherTotal;
+      }
+
+      const quoteType = values["Quote Type"]?.toLowerCase() || "variable";
+      const quoteAmount = parseFloat(values["Quote Amount"]) || 0;
+
+      let invoiceAmount = "0.00";
+      if (quoteType === "fixed") {
+        invoiceAmount = formatNum(values["Quote Amount"] || 0);
+      } else {
+        invoiceAmount = formatNum(parseFloat(totalCosts || 0) + quoteAmount);
+      }
+
+      return {
+        ...values,
+        "Other (total)": otherTotal,
+        "Total Costs": totalCosts,
+        "Invoice Amount": invoiceAmount,
+      };
+    },
+    [company, currentModule]
+  );
+
+  // --- Data Fetching with useQuery ---
+  const fetchCostData = useCallback(async () => {
+    try {
+      let stageResponse, costData, stage1Data;
+
+      if (currentModule === "commercial") {
+        console.log("Fetching commercial cost data for:", matterNumber);
+        try {
+          const costResponse = await commercialApi.getCostData(matterNumber);
+          costData = costResponse || {};
+        } catch (error) {
+          console.log("No commercial cost data found, using empty state");
+          costData = {};
+        }
+
+        try {
+          const stage1Response = await commercialApi.getStageData(
+            1,
+            matterNumber
+          );
+          stage1Data = stage1Response || {};
+        } catch (stageError) {
+          console.log("No commercial stage 1 data found");
+          stage1Data = {};
+        }
+      } else {
+        stageResponse =
+          company === "vkl"
+            ? await StagesAPI.getAllStages(matterNumber)
+            : await StagesAPI.getIDGStages(matterNumber);
+
+        if (!stageResponse || (company === "idg" && !stageResponse.data)) {
+          throw new Error(
+            "Failed to fetch stage data. The client may not exist."
+          );
+        }
+
+        costData = stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
+        stage1Data = stageResponse?.stage1 || {};
+      }
+
+      const quoteType =
+        (stage1Data.quoteType &&
+          (stage1Data.quoteType.$numberDecimal ?? stage1Data.quoteType)) ||
+        "Variable";
+
+      const getDecimalValue = (v) => {
+        if (v === undefined || v === null) return "";
+        if (typeof v === "object" && v.$numberDecimal !== undefined)
+          return v.$numberDecimal;
+        return v;
+      };
+
+      const quoteAmount =
+        getDecimalValue(stage1Data.quoteAmount) ||
+        getDecimalValue(costData.quoteAmount) ||
+        "";
+
+      let mappedData = {};
+
+      const commonMapped = {
+        "Other (total)": costData.otherTotal?.$numberDecimal || "0",
+        "Other (total) Note": costData.otherTotalNote || "",
+        "Total Costs": costData.totalCosts?.$numberDecimal || "0",
+        "Total Costs Note": costData.totalCostsNote || "",
+        "Quote Amount": quoteAmount === "" ? "" : parseFloat(quoteAmount),
+        "Quote Amount Note": costData.quoteAmountNote || "",
+        "Invoice Amount": costData.invoiceAmount?.$numberDecimal || "",
+        "Invoice Amount Note": costData.invoiceAmountNote || "",
+        "Quote Type": quoteType,
+      };
+
+      if (currentModule === "commercial") {
+        mappedData = {
+          VOI: getDecimalValue(costData.voi) || "",
+          "VOI Note": costData.voiNote || "",
+          Title: getDecimalValue(costData.title) || "",
+          "Title Note": costData.titleNote || "",
+          "Land Tax": getDecimalValue(costData.landTax) || "",
+          "Land Tax Note": costData.landTaxNote || "",
+          "Owners Corporation":
+            getDecimalValue(costData.ownersCorporation) || "",
+          "Owners Corporation Note": costData.ownersCorporationNote || "",
+          PPSR: getDecimalValue(costData.ppsr) || "",
+          "PPSR Note": costData.ppsrNote || "",
+          Water: getDecimalValue(costData.water) || "",
+          "Water Note": costData.waterNote || "",
+          Rates: getDecimalValue(costData.rates) || "",
+          "Rates Note": costData.ratesNote || "",
+          "Other fee (1)": getDecimalValue(costData.otherFee1) || "",
+          "Note 1": costData.otherFee1Note || "",
+          "Other fee (2)": getDecimalValue(costData.otherFee2) || "",
+          "Note 2": costData.otherFee2Note || "",
+          "Other fee (3)": getDecimalValue(costData.otherFee3) || "",
+          "Note 3": costData.otherFee3Note || "",
+          "Other fee (4)": getDecimalValue(costData.otherFee4) || "",
+          "Note 4": costData.otherFee4Note || "",
+          ...commonMapped,
+        };
+      } else if (company === "vkl") {
+        mappedData = {
+          "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
+          "VOI/CAF Note": costData.voiCafNote || "",
+          Title: costData.title?.$numberDecimal || "",
+          "Title Note": costData.titleNote || "",
+          Plan: costData.plan?.$numberDecimal || "",
+          "Plan Note": costData.planNote || "",
+          "Land Tax": costData.landTax?.$numberDecimal || "",
+          "Land Tax Note": costData.landTaxNote || "",
+          "Land Information Certificate (Rates)":
+            costData.landInformationCertificate?.$numberDecimal || "",
+          "Land Information Note":
+            costData.landInformationCertificateNote || "",
+          "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
+          "Water Certificate Note": costData.waterCertificateNote || "",
+          "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
+          "Note 1": costData.otherFee1Note || "",
+          "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
+          "Note 2": costData.otherFee2Note || "",
+          "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
+          "Note 3": costData.otherFee3Note || "",
+          "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
+          "Note 4": costData.otherFee4Note || "",
+          ...commonMapped,
+        };
+      } else {
+        mappedData = {
+          "Other fee (1)": costData.fee1 || "",
+          "Note 1": costData.fee1Note || "",
+          "Other fee (2)": costData.fee2 || "",
+          "Note 2": costData.fee2Note || "",
+          "Other fee (3)": costData.fee3 || "",
+          "Note 3": costData.fee3Note || "",
+          "Other fee (4)": costData.fee4 || "",
+          "Note 4": costData.fee4Note || "",
+          ...commonMapped,
+        };
+      }
+
+      return calculateTotals(mappedData);
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+      toast.error("Failed to load cost data");
+      throw err; // Re-throw to be caught by useQuery
     }
+  }, [
+    matterNumber,
+    currentModule,
+    company,
+    commercialApi,
+    StagesAPI,
+    calculateTotals,
+  ]);
 
-    const quoteType = values["Quote Type"]?.toLowerCase() || "variable";
-    const quoteAmount = parseFloat(values["Quote Amount"]) || 0;
+  const { data: loadedData, isLoading } = useQuery({
+    queryKey: ["costData", matterNumber, currentModule, company],
+    queryFn: fetchCostData,
+    enabled: !!matterNumber,
+  });
 
-    let invoiceAmount = "0.00";
-    if (quoteType === "fixed") {
-      invoiceAmount = formatNum(values["Quote Amount"] || 0);
-    } else {
-      invoiceAmount = formatNum(parseFloat(totalCosts || 0) + quoteAmount);
+  // --- Effects ---
+
+  // Effect to populate form when query data is loaded
+  useEffect(() => {
+    if (loadedData) {
+      setFormValues(loadedData);
+      originalData.current = loadedData;
+      console.log("Final initialized form data:", loadedData);
     }
+  }, [loadedData]);
 
-    return {
-      ...values,
-      "Other (total)": otherTotal,
-      "Total Costs": totalCosts,
-      "Invoice Amount": invoiceAmount,
-    };
-  };
-
+  // Effect to re-calculate totals when inputs change
   useEffect(() => {
     setFormValues((prev) => calculateTotals(prev));
   }, [
+    calculateTotals, // Add memoized function
     formValues["Other fee (1)"],
     formValues["Other fee (2)"],
     formValues["Other fee (3)"],
@@ -169,174 +350,7 @@ export default function CostComponent({ changeStage, reloadTrigger }) {
     formValues["Quote Amount"],
   ]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const company = localStorage.getItem("company");
-        const currentModule = localStorage.getItem("currentModule");
-
-        let stageResponse, costData, stage1Data;
-
-        if (currentModule === "commercial") {
-          console.log("Fetching commercial cost data for:", matterNumber);
-          try {
-            // Try to get commercial cost data
-            const costResponse = await commercialApi.getCostData(matterNumber);
-            costData = costResponse || {};
-            console.log("Commercial cost data found:", costData);
-          } catch (error) {
-            // If 404 or other error, initialize with empty cost data
-            console.log("No commercial cost data found, using empty state");
-            costData = {};
-          }
-
-          // Always try to get stage 1 data for quote information
-          try {
-            const stage1Response = await commercialApi.getStageData(
-              1,
-              matterNumber
-            );
-            stage1Data = stage1Response || {};
-            console.log("Commercial stage 1 data:", stage1Data);
-          } catch (stageError) {
-            console.log("No commercial stage 1 data found");
-            stage1Data = {};
-          }
-        } else {
-          stageResponse =
-            company === "vkl"
-              ? await StagesAPI.getAllStages(matterNumber)
-              : await StagesAPI.getIDGStages(matterNumber);
-
-          if (!stageResponse || (company === "idg" && !stageResponse.data)) {
-            toast.error(
-              "Failed to fetch stage data. The client may not exist."
-            );
-            setIsLoading(false);
-            return;
-          }
-
-          costData =
-            stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
-          stage1Data = stageResponse?.stage1 || {};
-        }
-
-        const quoteType =
-          (stage1Data.quoteType &&
-            (stage1Data.quoteType.$numberDecimal ?? stage1Data.quoteType)) ||
-          "Variable";
-
-        const getDecimalValue = (v) => {
-          if (v === undefined || v === null) return "";
-          if (typeof v === "object" && v.$numberDecimal !== undefined)
-            return v.$numberDecimal;
-          return v;
-        };
-
-        const quoteAmount =
-          getDecimalValue(stage1Data.quoteAmount) ||
-          getDecimalValue(costData.quoteAmount) ||
-          "";
-
-        let mappedData = {};
-
-        const commonMapped = {
-          "Other (total)": costData.otherTotal?.$numberDecimal || "0",
-          "Other (total) Note": costData.otherTotalNote || "",
-          "Total Costs": costData.totalCosts?.$numberDecimal || "0",
-          "Total Costs Note": costData.totalCostsNote || "",
-          "Quote Amount": quoteAmount === "" ? "" : parseFloat(quoteAmount),
-          "Quote Amount Note": costData.quoteAmountNote || "",
-          "Invoice Amount": costData.invoiceAmount?.$numberDecimal || "",
-          "Invoice Amount Note": costData.invoiceAmountNote || "",
-          "Quote Type": quoteType,
-        };
-
-        if (currentModule === "commercial") {
-          mappedData = {
-            VOI: getDecimalValue(costData.voi) || "",
-            "VOI Note": costData.voiNote || "",
-            Title: getDecimalValue(costData.title) || "",
-            "Title Note": costData.titleNote || "",
-            "Land Tax": getDecimalValue(costData.landTax) || "",
-            "Land Tax Note": costData.landTaxNote || "",
-            "Owners Corporation":
-              getDecimalValue(costData.ownersCorporation) || "",
-            "Owners Corporation Note": costData.ownersCorporationNote || "",
-            PPSR: getDecimalValue(costData.ppsr) || "",
-            "PPSR Note": costData.ppsrNote || "",
-            Water: getDecimalValue(costData.water) || "",
-            "Water Note": costData.waterNote || "",
-            Rates: getDecimalValue(costData.rates) || "",
-            "Rates Note": costData.ratesNote || "",
-            "Other fee (1)": getDecimalValue(costData.otherFee1) || "",
-            "Note 1": costData.otherFee1Note || "",
-            "Other fee (2)": getDecimalValue(costData.otherFee2) || "",
-            "Note 2": costData.otherFee2Note || "",
-            "Other fee (3)": getDecimalValue(costData.otherFee3) || "",
-            "Note 3": costData.otherFee3Note || "",
-            "Other fee (4)": getDecimalValue(costData.otherFee4) || "",
-            "Note 4": costData.otherFee4Note || "",
-            ...commonMapped,
-          };
-        } else if (company === "vkl") {
-          mappedData = {
-            "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
-            "VOI/CAF Note": costData.voiCafNote || "",
-            Title: costData.title?.$numberDecimal || "",
-            "Title Note": costData.titleNote || "",
-            Plan: costData.plan?.$numberDecimal || "",
-            "Plan Note": costData.planNote || "",
-            "Land Tax": costData.landTax?.$numberDecimal || "",
-            "Land Tax Note": costData.landTaxNote || "",
-            "Land Information Certificate (Rates)":
-              costData.landInformationCertificate?.$numberDecimal || "",
-            "Land Information Note":
-              costData.landInformationCertificateNote || "",
-            "Water Certificate":
-              costData.waterCertificate?.$numberDecimal || "",
-            "Water Certificate Note": costData.waterCertificateNote || "",
-            "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
-            "Note 1": costData.otherFee1Note || "",
-            "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
-            "Note 2": costData.otherFee2Note || "",
-            "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
-            "Note 3": costData.otherFee3Note || "",
-            "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
-            "Note 4": costData.otherFee4Note || "",
-            ...commonMapped,
-          };
-        } else {
-          mappedData = {
-            "Other fee (1)": costData.fee1 || "",
-            "Note 1": costData.fee1Note || "",
-            "Other fee (2)": costData.fee2 || "",
-            "Note 2": costData.fee2Note || "",
-            "Other fee (3)": costData.fee3 || "",
-            "Note 3": costData.fee3Note || "",
-            "Other fee (4)": costData.fee4 || "",
-            "Note 4": costData.fee4Note || "",
-            ...commonMapped,
-          };
-        }
-
-        const calculatedMapped = calculateTotals(mappedData);
-        setFormValues(calculatedMapped);
-        originalData.current = calculatedMapped;
-
-        console.log("Final initialized form data:", calculatedMapped);
-      } catch (err) {
-        console.error("Failed to fetch data", err);
-        toast.error("Failed to load cost data");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [matterNumber, reloadTrigger]);
-
+  // --- Change Handlers ---
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
@@ -347,21 +361,13 @@ export default function CostComponent({ changeStage, reloadTrigger }) {
     }
   };
 
-  function isChanged() {
-    return Object.keys(formValues).some(
-      (key) => formValues[key] !== originalData.current[key]
-    );
-  }
+  const isChanged = () => {
+    return JSON.stringify(formValues) !== JSON.stringify(originalData.current);
+  };
 
-  async function handleSubmit() {
-    setIsSaving(true);
-    try {
-      if (!isChanged()) {
-        console.log("No changes to submit");
-        setIsSaving(false);
-        return;
-      }
-
+  // --- Data Saving with useMutation ---
+  const { mutate: saveCost, isPending: isSaving } = useMutation({
+    mutationFn: async () => {
       const formatNumber = (value) => {
         if (value === "") return 0;
         const num = parseFloat(value);
@@ -475,57 +481,46 @@ export default function CostComponent({ changeStage, reloadTrigger }) {
         finalPayload = commonPayload;
       }
 
-      console.log("=== COST SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", finalPayload);
+      console.log("=== COST SAVE PAYLOAD ===", finalPayload);
 
-      let response;
       if (currentModule === "commercial") {
-        console.log("Using Commercial API for cost");
-        response = await commercialApi.upsertCost(matterNumber, finalPayload);
+        return commercialApi.upsertCost(matterNumber, finalPayload);
       } else if (company === "vkl") {
-        console.log("Using VKL API for cost");
-        response = await api.upsertCost(finalPayload);
+        return api.upsertCost(finalPayload);
       } else {
-        console.log("Using IDG API for cost");
-        response = await api.upsertIDGCost(matterNumber, finalPayload);
+        return api.upsertIDGCost(matterNumber, finalPayload);
       }
-
+    },
+    onSuccess: (response) => {
       console.log("Cost save successful:", response);
-
-      // Update original data to reflect saved state
-      originalData.current = { ...formValues };
-
-      toast.success("Cost data updated Successfully!!!", {
-        position: "bottom-left",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        progress: undefined,
+      originalData.current = { ...formValues }; // Update original data
+      toast.success("Cost data updated Successfully!");
+      // Invalidate query to refetch
+      queryClient.invalidateQueries({
+        queryKey: ["costData", matterNumber, currentModule, company],
       });
-    } catch (err) {
-      console.error("=== COST SAVE ERROR ===");
-      console.error("Failed to save cost data:", err);
-      console.error("Error response:", err.response);
-      console.error("Error message:", err.message);
-
+    },
+    onError: (err) => {
+      console.error("=== COST SAVE ERROR ===", err);
       let errorMessage = "Failed to save cost data. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-
       toast.error(errorMessage);
-    } finally {
-      setIsSaving(false);
+    },
+  });
+
+  async function handleSubmit() {
+    if (!isChanged() || isSaving) {
+      if (!isChanged()) console.log("No changes to submit");
+      return;
     }
+    saveCost();
   }
 
+  // --- Render ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
