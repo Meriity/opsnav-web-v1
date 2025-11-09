@@ -549,10 +549,33 @@ export default function StagesLayout() {
     if (currentModule === "commercial") {
       console.log("Setting commercial stage statuses");
 
-      // Initialize all stages as "Not Completed"
-      for (let i = 1; i <= 6; i++) {
-        section[`status${i}`] = "Not Completed";
-      }
+          // Use colorStatus from stages array with S1, S2, etc. structure
+          if (
+            response.stages &&
+            Array.isArray(response.stages) &&
+            response.stages.length > 0
+          ) {
+            console.log("Found stages array:", response.stages);
+            const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
+
+            // Process each stage (S1, S2, S3, S4, S5, S6)
+            for (let i = 1; i <= 6; i++) {
+              const stageKey = `S${i}`;
+              if (stageObject[stageKey]) {
+                const statusMap = {
+                  green: "Completed",
+                  red: "Not Completed",
+                  amber: "In Progress",
+                };
+                section[`status${i}`] =
+                  statusMap[stageObject[stageKey]] || "Not Completed";
+                console.log(
+                  `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]
+                  } -> ${section[`status${i}`]}`
+                );
+              }
+            }
+          }
 
       // Use colorStatus from stages array with S1, S2, etc. structure
       if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
@@ -909,13 +932,13 @@ export default function StagesLayout() {
                   localStorage.getItem("role")
                 )) ||
               currentModule === "commercial") && (
-              <Button
-                label="Cost"
-                bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-                width="w-[60px] md:w-[70px]"
-                onClick={() => setSelectedStage(7)}
-              />
-            )}
+                <Button
+                  label="Cost"
+                  bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+                  width="w-[60px] md:w-[70px]"
+                  onClick={() => setSelectedStage(7)}
+                />
+              )}
           </div>
         </div>
 
@@ -949,9 +972,8 @@ export default function StagesLayout() {
               {/* Mobile stages with smooth transition */}
               {isSmallScreen && (
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isStagesCollapsed ? "max-h-0" : "max-h-96"
-                  }`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isStagesCollapsed ? "max-h-0" : "max-h-96"
+                    }`}
                 >
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
                     {stages.map((stage, index) => {
@@ -960,23 +982,21 @@ export default function StagesLayout() {
                         <div
                           key={stage.id}
                           onClick={() => setSelectedStage(stage.id)}
-                          className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
-                            selectedStage === stage.id
+                          className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${selectedStage === stage.id
                               ? "bg-[#FFFFFF] text-black border-gray-500"
                               : `${bgcolor(stageStatus)} border-gray-300`
-                          }`}
+                            }`}
                         >
                           <div className="flex justify-between">
                             <p className="font-bold font-poppins text-xs">
                               Stage {index + 1}
                             </p>
                             <div
-                              className={`h-[18px] ${
-                                stageStatus === "In Progress" ||
-                                stageStatus === "amber"
+                              className={`h-[18px] ${stageStatus === "In Progress" ||
+                                  stageStatus === "amber"
                                   ? "text-[#FF9500]"
                                   : "text-black"
-                              } flex items-center justify-center rounded-4xl`}
+                                } flex items-center justify-center rounded-4xl`}
                             >
                               <p className="text-[10px] whitespace-nowrap font-bold">
                                 {getStatusDisplayText(stageStatus)}
@@ -1010,23 +1030,21 @@ export default function StagesLayout() {
                         <li
                           key={stage.id}
                           onClick={() => setSelectedStage(stage.id)}
-                          className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${
-                            isActive
+                          className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${isActive
                               ? "bg-blue-50 border-[#00AEEF] scale-105 shadow-lg"
                               : "scale-95 border-gray-300"
-                          }`}
+                            }`}
                         >
                           <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
                             <span
-                              className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${
-                                isActive
+                              className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${isActive
                                   ? "bg-[#00AEEF] text-white border-[#00AEEF] shadow-[0_0_12px_3px_rgba(59,130,246,0.6)]"
                                   : isCompleted
-                                  ? "bg-green-600 text-white border-green-600"
-                                  : isInProgress
-                                  ? "bg-amber-500 text-white border-amber-500"
-                                  : "bg-red-500 text-gray-100 border-gray-300"
-                              }`}
+                                    ? "bg-green-600 text-white border-green-600"
+                                    : isInProgress
+                                      ? "bg-amber-500 text-white border-amber-500"
+                                      : "bg-red-500 text-gray-100 border-gray-300"
+                                }`}
                             >
                               {index + 1}
                             </span>
@@ -1038,15 +1056,14 @@ export default function StagesLayout() {
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${
-                                  isInProgress
+                                className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${isInProgress
                                     ? "text-[#FF9500]"
                                     : isCompleted
-                                    ? "text-green-600"
-                                    : isActive
-                                    ? "text-[red]"
-                                    : "text-gray-500"
-                                }`}
+                                      ? "text-green-600"
+                                      : isActive
+                                        ? "text-[red]"
+                                        : "text-gray-500"
+                                  }`}
                               >
                                 <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
                                   {getStatusDisplayText(stageStatus)}
@@ -1097,10 +1114,17 @@ export default function StagesLayout() {
                     {currentModule === "commercial"
                       ? "Project Details"
                       : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
-                      ? "Order Details"
-                      : ""}
+                        ? "Matter Details"
+                        : company === "idg"
+                          ? (
+                            <>
+                              Order Details{" "}
+                              <span className="absolute right-8 text-sm font-medium text-gray-600">
+                                Unit Number : ({clientData?.data?.unitNumber || "unset"})
+                              </span>
+                            </>
+                          )
+                          : ""}
                   </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
@@ -1112,10 +1136,10 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Project Date"
                           : company === "vkl"
-                          ? "Matter Date"
-                          : company === "idg"
-                          ? "Order Date"
-                          : ""}
+                            ? "Matter Date"
+                            : company === "idg"
+                              ? "Order Date"
+                              : ""}
                       </label>
                       <input
                         id="matterDate"
@@ -1146,9 +1170,8 @@ export default function StagesLayout() {
                             matterDate: v,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
+                          }`}
                         disabled={!isSuperAdmin}
                       />
                     </div>
@@ -1159,10 +1182,10 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Project Number"
                           : company === "vkl"
-                          ? "Matter Number"
-                          : company === "idg"
-                          ? "Order ID"
-                          : ""}
+                            ? "Matter Number"
+                            : company === "idg"
+                              ? "Order ID"
+                              : ""}
                       </label>
                       {isSuperAdmin ? (
                         <input
@@ -1216,9 +1239,8 @@ export default function StagesLayout() {
                             clientName: e.target.value,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
+                          }`}
                         disabled={!isSuperAdmin}
                       />
                     </div>
@@ -1263,10 +1285,10 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Business Address"
                           : company === "vkl"
-                          ? "Property Address"
-                          : company === "idg"
-                          ? "Billing Address"
-                          : "Address"}
+                            ? "Property Address"
+                            : company === "idg"
+                              ? "Billing Address"
+                              : "Address"}
                       </label>
                       <input
                         id={
@@ -1302,9 +1324,8 @@ export default function StagesLayout() {
                             [fieldName]: e.target.value,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
+                          }`}
                         disabled={!isSuperAdmin}
                       />
                     </div>
@@ -1359,10 +1380,10 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Client Type"
                           : company === "vkl"
-                          ? "Client Type"
-                          : company === "idg"
-                          ? "Order Type"
-                          : ""}
+                            ? "Client Type"
+                            : company === "idg"
+                              ? "Order Type"
+                              : ""}
                       </label>
                       {isSuperAdmin ? (
                         <select
@@ -1434,25 +1455,25 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Completion Date"
                           : company === "vkl"
-                          ? "Settlement Date"
-                          : company === "idg"
-                          ? "Delivery Date"
-                          : ""}
+                            ? "Settlement Date"
+                            : company === "idg"
+                              ? "Delivery Date"
+                              : ""}
                       </label>
                       <input
                         id={
                           currentModule === "commercial"
                             ? "completionDate"
                             : company === "vkl"
-                            ? "settlementDate"
-                            : "deliveryDate"
+                              ? "settlementDate"
+                              : "deliveryDate"
                         }
                         name={
                           currentModule === "commercial"
                             ? "completionDate"
                             : company === "vkl"
-                            ? "settlementDate"
-                            : "deliveryDate"
+                              ? "settlementDate"
+                              : "deliveryDate"
                         }
                         type="date"
                         value={
@@ -1473,8 +1494,14 @@ export default function StagesLayout() {
                               ? new Date(localClientData.data.deliveryDate)
                                   .toISOString()
                                   .substring(0, 10)
-                              : ""
-                            : ""
+                                : ""
+                              : company === "idg"
+                                ? clientData?.data?.deliveryDate
+                                  ? new Date(clientData.data.deliveryDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                  : ""
+                                : ""
                         }
                         onChange={(e) => {
                           const dateValue = e.target.value;
@@ -1626,8 +1653,7 @@ export default function StagesLayout() {
                       <div className="mt-2">
                         <button
                           type="submit"
-                          className={`w-full ${
-                            hasChanges
+                          className={`w-full ${hasChanges
                               ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
                               : "bg-gray-300 text-gray-200 cursor-not-allowed"
                           } font-medium rounded py-2 text-base`}
@@ -1649,10 +1675,10 @@ export default function StagesLayout() {
                   {currentModule === "commercial"
                     ? "Project Details"
                     : company === "vkl"
-                    ? "Matter Details"
-                    : company === "idg"
-                    ? "Order Details"
-                    : ""}
+                      ? "Matter Details"
+                      : company === "idg"
+                        ? "Order Details"
+                        : ""}
                 </h2>
                 <form
                   className="grid grid-cols-1 gap-x-4 gap-y-2"
@@ -1664,10 +1690,10 @@ export default function StagesLayout() {
                       {currentModule === "commercial"
                         ? "Project Date"
                         : company === "vkl"
-                        ? "Matter Date"
-                        : company === "idg"
-                        ? "Order Date"
-                        : ""}
+                          ? "Matter Date"
+                          : company === "idg"
+                            ? "Order Date"
+                            : ""}
                     </label>
                     <input
                       id="matterDate"
@@ -1696,9 +1722,8 @@ export default function StagesLayout() {
                           matterDate: v,
                         }));
                       }}
-                      className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                        !isSuperAdmin ? "bg-gray-100" : ""
-                      }`}
+                      className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
                       disabled={!isSuperAdmin}
                     />
                   </div>
@@ -1708,8 +1733,7 @@ export default function StagesLayout() {
                   <div className="mt-3">
                     <button
                       type="submit"
-                      className={`w-full ${
-                        hasChanges
+                      className={`w-full ${hasChanges
                           ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
                           : "bg-gray-300 text-gray-200 cursor-not-allowed"
                       } font-medium rounded py-2 text-base`}

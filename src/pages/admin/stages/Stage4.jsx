@@ -182,6 +182,30 @@ export default function Stage4({
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
 
+  console.log("=== STAGE 4 CONFIG ===");
+  console.log("Company:", company);
+  console.log("Current Module:", currentModule);
+  console.log("Selected Config:", currentConfig);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+    // Automatically trigger the upload
+    handleUpload(file);
+  };
+
+  const handleUpload = async (fileToUpload) => {
+    try {
+      const response = await api.uploadImageForOrder(
+        matterNumber,
+        fileToUpload
+      );
+      setReloadTrigger((prev) => !prev);
+      // console.log(response);
+    } catch (e) {
+      console.error(e);
   const currentConfig = useMemo(() => {
     if (currentModule === "commercial") {
       return formConfig.commercial;

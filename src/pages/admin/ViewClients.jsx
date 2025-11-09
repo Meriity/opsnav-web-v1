@@ -4,6 +4,7 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
+  DialogTitle
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
@@ -444,6 +445,51 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
+       <Dialog
+        open={showTAR}
+        onClose={()=>setShowTar(false)}
+        className="relative z-50"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
+           <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle> 
+          <div className="flex items-center gap-2 mb-5">
+             <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by Users
+              </label> 
+              <select
+                name="alloactedUser"
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={allocatedUser}
+                onChange={(e)=>setallocatedUser(e.target.value)}
+              >
+                <option value="">All Users</option>
+                {user.map((user) => (
+                  <option value={user.name}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+              <button
+                className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+                onClick={()=> {generateTaskAllocationPDF(allocatedUser)
+                 setShowTar(false)
+                }}
+              >
+                 Download
+              </button>
+            
+            
+          </DialogPanel>
+        </div>
+      </Dialog>
+
       <div className="space-y-4 p-2">
         <Header />
 
@@ -521,6 +567,8 @@ const ViewClients = () => {
               )}
             </div>
 
+
+            {/* Mobile Menu */}
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
                 <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
