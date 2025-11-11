@@ -40,14 +40,14 @@ const ViewClients = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-  const [dateFilter, setDateFilter] = useState({
-    type: "delivery_date",
-    range: ["", ""],
+  const [dateFilter, setDateFilter] = useState(() => {
+  const saved = localStorage.getItem("viewClientsDateFilter");
+  return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };  
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
   const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
-  const [allocatedUser,setallocatedUser]=useState("");
+  const [allocatedUser, setallocatedUser] = useState("");
   const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [commercialLoading, setCommercialLoading] = useState(false);
@@ -131,104 +131,104 @@ const ViewClients = () => {
 
   useEffect(() => {
     console.log(user);
-  let filteredData =
-    currentModule === "commercial" ? commercialClients : Clients;
+    let filteredData =
+      currentModule === "commercial" ? commercialClients : Clients;
 
-  const [startDate, endDate] = Array.isArray(dateFilter?.range)
-    ? dateFilter.range
-    : ["", ""];
+    const [startDate, endDate] = Array.isArray(dateFilter?.range)
+      ? dateFilter.range
+      : ["", ""];
 
-  // Fix: Use lowercase comparison to match localStorage value
-  if (company?.toLowerCase() === "idg" && startDate && endDate) {
-    filteredData = filteredData.filter((client) => {
-      let deliveryDateObj = moment(client.delivery_date);
-      let orderDateObj = moment(client.order_date || client.orderDate);
-
-      // Check if delivery or order date falls within range
-      const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
-        moment(startDate),
-        moment(endDate),
-        "day",
-        "[]"
-      );
-
-      const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
-        moment(startDate),
-        moment(endDate),
-        "day",
-        "[]"
-      );
-
-      if (dateFilter.type === "delivery_date") {
-        return inDeliveryRange;
-      } else if (dateFilter.type === "order_date") {
-        return inOrderRange;
-      } else if (dateFilter.type === "both_date") {
-        return inDeliveryRange && inOrderRange;
-      }
-
-      return;
-    });
-  }
-  else {
-      if (startDate && endDate) {
+    // Fix: Use lowercase comparison to match localStorage value
+    if (company?.toLowerCase() === "idg" && startDate && endDate) {
       filteredData = filteredData.filter((client) => {
-        let clientDate;
-        if (currentModule === "commercial") {
-          clientDate = moment(client.settlement_date || client.settlementDate);
-        } else {
-          clientDate = moment(client.settlement_date);
-        }
-        return clientDate.isBetween(
+        let deliveryDateObj = moment(client.delivery_date);
+        let orderDateObj = moment(client.order_date || client.orderDate);
+
+        // Check if delivery or order date falls within range
+        const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
           moment(startDate),
           moment(endDate),
           "day",
           "[]"
         );
+
+        const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
+          moment(startDate),
+          moment(endDate),
+          "day",
+          "[]"
+        );
+
+        if (dateFilter.type === "delivery_date") {
+          return inDeliveryRange;
+        } else if (dateFilter.type === "order_date") {
+          return inOrderRange;
+        } else if (dateFilter.type === "both_date") {
+          return inDeliveryRange && inOrderRange;
+        }
+
+        return;
       });
     }
-  }
-
-  // Apply search query filter
-  if (searchQuery) {
-    const lowercasedQuery = searchQuery.toLowerCase();
-    filteredData = filteredData.filter((client) => {
-      if (currentModule === "commercial") {
-        const searchableFields = [
-          client.matterNumber,
-          client.clientName,
-          client.businessName,
-          client.businessAddress,
-          client.state,
-          client.clientType,
-          client.dataEntryBy,
-          client.postcode,
-        ];
-
-        return searchableFields.some(
-          (field) =>
-            field && String(field).toLowerCase().includes(lowercasedQuery)
-        );
-      } else {
-        const searchableFields = [
-          client.client_name || client.clientName,
-          client.matternumber || client.matterNumber || client.orderId,
-          client.businessAddress || client.business_address,
-          client.property_address || client.propertyAddress,
-          client.state,
-          client.referral || client.referralName,
-        ];
-
-        return searchableFields.some(
-          (field) =>
-            field && String(field).toLowerCase().includes(lowercasedQuery)
-        );
+    else {
+      if (startDate && endDate) {
+        filteredData = filteredData.filter((client) => {
+          let clientDate;
+          if (currentModule === "commercial") {
+            clientDate = moment(client.settlement_date || client.settlementDate);
+          } else {
+            clientDate = moment(client.settlement_date);
+          }
+          return clientDate.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
+        });
       }
-    });
-  }
+    }
 
-  setClientList(filteredData);
-}, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
+    // Apply search query filter
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filteredData = filteredData.filter((client) => {
+        if (currentModule === "commercial") {
+          const searchableFields = [
+            client.matterNumber,
+            client.clientName,
+            client.businessName,
+            client.businessAddress,
+            client.state,
+            client.clientType,
+            client.dataEntryBy,
+            client.postcode,
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
+          );
+        } else {
+          const searchableFields = [
+            client.client_name || client.clientName,
+            client.matternumber || client.matterNumber || client.orderId,
+            client.businessAddress || client.business_address,
+            client.property_address || client.propertyAddress,
+            client.state,
+            client.referral || client.referralName,
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
+          );
+        }
+      });
+    }
+
+    setClientList(filteredData);
+  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
 
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
@@ -349,6 +349,15 @@ const ViewClients = () => {
     }
   };
 
+  const reloadPage = () => {
+    window.location.reload();
+  };
+
+  useEffect(() => {
+  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+}, [dateFilter]);
+
+
   const shouldShowOutstandingTasks = () => {
     return currentModule === "commercial" || company === "vkl";
   };
@@ -383,6 +392,7 @@ const ViewClients = () => {
         createType="order"
         companyName={company}
         isOpen={createOrder}
+        onClose={reloadPage}
         setIsOpen={() => setcreateOrder(false)}
       />
 
@@ -395,7 +405,10 @@ const ViewClients = () => {
           setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
         }}
-        onReset={() => setDateFilter({ type: "settlement_date", range: ["", ""] })}
+        onReset={() => {
+          setDateFilter({ type: "settlement_date", range: ["", ""] }) 
+          setShowDateRange(false); 
+        }}
       />
 
       <Dialog
@@ -460,27 +473,27 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
-       <Dialog
+      <Dialog
         open={showTAR}
-        onClose={()=>setShowTar(false)}
+        onClose={() => setShowTar(false)}
         className="relative z-50"
       >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-           <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle> 
-          <div className="flex items-center gap-2 mb-5">
-             <label
+            <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle>
+            <div className="flex items-center gap-2 mb-5">
+              <label
                 htmlFor="items-per-page"
                 className="text-sm font-medium text-gray-700"
               >
                 Select by Users
-              </label> 
+              </label>
               <select
                 name="alloactedUser"
                 className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 value={allocatedUser}
-                onChange={(e)=>setallocatedUser(e.target.value)}
+                onChange={(e) => setallocatedUser(e.target.value)}
               >
                 <option value="">All Users</option>
                 {user.map((user) => (
@@ -491,16 +504,17 @@ const ViewClients = () => {
               </select>
             </div>
 
-              <button
-                className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
-                onClick={()=> {generateTaskAllocationPDF(allocatedUser)
-                 setShowTar(false)
-                }}
-              >
-                 Download
-              </button>
-            
-            
+            <button
+              className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+              onClick={() => {
+                generateTaskAllocationPDF(allocatedUser)
+                setShowTar(false)
+              }}
+            >
+              Download
+            </button>
+
+
           </DialogPanel>
         </div>
       </Dialog>
@@ -537,29 +551,29 @@ const ViewClients = () => {
                 <option value={500}>500</option>
               </select>
             </div>
-            {localStorage.getItem("company")=="idg" &&
-            <div className="flex items-center gap-2">
-              {/* <label
+            {localStorage.getItem("company") == "idg" &&
+              <div className="flex items-center gap-2">
+                {/* <label
                 htmlFor="items-per-page"
                 className="text-sm font-medium text-gray-700"
               >
                 Select by clients
               </label> */}
-              <select
-                name="Client"
-                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={selectedClientName}
-                onChange={(e) => handleClientFilterChange(e.target.value)}
-                disabled={localStorage.getItem("role") !== "admin"}
-              >
-                <option value="">All Clients</option>
-                {list.map((client) => (
-                  <option key={client.name} value={client.name}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <select
+                  name="Client"
+                  className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={selectedClientName}
+                  onChange={(e) => handleClientFilterChange(e.target.value)}
+                  disabled={localStorage.getItem("role") !== "admin"}
+                >
+                  <option value="">All Clients</option>
+                  {list.map((client) => (
+                    <option key={client.name} value={client.name}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             }
 
             {/* Consolidated Desktop Buttons */}
@@ -604,8 +618,8 @@ const ViewClients = () => {
                   />
                   <Button
                     label="Task Report"
-                    onClick={()=>setShowTar(true)}
-                  width="w-[100px]"
+                    onClick={() => setShowTar(true)}
+                    width="w-[100px]"
                   />
                 </>
               )}

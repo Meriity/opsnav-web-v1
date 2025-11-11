@@ -91,6 +91,7 @@ export default function CreateClientModal({
   setIsOpen,
   companyName,
   createType,
+  onClose
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -497,6 +498,7 @@ export default function CreateClientModal({
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
+          onClose();
         } else if (createType === "order") {
           const requiredFields = [
             "client",
@@ -529,6 +531,7 @@ export default function CreateClientModal({
           console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
+          onClose();
         }
       }
       setIsOpen(false);
