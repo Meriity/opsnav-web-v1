@@ -713,7 +713,7 @@ export default function IDGClientDashboard() {
                                                                         <div className="flex flex-col items-center flex-1">
                                                                             <div
                                                                                 className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
-                                                                                    ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
+                                                                                    ? "bg-green-500 shadow-lg shadow-[#00AEEF]/30 scale-100"
                                                                                     : "bg-gray-200 scale-90"
                                                                                     }`}
                                                                             >
@@ -769,7 +769,7 @@ export default function IDGClientDashboard() {
                                                                             <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
                                                                                 <div
                                                                                     className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
-                                                                                        ? "bg-[#00AEEF] w-full"
+                                                                                        ? "bg-green-500 w-full"
                                                                                         : "bg-gray-200 w-0"
                                                                                         }`}
                                                                                 ></div>
