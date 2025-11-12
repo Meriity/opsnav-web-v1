@@ -69,26 +69,6 @@ class CommercialAPI {
   // Dashboard Data
   async getDashboardData(range = "tenMonths") {
     try {
-      // If no specific range is provided, return the same structure as userAPI
-      if (!range || range === "combined") {
-        const [tenMonthsData, allData] = await Promise.all([
-          this.getDashboardData("tenMonths"),
-          this.getDashboardData("all"),
-        ]);
-
-        return {
-          lifetimeTotals:
-            tenMonthsData?.lifetimeTotals || allData?.lifetimeTotals || {},
-          last10MonthsStats: Array.isArray(tenMonthsData?.monthlyStats)
-            ? tenMonthsData.monthlyStats
-            : [],
-          allTimeStats: Array.isArray(allData?.monthlyStats)
-            ? allData.monthlyStats
-            : [],
-        };
-      }
-
-      // Original implementation for specific ranges
       const response = await fetch(
         `${this.baseUrl}${this.endpoints.DASHBOARD}?range=${range}`,
         {
@@ -457,15 +437,9 @@ class CommercialAPI {
   // Get Outstanding Tasks
   async getOutstandingTasks(params = {}) {
     try {
-      ``;
-      let queryString;
-      if (params instanceof URLSearchParams) {
-        queryString = params.toString();
-      } else {
-        queryString = new URLSearchParams(params).toString();
-      }
+      const queryParams = new URLSearchParams(params).toString();
       const response = await fetch(
-        `${this.baseUrl}${this.endpoints.OUTSTANDING_TASKS}?${queryString}`,
+        `${this.baseUrl}${this.endpoints.OUTSTANDING_TASKS}?${queryParams}`,
         {
           method: "GET",
           headers: this.getHeaders(),
