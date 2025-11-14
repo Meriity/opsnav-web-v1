@@ -133,13 +133,6 @@ export default function StagesLayout() {
     // First try localStorage, then URL parameter, then default to 1
     const storedStage = localStorage.getItem("current_stage");
     const urlStage = Number(stageNo);
-
-    console.log("Stage initialization:", {
-      storedStage,
-      urlStage,
-      stageNo,
-    });
-
     return Number(storedStage || urlStage || 1);
   });
   const [reloadStage, setReloadStage] = useState(false);
@@ -271,9 +264,6 @@ export default function StagesLayout() {
   const getStageData = (stageNumber) => {
     if (!clientData) return null;
 
-    console.log(`=== GET STAGE ${stageNumber} DATA ===`);
-    console.log("Client data structure:", clientData);
-
     // For commercial projects
     if (currentModule === "commercial") {
       if (
@@ -284,10 +274,6 @@ export default function StagesLayout() {
         const stageObject = clientData.stages[0];
         const stageKey = `S${stageNumber}`;
         if (stageObject[stageKey]) {
-          console.log(
-            `Found stage ${stageNumber} in stages array as ${stageKey}:`,
-            stageObject[stageKey]
-          );
           // Return a mock stage object with the colorStatus
           return { colorStatus: stageObject[stageKey] };
         }
@@ -295,10 +281,6 @@ export default function StagesLayout() {
 
       // Check for individual stage properties (stage1, stage2, etc.)
       const stageData = clientData[`stage${stageNumber}`] || null;
-      console.log(
-        `Found stage ${stageNumber} as individual property:`,
-        stageData
-      );
       return stageData;
     }
 
@@ -323,8 +305,6 @@ export default function StagesLayout() {
     }
 
     const stageData = getStageData(stage);
-    console.log(`=== RENDERING STAGE ${stage} ===`);
-    console.log("Stage data to pass:", stageData);
 
     switch (stage) {
       case 1:
@@ -419,7 +399,6 @@ export default function StagesLayout() {
         // First, get all active projects
         const activeProjectsResponse =
           await commercialApiRef.current.getActiveProjects();
-        console.log("All active projects:", activeProjectsResponse);
 
         // Find the specific project by matterNumber from the active projects list
         let data = [];
@@ -450,10 +429,7 @@ export default function StagesLayout() {
             String(project.id) === String(matterNumber)
         );
 
-        console.log("Found project:", response);
-
         if (!response) {
-          // If not found in active projects, try the full data endpoint as fallback
           try {
             response = await commercialApiRef.current.getProjectFullData(
               matterNumber
@@ -465,17 +441,9 @@ export default function StagesLayout() {
           // If still not found, create default structure
           if (!response) {
             response = createDefaultProjectData(matterNumber);
-            console.log(
-              "Project not found, created default structure for:",
-              matterNumber
-            );
           }
         }
       } catch (error) {
-        console.log(
-          "Commercial API error, creating default project:",
-          error.message
-        );
         response = createDefaultProjectData(matterNumber);
       }
     } else if (localCompany === "vkl") {
@@ -487,28 +455,17 @@ export default function StagesLayout() {
     return response;
   };
 
-  // Data transformation function
   const transformClientData = (data) => {
     if (!data) return null;
-
-    console.log("Raw API response:", data);
-    console.log("Available fields in response:", Object.keys(data));
 
     // Handle server role
     const serverRole = data?.role || data?.currentUser?.role || null;
     if (serverRole) setRole(serverRole);
 
-    console.log("=== DEBUG STAGES ARRAY ===");
     if (data.stages && Array.isArray(data.stages)) {
-      data.stages.forEach((stage, index) => {
-        console.log(`Stage ${index}:`, stage);
-        console.log(`Stage ${index} keys:`, Object.keys(stage));
-      });
-    } else {
-      console.log("No stages array found in response");
+      data.stages.forEach((stage, index) => {});
     }
 
-    // Normalize dates for the response AND ensure business fields are included
     const normalized = {
       ...data,
       matterDate: data.matterDate
@@ -522,21 +479,18 @@ export default function StagesLayout() {
           : new Date(data.settlementDate).toISOString()
         : "",
       notes: data.notes !== undefined ? data.notes : data.notes ?? "",
-      // Ensure business fields are included with proper fallbacks
       businessName: data.businessName || data.business_name || "",
       businessAddress:
         data.businessAddress ||
         data.business_address ||
         data.propertyAddress ||
         "",
-      // Map the data structure properly
       clientName: data.clientName || data.client_name || "",
       clientType: data.clientType || data.client_type || "",
       dataEntryBy: data.dataEntryBy || data.dataentryby || "",
       postcode: data.postcode || data.postCode || "",
     };
 
-    console.log("Normalized client data:", normalized);
     return normalized;
   };
 
@@ -547,19 +501,13 @@ export default function StagesLayout() {
     const localCompany = localStorage.getItem("company");
 
     if (currentModule === "commercial") {
-      console.log("Setting commercial stage statuses");
-
-      // Initialize all stages as "Not Completed"
       for (let i = 1; i <= 6; i++) {
         section[`status${i}`] = "Not Completed";
       }
 
-      // Use colorStatus from stages array with S1, S2, etc. structure
       if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
-        console.log("Found stages array:", data.stages);
-        const stageObject = data.stages[0]; // Get the first object with S1, S2 properties
+        const stageObject = data.stages[0];
 
-        // Process each stage (S1, S2, S3, S4, S5, S6)
         for (let i = 1; i <= 6; i++) {
           const stageKey = `S${i}`;
           if (stageObject[stageKey]) {
@@ -570,11 +518,6 @@ export default function StagesLayout() {
             };
             section[`status${i}`] =
               statusMap[stageObject[stageKey]] || "Not Completed";
-            console.log(
-              `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]} -> ${
-                section[`status${i}`]
-              }`
-            );
           }
         }
       }
@@ -589,27 +532,16 @@ export default function StagesLayout() {
           };
           section[`status${i}`] =
             statusMap[data[stageKey].colorStatus] || "Not Completed";
-          console.log(
-            `Found ${stageKey} colorStatus:`,
-            data[stageKey].colorStatus,
-            "->",
-            section[`status${i}`]
-          );
         }
       }
 
-      // Also check for global colorStatus on the main response object
       if (data.colorStatus) {
         const statusMap = {
           green: "Completed",
           red: "Not Completed",
           amber: "In Progress",
         };
-        // If there's a global colorStatus, apply it to stage 1
         section.status1 = statusMap[data.colorStatus] || section.status1;
-        console.log(
-          `Found global colorStatus: ${data.colorStatus} -> Stage 1: ${section.status1}`
-        );
       }
     } else if (localCompany === "vkl") {
       // VKL stage status logic
@@ -626,8 +558,6 @@ export default function StagesLayout() {
       section.status3 = data.data?.stage3?.colorStatus || "Not Completed";
       section.status4 = data.data?.stage4?.colorStatus || "Not Completed";
     }
-
-    console.log("Final stage statuses:", section);
     return section;
   };
 
@@ -661,7 +591,6 @@ export default function StagesLayout() {
   // Handle errors
   useEffect(() => {
     if (isError) {
-      console.error("Error fetching client data:", clientError);
       toast.error("Failed to fetch project details.");
 
       // For commercial module, create default structure on any error
@@ -708,10 +637,9 @@ export default function StagesLayout() {
       let payload = {};
       const currentModule = localStorage.getItem("currentModule");
 
-      console.log("Client data before update:", localClientData);
-
       if (currentModule === "commercial") {
         payload = {
+          matterNumber: localClientData?.matterNumber || matterNumber,
           settlementDate: localClientData?.settlementDate || null,
           notes: localClientData?.notes || "",
           clientName: localClientData?.clientName || "",
@@ -722,9 +650,8 @@ export default function StagesLayout() {
           matterDate: localClientData?.matterDate || null,
           dataEntryBy: localClientData?.dataEntryBy || "",
           postcode: localClientData?.postcode || "",
+          status: localClientData?.status || "active",
         };
-
-        console.log("Commercial update payload:", payload);
       } else if (localStorage.getItem("company") === "vkl") {
         payload = {
           settlementDate: localClientData?.settlementDate || null,
@@ -773,9 +700,11 @@ export default function StagesLayout() {
           resp = await commercialApiRef.current.createProject(payload);
           toast.success("Project created successfully!");
         } else {
+          const updateMatterNumber =
+            payload.matterNumber || originalMatterNumber;
           // Use update project for existing projects
           resp = await commercialApiRef.current.updateProject(
-            originalMatterNumber,
+            updateMatterNumber,
             payload
           );
           toast.success("Project details updated successfully");
@@ -822,7 +751,6 @@ export default function StagesLayout() {
         setOriginalClientData(JSON.parse(JSON.stringify(context.previousData)));
       }
 
-      console.error("Update error:", err);
       let msg = "Failed to update. Please try again.";
       if (err?.message) msg = err.message;
       else if (err?.response?.data?.message) msg = err.response.data.message;
@@ -1234,10 +1162,6 @@ export default function StagesLayout() {
                             type="text"
                             value={localClientData?.businessName || ""}
                             onChange={(e) => {
-                              console.log(
-                                "Setting businessName to:",
-                                e.target.value
-                              );
                               setLocalClientData((prev) => ({
                                 ...(prev || {}),
                                 businessName: e.target.value,
@@ -1293,10 +1217,6 @@ export default function StagesLayout() {
                             currentModule === "commercial"
                               ? "businessAddress"
                               : "propertyAddress";
-                          console.log(
-                            `Setting ${fieldName} to:`,
-                            e.target.value
-                          );
                           setLocalClientData((prev) => ({
                             ...(prev || {}),
                             [fieldName]: e.target.value,
@@ -1735,3 +1655,5 @@ export default function StagesLayout() {
     </div>
   );
 }
+
+

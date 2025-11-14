@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Button from "@/components/ui/Button"; // Corrected path
-import ClientAPI from "@/api/clientAPI"; // Corrected path
-import CommercialAPI from "@/api/commercialAPI"; // Corrected path
+import Button from "@/components/ui/Button";
+import ClientAPI from "@/api/clientAPI";
+import CommercialAPI from "@/api/commercialAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 
-// --- Configuration Object for Stage 3 ---
-// NOTE: Your config had `key` but the code used `field.name`. I've standardized on `key`.
 const formConfig = {
   vkl: {
     fields: [
@@ -72,27 +70,21 @@ export default function Stage3({
   const queryClient = useQueryClient();
   const originalData = useRef({});
 
-  // --- State ---
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
   const [noteForClient, setNoteForClient] = useState("");
-  // isLoading and isSaving are now handled by React Query
 
   useEffect(() => {
-    // Check if we have a success message stored from before refresh
     const wasSuccess = localStorage.getItem("stage3_save_success");
     if (wasSuccess === "true") {
-      // Show success toast with longer autoClose
       toast.success("Stage 3 Saved Successfully!", {
-        autoClose: 3000, // Show for 3 seconds
+        autoClose: 3000,
         hideProgressBar: false,
       });
-      // Clear the stored message
       localStorage.removeItem("stage3_save_success");
     }
   }, []);
 
-  // --- Memoized Values ---
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
@@ -102,7 +94,6 @@ export default function Stage3({
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
 
-  // Get the correct field configuration
   const fields = useMemo(() => {
     if (currentModule === "commercial") {
       return formConfig.commercial.fields;
@@ -111,10 +102,9 @@ export default function Stage3({
     } else if (company === "idg") {
       return formConfig.idg.fields;
     }
-    return []; // Default empty
+    return [];
   }, [currentModule, company]);
 
-  // --- Callback Helpers ---
   const normalizeValue = useCallback((v) => {
     if (v === undefined || v === null) return "";
     return String(v)
@@ -134,7 +124,6 @@ export default function Stage3({
       if (val === "no") return "Not Completed";
       if (["processing", "inprogress", "in progress"].includes(val))
         return "In Progress";
-      // For IDG text fields, any value means "Completed"
       if (company === "idg" && val) return "Completed";
       return "Not Completed";
     },
@@ -154,14 +143,12 @@ export default function Stage3({
     const greenValues = new Set(["yes", "nr", "na", "n/a", "n/r"]);
     const notReceived = fields
       .filter((field) => {
-        // For IDG text fields, empty = not received
         if (
           field.type === "text" &&
           (!formState[field.key] || formState[field.key].trim() === "")
         ) {
           return true;
         }
-        // For radio fields
         if (field.type === "radio") {
           return !greenValues.has(normalizeValue(formState[field.key] || ""));
         }
@@ -173,7 +160,6 @@ export default function Stage3({
     return `${notReceived.join(" and ")} not received`;
   }, [fields, formState, normalizeValue]);
 
-  // --- Data Fetching with useQuery ---
   const fetchStageData = useCallback(async () => {
     if (!data) return null;
     let stageData = data;
@@ -192,10 +178,9 @@ export default function Stage3({
         );
       }
     } else if (data.stages && Array.isArray(data.stages)) {
-      // For VKL/IDG, find the stage 3 data
       const stage3Data = data.stages.find((stage) => stage.stageNumber === 3);
       if (stage3Data) {
-        stageData = { ...data, ...stage3Data }; // Merge with base
+        stageData = { ...data, ...stage3Data };
       }
     }
     return stageData;
@@ -207,7 +192,6 @@ export default function Stage3({
     enabled: !!data,
   });
 
-  // --- Effect to Populate Form from Query Data ---
   useEffect(() => {
     if (!stageData) return;
 
@@ -219,7 +203,6 @@ export default function Stage3({
 
       fields.forEach(({ key, hasDate, type }) => {
         const rawValue = stageData[key] || "";
-        // Don't normalize text fields on load
         newFormState[key] =
           type === "radio" ? normalizeValue(rawValue) : rawValue;
         newStatusState[key] = getStatus(newFormState[key]);
@@ -250,17 +233,14 @@ export default function Stage3({
         noteForClient: loadedClientComment,
       };
     } catch (error) {
-      console.error("Error initializing form data:", error);
       toast.error("Failed to load stage data");
     }
   }, [stageData, fields, getStatus, normalizeValue, currentModule]);
 
-  // --- Change Handlers ---
   const handleChange = (key, value) => {
     const fieldConfig = fields.find((f) => f.key === key);
     let processedValue = value;
 
-    // Only normalize radio buttons
     if (
       fieldConfig &&
       fieldConfig.type === "radio" &&
@@ -292,7 +272,6 @@ export default function Stage3({
     const noteForClientChanged =
       String(noteForClient).trim() !== String(original.noteForClient).trim();
 
-    // Compare generated note to the *loaded* system note
     const noteForSystemChanged = currentSystemNote !== original.noteForSystem;
 
     return (
@@ -300,7 +279,6 @@ export default function Stage3({
     );
   };
 
-  // --- Data Saving with useMutation ---
   const { mutate: saveStage, isPending: isSaving } = useMutation({
     mutationFn: async (payload) => {
       let apiResponse;
@@ -314,9 +292,7 @@ export default function Stage3({
       return apiResponse;
     },
     onSuccess: (responseData, payload) => {
-      // Store success message in localStorage before refresh
       localStorage.setItem("stage3_save_success", "true");
-      // Store current stage to persist after refresh
       localStorage.setItem("current_stage", "3");
       queryClient.invalidateQueries({
         queryKey: ["stageData", 3, matterNumber, currentModule],
@@ -325,7 +301,6 @@ export default function Stage3({
       queryClient.invalidateQueries({
         queryKey: ["clientData", matterNumber, company, currentModule],
       });
-      // Update original data to reflect the new saved state
       originalData.current = {
         ...formState,
         noteForSystem: generateSystemNote(),
@@ -333,17 +308,14 @@ export default function Stage3({
       };
 
       if (onStageUpdate) {
-        console.log("Notifying parent about stage update:", payload);
         onStageUpdate(payload, stageNumber);
       }
 
       setTimeout(() => {
-        console.log("Refreshing page to update progress status...");
         window.location.reload();
       }, 1000);
     },
     onError: (err) => {
-      console.error("=== SAVE ERROR ===", err);
       let errorMessage = "Failed to save Stage 3. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -360,7 +332,6 @@ export default function Stage3({
     let payload = { ...formState };
     const systemNote = generateSystemNote();
 
-    // Calculate color status
     const allCompleted = fields.every(
       (field) => getStatus(formState[field.key]) === "Completed"
     );
@@ -382,13 +353,11 @@ export default function Stage3({
       payload.colorStatus = colorStatus;
       payload.matterNumber = matterNumber;
     } else {
-      // For VKL/IDG
       const fullNote = noteForClient
         ? `${systemNote} - ${noteForClient}`
         : systemNote;
       payload.noteForClient = fullNote;
 
-      // handle dates: send null if empty
       fields.forEach(({ key, hasDate }) => {
         if (hasDate) {
           const dateKey = `${key}Date`;
@@ -405,8 +374,6 @@ export default function Stage3({
         payload.orderId = matterNumber;
       }
     }
-
-    console.log("=== SAVE PAYLOAD ===", payload);
     saveStage(payload);
   }
 
@@ -495,7 +462,7 @@ export default function Stage3({
         </label>
         <input
           type="text"
-          value={generateSystemNote()} // Always display the generated note
+          value={generateSystemNote()}
           disabled
           className="w-full rounded p-2 bg-gray-100"
         />

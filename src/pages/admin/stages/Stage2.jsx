@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Button from "@/components/ui/Button"; // Corrected path
-import ClientAPI from "@/api/clientAPI"; // Corrected path
-import CommercialAPI from "@/api/commercialAPI"; // Corrected path
+import Button from "@/components/ui/Button";
+import ClientAPI from "@/api/clientAPI";
+import CommercialAPI from "@/api/commercialAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// --- Configuration Object for Stage 2 ---
 const formConfig = {
   vkl: {
     fields: [
@@ -182,8 +181,6 @@ export default function Stage2({
   clientType,
   user,
 }) {
-  console.log("Stage2 data:", data);
-  console.log("User data:", user);
   const stage = 2;
   const { matterNumber } = useParams();
   const originalData = useRef({});
@@ -192,17 +189,13 @@ export default function Stage2({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
 
-  // Add this useEffect for toast persistence after refresh
   useEffect(() => {
-    // Check if we have a success message stored from before refresh
     const wasSuccess = localStorage.getItem("stage2_save_success");
     if (wasSuccess === "true") {
-      // Show success toast with longer autoClose
       toast.success("Stage 2 Saved Successfully!", {
-        autoClose: 3000, // Show for 3 seconds
+        autoClose: 3000,
         hideProgressBar: false,
       });
-      // Clear the stored message
       localStorage.removeItem("stage2_save_success");
     }
   }, []);
@@ -213,7 +206,6 @@ export default function Stage2({
     []
   );
 
-  // Memoize API instances
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
 
@@ -254,25 +246,18 @@ export default function Stage2({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
-  // Corrected extractNotes to handle both combined and separate note structures
   const extractNotes = useCallback(
     (noteForSystem = "", noteForClient = "") => {
-      // VKL/IDG notes are combined: "System Note - Client Comment"
-      // 'noteForSystem' will be the combined string. 'noteForClient' will be undefined.
       if (currentModule !== "commercial" && noteForSystem) {
         const parts = noteForSystem.split(" - ");
         if (parts.length > 1) {
           return {
-            systemNote: parts.slice(0, -1).join(" - "), // System note is everything before the last " - "
-            clientComment: parts.slice(-1)[0] || "", // Client comment is only the last part
+            systemNote: parts.slice(0, -1).join(" - "),
+            clientComment: parts.slice(-1)[0] || "",
           };
         }
-        // Fallback if no " - ", assume it's all a system note
         return { systemNote: noteForSystem, clientComment: "" };
       }
-
-      // Commercial notes are separate
-      // 'noteForSystem' and 'noteForClient' are passed as separate args.
       return {
         systemNote: noteForSystem || "",
         clientComment: noteForClient || "",
@@ -311,7 +296,6 @@ export default function Stage2({
     [currentConfig, formData, clientType]
   );
 
-  // --- Data Fetching with useQuery ---
   const fetchStageData = useCallback(async () => {
     if (!data) return null;
     let stageData = data;
@@ -325,19 +309,13 @@ export default function Stage2({
           stageData = { ...data, ...stageResponse };
         }
       } catch (error) {
-        console.log(
-          "No existing stage 2 data found for commercial, using base"
-        );
-        stageData = data; // Use base data on fetch fail
+        stageData = data;
       }
     } else if (data.stages && Array.isArray(data.stages)) {
-      // For VKL/IDG, find the stage 2 data within the main client 'data' prop
       const stage2Data = data.stages.find((stage) => stage.stageNumber === 2);
       if (stage2Data) {
-        // If stage 2 data exists, merge it with base data
         stageData = { ...data, ...stage2Data };
       }
-      // If no stage 2 data, 'stageData' remains the base 'data' prop
     }
     return stageData;
   }, [data, currentModule, matterNumber, commercialApi]);
@@ -345,10 +323,9 @@ export default function Stage2({
   const { data: stageData, isLoading } = useQuery({
     queryKey: ["stageData", 2, matterNumber, currentModule],
     queryFn: fetchStageData,
-    enabled: !!data, // Run query only when base data is available
+    enabled: !!data,
   });
 
-  // --- Effect to Populate Form from Query Data ---
   useEffect(() => {
     if (!stageData) return;
 
@@ -359,8 +336,6 @@ export default function Stage2({
         if (!dateString) return "";
         return new Date(dateString).toISOString().split("T")[0];
       };
-
-      // Process fields
       currentConfig.fields.forEach((field) => {
         if (field.type === "number") {
           const rawPrice = stageData[field.name];
@@ -385,19 +360,17 @@ export default function Stage2({
         initialStatuses[field.name] = getStatus(stageData[field.name]);
       });
 
-      // Handle notes
       if (currentModule === "commercial") {
         const { systemNote, clientComment } = extractNotes(
           stageData.noteForSystem,
           stageData.noteForClient
         );
-        initialFormData.noteForSystem = systemNote; // This will be displayed disabled
-        initialFormData.noteForClient = clientComment; // This will be editable
+        initialFormData.noteForSystem = systemNote;
+        initialFormData.noteForClient = clientComment;
       } else {
         currentConfig.noteGroups.forEach((group) => {
           const notes = extractNotes(stageData[group.noteForClientKey]);
           initialFormData[group.clientCommentKey] = notes.clientComment;
-          // System note is generated dynamically, not stored in form data
         });
       }
 
@@ -406,7 +379,6 @@ export default function Stage2({
       originalData.current = JSON.parse(JSON.stringify(initialFormData));
     } catch (error) {
       toast.error("Failed to parse stage data");
-      console.error("Error parsing stage data:", error);
     }
   }, [stageData, currentConfig, getStatus, extractNotes, currentModule]);
 
@@ -433,7 +405,6 @@ export default function Stage2({
     return JSON.stringify(formData) !== JSON.stringify(originalData.current);
   };
 
-  // --- Data Saving with useMutation ---
   const { mutate: saveStage, isPending: isSaving } = useMutation({
     mutationFn: async (payload) => {
       let apiResponse;
@@ -454,21 +425,15 @@ export default function Stage2({
       localStorage.setItem("stage2_save_success", "true");
 
       localStorage.setItem("current_stage", "2");
-      // Invalidate the query to refetch data, replacing reloadTrigger
       queryClient.invalidateQueries({
         queryKey: ["stageData", 2, matterNumber, currentModule],
       });
-      // Update original data to prevent "Save" button from being re-enabled
       originalData.current = { ...formData };
 
       if (onStageUpdate) {
-        console.log("Notifying parent about stage update:", payload);
         onStageUpdate(payload, stageNumber);
       }
-
-      // FORCE PAGE REFRESH after a short delay to ensure progress updates
       setTimeout(() => {
-        console.log("Refreshing page to update progress status...");
         window.location.reload();
       }, 1000);
     },
@@ -487,8 +452,6 @@ export default function Stage2({
     if (!isChanged() || isSaving) return;
 
     let payload = { ...formData };
-
-    // Calculate color status first
     const relevantFields = currentConfig.fields.filter((field) => {
       if (
         field.name === "obtainDaSeller" &&
@@ -509,7 +472,7 @@ export default function Stage2({
         "voi",
         "leaseTransfer",
         "contractOfSale",
-        "colorStatus", // Add colorStatus
+        "colorStatus",
       ];
       const filteredPayload = {};
       commercialFields.forEach((field) => {
@@ -518,7 +481,6 @@ export default function Stage2({
         }
       });
 
-      // Re-assign payload with only allowed fields
       payload = filteredPayload;
 
       const noteForSystem = generateSystemNote("main");
@@ -526,14 +488,12 @@ export default function Stage2({
       payload.noteForSystem = noteForSystem;
       payload.noteForClient = noteForClient;
     } else {
-      // VKL/IDG note generation
       currentConfig.noteGroups.forEach((group) => {
         const systemNote = generateSystemNote(group.id);
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
 
-        // Remove temporary form-only fields
         delete payload[group.systemNoteKey];
         delete payload[group.clientCommentKey];
       });
@@ -544,7 +504,6 @@ export default function Stage2({
       }
     }
 
-    // Add matterNumber/orderId for IDG/VKL
     if (currentModule !== "commercial") {
       if (company === "vkl") {
         payload.matterNumber = matterNumber;
@@ -552,8 +511,6 @@ export default function Stage2({
         payload.orderId = matterNumber;
       }
     }
-
-    console.log("Saving payload:", payload);
     saveStage(payload);
   }
 
@@ -564,7 +521,7 @@ export default function Stage2({
           {field.label}
         </label>
 
-        {field.type === "radio" && ( // Only show status for radio fields
+        {field.type === "radio" && (
           <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statuses[field.name]
@@ -751,7 +708,5 @@ Stage2.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
   clientType: PropTypes.string,
-  user: PropTypes.array, // Added user prop
-  // reloadTrigger: PropTypes.bool, // Removed
-  // setReloadTrigger: PropTypes.func, // Removed
+  user: PropTypes.array,
 };

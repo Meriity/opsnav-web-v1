@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Button from "@/components/ui/Button"; // Corrected path
-import ClientAPI from "@/api/clientAPI"; // Corrected path
-import CommercialAPI from "@/api/commercialAPI"; // Corrected path
+import Button from "@/components/ui/Button";
+import ClientAPI from "@/api/clientAPI";
+import CommercialAPI from "@/api/commercialAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
@@ -135,8 +135,6 @@ const formConfig = {
   },
 };
 
-// --- Helper Functions (Memoized) ---
-
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
   return String(v)
@@ -165,7 +163,6 @@ function bgcolor(status) {
   return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
-// For Commercial module
 const extractNotes = (noteForSystem = "", noteForClient = "") => {
   return {
     systemNote: noteForSystem || "",
@@ -173,39 +170,27 @@ const extractNotes = (noteForSystem = "", noteForClient = "") => {
   };
 };
 
-export default function Stage5({
-  changeStage,
-  data,
-  // reloadTrigger, (Removed)
-  // setReloadTrigger, (Removed)
-}) {
+export default function Stage5({ changeStage, data }) {
   const stage = 5;
   const { matterNumber } = useParams();
   const queryClient = useQueryClient();
   const originalData = useRef({});
 
-  // --- State ---
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
-  // isLoading and isSaving are now handled by React Query
-  // Only Commercial module uses a separate client note state
   const [noteForClient, setNoteForClient] = useState("");
 
   useEffect(() => {
-    // Check if we have a success message stored from before refresh
     const wasSuccess = localStorage.getItem("stage5_save_success");
     if (wasSuccess === "true") {
-      // Show success toast with longer autoClose
       toast.success("Stage 5 Saved Successfully!", {
-        autoClose: 3000, // Show for 3 seconds
+        autoClose: 3000,
         hideProgressBar: false,
       });
-      // Clear the stored message
       localStorage.removeItem("stage5_save_success");
     }
   }, []);
 
-  // --- Memoized Values ---
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
@@ -223,10 +208,9 @@ export default function Stage5({
     } else if (company === "idg") {
       return formConfig.idg;
     }
-    return formConfig.vkl; // default fallback
+    return formConfig.vkl;
   }, [currentModule, company]);
 
-  // --- Callback Helpers ---
   const generateSystemNote = useCallback(
     (noteGroupId) => {
       const noteGroup = currentConfig.noteGroups.find(
@@ -253,7 +237,6 @@ export default function Stage5({
     [currentConfig, formData]
   );
 
-  // --- Data Fetching with useQuery ---
   const fetchStageData = useCallback(async () => {
     if (!data) return null;
     let stageData = data;
@@ -272,10 +255,9 @@ export default function Stage5({
         );
       }
     } else if (data.stages && Array.isArray(data.stages)) {
-      // For VKL/IDG, find the stage 5 data
       const stage5Data = data.stages.find((stage) => stage.stageNumber === 5);
       if (stage5Data) {
-        stageData = { ...data, ...stage5Data }; // Merge with base
+        stageData = { ...data, ...stage5Data };
       }
     }
     return stageData;
@@ -287,7 +269,6 @@ export default function Stage5({
     enabled: !!data,
   });
 
-  // --- Effect to Populate Form from Query Data ---
   useEffect(() => {
     if (!stageData) return;
 
@@ -316,7 +297,6 @@ export default function Stage5({
         }
       });
 
-      // Handle notes
       if (currentModule === "commercial") {
         const { systemNote, clientComment } = extractNotes(
           stageData.noteForSystem,
@@ -326,7 +306,6 @@ export default function Stage5({
         loadedClientComment = clientComment;
         setNoteForClient(clientComment);
       } else {
-        // VKL/IDG
         currentConfig.noteGroups.forEach((group) => {
           const noteString = stageData[group.noteForClientKey] || "";
           const noteParts = noteString.split(" - ");
@@ -339,24 +318,20 @@ export default function Stage5({
       setFormData(initialFormData);
       setStatuses(initialStatuses);
 
-      // Set originalData for change tracking
       originalData.current = {
         formData: { ...initialFormData },
         noteForClient: loadedClientComment,
         noteForSystem: loadedSystemNote,
       };
     } catch (error) {
-      console.error("Error initializing form data:", error);
       toast.error("Failed to load stage data");
     }
   }, [stageData, currentConfig, currentModule]);
 
-  // --- Form Change Handlers ---
   const handleChange = (field, value) => {
     let processedValue = value;
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
 
-    // Only normalize radio buttons, keep text/number as-is
     if (fieldConfig && fieldConfig.type === "radio") {
       if (typeof processedValue === "string") {
         processedValue = normalizeValue(processedValue);
@@ -369,7 +344,7 @@ export default function Stage5({
 
   const isChanged = () => {
     const original = originalData.current;
-    if (!original.formData) return false; // Not yet initialized
+    if (!original.formData) return false;
 
     const formChanged =
       JSON.stringify(formData) !== JSON.stringify(original.formData);
@@ -379,15 +354,12 @@ export default function Stage5({
         ? noteForClient
         : formData.clientComment || "";
     const clientNoteChanged = currentClientNote !== original.noteForClient;
-
-    // Compare currently generated note with the note loaded from server
     const systemNoteChanged =
       generateSystemNote("main") !== original.noteForSystem;
 
     return formChanged || clientNoteChanged || systemNoteChanged;
   };
 
-  // --- Data Saving with useMutation ---
   const { mutate: saveStage, isPending: isSaving } = useMutation({
     mutationFn: async (payload) => {
       let apiResponse;
@@ -408,7 +380,6 @@ export default function Stage5({
         queryKey: ["stageData", 5, matterNumber, currentModule],
       });
 
-      // Update original data to reflect new saved state
       const currentClientNote =
         currentModule === "commercial"
           ? noteForClient
@@ -419,14 +390,11 @@ export default function Stage5({
         noteForSystem: generateSystemNote("main"),
       };
 
-      // FORCE PAGE REFRESH after a short delay to ensure progress updates
       setTimeout(() => {
-        console.log("Refreshing page to update progress status...");
         window.location.reload();
       }, 1000);
     },
     onError: (err) => {
-      console.error("=== SAVE ERROR ===", err);
       let errorMessage = "Failed to save Stage 5. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -443,7 +411,6 @@ export default function Stage5({
     let payload = { ...formData };
     const systemNote = generateSystemNote("main");
 
-    // Calculate color status
     const allCompleted = currentConfig.fields.every(
       (field) => getStatus(formData[field.name]) === "Completed"
     );
@@ -464,7 +431,6 @@ export default function Stage5({
       payload.colorStatus = colorStatus;
       payload.matterNumber = matterNumber;
     } else {
-      // For VKL/IDG
       currentConfig.noteGroups.forEach((group) => {
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
@@ -472,7 +438,6 @@ export default function Stage5({
         delete payload[group.clientCommentKey];
       });
 
-      // handle number fields
       currentConfig.fields.forEach((field) => {
         if (field.type === "number") {
           payload[field.name] =
@@ -487,11 +452,9 @@ export default function Stage5({
       }
     }
 
-    console.log("=== SAVE PAYLOAD ===", payload);
     saveStage(payload);
   }
 
-  // --- Render Functions ---
   const renderField = (field) => {
     switch (field.type) {
       case "radio":
@@ -673,6 +636,4 @@ export default function Stage5({
 Stage5.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
-  // reloadTrigger: PropTypes.bool, // Removed
-  // setReloadTrigger: PropTypes.func, // Removed
 };

@@ -181,6 +181,13 @@ class CommercialAPI {
 
   // Update Commercial Client
   async updateProject(clientId, projectData) {
+    console.log("Commercial API - Update Project:" );
+    console.log("Client ID:", clientId);
+    console.log("Project Data:", projectData);
+    console.log(
+      "URL:",
+      `${this.baseUrl}${this.endpoints.CLIENT_BY_ID}/${clientId}`
+    );
     try {
       const response = await fetch(
         `${this.baseUrl}${this.endpoints.CLIENT_BY_ID}/${clientId}`,
@@ -191,9 +198,14 @@ class CommercialAPI {
         }
       );
 
-      return await this.handleResponse(response);
+      console.log("Update response status:", response.status);
+
+      const result = await this.handleResponse(response);
+      console.log("Update response result:", result);
+      return result;
     } catch (error) {
       console.error("Error updating commercial project:", error);
+      console.error("Error details:", error.response);
       throw error;
     }
   }

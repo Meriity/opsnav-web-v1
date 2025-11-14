@@ -192,9 +192,7 @@ class CalendarErrorBoundary extends React.Component {
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(error, info) {
-    console.error("Calendar rendering error:", error, info);
-  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -524,7 +522,6 @@ function Dashboard() {
   // Process dashboard data when it loads
   useEffect(() => {
     if (dashboardData) {
-      console.log("Dashboard data:", dashboardData);
       setDashboardData(dashboardData, currentModule);
       setAllChartData({
         tenMonths: Array.isArray(dashboardData.last10MonthsStats)
@@ -540,11 +537,9 @@ function Dashboard() {
   // Handle errors
   useEffect(() => {
     if (dashboardError) {
-      console.error("Failed to fetch dashboard data:", dashboardError);
       toast.error("Failed to load dashboard data.");
     }
     if (calendarError) {
-      console.error("Error fetching calendar data:", calendarError);
       toast.error("Could not load calendar dates.");
     }
   }, [dashboardError, calendarError]);
@@ -560,8 +555,6 @@ function Dashboard() {
       const currentModule = localStorage.getItem("currentModule");
       const company = localStorage.getItem("company");
       const userRole = localStorage.getItem("userRole") || "admin";
-
-      console.log("Selected event:", event);
 
       let matterNumber = "";
 
@@ -682,9 +675,6 @@ function Dashboard() {
   useEffect(() => {
     if (!allChartData.tenMonths.length && !allChartData.allTime.length) return;
 
-    console.log("DEBUG - Processing chart data for view:", chartView);
-    console.log("DEBUG - Raw allChartData:", allChartData);
-
     const sourceData =
       chartView === "last10Months"
         ? (allChartData.tenMonths || []).slice(-10)
@@ -739,7 +729,6 @@ function Dashboard() {
       }));
     }
 
-    console.log("DEBUG - Formatted chart data:", formattedData);
     setCurrentChartData(formattedData || []);
   }, [chartView, allChartData, currentModule, company]);
 
@@ -785,7 +774,6 @@ function Dashboard() {
     return (
       <div className="flex justify-center items-center h-screen w-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
-        <span className="ml-4 text-lg text-gray-700">Loading Dashboard...</span>
       </div>
     );
   }

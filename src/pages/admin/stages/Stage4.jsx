@@ -270,7 +270,6 @@ export default function Stage4({
     enabled: !!data,
   });
 
-  // --- Effect to Populate Form from Query Data ---
   useEffect(() => {
     if (!stageData) return;
 
@@ -333,12 +332,10 @@ export default function Stage4({
         noteForSystem: loadedSystemNote,
       };
     } catch (error) {
-      console.error("Error initializing form data:", error);
       toast.error("Failed to load stage data");
     }
   }, [stageData, currentConfig, company, currentModule]);
 
-  // --- Form Change Handlers ---
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     let processedValue = value;
@@ -355,7 +352,7 @@ export default function Stage4({
 
   const isChanged = () => {
     const original = originalData.current;
-    if (!original.formData) return false; // Not yet initialized
+    if (!original.formData) return false;
 
     const formChanged =
       JSON.stringify(formData) !== JSON.stringify(original.formData);
@@ -372,18 +369,15 @@ export default function Stage4({
     return formChanged || clientNoteChanged || systemNoteChanged;
   };
 
-  // --- Image Upload/Delete Mutations (IDG) ---
   const { mutate: uploadImage, isPending: isUploading } = useMutation({
     mutationFn: (file) => api.uploadImageForOrder(matterNumber, file),
     onSuccess: (response) => {
       toast.success("Image uploaded successfully!");
-      // Invalidate query to refetch stage data, which will update preview
       queryClient.invalidateQueries({
         queryKey: ["stageData", 4, matterNumber, currentModule],
       });
     },
     onError: (err) => {
-      console.error(err);
       toast.error("Image upload failed.");
     },
   });
@@ -401,13 +395,11 @@ export default function Stage4({
       setPreview(null);
       setfileName("");
       setShowConfirmModal(false);
-      // Invalidate query to refetch stage data
       queryClient.invalidateQueries({
         queryKey: ["stageData", 4, matterNumber, currentModule],
       });
     },
     onError: (err) => {
-      console.error(err);
       toast.error("Failed to delete image.");
       setShowConfirmModal(false);
     },
@@ -417,11 +409,10 @@ export default function Stage4({
     const file = e.target.files[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
-      uploadImage(file); // Automatically trigger the upload
+      uploadImage(file);
     }
   };
 
-  // --- Main Save Mutation ---
   const { mutate: saveStage, isPending: isSaving } = useMutation({
     mutationFn: async (payload) => {
       let apiResponse;
@@ -435,16 +426,14 @@ export default function Stage4({
       return apiResponse;
     },
     onSuccess: () => {
-      // Store success message in localStorage before refresh
       localStorage.setItem("stage4_save_success", "true");
       localStorage.setItem("current_stage", "4");
 
       queryClient.invalidateQueries({
         queryKey: ["stageData", 4, matterNumber, currentModule],
       });
-      reloadArchivedClients(); // Trigger reload of archived list
+      reloadArchivedClients();
 
-      // Update original data to reflect new saved state
       const currentClientNote =
         currentModule === "commercial"
           ? noteForClient
@@ -455,14 +444,11 @@ export default function Stage4({
         noteForSystem: generateSystemNote("main"),
       };
 
-      // FORCE PAGE REFRESH after a short delay to ensure progress updates
       setTimeout(() => {
-        console.log("Refreshing page to update progress status...");
         window.location.reload();
       }, 1000);
     },
     onError: (err) => {
-      console.error("=== SAVE ERROR ===", err);
       let errorMessage = "Failed to save Stage 4. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -479,7 +465,6 @@ export default function Stage4({
     let payload = { ...formData };
     const systemNote = generateSystemNote("main");
 
-    // Calculate color status
     const allCompleted = currentConfig.fields.every(
       (field) =>
         field.type === "image" ||
@@ -503,15 +488,12 @@ export default function Stage4({
       payload.colorStatus = colorStatus;
       payload.matterNumber = matterNumber;
     } else {
-      // For VKL/IDG
       currentConfig.noteGroups.forEach((group) => {
         const clientComment = formData[group.clientCommentKey] || "";
         payload[group.noteForClientKey] =
           `${systemNote} - ${clientComment}`.trim();
         delete payload[group.clientCommentKey];
       });
-
-      // Convert number fields
       currentConfig.fields.forEach((field) => {
         if (field.type === "number") {
           payload[field.name] =
@@ -523,15 +505,12 @@ export default function Stage4({
         payload.matterNumber = matterNumber;
       } else if (company === "idg") {
         payload.orderId = matterNumber;
-        delete payload.completionPhotos; // Don't save this temporary field
+        delete payload.completionPhotos;
       }
     }
-
-    console.log("=== SAVE PAYLOAD ===", payload);
     saveStage(payload);
   }
 
-  // --- Render Functions ---
   const renderField = (field) => {
     switch (field.type) {
       case "radio":
@@ -642,7 +621,6 @@ export default function Stage4({
                   />
                 </label>
               ) : (
-                // Image preview
                 <div className="relative w-full text-center">
                   <img
                     src={preview}
@@ -795,6 +773,4 @@ export default function Stage4({
 Stage4.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
-  // reloadTrigger: PropTypes.bool, // Removed
-  // setReloadTrigger: PropTypes.func, // Removed
 };
