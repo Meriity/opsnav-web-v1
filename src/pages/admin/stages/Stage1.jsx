@@ -106,28 +106,23 @@ export default function Stage1({
   changeStage,
   data,
   stageNumber = 1,
-  onStageUpdate, // Add this new prop
+  onStageUpdate,
 }) {
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
 
   useEffect(() => {
-    // Check if we have a success message stored from before refresh
     const wasSuccess = localStorage.getItem("stage1_save_success");
     if (wasSuccess === "true") {
-      // Show success toast with longer autoClose
       toast.success("Stage 1 Saved Successfully!", {
-        autoClose: 3000, // Show for 3 seconds
+        autoClose: 3000,
         hideProgressBar: false,
       });
-      // Clear the stored message
       localStorage.removeItem("stage1_save_success");
     }
   }, []);
-  // isSaving and isLoading are now handled by React Query
   const originalData = useRef({});
 
-  console.log("Initial data prop:", data);
   const stage = 1;
   const { matterNumber } = useParams();
 
@@ -265,18 +260,14 @@ export default function Stage1({
     return `${notReceived.join(", ")} not received`;
   };
 
-  // Get the query client instance
   const queryClient = useQueryClient();
-
-  // 1. DEFINE THE FETCHER FUNCTION
   const fetchStageData = useCallback(async () => {
     if (!matterNumber) return null;
 
-    let stageData = data; // Start with the base prop data
+    let stageData = data;
 
     if (currentModule === "commercial") {
       try {
-        console.log("Commercial stage 1 - fetching actual stage data");
         const stageResponse = await commercialApi.getStageData(1, matterNumber);
 
         if (stageResponse && stageResponse.data) {
@@ -286,29 +277,19 @@ export default function Stage1({
         }
       } catch (error) {
         console.log("No existing stage 1 data found, using default data");
-        // We still return the base `data` prop even if the fetch fails
       }
     }
-
-    // For VKL/IDG, we just use the 'data' prop directly
-    console.log("Processing stage data:", stageData);
     return stageData;
   }, [matterNumber, currentModule, data, commercialApi]);
 
-  // 2. USE THE useQuery HOOK
-  // This replaces your big useEffect and isLoading state
   const { data: stageData, isLoading } = useQuery({
     queryKey: ["stageData", 1, matterNumber, currentModule],
     queryFn: fetchStageData,
     enabled: !!matterNumber,
   });
 
-  // 3. NEW useEffect to populate form from query data
-  // This runs ONLY when the query data (stageData) changes
   useEffect(() => {
     if (stageData) {
-      console.log("Query data received, setting form state:", stageData);
-
       const { systemNote, clientComment } = extractNotes(
         stageData.noteForClient
       );
@@ -371,14 +352,11 @@ export default function Stage1({
     mutationFn: async (payload) => {
       // This is the logic from your old handleSave
       if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 1");
         return commercialApi.upsertStage(1, matterNumber, payload);
       } else if (company === "vkl") {
-        console.log("Using VKL API for stage 1");
         payload.matterNumber = matterNumber;
         return api.upsertStageOne(payload);
       } else if (company === "idg") {
-        console.log("Using IDG API for stage 1");
         payload.orderId = matterNumber;
         return api.upsertIDGStages(payload.orderId, 1, payload);
       }
@@ -396,17 +374,12 @@ export default function Stage1({
         queryKey: ["clientData", matterNumber, company, currentModule],
       });
 
-      // Update originalData to match the saved state
       originalData.current = { ...formData };
 
-      // NEW: Notify parent component about the stage update for real-time status changes
       if (onStageUpdate) {
-        console.log("Notifying parent about stage update:", payload);
-
-        // Calculate the updated stage data to send to parent
         const updatedStageData = {
           ...payload,
-          // Ensure colorStatus is included for commercial projects
+
           colorStatus:
             currentModule === "commercial" ? payload.colorStatus : undefined,
         };
@@ -414,14 +387,11 @@ export default function Stage1({
         onStageUpdate(updatedStageData, stageNumber);
       }
 
-      // FORCE PAGE REFRESH after a short delay to ensure progress updates
       setTimeout(() => {
-        console.log("Refreshing page to update progress status...");
         window.location.reload();
-      }, 1000); // Increased to 1000ms to ensure localStorage is set
+      }, 1000);
     },
     onError: (error) => {
-      console.error("=== SAVE ERROR ===", error);
       let errorMessage = "Failed to save Stage 1. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -432,7 +402,6 @@ export default function Stage1({
     },
   });
 
-  // 5. SIMPLIFIED handleSave function
   async function handleSave() {
     if (!isChanged() || isSaving) return;
 
@@ -445,9 +414,7 @@ export default function Stage1({
       ...formData,
     };
 
-    // FIXED: Filter commercial fields and ensure correct payload structure
     if (currentModule === "commercial") {
-      // Only include fields that exist in the commercial schema
       const commercialFields = [
         "referral",
         "retainer",
@@ -468,32 +435,20 @@ export default function Stage1({
       });
 
       payload = filteredPayload;
-
-      // Generate system note
       payload.noteForSystem = systemNote;
       payload.noteForClient = noteForClient;
 
-      // Calculate and add color status
       const allCompleted = currentFields.every(
         (field) => getStatus(formData[field.name]) === "Completed"
       );
       payload.colorStatus = allCompleted ? "green" : "amber";
     } else {
-      // For other modules, use combined note structure
       payload.noteForClient = noteForClient;
     }
 
-    // remove temporary fields
     delete payload.systemNote;
     delete payload.clientComment;
 
-    console.log("=== SAVE DEBUG ===");
-    console.log("Current module:", currentModule);
-    console.log("Company:", company);
-    console.log("Matter number:", matterNumber);
-    console.log("Payload:", payload);
-
-    // Now, just call the mutation!
     saveStage(payload);
   }
 

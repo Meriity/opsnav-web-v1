@@ -1,6 +1,16 @@
-// components/ui/SidebarModuleSwitcher.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Home,
+  FileText,
+  Newspaper,
+  Briefcase,
+  Printer,
+  Folder,
+  ChevronDown,
+  X,
+  Check,
+} from "lucide-react";
 
 function SidebarModuleSwitcher() {
   const [currentModule, setCurrentModule] = useState("");
@@ -62,7 +72,6 @@ function SidebarModuleSwitcher() {
     }, 100);
   };
 
-  // Helper functions
   const getModuleDisplayName = (module) => {
     const moduleMap = {
       conveyancing: "Conveyancing",
@@ -77,57 +86,66 @@ function SidebarModuleSwitcher() {
 
   const getModuleIcon = (module) => {
     const iconMap = {
-      conveyancing: "🏠",
-      wills: "📝",
-      "print media": "📰",
-      commercial: "💼",
-      idg: "🖨️",
-      default: "📁",
+      conveyancing: Home,
+      wills: FileText,
+      "print media": Newspaper,
+      commercial: Briefcase,
+      idg: Printer,
+      default: Folder,
     };
     return iconMap[module.toLowerCase()] || iconMap.default;
   };
+
+  const getModuleColors = (module) => {
+    switch (module.toLowerCase()) {
+      case "conveyancing":
+        return "bg-blue-500 text-white";
+      case "wills":
+        return "bg-emerald-500 text-white";
+      case "print media":
+        return "bg-amber-500 text-white";
+      case "commercial":
+        return "bg-indigo-500 text-white";
+      case "idg":
+        return "bg-slate-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
+  const TriggerIcon = getModuleIcon(currentModule);
+  const triggerColors = getModuleColors(currentModule);
 
   if (availableModules.length <= 1) return null;
 
   return (
     <div className="relative">
-      {/* Trigger Button with pointer cursor */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 group mr-4 cursor-pointer"
       >
-        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs">
-          {getModuleIcon(currentModule)}
+        <div
+          className={`w-5 h-5 rounded-md flex items-center justify-center ${triggerColors} transition-all duration-200`}
+        >
+          <TriggerIcon className="w-3 h-3" strokeWidth={2.5} />
         </div>
         <span className="hidden sm:inline text-sm font-medium text-gray-700 group-hover:text-gray-900">
           {getModuleDisplayName(currentModule)}
         </span>
-        <svg
+        <ChevronDown
           className="w-4 h-4 text-gray-400 group-hover:text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+          strokeWidth={2}
+        />
       </button>
 
-      {/* Panel */}
       {isOpen && (
         <>
           <div
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setIsOpen(false)}
           />
-          {/* Mobile: bottom sheet style, Desktop: sidebar style */}
           <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full z-50 sm:mt-2">
             <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden mx-0 sm:mx-0">
-              {/* Header - More compact */}
               <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900">
                 <div className="flex items-center justify-between">
                   <div>
@@ -136,89 +154,71 @@ function SidebarModuleSwitcher() {
                     </h3>
                     <p className="text-slate-300 text-xs">Select module</p>
                   </div>
-                  {/* Close button for mobile with pointer */}
                   <button
                     onClick={() => setIsOpen(false)}
                     className="sm:hidden text-slate-300 hover:text-white p-1 cursor-pointer"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               </div>
 
-              {/* Modules List - More compact with better scroll handling */}
               <div
                 className={`p-1 space-y-1 ${
                   availableModules.length > 6 ? "max-h-64 overflow-y-auto" : ""
                 }`}
               >
-                {availableModules.map((module) => (
-                  <button
-                    key={module}
-                    onClick={() => handleModuleChange(module)}
-                    className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
-                      currentModule === module
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-sm sm:text-base flex-shrink-0 ${
+                {availableModules.map((module) => {
+                  const ModuleIcon = getModuleIcon(module);
+                  const moduleColors = getModuleColors(module);
+
+                  return (
+                    <button
+                      key={module}
+                      onClick={() => handleModuleChange(module)}
+                      className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
                         currentModule === module
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
-                      {getModuleIcon(module)}
-                    </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <div className="font-medium text-xs sm:text-sm truncate">
-                        {getModuleDisplayName(module)}
-                      </div>
                       <div
-                        className={`text-xs mt-0.5 ${
-                          currentModule === module
-                            ? "text-blue-600"
-                            : "text-gray-500"
-                        }`}
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${moduleColors} transition-all duration-200`}
                       >
-                        {currentModule === module
-                          ? "Active"
-                          : "Click to switch"}
+                        <ModuleIcon
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                          strokeWidth={2}
+                        />
                       </div>
-                    </div>
-                    {currentModule === module && (
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="font-medium text-xs sm:text-sm truncate">
+                          {getModuleDisplayName(module)}
+                        </div>
+                        <div
+                          className={`text-xs mt-0.5 ${
+                            currentModule === module
+                              ? "text-blue-600"
+                              : "text-gray-500"
+                          }`}
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                          {currentModule === module
+                            ? "Active"
+                            : "Click to switch"}
+                        </div>
                       </div>
-                    )}
-                  </button>
-                ))}
+                      {currentModule === module && (
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Check
+                            className="w-2 h-2 text-white"
+                            strokeWidth={3}
+                          />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Show module count if many modules */}
               {availableModules.length > 6 && (
                 <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
                   <p className="text-xs text-gray-500 text-center">
@@ -226,8 +226,6 @@ function SidebarModuleSwitcher() {
                   </p>
                 </div>
               )}
-
-              {/* Mobile bottom hint */}
               <div className="sm:hidden p-2 border-t border-gray-100 bg-gray-50">
                 <p className="text-xs text-gray-500 text-center">
                   Swipe down or tap outside to close

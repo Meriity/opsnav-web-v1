@@ -653,7 +653,6 @@ const ViewClients = () => {
         {isLoading ? (
           <div className="text-center py-10">
             <Loader />
-            <p className="mt-2 text-gray-600">Loading data...</p>
           </div>
         ) : !clientList || clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">
