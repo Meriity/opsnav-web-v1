@@ -185,7 +185,6 @@ export default function Stage4({
   console.log("=== STAGE 4 CONFIG ===");
   console.log("Company:", company);
   console.log("Current Module:", currentModule);
-  console.log("Selected Config:", currentConfig);
 
   const handleUpload = async (fileToUpload) => {
     try {
