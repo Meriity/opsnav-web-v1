@@ -4,6 +4,7 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
+  DialogTitle,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
@@ -38,6 +39,10 @@ const ViewClients = () => {
   const [showDateRange, setShowDateRange] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(100);
 
+  const [showTAR, setShowTar] = useState(false);
+  const [allocatedUser, setallocatedUser] = useState("");
+  const [user, setUser] = useState([]);
+
   const { searchQuery } = useSearchStore();
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
@@ -50,7 +55,6 @@ const ViewClients = () => {
     }
   }, [currentModule]);
 
-  // React Query Mutation for Resharing Email
   const { mutate: handelReShareEmail, isPending: isSendingEmail } = useMutation(
     {
       mutationFn: () =>
@@ -66,7 +70,6 @@ const ViewClients = () => {
     }
   );
 
-  // Optimized Fetcher Functions
   const fetchCommercialProjects = useCallback(async () => {
     const response = await api.getActiveProjects();
 
@@ -148,12 +151,10 @@ const ViewClients = () => {
     }));
   }, [api]);
 
-  // React Query Configuration
   const {
     data: clientData,
     isLoading,
     error,
-    refetch,
   } = useQuery({
     queryKey: ["clients", currentModule, company],
     queryFn: async () => {
@@ -173,16 +174,12 @@ const ViewClients = () => {
     refetchOnReconnect: false,
   });
 
-  // Use the React Query data directly
   const activeData = clientData || [];
 
-  // Optimized Filtering
   const clientList = useMemo(() => {
     if (!activeData.length) return [];
 
     let filteredData = [...activeData];
-
-    // Apply date range filter
     const [startDate, endDate] = settlementDate;
     if (startDate && endDate) {
       const startMoment = moment(startDate);
@@ -201,7 +198,6 @@ const ViewClients = () => {
       });
     }
 
-    // Apply search query filter
     if (searchQuery && searchQuery.trim().length > 0) {
       const lowercasedQuery = searchQuery.toLowerCase().trim();
 
@@ -251,7 +247,6 @@ const ViewClients = () => {
     return filteredData;
   }, [settlementDate, activeData, searchQuery, currentModule, company]);
 
-  // Helper Functions
   const getPageTitle = () => {
     if (currentModule === "commercial") return "View Projects";
     if (company === "idg") return "View Orders";
@@ -282,14 +277,12 @@ const ViewClients = () => {
     return company === "idg";
   };
 
-  // Modal Close Handlers
   const handelShareEmailModalClose = () => {
     setShowShareDialog(false);
     setemail("");
     setShareDetails({ matterNumber: "", reshareEmail: "" });
   };
 
-  // Column Definitions
   let columns = [];
   if (company === "vkl") {
     if (currentModule === "commercial") {
@@ -350,6 +343,7 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
+
       <CreateClientModal
         createType={currentModule === "commercial" ? "project" : "client"}
         companyName={company}
@@ -359,22 +353,23 @@ const ViewClients = () => {
           setCreateProject(false);
         }}
       />
+
       <CreateClientModal
         createType="order"
         companyName={company}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
       />
+
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial"
+        subTitle={`Select the date range to filter ${currentModule === "commercial"
             ? "projects"
             : company === "idg"
-            ? "orders"
-            : "clients"
-        }.`}
+              ? "orders"
+              : "clients"
+          }.`}
         handelSubmitFun={(fromDate, toDate) => {
           setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
@@ -404,8 +399,8 @@ const ViewClients = () => {
               {currentModule === "commercial"
                 ? "project"
                 : company === "idg"
-                ? "order"
-                : "matter"}{" "}
+                  ? "order"
+                  : "matter"}{" "}
               No. :{" "}
               <span className="text-blue-500 underline cursor-pointer">
                 {shareDetails?.matterNumber}
@@ -444,6 +439,48 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
+      <Dialog open={showTAR} onClose={() => setShowTar(false)} className="relative z-50">
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
+            <DialogTitle className={"text-xl mb-5"}>
+              Task Allocation Report
+            </DialogTitle>
+            <div className="flex items-center gap-2 mb-5">
+              <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by Users
+              </label>
+              <select
+                name="alloactedUser"
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={allocatedUser}
+                onChange={(e) => setallocatedUser(e.target.value)}
+              >
+                <option value="">All Users</option>
+                {user.map((user) => (
+                  <option key={user.name} value={user.name}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+              onClick={() => {
+                generateTaskAllocationPDF(allocatedUser);
+                setShowTar(false);
+              }}
+            >
+              Download
+            </button>
+          </DialogPanel>
+        </div>
+      </Dialog>
+
       <div className="space-y-4 p-2">
         <Header />
 
@@ -460,8 +497,8 @@ const ViewClients = () => {
                 {currentModule === "commercial"
                   ? "Projects"
                   : company === "idg"
-                  ? "Orders"
-                  : "Clients"}{" "}
+                    ? "Orders"
+                    : "Clients"}{" "}
                 per page:
               </label>
               <select
@@ -544,11 +581,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={handleCreateButtonClick}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
@@ -559,11 +595,10 @@ const ViewClients = () => {
                           {({ active }) => (
                             <button
                               onClick={() => setcreateOrder(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active
+                              className={`block w-full text-left px-4 py-2 text-sm ${active
                                   ? "bg-sky-50 text-sky-700"
                                   : "text-gray-700"
-                              }`}
+                                }`}
                             >
                               Create Order
                             </button>
@@ -575,11 +610,10 @@ const ViewClients = () => {
                           {({ active }) => (
                             <button
                               onClick={() => setShowOutstandingTask(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active
+                              className={`block w-full text-left px-4 py-2 text-sm ${active
                                   ? "bg-sky-50 text-sky-700"
                                   : "text-gray-700"
-                              }`}
+                                }`}
                             >
                               Outstanding Tasks
                             </button>
@@ -590,11 +624,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Select Date Range
                           </button>
@@ -614,12 +647,6 @@ const ViewClients = () => {
             role="alert"
           >
             <p>{error.message || "Error loading data"}</p>
-            <button
-              onClick={handleRefresh}
-              className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Retry
-            </button>
           </div>
         )}
 
@@ -632,8 +659,8 @@ const ViewClients = () => {
             {currentModule === "commercial"
               ? "No projects found"
               : company === "idg"
-              ? "No orders found"
-              : "No clients found"}
+                ? "No orders found"
+                : "No clients found"}
           </div>
         ) : (
           <div className="px-5">

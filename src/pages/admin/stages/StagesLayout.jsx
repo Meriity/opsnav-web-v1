@@ -501,8 +501,29 @@ export default function StagesLayout() {
     const localCompany = localStorage.getItem("company");
 
     if (currentModule === "commercial") {
-      for (let i = 1; i <= 6; i++) {
-        section[`status${i}`] = "Not Completed";
+      console.log("Setting commercial stage statuses");
+
+      if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
+        console.log("Found stages array:", data.stages);
+        const stageObject = data.stages[0];
+
+        for (let i = 1; i <= 6; i++) {
+          const stageKey = `S${i}`;
+          if (stageObject[stageKey]) {
+            const statusMap = {
+              green: "Completed",
+              red: "Not Completed",
+              amber: "In Progress",
+            };
+            section[`status${i}`] =
+              statusMap[stageObject[stageKey]] || "Not Completed";
+            console.log(
+              `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]} -> ${
+                section[`status${i}`]
+              }`
+            );
+          }
+        }
       }
 
       if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
@@ -636,6 +657,7 @@ export default function StagesLayout() {
 
       let payload = {};
       const currentModule = localStorage.getItem("currentModule");
+      const company = localStorage.getItem("company");
 
       if (currentModule === "commercial") {
         payload = {
@@ -652,16 +674,21 @@ export default function StagesLayout() {
           postcode: localClientData?.postcode || "",
           status: localClientData?.status || "active",
         };
-      } else if (localStorage.getItem("company") === "vkl") {
+      } else if (company === "vkl") {
         payload = {
           settlementDate: localClientData?.settlementDate || null,
           notes: localClientData?.notes || "",
+          propertyAddress: localClientData?.propertyAddress || "",
         };
-      } else if (localStorage.getItem("company") === "idg") {
+      } else if (company === "idg") {
         payload = {
           deliveryDate: localClientData?.data?.deliveryDate || null,
           order_details: localClientData?.data?.order_details || null,
           notes: localClientData?.data?.notes || "",
+          deliveryAddress:
+            localClientData?.data?.deliveryAddress ||
+            localClientData?.propertyAddress ||
+            "",
         };
       }
 
@@ -670,10 +697,21 @@ export default function StagesLayout() {
         payload.matterDate = localClientData?.matterDate || null;
         payload.clientName = localClientData?.clientName || "";
         payload.businessName = localClientData?.businessName || "";
-        payload.businessAddress = localClientData?.businessAddress || "";
         payload.state = localClientData?.state || "";
         payload.clientType = localClientData?.clientType || "";
         payload.dataEntryBy = localClientData?.dataEntryBy || "";
+
+        // Handle address fields for superadmin
+        if (currentModule === "commercial") {
+          payload.businessAddress = localClientData?.businessAddress || "";
+        } else if (company === "vkl") {
+          payload.propertyAddress = localClientData?.propertyAddress || "";
+        } else if (company === "idg") {
+          payload.deliveryAddress =
+            localClientData?.data?.deliveryAddress ||
+            localClientData?.propertyAddress ||
+            "";
+        }
 
         if (
           localClientData?.matterNumber &&
@@ -709,7 +747,7 @@ export default function StagesLayout() {
           );
           toast.success("Project details updated successfully");
         }
-      } else if (localStorage.getItem("company") === "vkl") {
+      } else if (company === "vkl") {
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
@@ -1022,13 +1060,21 @@ export default function StagesLayout() {
               <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
                   <h2 className="text-lg font-bold mb-2">
-                    {currentModule === "commercial"
-                      ? "Project Details"
-                      : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
-                      ? "Order Details"
-                      : ""}
+                    {currentModule === "commercial" ? (
+                      "Project Details"
+                    ) : company === "vkl" ? (
+                      "Matter Details"
+                    ) : company === "idg" ? (
+                      <>
+                        Order Details{" "}
+                        <span className="absolute right-8 text-sm font-medium text-gray-600">
+                          Unit Number : (
+                          {clientData?.data?.unitNumber || "unset"})
+                        </span>
+                      </>
+                    ) : (
+                      ""
+                    )}
                   </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
@@ -1394,6 +1440,12 @@ export default function StagesLayout() {
                                   .toISOString()
                                   .substring(0, 10)
                               : ""
+                            : company === "idg"
+                            ? clientData?.data?.deliveryDate
+                              ? new Date(clientData.data.deliveryDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
                             : ""
                         }
                         onChange={(e) => {
@@ -1655,5 +1707,3 @@ export default function StagesLayout() {
     </div>
   );
 }
-
-
