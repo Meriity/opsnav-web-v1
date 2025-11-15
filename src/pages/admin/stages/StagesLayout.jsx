@@ -525,33 +525,6 @@ export default function StagesLayout() {
           }
         }
       }
-          // Use colorStatus from stages array with S1, S2, etc. structure
-          if (
-            response.stages &&
-            Array.isArray(response.stages) &&
-            response.stages.length > 0
-          ) {
-            console.log("Found stages array:", response.stages);
-            const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
-
-            // Process each stage (S1, S2, S3, S4, S5, S6)
-            for (let i = 1; i <= 6; i++) {
-              const stageKey = `S${i}`;
-              if (stageObject[stageKey]) {
-                const statusMap = {
-                  green: "Completed",
-                  red: "Not Completed",
-                  amber: "In Progress",
-                };
-                section[`status${i}`] =
-                  statusMap[stageObject[stageKey]] || "Not Completed";
-                console.log(
-                  `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]
-                  } -> ${section[`status${i}`]}`
-                );
-              }
-            }
-          }
 
       if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
         const stageObject = data.stages[0];
