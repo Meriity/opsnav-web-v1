@@ -18,7 +18,8 @@ export const useArchivedClientStore = create((set, get) => ({
   archivedClients: [],
   loading: false,
   isFetched: false,
-  refreshKey: 0,
+  refreshKey: 0, 
+  isError:false,
 
   // --- Fetch archived clients ---
   fetchArchivedClients: async () => {
@@ -128,11 +129,11 @@ export const useArchivedClientStore = create((set, get) => ({
       // IMPORTANT: return the data so callers (e.g. react-query) don't receive undefined
       return mapped;
     } catch (err) {
-      console.error("Failed to fetch archived clients", err);
-      toast.error("Could not load archived client data.");
-      set({ archivedClients: [], isFetched: true, loading: false });
-      return []; // return empty array on error
-    }
+        console.error("Failed to fetch archived clients", err);
+        toast.error("Could not load archived client data.");
+        set({ archivedClients: [], isFetched: true, loading: false, isError: true });
+        return []; // return empty array on error
+      }
   },
 
   // --- Trigger a refetch manually ---

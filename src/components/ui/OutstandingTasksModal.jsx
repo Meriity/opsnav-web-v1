@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import ClientAPI from "../../api/userAPI";
-import CommercialAPI from "../../api/commercialAPI";
 import { formatDate } from "../../utils/formatters";
 import Loader from "./Loader";
 import jsPDF from "jspdf";
@@ -11,18 +10,15 @@ export default function OutstandingTasksModal({
   open,
   onClose,
   activeMatter = null,
-  onOpen = false,
+  onOpen=false,
 }) {
-  const company = localStorage.getItem("company");
-  const currentModule = localStorage.getItem("currentModule");
-  const api =
-    currentModule === "commercial" ? new CommercialAPI() : new ClientAPI();
-
+  const api = new ClientAPI();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [matterFilter, setMatterFilter] = useState("none");
+  const company = localStorage.getItem("company");
 
   useEffect(() => {
     if (open) {
@@ -39,43 +35,19 @@ export default function OutstandingTasksModal({
 
   const fetchData = async (page) => {
     setLoading(true);
+      console.log(matterFilter);
 
     try {
-      const ClientID = activeMatter;
-
-      let response;
-      if (currentModule === "commercial") {
-        // Fixed: Properly construct query parameters for commercial API
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: "10", // Add limit if needed by your API
-        });
-
-        // Only add filter if it's not "none"
-        if (matterFilter && matterFilter !== "none") {
-          params.append("filter", matterFilter);
-        }
-
-        // Only add matterNumber if activeMatter exists and is valid
-        if (
-          activeMatter &&
-          activeMatter !== "null" &&
-          activeMatter !== "undefined"
-        ) {
-          params.append("matterNumber", activeMatter);
-        }
-
-        response = await api.getOutstandingTasks(params);
-      } else {
-        response =
-          company === "vkl"
-            ? await api.getAllOutstandingTasks(page, activeMatter, matterFilter)
-            : await api.getIDGOutstandingTasks(
-                page,
-                matterFilter,
-                activeMatter
-              );
-      }
+      const ClientID=activeMatter;
+      const response = company === "vkl" ? await api.getAllOutstandingTasks(
+        page,
+        activeMatter,
+        matterFilter
+      )  : await api.getIDGOutstandingTasks( page,
+        matterFilter,
+        activeMatter
+        );
+      console.log(matterFilter);
       if (activeMatter) {
         setData([response]);
         setTotalPages(1);
@@ -84,6 +56,7 @@ export default function OutstandingTasksModal({
         setTotalPages(response.totalPages || 1);
       }
     } catch (error) {
+      console.error("Failed to fetch data:", error);
       setData([]);
     } finally {
       setLoading(false);
@@ -116,12 +89,8 @@ export default function OutstandingTasksModal({
       } else {
         nonEmptyStages.forEach(([stage, tasks], index) => {
           rows.push([
-            index === 0
-              ? `${item.matterNumber || item.orderId} - ${item.clientName}`
-              : "",
-            index === 0
-              ? formatDate(item.settlementDate || item.deliveryDate)
-              : "",
+            index === 0 ? `${item.matterNumber||item.orderId} - ${item.clientName}` : "",
+            index === 0 ? formatDate(item.settlementDate||item.deliveryDate) : "",
             stage,
             tasks.join("\n"),
           ]);
@@ -129,51 +98,52 @@ export default function OutstandingTasksModal({
       }
     });
 
-    const company = localStorage.getItem("company");
+const company = localStorage.getItem("company");
 
-    // dynamic head
-    const head =
-      company === "idg"
-        ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
-        : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
+// dynamic head
+const head =
+  company === "idg"
+    ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
+    : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
 
-    autoTable(doc, {
-      startY: 22,
-      head,
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [0, 123, 255] },
-      didDrawCell: (data) => {
-        if (
-          data.section === "body" &&
-          (data.column.index === 0 || data.column.index === 1)
-        ) {
-          if (data.cell.raw === "") {
-            let i = data.row.index - 1;
-            let startCell = null;
-            while (i >= 0) {
-              const prevCell = data.table.body[i].cells[data.column.index];
-              if (prevCell.raw !== "") {
-                startCell = prevCell;
-                break;
-              }
-              i--;
-            }
-            if (startCell) {
-              startCell.rowSpan = (startCell.rowSpan || 1) + 1;
-              data.cell.styles.lineWidth = 0;
-            }
+autoTable(doc, {
+  startY: 22,
+  head,
+  body: rows,
+  styles: { fontSize: 9, cellPadding: 2 },
+  headStyles: { fillColor: [0, 123, 255] },
+  didDrawCell: (data) => {
+    if (
+      data.section === "body" &&
+      (data.column.index === 0 || data.column.index === 1)
+    ) {
+      if (data.cell.raw === "") {
+        let i = data.row.index - 1;
+        let startCell = null;
+        while (i >= 0) {
+          const prevCell = data.table.body[i].cells[data.column.index];
+          if (prevCell.raw !== "") {
+            startCell = prevCell;
+            break;
           }
+          i--;
         }
-      },
-    });
+        if (startCell) {
+          startCell.rowSpan = (startCell.rowSpan || 1) + 1;
+          data.cell.styles.lineWidth = 0;
+        }
+      }
+    }
+  },
+});
 
-    doc.save(
-      company === "idg"
-        ? "IDG_Outstanding_Tasks_Report.pdf"
-        : "VKL_Outstanding_Tasks_Report.pdf"
-    );
-  };
+doc.save(
+  company === "idg"
+    ? "IDG_Outstanding_Tasks_Report.pdf"
+    : "VKL_Outstanding_Tasks_Report.pdf"
+);
+  }
+
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -187,9 +157,7 @@ export default function OutstandingTasksModal({
               {!activeMatter && (
                 <div>
                   <label className="text-sm font-semibold block mb-1 text-gray-600">
-                    {company === "vkl"
-                      ? "Matters Settling in"
-                      : "Orders Delivery in"}
+                    {company==="vkl" ? "Matters Settling in":"Orders Delivery in"}
                   </label>
                   <select
                     className="w-full sm:w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -217,21 +185,17 @@ export default function OutstandingTasksModal({
                   <thead className="bg-blue-600 text-white">
                     <tr>
                       <th className="px-6 py-3 border">
-                        {company === "vkl"
-                          ? "Matter No. and Client"
-                          : "OrderId and Client"}
+                        {company === "vkl" ? "Matter No. and Client" : "OrderId and Client"}
                       </th>
-                      <th className="px-6 py-3 border">
-                        {company === "vkl"
-                          ? "Settlement Date"
-                          : "Delivery Date"}
-                      </th>
+                      <th className="px-6 py-3 border">{company === "vkl" ? "Settlement Date" : "Delivery Date"}</th>
                       <th className="px-6 py-3 border">Stage</th>
                       <th className="px-6 py-3 border">Tasks</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {console.log(data)}
                     {data.length > 0 ? (
+
                       data.map((item, idx) => {
                         const allStages = Object.entries(
                           item.outstandingTasks || {}
@@ -243,8 +207,7 @@ export default function OutstandingTasksModal({
                           return (
                             <tr key={idx} className="border bg-white">
                               <td className="px-6 py-4 border align-top">
-                                {item.matterNumber || item.orderId} -{" "}
-                                {item.clientName || item.name || item.clientId}
+                                  {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
                               </td>
                               <td className="px-6 py-4 border align-top">
                                 {formatDate(item.settlementDate)}
@@ -270,18 +233,14 @@ export default function OutstandingTasksModal({
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50 font-medium"
                                   >
-                                    {item.matterNumber || item.orderId} -{" "}
-                                    {item.clientName ||
-                                      item.name ||
-                                      item.clientId}
+                                    {item.matterNumber || item.orderId} - {item.clientName || item.name || item.clientId}
+
                                   </td>
                                   <td
                                     rowSpan={nonEmptyStages.length}
                                     className="px-6 py-4 border align-top bg-gray-50"
                                   >
-                                    {formatDate(
-                                      item.settlementDate || item.deliveryDate
-                                    )}
+                                    {formatDate(item.settlementDate||item.deliveryDate)}
                                   </td>
                                 </>
                               )}

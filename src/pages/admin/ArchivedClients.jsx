@@ -1,22 +1,20 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "@/components/ui/Button";
-import Table from "@/components/ui/Table";
-import Header from "@/components/layout/Header";
+import Button from "../../components/ui/Button";
+import Table from "../../components/ui/Table";
+import Header from "../../components/layout/Header";
 import * as XLSX from "xlsx-js-style";
 import moment from "moment";
-import DateRangeModal from "@/components/ui/DateRangeModal";
+import DateRangeModal from "../../components/ui/DateRangeModal";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import Loader from "@/components/ui/Loader";
-import ClientAPI from "@/api/userAPI";
-import CommercialAPI from "@/api/commercialAPI";
+import Loader from "../../components/ui/Loader";
+import ClientAPI from "../../api/userAPI";
+import CommercialAPI from "../../api/commercialAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import MatterDetailsModal from "@/components/ui/MatterDetailsModal";
-import { useClientDetails } from "@/hooks/useClientDetails";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -43,27 +41,20 @@ function ClientsPerPage({ value, onChange }) {
 
 export default function ArchivedClients() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const {
-    archivedClients,
-    loading: zustandLoading,
-    isFetched,
-    fetchArchivedClients,
-  } = useArchivedClientStore();
+  const { archivedClients, loading, isFetched, isError, fetchArchivedClients } =
+    useArchivedClientStore();
   const { searchQuery } = useSearchStore();
 
-  // Modals & selection
+  // Modals
   const [openExcel, setOpenExcel] = useState(false);
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
-  // Client details modal state
-  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-
+  const [clientList, setClientList] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(100);
+  const [commercialLoading, setCommercialLoading] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
@@ -79,128 +70,71 @@ export default function ArchivedClients() {
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-  const { isLoading: vklLoading, error: vklError } = useQuery({
-    queryKey: ["archivedClients", currentModule],
-    queryFn: fetchArchivedClients,
-    enabled: currentModule !== "commercial" && !isFetched,
-  });
-
-  const fetchCommercialArchivedClients = async () => {
-    const response = await api.getArchivedProjects();
-
-    let data = [];
-    if (Array.isArray(response)) {
-      data = response;
-    } else if (response && Array.isArray(response.data)) {
-      data = response.data;
-    } else if (response && Array.isArray(response.clients)) {
-      data = response.clients;
-    } else if (response && Array.isArray(response.projects)) {
-      data = response.projects;
-    } else {
-      toast.error("Unexpected data format received");
-      return [];
-    }
-
-    // Transform the data - use businessAddress for commercial
-    return data.map((client) => ({
-      ...client,
-      id: client.id || client.matterNumber || client.orderId,
-      matternumber: client.matterNumber || client.id || client.orderId,
-      client_name: client.clientName || client.client_name,
-      property_address:
-        currentModule === "commercial"
-          ? client.businessAddress
-          : client.propertyAddress || client.property_address,
-      business_address: client.businessAddress,
-      matter_date:
-        currentModule === "commercial"
-          ? moment(client.matterDate || client.matter_date).format("DD-MM-YYYY")
-          : client.matterDate || client.matter_date,
-      settlement_date:
-        currentModule === "commercial"
-          ? moment(client.settlementDate || client.settlement_date).format(
-              "DD-MM-YYYY"
-            )
-          : client.settlementDate || client.settlement_date,
-      state: client.state || "",
-      clientType: client.clientType || client.type,
-      status: client.status || "archived",
-      // Ensure logo is included
-      logo:
-        client.logo ||
-        (currentModule === "commercial"
-          ? "https://storage.googleapis.com/opsnav_logo/logo_opsnav_new.png"
-          : "https://storage.googleapis.com/opsnav_logo/logo_vkl_new.png"),
-    }));
-  };
-
-  const {
-    data: commercialData,
-    isLoading: commercialLoading,
-    error: commercialError,
-  } = useQuery({
-    queryKey: ["archivedClients", currentModule],
-    queryFn: fetchCommercialArchivedClients,
-    enabled: currentModule === "commercial",
-    onError: (error) => {
-      toast.error("Failed to load archived projects");
-    },
-  });
-
-  // Use React Query for client details
-  const { data: detailedClientData, isLoading: clientDetailsLoading } =
-    useClientDetails(
-      selectedClient?._id || selectedClient?.id,
-      selectedClient?.matternumber ||
-        selectedClient?.matterNumber ||
-        selectedClient?.orderId,
-      currentModule,
-      isClientModalOpen ? api : null // Only enable when modal is open
-    );
-
-  // Update selectedClient when detailed data is available
   useEffect(() => {
-    if (detailedClientData && selectedClient) {
-      // Merge the detailed data with our existing client data
-      const mergedData = {
-        ...selectedClient,
-        ...detailedClientData,
-        // Preserve the original display data
-        client_name:
-          selectedClient.client_name || detailedClientData.clientName,
-        property_address:
-          selectedClient.property_address ||
-          detailedClientData.propertyAddress ||
-          detailedClientData.businessAddress,
-        business_address:
-          selectedClient.business_address || detailedClientData.businessAddress,
-        matter_date:
-          selectedClient.matter_date || detailedClientData.matterDate,
-        settlement_date:
-          selectedClient.settlement_date || detailedClientData.settlementDate,
-        logo: selectedClient.logo || detailedClientData.logo,
-        __fullyLoaded: true,
-      };
-
-      setSelectedClient(mergedData);
+    if (!isFetched && currentModule !== "commercial") {
+      fetchArchivedClients();
     }
-  }, [detailedClientData]);
+  }, [isFetched, fetchArchivedClients, currentModule]);
 
-  // Consolidate loading, error, and data
-  const isLoading =
-    currentModule === "commercial"
-      ? commercialLoading
-      : vklLoading || zustandLoading;
-  const error = currentModule === "commercial" ? commercialError : vklError;
-  const activeData =
-    currentModule === "commercial"
-      ? commercialData || []
-      : archivedClients || [];
+  // Fetch commercial archived clients if in commercial module
+  useEffect(() => {
+    const fetchCommercialArchivedClients = async () => {
+      if (currentModule === "commercial") {
+        setCommercialLoading(true);
+        try {
+          const response = await api.getArchivedProjects();
+          // If you want to debug uncomment the next line:
+          // console.log("Commercial archived projects response:", response);
 
-  // Apply date & search filters using useMemo
-  const filteredClientList = useMemo(() => {
-    let filteredData = activeData;
+          // Handle different response structures
+          let data = [];
+          if (Array.isArray(response)) {
+            data = response;
+          } else if (response && Array.isArray(response.data)) {
+            data = response.data;
+          } else if (response && Array.isArray(response.clients)) {
+            data = response.clients;
+          } else if (response && Array.isArray(response.projects)) {
+            data = response.projects;
+          } else {
+            console.warn("Unexpected response format:", response);
+            toast.error("Unexpected data format received");
+            return;
+          }
+
+          // Transform the data to match the expected format
+          const transformedData = data.map((client) => ({
+            ...client,
+            id: client.id || client.matterNumber || client.orderId,
+            matternumber: client.matterNumber || client.id || client.orderId,
+            client_name: client.clientName || client.client_name,
+            property_address: client.propertyAddress || client.property_address,
+            matter_date: client.matterDate || client.matter_date,
+            settlement_date: client.settlementDate || client.settlement_date,
+            state: client.state || "",
+            clientType: client.clientType || client.type,
+            status: client.status || "archived",
+          }));
+
+          setClientList(transformedData);
+        } catch (error) {
+          console.error("Error fetching commercial archived clients:", error);
+          toast.error("Failed to load archived projects");
+        } finally {
+          setCommercialLoading(false);
+        }
+      }
+    };
+
+    if (currentModule === "commercial") {
+      fetchCommercialArchivedClients();
+    }
+  }, [currentModule, api]);
+
+  // Apply date & search filters to list
+  useEffect(() => {
+    let filteredData =
+      currentModule === "commercial" ? clientList : archivedClients;
 
     if (fromDate && toDate) {
       filteredData = filteredData.filter((client) => {
@@ -226,11 +160,7 @@ export default function ArchivedClients() {
           String(client.client_name || client.clientName)
             .toLowerCase()
             .includes(lowercasedQuery) ||
-          // Search in both property_address and business_address
           String(client.property_address || client.propertyAddress)
-            .toLowerCase()
-            .includes(lowercasedQuery) ||
-          String(client.business_address || client.businessAddress)
             .toLowerCase()
             .includes(lowercasedQuery) ||
           String(client.state).toLowerCase().includes(lowercasedQuery) ||
@@ -240,15 +170,24 @@ export default function ArchivedClients() {
       );
     }
 
-    return filteredData;
-  }, [activeData, fromDate, toDate, searchQuery, currentModule]);
+    if (currentModule !== "commercial") {
+      setClientList(filteredData);
+    }
+  }, [
+    archivedClients,
+    clientList,
+    fromDate,
+    toDate,
+    searchQuery,
+    currentModule,
+  ]);
 
   const getColumns = () => {
     if (currentModule === "commercial") {
       return [
         { key: "matternumber", title: "Project Number" },
         { key: "client_name", title: "Client Name" },
-        { key: "property_address", title: "Business Address" },
+        { key: "property_address", title: "Property Address" },
         { key: "state", title: "State" },
         { key: "clientType", title: "Client Type" },
         { key: "matter_date", title: "Project Date" },
@@ -290,36 +229,26 @@ export default function ArchivedClients() {
   };
 
   const sortedClientList = useMemo(() => {
-    let sortableItems = [...filteredClientList];
+    let sortableItems = [...clientList];
     if (sortedColumn !== null) {
       sortableItems.sort((a, b) => {
         const aVal = a[sortedColumn];
         const bVal = b[sortedColumn];
 
+        // Handle null/undefined values
         if (aVal == null && bVal == null) return 0;
         if (aVal == null) return sortDirection === "asc" ? -1 : 1;
         if (bVal == null) return sortDirection === "asc" ? 1 : -1;
 
+        // Sort DD-MM-YYYY correctly
         if (
           sortedColumn === "matter_date" ||
           sortedColumn === "settlement_date" ||
           sortedColumn === "orderDate" ||
           sortedColumn === "deliveryDate"
         ) {
-          let dateA, dateB;
-
-          if (
-            currentModule === "commercial" &&
-            (sortedColumn === "matter_date" ||
-              sortedColumn === "settlement_date")
-          ) {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          } else {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          }
-
+          const dateA = moment(aVal, "DD-MM-YYYY");
+          const dateB = moment(bVal, "DD-MM-YYYY");
           if (dateA.isBefore(dateB)) return sortDirection === "asc" ? -1 : 1;
           if (dateA.isAfter(dateB)) return sortDirection === "asc" ? 1 : -1;
           return 0;
@@ -331,7 +260,7 @@ export default function ArchivedClients() {
       });
     }
     return sortableItems;
-  }, [filteredClientList, sortedColumn, sortDirection, currentModule]);
+  }, [clientList, sortedColumn, sortDirection]);
 
   // ----- Export helpers -----
   async function handleExcelExport(withFrom, withTo) {
@@ -347,8 +276,8 @@ export default function ArchivedClients() {
 
       let data;
       if (currentModule === "commercial") {
-        // For commercial, filter the already-fetched list
-        data = filteredClientList.filter((client) => {
+        // For commercial, we'll filter the existing data since we don't have a specific endpoint
+        data = clientList.filter((client) => {
           const clientDate = moment(
             new Date(client.settlement_date || client.settlementDate)
           );
@@ -365,6 +294,7 @@ export default function ArchivedClients() {
         convertToExcel(data);
       }
     } catch (e) {
+      console.error("Export error:", e);
       toast.error(e.message || "Export failed");
     } finally {
       setIsExporting(false);
@@ -383,6 +313,7 @@ export default function ArchivedClients() {
       const allData = [headers, ...rows];
       downloadExcel(allData);
     } catch (error) {
+      console.error("Excel conversion error:", error);
       toast.error("Failed to convert data to Excel format");
     }
   };
@@ -429,6 +360,7 @@ export default function ArchivedClients() {
       XLSX.writeFile(wb, `${sheetName}.xlsx`);
       toast.success("Export completed successfully");
     } catch (error) {
+      console.error("Excel download error:", error);
       toast.error("Failed to download Excel file");
     }
   };
@@ -450,48 +382,18 @@ export default function ArchivedClients() {
     return "Settlement Date";
   };
 
-  const getAddressFieldLabel = () => {
-    if (currentModule === "commercial") return "Business Address";
-    if (company === "idg") return "Billing Address";
-    return "Property Address";
-  };
-
   const handleViewClient = (client) => {
-    console.log("handleViewClient called with:", client);
-
-    let initialData = { ...client };
-
-    if (currentModule === "commercial" && !initialData.logo) {
-      initialData.logo =
-        "https://storage.googleapis.com/opsnav_logo/logo_opsnav_new.png";
-    }
-
-    if (client && client.__raw) {
-      initialData = { ...client.__raw, ...initialData };
-      initialData.__mergedFromRaw = true;
-    }
-
+    const clientId =
+      client.matternumber || client.matterNumber || client.orderId;
     if (currentModule === "commercial") {
-      initialData.__fullyLoaded = true;
-    }
-
-    setSelectedClient(initialData);
-    setIsClientModalOpen(true);
-
-    if (
-      currentModule !== "commercial" &&
-      (!client.costData || client.costData.length === 0) &&
-      api
-    ) {
-      const preferId = client._id || client.id;
-      const preferMatNo =
-        client.matternumber || client.matterNumber || client.orderId;
-
-      queryClient.invalidateQueries({
-        queryKey: ["clientDetails", preferId, preferMatNo, currentModule],
-      });
+      navigate(`/admin/client/view/${clientId}`);
+    } else {
+      navigate(`/admin/client/view/${clientId}`);
     }
   };
+
+  const isLoading =
+    currentModule === "commercial" ? commercialLoading : loading;
 
   return (
     <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
@@ -523,7 +425,6 @@ export default function ArchivedClients() {
           </div>
         </div>
 
-        {/* Use consolidated isLoading */}
         {isLoading ? (
           <Loader />
         ) : (
@@ -536,7 +437,6 @@ export default function ArchivedClients() {
                   onChange={(e) => setClientsPerPage(Number(e.target.value))}
                 />
               </div>
-              {/* Use sortedClientList */}
               {sortedClientList.length > 0 ? (
                 <Table
                   data={sortedClientList}
@@ -545,7 +445,8 @@ export default function ArchivedClients() {
                   showActions={true}
                   cellWrappingClass="whitespace-normal"
                   headerBgColor="bg-[#A6E7FF]"
-                  OnEye={handleViewClient}
+                  // OnEye={handleViewClient}
+                  EditOrder={true}
                   sortedColumn={sortedColumn}
                   sortDirection={sortDirection}
                   handleSort={handleSort}
@@ -593,13 +494,11 @@ export default function ArchivedClients() {
                             <button
                               onClick={() => setOpenExcel(true)}
                               disabled={isExporting}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              } ${
-                                isExporting
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                } ${isExporting
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                              }`}
+                                }`}
                             >
                               {isExporting ? "Exporting..." : "Export"}
                             </button>
@@ -609,9 +508,8 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                }`}
                             >
                               Filter
                             </button>
@@ -621,9 +519,8 @@ export default function ArchivedClients() {
                           {({ active }) => (
                             <button
                               onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
+                              className={`block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100" : "text-gray-700"
+                                }`}
                             >
                               Select Date Range
                             </button>
@@ -636,7 +533,6 @@ export default function ArchivedClients() {
               </div>
 
               {/* Mobile Client Cards */}
-              {/* Use sortedClientList */}
               {sortedClientList.length > 0 ? (
                 sortedClientList.slice(0, clientsPerPage).map((client) => (
                   <div
@@ -654,10 +550,7 @@ export default function ArchivedClients() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">
-                      {/* Show business address for commercial, property address for others */}
-                      {currentModule === "commercial"
-                        ? client.business_address || client.businessAddress
-                        : client.property_address || client.propertyAddress}
+                      {client.property_address || client.propertyAddress}
                     </p>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
@@ -673,8 +566,8 @@ export default function ArchivedClients() {
                           {currentModule === "commercial"
                             ? "Project Date:"
                             : company === "vkl"
-                            ? "Matter Date:"
-                            : "Order Date"}
+                              ? "Matter Date:"
+                              : "Order Date"}
                         </span>
                         {client.matter_date || client.orderDate}
                       </div>
@@ -715,9 +608,8 @@ export default function ArchivedClients() {
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial" ? "projects" : "clients"
-        }.`}
+        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+          }.`}
         handelSubmitFun={(from, to) => {
           handleDataFilter(from, to);
           setShowSettlementDateModal(false);
@@ -741,17 +633,15 @@ export default function ArchivedClients() {
         }}
       />
 
-      <MatterDetailsModal
-        isOpen={isClientModalOpen}
-        onClose={() => {
-          setIsClientModalOpen(false);
-          setSelectedClient(null);
-        }}
-        matter={selectedClient}
-        currentModule={currentModule}
-        company={company}
-        isLoading={clientDetailsLoading}
-      />
+      <ConfirmationModal
+        isOpen={isError}
+        onClose={() => console.log("")}
+        title="Session Expired!"
+        isLogout={true}
+      >
+        Please Login Again
+      </ConfirmationModal>
+
     </div>
   );
 }
