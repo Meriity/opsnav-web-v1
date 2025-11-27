@@ -167,9 +167,7 @@ class CalendarErrorBoundary extends React.Component {
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(error, info) {
-    console.error("Calendar rendering error:", error, info);
-  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -305,6 +303,43 @@ function Dashboard() {
 
     console.log("Selected event:", event);
 
+// Process dashboard data when it loads
+useEffect(() => {
+  if (dashboardData) {
+    setDashboardData(dashboardData, currentModule);
+    setAllChartData({
+      tenMonths: Array.isArray(dashboardData.last10MonthsStats)
+        ? dashboardData.last10MonthsStats
+        : [],
+      allTime: Array.isArray(dashboardData.allTimeStats)
+        ? dashboardData.allTimeStats
+        : [],
+    });
+  }
+}, [dashboardData, currentModule, setDashboardData]);
+
+// Handle errors
+useEffect(() => {
+  if (dashboardError) {
+    toast.error("Failed to load dashboard data.");
+  }
+  if (calendarError) {
+    toast.error("Could not load calendar dates.");
+  }
+}, [dashboardError, calendarError]);
+
+// Set loading state based on queries
+useEffect(() => {
+  setLoading(isDashboardLoading);
+}, [isDashboardLoading, setLoading]);
+
+// Handle event selection from calendar
+const handleEventSelect = useCallback(
+  (event) => {
+    const currentModule = localStorage.getItem("currentModule");
+    const company = localStorage.getItem("company");
+    const userRole = localStorage.getItem("userRole") || "admin";
+
     let matterNumber = "";
 
     // Determine matter number based on module and available data
@@ -323,6 +358,16 @@ function Dashboard() {
     ) {
       // Store event context for the stages page
       sessionStorage.setItem("lastSelectedEvent", JSON.stringify(event));
+      
+      // Navigate to stages page
+      const basePath = userRole === "admin" ? "/admin" : "/user";
+      navigate(`${basePath}/client/stages/${matterNumber}`);
+    } else {
+      toast.error("Cannot open event: Missing or invalid identifier");
+    }
+  },
+  [navigate]
+);
 
       // Navigate to existing StagesLayout with the matter number
       navigate(`/${userRole}/client/stages/${matterNumber}`);
@@ -569,31 +614,73 @@ function Dashboard() {
     fetchCalendarData();
   }, [clientApi, commercialApi, currentModule, company]);
 
-  // Handle chart view switch
-  useEffect(() => {
-    if (chartView === "last10Months") {
-      const ten = (allChartData.tenMonths || []).slice(-10);
-      let formattedData;
+// Handle chart view switch
+useEffect(() => {
+  let sourceData;
+  
+  if (chartView === "last10Months") {
+    const ten = (allChartData.tenMonths || []).slice(-10);
+    let formattedData;
 
-      if (currentModule === "commercial") {
-        formattedData = ten.map((item) => ({
-          ...item,
-          name: item.month,
-          closedMatters: item.closedProjects ?? item.count ?? item.total ?? 0,
-        }));
-      } else if (company === "vkl") {
-        formattedData = ten.map((item) => ({
-          ...item,
-          name: item.month,
-          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-        }));
-      } else if (company === "idg") {
-        formattedData = ten.map((item) => ({
-          ...item,
-          name: item.month,
-          closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
-        }));
-      }
+    if (currentModule === "commercial") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedProjects ?? item.count ?? item.total ?? 0,
+      }));
+    } else if (company === "vkl") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+      }));
+    } else if (company === "idg") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
+      }));
+    }
+    
+    sourceData = formattedData || ten;
+  } else {
+    sourceData = allChartData.allTime || [];
+  }
+
+  // Set the formatted source data for charts
+  setSourceData(sourceData);
+}, [chartView, allChartData, currentModule, company]);
+
+// For direct usage where you need the source data:
+const getSourceData = () => {
+  if (chartView === "last10Months") {
+    const ten = (allChartData.tenMonths || []).slice(-10);
+    let formattedData;
+
+    if (currentModule === "commercial") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedProjects ?? item.count ?? item.total ?? 0,
+      }));
+    } else if (company === "vkl") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+      }));
+    } else if (company === "idg") {
+      formattedData = ten.map((item) => ({
+        ...item,
+        name: item.month,
+        closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
+      }));
+    }
+    
+    return formattedData || ten;
+  }
+  return allChartData.allTime || [];
+};
 
       setCurrentChartData(formattedData || []);
     } else if (chartView === "allTime") {
@@ -620,8 +707,7 @@ function Dashboard() {
         }));
       }
 
-      setCurrentChartData(formattedData || []);
-    }
+    setCurrentChartData(formattedData || []);
   }, [chartView, allChartData, currentModule, company]);
 
   // Archived fetch
@@ -669,7 +755,6 @@ function Dashboard() {
     return (
       <div className="flex justify-center items-center h-screen w-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
-        <span className="ml-4 text-lg text-gray-700">Loading Dashboard...</span>
       </div>
     );
   }

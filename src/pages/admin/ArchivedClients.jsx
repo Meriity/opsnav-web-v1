@@ -83,7 +83,8 @@ export default function ArchivedClients() {
         setCommercialLoading(true);
         try {
           const response = await api.getArchivedProjects();
-          console.log("Commercial archived projects response:", response);
+          // If you want to debug uncomment the next line:
+          // console.log("Commercial archived projects response:", response);
 
           // Handle different response structures
           let data = [];

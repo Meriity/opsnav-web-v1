@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, HomeIcon } from "lucide-react";
 
 function LoginForm() {
   const api = new AuthAPI();
@@ -12,10 +12,12 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginError(""); // Clear previous errors
 
     try {
       const response = await api.signIn(email, password);
@@ -42,12 +44,20 @@ function LoginForm() {
         }, 1500);
       }
     } catch (err) {
-      toast.error(err.message || "Something went wrong. Please try again.", {
+      const errorMessage =
+        err.message || "Something went wrong. Please try again.";
+      setLoginError(errorMessage);
+
+      toast.error(errorMessage, {
         position: "bottom-center",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleHome = async (e) => {
+    navigate("/");
   };
 
   return (
@@ -70,10 +80,18 @@ function LoginForm() {
             Streamline with Precision. Scale Your Operations without
             bottlenecks.
           </p>
+          {/* Home Button */}
+          <button
+            onClick={handleHome}
+            className="w-[80px] mt-4 bg-sky-600 mx-auto md:mx-0 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2 px-2"
+          >
+            <HomeIcon size={18} />
+            Home
+          </button>
         </div>
 
         {/* Form Card */}
-        <div className="w-full md:w-1/2  max-w-md bg-white shadow-md rounded-xl p-6 sm:p-6">
+        <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-6 sm:p-6">
           <h2 className="text-xl font-semibold text-center mb-6">SIGN IN</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -108,6 +126,25 @@ function LoginForm() {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+
+            {/* Error Notification */}
+            {loginError && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="text-red-800 text-sm font-medium">
+                      {loginError}
+                    </p>
+                    <p className="text-red-600 text-xs mt-1">
+                      Please check your credentials or contact your
+                      administrator for assistance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button
               type={isLoading ? "button" : "submit"}
               disabled={isLoading}

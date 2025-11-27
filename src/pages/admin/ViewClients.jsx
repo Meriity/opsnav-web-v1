@@ -41,8 +41,8 @@ const ViewClients = () => {
   const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
-  const saved = localStorage.getItem("viewClientsDateFilter");
-  return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };  
+    const saved = localStorage.getItem("viewClientsDateFilter");
+    return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
@@ -68,13 +68,13 @@ const ViewClients = () => {
 
   // Fetch clients based on module
   useEffect(() => {
-    // In the fetchData function, improve commercial data handling:
     const fetchData = async () => {
       if (currentModule === "commercial") {
         setCommercialLoading(true);
         try {
           const response = await api.getActiveProjects();
-          console.log("Commercial clients response:", response);
+          // Remove or comment debug logs for production.
+          // console.log("Commercial clients response:", response);
 
           let data = [];
           if (Array.isArray(response)) {
@@ -130,7 +130,8 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-    console.log(user);
+    // Remove debug log in production.
+    // console.log(user);
     let filteredData =
       currentModule === "commercial" ? commercialClients : Clients;
 
@@ -138,26 +139,29 @@ const ViewClients = () => {
       ? dateFilter.range
       : ["", ""];
 
-    // Fix: Use lowercase comparison to match localStorage value
     if (company?.toLowerCase() === "idg" && startDate && endDate) {
       filteredData = filteredData.filter((client) => {
         let deliveryDateObj = moment(client.delivery_date);
         let orderDateObj = moment(client.order_date || client.orderDate);
 
         // Check if delivery or order date falls within range
-        const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
+        const inDeliveryRange =
+          deliveryDateObj.isValid() &&
+          deliveryDateObj.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
 
-        const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
+        const inOrderRange =
+          orderDateObj.isValid() &&
+          orderDateObj.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
 
         if (dateFilter.type === "delivery_date") {
           return inDeliveryRange;
@@ -169,8 +173,7 @@ const ViewClients = () => {
 
         return;
       });
-    }
-    else {
+    } else {
       if (startDate && endDate) {
         filteredData = filteredData.filter((client) => {
           let clientDate;
@@ -243,8 +246,7 @@ const ViewClients = () => {
         { key: "state", title: "State", width: "6%" },
         { key: "clientType", title: "Client Type", width: "8%" },
         { key: "settlementDate", title: "Completion Date", width: "10%" },
-        { key: "matterDate", title: "Project Date", width: "10%" },
-        // { key: "postcode", title: "Postcode", width: "7%" },
+        { key: "matterDate", title: "Project Date", width: "10%" }
       ];
     } else {
       // Regular VKL clients
@@ -265,7 +267,7 @@ const ViewClients = () => {
           key: "building_and_pest_date",
           title: "Building & Pest Date",
           width: "10%",
-        },
+        }
       ];
     }
   } else if (localStorage.getItem("company") === "idg") {
@@ -279,7 +281,7 @@ const ViewClients = () => {
       { key: "delivery_date", title: "Delivery Date", width: "12%" },
       { key: "orderDetails", title: "Order Details", width: "10%" },
       { key: "billing_address", title: "Delivery Address", width: "10%" },
-      { key: "postcode", title: "Post Code", width: "6.5%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" }
     ];
   }
 
@@ -296,9 +298,8 @@ const ViewClients = () => {
   }
 
   async function changeUser(user, orderId) {
-    console.log(user, orderId);
     try {
-      const res = api.changeUser(user, orderId);
+      await api.changeUser(user, orderId);
     } catch (error) {
       console.log("Error occured!!", error);
     }
@@ -318,7 +319,6 @@ const ViewClients = () => {
       setClientList(filtered);
     }
   };
-
 
   const handelShareEmailModalClose = () => {
     setShowShareDialog(false);
@@ -354,9 +354,8 @@ const ViewClients = () => {
   };
 
   useEffect(() => {
-  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-}, [dateFilter]);
-
+    localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+  }, [dateFilter]);
 
   const shouldShowOutstandingTasks = () => {
     return currentModule === "commercial" || company === "vkl";
@@ -406,8 +405,8 @@ const ViewClients = () => {
           setShowDateRange(false);
         }}
         onReset={() => {
-          setDateFilter({ type: "settlement_date", range: ["", ""] }) 
-          setShowDateRange(false); 
+          setDateFilter({ type: "settlement_date", range: ["", ""] })
+          setShowDateRange(false);
         }}
       />
 
@@ -497,7 +496,7 @@ const ViewClients = () => {
               >
                 <option value="">All Users</option>
                 {user.map((user) => (
-                  <option value={user.name}>
+                  <option value={user.name} key={user.name}>
                     {user.name}
                   </option>
                 ))}
@@ -507,13 +506,12 @@ const ViewClients = () => {
             <button
               className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
               onClick={() => {
-                generateTaskAllocationPDF(allocatedUser)
-                setShowTar(false)
+                generateTaskAllocationPDF(allocatedUser);
+                setShowTar(false);
               }}
             >
               Download
             </button>
-
 
           </DialogPanel>
         </div>
@@ -551,14 +549,8 @@ const ViewClients = () => {
                 <option value={500}>500</option>
               </select>
             </div>
-            {localStorage.getItem("company") == "idg" &&
+            {localStorage.getItem("company") === "idg" &&
               <div className="flex items-center gap-2">
-                {/* <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                Select by clients
-              </label> */}
                 <select
                   name="Client"
                   className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -624,7 +616,6 @@ const ViewClients = () => {
                 </>
               )}
             </div>
-
 
             {/* Mobile Menu */}
             <div className="flex lg:hidden items-center gap-2">

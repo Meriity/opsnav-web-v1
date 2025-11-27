@@ -22,10 +22,9 @@ export default function Stage3({
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
-  // FIXED: Proper field configuration logic
+  // FIELD CONFIGURATION
   let fields = [];
   if (currentModule === "commercial") {
-    // COMMERCIAL MODULE FIELDS
     fields = [
       { key: "ppsrSearch", label: "PPSR Search", type: "radio" },
       { key: "asicSearch", label: "ASIC Search", type: "radio" },
@@ -34,7 +33,6 @@ export default function Stage3({
       { key: "title", label: "Title", type: "radio" },
     ];
   } else if (company === "vkl") {
-    // VKL COMPANY FIELDS
     fields = [
       {
         key: "titleSearch",
@@ -52,26 +50,13 @@ export default function Stage3({
       { key: "inviteBank", label: "Invite Bank", type: "radio" },
     ];
   } else if (company === "idg") {
-    // IDG COMPANY FIELDS
     fields = [
       { key: "boardsPrinted", label: "Boards Printed", type: "radio" },
       { key: "packaged", label: "Packaged", type: "radio" },
-      {
-        key: "qualityCheckPassed",
-        label: "Quality Check Passed",
-        type: "radio",
-      },
-      {
-        key: "onsiteStickersApplied",
-        label: "Apply On-Site Stickers",
-        type: "radio",
-      },
+      { key: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" },
+      { key: "onsiteStickersApplied", label: "Apply On-Site Stickers", type: "radio" },
       { key: "finalStatus", label: "Update Status", type: "text" },
-      {
-        key: "invoiceGenerated",
-        label: "Generate and send Invoice",
-        type: "radio",
-      },
+      { key: "invoiceGenerated", label: "Generate and send Invoice", type: "radio" },
     ];
   }
 
@@ -86,7 +71,7 @@ export default function Stage3({
   const getStatus = (value) => {
     const val = normalizeValue(value);
     if (!val) return "Not Completed";
-    const completedValues = ["yes", "na", "n/a", "nr", "n/r"];
+    const completedValues = ["yes", "na", "n/a", "nr", "n/r", "approved"];
     if (completedValues.includes(val)) {
       return "Completed";
     }
@@ -112,7 +97,6 @@ export default function Stage3({
   const [noteForSystem, setNoteForSystem] = useState("");
   const originalData = useRef({});
 
-  // NEW: Generate system note for commercial
   const generateSystemNote = () => {
     const greenValues = new Set(["yes", "nr", "na", "approved"]);
     const notReceived = fields
@@ -125,12 +109,9 @@ export default function Stage3({
     return `${notReceived.join(" and ")} not received`;
   };
 
-  // UPDATED: Data initialization effect
+  // Effect: Data initialization
   useEffect(() => {
     if (!data) return;
-
-    console.log("=== INITIALIZING STAGE 3 FORM DATA ===");
-    console.log("Raw data received:", data);
 
     setIsLoading(true);
 
@@ -138,24 +119,15 @@ export default function Stage3({
       try {
         let stageData = data;
 
-        // For commercial stage 3, fetch the actual stage data from API
         if (currentModule === "commercial") {
-          console.log("Commercial stage 3 - fetching actual stage data");
           try {
-            const stageResponse = await commercialApi.getStageData(
-              3,
-              matterNumber
-            );
-            console.log("Commercial stage 3 API response:", stageResponse);
-
+            const stageResponse = await commercialApi.getStageData(3, matterNumber);
             if (stageResponse && stageResponse.data) {
               stageData = { ...data, ...stageResponse.data };
             } else if (stageResponse) {
               stageData = { ...data, ...stageResponse };
             }
-            console.log("Combined stage data for commercial:", stageData);
           } catch (error) {
-            console.log("No existing stage 3 data found, using default data");
             stageData = data;
           }
         }
@@ -167,7 +139,9 @@ export default function Stage3({
 
         fields.forEach(({ key, hasDate }) => {
           const rawValue = stageData[key] || "";
-          newFormState[key] = normalizeValue(rawValue);
+          newFormState[key] = fields.find(f => f.type === "radio" && f.key === key)
+            ? normalizeValue(rawValue)
+            : rawValue;
           newStatusState[key] = getStatus(newFormState[key]);
 
           if (hasDate) {
@@ -186,7 +160,6 @@ export default function Stage3({
           const noteParts = (stageData.noteForClient || "").split(" - ");
           systemNotePart = noteParts[0]?.trim() || generateSystemNote();
           clientCommentPart = noteParts.length > 1 ? noteParts[1].trim() : "";
-
           setNoteForSystem(systemNotePart);
           setNoteForClient(clientCommentPart);
         }
@@ -199,10 +172,7 @@ export default function Stage3({
           noteForSystem: systemNotePart,
           noteForClient: clientCommentPart,
         };
-
-        console.log("Initialized form state:", newFormState);
       } catch (error) {
-        console.error("Error initializing form data:", error);
         toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
@@ -210,11 +180,14 @@ export default function Stage3({
     };
 
     initializeData();
+    // eslint-disable-next-line
   }, [data, reloadTrigger, company, currentModule, matterNumber]);
 
   function isChanged() {
-    const currentSystemNote =
-      currentModule === "commercial" ? noteForSystem : generateSystemNote();
+    const currentSystemNote = currentModule === "commercial"
+      ? noteForSystem
+      : generateSystemNote();
+
     const current = {
       ...formState,
       noteForSystem: currentSystemNote,
@@ -223,15 +196,12 @@ export default function Stage3({
     const original = originalData.current;
 
     const formChanged = fields.some(
-      ({ key }) =>
-        String(formState[key] || "").trim() !==
-        String(original[key] || "").trim()
+      ({ key }) => String(formState[key] || "").trim() !== String(original[key] || "").trim()
     );
     const dateChanged = fields.some(
       ({ key, hasDate }) =>
         hasDate &&
-        String(formState[`${key}Date`] || "").trim() !==
-          String(original[`${key}Date`] || "").trim()
+        String(formState[`${key}Date`] || "").trim() !== String(original[`${key}Date`] || "").trim()
     );
 
     const noteForClientChanged =
@@ -252,7 +222,7 @@ export default function Stage3({
 
   const handleChange = (key, value, hasDate) => {
     let processedValue = value;
-    if (typeof processedValue === "string") {
+    if (typeof processedValue === "string" && fields.find(f => f.key === key && f.type === "radio")) {
       processedValue = normalizeValue(processedValue);
     }
 
@@ -269,9 +239,7 @@ export default function Stage3({
         ...formState,
       };
 
-      // FIXED: Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // Only include fields that exist in the commercial schema
         const commercialFields = [
           "ppsrSearch",
           "asicSearch",
@@ -281,7 +249,7 @@ export default function Stage3({
           "noteForSystem",
           "noteForClient",
           "colorStatus",
-          "matterNumber",
+          "matterNumber"
         ];
         const filteredPayload = {};
 
@@ -300,13 +268,12 @@ export default function Stage3({
       } else {
         // For other modules, use combined note structure
         const systemNote = generateSystemNote();
-        const fullNote = noteForClient
+        payload.noteForClient = noteForClient
           ? `${systemNote} - ${noteForClient}`
           : systemNote;
-        payload.noteForClient = fullNote;
       }
 
-      // handle dates: send null if empty
+      // Dates
       fields.forEach(({ key, hasDate }) => {
         if (hasDate) {
           const dateKey = `${key}Date`;
@@ -317,41 +284,23 @@ export default function Stage3({
         }
       });
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
-      // Calculate color status based on field completion
       const allCompleted = fields.every(
         (field) => getStatus(formState[field.key]) === "Completed"
       );
       const colorStatus = allCompleted ? "green" : "amber";
 
-      // Add colorStatus to payload for commercial
       if (currentModule === "commercial") {
         payload.colorStatus = colorStatus;
-      }
-
-      // API CALL SECTION
-      if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 3");
         payload.matterNumber = matterNumber;
         await commercialApi.upsertStage(3, matterNumber, payload);
       } else if (company === "vkl") {
-        console.log("Using VKL API for stage 3");
         payload.matterNumber = matterNumber;
         await api.upsertStageThree(payload);
       } else if (company === "idg") {
-        console.log("Using IDG API for stage 3");
         payload.orderId = matterNumber;
         await api.upsertIDGStages(payload.orderId, 3, payload);
       }
 
-      console.log("API call successful");
-
-      // update original data
       originalData.current = {
         ...formState,
         noteForSystem:
@@ -370,18 +319,12 @@ export default function Stage3({
         progress: undefined,
       });
     } catch (err) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to save Stage 3:", err);
-      console.error("Error response:", err.response);
-      console.error("Error message:", err.message);
-
       let errorMessage = "Failed to save Stage 3. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
@@ -394,7 +337,7 @@ export default function Stage3({
         <label className="block mb-1 text-sm md:text-base font-bold">
           {label}
         </label>
-        {type !== "text" && type !== "image" && (
+        {type !== "text" && (
           <div
             className={`w-[90px] h-[18px] ${bgcolor(
               statusState[key]
@@ -408,29 +351,7 @@ export default function Stage3({
       </div>
 
       <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 items-center">
-        {type === "image" ? (
-          <div className="w-full">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setCompletionPhotoFile(e.target.files[0])}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {formState.completionPhotos && (
-              <div className="mt-2">
-                <p className="text-xs font-semibold">Current Photo:</p>
-                <a
-                  href={formState.completionPhotos}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  View Uploaded Photo
-                </a>
-              </div>
-            )}
-          </div>
-        ) : type === "text" ? (
+        {type === "text" ? (
           <input
             type="text"
             name={key}
@@ -493,21 +414,12 @@ export default function Stage3({
         <label className="block mb-1 text-sm md:text-base font-bold">
           System Note for Client
         </label>
-        {currentModule === "commercial" ? (
-          <input
-            type="text"
-            value={generateSystemNote()}
-            disabled
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        ) : (
-          <input
-            type="text"
-            value={generateSystemNote()}
-            disabled
-            className="w-full rounded p-2 bg-gray-100"
-          />
-        )}
+        <input
+          type="text"
+          value={generateSystemNote()}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
 
       <div className="mt-5">

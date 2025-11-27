@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import useDebounce from "../../hooks/useDebounce";
-import { Search } from "lucide-react";
+import { Search, Maximize2, Minimize2, X } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
 // import NotificationBell from "../ui/NotificationBell.jsx";
-// import ModuleSwitcher from "../ui/ModuleSwitcher.jsx";
-// import ModernModuleSwitcher from "../ui/ModernModuleSwitcher.jsx";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
-// import FloatingModuleSwitcher from "../ui/FloatingModuleSwitcher.jsx";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -27,6 +24,8 @@ export default function Header() {
     top: 0,
     width: 0,
   });
+
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     if (debouncedInput.trim()) {
@@ -61,7 +60,6 @@ export default function Header() {
           ? await api.getIDGSearchResult(value)
           : "";
 
-      // If API doesn't support extended search, filter client-side
       const lowercasedValue = value.toLowerCase();
       const filteredResults = response.filter(
         (item) =>
@@ -125,7 +123,40 @@ export default function Header() {
     }
   };
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      const doc = window.document;
+      const isCurrentlyFullScreen = !!(
+        doc.fullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.msFullscreenElement
+      );
+      setIsFullScreen(isCurrentlyFullScreen);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullScreenChange);
+    document.addEventListener("msfullscreenchange", handleFullScreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullScreenChange
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullScreenChange
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullScreenChange
+      );
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -148,39 +179,24 @@ export default function Header() {
         </h2>
 
         <div className="flex items-center gap-8">
-          {/* Module Switcher */}
-
-          {/* <ModuleSwitcher /> */}
-          {/* <ModernModuleSwitcher /> */}
           <SidebarModuleSwitcher />
-          {/* <FloatingModuleSwitcher /> */}
 
-          {/* Fullscreen and Search */}
           <div
             className="flex justify-center items-center relative w-full md:w-fit px-4 md:px-0"
             ref={searchBoxRef}
           >
-            {/* Fullscreen Toggle */}
-            <div
+            <button
               onClick={toggleFullScreen}
-              className="relative right-6 text-[#00AEE5] hover:text-blue-500 cursor-pointer transition-colors duration-200"
-              title="Toggle Fullscreen"
+              className="relative right-6 text-gray-500 hover:text-blue-500 cursor-pointer transition-all duration-200 hover:scale-110"
+              title={isFullScreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                className="hover:scale-110 transition-transform duration-200"
-              >
-                <path
-                  fill="currentColor"
-                  d="M8 2H3a1 1 0 0 0-1 1v5a1 1 0 0 0 2 0V4h4a1 1 0 0 0 0-2m0 18H4v-4a1 1 0 0 0-2 0v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2M21 2h-5a1 1 0 0 0 0 2h4v4a1 1 0 0 0 2 0V3a1 1 0 0 0-1-1m0 13a1 1 0 0 0-1 1v4h-4a1 1 0 0 0 0 2h5a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1"
-                />
-              </svg>
-            </div>
+              {isFullScreen ? (
+                <Minimize2 className="w-5 h-5" strokeWidth={2} />
+              ) : (
+                <Maximize2 className="w-5 h-5" strokeWidth={2} />
+              )}
+            </button>
 
-            {/* Search Box */}
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-full md:max-w-xs border border-gray-200 hover:border-gray-300 transition-colors duration-200">
               <Search className="w-4 h-4 text-gray-500" />
               <input
@@ -201,25 +217,12 @@ export default function Header() {
                 }}
               />
 
-              {/* Clear search button */}
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-4 h-4" strokeWidth={2} />
                 </button>
               )}
             </div>
@@ -228,7 +231,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Search Results Dropdown */}
       {showDropdown &&
         searchQuery.trim() &&
         createPortal(

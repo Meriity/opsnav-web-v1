@@ -9,29 +9,13 @@ import { toast } from "react-toastify";
 const formConfig = {
   vkl: {
     fields: [
-      {
-        name: "notifySoaToClient",
-        label: "Notify SOA to Client",
-        type: "radio",
-      },
-      {
-        name: "transferDocsOnPexa",
-        label: "Transfer Docs on PEXA",
-        type: "radio",
-      },
+      { name: "notifySoaToClient", label: "Notify SOA to Client", type: "radio" },
+      { name: "transferDocsOnPexa", label: "Transfer Docs on PEXA", type: "radio" },
       { name: "gstWithholding", label: "GST Withholding", type: "radio" },
-      {
-        name: "disbursementsInPexa",
-        label: "Disbursements in PEXA",
-        type: "radio",
-      },
+      { name: "disbursementsInPexa", label: "Disbursements in PEXA", type: "radio" },
       { name: "addAgentFee", label: "Add Agent Fee", type: "radio" },
-      {
-        name: "settlementNotification",
-        label: "Settlement Notification",
-        type: "radio",
-      },
-      { name: "council", label: "Council", type: "text" },
+      { name: "settlementNotification", label: "Settlement Notification", type: "radio" },
+      { name: "council", label: "Council", type: "text" }
     ],
     noteGroups: [
       {
@@ -47,24 +31,16 @@ const formConfig = {
           "gstWithholding",
           "disbursementsInPexa",
           "addAgentFee",
-          "settlementNotification",
-        ],
-      },
-    ],
+          "settlementNotification"
+        ]
+      }
+    ]
   },
   idg: {
     fields: [
       { name: "boardsPrinted", label: "Boards Printed", type: "radio" },
-      {
-        name: "packaged",
-        label: "Packaged",
-        type: "radio",
-      },
-      {
-        name: "qualityCheckPassed",
-        label: "Quality Check Passed",
-        type: "radio",
-      },
+      { name: "packaged", label: "Packaged", type: "radio" },
+      { name: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" }
     ],
     noteGroups: [
       {
@@ -76,44 +52,19 @@ const formConfig = {
         noteForClientKey: "noteForClient",
         fieldsForNote: [
           "boardsPrinted",
-          "laminationApplied",
-          "cuttingDone",
-          "mountingDone",
-          "auctionStickersPreapplied",
           "packaged",
-          "qualityCheckPassed",
-          "labeled",
-        ],
-      },
-    ],
+          "qualityCheckPassed"
+        ]
+      }
+    ]
   },
   commercial: {
     fields: [
-      {
-        name: "statementOfAdjustment",
-        label: "Statement of Adjustment",
-        type: "radio",
-      },
-      {
-        name: "contractPrice",
-        label: "Contract Price",
-        type: "number",
-      },
-      {
-        name: "liquorLicence",
-        label: "Liquor Licence",
-        type: "radio",
-      },
-      {
-        name: "transferBusinessName",
-        label: "Transfer Business Name",
-        type: "radio",
-      },
-      {
-        name: "leaseTransfer",
-        label: "Lease Transfer",
-        type: "radio",
-      },
+      { name: "statementOfAdjustment", label: "Statement of Adjustment", type: "radio" },
+      { name: "contractPrice", label: "Contract Price", type: "number" },
+      { name: "liquorLicence", label: "Liquor Licence", type: "radio" },
+      { name: "transferBusinessName", label: "Transfer Business Name", type: "radio" },
+      { name: "leaseTransfer", label: "Lease Transfer", type: "radio" }
     ],
     noteGroups: [
       {
@@ -127,11 +78,11 @@ const formConfig = {
           "statementOfAdjustment",
           "liquorLicence",
           "transferBusinessName",
-          "leaseTransfer",
-        ],
-      },
-    ],
-  },
+          "leaseTransfer"
+        ]
+      }
+    ]
+  }
 };
 
 const normalizeValue = (v) => {
@@ -144,12 +95,10 @@ const normalizeValue = (v) => {
 
 const getStatus = (value) => {
   const val = normalizeValue(value);
-  if (val === "") return "Not Completed";
   if (!val) return "Not Completed";
   if (["yes", "na", "n/a", "nr"].includes(val)) return "Completed";
   if (val === "no") return "Not Completed";
-  if (["processing", "inprogress", "inprogress"].includes(val))
-    return "In Progress";
+  if (["processing", "inprogress", "pending"].includes(val)) return "In Progress";
   return "Not Completed";
 };
 
@@ -157,23 +106,21 @@ function bgcolor(status) {
   const statusColors = {
     Completed: "bg-[#00A506] text-white",
     "Not Completed": "bg-[#FF0000] text-white",
-    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]"
   };
   return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
-const extractNotes = (noteForSystem = "", noteForClient = "") => {
-  return {
-    systemNote: noteForSystem || "",
-    clientComment: noteForClient || "",
-  };
-};
+const extractNotes = (noteForSystem = "", noteForClient = "") => ({
+  systemNote: noteForSystem || "",
+  clientComment: noteForClient || ""
+});
 
 export default function Stage5({
   changeStage,
   data,
   reloadTrigger,
-  setReloadTrigger,
+  setReloadTrigger
 }) {
   const stage = 5;
   const api = new ClientAPI();
@@ -192,35 +139,19 @@ export default function Stage5({
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
-  // FIXED: Proper field configuration logic - check module first
-  let currentConfig;
-  if (currentModule === "commercial") {
-    currentConfig = formConfig.commercial;
-  } else if (company === "vkl") {
-    currentConfig = formConfig.vkl;
-  } else if (company === "idg") {
-    currentConfig = formConfig.idg;
-  } else {
-    currentConfig = formConfig.vkl; // default fallback
-  }
-
-  console.log("=== STAGE 5 CONFIG ===");
-  console.log("Company:", company);
-  console.log("Current Module:", currentModule);
-  console.log("Selected Config:", currentConfig);
+  const currentConfig =
+    currentModule === "commercial"
+      ? formConfig.commercial
+      : formConfig[company] || formConfig.vkl;
 
   const generateSystemNote = (noteGroupId) => {
-    const noteGroup = currentConfig.noteGroups.find(
-      (ng) => ng.id === noteGroupId
-    );
+    const noteGroup = currentConfig.noteGroups.find((ng) => ng.id === noteGroupId);
     if (!noteGroup) return "";
 
     const greenValues = new Set(["yes", "na", "n/a", "nr"]);
-
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
-
     const incomplete = fieldsToCheck
       .filter((field) => {
         const value = normalizeValue(formData[field.name] || "");
@@ -232,44 +163,28 @@ export default function Stage5({
     return `Pending: ${incomplete.join(", ")}`;
   };
 
-  // UPDATED: Data initialization effect
   useEffect(() => {
     if (!data) return;
-
-    console.log("=== STAGE 5 INITIALIZATION ===");
-    console.log("Using config:", currentConfig);
-
     setIsLoading(true);
 
     const initializeData = async () => {
       try {
         let stageData = data;
-
-        // For commercial stage 5, fetch the actual stage data from API
         if (currentModule === "commercial") {
-          console.log("Commercial stage 5 - fetching actual stage data");
           try {
-            const stageResponse = await commercialApi.getStageData(
-              5,
-              matterNumber
-            );
-            console.log("Commercial stage 5 API response:", stageResponse);
-
+            const stageResponse = await commercialApi.getStageData(5, matterNumber);
             if (stageResponse && stageResponse.data) {
               stageData = { ...data, ...stageResponse.data };
             } else if (stageResponse) {
               stageData = { ...data, ...stageResponse };
             }
-            console.log("Combined stage data for commercial:", stageData);
-          } catch (error) {
-            console.log("No existing stage 5 data found, using default data");
+          } catch {
             stageData = data;
           }
         }
 
         const initialFormData = {};
         const initialStatuses = {};
-
         currentConfig.fields.forEach((field) => {
           if (field.type === "number") {
             const rawPrice = stageData[field.name];
@@ -278,30 +193,18 @@ export default function Stage5({
                 ? rawPrice.$numberDecimal
                 : rawPrice?.toString() || "";
           } else if (field.type === "radio") {
-            initialFormData[field.name] = normalizeValue(
-              stageData[field.name] || ""
-            );
-            initialStatuses[field.name] = getStatus(
-              initialFormData[field.name]
-            );
-          } else if (field.type === "text") {
-            initialFormData[field.name] = stageData[field.name] || "";
+            initialFormData[field.name] = normalizeValue(stageData[field.name] || "");
+            initialStatuses[field.name] = getStatus(initialFormData[field.name]);
           } else {
             initialFormData[field.name] = stageData[field.name] || "";
           }
-
           if (field.hasDate) {
-            initialFormData[field.dateFieldName] = stageData[
-              field.dateFieldName
-            ]
-              ? new Date(stageData[field.dateFieldName])
-                  .toISOString()
-                  .split("T")[0]
+            initialFormData[field.dateFieldName] = stageData[field.dateFieldName]
+              ? new Date(stageData[field.dateFieldName]).toISOString().split("T")[0]
               : "";
           }
         });
 
-        // Handle notes differently for commercial vs other modules
         if (currentModule === "commercial") {
           const { systemNote, clientComment } = extractNotes(
             stageData.noteForSystem,
@@ -319,10 +222,7 @@ export default function Stage5({
         setFormData(initialFormData);
         setStatuses(initialStatuses);
         originalData.current = initialFormData;
-
-        console.log("Initialized form data:", initialFormData);
-      } catch (error) {
-        console.error("Error initializing form data:", error);
+      } catch {
         toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
@@ -330,27 +230,17 @@ export default function Stage5({
     };
 
     initializeData();
-  }, [
-    data,
-    reloadTrigger,
-    company,
-    currentModule,
-    currentConfig,
-    matterNumber,
-  ]);
+    // eslint-disable-next-line
+  }, [data, reloadTrigger, company, currentModule, matterNumber]);
 
   const handleChange = (field, value) => {
-    let processedValue = value;
-    if (typeof processedValue === "string") {
-      processedValue = normalizeValue(processedValue);
-    }
-
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
-    if (fieldConfig && fieldConfig.type === "radio") {
+    let processedValue = value;
+    if (fieldConfig && fieldConfig.type === "radio" && typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
   };
 
   const handleDateChange = (dateField, value) => {
@@ -359,7 +249,6 @@ export default function Stage5({
 
   const isChanged = () => {
     const currentSystemNote = generateSystemNote("main");
-
     if (currentModule === "commercial") {
       return (
         JSON.stringify(formData) !== JSON.stringify(originalData.current) ||
@@ -378,9 +267,7 @@ export default function Stage5({
     try {
       let payload = { ...formData };
 
-      // FIXED: Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // Only include fields that exist in the commercial schema
         const commercialFields = [
           "statementOfAdjustment",
           "contractPrice",
@@ -390,30 +277,24 @@ export default function Stage5({
           "noteForSystem",
           "noteForClient",
           "colorStatus",
-          "matterNumber",
+          "matterNumber"
         ];
         const filteredPayload = {};
-
         commercialFields.forEach((field) => {
           if (payload[field] !== undefined) {
             filteredPayload[field] = payload[field];
           }
         });
-
         payload = filteredPayload;
-
-        // Generate system note
-        const systemNote = generateSystemNote("main");
-        payload.noteForSystem = systemNote;
+        payload.noteForSystem = generateSystemNote("main");
         payload.noteForClient = noteForClient || "";
-
-        // Calculate and add color status
         const allCompleted = currentConfig.fields.every(
           (field) => getStatus(formData[field.name]) === "Completed"
         );
         payload.colorStatus = allCompleted ? "green" : "amber";
+        payload.matterNumber = matterNumber;
+        await commercialApi.upsertStage(5, matterNumber, payload);
       } else {
-        // For other modules, use combined note structure
         currentConfig.noteGroups.forEach((group) => {
           const systemNote = generateSystemNote(group.id);
           const clientComment = formData[group.clientCommentKey] || "";
@@ -421,40 +302,21 @@ export default function Stage5({
             `${systemNote} - ${clientComment}`.trim();
           delete payload[group.clientCommentKey];
         });
-      }
-
-      // handle number fields
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
+        currentConfig.fields.forEach((field) => {
+          if (field.type === "number") {
+            payload[field.name] =
+              payload[field.name] === "" ? null : Number(payload[field.name]);
+          }
+        });
+        if (company === "vkl") {
+          payload.matterNumber = matterNumber;
+          await api.upsertStageFive(payload);
+        } else if (company === "idg") {
+          payload.orderId = matterNumber;
+          await api.upsertIDGStages(payload.orderId, 5, payload);
         }
-      });
-
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
-      // API CALL SECTION
-      if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 5");
-        payload.matterNumber = matterNumber;
-        await commercialApi.upsertStage(5, matterNumber, payload);
-      } else if (company === "vkl") {
-        console.log("Using VKL API for stage 5");
-        payload.matterNumber = matterNumber;
-        await api.upsertStageFive(payload);
-      } else if (company === "idg") {
-        console.log("Using IDG API for stage 5");
-        payload.orderId = matterNumber;
-        await api.upsertIDGStages(payload.orderId, 5, payload);
       }
 
-      console.log("API call successful");
-
-      // update original data
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
 
@@ -465,21 +327,15 @@ export default function Stage5({
         closeOnClick: true,
         pauseOnHover: false,
         draggable: false,
-        progress: undefined,
+        progress: undefined
       });
     } catch (err) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to save Stage 5:", err);
-      console.error("Error response:", err.response);
-      console.error("Error message:", err.message);
-
       let errorMessage = "Failed to save Stage 5. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
@@ -496,16 +352,13 @@ export default function Stage5({
                 {field.label}
               </label>
               <div
-                className={`w-[90px] h-[18px] ${bgcolor(
-                  statuses[field.name]
-                )} flex items-center justify-center rounded-4xl`}
+                className={`w-[90px] h-[18px] ${bgcolor(statuses[field.name])} flex items-center justify-center rounded-4xl`}
               >
                 <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                  {statuses[field.name]}
+                  {statuses[field.name] || "Not Completed"}
                 </p>
               </div>
             </div>
-
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
               {["Yes", "No", "Processing", "N/R"].map((val) => (
                 <label
@@ -517,8 +370,7 @@ export default function Stage5({
                     name={field.name}
                     value={val}
                     checked={
-                      normalizeValue(formData[field.name] || "") ===
-                      normalizeValue(val)
+                      normalizeValue(formData[field.name] || "") === normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
                   />
@@ -566,7 +418,7 @@ export default function Stage5({
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  [field.name]: e.target.value,
+                  [field.name]: e.target.value
                 }))
               }
               className="w-full rounded p-2 bg-gray-100"
@@ -600,7 +452,7 @@ export default function Stage5({
           onChange={(e) =>
             setFormData((prev) => ({
               ...prev,
-              [group.clientCommentKey]: e.target.value,
+              [group.clientCommentKey]: e.target.value
             }))
           }
           className="w-full rounded p-2 bg-gray-100"
@@ -650,7 +502,6 @@ export default function Stage5({
     <div className="overflow-y-auto">
       {currentConfig.fields.map(renderField)}
 
-      {/* Render notes based on module */}
       {currentModule === "commercial"
         ? renderCommercialNotes()
         : currentConfig.noteGroups.map(renderNoteGroup)}
@@ -684,5 +535,5 @@ Stage5.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
   reloadTrigger: PropTypes.bool.isRequired,
-  setReloadTrigger: PropTypes.func.isRequired,
+  setReloadTrigger: PropTypes.func.isRequired
 };

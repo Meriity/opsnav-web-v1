@@ -113,13 +113,12 @@ export default function Stage1({
   const [isLoading, setIsLoading] = useState(false);
   const originalData = useRef({});
 
-  console.log("Initial data prop:", data);
   const stage = 1;
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
 
-  // Stabilize company + fields so they can be safely used in hooks' deps
+  // Get company and current module
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
@@ -133,7 +132,7 @@ export default function Stage1({
     return formConfig[company] || formConfig.vkl;
   }, [company, currentModule]);
 
-  // Helper to normalize/standardize values for comparison and storage
+  // Helper to normalize/standardize values
   const normalizeValue = useCallback((v) => {
     if (v === undefined || v === null) return "";
     return String(v)
@@ -142,6 +141,7 @@ export default function Stage1({
       .replace(/[^a-z0-9]/g, "");
   }, []);
 
+  // Status for colored badge
   const getStatus = useCallback(
     (value) => {
       const val = normalizeValue(value);
@@ -215,7 +215,7 @@ export default function Stage1({
     return `${notReceived.join(", ")} not received`;
   };
 
-  // UPDATED: Data initialization effect
+  // Data initialization effect
   useEffect(() => {
     const initializeData = async () => {
       if (!matterNumber) return;
@@ -226,29 +226,22 @@ export default function Stage1({
 
         // For commercial stage 1, fetch the actual stage data from API
         if (currentModule === "commercial") {
-          console.log("Commercial stage 1 - fetching actual stage data");
           try {
             const stageResponse = await commercialApi.getStageData(
               1,
               matterNumber
             );
-            console.log("Commercial stage 1 API response:", stageResponse);
-
             if (stageResponse && stageResponse.data) {
               stageData = { ...data, ...stageResponse.data };
             } else if (stageResponse) {
               stageData = { ...data, ...stageResponse };
             }
-            console.log("Combined stage data for commercial:", stageData);
           } catch (error) {
-            console.log("No existing stage 1 data found, using default data");
             stageData = data;
           }
         }
 
         // Process the data for stage 1
-        console.log("Processing stage data:", stageData);
-
         const { systemNote, clientComment } = extractNotes(
           stageData.noteForClient
         );
@@ -284,10 +277,7 @@ export default function Stage1({
         setFormData(initialFormData);
         setStatuses(initialStatuses);
         originalData.current = initialFormData;
-
-        console.log("Initialized form data:", initialFormData);
       } catch (error) {
-        console.error("Error initializing form data:", error);
         toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
@@ -368,9 +358,8 @@ export default function Stage1({
         ...formData,
       };
 
-      // FIXED: Filter commercial fields and ensure correct payload structure
+      // Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // Only include fields that exist in the commercial schema
         const commercialFields = [
           "referral",
           "retainer",
@@ -392,46 +381,31 @@ export default function Stage1({
 
         payload = filteredPayload;
 
-        // Generate system note
         payload.noteForSystem = systemNote;
         payload.noteForClient = noteForClient;
 
-        // Calculate and add color status
         const allCompleted = currentFields.every(
           (field) => getStatus(formData[field.name]) === "Completed"
         );
         payload.colorStatus = allCompleted ? "green" : "amber";
       } else {
-        // For other modules, use combined note structure
         payload.noteForClient = noteForClient;
       }
 
-      // remove temporary fields
       delete payload.systemNote;
       delete payload.clientComment;
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
       // API CALL SECTION
       if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 1");
         payload.matterNumber = matterNumber;
         await commercialApi.upsertStage(1, matterNumber, payload);
       } else if (company === "vkl") {
-        console.log("Using VKL API for stage 1");
         payload.matterNumber = matterNumber;
         await api.upsertStageOne(payload);
       } else if (company === "idg") {
-        console.log("Using IDG API for stage 1");
         payload.orderId = matterNumber;
         await api.upsertIDGStages(payload.orderId, 1, payload);
       }
-
-      console.log("API call successful");
 
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
@@ -445,18 +419,12 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to update stage 1:", error);
-      console.error("Error response:", error.response);
-      console.error("Error message:", error.message);
-
       let errorMessage = "Failed to save Stage 1. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);

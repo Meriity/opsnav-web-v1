@@ -161,6 +161,13 @@ class CommercialAPI {
 
   // Update Commercial Client
   async updateProject(clientId, projectData) {
+    console.log("Commercial API - Update Project:");
+    console.log("Client ID:", clientId);
+    console.log("Project Data:", projectData);
+    console.log(
+      "URL:",
+      `${this.baseUrl}${this.endpoints.CLIENT_BY_ID}/${clientId}`
+    );
     try {
       const response = await fetch(
         `${this.baseUrl}${this.endpoints.CLIENT_BY_ID}/${clientId}`,
@@ -171,9 +178,14 @@ class CommercialAPI {
         }
       );
 
-      return await this.handleResponse(response);
+      console.log("Update response status:", response.status);
+
+      const result = await this.handleResponse(response);
+      console.log("Update response result:", result);
+      return result;
     } catch (error) {
       console.error("Error updating commercial project:", error);
+      console.error("Error details:", error.response);
       throw error;
     }
   }
@@ -251,7 +263,6 @@ class CommercialAPI {
     }
   }
 
-  // Check Client Exists
   async checkProjectExists(matterNumber) {
     try {
       const response = await fetch(
@@ -274,13 +285,6 @@ class CommercialAPI {
 
       const data = await response.json();
       return data;
-
-      // For commercial, 404 means project doesn't exist
-      if (response.status === 404) {
-        return { exists: false };
-      }
-
-      return await this.handleResponse(response);
     } catch (error) {
       console.error("Error checking commercial client existence:", error);
       // If 404, return false

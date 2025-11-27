@@ -300,6 +300,7 @@ export default function ManageUsers() {
                 itemsPerPage={usersPerPage}
                 headerBgColor="bg-[#A6E7FF]"
                 cellWrappingClass="whitespace-normal"
+                compact={true}
                 // resetLoadingEmail={resetLoadingEmail}
                 // resetSuccessEmail={resetSuccessEmail}
               />

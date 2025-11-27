@@ -2,11 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import CommercialAPI from "../../../api/commercialAPI";
-import ImageUploadField from "@/components/ui/ImageUploadField.jsx";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
-import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
+import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
@@ -17,7 +16,7 @@ const formConfig = {
       { name: "dutyOnline", label: "Duty Online", type: "radio" },
       { name: "soa", label: "SOA", type: "radio" },
       { name: "frcgw", label: "FRCGW", type: "radio" },
-      { name: "contractPrice", label: "Contract Price", type: "number" },
+      { name: "contractPrice", label: "Contract Price", type: "number" }
     ],
     noteGroups: [
       {
@@ -27,27 +26,27 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["dts", "dutyOnline", "soa", "frcgw"],
-      },
-    ],
+        fieldsForNote: ["dts", "dutyOnline", "soa", "frcgw"]
+      }
+    ]
   },
   idg: {
     fields: [
       {
         name: "uploadImageConfirmation",
         label: "Image Uploaded Correctly",
-        type: "radio",
+        type: "radio"
       },
       {
         name: "completionPhotos",
         label: "Capture Proof of Completion Photos",
-        type: "image",
+        type: "image"
       },
       {
         name: "closeOrder",
         label: "Close Order",
-        type: "radio",
-      },
+        type: "radio"
+      }
     ],
     noteGroups: [
       {
@@ -57,32 +56,32 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["uploadImageConfirmation", "closeOrder"],
-      },
-    ],
+        fieldsForNote: ["uploadImageConfirmation", "closeOrder"]
+      }
+    ]
   },
   commercial: {
     fields: [
       {
         name: "employeesEntitlements",
         label: "Employees Entitlements",
-        type: "radio",
+        type: "radio"
       },
       {
         name: "purchaseContracts",
         label: "Purchase Contracts",
-        type: "radio",
+        type: "radio"
       },
       {
         name: "customerContracts",
         label: "Customer Contracts",
-        type: "radio",
+        type: "radio"
       },
       {
         name: "leaseAgreement",
         label: "Lease Agreement",
-        type: "radio",
-      },
+        type: "radio"
+      }
     ],
     noteGroups: [
       {
@@ -96,11 +95,11 @@ const formConfig = {
           "employeesEntitlements",
           "purchaseContracts",
           "customerContracts",
-          "leaseAgreement",
-        ],
-      },
-    ],
-  },
+          "leaseAgreement"
+        ]
+      }
+    ]
+  }
 };
 
 const normalizeValue = (v) => {
@@ -114,7 +113,7 @@ const normalizeValue = (v) => {
 const getStatus = (value) => {
   const val = normalizeValue(value);
   if (!val) return "Not Completed";
-  if (["yes", "na", "n/a", "nr", "cancelled", "completed"].includes(val))
+  if (["yes", "na", "n/a", "nr", "cancelled", "completed", "approved"].includes(val))
     return "Completed";
   if (val === "no") return "Not Completed";
   if (["processing", "inprogress"].includes(val)) return "In Progress";
@@ -125,23 +124,21 @@ function bgcolor(status) {
   const statusColors = {
     Completed: "bg-[#00A506] text-white",
     "Not Completed": "bg-[#FF0000] text-white",
-    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]"
   };
   return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
-const extractNotes = (noteForSystem = "", noteForClient = "") => {
-  return {
-    systemNote: noteForSystem || "",
-    clientComment: noteForClient || "",
-  };
-};
+const extractNotes = (noteForSystem = "", noteForClient = "") => ({
+  systemNote: noteForSystem || "",
+  clientComment: noteForClient || ""
+});
 
 export default function Stage4({
   changeStage,
   data,
   reloadTrigger,
-  setReloadTrigger,
+  setReloadTrigger
 }) {
   const stage = 4;
   const api = new ClientAPI();
@@ -163,47 +160,30 @@ export default function Stage4({
   const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
-  // Add Zustland retrigger
+  // Zustland retrigger
   const reloadArchivedClients = useArchivedClientStore(
     (s) => s.reloadArchivedClients
   );
 
-  // FIXED: Proper field configuration logic - check module first
-  let currentConfig;
-  if (currentModule === "commercial") {
-    currentConfig = formConfig.commercial;
-  } else if (company === "vkl") {
-    currentConfig = formConfig.vkl;
-  } else if (company === "idg") {
-    currentConfig = formConfig.idg;
-  } else {
-    currentConfig = formConfig.vkl; // default fallback
-  }
-
-  console.log("=== STAGE 4 CONFIG ===");
-  console.log("Company:", company);
-  console.log("Current Module:", currentModule);
-  console.log("Selected Config:", currentConfig);
+  let currentConfig =
+    currentModule === "commercial"
+      ? formConfig.commercial
+      : formConfig[company] || formConfig.vkl;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
+      handleUpload(file);
     }
-    // Automatically trigger the upload
-    handleUpload(file);
   };
 
   const handleUpload = async (fileToUpload) => {
     try {
-      const response = await api.uploadImageForOrder(
-        matterNumber,
-        fileToUpload
-      );
+      await api.uploadImageForOrder(matterNumber, fileToUpload);
       setReloadTrigger((prev) => !prev);
-      // console.log(response);
     } catch (e) {
-      console.error(e);
+      toast.error("Image upload failed.");
     }
   };
 
@@ -213,15 +193,12 @@ export default function Stage4({
   }
 
   const handleImagedelete = async (filename) => {
-    
     try {
-      console.log(matterNumber);
-      const response = await api.deleteImageForOrder(matterNumber);
+      await api.deleteImageForOrder(matterNumber);
       setPreview(null);
       setShowConfirmModal(false);
-    }
-    catch (e) {
-      console.error(e);
+    } catch (e) {
+      toast.error("Failed to delete image.");
     }
   };
 
@@ -230,25 +207,15 @@ export default function Stage4({
       (ng) => ng.id === noteGroupId
     );
     if (!noteGroup) return "";
-
     const greenValues = new Set(["yes", "nr", "na", "approved"]);
-
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
-
     const notReceived = fieldsToCheck
       .filter((field) => {
-        const rawValue = formData[field.name] || "";
-        const value = normalizeValue(rawValue);
-
-        if (field.type === "text") {
-          // text fields count as completed if not empty
-          return value === "";
-        }
-
-        // non-text fields rely on greenValues
-        return !greenValues.has(value);
+        const val = normalizeValue(formData[field.name] || "");
+        if (field.type === "text") return val === "";
+        return !greenValues.has(val);
       })
       .map((field) => field.label);
 
@@ -256,44 +223,32 @@ export default function Stage4({
     return `${notReceived.join(" and ")} not completed`;
   };
 
-  // UPDATED: Data initialization effect
   useEffect(() => {
     if (!data) return;
-
-    console.log("=== STAGE 4 INITIALIZATION ===");
-    console.log("Using config:", currentConfig);
-
     setIsLoading(true);
 
     const initializeData = async () => {
       try {
         let stageData = data;
 
-        // For commercial stage 4, fetch the actual stage data from API
         if (currentModule === "commercial") {
-          console.log("Commercial stage 4 - fetching actual stage data");
           try {
             const stageResponse = await commercialApi.getStageData(
               4,
               matterNumber
             );
-            console.log("Commercial stage 4 API response:", stageResponse);
-
             if (stageResponse && stageResponse.data) {
               stageData = { ...data, ...stageResponse.data };
             } else if (stageResponse) {
               stageData = { ...data, ...stageResponse };
             }
-            console.log("Combined stage data for commercial:", stageData);
-          } catch (error) {
-            console.log("No existing stage 4 data found, using default data");
+          } catch {
             stageData = data;
           }
         }
 
         const initialFormData = {};
         const initialStatuses = {};
-
         currentConfig.fields.forEach((field) => {
           if (field.type === "number") {
             const rawPrice = stageData[field.name];
@@ -305,15 +260,13 @@ export default function Stage4({
             initialFormData[field.name] = normalizeValue(
               stageData[field.name] || ""
             );
-            initialStatuses[field.name] = getStatus(
-              initialFormData[field.name]
-            );
+            initialStatuses[field.name] = getStatus(initialFormData[field.name]);
           } else {
             initialFormData[field.name] = stageData[field.name] || "";
           }
         });
 
-        // Handle notes differently for commercial vs other modules
+        // Populate notes
         if (currentModule === "commercial") {
           const { systemNote, clientComment } = extractNotes(
             stageData.noteForSystem,
@@ -333,16 +286,13 @@ export default function Stage4({
 
         if (company === "idg") {
           setPreview(
-            stageData?.images[stageData?.images?.length - 1]?.url || null
+            stageData?.images?.[stageData?.images?.length - 1]?.url || null
           );
-          setfileName(stageData?.images[0]?.filename || " ");
+          setfileName(stageData?.images?.[0]?.filename || " ");
         }
 
         originalData.current = initialFormData;
-
-        console.log("Initialized form data:", initialFormData);
-      } catch (error) {
-        console.error("Error initializing form data:", error);
+      } catch {
         toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
@@ -350,35 +300,27 @@ export default function Stage4({
     };
 
     initializeData();
+    // eslint-disable-next-line
   }, [
     data,
     reloadTrigger,
     company,
     currentModule,
-    currentConfig,
-    matterNumber,
+    matterNumber
   ]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
-
     let processedValue = value;
-
-    // Only normalize radio fields, leave other fields as-is
-    if (fieldConfig && fieldConfig.type === "radio") {
-      if (typeof processedValue === "string") {
-        processedValue = normalizeValue(processedValue);
-      }
-
+    if (fieldConfig && fieldConfig.type === "radio" && typeof processedValue === "string") {
+      processedValue = normalizeValue(processedValue);
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
     }
-
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
   };
 
   const isChanged = () => {
     const currentSystemNote = generateSystemNote("main");
-
     if (currentModule === "commercial") {
       return (
         JSON.stringify(formData) !== JSON.stringify(originalData.current) ||
@@ -397,9 +339,7 @@ export default function Stage4({
     try {
       let payload = { ...formData };
 
-      // FIXED: Filter commercial fields and ensure correct payload structure
       if (currentModule === "commercial") {
-        // Only include fields that exist in the commercial schema
         const commercialFields = [
           "employeesEntitlements",
           "purchaseContracts",
@@ -408,30 +348,26 @@ export default function Stage4({
           "noteForSystem",
           "noteForClient",
           "colorStatus",
-          "matterNumber",
+          "matterNumber"
         ];
         const filteredPayload = {};
-
         commercialFields.forEach((field) => {
           if (payload[field] !== undefined) {
             filteredPayload[field] = payload[field];
           }
         });
-
         payload = filteredPayload;
-
-        // Generate system note
-        const systemNote = generateSystemNote("main");
-        payload.noteForSystem = systemNote;
+        payload.noteForSystem = generateSystemNote("main");
         payload.noteForClient = noteForClient || "";
 
-        // Calculate and add color status
+        // Color status
         const allCompleted = currentConfig.fields.every(
           (field) => getStatus(formData[field.name]) === "Completed"
         );
         payload.colorStatus = allCompleted ? "green" : "amber";
+        payload.matterNumber = matterNumber;
+        await commercialApi.upsertStage(4, matterNumber, payload);
       } else {
-        // For other modules, use combined note structure
         currentConfig.noteGroups.forEach((group) => {
           const systemNote = generateSystemNote(group.id);
           const clientComment = formData[group.clientCommentKey] || "";
@@ -439,40 +375,22 @@ export default function Stage4({
             `${systemNote} - ${clientComment}`.trim();
           delete payload[group.clientCommentKey];
         });
-      }
-
-      // --- Convert number fields properly ---
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
+        // Number fields
+        currentConfig.fields.forEach((field) => {
+          if (field.type === "number") {
+            payload[field.name] =
+              payload[field.name] === "" ? null : Number(payload[field.name]);
+          }
+        });
+        if (company === "vkl") {
+          payload.matterNumber = matterNumber;
+          await api.upsertStageFour(payload);
+        } else if (company === "idg") {
+          payload.orderId = matterNumber;
+          await api.upsertIDGStages(payload.orderId, 4, payload);
         }
-      });
-
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
-      // API CALL SECTION
-      if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 4");
-        payload.matterNumber = matterNumber;
-        await commercialApi.upsertStage(4, matterNumber, payload);
-      } else if (company === "vkl") {
-        console.log("Using VKL API for stage 4");
-        payload.matterNumber = matterNumber;
-        await api.upsertStageFour(payload);
-      } else if (company === "idg") {
-        console.log("Using IDG API for stage 4");
-        payload.orderId = matterNumber;
-        await api.upsertIDGStages(payload.orderId, 4, payload);
       }
 
-      console.log("API call successful");
-
-      // --- Update local state & reload ---
       originalData.current = { ...formData };
       setReloadTrigger((prev) => !prev);
       reloadArchivedClients();
@@ -483,21 +401,15 @@ export default function Stage4({
         closeOnClick: true,
         pauseOnHover: false,
         draggable: false,
-        progress: undefined,
+        progress: undefined
       });
     } catch (err) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to save Stage 4:", err);
-      console.error("Error response:", err.response);
-      console.error("Error message:", err.message);
-
       let errorMessage = "Failed to save Stage 4. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
@@ -549,7 +461,6 @@ export default function Stage4({
             </div>
           </div>
         );
-
       case "number":
         return (
           <div key={field.name} className="mt-5">
@@ -581,11 +492,10 @@ export default function Stage4({
         );
       case "image":
         return (
-          <div className="w-full mt-5">
+          <div className="w-full mt-5" key={field.name}>
             <label className="block mb-1 text-sm md:text-base font-bold">
               {field.label}
             </label>
-
             <div className="relative w-full">
               {!preview ? (
                 <label
@@ -605,7 +515,6 @@ export default function Stage4({
                   />
                 </label>
               ) : (
-                // Image preview (no changes needed here)
                 <div className="relative w-full text-center">
                   <img
                     src={preview}
@@ -630,7 +539,7 @@ export default function Stage4({
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.45 0c.083-.738-.36-1.458-1.082-1.458H5.86c-.721 0-1.165.72-1.082 1.458"
                       />
                     </svg>
                   </button>
@@ -639,7 +548,6 @@ export default function Stage4({
             </div>
           </div>
         );
-
       default:
         return null;
     }
@@ -754,5 +662,5 @@ Stage4.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
   reloadTrigger: PropTypes.bool.isRequired,
-  setReloadTrigger: PropTypes.func.isRequired,
+  setReloadTrigger: PropTypes.func.isRequired
 };

@@ -162,26 +162,12 @@ const formConfig = {
         fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
       },
     ],
-    noteGroups: [
-      {
-        id: "main",
-        systemNoteLabel: "System Note for Client",
-        clientCommentLabel: "Comment for Client",
-        systemNoteKey: "systemNote",
-        clientCommentKey: "clientComment",
-        noteForClientKey: "noteForClient",
-        fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
-      },
-    ],
   },
 };
 
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
-  return String(v)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]/g, "");
+  return String(v).toLowerCase().trim().replace(/[^a-z0-9]/g, "");
 };
 
 export default function Stage2({
@@ -192,8 +178,6 @@ export default function Stage2({
   clientType,
   user,
 }) {
-  console.log("Stage2 data:", data);
-  console.log("User data:", user);
   const stage = 2;
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -241,6 +225,7 @@ export default function Stage2({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
+  // Extracts notes based on system/client format in data
   const extractNotes = (noteForSystem = "", noteForClient = "") => {
     return {
       systemNote: noteForSystem || "",
@@ -248,13 +233,16 @@ export default function Stage2({
     };
   };
 
+  // Returns the generated system note per note group
   const generateSystemNote = (noteGroupId) => {
     const noteGroup = currentConfig.noteGroups.find(
       (ng) => ng.id === noteGroupId
     );
     if (!noteGroup) return "";
 
-    const greenValues = new Set(["yes", "nr", "na", "approved"]);
+    const greenValues = new Set([
+      "yes", "nr", "na", "approved"
+    ]);
     const fieldsToCheck = currentConfig.fields.filter((f) =>
       noteGroup.fieldsForNote.includes(f.name)
     );
@@ -275,12 +263,9 @@ export default function Stage2({
     return `${notReceived.join(" and ")} not received`;
   };
 
-  // DATA INITIALIZATION EFFECT
+  // Effect: Data Initialization
   useEffect(() => {
     if (!data) return;
-
-    console.log("=== INITIALIZING STAGE 2 FORM DATA ===");
-    console.log("Raw data received:", data);
 
     setIsLoading(true);
 
@@ -295,39 +280,29 @@ export default function Stage2({
 
         let stageData = data;
 
-        // For commercial stage 2, fetch the actual stage data from API
+        // For commercial stage 2: fetch stage data from API
         if (currentModule === "commercial") {
-          console.log("Commercial stage 2 - fetching actual stage data");
           try {
             const stageResponse = await commercialApi.getStageData(
               2,
               matterNumber
             );
-            console.log("Commercial stage 2 API response:", stageResponse);
-
             if (stageResponse && stageResponse.data) {
               stageData = { ...data, ...stageResponse.data };
             } else if (stageResponse) {
               stageData = { ...data, ...stageResponse };
             }
-            console.log("Combined stage data for commercial:", stageData);
           } catch (error) {
-            console.log("No existing stage 2 data found, using default data");
             stageData = data;
           }
         } else if (data.stages && Array.isArray(data.stages)) {
-          console.log("Data has stages array:", data.stages);
           const stage2Data = data.stages.find(
             (stage) => stage.stageNumber === 2
           );
-          console.log("Stage 2 data from stages array:", stage2Data);
-
           if (stage2Data) {
             stageData = stage2Data;
           }
         }
-
-        console.log("Using this data for initialization:", stageData);
 
         // Process fields
         currentConfig.fields.forEach((field) => {
@@ -354,9 +329,8 @@ export default function Stage2({
           initialStatuses[field.name] = getStatus(stageData[field.name]);
         });
 
-        // Handle notes differently for commercial vs other modules
+        // Notes
         if (currentModule === "commercial") {
-          // For commercial, use separate noteForSystem and noteForClient fields
           const { systemNote, clientComment } = extractNotes(
             stageData.noteForSystem,
             stageData.noteForClient
@@ -364,21 +338,16 @@ export default function Stage2({
           initialFormData.noteForSystem = systemNote;
           initialFormData.noteForClient = clientComment;
         } else {
-          // For other modules, use the existing note structure
           currentConfig.noteGroups.forEach((group) => {
             const notes = extractNotes(stageData[group.noteForClientKey]);
             initialFormData[group.clientCommentKey] = notes.clientComment;
           });
         }
 
-        console.log("Initial form data:", initialFormData);
-        console.log("Initial statuses:", initialStatuses);
-
         setFormData(initialFormData);
         setStatuses(initialStatuses);
         originalData.current = JSON.parse(JSON.stringify(initialFormData));
       } catch (error) {
-        console.error("Error initializing form data:", error);
         toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
@@ -397,6 +366,7 @@ export default function Stage2({
     matterNumber,
   ]);
 
+  // Change handler for form fields
   const handleChange = (field, value) => {
     const fieldConfig = currentConfig.fields.find((f) => f.name === field);
     let processedValue = value;
@@ -416,10 +386,12 @@ export default function Stage2({
     }
   };
 
+  // Whether the form has changed
   const isChanged = () => {
     return JSON.stringify(formData) !== JSON.stringify(originalData.current);
   };
 
+  // Handles saving stage 2
   async function handleSave() {
     if (!isChanged() || isSaving) return;
     setIsSaving(true);
@@ -429,13 +401,7 @@ export default function Stage2({
       const currentModule = localStorage.getItem("currentModule");
       let payload = { ...formData };
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Saving payload:", payload);
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-
-      // Handle notes differently for commercial vs other modules
+      // Notes
       if (currentModule === "commercial") {
         const commercialFields = [
           "voi",
@@ -454,30 +420,25 @@ export default function Stage2({
 
         payload = filteredPayload;
 
-        // Generate system note
-        const noteForSystem = generateSystemNote("main");
-        const noteForClient = formData.noteForClient || "";
-        payload.noteForSystem = noteForSystem;
-        payload.noteForClient = noteForClient;
+        // Generate system note (for commercial, uses "main")
+        payload.noteForSystem = generateSystemNote("main");
+        payload.noteForClient = formData.noteForClient || "";
 
-        // Remove temporary fields
         delete payload.systemNote;
         delete payload.clientComment;
       } else {
-        // For other modules, use the existing note structure
         currentConfig.noteGroups.forEach((group) => {
           const systemNote = generateSystemNote(group.id);
           const clientComment = formData[group.clientCommentKey] || "";
           payload[group.noteForClientKey] =
             `${systemNote} - ${clientComment}`.trim();
 
-          // remove temporary fields
           delete payload[group.systemNoteKey];
           delete payload[group.clientCommentKey];
         });
       }
 
-      // Calculate color status based on field completion
+      // Evaluate color status
       const relevantFields = currentConfig.fields.filter((field) => {
         if (
           field.name === "obtainDaSeller" &&
@@ -487,52 +448,36 @@ export default function Stage2({
         }
         return true;
       });
-
       const allCompleted = relevantFields.every(
         (f) => getStatus(formData[f.name]) === "Completed"
       );
       const colorStatus = allCompleted ? "green" : "amber";
 
+      // Remove obtainDaSeller if not seller
       if ((clientType || "").toLowerCase() !== "seller") {
         delete payload.obtainDaSeller;
         delete payload.obtainDaSellerDate;
       }
 
-      console.log("Final payload before API call:", payload);
-
-      // API CALL SECTION
+      // API call section
       let apiResponse;
       if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 2");
-        // For commercial, include matterNumber and colorStatus in payload
         payload.matterNumber = matterNumber;
         payload.colorStatus = colorStatus;
         apiResponse = await commercialApi.upsertStage(2, matterNumber, payload);
-        console.log("Commercial API response:", apiResponse);
       } else if (company === "vkl") {
-        console.log("Using VKL API for stage 2");
         payload.matterNumber = matterNumber;
-        apiResponse = await api.upsertStageTwo(
-          matterNumber,
-          colorStatus,
-          payload
-        );
-        console.log("VKL API response:", apiResponse);
+        apiResponse = await api.upsertStageTwo(matterNumber, colorStatus, payload);
       } else if (company === "idg") {
-        console.log("Using IDG API for stage 2");
         payload.orderId = matterNumber;
         apiResponse = await api.upsertIDGStages(payload.orderId, 2, {
           ...payload,
           colorStatus,
         });
-        console.log("IDG API response:", apiResponse);
       }
 
-      console.log("API call successful");
-
-      // update original data
+      // Update original
       originalData.current = { ...formData };
-      console.log("Original data updated:", originalData.current);
       setReloadTrigger((prev) => !prev);
 
       toast.success("Stage 2 Saved Successfully!", {
@@ -545,24 +490,19 @@ export default function Stage2({
         progress: undefined,
       });
     } catch (error) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to update stage 2:", error);
-      console.error("Error response:", error.response);
-      console.error("Error message:", error.message);
-
       let errorMessage = "Failed to save Stage 2. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
   }
 
+  // Renderers
   const renderField = (field) => (
     <div key={field.name} className="mt-5">
       <div className="flex gap-4 justify-between items-center mb-2">
@@ -749,4 +689,5 @@ Stage2.propTypes = {
   clientType: PropTypes.string,
   reloadTrigger: PropTypes.bool.isRequired,
   setReloadTrigger: PropTypes.func.isRequired,
+  user: PropTypes.array,
 };
