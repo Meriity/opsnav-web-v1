@@ -895,80 +895,170 @@ export default function IDGClientDashboard() {
                               {stages.map((stage, i) => {
                                 const stageActive = i <= currentStageIndex;
 
-                                return (
-                                  <div
-                                    key={stage}
-                                    className="flex items-center flex-1"
-                                  >
-                                    {/* Stage Circle */}
-                                    <div className="flex flex-col items-center flex-1">
-                                      <div
-                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${
-                                          stageActive
-                                            ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
-                                            : "bg-gray-200 scale-90"
-                                        }`}
-                                      >
-                                        {stage === "ordered" && (
-                                          <Package
-                                            className={`transition-all duration-300 ${
-                                              stageActive
-                                                ? "text-white"
-                                                : "text-gray-400"
-                                            }`}
-                                            size={32}
-                                          />
-                                        )}
-                                        {stage === "booked" && (
-                                          <Calendar
-                                            className={`transition-all duration-300 ${
-                                              stageActive
-                                                ? "text-white"
-                                                : "text-gray-400"
-                                            }`}
-                                            size={32}
-                                          />
-                                        )}
-                                        {stage === "completed" && (
-                                          <CheckCircle2
-                                            className={`transition-all duration-300 ${
-                                              stageActive
-                                                ? "text-white"
-                                                : "text-gray-400"
-                                            }`}
-                                            size={32}
-                                          />
-                                        )}
-                                      </div>
+<div className="mt-10 space-y-6">
+    <h2 className="ml-5 text-2xl font-bold text-gray-800 mb-2 underline decoration-[#00AEEF]">
+        Order History
+    </h2>
+    {orders.filter((job) => job.status === "completed").length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10">
+            <img
+                src="/undraw_no-data_ig65.svg"
+                alt="No active orders"
+                className="w-20 h-auto mb-4"
+            />
+            <p className="text-gray-600 text-lg">
+                You don't have any completed orders yet. Once your jobs are finished, they'll appear here for your reference.
+            </p>
+        </div>
+    ) : (
+        <div className="grid grid-cols-1 gap-6">
+            {orders
+                .filter((job) => job.status === "completed")
+                .map((job, index) => {
+                    const stages = ["ordered", "booked", "completed"];
+                    const currentStageIndex = stages.indexOf(job.status);
 
-                                      {/* Stage Label */}
-                                      <p
-                                        className={`mt-4 font-bold capitalize transition-colors text-center ${
-                                          stageActive
-                                            ? "text-gray-900"
-                                            : "text-gray-400"
-                                        }`}
-                                      >
-                                        {stage === "ordered"
-                                          ? "Job Ordered"
-                                          : stage === "booked"
-                                          ? "Job Booked"
-                                          : "Job Completed"}
-                                      </p>
-
-                                      {/* Date Display */}
-                                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                                        <Calendar size={14} />
-                                        <span>
-                                          {stage === "ordered" &&
-                                            formatDate(job.orderDate)}
-                                          {stage === "booked" &&
-                                            formatDate(job.deliveryDate)}
-                                          {stage === "completed" &&
-                                            formatDate(job.deliveryDate)}
-                                        </span>
-                                      </div>
+                    return (
+                        <div
+                            key={job.id}
+                            className="bg-white/90 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
+                            onClick={() => setSelectedJob(job)}
+                            style={{
+                                animation: `slideIn 0.5s ease-out ${index * 0.1}s backwards`,
+                            }}
+                        >
+                            <div className="p-6">
+                                {/* Header Section */}
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
+                                            <Package className="text-white" size={28} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#00AEEF] transition-colors">
+                                                {job.orderId}
+                                            </h3>
+                                            <p className="text-gray-600">Delivery Address: {job.deliveryAddress}</p>
+                                            <p className="text-gray-600">Order Details: {job.order_details}</p>
+                                        </div>
                                     </div>
+
+                                    <div className="flex flex-col items-center">
+                                        <span
+                                            className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === "completed"
+                                                ? "bg-green-100 text-green-700"
+                                                : job.status === "booked"
+                                                    ? "bg-yellow-100 text-yellow-700"
+                                                    : "bg-orange-100 text-orange-700"
+                                                }`}
+                                        >
+                                            {job.status === "ordered"
+                                                ? "Ordered"
+                                                : job.status === "booked"
+                                                    ? "Booked"
+                                                    : "Completed"}
+                                        </span>
+                                        <img
+                                            src={job.imageUrl[0]}
+                                            onClick={() => window.open(job.imageUrl[0], "_blank")}
+                                            className="mt-4 w-[90px]"
+                                            alt="Order Illustration"
+                                        />
+                                        <p className="text-gray-600 text-[12px]">Click to open</p>
+                                    </div>
+                                </div>
+
+                                {/* Progress Tracker */}
+                                <div className="flex items-center justify-between">
+                                    {stages.map((stage, i) => {
+                                        const stageActive = i <= currentStageIndex;
+
+                                        return (
+                                            <div key={stage} className="flex items-center flex-1">
+                                                {/* Stage Circle */}
+                                                <div className="flex flex-col items-center flex-1">
+                                                    <div
+                                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                                            ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
+                                                            : "bg-gray-200 scale-90"
+                                                            }`}
+                                                    >
+                                                        {stage === "ordered" && (
+                                                            <Package
+                                                                className={`transition-all duration-300 ${stageActive
+                                                                    ? "text-white"
+                                                                    : "text-gray-400"
+                                                                    }`}
+                                                                size={32}
+                                                            />
+                                                        )}
+                                                        {stage === "booked" && (
+                                                            <Calendar
+                                                                className={`transition-all duration-300 ${stageActive
+                                                                    ? "text-white"
+                                                                    : "text-gray-400"
+                                                                    }`}
+                                                                size={32}
+                                                            />
+                                                        )}
+                                                        {stage === "completed" && (
+                                                            <CheckCircle2
+                                                                className={`transition-all duration-300 ${stageActive
+                                                                    ? "text-white"
+                                                                    : "text-gray-400"
+                                                                    }`}
+                                                                size={32}
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Stage Label */}
+                                                    <p
+                                                        className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive
+                                                            ? "text-gray-900"
+                                                            : "text-gray-400"
+                                                            }`}
+                                                    >
+                                                        {stage === "ordered"
+                                                            ? "Job Ordered"
+                                                            : stage === "booked"
+                                                                ? "Job Booked"
+                                                                : "Job Completed"}
+                                                    </p>
+
+                                                    {/* Date Display */}
+                                                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                                        <Calendar size={14} />
+                                                        <span>
+                                                            {stage === "ordered" && formatDate(job.orderDate)}
+                                                            {stage === "booked" && formatDate(job.deliveryDate)}
+                                                            {stage === "completed" && formatDate(job.deliveryDate)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Connector Line */}
+                                                {i < stages.length - 1 && (
+                                                    <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
+                                                        <div
+                                                            className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                                                ? "bg-[#00AEEF] w-full"
+                                                                : "bg-gray-200 w-0"
+                                                                }`}
+                                                        ></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+        </div>
+    )}
+</div>
 
                                     {/* Connector Line */}
                                     {i < stages.length - 1 && (

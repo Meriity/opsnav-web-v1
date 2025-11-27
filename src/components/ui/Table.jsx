@@ -11,11 +11,13 @@ import {
 } from "lucide-react";
 import Eye from "../../icons/Button icons/Frame 362.png";
 import Pagination from "./Pagination";
+import { useNavigate } from "react-router-dom";
 
 const Table = ({
   data,
   columns,
   onEdit,
+  EditOrder,
   onDelete,
   onReset,
   OnEye,
@@ -36,6 +38,7 @@ const Table = ({
   compact = false,
 }) => {
   const [currentData, setCurrentData] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setCurrentData(data.slice(0, itemsPerPage));
@@ -144,6 +147,7 @@ const Table = ({
           </thead>
           <tbody>
             {currentData.map((item) => (
+              
               <tr
                 key={item.id || item.email}
                 className={`bg-white rounded-2xl transition-all ${
@@ -256,6 +260,19 @@ const Table = ({
                           <img src={Eye} alt="View" className="h-[16px]" />
                           <span className="text-xs">View</span>
                         </button>
+                      )}
+                      {EditOrder && (
+                      <button
+                        onClick={() => {
+                          console.log("clicked!");
+                          navigate(`/admin/client/stages/${item.orderId}`);
+                        }}
+                        className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                        title="Edit"
+                      >
+                        <Edit size={12} />
+                        <span className="text-xs">Edit</span>
+                      </button>
                       )}
                     </div>
                   </td>
