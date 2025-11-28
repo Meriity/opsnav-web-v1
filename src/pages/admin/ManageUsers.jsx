@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { Search, Plus, Edit, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  Home,
+  FileText,
+  Newspaper,
+  Briefcase,
+} from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table"; // Used for desktop view
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -9,8 +20,31 @@ import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import NotificationAPI from "../../api/notificationAPI";
+
+const ACCESS_MODULES = [
+  {
+    value: "CONVEYANCING",
+    label: "Conveyancing",
+    icon: Home,
+    color: "bg-blue-500",
+  },
+  { value: "WILLS", label: "Wills", icon: FileText, color: "bg-emerald-500" },
+  {
+    value: "PRINT MEDIA",
+    label: "Print Media",
+    icon: Newspaper,
+    color: "bg-amber-500",
+  },
+  {
+    value: "COMMERCIAL",
+    label: "Commercial",
+    icon: Briefcase,
+    color: "bg-indigo-500",
+  },
+];
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -31,7 +65,7 @@ const useUserStore = create((set) => ({
         email: user.email,
         status: user.status,
         role: user.role,
-        canCreateUsers: user.canCreateUsers || false,
+        access: user.access || [],
         createdAt: new Date(user.createdAt)
           .toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -48,24 +82,6 @@ const useUserStore = create((set) => ({
     }
   },
 }));
-
-const useCurrentUser = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    // Get current user info from localStorage or context
-    const userData = localStorage.getItem("userData");
-    if (userData) {
-      try {
-        setCurrentUser(JSON.parse(userData));
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, []);
-
-  return currentUser;
-};
 
 // UsersPerPage dropdown component
 function UsersPerPage({ value, onChange }) {
@@ -88,6 +104,98 @@ function UsersPerPage({ value, onChange }) {
   );
 }
 
+function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
+  return (
+    <div className="mb-6">
+      <label className="block font-medium mb-3">Access Modules</label>
+      <div className="grid grid-cols-2 gap-3">
+        {ACCESS_MODULES.map((module) => (
+          <label key={module.value} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              value={module.value}
+              checked={selectedAccess.includes(module.value)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  onAccessChange([...selectedAccess, module.value]);
+                } else {
+                  onAccessChange(
+                    selectedAccess.filter((access) => access !== module.value)
+                  );
+                }
+              }}
+              className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">{module.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MobileAccessModulesDisplay({ access = [] }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (!access || access.length === 0) {
+    return <span className="text-gray-400">None</span>;
+  }
+
+  const getTargetPath = (currentPath, module) => {
+    const role = localStorage.getItem("role");
+    const basePath = role === "user" ? "/user" : "/admin";
+
+    if (currentPath.includes("/dashboard")) return `${basePath}/dashboard`;
+    if (currentPath.includes("/view-clients"))
+      return `${basePath}/view-clients`;
+    if (currentPath.includes("/manage-clients"))
+      return `${basePath}/manage-clients`;
+    if (currentPath.includes("/manage-users"))
+      return `${basePath}/manage-users`;
+    if (currentPath.includes("/archived-clients"))
+      return `${basePath}/archived-clients`;
+    if (currentPath.includes("/client/stages")) return `${basePath}/dashboard`;
+    return `${basePath}/dashboard`;
+  };
+
+  const handleModuleClick = (module) => {
+    // Save the module to localStorage
+    localStorage.setItem("currentModule", module.value.toLowerCase());
+    localStorage.setItem("workType", module.value.toUpperCase());
+
+    // Dispatch event to update the sidebar
+    window.dispatchEvent(new Event("moduleChanged"));
+
+    // Navigate to the appropriate page
+    const targetPath = getTargetPath(location.pathname, module);
+    setTimeout(() => {
+      navigate(targetPath);
+    }, 100);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {ACCESS_MODULES.map((module) => {
+        if (access.includes(module.value)) {
+          const ModuleIcon = module.icon;
+          return (
+            <button
+              key={module.value}
+              onClick={() => handleModuleClick(module)}
+              className={`w-5 h-5 rounded flex items-center justify-center ${module.color} text-white hover:scale-110 transition-transform cursor-pointer`}
+              title={`Switch to ${module.label}`}
+            >
+              <ModuleIcon className="w-2.5 h-2.5" strokeWidth={2.5} />
+            </button>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
 export default function ManageUsers() {
   const { users, isFetched, loading, fetchUsers, setIsFetched } =
     useUserStore();
@@ -106,21 +214,14 @@ export default function ManageUsers() {
   const [usersPerPage, setUsersPerPage] = useState(5);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [selectedAccess, setSelectedAccess] = useState([]);
+  const [editAccess, setEditAccess] = useState([]);
+
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
-
-  const currentUserRole = localStorage.getItem("role");
-  const isSuperAdmin = currentUserRole === "superadmin";
-
-  useEffect(() => {
-    console.log("=== SIMPLE DEBUG ===");
-    console.log("User Role:", currentUserRole);
-    console.log("Is Super Admin:", isSuperAdmin);
-    console.log("===================");
-  }, [currentUserRole, isSuperAdmin]);
 
   const handleChange = (e) => {
     setRole(e.target.value);
@@ -146,43 +247,23 @@ export default function ManageUsers() {
     }
   }, [searchQuery, users]);
 
-  const displayUserList = userList.map((user) => ({
-    ...user,
-    // Keep original canCreateUsers for editing
-    // Create a display version for the table
-    displayCanCreateUsers: user.canCreateUsers ? "Yes" : "No",
-  }));
-
-  // Update columns to use the display version
   const columns = [
     { key: "displayName", title: "Display Name" },
     { key: "email", title: "Email" },
     { key: "status", title: "Status" },
     { key: "role", title: "Role" },
-    ...(isSuperAdmin
-      ? [{ key: "displayCanCreateUsers", title: "Can Create Users" }]
-      : []),
+    {
+      key: "access",
+      title: "Access Modules",
+      render: null,
+    },
     { key: "createdAt", title: "Created At" },
   ];
 
-  const handleEdit = (displayUser) => {
-    // Find the original user from userList (not displayUserList)
-    const originalUser = userList.find((u) => u.id === displayUser.id);
-    if (originalUser) {
-      setSelectedUser(originalUser);
-      setOpenEdit(true);
-    }
-  };
-
-  const handleUserCreation = async (
-    display_name,
-    email,
-    role,
-    canCreateUsers = false
-  ) => {
+  const handleUserCreation = async (display_name, email, role) => {
     try {
       setIsLoading(true);
-      await api.createUser(email, role, display_name, canCreateUsers);
+      await api.createUser(email, role, display_name, selectedAccess);
 
       // Create notification
       const notificationAPI = new NotificationAPI();
@@ -199,6 +280,7 @@ export default function ManageUsers() {
 
       toast.success("User created successfully!");
       setOpenUser(false);
+      setSelectedAccess([]);
       setIsFetched(false);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -216,13 +298,7 @@ export default function ManageUsers() {
     }
   };
 
-  const handleUserCreationIDG = async (
-    display_name,
-    email,
-    role,
-    password,
-    canCreateUsers = false
-  ) => {
+  const handleUserCreationIDG = async (display_name, email, role, password) => {
     try {
       setIsLoading(true);
       await api.createUserIDG(
@@ -230,10 +306,11 @@ export default function ManageUsers() {
         role,
         display_name,
         password,
-        canCreateUsers
+        selectedAccess
       );
       toast.success("User created successfully!");
       setOpenUserIDG(false);
+      setSelectedAccess([]);
       setIsFetched(false);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -253,7 +330,10 @@ export default function ManageUsers() {
 
   const handleUserUpdate = async () => {
     try {
-      await api.editUser(selectedUser);
+      await api.editUser({
+        ...selectedUser,
+        access: editAccess,
+      });
       toast.success("User updated successfully!");
       setOpenEdit(false);
       setIsFetched(false);
@@ -293,6 +373,12 @@ export default function ManageUsers() {
     }
   };
 
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditAccess(user.access || []);
+    setOpenEdit(true);
+  };
+
   const shouldShowCreateButton = () => {
     if (currentModule === "commercial") {
       return true;
@@ -324,7 +410,9 @@ export default function ManageUsers() {
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <h2 className="text-2xl font-semibold">
-            {currentModule === "commercial" ? "Manage Users" : "Manage Users"}
+            {currentModule === "commercial"
+              ? "Manage Users - Commercial"
+              : "Manage Users"}
           </h2>
           {shouldShowCreateButton() && (
             <Button
@@ -350,19 +438,22 @@ export default function ManageUsers() {
                 />
               </div>
               <Table
-                data={displayUserList}
+                data={userList}
                 columns={columns}
-                onEdit={handleEdit}
+                onEdit={(user) => {
+                  handleEditClick(user);
+                }}
+                // onReset={handleReset}
                 onDelete={(user) => {
-                  // Handle both original and display users
-                  const userId = user.id;
-                  setId(userId);
+                  setId(user.id);
                   setOpenDelete(true);
                 }}
                 itemsPerPage={usersPerPage}
                 headerBgColor="bg-[#A6E7FF]"
                 cellWrappingClass="whitespace-normal"
                 compact={true}
+                // resetLoadingEmail={resetLoadingEmail}
+                // resetSuccessEmail={resetSuccessEmail}
               />
             </div>
             {/* Mobile & Tablet Card View */}
@@ -374,6 +465,8 @@ export default function ManageUsers() {
                 />
               </div>
               {userList.slice(0, usersPerPage).map((user) => {
+                // const isRowLoading = resetLoadingEmail === user.email;
+                // const isRowSuccess = resetSuccessEmail === user.email;
                 return (
                   <div
                     key={user.id}
@@ -388,12 +481,9 @@ export default function ManageUsers() {
                           {user.email}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex items-center space-x-2 shrink-0">
                         <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenEdit(true);
-                          }}
+                          onClick={() => handleEditClick(user)}
                           title="Edit"
                           className="flex flex-col items-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
                         >
@@ -411,10 +501,45 @@ export default function ManageUsers() {
                           <Trash2 size={16} />
                           <span className="text-xs mt-1">Delete</span>
                         </button>
+                        {/* <button
+                          onClick={() => handleReset(user.email)}
+                          disabled={isRowLoading}
+                          title={
+                            isRowLoading
+                              ? "Sending reset link..."
+                              : isRowSuccess
+                              ? "Reset link sent"
+                              : "Reset Password"
+                          }
+                          className={`flex flex-col items-center p-2 rounded-lg transition-colors
+                            ${
+                              isRowSuccess
+                                ? "text-green-600 hover:text-green-700 hover:bg-green-50"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }
+                            ${
+                              isRowLoading
+                                ? "opacity-60 cursor-not-allowed"
+                                : ""
+                            }`}
+                        >
+                          {isRowLoading ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <RefreshCw size={16} />
+                          )}
+                          <span className="text-xs mt-1">
+                            {isRowLoading
+                              ? "Sending…"
+                              : isRowSuccess
+                              ? "Sent"
+                              : "Reset"}
+                          </span>
+                        </button> */}
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex flex-col space-y-2 text-sm">
                         <div>
                           <span className="font-semibold text-gray-500">
                             Status:
@@ -427,14 +552,12 @@ export default function ManageUsers() {
                           </span>{" "}
                           {user.role}
                         </div>
-                        {isSuperAdmin && (
-                          <div>
-                            <span className="font-semibold text-gray-500">
-                              Can Create:
-                            </span>{" "}
-                            {user.canCreateUsers ? "Yes" : "No"}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-500">
+                            Access:
+                          </span>
+                          <MobileAccessModulesDisplay access={user.access} />
+                        </div>
                         <div>
                           <span className="font-semibold text-gray-500">
                             Created:
@@ -462,8 +585,7 @@ export default function ManageUsers() {
                 const form = new FormData(e.target);
                 const email = form.get("email");
                 const display_name = form.get("name");
-                const canCreateUsers = form.get("canCreateUsers") === "on";
-                handleUserCreation(display_name, email, role, canCreateUsers);
+                handleUserCreation(display_name, email, role);
               }}
               className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
             >
@@ -489,8 +611,13 @@ export default function ManageUsers() {
                 placeholder="Display Name"
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
-              <label className="block font-medium mb-2">Role</label>
-              <div className="flex gap-6 mb-4">
+
+              <AccessModulesCheckbox
+                selectedAccess={selectedAccess}
+                onAccessChange={setSelectedAccess}
+              />
+
+              <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -514,24 +641,6 @@ export default function ManageUsers() {
                   Admin
                 </label>
               </div>
-
-              {/* Can Create Users Checkbox - Only for Super Admin */}
-              {isSuperAdmin && (
-                <div className="mb-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name="canCreateUsers"
-                      className="form-checkbox text-blue-600 rounded"
-                    />
-                    <span className="font-medium">Can Create Users</span>
-                  </label>
-                  <p className="text-sm text-gray-600 mt-1 ml-6">
-                    Allow this user to create other users
-                  </p>
-                </div>
-              )}
-
               <button
                 type={isLoading ? "button" : "submit"}
                 disabled={isLoading}
@@ -560,14 +669,7 @@ export default function ManageUsers() {
                 const email = form.get("email");
                 const display_name = form.get("name");
                 const password = form.get("password");
-                const canCreateUsers = form.get("canCreateUsers") === "on";
-                handleUserCreationIDG(
-                  display_name,
-                  email,
-                  role,
-                  password,
-                  canCreateUsers
-                );
+                handleUserCreationIDG(display_name, email, role, password);
               }}
               className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
             >
@@ -600,8 +702,13 @@ export default function ManageUsers() {
                 placeholder="Password"
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
+
+              <AccessModulesCheckbox
+                selectedAccess={selectedAccess}
+                onAccessChange={setSelectedAccess}
+              />
               <label className="block font-medium mb-2">Role</label>
-              <div className="flex gap-6 mb-4">
+              <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -625,24 +732,6 @@ export default function ManageUsers() {
                   Admin
                 </label>
               </div>
-
-              {/* Can Create Users Checkbox - Only for Super Admin */}
-              {isSuperAdmin && (
-                <div className="mb-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name="canCreateUsers"
-                      className="form-checkbox text-blue-600 rounded"
-                    />
-                    <span className="font-medium">Can Create Users</span>
-                  </label>
-                  <p className="text-sm text-gray-600 mt-1 ml-6">
-                    Allow this user to create other users
-                  </p>
-                </div>
-              )}
-
               <button
                 type={isLoading ? "button" : "submit"}
                 disabled={isLoading}
@@ -685,7 +774,12 @@ export default function ManageUsers() {
                 }
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
-              <div className="flex gap-6 mb-4">
+
+              <AccessModulesCheckbox
+                selectedAccess={editAccess}
+                onAccessChange={setEditAccess}
+              />
+              <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -709,30 +803,6 @@ export default function ManageUsers() {
                   Admin
                 </label>
               </div>
-
-              {/* Can Create Users Checkbox - Only for Super Admin */}
-              {isSuperAdmin && (
-                <div className="mb-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedUser.canCreateUsers || false}
-                      onChange={(e) =>
-                        setSelectedUser({
-                          ...selectedUser,
-                          canCreateUsers: e.target.checked,
-                        })
-                      }
-                      className="form-checkbox text-blue-600 rounded"
-                    />
-                    <span className="font-medium">Can Create Users</span>
-                  </label>
-                  <p className="text-sm text-gray-600 mt-1 ml-6">
-                    Allow this user to create other users
-                  </p>
-                </div>
-              )}
-
               <Button label="Update" onClick={handleUserUpdate} />
             </DialogPanel>
           </div>
@@ -771,6 +841,12 @@ export default function ManageUsers() {
           </div>
         </div>
       </Dialog>
+
+      {/* a11y live announcements (non-visual) */}
+      {/* <div className="sr-only" aria-live="polite">
+        {resetLoadingEmail && `Sending reset link to ${resetLoadingEmail}`}
+        {resetSuccessEmail && `Reset link sent to ${resetSuccessEmail}`}
+      </div> */}
     </div>
   );
 }
