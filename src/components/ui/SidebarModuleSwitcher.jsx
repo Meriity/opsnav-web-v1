@@ -146,7 +146,7 @@ function SidebarModuleSwitcher() {
           />
           <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full z-50 sm:mt-2">
             <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden mx-0 sm:mx-0">
-              <div className="p-3 bg-linear-to-r from-slate-800 to-slate-900">
+              <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-white text-sm">
@@ -183,7 +183,7 @@ function SidebarModuleSwitcher() {
                       }`}
                     >
                       <div
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${moduleColors} transition-all duration-200`}
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${moduleColors} transition-all duration-200`}
                       >
                         <ModuleIcon
                           className="w-3.5 h-3.5 sm:w-4 sm:h-4"
@@ -207,7 +207,7 @@ function SidebarModuleSwitcher() {
                         </div>
                       </div>
                       {currentModule === module && (
-                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shrink-0">
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                           <Check
                             className="w-2 h-2 text-white"
                             strokeWidth={3}
