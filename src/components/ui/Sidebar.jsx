@@ -1,192 +1,203 @@
-    import { useLocation, useNavigate } from "react-router-dom";
-    import DashboardIcon from "../../icons/Sidebar icons/Dashboard.svg";
-    import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
-    import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
-    import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
-    import { useDropdown } from "../../hooks/dropdown";
-    import {
-      ChevronsUpDown,
-      LogOut,
-      CircleUserRound,
-      ChevronLeft,
-      ChevronRight,
-      ListOrdered,
-    } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import DashboardIcon from "../../icons/Sidebar icons/Dashboard.svg";
+import ManageUsersIcon from "../../icons/Sidebar icons/Manage_users.svg";
+import ViewClientsIcon from "../../icons/Sidebar icons/ViewClients.svg";
+import ArchivedChatsIcon from "../../icons/Sidebar icons/ArchievedClients.svg";
+import { useDropdown } from "../../hooks/dropdown";
+import {
+  ChevronsUpDown,
+  LogOut,
+  CircleUserRound,
+  ChevronLeft,
+  ChevronRight,
+  ListOrdered,
+} from "lucide-react";
 
-    export default function Sidebar({
-      setSidebarOpen,
-      isCollapsed,
-      onCollapseToggle,
-    }) {
-      const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
-      const location = useLocation();
-      const navigate = useNavigate();
-      const isAdminRoute = location.pathname.startsWith("/admin");
-      const company = localStorage.getItem("company");
-      const userRole = localStorage.getItem("role");
+export default function Sidebar({
+  setSidebarOpen,
+  isCollapsed,
+  onCollapseToggle,
+}) {
+  const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const company = localStorage.getItem("company");
+  const userRole = localStorage.getItem("role");
+  const currentModule = localStorage.getItem("currentModule");
 
-      const menuItems = [
-        {
-          label: "Dashboard",
-          icon: DashboardIcon,
-          to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
-        },
-        {
-          label:
-            company === "vkl"
-              ? "View Clients"
-              : company === "idg"
-              ? "View Orders"
-              : "View",
-          icon: ViewClientsIcon,
-          to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
-        },
-        {
-          label:
-            company === "vkl"
-              ? "Archived Clients"
-              : company === "idg"
-              ? "Completed Orders"
-              : "Completed/Archived",
-          icon: ArchivedChatsIcon,
-          to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
-        },
-      ];
-
-      // if (isAdminRoute) {
-      if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
-        menuItems.splice(1, 0, {
-          label: "Manage Users",
-          icon: ManageUsersIcon,
-          to: "/admin/manage-users",
-        });
-      }
-
-      if (company==="idg"&&isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
-        menuItems.splice(2, 0, {
-          label: "Manage Clients",
-          icon: ManageUsersIcon,
-          to: "/admin/manage-clients",
-        });
-      }
-
-      const handleLogout = () => {
-        localStorage.removeItem("user");
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("client-storage");
-        localStorage.removeItem("matterNumber");
-        // This line forces a hard refresh
-        window.location.href = "/admin/login";
+  // Get appropriate labels based on company and module
+  const getMenuLabels = () => {
+    if (currentModule === "commercial") {
+      return {
+        view: "View Projects",
+        archived: "Archived Projects",
       };
-
-      const handleViewClientsClick = () => {
-        localStorage.removeItem("client-storage");
-        navigate(isAdminRoute ? "/admin/view-clients" : "/user/view-clients");
-        if (typeof setSidebarOpen === "function") {
-          setSidebarOpen(false);
-        }
+    } else if (company === "idg") {
+      return {
+        view: "View Orders",
+        archived: "Completed Orders",
       };
-
-      const handleNavigate = (to) => {
-        navigate(to);
-        if (typeof setSidebarOpen === "function") {
-          setSidebarOpen(false);
-        }
+    } else {
+      return {
+        view: "View Clients",
+        archived: "Archived Clients",
       };
+    }
+  };
 
-      return (
-        <aside className="flex flex-col h-screen justify-between px-4 py-8 bg-white relative">
-          <div>
-            <div className="flex px-2 justify-center">
-              <img
-                className={`${
-                  isCollapsed ? "w-[40px]" : "w-[120px]"
-                } h-auto transition-all duration-300`}
-                src={
-                  localStorage.getItem("logo") ||
-                  "https://via.placeholder.com/70x58"
-                }
-                alt="Logo"
-              />
-            </div>
+  const menuLabels = getMenuLabels();
 
-            {/* Desktop Toggle Button */}
-            <button
-              onClick={onCollapseToggle}
-              className="hidden md:flex absolute top-1/2 -right-4 transform -translate-y-1/2 p-1 rounded-full bg-gray-200 shadow-md z-50 hover:bg-gray-300"
-            >
-              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </button>
+  const menuItems = [
+    {
+      label: "Dashboard",
+      icon: DashboardIcon,
+      to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
+    },
+    {
+      label: menuLabels.view,
+      icon: ViewClientsIcon,
+      to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
+    },
+    {
+      label: menuLabels.archived,
+      icon: ArchivedChatsIcon,
+      to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
+    },
+  ];
 
-            <nav className="flex flex-col space-y-4 mt-7">
-              {menuItems.map(({ label, icon, to }) => {
-                const isActive = location.pathname === to;
-                const handleClick =
-                  label === "View Clients"
-                    ? handleViewClientsClick
-                    : () => handleNavigate(to);
+  // Add Manage Users for admin routes only
+  if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
+    menuItems.splice(1, 0, {
+      label: "Manage Users",
+      icon: ManageUsersIcon,
+      to: "/admin/manage-users",
+    });
+  }
 
-                return (
-                  <button
-                    key={to}
-                    onClick={handleClick}
-                    title={label}
-                    className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full ${
-                      isActive
-                        ? "bg-[#00AEEF] text-white"
-                        : "hover:bg-gray-100 text-gray-800"
-                    } ${isCollapsed ? "justify-center" : "text-left"}`}
-                  >
-                    <img
-                      src={icon}
-                      alt={label}
-                      className={`w-[30px] h-[30px] ${
-                        isActive ? "filter brightness-0 invert" : ""
-                      }`}
-                    />
-                    {!isCollapsed && (
-                      <span className="ml-4 font-medium">{label}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="relative">
-            <button
-              ref={buttonRef}
-              onClick={() => setIsOpen((prev) => !prev)}
-              className={`px-4 py-2 cursor-pointer flex text-black w-full items-center ${
-                isCollapsed ? "justify-center" : "justify-between"
-              } bg-sky-100 rounded-2xl`}
-            >
-              <div className="flex gap-2 items-center truncate">
-                <CircleUserRound />
-                {!isCollapsed && (
-                  <span className="truncate">{localStorage.getItem("user")}</span>
-                )}
-              </div>
-              {!isCollapsed && <ChevronsUpDown className="w-5 shrink-0" />}
-            </button>
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("client-storage");
+    localStorage.removeItem("matterNumber");
+    // This line forces a hard refresh
+    window.location.href = "/admin/login";
+  };
 
-            {isOpen && (
-              <div
-                ref={dropdownRef}
-                className="absolute bottom-full mb-2 bg-white shadow-lg p-2 rounded w-full border"
+  const handleViewClientsClick = () => {
+    localStorage.removeItem("client-storage");
+    navigate(isAdminRoute ? "/admin/view-clients" : "/user/view-clients");
+    if (typeof setSidebarOpen === "function") {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleNavigate = (to) => {
+    navigate(to);
+    if (typeof setSidebarOpen === "function") {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Update the click handler to handle all view items
+  const getClickHandler = (label, to) => {
+    // For all view items (View Clients, View Orders, View Projects)
+    if (label === menuLabels.view) {
+      return handleViewClientsClick;
+    }
+    return () => handleNavigate(to);
+  };
+
+  return (
+    <aside className="flex flex-col h-screen justify-between px-4 py-8 bg-white relative">
+      <div>
+        <div className="flex px-2 justify-center">
+          <img
+            className={`${
+              isCollapsed ? "w-[40px]" : "w-[120px]"
+            } h-auto transition-all duration-300`}
+            src={
+              localStorage.getItem("logo") ||
+              "https://via.placeholder.com/70x58"
+            }
+            alt="Logo"
+          />
+        </div>
+
+        {/* Desktop Toggle Button */}
+        <button
+          onClick={onCollapseToggle}
+          className="hidden md:flex absolute top-1/2 -right-4 transform -translate-y-1/2 p-1 rounded-full bg-gray-200 shadow-md z-50 hover:bg-gray-300"
+        >
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+
+        <nav className="flex flex-col space-y-4 mt-7">
+          {menuItems.map(({ label, icon, to }) => {
+            const isActive = location.pathname === to;
+            const handleClick = getClickHandler(label, to);
+
+            return (
+              <button
+                key={to}
+                onClick={handleClick}
+                title={label}
+                className={`flex items-center cursor-pointer px-4 py-2 rounded-md transition-colors w-full ${
+                  isActive
+                    ? "bg-[#00AEEF] text-white"
+                    : "hover:bg-gray-100 text-gray-800"
+                } ${isCollapsed ? "justify-center" : "text-left"}`}
               >
-                <button
-                  onClick={handleLogout}
-                  title="Logout"
-                  className={`w-full px-4 py-2 flex items-center rounded cursor-pointer text-black hover:bg-sky-100 ${
-                    isCollapsed ? "justify-center" : "justify-between"
+                <img
+                  src={icon}
+                  alt={label}
+                  className={`w-[30px] h-[30px] ${
+                    isActive ? "filter brightness-0 invert" : ""
                   }`}
-                >
-                  {!isCollapsed && <span>Logout</span>}
-                  <LogOut className="w-4 shrink-0" />
-                </button>
-              </div>
+                />
+                {!isCollapsed && (
+                  <span className="ml-4 font-medium">{label}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen((prev) => !prev)}
+          className={`px-4 py-2 cursor-pointer flex text-black w-full items-center ${
+            isCollapsed ? "justify-center" : "justify-between"
+          } bg-sky-100 rounded-2xl`}
+        >
+          <div className="flex gap-2 items-center truncate">
+            <CircleUserRound />
+            {!isCollapsed && (
+              <span className="truncate">{localStorage.getItem("user")}</span>
             )}
           </div>
-        </aside>
-      );
-    }
+          {!isCollapsed && <ChevronsUpDown className="w-5 shrink-0" />}
+        </button>
+
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute bottom-full mb-2 bg-white shadow-lg p-2 rounded w-full border"
+          >
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className={`w-full px-4 py-2 flex items-center rounded cursor-pointer text-black hover:bg-sky-100 ${
+                isCollapsed ? "justify-center" : "justify-between"
+              }`}
+            >
+              {!isCollapsed && <span>Logout</span>}
+              <LogOut className="w-4 shrink-0" />
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}

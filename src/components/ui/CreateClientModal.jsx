@@ -91,7 +91,6 @@ export default function CreateClientModal({
   setIsOpen,
   companyName,
   createType,
-  onClose
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -473,11 +472,11 @@ export default function CreateClientModal({
             "password",
             "email",
             "billingAddress",
+            "country",
             "state",
             "postcode",
             "abn",
           ];
-          console.log(formData);
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
@@ -491,14 +490,13 @@ export default function CreateClientModal({
             email: formData.email,
             password: formData.password,
             billingAddress: formData.billingAddress,
-            country: "Australia",
+            country: formData.country,
             state: formData.state,
             postcode: formData.postcode,
             abn: formData.abn,
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
-          onClose();
         } else if (createType === "order") {
           const requiredFields = [
             "client",
@@ -531,7 +529,6 @@ export default function CreateClientModal({
           console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
-          onClose();
         }
       }
       setIsOpen(false);
@@ -606,10 +603,11 @@ export default function CreateClientModal({
                         onChange={handleChange}
                         pattern="[0-9]*"
                         inputMode="numeric"
-                        className={`w-full px-4 py-2 rounded-md border ${matterNumberError
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } bg-white/80 backdrop-blur-sm`}
+                        className={`w-full px-4 py-2 rounded-md border ${
+                          matterNumberError
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } bg-white/80 backdrop-blur-sm`}
                         required
                       />
                       {matterNumberError && (
@@ -849,37 +847,20 @@ export default function CreateClientModal({
                       <input
                         type="text"
                         name="country"
-                        value={"Australia"}
-                        readOnly
-                        // onChange={handleChange}
+                        value={formData.country || ""}
+                        onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                       />
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">State</label>
-                      {/* <input
+                      <input
                         type="text"
                         name="state"
                         value={formData.state || ""}
                         onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      /> */}
-                      <select
-                        name="state"
-                        value={formData.state || ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      >
-                        <option value={""}>Select State</option>
-                        <option value={"ACT"}>ACT</option>
-                        <option value={"NSW"}>NSW</option>
-                        <option value={"NT"}>NT</option>
-                        <option value={"QLD"}>QLD</option>
-                        <option value={"SA"}>SA</option>
-                        <option value={"TAS"}>TAS</option>
-                        <option value={"VIC"}>VIC</option>
-                        <option value={"WA"}>WA</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">Postcode</label>
@@ -1101,10 +1082,11 @@ export default function CreateClientModal({
                 <button
                   type="submit"
                   disabled={isLoading || !!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${isLoading || matterNumberError
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-sky-600 hover:shadow-lg"
-                    }`}
+                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${
+                    isLoading || matterNumberError
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-sky-600 hover:shadow-lg"
+                  }`}
                 >
                   {isLoading ? "Creating..." : getModalTitle()}
                 </button>

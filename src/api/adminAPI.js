@@ -30,7 +30,7 @@ class AdminAPI {
   }
 
   // Create new User
-  async createUser(email, role, displayName, access = []) {
+  async createUser(email, role, displayName, canCreateUsers = false) {
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
         method: "POST",
@@ -39,7 +39,7 @@ class AdminAPI {
           email,
           role,
           display_name: displayName,
-          access,
+          canCreateUsers,
         }),
       });
 
@@ -62,7 +62,13 @@ class AdminAPI {
   }
 
   // Create new User
-  async createUserIDG(email, role, displayName, password, access = []) {
+  async createUserIDG(
+    email,
+    role,
+    displayName,
+    password,
+    canCreateUsers = false
+  ) {
     try {
       const response = await fetch(`${this.baseUrl}/admin/idg/users`, {
         method: "POST",
@@ -72,7 +78,7 @@ class AdminAPI {
           role,
           display_name: displayName,
           password,
-          access,
+          canCreateUsers,
         }),
       });
 
@@ -178,7 +184,7 @@ class AdminAPI {
         body: JSON.stringify({
           displayName: user.displayName,
           role: user.role,
-          access: user.access || [],
+          canCreateUsers: user.canCreateUsers,
         }),
       });
 
