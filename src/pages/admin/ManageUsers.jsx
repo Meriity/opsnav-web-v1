@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { Search, Plus, Edit, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  Home,
+  FileText,
+  Newspaper,
+  Briefcase,
+} from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table"; // Used for desktop view
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -9,8 +20,31 @@ import Header from "../../components/layout/Header";
 import Loader from "../../components/ui/Loader";
 import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import NotificationAPI from "../../api/notificationAPI";
+
+const ACCESS_MODULES = [
+  {
+    value: "CONVEYANCING",
+    label: "Conveyancing",
+    icon: Home,
+    color: "bg-blue-500",
+  },
+  { value: "WILLS", label: "Wills", icon: FileText, color: "bg-emerald-500" },
+  {
+    value: "PRINT MEDIA",
+    label: "Print Media",
+    icon: Newspaper,
+    color: "bg-amber-500",
+  },
+  {
+    value: "COMMERCIAL",
+    label: "Commercial",
+    icon: Briefcase,
+    color: "bg-indigo-500",
+  },
+];
 
 // 🔸 Zustand Store
 const useUserStore = create((set) => ({
@@ -31,6 +65,7 @@ const useUserStore = create((set) => ({
         email: user.email,
         status: user.status,
         role: user.role,
+        access: user.access || [],
         createdAt: new Date(user.createdAt)
           .toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -69,6 +104,98 @@ function UsersPerPage({ value, onChange }) {
   );
 }
 
+function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
+  return (
+    <div className="mb-6">
+      <label className="block font-medium mb-3">Access Modules</label>
+      <div className="grid grid-cols-2 gap-3">
+        {ACCESS_MODULES.map((module) => (
+          <label key={module.value} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              value={module.value}
+              checked={selectedAccess.includes(module.value)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  onAccessChange([...selectedAccess, module.value]);
+                } else {
+                  onAccessChange(
+                    selectedAccess.filter((access) => access !== module.value)
+                  );
+                }
+              }}
+              className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">{module.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MobileAccessModulesDisplay({ access = [] }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (!access || access.length === 0) {
+    return <span className="text-gray-400">None</span>;
+  }
+
+  const getTargetPath = (currentPath, module) => {
+    const role = localStorage.getItem("role");
+    const basePath = role === "user" ? "/user" : "/admin";
+
+    if (currentPath.includes("/dashboard")) return `${basePath}/dashboard`;
+    if (currentPath.includes("/view-clients"))
+      return `${basePath}/view-clients`;
+    if (currentPath.includes("/manage-clients"))
+      return `${basePath}/manage-clients`;
+    if (currentPath.includes("/manage-users"))
+      return `${basePath}/manage-users`;
+    if (currentPath.includes("/archived-clients"))
+      return `${basePath}/archived-clients`;
+    if (currentPath.includes("/client/stages")) return `${basePath}/dashboard`;
+    return `${basePath}/dashboard`;
+  };
+
+  const handleModuleClick = (module) => {
+    // Save the module to localStorage
+    localStorage.setItem("currentModule", module.value.toLowerCase());
+    localStorage.setItem("workType", module.value.toUpperCase());
+
+    // Dispatch event to update the sidebar
+    window.dispatchEvent(new Event("moduleChanged"));
+
+    // Navigate to the appropriate page
+    const targetPath = getTargetPath(location.pathname, module);
+    setTimeout(() => {
+      navigate(targetPath);
+    }, 100);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {ACCESS_MODULES.map((module) => {
+        if (access.includes(module.value)) {
+          const ModuleIcon = module.icon;
+          return (
+            <button
+              key={module.value}
+              onClick={() => handleModuleClick(module)}
+              className={`w-5 h-5 rounded flex items-center justify-center ${module.color} text-white hover:scale-110 transition-transform cursor-pointer`}
+              title={`Switch to ${module.label}`}
+            >
+              <ModuleIcon className="w-2.5 h-2.5" strokeWidth={2.5} />
+            </button>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
 export default function ManageUsers() {
   const { users, isFetched, loading, fetchUsers, setIsFetched } =
     useUserStore();
@@ -86,6 +213,9 @@ export default function ManageUsers() {
   const [userList, setUserList] = useState([]);
   const [usersPerPage, setUsersPerPage] = useState(5);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [selectedAccess, setSelectedAccess] = useState([]);
+  const [editAccess, setEditAccess] = useState([]);
 
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -122,13 +252,18 @@ export default function ManageUsers() {
     { key: "email", title: "Email" },
     { key: "status", title: "Status" },
     { key: "role", title: "Role" },
+    {
+      key: "access",
+      title: "Access Modules",
+      render: null,
+    },
     { key: "createdAt", title: "Created At" },
   ];
 
   const handleUserCreation = async (display_name, email, role) => {
     try {
       setIsLoading(true);
-      await api.createUser(email, role, display_name);
+      await api.createUser(email, role, display_name, selectedAccess);
 
       // Create notification
       const notificationAPI = new NotificationAPI();
@@ -145,6 +280,7 @@ export default function ManageUsers() {
 
       toast.success("User created successfully!");
       setOpenUser(false);
+      setSelectedAccess([]);
       setIsFetched(false);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -165,9 +301,16 @@ export default function ManageUsers() {
   const handleUserCreationIDG = async (display_name, email, role, password) => {
     try {
       setIsLoading(true);
-      await api.createUserIDG(email, role, display_name, password);
+      await api.createUserIDG(
+        email,
+        role,
+        display_name,
+        password,
+        selectedAccess
+      );
       toast.success("User created successfully!");
       setOpenUserIDG(false);
+      setSelectedAccess([]);
       setIsFetched(false);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -187,7 +330,10 @@ export default function ManageUsers() {
 
   const handleUserUpdate = async () => {
     try {
-      await api.editUser(selectedUser);
+      await api.editUser({
+        ...selectedUser,
+        access: editAccess,
+      });
       toast.success("User updated successfully!");
       setOpenEdit(false);
       setIsFetched(false);
@@ -225,6 +371,12 @@ export default function ManageUsers() {
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditAccess(user.access || []);
+    setOpenEdit(true);
   };
 
   const shouldShowCreateButton = () => {
@@ -288,13 +440,12 @@ export default function ManageUsers() {
               <Table
                 data={userList}
                 columns={columns}
-                onEdit={(u) => {
-                  setSelectedUser(u);
-                  setOpenEdit(true);
+                onEdit={(user) => {
+                  handleEditClick(user);
                 }}
                 // onReset={handleReset}
-                onDelete={(id) => {
-                  setId(id);
+                onDelete={(user) => {
+                  setId(user.id);
                   setOpenDelete(true);
                 }}
                 itemsPerPage={usersPerPage}
@@ -330,12 +481,9 @@ export default function ManageUsers() {
                           {user.email}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex items-center space-x-2 shrink-0">
                         <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenEdit(true);
-                          }}
+                          onClick={() => handleEditClick(user)}
                           title="Edit"
                           className="flex flex-col items-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
                         >
@@ -391,7 +539,7 @@ export default function ManageUsers() {
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex flex-col space-y-2 text-sm">
                         <div>
                           <span className="font-semibold text-gray-500">
                             Status:
@@ -403,6 +551,12 @@ export default function ManageUsers() {
                             Role:
                           </span>{" "}
                           {user.role}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-500">
+                            Access:
+                          </span>
+                          <MobileAccessModulesDisplay access={user.access} />
                         </div>
                         <div>
                           <span className="font-semibold text-gray-500">
@@ -457,7 +611,12 @@ export default function ManageUsers() {
                 placeholder="Display Name"
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
-              <label className="block font-medium mb-2">Role</label>
+
+              <AccessModulesCheckbox
+                selectedAccess={selectedAccess}
+                onAccessChange={setSelectedAccess}
+              />
+
               <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
                   <input
@@ -543,6 +702,11 @@ export default function ManageUsers() {
                 placeholder="Password"
                 className="w-full mb-4 px-4 py-3 border rounded"
               />
+
+              <AccessModulesCheckbox
+                selectedAccess={selectedAccess}
+                onAccessChange={setSelectedAccess}
+              />
               <label className="block font-medium mb-2">Role</label>
               <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
@@ -609,6 +773,11 @@ export default function ManageUsers() {
                   setSelectedUser({ ...selectedUser, email: e.target.value })
                 }
                 className="w-full mb-4 px-4 py-3 border rounded"
+              />
+
+              <AccessModulesCheckbox
+                selectedAccess={editAccess}
+                onAccessChange={setEditAccess}
               />
               <div className="flex gap-6 mb-6">
                 <label className="flex items-center gap-2">
