@@ -11,7 +11,117 @@ import {
 } from "lucide-react";
 import Eye from "../../icons/Button icons/Frame 362.png";
 import Pagination from "./Pagination";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
+import {
+  Home,
+  FileText,
+  Newspaper,
+  Briefcase,
+  Printer,
+  Folder,
+} from "lucide-react";
+
+// Access Modules Configuration (same as in ManageUsers.jsx)
+const ACCESS_MODULES = [
+  {
+    value: "CONVEYANCING",
+    label: "Conveyancing",
+    icon: Home,
+    color: "bg-blue-500",
+  },
+  {
+    value: "WILLS",
+    label: "Wills & Estates",
+    icon: FileText,
+    color: "bg-emerald-500",
+  },
+  {
+    value: "PRINT MEDIA",
+    label: "Print Media",
+    icon: Newspaper,
+    color: "bg-amber-500",
+  },
+  {
+    value: "COMMERCIAL",
+    label: "Commercial",
+    icon: Briefcase,
+    color: "bg-indigo-500",
+  },
+];
+
+// Component to render access modules with icons
+// In Table.jsx - Update the AccessModulesDisplay component
+function AccessModulesDisplay({ access = [] }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (!access || access.length === 0) {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="text-xs text-gray-400">None</span>
+      </div>
+    );
+  }
+
+  const getTargetPath = (currentPath, module) => {
+    const role = localStorage.getItem("role");
+    const basePath = role === "user" ? "/user" : "/admin";
+
+    if (currentPath.includes("/dashboard")) return `${basePath}/dashboard`;
+    if (currentPath.includes("/view-clients"))
+      return `${basePath}/view-clients`;
+    if (currentPath.includes("/manage-clients"))
+      return `${basePath}/manage-clients`;
+    if (currentPath.includes("/manage-users"))
+      return `${basePath}/manage-users`;
+    if (currentPath.includes("/archived-clients"))
+      return `${basePath}/archived-clients`;
+    if (currentPath.includes("/client/stages")) return `${basePath}/dashboard`;
+    return `${basePath}/dashboard`;
+  };
+
+  const handleModuleClick = (module) => {
+    // Save the module to localStorage
+    localStorage.setItem("currentModule", module.value.toLowerCase());
+    localStorage.setItem("workType", module.value.toUpperCase());
+
+    // Dispatch event to update the sidebar
+    window.dispatchEvent(new Event("moduleChanged"));
+
+    // Navigate to the appropriate page
+    const targetPath = getTargetPath(location.pathname, module);
+    setTimeout(() => {
+      navigate(targetPath);
+    }, 100);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1 justify-center">
+      {ACCESS_MODULES.map((module) => {
+        if (access.includes(module.value)) {
+          const ModuleIcon = module.icon;
+          return (
+            <button
+              key={module.value}
+              onClick={() => handleModuleClick(module)}
+              className={`w-6 h-6 rounded-md flex items-center justify-center ${module.color} text-white hover:scale-110 transition-transform cursor-pointer group relative`}
+              title={`Switch to ${module.label}`}
+            >
+              <ModuleIcon className="w-3 h-3" strokeWidth={2.5} />
+              {/* Tooltip on hover */}
+              <div className="absolute bottom-full mb-1 hidden group-hover:flex items-center justify-center px-2 py-1 bg-gray-800 text-white text-xs rounded-md whitespace-nowrap z-10">
+                Switch to {module.label}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+              </div>
+            </button>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+}
 
 const Table = ({
   data,
@@ -79,6 +189,8 @@ const Table = ({
         return "10%";
       case "createdAt":
         return "12%";
+      case "access":
+        return "20%";
       default:
         return "15%";
     }
@@ -93,7 +205,7 @@ const Table = ({
 
   return (
     <div className="w-full">
-      <div className="flex-grow overflow-auto">
+      <div className="grow overflow-auto">
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
           <thead className={`${headerBgColor} text-black`}>
             <tr>
@@ -147,7 +259,6 @@ const Table = ({
           </thead>
           <tbody>
             {currentData.map((item) => (
-              
               <tr
                 key={item.id || item.email}
                 className={`bg-white rounded-2xl transition-all ${
@@ -160,7 +271,7 @@ const Table = ({
                   return (
                     <td
                       key={column.key}
-                      className={`px-2 ${cellPadding} text-xs lg:text-sm xl:text-base text-black align-middle break-words ${
+                      className={`px-2 ${cellPadding} text-xs lg:text-sm xl:text-base text-black align-middle wrap-break-word ${
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       } ${
                         colIndex === columns.length - 1 && !showActions
@@ -172,9 +283,17 @@ const Table = ({
                         className={`${
                           isLeftAligned ? "text-left pl-3" : "text-center"
                         }`}
-                        title={item[column.key]}
+                        title={
+                          column.render ? column.render(item) : item[column.key]
+                        }
                       >
-                        {item[column.key]}
+                        {column.key === "access" ? (
+                          <AccessModulesDisplay access={item[column.key]} />
+                        ) : column.render ? (
+                          column.render(item)
+                        ) : (
+                          item[column.key]
+                        )}
                       </div>
                     </td>
                   );
@@ -257,22 +376,22 @@ const Table = ({
                           className="flex flex-col items-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                           title="View Details"
                         >
-                          <img src={Eye} alt="View" className="h-[16px]" />
+                          <img src={Eye} alt="View" className="h-4" />
                           <span className="text-xs">View</span>
                         </button>
                       )}
                       {EditOrder && (
-                      <button
-                        onClick={() => {
-                          console.log("clicked!");
-                          navigate(`/admin/client/stages/${item.orderId}`);
-                        }}
-                        className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                        title="Edit"
-                      >
-                        <Edit size={12} />
-                        <span className="text-xs">Edit</span>
-                      </button>
+                        <button
+                          onClick={() => {
+                            console.log("clicked!");
+                            navigate(`/admin/client/stages/${item.orderId}`);
+                          }}
+                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                          title="Edit"
+                        >
+                          <Edit size={12} />
+                          <span className="text-xs">Edit</span>
+                        </button>
                       )}
                     </div>
                   </td>
@@ -282,7 +401,7 @@ const Table = ({
           </tbody>
         </table>
       </div>
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Pagination
           data={data}
           itemsPerPage={itemsPerPage}

@@ -30,7 +30,7 @@ class AdminAPI {
   }
 
   // Create new User
-  async createUser(email, role, displayName) {
+  async createUser(email, role, displayName, access = []) {
     try {
       const response = await fetch(`${this.baseUrl}/admin/users`, {
         method: "POST",
@@ -39,6 +39,7 @@ class AdminAPI {
           email,
           role,
           display_name: displayName,
+          access,
         }),
       });
 
@@ -60,8 +61,8 @@ class AdminAPI {
     }
   }
 
-    // Create new User
-  async createUserIDG(email, role, displayName,password) {
+  // Create new User
+  async createUserIDG(email, role, displayName, password, access = []) {
     try {
       const response = await fetch(`${this.baseUrl}/admin/idg/users`, {
         method: "POST",
@@ -70,7 +71,8 @@ class AdminAPI {
           email,
           role,
           display_name: displayName,
-          password
+          password,
+          access,
         }),
       });
 
@@ -146,7 +148,7 @@ class AdminAPI {
     }
   }
 
-    // Delete a user
+  // Delete a user
   async deleteIDGClient(clientId) {
     console.log(clientId);
     try {
@@ -176,6 +178,7 @@ class AdminAPI {
         body: JSON.stringify({
           displayName: user.displayName,
           role: user.role,
+          access: user.access || [],
         }),
       });
 
@@ -190,24 +193,27 @@ class AdminAPI {
     }
   }
 
-    async editIDGClient(ClientData) {
+  async editIDGClient(ClientData) {
     console.log(ClientData);
     try {
-      const response = await fetch(`${this.baseUrl}/idg/clients/${ClientData.clientId}`, {
-        method: "PATCH",
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          name: ClientData.name,
-          email: ClientData.email,
-          contact:ClientData.contact,
-          billingAddress:ClientData.address,
-          country:ClientData.country,
-          state:ClientData.state,
-          postcode:ClientData.postcode,
-          abn:ClientData.abn,
-          password:ClientData.password
-        }),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/idg/clients/${ClientData.clientId}`,
+        {
+          method: "PATCH",
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            name: ClientData.name,
+            email: ClientData.email,
+            contact: ClientData.contact,
+            billingAddress: ClientData.address,
+            country: ClientData.country,
+            state: ClientData.state,
+            postcode: ClientData.postcode,
+            abn: ClientData.abn,
+            password: ClientData.password,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
