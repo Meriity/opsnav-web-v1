@@ -9,6 +9,7 @@ export default function ConfirmationModal({
   title,
   children,
   message,
+  isLogout,
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -72,21 +73,39 @@ export default function ConfirmationModal({
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">
-                <Button
-                  label="Cancel"
-                  onClick={onClose}
-                  disabled={isConfirming}
-                  textColor="text-gray-700"
-                  border="border border-gray-300"
-                  width="w-24"
-                />
-                <Button
-                  label={isConfirming ? "Saving..." : "Confirm"}
-                  onClick={handleConfirm}
-                  disabled={isConfirming}
-                  textColor="text-white"
-                  width="w-24"
-                />
+                {isLogout ? (
+                  <Button
+                    label="Login"
+                    onClick={() => {
+                      localStorage.removeItem("user");
+                      localStorage.removeItem("authToken");
+                      localStorage.removeItem("client-storage");
+                      window.location.href = "/admin/login";
+                    }}
+                    disabled={isConfirming}
+                    textColor="text-gray-700"
+                    border="border border-gray-300"
+                    width="w-24"
+                  />
+                ) : (
+                  <>
+                    <Button
+                      label="Cancel"
+                      onClick={onClose}
+                      disabled={isConfirming}
+                      textColor="text-gray-700"
+                      border="border border-gray-300"
+                      width="w-24"
+                    />
+                    <Button
+                      label={isConfirming ? "Saving..." : "Confirm"}
+                      onClick={handleConfirm}
+                      disabled={isConfirming}
+                      textColor="text-white"
+                      width="w-24"
+                    />
+                  </>
+                )}
               </div>
             </Dialog.Panel>
           </Transition.Child>

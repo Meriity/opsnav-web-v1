@@ -91,6 +91,7 @@ export default function CreateClientModal({
   setIsOpen,
   companyName,
   createType,
+  onClose,
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -472,11 +473,11 @@ export default function CreateClientModal({
             "password",
             "email",
             "billingAddress",
-            "country",
             "state",
             "postcode",
             "abn",
           ];
+          console.log(formData);
           if (requiredFields.some((field) => !formData[field])) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
@@ -490,13 +491,14 @@ export default function CreateClientModal({
             email: formData.email,
             password: formData.password,
             billingAddress: formData.billingAddress,
-            country: formData.country,
+            country: "Australia",
             state: formData.state,
             postcode: formData.postcode,
             abn: formData.abn,
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
+          onClose();
         } else if (createType === "order") {
           const requiredFields = [
             "client",
@@ -529,6 +531,7 @@ export default function CreateClientModal({
           console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
+          onClose();
         }
       }
       setIsOpen(false);
@@ -847,20 +850,37 @@ export default function CreateClientModal({
                       <input
                         type="text"
                         name="country"
-                        value={formData.country || ""}
-                        onChange={handleChange}
+                        value={"Australia"}
+                        readOnly
+                        // onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
                       />
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">State</label>
-                      <input
+                      {/* <input
                         type="text"
                         name="state"
                         value={formData.state || ""}
                         onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      />
+                      /> */}
+                      <select
+                        name="state"
+                        value={formData.state || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
+                      >
+                        <option value={""}>Select State</option>
+                        <option value={"ACT"}>ACT</option>
+                        <option value={"NSW"}>NSW</option>
+                        <option value={"NT"}>NT</option>
+                        <option value={"QLD"}>QLD</option>
+                        <option value={"SA"}>SA</option>
+                        <option value={"TAS"}>TAS</option>
+                        <option value={"VIC"}>VIC</option>
+                        <option value={"WA"}>WA</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">Postcode</label>
