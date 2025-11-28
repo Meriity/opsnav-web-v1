@@ -571,7 +571,7 @@ export default function ArchivedClients() {
                 />
 
                 <Menu as="div" className="relative">
-                  <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <EllipsisVerticalIcon
                       className="h-5 w-5 text-gray-600"
                       aria-hidden="true"

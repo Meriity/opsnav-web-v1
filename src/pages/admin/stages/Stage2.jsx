@@ -184,6 +184,7 @@ export default function Stage2({
   const stage = 2;
   const { matterNumber } = useParams();
   const originalData = useRef({});
+  const hasLoadedData = useRef(false);
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({});
@@ -316,7 +317,7 @@ export default function Stage2({
   });
 
   useEffect(() => {
-    if (!stageData) return;
+    if (!stageData || hasLoadedData.current) return;
 
     try {
       const initialFormData = {};
@@ -325,19 +326,21 @@ export default function Stage2({
         if (!dateString) return "";
         return new Date(dateString).toISOString().split("T")[0];
       };
+
       currentConfig.fields.forEach((field) => {
+        const raw = stageData[field.name];
+
         if (field.type === "number") {
-          const rawPrice = stageData[field.name];
+          const rawPrice = raw;
           initialFormData[field.name] =
             typeof rawPrice === "object" && rawPrice?.$numberDecimal
               ? rawPrice.$numberDecimal
-              : rawPrice?.toString() || "";
+              : rawPrice?.toString() ?? "";
         } else if (field.type === "radio") {
-          initialFormData[field.name] = normalizeValue(
-            stageData[field.name] || ""
-          );
+          // keep normalized representation (Stage2 already used normalizeValue)
+          initialFormData[field.name] = normalizeValue(raw ?? "");
         } else {
-          initialFormData[field.name] = stageData[field.name] || "";
+          initialFormData[field.name] = raw ?? "";
         }
 
         if (field.hasDate) {
@@ -354,44 +357,82 @@ export default function Stage2({
           stageData.noteForSystem,
           stageData.noteForClient
         );
-        initialFormData.noteForSystem = systemNote;
-        initialFormData.noteForClient = clientComment;
+        initialFormData.noteForSystem = systemNote || "";
+        initialFormData.noteForClient = clientComment || "";
       } else {
         currentConfig.noteGroups.forEach((group) => {
-          const notes = extractNotes(stageData[group.noteForClientKey]);
-          initialFormData[group.clientCommentKey] = notes.clientComment;
+          const notes = extractNotes(stageData[group.noteForClientKey] || "");
+          initialFormData[group.clientCommentKey] = notes.clientComment || "";
         });
       }
 
+      // Ensure all expected keys exist (avoid uncontrolled -> controlled)
+      currentConfig.fields.forEach((field) => {
+        if (
+          initialFormData[field.name] === undefined ||
+          initialFormData[field.name] === null
+        ) {
+          initialFormData[field.name] = field.type === "radio" ? "" : "";
+        }
+        if (field.hasDate && !initialFormData[field.dateFieldName]) {
+          initialFormData[field.dateFieldName] = "";
+        }
+      });
+
       setFormData(initialFormData);
       setStatuses(initialStatuses);
+      // Deep clone for stable comparisons (Stage6/Stage1 pattern)
       originalData.current = JSON.parse(JSON.stringify(initialFormData));
+      hasLoadedData.current = true;
     } catch (error) {
       toast.error("Failed to parse stage data");
     }
   }, [stageData, currentConfig, getStatus, extractNotes, currentModule]);
 
-  const handleChange = (field, value) => {
-    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
-    let processedValue = value;
+  const handleChange = useCallback(
+    (field, value) => {
+      const fieldConfig = currentConfig.fields.find((f) => f.name === field);
+      let processedValue = value;
 
-    if (
-      fieldConfig &&
-      fieldConfig.type === "radio" &&
-      typeof processedValue === "string"
-    ) {
-      processedValue = normalizeValue(processedValue);
-    }
+      if (
+        fieldConfig &&
+        fieldConfig.type === "radio" &&
+        typeof processedValue === "string"
+      ) {
+        processedValue = normalizeValue(processedValue);
+      }
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+      setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
 
-    if (fieldConfig) {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(value) }));
-    }
-  };
+      if (fieldConfig) {
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
+      }
+    },
+    [currentConfig.fields, getStatus]
+  );
 
   const isChanged = () => {
-    return JSON.stringify(formData) !== JSON.stringify(originalData.current);
+    try {
+      // If originalData is empty, treat any non-empty formData as change
+      if (
+        !originalData.current ||
+        Object.keys(originalData.current).length === 0
+      ) {
+        const anyFilled = Object.keys(formData || {}).some(
+          (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
+        );
+        return anyFilled;
+      }
+      return (
+        JSON.stringify(formData || {}) !==
+        JSON.stringify(originalData.current || {})
+      );
+    } catch (e) {
+      return true;
+    }
   };
 
   const { mutate: saveStage, isPending: isSaving } = useMutation({
@@ -659,7 +700,7 @@ export default function Stage2({
             type="text"
             name={field.name}
             className="w-full rounded p-2 bg-gray-100 text-sm md:text-base"
-            value={formData[field.name] || ""}
+            value={formData[field.name] ?? ""}
             onChange={(e) => handleChange(field.name, e.target.value)}
           />
         ) : field.name === "agent" ? (
@@ -697,7 +738,7 @@ export default function Stage2({
                 name={field.name}
                 value={val}
                 checked={
-                  normalizeValue(formData[field.name] || "") ===
+                  normalizeValue(formData[field.name] ?? "") ===
                   normalizeValue(val)
                 }
                 onChange={() => handleChange(field.name, val)}
@@ -710,7 +751,7 @@ export default function Stage2({
         {field.hasDate && (
           <input
             type="date"
-            value={formData[field.dateFieldName] || ""}
+            value={formData[field.dateFieldName] ?? ""}
             onChange={(e) => handleChange(field.dateFieldName, e.target.value)}
             className="ml-2 p-1 border rounded"
           />

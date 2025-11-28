@@ -176,6 +176,8 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
   const queryClient = useQueryClient();
   const originalData = useRef({});
 
+  const hasLoadedData = useRef(false);
+
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [noteForClient, setNoteForClient] = useState("");
@@ -259,7 +261,8 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
   });
 
   useEffect(() => {
-    if (!stageData) return;
+    // Only initialize once per matter to avoid clobbering user's in-progress edits
+    if (!stageData || hasLoadedData.current) return;
 
     try {
       const initialFormData = {};
@@ -268,21 +271,21 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
       let loadedClientComment = "";
 
       currentConfig.fields.forEach((field) => {
+        const rawValue = stageData[field.name];
+
         if (field.type === "number") {
-          const rawPrice = stageData[field.name];
+          const rawPrice = rawValue;
           initialFormData[field.name] =
             typeof rawPrice === "object" && rawPrice?.$numberDecimal
               ? rawPrice.$numberDecimal
-              : rawPrice?.toString() || "";
+              : rawPrice?.toString() ?? "";
         } else if (field.type === "radio") {
-          initialFormData[field.name] = normalizeValue(
-            stageData[field.name] || ""
-          );
+          initialFormData[field.name] = normalizeValue(rawValue ?? "");
           initialStatuses[field.name] = getStatus(initialFormData[field.name]);
         } else if (field.type === "text") {
-          initialFormData[field.name] = stageData[field.name] || "";
+          initialFormData[field.name] = rawValue ?? "";
         } else {
-          initialFormData[field.name] = stageData[field.name] || "";
+          initialFormData[field.name] = rawValue ?? "";
         }
       });
 
@@ -291,14 +294,13 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
           stageData.noteForSystem,
           stageData.noteForClient
         );
-        loadedSystemNote = systemNote;
-        loadedClientComment = clientComment;
-        setNoteForClient(clientComment);
+        loadedSystemNote = systemNote || "";
+        loadedClientComment = clientComment || "";
+        setNoteForClient(loadedClientComment);
       } else {
         // Normalize the system note by removing trailing dashes
         currentConfig.noteGroups.forEach((group) => {
           const noteString = stageData[group.noteForClientKey] || "";
-          // Split and clean up the note parts
           const noteParts = noteString
             .split(" - ")
             .filter((part) => part.trim() !== "");
@@ -309,92 +311,123 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
         });
       }
 
-      setFormData(initialFormData);
-      setStatuses(initialStatuses);
+      // Ensure all expected keys exist to keep inputs controlled
+      currentConfig.fields.forEach((field) => {
+        if (
+          initialFormData[field.name] === undefined ||
+          initialFormData[field.name] === null
+        ) {
+          initialFormData[field.name] = "";
+        }
+      });
+
+      setFormData(JSON.parse(JSON.stringify(initialFormData)));
+      setStatuses(JSON.parse(JSON.stringify(initialStatuses)));
 
       originalData.current = {
-        formData: { ...initialFormData },
+        formData: JSON.parse(JSON.stringify(initialFormData)),
         noteForClient: loadedClientComment,
         noteForSystem: loadedSystemNote,
       };
+
+      hasLoadedData.current = true;
     } catch (error) {
       toast.error("Failed to load stage data");
     }
-  }, [stageData, currentConfig, currentModule]);
+  }, [stageData, currentConfig, currentModule, matterNumber]);
 
-  const handleChange = (field, value) => {
-    let processedValue = value;
-    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
+  const handleChange = useCallback(
+    (field, value) => {
+      let processedValue = value;
+      const fieldConfig = currentConfig.fields.find((f) => f.name === field);
 
-    if (fieldConfig && fieldConfig.type === "radio") {
-      if (typeof processedValue === "string") {
-        processedValue = normalizeValue(processedValue);
+      if (fieldConfig && fieldConfig.type === "radio") {
+        if (typeof processedValue === "string") {
+          processedValue = normalizeValue(processedValue);
+        }
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
+      } else {
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
       }
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
-    }
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-  };
+      setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
+    },
+    [currentConfig.fields]
+  );
 
   const isChanged = () => {
-    const original = originalData.current;
-    if (!original || !original.formData) return false;
+    const original = originalData.current || {};
 
-    // Check if any form field has changed
-    const formChanged = currentConfig.fields.some((field) => {
-      const currentValue = formData[field.name] || "";
-      const originalValue = original.formData[field.name] || "";
-
-      if (field.type === "radio") {
-        return normalizeValue(currentValue) !== normalizeValue(originalValue);
-      }
-
-      return String(currentValue).trim() !== String(originalValue).trim();
-    });
-
-    // Check client note changes
-    let clientNoteChanged = false;
-    if (currentModule === "commercial") {
-      const currentNote = noteForClient || "";
-      const originalNote = original.noteForClient || "";
-      clientNoteChanged =
-        String(currentNote).trim() !== String(originalNote).trim();
-    } else {
-      // For VKL/IDG, check each note group
-      clientNoteChanged = currentConfig.noteGroups.some((group) => {
-        const currentNote = formData[group.clientCommentKey] || "";
-        const originalNote = original.formData[group.clientCommentKey] || "";
-        return String(currentNote).trim() !== String(originalNote).trim();
-      });
+    // If we don't have an original snapshot, treat any filled value as change
+    if (!original || !original.formData) {
+      const anyFilled = Object.keys(formData || {}).some(
+        (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
+      );
+      return (
+        anyFilled || (noteForClient && String(noteForClient).trim() !== "")
+      );
     }
 
-    // Check system note changes - only if form fields have actually changed
-    const currentSystemNote = generateSystemNote("main");
-    const originalSystemNote = original.noteForSystem || "";
+    try {
+      // Compare form data (only configured fields)
+      const currentForm = currentConfig.fields.reduce((acc, field) => {
+        acc[field.name] = formData[field.name] ?? "";
+        return acc;
+      }, {});
 
-    // Normalize system notes for comparison (remove trailing dashes/spaces)
-    const normalizeSystemNote = (note) => {
-      if (!note) return ""; // Handle undefined/null
-      return note.replace(/\s*-+\s*$/, "").trim(); // Remove trailing dashes and spaces
-    };
+      const originalForm = currentConfig.fields.reduce((acc, field) => {
+        acc[field.name] = original.formData[field.name] ?? "";
+        return acc;
+      }, {});
 
-    const systemNoteChanged =
-      normalizeSystemNote(currentSystemNote) !==
-        normalizeSystemNote(originalSystemNote) && formChanged; // Only consider system note changed if form fields actually changed
+      const formChanged =
+        JSON.stringify(currentForm) !== JSON.stringify(originalForm);
 
-    console.log("Stage5 Change detection:", {
-      formChanged,
-      clientNoteChanged,
-      systemNoteChanged,
-      currentSystemNote: normalizeSystemNote(currentSystemNote),
-      originalSystemNote: normalizeSystemNote(originalSystemNote),
-      formData,
-      originalFormData: original.formData,
-    });
+      // Check client note changes
+      let clientNoteChanged = false;
+      if (currentModule === "commercial") {
+        const currentNote = noteForClient ?? "";
+        const originalNote = original.noteForClient ?? "";
+        clientNoteChanged =
+          String(currentNote).trim() !== String(originalNote).trim();
+      } else {
+        clientNoteChanged = currentConfig.noteGroups.some((group) => {
+          const currentNote = formData[group.clientCommentKey] ?? "";
+          const originalNote = original.formData[group.clientCommentKey] ?? "";
+          return String(currentNote).trim() !== String(originalNote).trim();
+        });
+      }
 
-    return formChanged || clientNoteChanged || systemNoteChanged;
+      // System note
+      const currentSystemNote = generateSystemNote("main");
+      const originalSystemNote = original.noteForSystem ?? "";
+      const normalizeSystemNote = (note) =>
+        note
+          ? String(note)
+              .replace(/\s*-+\s*$/, "")
+              .trim()
+          : "";
+      const systemNoteChanged =
+        normalizeSystemNote(currentSystemNote) !==
+          normalizeSystemNote(originalSystemNote) && formChanged;
+
+      console.log("Stage5 Change detection:", {
+        formChanged,
+        clientNoteChanged,
+        systemNoteChanged,
+      });
+
+      return formChanged || clientNoteChanged || systemNoteChanged;
+    } catch (e) {
+      return true;
+    }
   };
-
   const { mutate: saveStage, isPending: isSaving } = useMutation({
     mutationFn: async (payload) => {
       let apiResponse;
@@ -680,7 +713,7 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
       {/* Render notes based on module */}
       {currentModule === "commercial"
         ? renderCommercialNotes()
-        : currentConfig.noteGroups.map(renderNoteGroup)}
+        : currentConfig.noteGroups.map((g) => renderNoteGroup(g))}
 
       <div className="flex mt-10 justify-between">
         <Button

@@ -145,7 +145,7 @@ export default function StagesLayout() {
   const currentModule = localStorage.getItem("currentModule");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
-  const [localClientData, setLocalClientData] = useState(null);
+  const [localClientData, setLocalClientData] = useState({});
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -432,6 +432,115 @@ export default function StagesLayout() {
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
             onStageUpdate={(stageData, stageNumber) => {
+              // Immediately update the local snapshot for the stage so the UI reflects the latest values
+              setLocalClientData((prev) => ({
+                ...(prev || {}),
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // Map of color codes to readable status text
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+
+              // Prefer explicit colorStatus from the stage payload if present.
+              // If it's not present (or not yet persisted), derive a best-effort status
+              // from the returned stageData fields so UI updates immediately and correctly.
+              let newStatus = "Not Completed";
+              if (stageData && stageData.colorStatus) {
+                newStatus = statusMap[stageData.colorStatus] || "Not Completed";
+              } else {
+                // best-effort derive: treat values like yes, n/r, na, fixed, variable, approved as completed
+                try {
+                  const values = Object.keys(stageData || {}).map((k) =>
+                    (stageData[k] === undefined || stageData[k] === null)
+                      ? ""
+                      : String(stageData[k]).toLowerCase().replace(/[^a-z0-9]/g, "")
+                  );
+                  const completedSet = new Set([
+                    "yes",
+                    "nr",
+                    "na",
+                    "n",
+                    "fixed",
+                    "variable",
+                    "approved",
+                  ]);
+                  // consider non-empty fields that are not explicitly 'no' as completed for this heuristic
+                  const meaningfulValues = values.filter((v) => v !== "");
+                  if (meaningfulValues.length === 0) {
+                    newStatus = "Not Completed";
+                  } else if (meaningfulValues.every((v) => completedSet.has(v))) {
+                    newStatus = "Completed";
+                  } else if (meaningfulValues.every((v) => v === "no")) {
+                    newStatus = "Not Completed";
+                  } else {
+                    newStatus = "In Progress";
+                  }
+                } catch (e) {
+                  newStatus = "In Progress";
+                }
+              }
+
+              // update React state (will re-render the stage navigation immediately)
+              setStageStatuses((prev) => ({
+                ...prev,
+                [`status${stageNumber}`]: newStatus,
+              }));
+
+              // persist the small status map in localStorage so other parts of the app see it immediately
+              try {
+                const currentStatuses = JSON.parse(
+                  localStorage.getItem("stageStatuses") || "{}"
+                );
+                currentStatuses[`status${stageNumber}`] = newStatus;
+                localStorage.setItem(
+                  "stageStatuses",
+                  JSON.stringify(currentStatuses)
+                );
+              } catch (e) {
+                // ignore localStorage errors
+              }
+
+              // Also synchronously update the clientData cache's stage object colorStatus if provided
+              // (keeps side panels / lists in sync)
+              if (stageData && stageData.colorStatus) {
+                try {
+                  queryClient.setQueryData(
+                    ["clientData", matterNumber, company, currentModule],
+                    (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        [`stage${stageNumber}`]: {
+                          ...(old[`stage${stageNumber}`] || {}),
+                          colorStatus: stageData.colorStatus,
+                        },
+                      };
+                    }
+                  );
+                } catch (e) {
+                  // fallback: trigger background refetch if merge fails
+                  queryClient.invalidateQueries([
+                    "clientData",
+                    matterNumber,
+                    company,
+                    currentModule,
+                  ]);
+                }
+              }
+            }}
+          />
+        );
+        return (
+          <Stage4
+            data={stageData}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
               // Update local client data with the new stage data
               setLocalClientData((prev) => ({
                 ...prev,
@@ -580,28 +689,29 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-          onStageUpdate={(stageData, stageNumber) => {
+            onStageUpdate={(stageData, stageNumber) => {
               // Update local client data with the new stage data
-              setLocalClientData(prev => ({
+              setLocalClientData((prev) => ({
                 ...prev,
-                [`stage${stageNumber}`]: stageData
+                [`stage${stageNumber}`]: stageData,
               }));
-              
+
               // CRITICAL: Update stage statuses immediately for instant UI update
               const statusMap = {
                 green: "Completed",
-                red: "Not Completed", 
+                red: "Not Completed",
                 amber: "In Progress",
               };
-              
+
               // Force immediate update of stage status
               if (stageData.colorStatus) {
-                const newStatus = statusMap[stageData.colorStatus] || "Not Completed";
-                setStageStatuses(prev => ({
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
                   ...prev,
-                  [`status${stageNumber}`]: newStatus
+                  [`status${stageNumber}`]: newStatus,
                 }));
-                
+
                 // Also update the clientData cache for immediate reflection
                 queryClient.setQueryData(
                   ["clientData", matterNumber, company, currentModule],
@@ -611,8 +721,8 @@ export default function StagesLayout() {
                       ...old,
                       [`stage${stageNumber}`]: {
                         ...(old[`stage${stageNumber}`] || {}),
-                        colorStatus: stageData.colorStatus
-                      }
+                        colorStatus: stageData.colorStatus,
+                      },
                     };
                   }
                 );
@@ -842,8 +952,39 @@ export default function StagesLayout() {
     if (clientData) {
       const statuses = processStageStatuses(clientData);
       setStageStatuses(statuses);
-      setLocalClientData(clientData);
-      setOriginalClientData(JSON.parse(JSON.stringify(clientData)));
+      const normalized = {
+        ...(clientData || {}),
+        matterDate: clientData?.matterDate ?? "",
+        settlementDate: clientData?.settlementDate ?? "",
+        notes: clientData?.notes ?? clientData?.data?.notes ?? "",
+        businessName:
+          clientData?.businessName ?? clientData?.business_name ?? "",
+        businessAddress:
+          clientData?.businessAddress ??
+          clientData?.business_address ??
+          clientData?.propertyAddress ??
+          "",
+        clientName: clientData?.clientName ?? clientData?.client_name ?? "",
+        clientType: clientData?.clientType ?? clientData?.client_type ?? "",
+        dataEntryBy: clientData?.dataEntryBy ?? clientData?.dataentryby ?? "",
+        postcode: clientData?.postcode ?? clientData?.postCode ?? "",
+        propertyAddress:
+          clientData?.propertyAddress ??
+          clientData?.data?.deliveryAddress ??
+          "",
+        data: {
+          ...(clientData?.data || {}),
+          order_details: clientData?.data?.order_details ?? "",
+          orderDate: clientData?.data?.orderDate ?? "",
+          deliveryDate: clientData?.data?.deliveryDate ?? "",
+          unitNumber: clientData?.data?.unitNumber ?? "",
+          postCode: clientData?.data?.postCode ?? "",
+        },
+      };
+
+      // deep clone to avoid shared references and ensure consistent shapes
+      setLocalClientData(JSON.parse(JSON.stringify(normalized)));
+      setOriginalClientData(JSON.parse(JSON.stringify(normalized)));
     }
   }, [clientData]);
 
@@ -1089,9 +1230,9 @@ export default function StagesLayout() {
   return (
     <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
       <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
+      <main className="grow flex flex-col p-4 w-full max-w-7xl mx-auto overflow-auto">
         {/* Desktop layout - buttons next to Hello */}
-        <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
+        <div className="hidden md:flex justify-between items-center mb-2 shrink-0">
           <h2 className="text-lg md:text-xl font-semibold">
             Hello {localStorage.getItem("user")}
           </h2>
@@ -1135,7 +1276,7 @@ export default function StagesLayout() {
         </div>
 
         {/* Mobile layout - buttons below Hello */}
-        <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
+        <div className="flex flex-col md:hidden mb-2 shrink-0">
           <h2 className="text-lg font-semibold mb-2">
             Hello {localStorage.getItem("user")}
           </h2>
@@ -1168,7 +1309,7 @@ export default function StagesLayout() {
                     isStagesCollapsed ? "max-h-0" : "max-h-96"
                   }`}
                 >
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 shrink-0">
                     {stages.map((stage, index) => {
                       const stageStatus = stageStatuses[`status${stage.id}`];
                       return (
@@ -1300,13 +1441,13 @@ export default function StagesLayout() {
               )}
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-1 grow overflow-hidden">
               <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
                 {clientData && Showstage(selectedStage)}
               </div>
 
               {/* Project/Matter/Order Details - Desktop */}
-              <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
+              <div className="hidden lg:block w-[430px] xl:w-[500px] shrink-0">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
                   <h2 className="text-lg font-bold mb-2">
                     {currentModule === "commercial" ? (
@@ -1428,8 +1569,8 @@ export default function StagesLayout() {
                         name="clientName"
                         type="text"
                         value={
-                          localClientData?.clientName ||
-                          localClientData?.data?.client?.name ||
+                          localClientData?.clientName ??
+                          localClientData?.data?.client?.name ??
                           ""
                         }
                         onChange={(e) => {
@@ -1455,7 +1596,7 @@ export default function StagesLayout() {
                         {isSuperAdmin ? (
                           <input
                             type="text"
-                            value={localClientData?.businessName || ""}
+                            value={localClientData?.businessName ?? ""}
                             onChange={(e) => {
                               setLocalClientData((prev) => ({
                                 ...(prev || {}),
@@ -1501,9 +1642,9 @@ export default function StagesLayout() {
                         type="text"
                         value={
                           currentModule === "commercial"
-                            ? localClientData?.businessAddress || ""
-                            : localClientData?.propertyAddress ||
-                              localClientData?.data?.deliveryAddress ||
+                            ? localClientData?.businessAddress ?? ""
+                            : localClientData?.propertyAddress ??
+                              localClientData?.data?.deliveryAddress ??
                               ""
                         }
                         onChange={(e) => {
@@ -1534,8 +1675,8 @@ export default function StagesLayout() {
                           id="state"
                           name="state"
                           value={
-                            localClientData?.state ||
-                            localClientData?.data?.country ||
+                            localClientData?.state ??
+                            localClientData?.data?.country ??
                             ""
                           }
                           onChange={(e) =>
@@ -1584,8 +1725,9 @@ export default function StagesLayout() {
                           id="clientType"
                           name="clientType"
                           value={
-                            localClientData?.clientType ||
-                            localClientData?.data?.orderType
+                            localClientData?.clientType ??
+                            localClientData?.data?.orderType ??
+                            ""
                           }
                           onChange={(e) =>
                             setLocalClientData((prev) => ({
@@ -1593,7 +1735,7 @@ export default function StagesLayout() {
                               clientType: e.target.value,
                             }))
                           }
-                          className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
                         >
                           <option value="">Select client type</option>
                           {CLIENT_TYPE_OPTIONS.map((ct) => (
@@ -1609,7 +1751,7 @@ export default function StagesLayout() {
                             localClientData?.clientType ||
                             localClientData?.data?.orderType
                           }
-                          className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
                         />
@@ -1626,8 +1768,8 @@ export default function StagesLayout() {
                         id="postcode"
                         name="postcode"
                         value={
-                          localClientData?.postcode ||
-                          localClientData?.data?.postCode ||
+                          localClientData?.postcode ??
+                          localClientData?.data?.postCode ??
                           ""
                         }
                         onChange={(e) => {
@@ -1767,7 +1909,7 @@ export default function StagesLayout() {
                             </label>
                             <textarea
                               rows={5}
-                              value={localClientData?.data?.order_details || ""}
+                              value={localClientData?.data?.order_details ?? ""}
                               onChange={(e) => {
                                 const newOrderDetails = e.target.value;
                                 setLocalClientData((prev) => ({
@@ -1789,8 +1931,8 @@ export default function StagesLayout() {
                             <textarea
                               rows={5}
                               value={
-                                localClientData?.notes ||
-                                localClientData?.data?.notes ||
+                                localClientData?.notes ??
+                                localClientData?.data?.notes ??
                                 ""
                               }
                               onChange={(e) => {

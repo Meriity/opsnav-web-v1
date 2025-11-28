@@ -70,6 +70,8 @@ export default function Stage3({
   const queryClient = useQueryClient();
   const originalData = useRef({});
 
+  const hasLoadedData = useRef(false);
+
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
   const [noteForClient, setNoteForClient] = useState("");
@@ -182,7 +184,8 @@ export default function Stage3({
   });
 
   useEffect(() => {
-    if (!stageData) return;
+    // Only initialize once per matter to avoid clobbering user's in-progress edits
+    if (!stageData || hasLoadedData.current) return;
 
     try {
       const newFormState = {};
@@ -191,25 +194,24 @@ export default function Stage3({
       let loadedClientComment = "";
 
       fields.forEach(({ key, hasDate, type }) => {
-        const rawValue = stageData[key] || "";
+        const rawValue = stageData[key] ?? "";
+        // For radio keep the normalized option text (consistent with other stages)
         newFormState[key] =
-          type === "radio" ? normalizeValue(rawValue) : rawValue;
+          type === "radio" ? normalizeValue(rawValue) : rawValue ?? "";
         newStatusState[key] = getStatus(newFormState[key]);
 
         if (hasDate) {
           newFormState[`${key}Date`] = stageData[`${key}Date`]
-            ? stageData[`${key}Date`].split("T")[0]
+            ? String(stageData[`${key}Date`]).split("T")[0]
             : "";
         }
       });
 
       if (currentModule === "commercial") {
-        loadedSystemNote = stageData.noteForSystem || "";
-        loadedClientComment = stageData.noteForClient || "";
+        loadedSystemNote = stageData.noteForSystem ?? "";
+        loadedClientComment = stageData.noteForClient ?? "";
       } else {
-        // Normalize the system note by removing trailing dashes
-        const noteString = stageData.noteForClient || "";
-        // Split and clean up the note parts
+        const noteString = stageData.noteForClient ?? "";
         const noteParts = noteString
           .split(" - ")
           .filter((part) => part.trim() !== "");
@@ -218,91 +220,121 @@ export default function Stage3({
           noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
       }
 
+      // ensure all expected keys exist (prevents uncontrolled -> controlled warnings)
+      fields.forEach(({ key, hasDate }) => {
+        if (newFormState[key] === undefined || newFormState[key] === null) {
+          newFormState[key] = "";
+        }
+        if (hasDate && newFormState[`${key}Date`] === undefined) {
+          newFormState[`${key}Date`] = "";
+        }
+      });
+
       setFormState(newFormState);
       setStatusState(newStatusState);
       setNoteForClient(loadedClientComment);
 
-      originalData.current = {
-        ...newFormState,
-        noteForSystem: loadedSystemNote,
-        noteForClient: loadedClientComment,
-      };
+      // store deep-cloned original snapshot for comparisons (Stage6 pattern)
+      originalData.current = JSON.parse(
+        JSON.stringify({
+          ...newFormState,
+          noteForSystem: loadedSystemNote,
+          noteForClient: loadedClientComment,
+        })
+      );
 
-      setFormState(newFormState);
-      setStatusState(newStatusState);
-      setNoteForClient(loadedClientComment);
-
-      originalData.current = {
-        ...newFormState,
-        noteForSystem: loadedSystemNote,
-        noteForClient: loadedClientComment,
-      };
+      hasLoadedData.current = true;
     } catch (error) {
       toast.error("Failed to load stage data");
     }
-  }, [stageData, fields, getStatus, normalizeValue, currentModule]);
+  }, [
+    stageData,
+    fields,
+    getStatus,
+    normalizeValue,
+    currentModule,
+    matterNumber,
+  ]);
 
-  const handleChange = (key, value) => {
-    const fieldConfig = fields.find((f) => f.key === key);
-    let processedValue = value;
-
-    if (
-      fieldConfig &&
-      fieldConfig.type === "radio" &&
-      typeof processedValue === "string"
-    ) {
-      processedValue = normalizeValue(processedValue);
-    }
-
-    setFormState((prev) => ({ ...prev, [key]: processedValue }));
-    setStatusState((prev) => ({ ...prev, [key]: getStatus(processedValue) }));
-  };
+  const handleChange = useCallback(
+    (key, value) => {
+      const fieldConfig = fields.find((f) => f.key === key);
+      let processedValue = value;
+      if (
+        fieldConfig &&
+        fieldConfig.type === "radio" &&
+        typeof processedValue === "string"
+      ) {
+        processedValue = normalizeValue(processedValue);
+      }
+      setFormState((prev) => ({ ...(prev || {}), [key]: processedValue }));
+      setStatusState((prev) => ({
+        ...(prev || {}),
+        [key]: getStatus(processedValue),
+      }));
+    },
+    [fields, normalizeValue, getStatus]
+  );
 
   const isChanged = () => {
-    const currentSystemNote = generateSystemNote();
-    const original = originalData.current;
-    if (!original) return false;
+    const original = originalData.current || {};
+    // If we don't have an original snapshot, consider any filled value a change
+    if (!original || Object.keys(original).length === 0) {
+      const anyFilled = Object.keys(formState || {}).some(
+        (k) => formState[k] !== undefined && String(formState[k]).trim() !== ""
+      );
+      return (
+        anyFilled || (noteForClient && String(noteForClient).trim() !== "")
+      );
+    }
 
-    const formChanged = fields.some(
-      ({ key }) =>
-        String(formState[key] || "").trim() !==
-        String(original[key] || "").trim()
-    );
-    const dateChanged = fields.some(
-      ({ key, hasDate }) =>
-        hasDate &&
-        String(formState[`${key}Date`] || "").trim() !==
-          String(original[`${key}Date`] || "").trim()
-    );
-    const noteForClientChanged =
-      String(noteForClient).trim() !==
-      String(original.noteForClient || "").trim();
+    // Compare form JSON and notes (deep equality via JSON)
+    try {
+      const currentFormJSON = JSON.stringify(formState || {});
+      const originalFormJSON = JSON.stringify(
+        Object.keys(original).reduce((acc, k) => {
+          if (!k.startsWith("noteFor")) acc[k] = original[k];
+          return acc;
+        }, {})
+      );
 
-    // Normalize system notes for comparison (remove trailing dashes/spaces)
-    const normalizeSystemNote = (note) => {
-      if (!note) return ""; // Handle undefined/null
-      return note.replace(/\s*-+\s*$/, "").trim(); // Remove trailing dashes and spaces
-    };
+      const formChanged = currentFormJSON !== originalFormJSON;
 
-    const noteForSystemChanged =
-      normalizeSystemNote(currentSystemNote) !==
-        normalizeSystemNote(original.noteForSystem) &&
-      (formChanged || dateChanged); // Only consider system note changed if form/date fields actually changed
+      const dateChanged = fields.some(
+        ({ key, hasDate }) =>
+          hasDate &&
+          String(formState[`${key}Date`] || "").trim() !==
+            String(original[`${key}Date`] || "").trim()
+      );
 
-    console.log("Stage3 Change detection:", {
-      formChanged,
-      dateChanged,
-      noteForClientChanged,
-      noteForSystemChanged,
-      currentSystemNote: normalizeSystemNote(currentSystemNote),
-      originalSystemNote: normalizeSystemNote(original.noteForSystem),
-      formState,
-      original: original,
-    });
+      const noteForClientChanged =
+        String(noteForClient).trim() !==
+        String(original.noteForClient || "").trim();
 
-    return (
-      formChanged || dateChanged || noteForClientChanged || noteForSystemChanged
-    );
+      const normalizeSystemNote = (note) => {
+        if (!note) return "";
+        return String(note)
+          .replace(/\s*-\s*$/, "")
+          .trim();
+      };
+
+      const currentSystemNote = normalizeSystemNote(generateSystemNote());
+      const originalSystemNote = normalizeSystemNote(
+        original.noteForSystem || ""
+      );
+      const noteForSystemChanged =
+        currentSystemNote !== originalSystemNote &&
+        (formChanged || dateChanged);
+
+      return (
+        formChanged ||
+        dateChanged ||
+        noteForClientChanged ||
+        noteForSystemChanged
+      );
+    } catch (e) {
+      return true;
+    }
   };
 
   const { mutate: saveStage, isPending: isSaving } = useMutation({
@@ -662,7 +694,7 @@ export default function Stage3({
           <input
             type="text"
             name={key}
-            value={formState[key] || ""}
+            value={formState[key] ?? ""}
             onChange={(e) => handleChange(key, e.target.value)}
             className="border rounded-md p-2 text-sm md:text-base w-full"
           />
@@ -677,7 +709,7 @@ export default function Stage3({
                 name={key}
                 value={val}
                 checked={
-                  normalizeValue(formState[key] || "") === normalizeValue(val)
+                  normalizeValue(formState[key] ?? "") === normalizeValue(val)
                 }
                 onChange={() => handleChange(key, val)}
               />
@@ -688,10 +720,10 @@ export default function Stage3({
         {hasDate && (
           <input
             type="date"
-            value={formState[`${key}Date`] || ""}
+            value={formState[`${key}Date`] ?? ""}
             onChange={(e) =>
               setFormState((prev) => ({
-                ...prev,
+                ...(prev || {}),
                 [`${key}Date`]: e.target.value,
               }))
             }

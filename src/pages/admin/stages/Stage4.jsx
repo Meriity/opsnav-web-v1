@@ -149,6 +149,7 @@ export default function Stage4({
   const { matterNumber } = useParams();
   const queryClient = useQueryClient();
   const originalData = useRef({});
+  const hasLoadedData = useRef(false);
 
   // --- State ---
   const [formData, setFormData] = useState({});
@@ -159,7 +160,6 @@ export default function Stage4({
   // Only Commercial module uses a separate client note state
   const [noteForClient, setNoteForClient] = useState("");
   // isLoading and isSaving are now handled by React Query
-
 
   // --- Memoized Values ---
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
@@ -277,7 +277,8 @@ export default function Stage4({
   });
 
   useEffect(() => {
-    if (!stageData) return;
+    // Only initialize once per matter to avoid clobbering user's in-progress edits
+    if (!stageData || hasLoadedData.current) return;
 
     try {
       const initialFormData = {};
@@ -286,27 +287,29 @@ export default function Stage4({
       let loadedSystemNote = ""; // For change tracking
 
       currentConfig.fields.forEach((field) => {
-        // Initialize ALL fields with proper default values
+        const rawValue = stageData[field.name];
+
         if (field.type === "number") {
-          const rawPrice = stageData[field.name];
+          const rawPrice = rawValue;
           initialFormData[field.name] =
             typeof rawPrice === "object" && rawPrice?.$numberDecimal
               ? rawPrice.$numberDecimal
-              : rawPrice?.toString() || "";
+              : rawPrice?.toString() ?? "";
         } else if (field.type === "radio") {
-          // For radio fields, ensure we have a normalized value
-          const rawValue = stageData[field.name] || "";
-          initialFormData[field.name] = normalizeValue(rawValue);
+          // For radio fields, normalize but keep readable options where possible
+          initialFormData[field.name] = normalizeValue(rawValue ?? "");
           initialStatuses[field.name] = getStatus(initialFormData[field.name]);
         } else if (field.type === "text") {
-          initialFormData[field.name] = stageData[field.name] || "";
+          initialFormData[field.name] = rawValue ?? "";
         } else if (field.type === "image") {
-          // Image fields don't go into formData for change detection
-          // They're handled separately via preview state
+          // Image fields handled separately via preview state
         }
 
         // Ensure every field has a value, even if empty
-        if (initialFormData[field.name] === undefined) {
+        if (
+          initialFormData[field.name] === undefined ||
+          initialFormData[field.name] === null
+        ) {
           initialFormData[field.name] = "";
         }
       });
@@ -317,9 +320,9 @@ export default function Stage4({
           stageData.noteForSystem,
           stageData.noteForClient
         );
-        loadedSystemNote = systemNote;
-        loadedClientComment = clientComment;
-        setNoteForClient(clientComment);
+        loadedSystemNote = systemNote || "";
+        loadedClientComment = clientComment || "";
+        setNoteForClient(loadedClientComment);
       } else {
         // VKL/IDG
         currentConfig.noteGroups.forEach((group) => {
@@ -340,91 +343,125 @@ export default function Stage4({
         setfileName(lastImage?.filename || "");
       }
 
+      // Deep-cloned original snapshot used later for isChanged comparisons
       originalData.current = {
-        formData: { ...initialFormData },
+        formData: JSON.parse(JSON.stringify(initialFormData)),
         noteForClient: loadedClientComment,
         noteForSystem: loadedSystemNote,
       };
+
+      hasLoadedData.current = true;
     } catch (error) {
       toast.error("Failed to load stage data");
     }
-  }, [stageData, currentConfig, company, currentModule]);
+  }, [stageData, currentConfig, company, currentModule, matterNumber]);
 
-  const handleChange = (field, value) => {
-    const fieldConfig = currentConfig.fields.find((f) => f.name === field);
-    let processedValue = value;
+  // Reset loaded flag when matterNumber changes so new matter can reinitialize
+  useEffect(() => {
+    hasLoadedData.current = false;
+  }, [matterNumber]);
 
-    if (fieldConfig && fieldConfig.type === "radio") {
-      if (typeof processedValue === "string") {
-        processedValue = normalizeValue(processedValue);
+  const handleChange = useCallback(
+    (field, value) => {
+      const fieldConfig = currentConfig.fields.find((f) => f.name === field);
+      let processedValue = value;
+
+      if (fieldConfig && fieldConfig.type === "radio") {
+        if (typeof processedValue === "string") {
+          processedValue = normalizeValue(processedValue);
+        }
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
+      } else {
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
       }
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
-    }
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
-  };
+      setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
+    },
+    [currentConfig.fields]
+  );
 
   const isChanged = () => {
-    const original = originalData.current;
+    const original = originalData.current || {};
 
-    // If original data hasn't been set yet, consider no changes
-    if (!original || !original.formData) return false;
-
-    // Check if any form field has changed
-    const formChanged = currentConfig.fields.some((field) => {
-      // Skip image fields for change detection
-      if (field.type === "image") return false;
-
-      const currentValue = formData[field.name] || "";
-      const originalValue = original.formData[field.name] || "";
-
-      if (field.type === "radio") {
-        return normalizeValue(currentValue) !== normalizeValue(originalValue);
-      }
-
-      return String(currentValue).trim() !== String(originalValue).trim();
-    });
-
-    // Check client note changes
-    let clientNoteChanged = false;
-    if (currentModule === "commercial") {
-      const currentNote = noteForClient || "";
-      const originalNote = original.noteForClient || "";
-      clientNoteChanged =
-        String(currentNote).trim() !== String(originalNote).trim();
-    } else {
-      // For VKL/IDG, check each note group
-      clientNoteChanged = currentConfig.noteGroups.some((group) => {
-        const currentNote = formData[group.clientCommentKey] || "";
-        const originalNote = original.formData[group.clientCommentKey] || "";
-        return String(currentNote).trim() !== String(originalNote).trim();
-      });
+    // If we don't have an original snapshot, treat any filled value as change
+    if (!original || !original.formData) {
+      const anyFilled = Object.keys(formData || {}).some(
+        (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
+      );
+      return (
+        anyFilled || (noteForClient && String(noteForClient).trim() !== "")
+      );
     }
 
-    // Check system note changes - only if form fields have actually changed
-    const currentSystemNote = generateSystemNote("main");
-    const originalSystemNote = original.noteForSystem || "";
+    try {
+      // Compare form data (excluding image fields)
+      const currentForm = currentConfig.fields.reduce((acc, field) => {
+        if (field.type === "image") return acc;
+        acc[field.name] = formData[field.name] ?? "";
+        return acc;
+      }, {});
 
-    // Normalize system notes for comparison (remove trailing dashes/spaces)
-    const normalizeSystemNote = (note) => {
-      return note.replace(/\s*-+\s*$/, "").trim(); // Remove trailing dashes and spaces
-    };
+      const originalForm = Object.keys(original.formData || {}).reduce(
+        (acc, k) => {
+          // only include keys that are in currentConfig fields (exclude other meta)
+          if (
+            currentConfig.fields.some((f) => f.name === k && f.type !== "image")
+          ) {
+            acc[k] = original.formData[k] ?? "";
+          }
+          return acc;
+        },
+        {}
+      );
 
-    const systemNoteChanged =
-      normalizeSystemNote(currentSystemNote) !==
-        normalizeSystemNote(originalSystemNote) && formChanged; // Only consider system note changed if form fields actually changed
+      const formChanged =
+        JSON.stringify(currentForm) !== JSON.stringify(originalForm);
 
-    console.log("Change detection:", {
-      formChanged,
-      clientNoteChanged,
-      systemNoteChanged,
-      currentSystemNote: normalizeSystemNote(currentSystemNote),
-      originalSystemNote: normalizeSystemNote(originalSystemNote),
-      formData,
-      originalFormData: original.formData,
-    });
+      // Check client note changes
+      let clientNoteChanged = false;
+      if (currentModule === "commercial") {
+        const currentNote = noteForClient ?? "";
+        const originalNote = original.noteForClient ?? "";
+        clientNoteChanged =
+          String(currentNote).trim() !== String(originalNote).trim();
+      } else {
+        clientNoteChanged = currentConfig.noteGroups.some((group) => {
+          const currentNote = formData[group.clientCommentKey] ?? "";
+          const originalNote = original.formData[group.clientCommentKey] ?? "";
+          return String(currentNote).trim() !== String(originalNote).trim();
+        });
+      }
 
-    return formChanged || clientNoteChanged || systemNoteChanged;
+      // System note
+      const currentSystemNote = generateSystemNote("main");
+      const originalSystemNote = original.noteForSystem ?? "";
+      const normalizeSystemNote = (note) =>
+        note
+          ? String(note)
+              .replace(/\s*-+\s*$/, "")
+              .trim()
+          : "";
+      const systemNoteChanged =
+        normalizeSystemNote(currentSystemNote) !==
+          normalizeSystemNote(originalSystemNote) && formChanged;
+
+      // debug
+      console.log("Stage4 Change detection:", {
+        formChanged,
+        clientNoteChanged,
+        systemNoteChanged,
+      });
+
+      return formChanged || clientNoteChanged || systemNoteChanged;
+    } catch (e) {
+      return true;
+    }
   };
   // Add debug useEffect to monitor changes
   useEffect(() => {
@@ -490,60 +527,28 @@ export default function Stage4({
       return apiResponse;
     },
     onSuccess: (responseData, payload) => {
-      // Normalize server response
-      const res = responseData?.data || responseData;
+      // Server response becomes source of truth
+      const res = responseData?.data || responseData || {};
 
-
+      localStorage.setItem("current_stage", "4");
 
       const companyKey = localStorage.getItem("company") || company;
       const currentModuleKey =
         localStorage.getItem("currentModule") || currentModule;
 
-      // 1) Update the clientData cache used by StagesLayout for instant UI updates
+      // 1) Update react-query cached clientData with server response (merge safely)
       try {
         queryClient.setQueryData(
           ["clientData", matterNumber, companyKey, currentModuleKey],
           (old) => {
-            const stageProp = `stage${stage}`; // "stage4"
-
-            // Build stage payload from response
-            const stagePayload =
-              (res && (res[stageProp] || res.stageData)) ||
-              (res &&
-                Object.keys(res).reduce((acc, key) => {
-                  if (
-                    currentConfig.fields.some((field) => field.name === key) ||
-                    key === "colorStatus" ||
-                    key === "noteForClient" ||
-                    key === "noteForSystem"
-                  ) {
-                    acc[key] = res[key];
-                  }
-                  return acc;
-                }, {}));
-
-            if (!old) {
-              const base = { ...(res || {}) };
-              base[stageProp] = { ...(stagePayload || {}) };
-              return base;
-            }
-
+            if (!old) return res;
+            // merge stage4 specifically if available, otherwise merge top-level
             const merged = { ...old };
-            merged[stageProp] = {
-              ...(old[stageProp] || {}),
-              ...(stagePayload || {}),
-            };
-
-            // IMPORTANT: Update the stage4 colorStatus for instant UI update
-            if (payload.colorStatus && merged[stageProp]) {
-              merged[stageProp].colorStatus = payload.colorStatus;
-            }
-
+            merged.stage4 = { ...(old.stage4 || {}), ...(res.stage4 || res) };
             return merged;
           }
         );
       } catch (e) {
-        // fallback: refetch client data in background
         queryClient.invalidateQueries([
           "clientData",
           matterNumber,
@@ -552,81 +557,114 @@ export default function Stage4({
         ]);
       }
 
-      // 2) Update the view/list cache so any listing showing the color/status updates
-      try {
-        queryClient.setQueryData(["viewClients", currentModuleKey], (list) => {
-          if (!Array.isArray(list)) return list;
-          return list.map((c) => {
-            if (String(c.matterNumber) !== String(matterNumber)) return c;
-
-            const updated = { ...c };
-
-            // Update stage4 colorStatus for instant UI update in lists
-            if (payload.colorStatus) {
-              updated.stage4 = updated.stage4
-                ? { ...updated.stage4, colorStatus: payload.colorStatus }
-                : { colorStatus: payload.colorStatus };
-            }
-
-            // Also update top-level colorStatus if it exists in commercial module
-            if (currentModuleKey === "commercial" && payload.colorStatus) {
-              updated.colorStatus = payload.colorStatus;
-            }
-
-            return updated;
-          });
-        });
-      } catch (err) {
-        queryClient.invalidateQueries(["viewClients", currentModuleKey]);
-      }
-
-      try {
-        toast.success("Stage 4 Saved Successfully!", {
-          autoClose: 3000,
-          hideProgressBar: false,
-        });
-      } catch (e) {}
-
-      // 3) Keep the specific stageData in sync (refetch in background)
+      // 2) invalidate/fetch stageData for this stage so any other derived queries refresh
       try {
         queryClient.invalidateQueries({
           queryKey: ["stageData", 4, matterNumber, currentModuleKey],
         });
+      } catch (e) {}
+
+      // 3) show success toast
+      try {
+        toast.success("Stage 4 Saved Successfully!", {
+          autoClose: 2500,
+          hideProgressBar: false,
+        });
+      } catch (e) {}
+
+      // 4) Update local original snapshot using server-returned values (ensures isChanged becomes false)
+      try {
+        // prefer the stage object inside response data
+        const serverStage =
+          (res && (res.stage4 || res.data || res)) ||
+          (typeof payload === "object" ? payload : {});
+
+        // Extract client/system notes depending on module
+        const serverNoteForClient = serverStage.noteForClient || "";
+        const serverSystemNote =
+          serverStage.noteForSystem ||
+          (typeof serverStage.noteForClient === "string"
+            ? serverStage.noteForClient.split(" - ")[0] || ""
+            : "");
+
+        originalData.current = {
+          formData: (() => {
+            const snapshot = {};
+            currentConfig.fields.forEach((f) => {
+              // use server value if present, else payload, else ''
+              snapshot[f.name] =
+                serverStage[f.name] !== undefined
+                  ? serverStage[f.name]
+                  : payload[f.name] ?? "";
+            });
+            // include clientComment key if present in config
+            currentConfig.noteGroups.forEach((group) => {
+              snapshot[group.clientCommentKey] =
+                serverStage[group.clientCommentKey] ??
+                (payload && payload[group.clientCommentKey]) ??
+                "";
+            });
+            return snapshot;
+          })(),
+          noteForClient: serverNoteForClient,
+          noteForSystem: serverSystemNote,
+        };
       } catch (e) {
-        // ignore
+        // fallback to writing payload snapshot
+        originalData.current = {
+          formData: { ...(formData || {}) },
+          noteForClient:
+            currentModule === "commercial"
+              ? noteForClient || ""
+              : formData.clientComment || "",
+          noteForSystem: generateSystemNote("main"),
+        };
       }
 
-      // Keep local snapshot so UI remains stable while user navigates stages
-      const currentClientNote =
-        currentModule === "commercial"
-          ? noteForClient
-          : formData.clientComment || "";
-      originalData.current = {
-        formData: { ...formData },
-        noteForClient: currentClientNote,
-        noteForSystem: generateSystemNote("main"),
-      };
+      // 5) Derive human status and update statuses & parent immediately using server colorStatus
+      try {
+        const serverColor =
+          res.colorStatus ||
+          res.stage4?.colorStatus ||
+          (res.data && res.data.colorStatus) ||
+          serverStage?.colorStatus;
+        const statusMap = {
+          green: "Completed",
+          red: "Not Completed",
+          amber: "In Progress",
+        };
+        const humanStatus = statusMap[serverColor] || "In Progress";
 
-      const statusMap = {
-        green: "Completed",
-        red: "Not Completed",
-        amber: "In Progress",
-      };
+        // update local visual statuses for this stage
+        setStatuses((prev) => ({
+          ...prev,
+          ...(prev || {}),
+          colorStatus: serverColor,
+        }));
 
-      // Update the stage status immediately
-      const newStatus = statusMap[payload.colorStatus] || "Not Completed";
+        // update parent layout immediately so nav bubble reflects server truth
+        if (typeof onStageUpdate === "function") {
+          try {
+            onStageUpdate(
+              { ...(serverStage || {}), colorStatus: serverColor },
+              4
+            );
+          } catch (e) {
+            // ignore
+          }
+        }
 
-      // This will trigger an immediate re-render of the stage navigation
-      if (onStageUpdate) {
+        // persist small status map in localStorage too
         try {
-          onStageUpdate({ ...payload, colorStatus: payload.colorStatus }, 4);
-        } catch {}
+          const stored = JSON.parse(
+            localStorage.getItem("stageStatuses") || "{}"
+          );
+          stored.status4 = humanStatus;
+          localStorage.setItem("stageStatuses", JSON.stringify(stored));
+        } catch (e) {}
+      } catch (e) {
+        // ignore status update failures
       }
-      const currentStatuses = JSON.parse(
-        localStorage.getItem("stageStatuses") || "{}"
-      );
-      currentStatuses[`status4`] = newStatus;
-      localStorage.setItem("stageStatuses", JSON.stringify(currentStatuses));
     },
     onError: (err) => {
       let errorMessage = "Failed to save Stage 4. Please try again.";
@@ -642,31 +680,70 @@ export default function Stage4({
   async function handleSave() {
     if (!isChanged() || isSaving) return;
 
-    let payload = { ...formData };
+    // 1) prepare a clean payload and map radios to exact option strings
     const systemNote = generateSystemNote("main");
+    let payload = JSON.parse(JSON.stringify(formData || {}));
 
-    const allCompleted = currentConfig.fields.every(
-      (field) =>
-        field.type === "image" ||
-        getStatus(formData[field.name]) === "Completed"
-    );
-    const colorStatus = allCompleted ? "green" : "amber";
-    payload.colorStatus = colorStatus;
-
-    if (currentModule === "commercial") {
-      const commercialFields = currentConfig.fields.map((f) => f.name);
-      const filteredPayload = {};
-      commercialFields.forEach((field) => {
-        if (payload[field] !== undefined) {
-          filteredPayload[field] = payload[field];
+    currentConfig.fields.forEach((field) => {
+      const raw = payload[field.name];
+      if (field.type === "radio") {
+        // map normalized -> exact option
+        if (field.options && field.options.length > 0) {
+          const exactOpt = field.options.find(
+            (opt) => normalizeValue(opt) === normalizeValue(raw ?? "")
+          );
+          payload[field.name] = exactOpt !== undefined ? exactOpt : raw ?? "";
+        } else {
+          payload[field.name] = raw ?? "";
         }
-      });
-      payload = filteredPayload;
+      } else if (field.type === "number") {
+        // normalize number fields safely
+        if (payload[field.name] === "" || payload[field.name] === undefined) {
+          payload[field.name] = null;
+        } else if (typeof payload[field.name] === "string") {
+          const n = Number(payload[field.name]);
+          payload[field.name] = Number.isFinite(n) ? n : null;
+        }
+      } else {
+        payload[field.name] = payload[field.name] ?? "";
+      }
+    });
 
-      payload.noteForSystem = systemNote;
-      payload.noteForClient = noteForClient || "";
-      payload.colorStatus = colorStatus;
-      payload.matterNumber = matterNumber;
+    // 2) compute colorStatus from normalized values (treat N/R / nr as completed)
+    const completedSet = new Set([
+      "yes",
+      "nr",
+      "n/r",
+      "na",
+      "n/a",
+      "fixed",
+      "variable",
+      "approved",
+    ]);
+    const fieldsValues = currentConfig.fields.map((f) =>
+      normalizeValue(String(payload[f.name] ?? ""))
+    );
+    const nonEmpty = fieldsValues.filter((v) => v !== "");
+    const computedColorStatus =
+      nonEmpty.length > 0 && nonEmpty.every((v) => completedSet.has(v))
+        ? "green"
+        : nonEmpty.length === 0
+        ? "red"
+        : "amber";
+
+    // 3) attach notes and module/company specific keys
+    if (currentModule === "commercial") {
+      // only include configured commercial fields
+      const commercialFields = currentConfig.fields.map((f) => f.name);
+      const filtered = {};
+      commercialFields.forEach((n) => {
+        if (payload[n] !== undefined) filtered[n] = payload[n];
+      });
+      filtered.noteForSystem = systemNote;
+      filtered.noteForClient = noteForClient || "";
+      filtered.colorStatus = computedColorStatus;
+      filtered.matterNumber = matterNumber;
+      payload = filtered;
     } else {
       currentConfig.noteGroups.forEach((group) => {
         const clientComment = formData[group.clientCommentKey] || "";
@@ -674,20 +751,51 @@ export default function Stage4({
           `${systemNote} - ${clientComment}`.trim();
         delete payload[group.clientCommentKey];
       });
-      currentConfig.fields.forEach((field) => {
-        if (field.type === "number") {
-          payload[field.name] =
-            payload[field.name] === "" ? null : Number(payload[field.name]);
-        }
-      });
-
-      if (company === "vkl") {
-        payload.matterNumber = matterNumber;
-      } else if (company === "idg") {
-        payload.orderId = matterNumber;
-        delete payload.completionPhotos;
-      }
+      if (company === "vkl") payload.matterNumber = matterNumber;
+      if (company === "idg") payload.orderId = matterNumber;
+      payload.colorStatus = computedColorStatus;
     }
+
+    // 4) optimistic local updates so UI reflects computedColorStatus immediately
+    try {
+      // update original snapshot to the new saved values so isChanged() becomes false
+      originalData.current = {
+        formData: JSON.parse(JSON.stringify(formData || {})),
+        noteForClient:
+          currentModule === "commercial"
+            ? noteForClient
+            : formData.clientComment || "",
+        noteForSystem: systemNote,
+      };
+
+      // notify parent immediately so side-panel / nav updates without waiting
+      if (typeof onStageUpdate === "function") {
+        try {
+          onStageUpdate({ ...payload, colorStatus: payload.colorStatus }, 4);
+        } catch (e) {
+          console.warn("onStageUpdate optimistic call failed:", e);
+        }
+      }
+
+      // update stage status UI and localStorage (instant)
+      const statusMap = {
+        green: "Completed",
+        amber: "In Progress",
+        red: "Not Completed",
+      };
+      const human = statusMap[payload.colorStatus] || "In Progress";
+      setStatuses((s) => ({ ...(s || {}), colorStatus: payload.colorStatus }));
+      try {
+        const ss = JSON.parse(localStorage.getItem("stageStatuses") || "{}");
+        ss.status4 = human;
+        localStorage.setItem("stageStatuses", JSON.stringify(ss));
+      } catch (e) {}
+    } catch (e) {
+      // swallow optimistic update errors
+      console.warn("optimistic update preparation failed", e);
+    }
+
+    // 5) finally send to server
     saveStage(payload);
   }
 
@@ -725,7 +833,7 @@ export default function Stage4({
                     name={field.name}
                     value={val}
                     checked={
-                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(formData[field.name] ?? "") ===
                       normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
@@ -746,7 +854,7 @@ export default function Stage4({
             <input
               type="number"
               step="0.01"
-              value={formData[field.name] || ""}
+              value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
             />
@@ -761,7 +869,7 @@ export default function Stage4({
             </label>
             <input
               type="text"
-              value={formData[field.name] || ""}
+              value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full rounded p-2 bg-gray-100"
             />
@@ -863,7 +971,7 @@ export default function Stage4({
           {group.clientCommentLabel}
         </label>
         <textarea
-          value={formData[group.clientCommentKey] || ""}
+          value={formData[group.clientCommentKey] ?? ""}
           onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
           className="w-full rounded p-2 bg-gray-100"
         />
