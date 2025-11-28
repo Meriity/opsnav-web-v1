@@ -109,9 +109,10 @@ export default function Stage1({
   onStageUpdate,
 }) {
   const [formData, setFormData] = useState({});
-  const [statuses, setStatuses] = useState({});
 
+  const [statuses, setStatuses] = useState({});
   const originalData = useRef({});
+  const hasLoadedData = useRef(false);
 
   const stage = 1;
   const { matterNumber } = useParams();
@@ -171,7 +172,10 @@ export default function Stage1({
   // Helper to normalize/standardize values for comparison and storage
   const normalizeValue = useCallback((v) => {
     if (v === undefined || v === null) return "";
-    return String(v).toLowerCase().trim();
+    return String(v)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
   }, []);
 
   const getStatus = useCallback(
@@ -280,68 +284,139 @@ export default function Stage1({
   });
 
   useEffect(() => {
-    if (stageData) {
-      const { systemNote, clientComment } = extractNotes(
-        stageData.noteForClient
-      );
-      const initialFormData = {};
-      const initialStatuses = {};
+    // Don't reload if we've already loaded initial data (prevents clobbering user selection)
+    if (!stageData || hasLoadedData.current) return;
 
-      currentFields.forEach((field) => {
-        if (field.name === "quoteAmount") {
-          initialFormData[field.name] =
-            stageData[field.name]?.$numberDecimal ||
-            stageData[field.name] ||
-            "";
-        } else {
-          initialFormData[field.name] = stageData[field.name] || "";
+    const { systemNote, clientComment } = extractNotes(stageData.noteForClient);
+    const initialFormData = {};
+    const initialStatuses = {};
 
-          if (field.type === "radio" && initialFormData[field.name]) {
-            const fieldConfig = currentFields.find(
-              (f) => f.name === field.name
-            );
-            if (fieldConfig && fieldConfig.options) {
-              const normalizedValue = normalizeValue(
-                initialFormData[field.name]
-              );
-              const exactOption = fieldConfig.options.find(
-                (opt) => normalizeValue(opt) === normalizedValue
-              );
-              if (exactOption) {
-                initialFormData[field.name] = exactOption;
-              }
-            }
-          }
-        }
+    currentFields.forEach((field) => {
+      const raw = stageData[field.name];
 
+      if (field.name === "quoteAmount") {
+        initialFormData[field.name] =
+          stageData[field.name]?.$numberDecimal || stageData[field.name] || "";
+      } else {
         if (field.type === "radio") {
-          initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+          // Normalize and map stored value back to one of the configured options when possible
+          const rawVal = raw ?? "";
+          const normalizedValue = normalizeValue(rawVal);
+          const fieldConfig = currentFields.find((f) => f.name === field.name);
+          let chosen = "";
+          if (fieldConfig && fieldConfig.options) {
+            const exactOption = fieldConfig.options.find(
+              (opt) => normalizeValue(opt) === normalizedValue
+            );
+            chosen = exactOption || (rawVal ? String(rawVal) : "");
+          } else {
+            chosen = rawVal ?? "";
+          }
+          initialFormData[field.name] = chosen;
+        } else {
+          initialFormData[field.name] = raw ?? "";
         }
+      }
+
+      if (field.type === "radio") {
+        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      }
+    });
+
+    currentFields.forEach((field) => {
+      if (
+        initialFormData[field.name] === undefined ||
+        initialFormData[field.name] === null
+      ) {
+        initialFormData[field.name] = "";
+      }
+    });
+
+    initialFormData.systemNote = systemNote;
+    initialFormData.clientComment = clientComment || "";
+
+    setFormData(initialFormData);
+    setStatuses(initialStatuses);
+
+    // Keep originalData in the same shape Stage6 uses so isChanged can compare reliably
+    originalData.current = {
+      formData: JSON.parse(JSON.stringify(initialFormData)),
+      noteForClient: clientComment || "",
+      noteForSystem: systemNote || "",
+    };
+
+    // Mark we've loaded initial data once
+    hasLoadedData.current = true;
+
+    // Reset loaded flag when matterNumber changes (cleanup handled below)
+  }, [stageData, currentFields, getStatus, normalizeValue, matterNumber]);
+
+  // Reset the loaded flag whenever matterNumber changes (so new matter can reload)
+  useEffect(() => {
+    hasLoadedData.current = false;
+  }, [matterNumber]);
+
+  const handleChange = useCallback(
+    (field, value) => {
+      const fieldConfig = currentFields.find((f) => f.name === field);
+
+      let processedValue = value;
+
+      // For radios we prefer the exact option text (Stage6 pattern)
+      if (fieldConfig && fieldConfig.type === "radio") {
+        processedValue = value;
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
+      } else {
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
+      }
+
+      setFormData((prev) => {
+        const next = { ...(prev || {}), [field]: processedValue };
+        return next;
       });
-
-      initialFormData.systemNote = systemNote;
-      initialFormData.clientComment = clientComment || "";
-
-      setFormData(initialFormData);
-      setStatuses(initialStatuses);
-      originalData.current = initialFormData; // Set original data for comparison
-    }
-  }, [stageData, currentFields, getStatus, normalizeValue]); // Dependencies
-
-  const handleChange = (field, value) => {
-    const fieldConfig = currentFields.find((f) => f.name === field);
-
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(value) }));
-    }
-  };
+    },
+    [currentFields, getStatus]
+  );
 
   function isChanged() {
-    return Object.keys(formData).some(
-      (key) => formData[key] !== originalData.current[key]
-    );
+    // If we don't have an original snapshot, consider whether the current form has any filled values
+    const original = originalData.current || {};
+    if (!original.formData) {
+      // If user has entered anything at all, that's a change
+      const anyFilled = Object.keys(formData || {}).some(
+        (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
+      );
+      return (
+        anyFilled ||
+        (formData.clientComment && String(formData.clientComment).trim() !== "")
+      );
+    }
+
+    // Deep compare JSON of the form states (Stage6 approach)
+    try {
+      const currentFormJSON = JSON.stringify(formData || {});
+      const originalFormJSON = JSON.stringify(original.formData || {});
+      const clientNoteCurrent = (formData.clientComment || "").trim();
+      const clientNoteOriginal = (original.noteForClient || "").trim();
+      const systemNoteChanged =
+        (generateSystemNote() || "").trim() !==
+        (original.noteForSystem || "").trim();
+
+      return (
+        currentFormJSON !== originalFormJSON ||
+        clientNoteCurrent !== clientNoteOriginal ||
+        systemNoteChanged
+      );
+    } catch (e) {
+      // fallback to conservative true if stringify fails
+      return true;
+    }
   }
 
   // 4. USE THE useMutation HOOK
@@ -659,7 +734,6 @@ export default function Stage1({
       currentStatuses[`status${stageNumber}`] = newStatus;
       localStorage.setItem("stageStatuses", JSON.stringify(currentStatuses));
 
-
       try {
         toast.success("Stage 1 Saved Successfully!", {
           autoClose: 3000,
@@ -692,17 +766,19 @@ export default function Stage1({
   });
 
   async function handleSave() {
-    if (!isChanged() || isSaving) return;
+    // Snapshot the current formData to avoid races with async setState
+    const snapshotFormData = { ...formData };
+
+    if (!isChanged(snapshotFormData) || isSaving) return;
 
     const systemNote = generateSystemNote();
     let noteForClient = `${systemNote} - ${
-      formData.clientComment || ""
+      snapshotFormData.clientComment || ""
     }`.trim();
 
     let payload = {
-      ...formData,
+      ...snapshotFormData,
     };
-
     currentFields.forEach((field) => {
       if (field.type === "radio" && payload[field.name]) {
         // Find the exact matching option value (case-sensitive)
@@ -740,7 +816,7 @@ export default function Stage1({
       payload.noteForClient = noteForClient;
 
       const allCompleted = currentFields.every(
-        (field) => getStatus(formData[field.name]) === "Completed"
+        (field) => getStatus(snapshotFormData[field.name]) === "Completed"
       );
       payload.colorStatus = allCompleted ? "green" : "amber";
     } else {
@@ -754,7 +830,7 @@ export default function Stage1({
         return true;
       });
       const allCompleted = relevantFields.every(
-        (f) => getStatus(formData[f.name]) === "Completed"
+        (f) => getStatus(snapshotFormData[f.name]) === "Completed"
       );
       payload.colorStatus = allCompleted ? "green" : "amber";
     }
@@ -774,7 +850,7 @@ export default function Stage1({
             </label>
             <input
               type="text"
-              value={formData[field.name] || ""}
+              value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base"
             />
@@ -841,7 +917,7 @@ export default function Stage1({
               {field.label}
             </label>
             <textarea
-              value={formData[field.name] || ""}
+              value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none"
             />
