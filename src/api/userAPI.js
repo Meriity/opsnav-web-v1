@@ -446,21 +446,20 @@ class ClientAPI {
     }
   }
 
-    async changeUser(user,orderId){
-    try{
+  async changeUser(user, orderId) {
+    try {
       const response = await fetch(
         `${this.baseUrl}/idg/orders/changeuser/${orderId}`,
         {
           method: "POST",
           headers: this.getHeaders(),
-          body:JSON.stringify({
-              user
-            })
+          body: JSON.stringify({
+            user,
+          }),
         }
       );
-    }
-    catch(error){
-      console.log("Error occured!!",error);
+    } catch (error) {
+      console.log("Error occured!!", error);
     }
   }
 
@@ -685,7 +684,6 @@ class ClientAPI {
     }
   }
 
-
   async getIDGOutstandingTasks(page = 1, matterFilter = null, ClientID = null) {
     console.log("Inputs =>", { page, matterFilter, ClientID });
 
@@ -736,10 +734,6 @@ class ClientAPI {
       throw error;
     }
   }
-
-
-
-
 
   // Get All Outstanding Task Report
   async getAllOutstandingTasks(page, activeMatter, matterFilter) {

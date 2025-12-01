@@ -17,8 +17,6 @@ import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// ---------- Helpers ----------
-
 const formatDateForDisplay = (isoString) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -50,153 +48,12 @@ const createDefaultProjectData = (matterNumber) => ({
   status: "active",
 });
 
-const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
-const CLIENT_TYPE_OPTIONS = ["Buyer", "Seller", "Transfer"];
-
-function bgcolor(status) {
-  const statusColors = {
-    "In Progress": "bg-[#FFEECF]",
-    Completed: "bg-[#00A506]",
-    "Not Completed": "bg-[#FF0000]",
-    green: "bg-[#00A506]",
-    red: "bg-[#FF0000]",
-    amber: "bg-[#FFEECF]",
-    yellow: "bg-[#facc15]",
-    blue: "bg-[#3b82f6]",
-  };
-  return statusColors[status] || "bg-[#F3F7FF]";
-}
-
-function getStatusDisplayText(status) {
-  const textMap = {
-    green: "Completed",
-    red: "Not Completed",
-    amber: "In Progress",
-    yellow: "Warning",
-    blue: "Info",
-    "In Progress": "In Progress",
-    Completed: "Completed",
-    "Not Completed": "Not Completed",
-  };
-  return textMap[status] || status;
-}
-
-// Normalize data from various APIs into a single shape
-const transformClientData = (data) => {
-  if (!data) return null;
-
-  const normalized = {
-    ...data,
-    matterDate: data.matterDate
-      ? typeof data.matterDate === "string"
-        ? data.matterDate
-        : new Date(data.matterDate).toISOString()
-      : "",
-    settlementDate: data.settlementDate
-      ? typeof data.settlementDate === "string"
-        ? data.settlementDate
-        : new Date(data.settlementDate).toISOString()
-      : "",
-    notes:
-      data.notes !== undefined
-        ? data.notes
-        : data.notes ?? data?.data?.notes ?? "",
-    businessName: data.businessName || data.business_name || "",
-    businessAddress:
-      data.businessAddress ||
-      data.business_address ||
-      data.propertyAddress ||
-      data?.data?.deliveryAddress ||
-      "",
-    clientName: data.clientName || data.client_name || "",
-    clientType: data.clientType || data.client_type || data?.data?.orderType || "",
-    dataEntryBy: data.dataEntryBy || data.dataentryby || data?.data?.dataEntryBy || "",
-    postcode: data.postcode || data.postCode || data?.data?.postCode || "",
-  };
-
-  return normalized;
-};
-
-// Compute stage statuses from server data
-const processStageStatuses = (data) => {
-  const section = {};
-  const localCompany = localStorage.getItem("company");
-  const currentModule = localStorage.getItem("currentModule");
-
-  // default all as Not Completed
-  for (let i = 1; i <= 6; i++) {
-    section[`status${i}`] = "Not Completed";
-  }
-
-  if (currentModule === "commercial") {
-    // stages array with S1, S2... keys
-    if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
-      const stageObject = data.stages[0];
-      for (let i = 1; i <= 6; i++) {
-        const stageKey = `S${i}`;
-        if (stageObject[stageKey]) {
-          const statusMap = {
-            green: "Completed",
-            red: "Not Completed",
-            amber: "In Progress",
-          };
-          section[`status${i}`] =
-            statusMap[stageObject[stageKey]] || "Not Completed";
-        }
-      }
-    }
-
-    // fallback: individual stageX.colorStatus
-    for (let i = 1; i <= 6; i++) {
-      const stageKey = `stage${i}`;
-      if (data[stageKey] && data[stageKey].colorStatus) {
-        const statusMap = {
-          green: "Completed",
-          red: "Not Completed",
-          amber: "In Progress",
-        };
-        section[`status${i}`] =
-          statusMap[data[stageKey].colorStatus] || section[`status${i}`];
-      }
-    }
-
-    // global colorStatus applies to stage 1
-    if (data.colorStatus) {
-      const statusMap = {
-        green: "Completed",
-        red: "Not Completed",
-        amber: "In Progress",
-      };
-      section.status1 = statusMap[data.colorStatus] || section.status1;
-    }
-  } else if (localCompany === "vkl") {
-    section.status1 = data.stage1?.colorStatus || "Not Completed";
-    section.status2 = data.stage2?.colorStatus || "Not Completed";
-    section.status3 = data.stage3?.colorStatus || "Not Completed";
-    section.status4 = data.stage4?.colorStatus || "Not Completed";
-    section.status5 = data.stage5?.colorStatus || "Not Completed";
-    section.status6 = data.stage6?.colorStatus || "Not Completed";
-  } else if (localCompany === "idg") {
-    section.status1 = data.data?.stage1?.colorStatus || "Not Completed";
-    section.status2 = data.data?.stage2?.colorStatus || "Not Completed";
-    section.status3 = data.data?.stage3?.colorStatus || "Not Completed";
-    section.status4 = data.data?.stage4?.colorStatus || "Not Completed";
-  }
-
-  return section;
-};
-
-// ---------- Component ----------
-
 export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const apiRef = useRef(new ClientAPI());
   const commercialApiRef = useRef(new CommercialAPI());
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const company = localStorage.getItem("company");
-  const currentModule = localStorage.getItem("currentModule");
 
   const [role, setRole] = useState(() => {
     const r = localStorage.getItem("role");
@@ -210,11 +67,15 @@ export default function StagesLayout() {
     try {
       const t = localStorage.getItem("token");
       if (t) {
-        const payload = JSON.parse(atob(t.split(".")[1] || ""));
-        if (payload && payload.role) return payload.role;
+        try {
+          const payload = JSON.parse(atob(t.split(".")[1] || ""));
+          if (payload && payload.role) return payload.role;
+        } catch {
+          // ignore token parse error
+        }
       }
     } catch {
-      // ignore
+      // ignore localStorage access error
     }
     return null;
   });
@@ -222,42 +83,6 @@ export default function StagesLayout() {
   const isAnyAdmin = role === "superadmin" || role === "admin";
   const isSuperAdmin = role === "superadmin";
 
-  const [selectedStage, setSelectedStage] = useState(
-    Number(stageNo) || 1
-  );
-  const [reloadStage, setReloadStage] = useState(false);
-
-  const [clientData, setClientData] = useState(null); // editable copy
-  const [originalClientData, setOriginalClientData] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const [loading, setLoading] = useState(false);
-  const [isSmallScreen, setIsSmallScreen] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 1024 : false
-  );
-  const [isOpen, setIsOpen] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
-
-  const [stageStatuses, setStageStatuses] = useState({
-    status1: "Not Completed",
-    status2: "Not Completed",
-    status3: "Not Completed",
-    status4: "Not Completed",
-    status5: "Not Completed",
-    status6: "Not Completed",
-  });
-
-  const [originalMatterNumber, setOriginalMatterNumber] =
-    useState(matterNumber);
-
-  // keep originalMatterNumber in sync
-  useEffect(() => {
-    setOriginalMatterNumber(matterNumber);
-  }, [matterNumber]);
-
-  // Role auto-refresh on focus/storage changes
   useEffect(() => {
     const onStorage = (e) => {
       if (["role", "user", "token"].includes(e.key)) {
@@ -268,7 +93,7 @@ export default function StagesLayout() {
               const u = JSON.parse(localStorage.getItem("user") || "null");
               return u?.role;
             } catch {
-              return null;
+              // ignore parse error
             }
           })();
         setRole(newRole);
@@ -296,17 +121,48 @@ export default function StagesLayout() {
       if (!document.hidden) refreshRole();
     };
     const onFocus = () => refreshRole();
-
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [role]);
 
-  // Resize listener
+  const [selectedStage, setSelectedStage] = useState(() => {
+    // First try localStorage, then URL parameter, then default to 1
+    const storedStage = localStorage.getItem("current_stage");
+    const urlStage = Number(stageNo);
+    return Number(storedStage || urlStage || 1);
+  });
+  const [reloadStage, setReloadStage] = useState(false);
+  const [originalClientData, setOriginalClientData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
+  const [isOpen, setIsOpen] = useState(false);
+  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
+  const [localClientData, setLocalClientData] = useState({});
+
+  const [stageStatuses, setStageStatuses] = useState({
+    status1: "Not Completed",
+    status2: "Not Completed",
+    status3: "Not Completed",
+    status4: "Not Completed",
+    status5: "Not Completed",
+    status6: "Not Completed",
+  });
+
+  const [originalMatterNumber, setOriginalMatterNumber] =
+    useState(matterNumber);
+
+  useEffect(() => {
+    setOriginalMatterNumber(matterNumber);
+  }, [matterNumber]);
+
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 1024);
@@ -315,25 +171,19 @@ export default function StagesLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Stages list based on company/module
-  let stages = [];
-  if (currentModule === "commercial") {
-    stages = [
-      { id: 1, title: "Engagement & Proposal" },
-      { id: 2, title: "Due Diligence & Negotiation" },
-      { id: 3, title: "Execution & Registration" },
-      { id: 4, title: "Finalization & Settlement" },
-      { id: 5, title: "Review & Compliance" },
-      { id: 6, title: "Completion & Archiving" },
-    ];
-  } else if (company === "idg") {
-    stages = [
-      { id: 1, title: "Initiate & Approve" },
-      { id: 2, title: "Plan & Prepare" },
-      { id: 3, title: "Process & Deliver" },
-      { id: 4, title: "Upload Image & Close" },
-    ];
-  } else {
+  const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
+  const CLIENT_TYPE_OPTIONS = ["Buyer", "Seller", "Transfer"];
+
+  let stages = [
+    { id: 1, title: "Retainer/Declaration" },
+    { id: 2, title: "VOI/CAF/Approvals" },
+    { id: 3, title: "Searches/PEXA" },
+    { id: 4, title: "DTS/DOL/SOA" },
+    { id: 5, title: "Notify/Transfer/Disb" },
+    { id: 6, title: "Final Letter/Close" },
+  ];
+
+  if (localStorage.getItem("company") === "vkl") {
     stages = [
       { id: 1, title: "Retainer/Declaration" },
       { id: 2, title: "VOI/CAF/Approvals" },
@@ -342,163 +192,80 @@ export default function StagesLayout() {
       { id: 5, title: "Notify/Transfer/Disb" },
       { id: 6, title: "Final Letter/Close" },
     ];
+  } else if (localStorage.getItem("company") === "idg") {
+    stages = [
+      { id: 1, title: "Initiate & Approve" },
+      { id: 2, title: "Plan & Prepare" },
+      { id: 3, title: "Process & Deliver" },
+      { id: 4, title: "Upload Image & Close" },
+    ];
+  } else if (currentModule === "commercial") {
+    stages = [
+      { id: 1, title: "Engagement & Proposal" },
+      { id: 2, title: "Due Diligence & Negotiation" },
+      { id: 3, title: "Execution & Registration" },
+      { id: 4, title: "Finalization & Settlement" },
+      { id: 5, title: "Review & Compliance" },
+      { id: 6, title: "Completion & Archiving" },
+    ];
   }
 
-  // --------- Data fetching (React Query) ---------
+  function bgcolor(status) {
+    const statusColors = {
+      "In Progress": "bg-[#FFEECF]",
+      Completed: "bg-[#00A506]",
+      "Not Completed": "bg-[#FF0000]",
+      green: "bg-[#00A506]",
+      red: "bg-[#FF0000]",
+      amber: "bg-[#FFEECF]",
+      yellow: "bg-[#facc15]",
+      blue: "bg-[#3b82f6]",
+    };
+    return statusColors[status] || "bg-[#F3F7FF]";
+  }
 
-  const fetchDetails = async () => {
-    const localCompany = localStorage.getItem("company");
-    const localModule = localStorage.getItem("currentModule");
+  function getStatusDisplayText(status) {
+    const textMap = {
+      green: "Completed",
+      red: "Not Completed",
+      amber: "In Progress",
+      yellow: "Warning",
+      blue: "Info",
+      "In Progress": "In Progress",
+      Completed: "Completed",
+      "Not Completed": "Not Completed",
+    };
+    return textMap[status] || status;
+  }
 
-    let response = null;
-
-    try {
-      if (localModule === "commercial") {
-        // First: active projects
-        const activeProjectsResponse =
-          await commercialApiRef.current.getActiveProjects();
-
-        let dataArr = [];
-        if (Array.isArray(activeProjectsResponse)) {
-          dataArr = activeProjectsResponse;
-        } else if (
-          activeProjectsResponse &&
-          Array.isArray(activeProjectsResponse.data)
-        ) {
-          dataArr = activeProjectsResponse.data;
-        } else if (
-          activeProjectsResponse &&
-          Array.isArray(activeProjectsResponse.clients)
-        ) {
-          dataArr = activeProjectsResponse.clients;
-        } else if (
-          activeProjectsResponse &&
-          Array.isArray(activeProjectsResponse.projects)
-        ) {
-          dataArr = activeProjectsResponse.projects;
-        }
-
-        response =
-          dataArr.find(
-            (project) =>
-              String(project.matterNumber) === String(matterNumber) ||
-              String(project._id) === String(matterNumber) ||
-              String(project.id) === String(matterNumber)
-          ) || null;
-
-        // If not found in active, try full data endpoint
-        if (!response) {
-          try {
-            response =
-              await commercialApiRef.current.getProjectFullData(matterNumber);
-          } catch {
-            // ignore; fallback below
-          }
-        }
-
-        if (!response) {
-          response = createDefaultProjectData(matterNumber);
-        }
-      } else if (localCompany === "vkl") {
-        response = await apiRef.current.getAllStages(matterNumber);
-      } else if (localCompany === "idg") {
-        response = await apiRef.current.getIDGStages(matterNumber);
-      } else {
-        response = await apiRef.current.getAllStages(matterNumber);
-      }
-    } catch (error) {
-      // For commercial: fallback to default structure
-      if (localModule === "commercial") {
-        response = createDefaultProjectData(matterNumber);
-      } else {
-        throw error;
-      }
+  function evaluateStageStatus(stageData, fields) {
+    if (!stageData || fields.length === 0) return "Not Completed";
+    let yesCount = 0,
+      noCount = 0,
+      emptyCount = 0;
+    for (const field of fields) {
+      const val = stageData[field]?.toString().toLowerCase();
+      if (val === "yes" || val == "fixed" || val == "variable") yesCount++;
+      else if (val === "no") noCount++;
+      else if (!val || val === "null" || val === "undefined" || val === "")
+        emptyCount++;
     }
+    if (emptyCount === fields.length) return "Not Completed";
+    if (yesCount === fields.length) return "Completed";
+    if (noCount === fields.length) return "Not Completed";
+    return "In Progress";
+  }
 
-    // Handle role returned from server
-    const serverRole =
-      response?.role || response?.currentUser?.role || null;
-    if (serverRole) {
-      setRole(serverRole);
-    }
-
-    return response;
-  };
-
-  const {
-    data: fetchedData,
-    isLoading: isClientLoading,
-    error: clientError,
-    isError,
-  } = useQuery({
-    queryKey: ["clientData", matterNumber, company, currentModule],
-    queryFn: fetchDetails,
-    enabled: !!matterNumber,
-    retry: (failureCount) => failureCount < 2,
-    select: (data) => transformClientData(data),
-  });
-
-  // When data loads, sync into local editable copy & compute statuses
-  useEffect(() => {
-    if (fetchedData) {
-      setClientData(fetchedData);
-      setOriginalClientData(JSON.parse(JSON.stringify(fetchedData)));
-      const statuses = processStageStatuses(fetchedData);
-      setStageStatuses(statuses);
-    }
-  }, [fetchedData]);
-
-  // Error handling
-  useEffect(() => {
-    if (isError) {
-      console.error("Error fetching stage details:", clientError);
-      const localModule = localStorage.getItem("currentModule");
-      if (localModule === "commercial") {
-        const defaultData = createDefaultProjectData(matterNumber);
-        setClientData(defaultData);
-        setOriginalClientData(JSON.parse(JSON.stringify(defaultData)));
-        setStageStatuses({
-          status1: "Not Completed",
-          status2: "Not Completed",
-          status3: "Not Completed",
-          status4: "Not Completed",
-          status5: "Not Completed",
-          status6: "Not Completed",
-        });
-        toast.info("New project created. Please fill in the details.");
-      } else {
-        toast.error("Failed to fetch project details.");
-      }
-    }
-  }, [isError, clientError, matterNumber]);
-
-  // Loading state
-  useEffect(() => {
-    setLoading(isClientLoading || isUpdating);
-  }, [isClientLoading, isUpdating]);
-
-  // Detect unsaved changes
-  useEffect(() => {
-    if (!clientData || !originalClientData) {
-      setHasChanges(false);
-      return;
-    }
-    try {
-      const a = JSON.stringify(clientData);
-      const b = JSON.stringify(originalClientData);
-      setHasChanges(a !== b);
-    } catch {
-      setHasChanges(true);
-    }
-  }, [clientData, originalClientData]);
-
-  // --------- Stage data helpers ---------
+  function RenderStage(newStage) {
+    setSelectedStage(newStage);
+    setReloadStage((prev) => !prev);
+  }
 
   const getStageData = (stageNumber) => {
     if (!clientData) return null;
 
+    // For commercial projects
     if (currentModule === "commercial") {
-      // Try stages array
       if (
         clientData.stages &&
         Array.isArray(clientData.stages) &&
@@ -507,28 +274,23 @@ export default function StagesLayout() {
         const stageObject = clientData.stages[0];
         const stageKey = `S${stageNumber}`;
         if (stageObject[stageKey]) {
+          // Return a mock stage object with the colorStatus
           return { colorStatus: stageObject[stageKey] };
         }
       }
-      // Or stage1, stage2, ...
-      return clientData[`stage${stageNumber}`] || null;
+
+      // Check for individual stage properties (stage1, stage2, etc.)
+      const stageData = clientData[`stage${stageNumber}`] || null;
+      return stageData;
     }
 
-    if (company === "idg") {
-      return clientData.data?.[`stage${stageNumber}`] || null;
-    }
-
+    // For other modules, use the existing structure
     if (clientData.data && clientData.data[`stage${stageNumber}`]) {
       return clientData.data[`stage${stageNumber}`];
     }
 
     return clientData[`stage${stageNumber}`] || null;
   };
-
-  function RenderStage(newStage) {
-    setSelectedStage(newStage);
-    setReloadStage((prev) => !prev);
-  }
 
   function Showstage(stage) {
     function normalizeCloseMatterForClient(client) {
@@ -552,6 +314,40 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              setLocalClientData((prev) => ({
+                ...prev,
+                [`stage${stageNumber}`]: stageData,
+              }));
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+              if (stageData.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+
+                // Also update the clientData cache for immediate reflection
+                queryClient.setQueryData(
+                  ["clientData", matterNumber, company, currentModule],
+                  (old) => {
+                    if (!old) return old;
+                    return {
+                      ...old,
+                      [`stage${stageNumber}`]: {
+                        ...(old[`stage${stageNumber}`] || {}),
+                        colorStatus: stageData.colorStatus,
+                      },
+                    };
+                  }
+                );
+              }
+            }}
           />
         );
       case 2:
@@ -563,6 +359,13 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Update local client data with the new stage data
+              setLocalClientData((prev) => ({
+                ...prev,
+                [`stage${stageNumber}`]: stageData,
+              }));
+            }}
           />
         );
       case 3:
@@ -572,6 +375,53 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Update local client data with the new stage data
+              setLocalClientData((prev) => ({
+                ...prev,
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // Translate colorStatus to human readable status and update UI
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+              if (stageData?.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+
+                // Also update the clientData cache for immediate reflection
+                try {
+                  queryClient.setQueryData(
+                    ["clientData", matterNumber, company, currentModule],
+                    (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        [`stage${stageNumber}`]: {
+                          ...(old[`stage${stageNumber}`] || {}),
+                          colorStatus: stageData.colorStatus,
+                        },
+                      };
+                    }
+                  );
+                } catch (e) {
+                  // fallback to invalidation if merge fails
+                  queryClient.invalidateQueries([
+                    "clientData",
+                    matterNumber,
+                    company,
+                    currentModule,
+                  ]);
+                }
+              }
+            }}
           />
         );
       case 4:
@@ -581,9 +431,245 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Immediately update the local snapshot for the stage so the UI reflects the latest values
+              setLocalClientData((prev) => ({
+                ...(prev || {}),
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // Map of color codes to readable status text
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+
+              // Prefer explicit colorStatus from the stage payload if present.
+              // If it's not present (or not yet persisted), derive a best-effort status
+              // from the returned stageData fields so UI updates immediately and correctly.
+              let newStatus = "Not Completed";
+              if (stageData && stageData.colorStatus) {
+                newStatus = statusMap[stageData.colorStatus] || "Not Completed";
+              } else {
+                // best-effort derive: treat values like yes, n/r, na, fixed, variable, approved as completed
+                try {
+                  const values = Object.keys(stageData || {}).map((k) =>
+                    (stageData[k] === undefined || stageData[k] === null)
+                      ? ""
+                      : String(stageData[k]).toLowerCase().replace(/[^a-z0-9]/g, "")
+                  );
+                  const completedSet = new Set([
+                    "yes",
+                    "nr",
+                    "na",
+                    "n",
+                    "fixed",
+                    "variable",
+                    "approved",
+                  ]);
+                  // consider non-empty fields that are not explicitly 'no' as completed for this heuristic
+                  const meaningfulValues = values.filter((v) => v !== "");
+                  if (meaningfulValues.length === 0) {
+                    newStatus = "Not Completed";
+                  } else if (meaningfulValues.every((v) => completedSet.has(v))) {
+                    newStatus = "Completed";
+                  } else if (meaningfulValues.every((v) => v === "no")) {
+                    newStatus = "Not Completed";
+                  } else {
+                    newStatus = "In Progress";
+                  }
+                } catch (e) {
+                  newStatus = "In Progress";
+                }
+              }
+
+              // update React state (will re-render the stage navigation immediately)
+              setStageStatuses((prev) => ({
+                ...prev,
+                [`status${stageNumber}`]: newStatus,
+              }));
+
+              // persist the small status map in localStorage so other parts of the app see it immediately
+              try {
+                const currentStatuses = JSON.parse(
+                  localStorage.getItem("stageStatuses") || "{}"
+                );
+                currentStatuses[`status${stageNumber}`] = newStatus;
+                localStorage.setItem(
+                  "stageStatuses",
+                  JSON.stringify(currentStatuses)
+                );
+              } catch (e) {
+                // ignore localStorage errors
+              }
+
+              // Also synchronously update the clientData cache's stage object colorStatus if provided
+              // (keeps side panels / lists in sync)
+              if (stageData && stageData.colorStatus) {
+                try {
+                  queryClient.setQueryData(
+                    ["clientData", matterNumber, company, currentModule],
+                    (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        [`stage${stageNumber}`]: {
+                          ...(old[`stage${stageNumber}`] || {}),
+                          colorStatus: stageData.colorStatus,
+                        },
+                      };
+                    }
+                  );
+                } catch (e) {
+                  // fallback: trigger background refetch if merge fails
+                  queryClient.invalidateQueries([
+                    "clientData",
+                    matterNumber,
+                    company,
+                    currentModule,
+                  ]);
+                }
+              }
+            }}
+          />
+        );
+        return (
+          <Stage4
+            data={stageData}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Update local client data with the new stage data
+              setLocalClientData((prev) => ({
+                ...prev,
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // CRITICAL: Update stage statuses immediately for instant UI update
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+
+              // Force immediate update of stage status
+              if (stageData.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+
+                // Also update the clientData cache for immediate reflection
+                queryClient.setQueryData(
+                  ["clientData", matterNumber, company, currentModule],
+                  (old) => {
+                    if (!old) return old;
+                    return {
+                      ...old,
+                      [`stage${stageNumber}`]: {
+                        ...(old[`stage${stageNumber}`] || {}),
+                        colorStatus: stageData.colorStatus,
+                      },
+                    };
+                  }
+                );
+              }
+            }}
           />
         );
       case 5:
+        return (
+          <Stage5
+            data={stageData}
+            changeStage={RenderStage}
+            reloadTrigger={reloadStage}
+            setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Keep local client snapshot in sync
+              setLocalClientData((prev) => ({
+                ...(prev || {}),
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // Map colorStatus to readable status and update UI
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+              if (stageData?.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+
+                // Also update the clientData cache for immediate reflection
+                try {
+                  const companyKey = localStorage.getItem("company") || company;
+                  const currentModuleKey =
+                    localStorage.getItem("currentModule") || currentModule;
+
+                  queryClient.setQueryData(
+                    ["clientData", matterNumber, companyKey, currentModuleKey],
+                    (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        [`stage${stageNumber}`]: {
+                          ...(old[`stage${stageNumber}`] || {}),
+                          ...stageData,
+                          colorStatus: stageData.colorStatus,
+                        },
+                      };
+                    }
+                  );
+                } catch (e) {
+                  // fallback to invalidation if merge fails
+                  queryClient.invalidateQueries([
+                    "clientData",
+                    matterNumber,
+                    company,
+                    currentModule,
+                  ]);
+                }
+              } else {
+                // If there's no colorStatus, still attempt to merge returned stageData
+                try {
+                  const companyKey = localStorage.getItem("company") || company;
+                  const currentModuleKey =
+                    localStorage.getItem("currentModule") || currentModule;
+
+                  queryClient.setQueryData(
+                    ["clientData", matterNumber, companyKey, currentModuleKey],
+                    (old) => {
+                      if (!old) return old;
+                      return {
+                        ...old,
+                        [`stage${stageNumber}`]: {
+                          ...(old[`stage${stageNumber}`] || {}),
+                          ...stageData,
+                        },
+                      };
+                    }
+                  );
+                } catch (e) {
+                  queryClient.invalidateQueries([
+                    "clientData",
+                    matterNumber,
+                    company,
+                    currentModule,
+                  ]);
+                }
+              }
+            }}
+          />
+        );
         return (
           <Stage5
             data={stageData}
@@ -596,13 +682,52 @@ export default function StagesLayout() {
         return (
           <Stage6
             data={
-              company === "vkl"
+              localStorage.getItem("company") === "vkl"
                 ? normalizeCloseMatterForClient(stageData)
                 : stageData
             }
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            onStageUpdate={(stageData, stageNumber) => {
+              // Update local client data with the new stage data
+              setLocalClientData((prev) => ({
+                ...prev,
+                [`stage${stageNumber}`]: stageData,
+              }));
+
+              // CRITICAL: Update stage statuses immediately for instant UI update
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+
+              // Force immediate update of stage status
+              if (stageData.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+
+                // Also update the clientData cache for immediate reflection
+                queryClient.setQueryData(
+                  ["clientData", matterNumber, company, currentModule],
+                  (old) => {
+                    if (!old) return old;
+                    return {
+                      ...old,
+                      [`stage${stageNumber}`]: {
+                        ...(old[`stage${stageNumber}`] || {}),
+                        colorStatus: stageData.colorStatus,
+                      },
+                    };
+                  }
+                );
+              }
+            }}
           />
         );
       case 7:
@@ -626,79 +751,444 @@ export default function StagesLayout() {
     }
   }
 
-  // --------- Update / Mutation ---------
+  // Data fetching function - only responsible for fetching
+  const fetchDetails = async () => {
+    const localCompany = localStorage.getItem("company");
+    const currentModule = localStorage.getItem("currentModule");
 
-  const updateMutation = useMutation({
-    mutationFn: async (payload) => {
-      const localModule = localStorage.getItem("currentModule");
-      const localCompany = localStorage.getItem("company");
+    let response = null;
+    if (currentModule === "commercial") {
+      try {
+        // First, get all active projects
+        const activeProjectsResponse =
+          await commercialApiRef.current.getActiveProjects();
 
-      let resp;
-      if (localModule === "commercial") {
+        // Find the specific project by matterNumber from the active projects list
+        let data = [];
+        if (Array.isArray(activeProjectsResponse)) {
+          data = activeProjectsResponse;
+        } else if (
+          activeProjectsResponse &&
+          Array.isArray(activeProjectsResponse.data)
+        ) {
+          data = activeProjectsResponse.data;
+        } else if (
+          activeProjectsResponse &&
+          Array.isArray(activeProjectsResponse.clients)
+        ) {
+          data = activeProjectsResponse.clients;
+        } else if (
+          activeProjectsResponse &&
+          Array.isArray(activeProjectsResponse.projects)
+        ) {
+          data = activeProjectsResponse.projects;
+        }
+
+        // Find the project with matching matterNumber
+        response = data.find(
+          (project) =>
+            String(project.matterNumber) === String(matterNumber) ||
+            String(project._id) === String(matterNumber) ||
+            String(project.id) === String(matterNumber)
+        );
+
+        if (!response) {
+          try {
+            response = await commercialApiRef.current.getProjectFullData(
+              matterNumber
+            );
+          } catch (error) {
+            console.log("Full data endpoint also failed");
+          }
+
+          // If still not found, create default structure
+          if (!response) {
+            response = createDefaultProjectData(matterNumber);
+          }
+        }
+      } catch (error) {
+        response = createDefaultProjectData(matterNumber);
+      }
+    } else if (localCompany === "vkl") {
+      response = await apiRef.current.getAllStages(matterNumber);
+    } else if (localCompany === "idg") {
+      response = await apiRef.current.getIDGStages(matterNumber);
+    }
+
+    return response;
+  };
+
+  const transformClientData = (data) => {
+    if (!data) return null;
+
+    // Handle server role
+    const serverRole = data?.role || data?.currentUser?.role || null;
+    if (serverRole) setRole(serverRole);
+
+    if (data.stages && Array.isArray(data.stages)) {
+      data.stages.forEach((stage, index) => {});
+    }
+
+    const normalized = {
+      ...data,
+      matterDate: data.matterDate
+        ? typeof data.matterDate === "string"
+          ? data.matterDate
+          : new Date(data.matterDate).toISOString()
+        : "",
+      settlementDate: data.settlementDate
+        ? typeof data.settlementDate === "string"
+          ? data.settlementDate
+          : new Date(data.settlementDate).toISOString()
+        : "",
+      notes: data.notes !== undefined ? data.notes : data.notes ?? "",
+      businessName: data.businessName || data.business_name || "",
+      businessAddress:
+        data.businessAddress ||
+        data.business_address ||
+        data.propertyAddress ||
+        "",
+      clientName: data.clientName || data.client_name || "",
+      clientType: data.clientType || data.client_type || "",
+      dataEntryBy: data.dataEntryBy || data.dataentryby || "",
+      postcode: data.postcode || data.postCode || "",
+    };
+
+    return normalized;
+  };
+
+  // Process stage statuses
+  const processStageStatuses = (data) => {
+    const section = {};
+    const currentModule = localStorage.getItem("currentModule");
+    const localCompany = localStorage.getItem("company");
+
+    if (currentModule === "commercial") {
+      console.log("Setting commercial stage statuses");
+
+      // Initialize all stages as "Not Completed" by default
+      for (let i = 1; i <= 6; i++) {
+        section[`status${i}`] = "Not Completed";
+      }
+
+      if (data.stages && Array.isArray(data.stages) && data.stages.length > 0) {
+        console.log("Found stages array:", data.stages);
+        const stageObject = data.stages[0];
+
+        for (let i = 1; i <= 6; i++) {
+          const stageKey = `S${i}`;
+          if (stageObject[stageKey]) {
+            const statusMap = {
+              green: "Completed",
+              red: "Not Completed",
+              amber: "In Progress",
+            };
+            section[`status${i}`] =
+              statusMap[stageObject[stageKey]] || "Not Completed";
+            console.log(
+              `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]} -> ${
+                section[`status${i}`]
+              }`
+            );
+          }
+        }
+      }
+
+      for (let i = 1; i <= 6; i++) {
+        const stageKey = `stage${i}`;
+        const stageData = data[stageKey];
+        if (stageData && stageData.colorStatus) {
+          const statusMap = {
+            green: "Completed",
+            red: "Not Completed",
+            amber: "In Progress",
+          };
+          section[`status${i}`] =
+            statusMap[stageData.colorStatus] || section[`status${i}`];
+          console.log(
+            `Stage ${i} individual object status: ${stageData.colorStatus} -> ${
+              section[`status${i}`]
+            }`
+          );
+        }
+      }
+    } else if (localCompany === "vkl") {
+      // VKL stage status logic
+      section.status1 = data.stage1?.colorStatus || "Not Completed";
+      section.status2 = data.stage2?.colorStatus || "Not Completed";
+      section.status3 = data.stage3?.colorStatus || "Not Completed";
+      section.status4 = data.stage4?.colorStatus || "Not Completed";
+      section.status5 = data.stage5?.colorStatus || "Not Completed";
+      section.status6 = data.stage6?.colorStatus || "Not Completed";
+    } else if (localCompany === "idg") {
+      // IDG stage status logic
+      section.status1 = data.data?.stage1?.colorStatus || "Not Completed";
+      section.status2 = data.data?.stage2?.colorStatus || "Not Completed";
+      section.status3 = data.data?.stage3?.colorStatus || "Not Completed";
+      section.status4 = data.data?.stage4?.colorStatus || "Not Completed";
+    }
+    return section;
+  };
+
+  // React Query for data fetching
+  const {
+    data: clientData,
+    isLoading: isClientLoading,
+    error: clientError,
+    isError,
+  } = useQuery({
+    queryKey: ["clientData", matterNumber, company, currentModule],
+    queryFn: fetchDetails,
+    enabled: !!matterNumber,
+    retry: (failureCount, error) => {
+      // Only retry on network errors, not on 404s
+      return failureCount < 2;
+    },
+    select: (data) => transformClientData(data),
+  });
+
+  // Process stage statuses when data loads
+  useEffect(() => {
+    if (clientData) {
+      const statuses = processStageStatuses(clientData);
+      setStageStatuses(statuses);
+      const normalized = {
+        ...(clientData || {}),
+        matterDate: clientData?.matterDate ?? "",
+        settlementDate: clientData?.settlementDate ?? "",
+        notes: clientData?.notes ?? clientData?.data?.notes ?? "",
+        businessName:
+          clientData?.businessName ?? clientData?.business_name ?? "",
+        businessAddress:
+          clientData?.businessAddress ??
+          clientData?.business_address ??
+          clientData?.propertyAddress ??
+          "",
+        clientName: clientData?.clientName ?? clientData?.client_name ?? "",
+        clientType: clientData?.clientType ?? clientData?.client_type ?? "",
+        dataEntryBy: clientData?.dataEntryBy ?? clientData?.dataentryby ?? "",
+        postcode: clientData?.postcode ?? clientData?.postCode ?? "",
+        propertyAddress:
+          clientData?.propertyAddress ??
+          clientData?.data?.deliveryAddress ??
+          "",
+        data: {
+          ...(clientData?.data || {}),
+          order_details: clientData?.data?.order_details ?? "",
+          orderDate: clientData?.data?.orderDate ?? "",
+          deliveryDate: clientData?.data?.deliveryDate ?? "",
+          unitNumber: clientData?.data?.unitNumber ?? "",
+          postCode: clientData?.data?.postCode ?? "",
+        },
+      };
+
+      // deep clone to avoid shared references and ensure consistent shapes
+      setLocalClientData(JSON.parse(JSON.stringify(normalized)));
+      setOriginalClientData(JSON.parse(JSON.stringify(normalized)));
+    }
+  }, [clientData]);
+
+  // Handle errors
+  useEffect(() => {
+    if (isError) {
+      toast.error("Failed to fetch project details.");
+
+      // For commercial module, create default structure on any error
+      if (currentModule === "commercial") {
+        const defaultData = createDefaultProjectData(matterNumber);
+        setStageStatuses({
+          status1: "Not Completed",
+          status2: "Not Completed",
+          status3: "Not Completed",
+          status4: "Not Completed",
+          status5: "Not Completed",
+          status6: "Not Completed",
+        });
+        setLocalClientData(defaultData);
+        setOriginalClientData(JSON.parse(JSON.stringify(defaultData)));
+        toast.info("New project created. Please fill in the details.");
+      }
+    }
+  }, [isError, clientError, currentModule, matterNumber]);
+
+  // Track changes
+  useEffect(() => {
+    if (!localClientData || !originalClientData) {
+      setHasChanges(false);
+      return;
+    }
+    try {
+      const a = JSON.stringify(localClientData);
+      const b = JSON.stringify(originalClientData);
+      setHasChanges(a !== b);
+    } catch {
+      setHasChanges(true);
+    }
+  }, [localClientData, originalClientData]);
+
+  // React Query Mutation for Update with optimistic updates
+  const { mutate: performUpdate, isPending: isUpdating } = useMutation({
+    mutationFn: async () => {
+      if (!hasChanges) {
+        setShowConfirmModal(false);
+        return;
+      }
+
+      let payload = {};
+      const currentModule = localStorage.getItem("currentModule");
+      const company = localStorage.getItem("company");
+
+      if (currentModule === "commercial") {
+        payload = {
+          matterNumber: localClientData?.matterNumber || matterNumber,
+          settlementDate: localClientData?.settlementDate || null,
+          notes: localClientData?.notes || "",
+          clientName: localClientData?.clientName || "",
+          businessName: localClientData?.businessName || "",
+          businessAddress: localClientData?.businessAddress || "",
+          state: localClientData?.state || "",
+          clientType: localClientData?.clientType || "",
+          matterDate: localClientData?.matterDate || null,
+          dataEntryBy: localClientData?.dataEntryBy || "",
+          postcode: localClientData?.postcode || "",
+          status: localClientData?.status || "active",
+        };
+      } else if (company === "vkl") {
+        payload = {
+          settlementDate: localClientData?.settlementDate || null,
+          notes: localClientData?.notes || "",
+          propertyAddress: localClientData?.propertyAddress || "",
+        };
+      } else if (company === "idg") {
+        payload = {
+          deliveryDate: localClientData?.data?.deliveryDate || null,
+          order_details: localClientData?.data?.order_details || null,
+          notes: localClientData?.data?.notes || "",
+          deliveryAddress:
+            localClientData?.data?.deliveryAddress ||
+            localClientData?.propertyAddress ||
+            "",
+        };
+      }
+
+      // Include superadmin fields
+      if (isSuperAdmin) {
+        payload.matterDate = localClientData?.matterDate || null;
+        payload.clientName = localClientData?.clientName || "";
+        payload.businessName = localClientData?.businessName || "";
+        payload.state = localClientData?.state || "";
+        payload.clientType = localClientData?.clientType || "";
+        payload.dataEntryBy = localClientData?.dataEntryBy || "";
+
+        // Handle address fields for superadmin
+        if (currentModule === "commercial") {
+          payload.businessAddress = localClientData?.businessAddress || "";
+        } else if (company === "vkl") {
+          payload.propertyAddress = localClientData?.propertyAddress || "";
+        } else if (company === "idg") {
+          payload.deliveryAddress =
+            localClientData?.data?.deliveryAddress ||
+            localClientData?.propertyAddress ||
+            "";
+        }
+
+        if (
+          localClientData?.matterNumber &&
+          String(localClientData?.matterNumber) !== String(originalMatterNumber)
+        ) {
+          payload.matterNumber = localClientData.matterNumber;
+        }
+      }
+
+      // Postcode is editable by all users
+      payload.postcode =
+        localClientData?.postcode || localClientData?.data?.postcode || "";
+
+      let resp = {};
+      if (currentModule === "commercial") {
+        // Check if this is a new project (has default empty structure)
         const isNewProject =
           !originalClientData?.clientName &&
           !originalClientData?.businessName &&
           !originalClientData?.state;
 
         if (isNewProject) {
+          // Use create project for new projects
           resp = await commercialApiRef.current.createProject(payload);
           toast.success("Project created successfully!");
         } else {
           const updateMatterNumber =
             payload.matterNumber || originalMatterNumber;
+          // Use update project for existing projects
           resp = await commercialApiRef.current.updateProject(
             updateMatterNumber,
             payload
           );
           toast.success("Project details updated successfully");
         }
-      } else if (localCompany === "vkl") {
+      } else if (company === "vkl") {
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
         );
-        toast.success("Matter details updated successfully");
-      } else if (localCompany === "idg") {
+      } else {
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
         );
-        toast.success("Order details updated successfully");
-      } else {
-        resp = await apiRef.current.updateClientData(
-          originalMatterNumber,
-          payload
-        );
-        toast.success("Details updated successfully");
       }
 
       return resp;
     },
-    onSuccess: (resp) => {
-      const updatedClient = resp?.client || resp || clientData;
-      const normalizedUpdated = transformClientData(updatedClient);
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["clientData", matterNumber, company, currentModule],
+      });
 
-      queryClient.setQueryData(
-        ["clientData", matterNumber, company, currentModule],
-        normalizedUpdated
-      );
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData([
+        "clientData",
+        matterNumber,
+        company,
+        currentModule,
+      ]);
 
-      setClientData(normalizedUpdated);
-      setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
-
-      // update stage statuses
-      const statuses = processStageStatuses(normalizedUpdated);
-      setStageStatuses(statuses);
-
-      // update original matter number if changed
-      if (
-        normalizedUpdated.matterNumber &&
-        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
-      ) {
-        setOriginalMatterNumber(normalizedUpdated.matterNumber);
+      // Return a context object with the snapshotted value
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["clientData", matterNumber, company, currentModule],
+          context.previousData
+        );
+        setLocalClientData(context.previousData);
+        setOriginalClientData(JSON.parse(JSON.stringify(context.previousData)));
       }
 
-      // optional redirect
+      let msg = "Failed to update. Please try again.";
+      if (err?.message) msg = err.message;
+      else if (err?.response?.data?.message) msg = err.response.data.message;
+
+      toast.error(msg);
+    },
+    onSuccess: (resp) => {
+      // Invalidate and refetch client data
+      queryClient.invalidateQueries({
+        queryKey: ["clientData", matterNumber, company, currentModule],
+      });
+
+      // Update matter number if it changed
+      if (
+        resp?.matterNumber &&
+        String(resp.matterNumber) !== String(originalMatterNumber)
+      ) {
+        setOriginalMatterNumber(resp.matterNumber);
+      }
+
+      // Handle navigation
       if (resp?.directUrl) {
         let direct = resp.directUrl;
         if (!direct.startsWith("/")) direct = `/${direct}`;
@@ -714,28 +1204,19 @@ export default function StagesLayout() {
       }
 
       if (
-        normalizedUpdated?.matterNumber &&
-        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
+        resp?.matterNumber &&
+        String(resp.matterNumber) !== String(originalMatterNumber)
       ) {
         setTimeout(() => {
-          const newUrl = `/admin/client/stages/${normalizedUpdated.matterNumber}`;
           try {
-            navigate(newUrl);
+            navigate(`/admin/client/stages/${resp.matterNumber}`);
           } catch {
-            window.location.href = newUrl;
+            window.location.href = `/admin/client/stages/${resp.matterNumber}`;
           }
         }, 450);
       }
     },
-    onError: (err) => {
-      console.error("Update error:", err);
-      let msg = "Failed to update. Please try again.";
-      if (err?.message) msg = err.message;
-      else if (err?.response?.data?.message) msg = err.response.data.message;
-      toast.error(msg);
-    },
     onSettled: () => {
-      setIsUpdating(false);
       setShowConfirmModal(false);
     },
   });
@@ -746,130 +1227,12 @@ export default function StagesLayout() {
     setShowConfirmModal(true);
   }
 
-  function performUpdate() {
-    if (!hasChanges || !clientData) {
-      setShowConfirmModal(false);
-      return;
-    }
-
-    setIsUpdating(true);
-
-    const localModule = localStorage.getItem("currentModule");
-    const localCompany = localStorage.getItem("company");
-
-    let payload = {};
-
-    if (localModule === "commercial") {
-      payload = {
-        matterNumber: clientData?.matterNumber || matterNumber,
-        settlementDate: clientData?.settlementDate || null,
-        notes: clientData?.notes || "",
-        clientName: clientData?.clientName || "",
-        businessName: clientData?.businessName || "",
-        businessAddress: clientData?.businessAddress || "",
-        state: clientData?.state || "",
-        clientType: clientData?.clientType || "",
-        matterDate: clientData?.matterDate || null,
-        dataEntryBy: clientData?.dataEntryBy || "",
-        postcode: clientData?.postcode || "",
-        status: clientData?.status || "active",
-      };
-    } else if (localCompany === "vkl") {
-      payload = {
-        settlementDate: clientData?.settlementDate || null,
-        notes: clientData?.notes || "",
-        propertyAddress: clientData?.propertyAddress || "",
-        matterDate: clientData?.matterDate || null,
-        clientName: clientData?.clientName || "",
-        state: clientData?.state || "",
-        clientType: clientData?.clientType || "",
-        dataEntryBy: clientData?.dataEntryBy || "",
-        postcode: clientData?.postcode || "",
-      };
-    } else if (localCompany === "idg") {
-      payload = {
-        deliveryDate: clientData?.data?.deliveryDate || null,
-        order_details: clientData?.data?.order_details || null,
-        notes: clientData?.notes || clientData?.data?.notes || "",
-        deliveryAddress:
-          clientData?.data?.deliveryAddress ||
-          clientData?.propertyAddress ||
-          "",
-        postcode:
-          clientData?.postcode || clientData?.data?.postCode || "",
-      };
-    } else {
-      payload = {
-        settlementDate: clientData?.settlementDate || null,
-        notes: clientData?.notes || "",
-        propertyAddress: clientData?.propertyAddress || "",
-        matterDate: clientData?.matterDate || null,
-        clientName: clientData?.clientName || "",
-        state: clientData?.state || "",
-        clientType: clientData?.clientType || "",
-        dataEntryBy: clientData?.dataEntryBy || "",
-        postcode: clientData?.postcode || "",
-      };
-    }
-
-    // superadmin can override identifiers & extra fields
-    if (isSuperAdmin) {
-      payload.matterDate = clientData?.matterDate || payload.matterDate || null;
-      payload.clientName = clientData?.clientName || payload.clientName || "";
-      payload.businessName =
-        clientData?.businessName || payload.businessName || "";
-      payload.state = clientData?.state || payload.state || "";
-      payload.clientType =
-        clientData?.clientType || payload.clientType || "";
-      payload.dataEntryBy =
-        clientData?.dataEntryBy || payload.dataEntryBy || "";
-
-      if (localModule === "commercial") {
-        payload.businessAddress =
-          clientData?.businessAddress || payload.businessAddress || "";
-      } else if (localCompany === "vkl") {
-        payload.propertyAddress =
-          clientData?.propertyAddress || payload.propertyAddress || "";
-      } else if (localCompany === "idg") {
-        payload.deliveryAddress =
-          clientData?.data?.deliveryAddress ||
-          clientData?.propertyAddress ||
-          payload.deliveryAddress ||
-          "";
-      }
-
-      if (
-        clientData?.matterNumber &&
-        String(clientData.matterNumber) !== String(originalMatterNumber)
-      ) {
-        payload.matterNumber = clientData.matterNumber;
-      }
-    }
-
-    // postcode editable for all
-    payload.postcode =
-      clientData?.postcode || clientData?.data?.postcode || payload.postcode || "";
-
-    updateMutation.mutate(payload);
-  }
-
-  // --------- Render ---------
-
-  if (loading && !clientData) {
-    return (
-      <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
-        <Loader />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
       <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-
-      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
-        {/* Desktop header */}
-        <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
+      <main className="grow flex flex-col p-4 w-full max-w-7xl mx-auto overflow-auto">
+        {/* Desktop layout - buttons next to Hello */}
+        <div className="hidden md:flex justify-between items-center mb-2 shrink-0">
           <h2 className="text-lg md:text-xl font-semibold">
             Hello {localStorage.getItem("user")}
           </h2>
@@ -879,14 +1242,25 @@ export default function StagesLayout() {
               bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
               width="w-[60px] md:w-[70px]"
               onClick={() => {
+                try {
+                  queryClient.invalidateQueries(["viewClients", currentModule]);
+                  queryClient.invalidateQueries([
+                    "archivedClients",
+                    currentModule,
+                  ]);
+                } catch (e) {
+                  console.warn("Back refresh failed", e);
+                }
+
                 isAnyAdmin
                   ? navigate("/admin/view-clients")
                   : navigate("/user/view-clients");
+
                 localStorage.removeItem("client-storage");
               }}
             />
-            {(company === "vkl" ||
-              (company === "idg" &&
+            {(localStorage.getItem("company") === "vkl" ||
+              (localStorage.getItem("company") === "idg" &&
                 ["admin", "superadmin"].includes(
                   localStorage.getItem("role")
                 )) ||
@@ -901,8 +1275,8 @@ export default function StagesLayout() {
           </div>
         </div>
 
-        {/* Mobile header */}
-        <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
+        {/* Mobile layout - buttons below Hello */}
+        <div className="flex flex-col md:hidden mb-2 shrink-0">
           <h2 className="text-lg font-semibold mb-2">
             Hello {localStorage.getItem("user")}
           </h2>
@@ -922,20 +1296,20 @@ export default function StagesLayout() {
           </div>
         </div>
 
-        {loading && clientData ? (
+        {isClientLoading ? (
           <Loader />
         ) : (
           <>
-            {/* Stages section */}
+            {/* Stages section with collapse button at the bottom */}
             <div className="relative">
-              {/* Mobile stages (collapsible) */}
+              {/* Mobile stages with smooth transition */}
               {isSmallScreen && (
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
                     isStagesCollapsed ? "max-h-0" : "max-h-96"
                   }`}
                 >
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 shrink-0">
                     {stages.map((stage, index) => {
                       const stageStatus = stageStatuses[`status${stage.id}`];
                       return (
@@ -975,7 +1349,7 @@ export default function StagesLayout() {
                 </div>
               )}
 
-              {/* Desktop stages */}
+              {/* Desktop stages (always visible) */}
               {!isSmallScreen && (
                 <div>
                   <ul className="relative flex flex-col md:flex-row gap-2">
@@ -1049,7 +1423,7 @@ export default function StagesLayout() {
                 </div>
               )}
 
-              {/* Mobile collapse toggle */}
+              {/* Mobile-only collapse toggle button */}
               {isSmallScreen && (
                 <div className="flex justify-center mb-4">
                   <button
@@ -1067,36 +1441,36 @@ export default function StagesLayout() {
               )}
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-1 grow overflow-hidden">
               <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
                 {clientData && Showstage(selectedStage)}
               </div>
 
-              {/* Right panel: details (desktop) */}
-              <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
+              {/* Project/Matter/Order Details - Desktop */}
+              <div className="hidden lg:block w-[430px] xl:w-[500px] shrink-0">
                 <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
                   <h2 className="text-lg font-bold mb-2">
-                    {currentModule === "commercial"
-                      ? "Project Details"
-                      : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
-                      ? (
-                        <>
-                          Order Details{" "}
-                          <span className="absolute right-8 text-sm font-medium text-gray-600">
-                            Unit Number : (
-                            {clientData?.data?.unitNumber || "unset"})
-                          </span>
-                        </>
-                      )
-                      : ""}
+                    {currentModule === "commercial" ? (
+                      "Project Details"
+                    ) : company === "vkl" ? (
+                      "Matter Details"
+                    ) : company === "idg" ? (
+                      <>
+                        Order Details{" "}
+                        <span className="absolute right-8 text-sm font-medium text-gray-600">
+                          Unit Number : (
+                          {clientData?.data?.unitNumber || "unset"})
+                        </span>
+                      </>
+                    ) : (
+                      ""
+                    )}
                   </h2>
                   <form
                     className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
                     onSubmit={handleupdate}
                   >
-                    {/* Date */}
+                    {/* Date Field */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-0.5">
                         {currentModule === "commercial"
@@ -1113,15 +1487,17 @@ export default function StagesLayout() {
                         type={isSuperAdmin ? "date" : "text"}
                         value={
                           isSuperAdmin
-                            ? clientData?.matterDate
-                              ? new Date(clientData.matterDate)
+                            ? localClientData?.matterDate
+                              ? new Date(localClientData.matterDate)
                                   .toISOString()
                                   .substring(0, 10)
                               : ""
-                            : clientData?.matterNumber
-                            ? formatDateForDisplay(clientData.matterDate)
-                            : clientData?.data?.orderDate
-                            ? formatDateForDisplay(clientData.data.orderDate)
+                            : localClientData?.matterNumber
+                            ? formatDateForDisplay(localClientData.matterDate)
+                            : localClientData?.data?.orderDate
+                            ? formatDateForDisplay(
+                                localClientData.data.orderDate
+                              )
                             : ""
                         }
                         onChange={(e) => {
@@ -1129,7 +1505,7 @@ export default function StagesLayout() {
                           const v = e.target.value
                             ? new Date(e.target.value).toISOString()
                             : "";
-                          setClientData((prev) => ({
+                          setLocalClientData((prev) => ({
                             ...(prev || {}),
                             matterDate: v,
                           }));
@@ -1141,7 +1517,7 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* Number / ID */}
+                    {/* Number Field */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-0.5">
                         {currentModule === "commercial"
@@ -1156,12 +1532,12 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.matterNumber ||
-                            clientData?.data?.orderId ||
+                            localClientData?.matterNumber ||
+                            localClientData?.data?.orderId ||
                             ""
                           }
                           onChange={(e) =>
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               matterNumber: e.target.value,
                             }))
@@ -1172,8 +1548,8 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.matterNumber ||
-                            clientData?.data?.orderId ||
+                            localClientData?.matterNumber ||
+                            localClientData?.data?.orderId ||
                             ""
                           }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
@@ -1193,13 +1569,13 @@ export default function StagesLayout() {
                         name="clientName"
                         type="text"
                         value={
-                          clientData?.clientName ||
-                          clientData?.data?.client?.name ||
+                          localClientData?.clientName ??
+                          localClientData?.data?.client?.name ??
                           ""
                         }
                         onChange={(e) => {
                           if (!isSuperAdmin) return;
-                          setClientData((prev) => ({
+                          setLocalClientData((prev) => ({
                             ...(prev || {}),
                             clientName: e.target.value,
                           }));
@@ -1211,7 +1587,7 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* Business Name (commercial) */}
+                    {/* Business Name */}
                     {currentModule === "commercial" && (
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -1220,9 +1596,9 @@ export default function StagesLayout() {
                         {isSuperAdmin ? (
                           <input
                             type="text"
-                            value={clientData?.businessName || ""}
+                            value={localClientData?.businessName ?? ""}
                             onChange={(e) => {
-                              setClientData((prev) => ({
+                              setLocalClientData((prev) => ({
                                 ...(prev || {}),
                                 businessName: e.target.value,
                               }));
@@ -1232,7 +1608,7 @@ export default function StagesLayout() {
                         ) : (
                           <input
                             type="text"
-                            value={clientData?.businessName || ""}
+                            value={localClientData?.businessName || ""}
                             className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                             disabled
                             readOnly
@@ -1241,7 +1617,7 @@ export default function StagesLayout() {
                       </div>
                     )}
 
-                    {/* Address */}
+                    {/* Address Field */}
                     <div className="md:col-span-2">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {currentModule === "commercial"
@@ -1266,9 +1642,9 @@ export default function StagesLayout() {
                         type="text"
                         value={
                           currentModule === "commercial"
-                            ? clientData?.businessAddress || ""
-                            : clientData?.propertyAddress ||
-                              clientData?.data?.deliveryAddress ||
+                            ? localClientData?.businessAddress ?? ""
+                            : localClientData?.propertyAddress ??
+                              localClientData?.data?.deliveryAddress ??
                               ""
                         }
                         onChange={(e) => {
@@ -1277,7 +1653,7 @@ export default function StagesLayout() {
                             currentModule === "commercial"
                               ? "businessAddress"
                               : "propertyAddress";
-                          setClientData((prev) => ({
+                          setLocalClientData((prev) => ({
                             ...(prev || {}),
                             [fieldName]: e.target.value,
                           }));
@@ -1289,7 +1665,7 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* State */}
+                    {/* State Field */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         State
@@ -1299,10 +1675,12 @@ export default function StagesLayout() {
                           id="state"
                           name="state"
                           value={
-                            clientData?.state || clientData?.data?.state || ""
+                            localClientData?.state ??
+                            localClientData?.data?.country ??
+                            ""
                           }
                           onChange={(e) =>
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               state: e.target.value,
                             }))
@@ -1320,7 +1698,9 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.state || clientData?.data?.state || ""
+                            localClientData?.state ||
+                            localClientData?.data?.state ||
+                            ""
                           }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
@@ -1329,7 +1709,7 @@ export default function StagesLayout() {
                       )}
                     </div>
 
-                    {/* Client/Order Type */}
+                    {/* Client Type Field */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {currentModule === "commercial"
@@ -1345,17 +1725,17 @@ export default function StagesLayout() {
                           id="clientType"
                           name="clientType"
                           value={
-                            clientData?.clientType ||
-                            clientData?.data?.orderType ||
+                            localClientData?.clientType ??
+                            localClientData?.data?.orderType ??
                             ""
                           }
                           onChange={(e) =>
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               clientType: e.target.value,
                             }))
                           }
-                          className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
                         >
                           <option value="">Select client type</option>
                           {CLIENT_TYPE_OPTIONS.map((ct) => (
@@ -1368,11 +1748,10 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.clientType ||
-                            clientData?.data?.orderType ||
-                            ""
+                            localClientData?.clientType ||
+                            localClientData?.data?.orderType
                           }
-                          className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
                           readOnly
                         />
@@ -1389,13 +1768,13 @@ export default function StagesLayout() {
                         id="postcode"
                         name="postcode"
                         value={
-                          clientData?.postcode ||
-                          clientData?.data?.postCode ||
+                          localClientData?.postcode ??
+                          localClientData?.data?.postCode ??
                           ""
                         }
                         onChange={(e) => {
-                          setClientData((prev) => ({
-                            ...(prev || {}),
+                          setLocalClientData((prev) => ({
+                            ...prev,
                             postcode: e.target.value,
                           }));
                         }}
@@ -1406,7 +1785,7 @@ export default function StagesLayout() {
                       />
                     </div>
 
-                    {/* Completion / Settlement / Delivery Date */}
+                    {/* Completion/Settlement/Delivery Date */}
                     <div className="md:col-span-1">
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {currentModule === "commercial"
@@ -1435,14 +1814,20 @@ export default function StagesLayout() {
                         type="date"
                         value={
                           currentModule === "commercial"
-                            ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate)
+                            ? localClientData?.settlementDate
+                              ? new Date(localClientData.settlementDate)
                                   .toISOString()
                                   .substring(0, 10)
                               : ""
                             : company === "vkl"
-                            ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate)
+                            ? localClientData?.settlementDate
+                              ? new Date(localClientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : company === "idg"
+                            ? localClientData?.data?.deliveryDate
+                              ? new Date(localClientData.data.deliveryDate)
                                   .toISOString()
                                   .substring(0, 10)
                               : ""
@@ -1457,17 +1842,17 @@ export default function StagesLayout() {
                         onChange={(e) => {
                           const dateValue = e.target.value;
                           if (currentModule === "commercial") {
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               settlementDate: dateValue,
                             }));
                           } else if (company === "vkl") {
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               settlementDate: dateValue,
                             }));
                           } else if (company === "idg") {
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               data: {
                                 ...((prev && prev.data) || {}),
@@ -1489,12 +1874,11 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data?.dataEntryBy ||
-                            ""
+                            localClientData?.dataEntryBy ||
+                            localClientData?.data?.dataEntryBy
                           }
                           onChange={(e) =>
-                            setClientData((prev) => ({
+                            setLocalClientData((prev) => ({
                               ...(prev || {}),
                               dataEntryBy: e.target.value,
                             }))
@@ -1505,9 +1889,8 @@ export default function StagesLayout() {
                         <input
                           type="text"
                           value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data?.dataEntryBy ||
-                            ""
+                            localClientData?.dataEntryBy ||
+                            localClientData?.data?.dataEntryBy
                           }
                           className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                           disabled
@@ -1516,7 +1899,7 @@ export default function StagesLayout() {
                       )}
                     </div>
 
-                    {/* Notes / Order details */}
+                    {/* Notes */}
                     <div className="md:col-span-3">
                       {company === "idg" ? (
                         <div className="flex gap-1 w-full">
@@ -1526,10 +1909,10 @@ export default function StagesLayout() {
                             </label>
                             <textarea
                               rows={5}
-                              value={clientData?.data?.order_details || ""}
+                              value={localClientData?.data?.order_details ?? ""}
                               onChange={(e) => {
                                 const newOrderDetails = e.target.value;
-                                setClientData((prev) => ({
+                                setLocalClientData((prev) => ({
                                   ...(prev || {}),
                                   data: {
                                     ...((prev && prev.data) || {}),
@@ -1548,13 +1931,13 @@ export default function StagesLayout() {
                             <textarea
                               rows={5}
                               value={
-                                clientData?.notes ||
-                                clientData?.data?.notes ||
+                                localClientData?.notes ??
+                                localClientData?.data?.notes ??
                                 ""
                               }
                               onChange={(e) => {
                                 const newNote = e.target.value;
-                                setClientData((prev) => {
+                                setLocalClientData((prev) => {
                                   const updated = { ...(prev || {}) };
                                   updated.notes = newNote;
                                   if (updated.data) {
@@ -1578,13 +1961,13 @@ export default function StagesLayout() {
                           <textarea
                             rows={5}
                             value={
-                              clientData?.notes ||
-                              clientData?.data?.notes ||
+                              localClientData?.notes ||
+                              localClientData?.data?.notes ||
                               ""
                             }
                             onChange={(e) => {
                               const newNote = e.target.value;
-                              setClientData((prev) => {
+                              setLocalClientData((prev) => {
                                 const updated = { ...(prev || {}) };
                                 updated.notes = newNote;
                                 if (updated.data) {
@@ -1602,7 +1985,6 @@ export default function StagesLayout() {
                       )}
                     </div>
 
-                    {/* Update button */}
                     <div className="md:col-span-3 mt-2">
                       <div className="mt-2">
                         <button
@@ -1624,7 +2006,7 @@ export default function StagesLayout() {
             </div>
 
             {/* Mobile Details */}
-            {isSmallScreen && clientData && (
+            {isSmallScreen && (
               <div className="w-full mt-4 bg-white rounded shadow border border-gray-200 p-4 overflow-y-auto max-h-96">
                 <h2 className="text-lg font-bold mb-2">
                   {currentModule === "commercial"
@@ -1639,6 +2021,7 @@ export default function StagesLayout() {
                   className="grid grid-cols-1 gap-x-4 gap-y-2"
                   onSubmit={handleupdate}
                 >
+                  {/* Mobile form fields - similar structure but simplified */}
                   <div>
                     <label className="block text-xs md:text-sm font-semibold mb-1">
                       {currentModule === "commercial"
@@ -1650,20 +2033,20 @@ export default function StagesLayout() {
                         : ""}
                     </label>
                     <input
-                      id="matterDateMobile"
-                      name="matterDateMobile"
+                      id="matterDate"
+                      name="matterDate"
                       type={isSuperAdmin ? "date" : "text"}
                       value={
                         isSuperAdmin
-                          ? clientData?.matterDate
-                            ? new Date(clientData.matterDate)
+                          ? localClientData?.matterDate
+                            ? new Date(localClientData.matterDate)
                                 .toISOString()
                                 .substring(0, 10)
                             : ""
-                          : clientData?.matterNumber
-                          ? formatDateForDisplay(clientData.matterDate)
-                          : clientData?.data?.orderDate
-                          ? formatDateForDisplay(clientData.data.orderDate)
+                          : localClientData?.matterNumber
+                          ? formatDateForDisplay(localClientData.matterDate)
+                          : localClientData?.data?.orderDate
+                          ? formatDateForDisplay(localClientData.data.orderDate)
                           : ""
                       }
                       onChange={(e) => {
@@ -1671,7 +2054,7 @@ export default function StagesLayout() {
                         const v = e.target.value
                           ? new Date(e.target.value).toISOString()
                           : "";
-                        setClientData((prev) => ({
+                        setLocalClientData((prev) => ({
                           ...(prev || {}),
                           matterDate: v,
                         }));
@@ -1683,7 +2066,7 @@ export default function StagesLayout() {
                     />
                   </div>
 
-                  {/* You can mirror other fields here if you want full mobile form parity */}
+                  {/* ... other mobile form fields similar to desktop but in single column ... */}
 
                   <div className="mt-3">
                     <button
@@ -1704,12 +2087,11 @@ export default function StagesLayout() {
           </>
         )}
       </main>
-
       <ConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         title="Confirm update"
-        onConfirm={performUpdate}
+        onConfirm={() => performUpdate()}
       >
         Are you sure you want to update client data?
       </ConfirmationModal>

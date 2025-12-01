@@ -91,7 +91,7 @@ export default function CreateClientModal({
   setIsOpen,
   companyName,
   createType,
-  onClose
+  onClose,
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -606,10 +606,11 @@ export default function CreateClientModal({
                         onChange={handleChange}
                         pattern="[0-9]*"
                         inputMode="numeric"
-                        className={`w-full px-4 py-2 rounded-md border ${matterNumberError
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } bg-white/80 backdrop-blur-sm`}
+                        className={`w-full px-4 py-2 rounded-md border ${
+                          matterNumberError
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } bg-white/80 backdrop-blur-sm`}
                         required
                       />
                       {matterNumberError && (
@@ -1101,10 +1102,11 @@ export default function CreateClientModal({
                 <button
                   type="submit"
                   disabled={isLoading || !!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${isLoading || matterNumberError
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-sky-600 hover:shadow-lg"
-                    }`}
+                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${
+                    isLoading || matterNumberError
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-sky-600 hover:shadow-lg"
+                  }`}
                 >
                   {isLoading ? "Creating..." : getModalTitle()}
                 </button>
