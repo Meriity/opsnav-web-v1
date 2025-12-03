@@ -10,7 +10,7 @@ import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useState, Fragment, useMemo, useCallback } from "react";
+import { useState, Fragment, useMemo, useCallback, useEffect } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import Header from "../../components/layout/Header";
@@ -45,6 +45,23 @@ const ViewClients = () => {
 
   const { searchQuery } = useSearchStore();
   const currentModule = localStorage.getItem("currentModule");
+
+  useEffect(() => {
+    try {
+      const reloadFlag = sessionStorage.getItem("opsnav_clients_should_reload");
+      if (reloadFlag === "1") {
+        // clear the flag so we don't loop
+        sessionStorage.removeItem("opsnav_clients_should_reload");
+        // hard reload once so the server / list is absolutely fresh
+        window.location.reload();
+      }
+    } catch (e) {
+      // ignore any storage errors and continue regular mount
+      console.warn("Reload flag check failed", e);
+    }
+    // run only once on mount
+  }, []);
+
   const company = localStorage.getItem("company");
 
   const api = useMemo(() => {
@@ -364,12 +381,13 @@ const ViewClients = () => {
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${currentModule === "commercial"
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial"
             ? "projects"
             : company === "idg"
-              ? "orders"
-              : "clients"
-          }.`}
+            ? "orders"
+            : "clients"
+        }.`}
         handelSubmitFun={(fromDate, toDate) => {
           setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
@@ -399,8 +417,8 @@ const ViewClients = () => {
               {currentModule === "commercial"
                 ? "project"
                 : company === "idg"
-                  ? "order"
-                  : "matter"}{" "}
+                ? "order"
+                : "matter"}{" "}
               No. :{" "}
               <span className="text-blue-500 underline cursor-pointer">
                 {shareDetails?.matterNumber}
@@ -439,7 +457,11 @@ const ViewClients = () => {
         </div>
       </Dialog>
 
-      <Dialog open={showTAR} onClose={() => setShowTar(false)} className="relative z-50">
+      <Dialog
+        open={showTAR}
+        onClose={() => setShowTar(false)}
+        className="relative z-50"
+      >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
@@ -497,8 +519,8 @@ const ViewClients = () => {
                 {currentModule === "commercial"
                   ? "Projects"
                   : company === "idg"
-                    ? "Orders"
-                    : "Clients"}{" "}
+                  ? "Orders"
+                  : "Clients"}{" "}
                 per page:
               </label>
               <select
@@ -581,10 +603,11 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={handleCreateButtonClick}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
@@ -595,10 +618,11 @@ const ViewClients = () => {
                           {({ active }) => (
                             <button
                               onClick={() => setcreateOrder(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${active
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active
                                   ? "bg-sky-50 text-sky-700"
                                   : "text-gray-700"
-                                }`}
+                              }`}
                             >
                               Create Order
                             </button>
@@ -610,10 +634,11 @@ const ViewClients = () => {
                           {({ active }) => (
                             <button
                               onClick={() => setShowOutstandingTask(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${active
+                              className={`block w-full text-left px-4 py-2 text-sm ${
+                                active
                                   ? "bg-sky-50 text-sky-700"
                                   : "text-gray-700"
-                                }`}
+                              }`}
                             >
                               Outstanding Tasks
                             </button>
@@ -624,10 +649,11 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             Select Date Range
                           </button>
@@ -659,8 +685,8 @@ const ViewClients = () => {
             {currentModule === "commercial"
               ? "No projects found"
               : company === "idg"
-                ? "No orders found"
-                : "No clients found"}
+              ? "No orders found"
+              : "No clients found"}
           </div>
         ) : (
           <div className="px-5">

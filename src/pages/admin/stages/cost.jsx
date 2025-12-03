@@ -499,6 +499,9 @@ export default function CostComponent({ changeStage }) {
       queryClient.invalidateQueries({
         queryKey: ["costData", matterNumber, currentModule, company],
       });
+      try {
+        sessionStorage.setItem("opsnav_clients_should_reload", "1");
+      } catch (e) {}
     },
     onError: (err) => {
       console.error("=== COST SAVE ERROR ===", err);
