@@ -53,32 +53,83 @@ export default function Header() {
     setLoading(true);
     setShowDropdown(true);
     try {
-      const response =
+      const lowercasedValue = value.toLowerCase();
+
+      // First try the existing search endpoint (fast / server-side results)
+      let response =
         company === "vkl"
           ? await api.getSearchResult(value)
           : company === "idg"
           ? await api.getIDGSearchResult(value)
-          : "";
+          : [];
 
-      const lowercasedValue = value.toLowerCase();
-      const filteredResults = response.filter(
-        (item) =>
-          String(item.matterNumber || item.orderId)
-            .toLowerCase()
-            .includes(lowercasedValue) ||
-          String(item.clientName).toLowerCase().includes(lowercasedValue) ||
-          String(item.propertyAddress || item.property_address)
-            .toLowerCase()
-            .includes(lowercasedValue) ||
-          String(item.state).toLowerCase().includes(lowercasedValue) ||
-          String(item.referral || item.referralName)
-            .toLowerCase()
-            .includes(lowercasedValue)
-      );
+      // If server returned nothing or might be missing referral-only matches,
+      // fetch the full client list and merge — this guarantees referral matches.
+      if (!Array.isArray(response) || response.length === 0) {
+        try {
+          const allClients = await api.getClients();
+          // backend sometimes returns { data: [...] } — normalize:
+          response = Array.isArray(allClients)
+            ? allClients
+            : allClients?.data || allClients?.clients || [];
+        } catch (e) {
+          // if fetching full list fails, keep whatever we have from server search
+          console.warn("Fallback getClients failed:", e);
+          response = Array.isArray(response) ? response : [];
+        }
+      } else {
+        // still attempt to include clients from the full list (de-duplicate)
+        try {
+          const allClients = await api.getClients();
+          const list = Array.isArray(allClients)
+            ? allClients
+            : allClients?.data || [];
+          // merge server results + full list by matterNumber/orderId/_id to ensure referral-only items included
+          const map = new Map();
+          (response || []).forEach((r) =>
+            map.set(String(r.matterNumber || r.orderId || r._id), r)
+          );
+          (list || []).forEach((r) =>
+            map.set(String(r.matterNumber || r.orderId || r._id), r)
+          );
+          response = Array.from(map.values());
+        } catch {
+          /* ignore merge failures; we already have server response */
+        }
+      }
+
+      const searchWords = lowercasedValue.split(/\s+/).filter(Boolean);
+
+      const filteredResults = (response || []).filter((item) => {
+        // collect top-level fields
+        const topFields = [
+          String(item.matterNumber || item.orderId || ""),
+          String(item.clientName || item.client_name || ""),
+          String(item.propertyAddress || item.property_address || ""),
+          String(item.state || ""),
+          String(item.referral || item.referralName || ""),
+        ];
+
+        // collect referral (or similar) from any nested stage objects (stage1, stage2, ...)
+        const stageRefValues = Object.keys(item)
+          .filter((k) => /^stage\d/i.test(k))
+          .map((k) => String(item[k]?.referral || item[k]?.referralName || ""))
+          .filter(Boolean);
+
+        const fields = topFields
+          .concat(stageRefValues)
+          .map((x) => String(x).toLowerCase());
+
+        // Match ANY word against ANY field
+        return searchWords.some((word) =>
+          fields.some((field) => field.includes(word))
+        );
+      });
 
       setSearchResult(filteredResults);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
+      setSearchResult([]);
     } finally {
       setLoading(false);
     }
@@ -247,9 +298,11 @@ export default function Header() {
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                 Searching...
               </div>
-            ) : searchResult.length === 0 ? (
+            ) : !loading &&
+              searchQuery.trim().length > 0 &&
+              searchResult.length === 0 ? (
               <div className="p-3 text-gray-400 text-sm">
-                No results found for "{searchQuery}"
+                No results found for "{searchQuery.trim()}"
               </div>
             ) : (
               <>

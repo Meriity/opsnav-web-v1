@@ -578,6 +578,10 @@ export default function Stage1({
 
       localStorage.setItem("current_stage", "1");
 
+      try {
+        sessionStorage.setItem("opsnav_clients_should_reload", "1");
+      } catch (e) {}
+
       const companyKey = localStorage.getItem("company") || company;
       const moduleKey = localStorage.getItem("currentModule") || currentModule;
 

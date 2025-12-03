@@ -455,9 +455,11 @@ export default function StagesLayout() {
                 // best-effort derive: treat values like yes, n/r, na, fixed, variable, approved as completed
                 try {
                   const values = Object.keys(stageData || {}).map((k) =>
-                    (stageData[k] === undefined || stageData[k] === null)
+                    stageData[k] === undefined || stageData[k] === null
                       ? ""
-                      : String(stageData[k]).toLowerCase().replace(/[^a-z0-9]/g, "")
+                      : String(stageData[k])
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]/g, "")
                   );
                   const completedSet = new Set([
                     "yes",
@@ -472,7 +474,9 @@ export default function StagesLayout() {
                   const meaningfulValues = values.filter((v) => v !== "");
                   if (meaningfulValues.length === 0) {
                     newStatus = "Not Completed";
-                  } else if (meaningfulValues.every((v) => completedSet.has(v))) {
+                  } else if (
+                    meaningfulValues.every((v) => completedSet.has(v))
+                  ) {
                     newStatus = "Completed";
                   } else if (meaningfulValues.every((v) => v === "no")) {
                     newStatus = "Not Completed";
@@ -1252,11 +1256,30 @@ export default function StagesLayout() {
                   console.warn("Back refresh failed", e);
                 }
 
-                isAnyAdmin
-                  ? navigate("/admin/view-clients")
-                  : navigate("/user/view-clients");
+                // If any stage/cost save set the reload flag, do a hard navigation (force reload)
+                const reloadFlag = sessionStorage.getItem(
+                  "opsnav_clients_should_reload"
+                );
 
                 localStorage.removeItem("client-storage");
+
+                if (reloadFlag === "1") {
+                  // clear the flag then hard navigate (causes full page reload)
+                  try {
+                    sessionStorage.removeItem("opsnav_clients_should_reload");
+                  } catch (e) {}
+
+                  const target = isAnyAdmin
+                    ? "/admin/view-clients"
+                    : "/user/view-clients";
+                  // Hard navigate to force a full reload of the listing page.
+                  window.location.href = target;
+                } else {
+                  // Soft navigation (no hard reload) — uses react-router as before
+                  isAnyAdmin
+                    ? navigate("/admin/view-clients")
+                    : navigate("/user/view-clients");
+                }
               }}
             />
             {(localStorage.getItem("company") === "vkl" ||

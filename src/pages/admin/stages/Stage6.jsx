@@ -455,7 +455,9 @@ export default function Stage6({ changeStage, data, onStageUpdate }) {
         (k) => formData[k] !== undefined && formData[k] !== ""
       );
       const currentClientNote =
-        currentModule === "commercial" ? noteForClient : formData.clientComment || "";
+        currentModule === "commercial"
+          ? noteForClient
+          : formData.clientComment || "";
       const hasClientNote = !!(
         currentClientNote && currentClientNote.trim() !== ""
       );
@@ -527,6 +529,10 @@ export default function Stage6({ changeStage, data, onStageUpdate }) {
 
     onSuccess: (res, payload) => {
       localStorage.setItem("current_stage", "6");
+
+      try {
+        sessionStorage.setItem("opsnav_clients_should_reload", "1");
+      } catch (e) {}
 
       const companyKey = localStorage.getItem("company") || company;
       const currentModuleKey =
