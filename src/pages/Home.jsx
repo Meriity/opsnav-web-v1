@@ -406,7 +406,7 @@ export default function Home() {
               className="flex items-center gap-3"
             >
               <div className="relative">
-                <img src="/Logo.png" alt="OpsNav" className="h-12 w-auto" />
+                <img src="/Logo.png" alt="Opsnav" className="h-12 w-auto" />
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{
@@ -414,7 +414,6 @@ export default function Home() {
                     repeat: Infinity,
                     ease: "linear",
                   }}
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-[#2E3D99] rounded-full"
                 />
               </div>
             </motion.div>
@@ -521,6 +520,15 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-6 text-gray-500 text-sm"
+          >
+            No credit card required • Cancel anytime • 24/7 support
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl"
           >
             {/* <StatsCounter end={500} suffix="+" label="Legal Professionals" />
@@ -539,12 +547,12 @@ export default function Home() {
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
               onClick={handleScrollToFeatures}
-              className="w-12 h-20 border-2 border-[#2E3D99]/20 rounded-full flex justify-center cursor-pointer"
+              className="w-10 h-16 border-2 border-[#2E3D99]/20 rounded-full flex justify-center cursor-pointer"
             >
               <motion.div
-                animate={{ y: [0, 12, 0] }}
+                animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="w-2 h-2 bg-[#2E3D99] rounded-full mt-3"
+                className="w-1.5 h-1.5 bg-[#2E3D99] rounded-full mt-3"
               />
             </motion.div>
           </motion.div>
@@ -936,7 +944,7 @@ export default function Home() {
               Ready to transform your legal operations?
             </h2>
             <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-              Join thousands of legal professionals who trust OpsNav to
+              Join thousands of legal professionals who trust Opsnav to
               streamline their workflow.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -966,11 +974,11 @@ export default function Home() {
       <footer className="bg-black text-white py-12">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* OpsNav Text */}
+            {/* Opsnav Text */}
             <div className="text-center md:text-left">
               <div className="flex flex-col items-center md:items-start">
                 <span className="text-3xl font-bold text-white mb-2">
-                  OpsNav
+                  Opsnav
                 </span>
                 <p className="text-gray-400 max-w-md">
                   Streamline legal operations with precision and scale without
@@ -1006,7 +1014,7 @@ export default function Home() {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>© {new Date().getFullYear()} OpsNav. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Opsnav. All rights reserved.</p>
             <div className="mt-4 flex flex-wrap justify-center gap-6 text-sm">
               <a href="#" className="hover:text-white transition-colors">
                 Privacy Policy
