@@ -48,8 +48,8 @@ const useDashboardStore = create((set) => ({
 
   setDashboardData: (data, currentModule = "") =>
     set(() => {
-      const arr = Array.isArray(data.last10MonthsStats)
-        ? data.last10MonthsStats.slice(-10)
+      const arr = Array.isArray(data.monthlyStats)
+        ? data.monthlyStats.slice(-6) // Changed from slice(-10) to slice(-6)
         : [];
       const lastRec =
         arr[arr.length - 1]?.closedMatters ??
@@ -235,7 +235,7 @@ const ResponsiveCalendarToolbar = ({
 }) => {
   return (
     <div className="rbc-toolbar flex flex-col sm:flex-row items-center justify-between p-2 mb-3">
-      <div className="flex items-center justify-center gap-[10px] w-full sm:w-auto mb-2 sm:mb-0">
+      <div className="flex items-center justify-center gap-2.5 w-full sm:w-auto mb-2 sm:mb-0">
         <button
           type="button"
           onClick={() => onNavigate("PREV")}
@@ -260,7 +260,7 @@ const ResponsiveCalendarToolbar = ({
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <div className="text-lg font-bold text-gray-800 order-first sm:order-none mb-2 sm:mb-0">
+      <div className="text-lg font-bold text-gray-800 order-first sm:order-0 mb-2 sm:mb-0">
         {label}
       </div>
       <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-white">
@@ -478,10 +478,10 @@ function Dashboard() {
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
-  const [chartView, setChartView] = useState("last10Months");
+  const [chartView, setChartView] = useState("last6Months");
   const [allChartData, setAllChartData] = useState({
-    tenMonths: [],
-    allTime: [],
+    monthlyStats: [], // Changed from sixMonths to monthlyStats
+    allTimeStats: [],
   });
   const [currentChartData, setCurrentChartData] = useState([]);
   const [calendarView, setCalendarView] = useState(Views.MONTH);
@@ -524,10 +524,10 @@ function Dashboard() {
     if (dashboardData) {
       setDashboardData(dashboardData, currentModule);
       setAllChartData({
-        tenMonths: Array.isArray(dashboardData.last10MonthsStats)
-          ? dashboardData.last10MonthsStats
+        monthlyStats: Array.isArray(dashboardData.monthlyStats) // Changed from last6MonthsStats to monthlyStats
+          ? dashboardData.monthlyStats
           : [],
-        allTime: Array.isArray(dashboardData.allTimeStats)
+        allTimeStats: Array.isArray(dashboardData.allTimeStats)
           ? dashboardData.allTimeStats
           : [],
       });
@@ -587,20 +587,20 @@ function Dashboard() {
   // Event styling with clickable cursor
   const eventStyleGetter = useCallback(
     (event) => {
-      let backgroundColor = "#00aeef"; // Using your existing blue color
+      let backgroundColor = "#00aeef";
 
       if (currentModule === "commercial") {
-        backgroundColor = "#10B981"; // Green for commercial
+        backgroundColor = "#10B981";
       } else if (event.type === "buildingAndPest") {
-        backgroundColor = "#B24592"; // Magenta / Deep Pink
+        backgroundColor = "#B24592";
       } else if (event.type === "financeApproval") {
-        backgroundColor = "#f83600"; // Red-Orange
+        backgroundColor = "#f83600";
       } else if (event.type === "titleSearch") {
-        backgroundColor = "#34495E"; // Indigo
+        backgroundColor = "#34495E";
       } else if (event.type === "settlement") {
-        backgroundColor = "#8E44AD"; // Pleasant Purple
+        backgroundColor = "#8E44AD";
       } else if (event.type === "deliveryDate") {
-        backgroundColor = "#F39C12"; // Orange for IDG
+        backgroundColor = "#F39C12";
       }
 
       return {
@@ -673,12 +673,13 @@ function Dashboard() {
 
   // Handle chart data processing
   useEffect(() => {
-    if (!allChartData.tenMonths.length && !allChartData.allTime.length) return;
+    if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
+      return;
 
     const sourceData =
-      chartView === "last10Months"
-        ? (allChartData.tenMonths || []).slice(-10)
-        : allChartData.allTime || [];
+      chartView === "last6Months"
+        ? (allChartData.monthlyStats || []).slice(-6) // Changed from slice(-10) to slice(-6)
+        : allChartData.allTimeStats || [];
 
     let formattedData;
 
@@ -694,7 +695,7 @@ function Dashboard() {
           0;
 
         const name =
-          chartView === "last10Months"
+          chartView === "last6Months"
             ? item.month || item.name || item.label || `Month ${index + 1}`
             : `${item.month || ""} ${item.year || ""}`.trim() ||
               item.name ||
@@ -711,7 +712,7 @@ function Dashboard() {
       formattedData = sourceData.map((item, index) => ({
         ...item,
         name:
-          chartView === "last10Months"
+          chartView === "last6Months"
             ? item.month || item.name || `Month ${index + 1}`
             : `${item.month || ""} ${item.year || ""}`.trim() ||
               `Period ${index + 1}`,
@@ -721,7 +722,7 @@ function Dashboard() {
       formattedData = sourceData.map((item, index) => ({
         ...item,
         name:
-          chartView === "last10Months"
+          chartView === "last6Months"
             ? item.month || item.name || `Month ${index + 1}`
             : `${item.month || ""} ${item.year || ""}`.trim() ||
               `Period ${index + 1}`,
@@ -733,7 +734,6 @@ function Dashboard() {
   }, [chartView, allChartData, currentModule, company]);
 
   const StatCard = ({ icon, label, value, isArchived = false }) => {
-    // For archived card, show the chart period total instead of lifetime total
     const displayValue = isArchived ? chartPeriodTotal : value;
 
     return (
@@ -746,7 +746,7 @@ function Dashboard() {
           <p className="text-sm text-gray-600">{label}</p>
           {isArchived && (
             <p className="text-xs text-gray-500 mt-1">
-              ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
+              ({chartView === "last6Months" ? "Last 6 Months" : "All Time"})
             </p>
           )}
         </div>
@@ -891,18 +891,18 @@ function Dashboard() {
                   : company === "idg"
                   ? "Closed Orders"
                   : "Closed"}{" "}
-                ({chartView === "last10Months" ? "Last 10 Months" : "All Time"})
+                ({chartView === "last6Months" ? "Last 6 Months" : "All Time"})
               </h2>
               <div className="flex items-center border border-gray-200 rounded-lg p-1 text-sm bg-gray-50">
                 <button
-                  onClick={() => setChartView("last10Months")}
+                  onClick={() => setChartView("last6Months")}
                   className={`px-3 py-1 rounded-md transition-colors ${
-                    chartView === "last10Months"
+                    chartView === "last6Months"
                       ? "bg-blue-500 text-white shadow"
                       : "text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  10 Months
+                  6 Months
                 </button>
                 <button
                   onClick={() => setChartView("allTime")}
@@ -949,7 +949,7 @@ function Dashboard() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
-                {chartView === "last10Months" && (
+                {chartView === "last6Months" && (
                   <p className="text-center text-md font-semibold mt-4 text-gray-800">
                     {lastrecord || totalCompleted}{" "}
                     {currentModule === "commercial"
@@ -970,7 +970,8 @@ function Dashboard() {
                   <div>Company: {company}</div>
                   <div>Chart View: {chartView}</div>
                   <div>
-                    Data Available: {allChartData.tenMonths?.length || 0} months
+                    Data Available: {allChartData.monthlyStats?.length || 0}{" "}
+                    months
                   </div>
                 </div>
               </div>

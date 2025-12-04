@@ -365,6 +365,23 @@ export default function StagesLayout() {
                 ...prev,
                 [`stage${stageNumber}`]: stageData,
               }));
+
+              // CRITICAL: Update stage statuses immediately for instant UI update
+              const statusMap = {
+                green: "Completed",
+                red: "Not Completed",
+                amber: "In Progress",
+              };
+
+              // Force immediate update of stage status
+              if (stageData.colorStatus) {
+                const newStatus =
+                  statusMap[stageData.colorStatus] || "Not Completed";
+                setStageStatuses((prev) => ({
+                  ...prev,
+                  [`status${stageNumber}`]: newStatus,
+                }));
+              }
             }}
           />
         );
@@ -919,7 +936,25 @@ export default function StagesLayout() {
     } else if (localCompany === "vkl") {
       // VKL stage status logic
       section.status1 = data.stage1?.colorStatus || "Not Completed";
-      section.status2 = data.stage2?.colorStatus || "Not Completed";
+      if (data.stage2 && data.stage2.colorStatus) {
+        section.status2 = data.stage2.colorStatus;
+      } else if (data.stage2) {
+        const stage2Fields = [
+          "signedContract",
+          "vendorDisclosure",
+          "sendKeyDates",
+          "voi",
+          "caf",
+          "depositReceipt",
+          "buildingAndPest",
+          "financeApproval",
+          "checkCtController",
+          "obtainDaSeller",
+        ];
+        section.status2 = evaluateStageStatus(data.stage2, stage2Fields);
+      } else {
+        section.status2 = "Not Completed";
+      }
       section.status3 = data.stage3?.colorStatus || "Not Completed";
       section.status4 = data.stage4?.colorStatus || "Not Completed";
       section.status5 = data.stage5?.colorStatus || "Not Completed";
