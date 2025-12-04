@@ -129,16 +129,54 @@ class AdminAPI {
   }
 
   // Delete a user
+  // async deleteUser(userId) {
+  //   console.log(userId);
+  //   try {
+  //     const response = await fetch(`${this.baseUrl}/admin/users/${userId.id}`, {
+  //       method: "DELETE",
+  //       headers: this.getHeaders(),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+
+  //     return await response.json();
+  //   } catch (error) {
+  //     console.error("Error deleting user:", error);
+  //     throw error;
+  //   }
+  // }
+
   async deleteUser(userId) {
-    console.log(userId);
+    // Accept either a string id or an object { id }
+    const id = typeof userId === "string" ? userId : userId && userId.id;
+    console.log("Deleting user id:", id);
+
+    if (!id) {
+      const err = new Error("Invalid user id provided to deleteUser");
+      console.error(err);
+      throw err;
+    }
+
     try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId.id}`, {
+      const response = await fetch(`${this.baseUrl}/admin/users/${id}`, {
         method: "DELETE",
         headers: this.getHeaders(),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // try to read server message if exists
+        let body = {};
+        try {
+          body = await response.json();
+        } catch (e) {
+          /* ignore parse errors */
+        }
+        const msg = body?.message || `HTTP error! status: ${response.status}`;
+        const error = new Error(msg);
+        error.response = { status: response.status, data: body };
+        throw error;
       }
 
       return await response.json();

@@ -261,31 +261,39 @@ export default function ManageUsers() {
   ];
 
   const handleUserCreation = async (display_name, email, role) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      // 1) create user - authoritative
       await api.createUser(email, role, display_name, selectedAccess);
 
-      // Create notification
-      const notificationAPI = new NotificationAPI();
-      await notificationAPI.createNotification({
-        type: "user",
-        message: `New user created: ${display_name} (${email})`,
-        metadata: {
-          userEmail: email,
-          userName: display_name,
-          role: role,
-          route: "/admin/manage-users",
-        },
-      });
-
+      // 2) treat creation as success for UX
       toast.success("User created successfully!");
       setOpenUser(false);
       setSelectedAccess([]);
       setIsFetched(false);
+
+      // 3) attempt to create notification, but don't let it block success
+      try {
+        const notificationAPI = new NotificationAPI();
+        await notificationAPI.createNotification({
+          type: "user",
+          message: `New user created: ${display_name} (${email})`,
+          metadata: {
+            userEmail: email,
+            userName: display_name,
+            role: role,
+            route: "/admin/manage-users",
+          },
+        });
+      } catch (notifyErr) {
+        console.error("Notification send failed:", notifyErr);
+      }
     } catch (err) {
-      if (err.response?.status === 404) {
+      // Duplicate emails usually return 409 (Conflict) or 400; handle that more accurately.
+      const status = err?.response?.status;
+      if (status === 409 || status === 400) {
         toast.error(
-          err.response.data?.message || "This email is already registered!"
+          err.response?.data?.message || "This email is already registered!"
         );
       } else {
         toast.error(
@@ -293,6 +301,7 @@ export default function ManageUsers() {
             "Something went wrong. Please try again!"
         );
       }
+      console.error("Create User Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -344,27 +353,30 @@ export default function ManageUsers() {
   };
 
   const handleUserDelete = async () => {
+    setDeleteLoading(true);
     try {
-      setDeleteLoading(true);
       await api.deleteUser(id);
-
       const userToDelete = users.find((user) => user.id === id);
-      if (userToDelete) {
-        const notificationAPI = new NotificationAPI();
-        await notificationAPI.createNotification({
-          type: "user",
-          message: `User deleted: ${userToDelete.displayName} (${userToDelete.email})`,
-          metadata: {
-            userEmail: userToDelete.email,
-            userName: userToDelete.displayName,
-            route: "/admin/manage-users",
-          },
-        });
-      }
-
       toast.success("User deleted successfully!");
       setOpenDelete(false);
       setIsFetched(false);
+
+      if (userToDelete) {
+        try {
+          const notificationAPI = new NotificationAPI();
+          await notificationAPI.createNotification({
+            type: "user",
+            message: `User deleted: ${userToDelete.displayName} (${userToDelete.email})`,
+            metadata: {
+              userEmail: userToDelete.email,
+              userName: userToDelete.displayName,
+              route: "/admin/manage-users",
+            },
+          });
+        } catch (notifyErr) {
+          console.error("Notification send failed:", notifyErr);
+        }
+      }
     } catch (err) {
       toast.error("Failed to delete user.");
       console.error("Delete Error:", err);

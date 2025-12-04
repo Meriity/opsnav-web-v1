@@ -11,6 +11,13 @@ const formConfig = {
   vkl: {
     fields: [
       { name: "signedContract", label: "Signed Contract", type: "radio" },
+      {
+        name: "vendorDisclosure",
+        label: "Vendor Disclosure",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "vendorDisclosureDate",
+      },
       { name: "sendKeyDates", label: "Send Key Dates", type: "radio" },
       { name: "voi", label: "VOI", type: "radio" },
       { name: "caf", label: "CAF", type: "radio" },
@@ -173,6 +180,24 @@ const normalizeValue = (v) => {
     .replace(/[^a-z0-9]/g, "");
 };
 
+// Helper function to check if a value is a vendor disclosure value
+const isVendorDisclosureValue = (value) => {
+  if (!value) return false;
+  const normalized = normalizeValue(value);
+  return normalized.includes("vendordisclosure");
+};
+
+// Helper to get the display value for vendor disclosure
+const getVendorDisclosureDisplayValue = (value) => {
+  if (!value) return "";
+  if (isVendorDisclosureValue(value)) return "Yes";
+  const normalized = normalizeValue(value);
+  if (normalized === "no") return "No";
+  if (normalized === "processing") return "Processing";
+  if (normalized === "n/r") return "N/R";
+  return "";
+};
+
 export default function Stage2({
   changeStage,
   data,
@@ -207,7 +232,7 @@ export default function Stage2({
     [currentModule, company]
   );
 
-  const getStatus = useCallback((value) => {
+  const getStatus = useCallback((value, fieldName = "") => {
     if (value === undefined || value === null || value === "") {
       return "Not Completed";
     }
@@ -220,6 +245,16 @@ export default function Stage2({
       "fixed",
       "approved",
     ]);
+
+    if (fieldName === "vendorDisclosure") {
+      if (isVendorDisclosureValue(value) || val === "yes") {
+        return "Completed";
+      }
+      if (val === "no") {
+        return "In Progress";
+      }
+    }
+
     if (completed.has(val)) return "Completed";
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "pending"].includes(val))
@@ -268,6 +303,18 @@ export default function Stage2({
         noteGroup.fieldsForNote.includes(f.name)
       );
 
+      const getVendorDisclosureLabel = (stateVal) => {
+        if (!stateVal) return "Vendor Disclosure";
+        const s = String(stateVal).trim().toUpperCase();
+        if (s === "VIC" || s.includes("VIC")) return "Vendor Disclosure (S32)";
+        if (s === "QLD" || s.includes("QLD"))
+          return "Vendor Disclosure (Form 2)";
+        if (s === "SA" || s.includes("SA")) return "Vendor Disclosure (Form 1)";
+        if (s === "NSW" || s.includes("NSW"))
+          return "Vendor Disclosure (S10.7)";
+        return "Vendor Disclosure";
+      };
+
       const notReceived = fieldsToCheck
         .filter((field) => {
           if (
@@ -276,14 +323,31 @@ export default function Stage2({
           ) {
             return false;
           }
+          if (field.name === "vendorDisclosure") {
+            return false;
+          }
           return !greenValues.has(normalizeValue(formData[field.name] || ""));
         })
-        .map((field) => field.label);
+        .map((field) => {
+          // use dynamic label for vendorDisclosure so notes match the client's state
+          if (field.name === "vendorDisclosure") {
+            const stateFromData =
+              (data && data.state) || (formData && formData.state) || "";
+            return getVendorDisclosureLabel(stateFromData);
+          }
+          return field.label;
+        });
 
-      if (notReceived.length === 0) return "Tasks completed";
-      return `${notReceived.join(" and ")} not received`;
+      if (notReceived.length === 0) {
+        return "Tasks completed";
+      }
+      return notReceived.length > 1
+        ? `${notReceived.slice(0, -1).join(", ")} and ${
+            notReceived.slice(-1)[0]
+          } not received`
+        : `${notReceived[0]} not received`;
     },
-    [currentConfig, formData, clientType]
+    [currentConfig, formData, clientType, data]
   );
 
   const fetchStageData = useCallback(async () => {
@@ -337,8 +401,12 @@ export default function Stage2({
               ? rawPrice.$numberDecimal
               : rawPrice?.toString() ?? "";
         } else if (field.type === "radio") {
-          // keep normalized representation (Stage2 already used normalizeValue)
-          initialFormData[field.name] = normalizeValue(raw ?? "");
+          // Special handling for vendorDisclosure - preserve the actual value
+          if (field.name === "vendorDisclosure") {
+            initialFormData[field.name] = raw ?? "";
+          } else {
+            initialFormData[field.name] = normalizeValue(raw ?? "");
+          }
         } else {
           initialFormData[field.name] = raw ?? "";
         }
@@ -349,7 +417,10 @@ export default function Stage2({
           );
         }
 
-        initialStatuses[field.name] = getStatus(stageData[field.name]);
+        initialStatuses[field.name] = getStatus(
+          stageData[field.name],
+          field.name
+        );
       });
 
       if (currentModule === "commercial") {
@@ -394,24 +465,42 @@ export default function Stage2({
       const fieldConfig = currentConfig.fields.find((f) => f.name === field);
       let processedValue = value;
 
-      if (
-        fieldConfig &&
-        fieldConfig.type === "radio" &&
-        typeof processedValue === "string"
-      ) {
-        processedValue = normalizeValue(processedValue);
+      if (fieldConfig && fieldConfig.type === "radio") {
+        if (field === "vendorDisclosure") {
+          // For vendorDisclosure, save based on state
+          const stateVal = (data && data.state) || "";
+          const state = String(stateVal).trim().toUpperCase();
+          if (value.toLowerCase() === "yes") {
+            if (state === "VIC" || state.includes("VIC"))
+              processedValue = "vendordisclosures32";
+            else if (state === "QLD" || state.includes("QLD"))
+              processedValue = "vendordisclosureform2";
+            else if (state === "SA" || state.includes("SA"))
+              processedValue = "vendordisclosureform1";
+            else if (state === "NSW" || state.includes("NSW"))
+              processedValue = "vendordisclosures107";
+            else processedValue = "vendordisclosure";
+          } else if (value.toLowerCase() === "no") {
+            processedValue = "no";
+          } else {
+            processedValue = value; // Keep the value as-is if it's already a vendor disclosure value
+          }
+        } else {
+          processedValue = normalizeValue(value);
+        }
       }
 
+      // Update formData
       setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
 
       if (fieldConfig) {
         setStatuses((prev) => ({
           ...(prev || {}),
-          [field]: getStatus(processedValue),
+          [field]: getStatus(processedValue, field),
         }));
       }
     },
-    [currentConfig.fields, getStatus]
+    [currentConfig.fields, getStatus, data]
   );
 
   const isChanged = () => {
@@ -451,10 +540,144 @@ export default function Stage2({
       }
       return apiResponse;
     },
+
+    // Optimistic update - ADDED THIS
+    onMutate: async (payload) => {
+      const companyKey = localStorage.getItem("company") || company;
+      const moduleKey = localStorage.getItem("currentModule") || currentModule;
+      const optimisticColor = payload.colorStatus;
+
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["clientData", matterNumber, companyKey, moduleKey],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["clientMatter", matterNumber],
+      });
+      await queryClient.cancelQueries({ queryKey: ["viewClients", moduleKey] });
+
+      // Snapshot previous values
+      const previousClientData = queryClient.getQueryData([
+        "clientData",
+        matterNumber,
+        companyKey,
+        moduleKey,
+      ]);
+      const previousClientMatter = queryClient.getQueryData([
+        "clientMatter",
+        matterNumber,
+      ]);
+      const previousViewClients = queryClient.getQueryData([
+        "viewClients",
+        moduleKey,
+      ]);
+
+      // Optimistically update clientData
+      if (previousClientData) {
+        queryClient.setQueryData(
+          ["clientData", matterNumber, companyKey, moduleKey],
+          (old) => {
+            const copy = { ...(old || {}) };
+            copy[`stage${stageNumber}`] = {
+              ...(copy[`stage${stageNumber}`] || {}),
+              colorStatus: optimisticColor,
+            };
+            return copy;
+          }
+        );
+      }
+
+      // Optimistically update clientMatter
+      if (previousClientMatter) {
+        queryClient.setQueryData(["clientMatter", matterNumber], (old) => {
+          const copy = { ...(old || {}) };
+          copy[`stage${stageNumber}`] = {
+            ...(copy[`stage${stageNumber}`] || {}),
+            colorStatus: optimisticColor,
+          };
+          return copy;
+        });
+      }
+
+      // Optimistically update viewClients listing
+      if (Array.isArray(previousViewClients)) {
+        queryClient.setQueryData(["viewClients", moduleKey], (list) => {
+          return list.map((c) => {
+            if (String(c.matterNumber) !== String(matterNumber)) return c;
+            const updated = { ...c };
+            updated[`stage${stageNumber}`] = {
+              ...(updated[`stage${stageNumber}`] || {}),
+              colorStatus: optimisticColor,
+            };
+            if (moduleKey === "commercial")
+              updated.colorStatus = optimisticColor;
+            return updated;
+          });
+        });
+      }
+
+      // Optimistically call onStageUpdate for immediate UI update
+      if (onStageUpdate) {
+        try {
+          onStageUpdate(
+            { ...payload, colorStatus: optimisticColor },
+            stageNumber
+          );
+        } catch (e) {
+          console.warn("onStageUpdate optimistic call failed", e);
+        }
+      }
+
+      return {
+        previousClientData,
+        previousClientMatter,
+        previousViewClients,
+      };
+    },
+
+    // Error handling with rollback - ADDED THIS
+    onError: (err, payload, context) => {
+      const companyKey = localStorage.getItem("company") || company;
+      const moduleKey = localStorage.getItem("currentModule") || currentModule;
+
+      // Rollback caches
+      if (context?.previousClientData) {
+        queryClient.setQueryData(
+          ["clientData", matterNumber, companyKey, moduleKey],
+          context.previousClientData
+        );
+      }
+      if (context?.previousClientMatter) {
+        queryClient.setQueryData(
+          ["clientMatter", matterNumber],
+          context.previousClientMatter
+        );
+      }
+      if (context?.previousViewClients) {
+        queryClient.setQueryData(
+          ["viewClients", moduleKey],
+          context.previousViewClients
+        );
+      }
+
+      // Rollback local snapshot if possible
+      if (context?.previousClientData) {
+        const prevStageData =
+          context.previousClientData[`stage${stageNumber}`] || {};
+        originalData.current = { ...prevStageData };
+      }
+
+      let errorMessage = "Failed to save Stage 2. Please try again.";
+      if (err?.response?.data?.message)
+        errorMessage = err.response.data.message;
+      else if (err?.message) errorMessage = err.message;
+      toast.error(errorMessage);
+    },
+
     onSuccess: (responseData, payload) => {
       const res = responseData?.data || responseData;
 
-      localStorage.setItem("current_stage", "2");
+      localStorage.setItem("current_stage", "3");
 
       try {
         sessionStorage.setItem("opsnav_clients_should_reload", "1");
@@ -594,21 +817,37 @@ export default function Stage2({
       // Keep local snapshot for UI stability
       originalData.current = { ...formData };
 
+      const newStatuses = { ...statuses };
+      currentConfig.fields.forEach((field) => {
+        if (field.name in formData) {
+          newStatuses[field.name] = getStatus(formData[field.name], field.name);
+        }
+      });
+      setStatuses(newStatuses);
+
       if (onStageUpdate) {
-        onStageUpdate(payload, stageNumber);
+        onStageUpdate(
+          { ...payload, colorStatus: payload.colorStatus },
+          stageNumber
+        );
       }
       // Important: do NOT call window.location.reload() or reloadArchivedClients() here.
       // The Back button should handle global list refresh when the user exits.
     },
 
-    onError: (error) => {
-      let errorMessage = "Failed to save Stage 2. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      toast.error(errorMessage);
+    // Settled callback - ADDED THIS
+    onSettled: () => {
+      const companyKey = localStorage.getItem("company") || company;
+      const moduleKey = localStorage.getItem("currentModule") || currentModule;
+
+      // Invalidate queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["clientData", matterNumber, companyKey, moduleKey],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["clientMatter", matterNumber],
+      });
+      queryClient.invalidateQueries({ queryKey: ["viewClients", moduleKey] });
     },
   });
 
@@ -628,6 +867,13 @@ export default function Stage2({
     const allCompleted = relevantFields.every(
       (f) => getStatus(formData[f.name]) === "Completed"
     );
+
+    const newStatuses = { ...statuses };
+    relevantFields.forEach((field) => {
+      newStatuses[field.name] = getStatus(formData[field.name], field.name);
+    });
+    setStatuses(newStatuses);
+
     const colorStatus = allCompleted ? "green" : "amber";
     payload.colorStatus = colorStatus;
 
@@ -682,7 +928,26 @@ export default function Stage2({
     <div key={field.name} className="mt-5">
       <div className="flex gap-4 justify-between items-center mb-2">
         <label className="block mb-1 text-sm md:text-base font-bold">
-          {field.label}
+          {field.name === "vendorDisclosure"
+            ? (() => {
+                const getVendorDisclosureLabel = (stateVal) => {
+                  if (!stateVal) return "Vendor Disclosure";
+                  const s = String(stateVal).trim().toUpperCase();
+                  if (s === "VIC" || s.includes("VIC"))
+                    return "Vendor Disclosure (S32)";
+                  if (s === "QLD" || s.includes("QLD"))
+                    return "Vendor Disclosure (Form 2)";
+                  if (s === "SA" || s.includes("SA"))
+                    return "Vendor Disclosure (Form 1)";
+                  if (s === "NSW" || s.includes("NSW"))
+                    return "Vendor Disclosure (S10.7)";
+                  return "Vendor Disclosure";
+                };
+                const stateFromData =
+                  (data && data.state) || (formData && formData.state) || "";
+                return getVendorDisclosureLabel(stateFromData);
+              })()
+            : field.label}
         </label>
 
         {field.type === "radio" && (
@@ -731,7 +996,33 @@ export default function Stage2({
                 </option>
               ))}
           </select>
+        ) : // For Vendor Disclosure, only show "Yes" and "No" options
+        field.name === "vendorDisclosure" ? (
+          ["Yes", "No"].map((val) => (
+            <label
+              key={val}
+              className="flex items-center gap-2 text-sm md:text-base"
+            >
+              <input
+                type="radio"
+                name={field.name}
+                value={val}
+                checked={(() => {
+                  const formValue = formData[field.name] ?? "";
+                  if (field.name === "vendorDisclosure") {
+                    const displayValue =
+                      getVendorDisclosureDisplayValue(formValue);
+                    return displayValue === val;
+                  }
+                  return normalizeValue(formValue) === normalizeValue(val);
+                })()}
+                onChange={() => handleChange(field.name, val)}
+              />
+              {val}
+            </label>
+          ))
         ) : (
+          // For other fields, show all options
           ["Yes", "No", "Processing", "N/R"].map((val) => (
             <label
               key={val}
@@ -741,10 +1032,15 @@ export default function Stage2({
                 type="radio"
                 name={field.name}
                 value={val}
-                checked={
-                  normalizeValue(formData[field.name] ?? "") ===
-                  normalizeValue(val)
-                }
+                checked={(() => {
+                  const formValue = formData[field.name] ?? "";
+                  if (field.name === "vendorDisclosure") {
+                    const displayValue =
+                      getVendorDisclosureDisplayValue(formValue);
+                    return displayValue === val;
+                  }
+                  return normalizeValue(formValue) === normalizeValue(val);
+                })()}
                 onChange={() => handleChange(field.name, val)}
               />
               {val}
