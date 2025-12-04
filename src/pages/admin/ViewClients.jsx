@@ -152,7 +152,7 @@ const ViewClients = () => {
       response?.data || response?.orders || response?.clients || response || [];
     if (!Array.isArray(data)) data = [];
 
-    return data.map((client) => ({
+    return response.activeOrders.map((client) => ({
       id: client.id || client.orderId || client.clientId || client._id,
       clientId: client.clientId || client.id,
       orderId: client.orderId || client.id,
