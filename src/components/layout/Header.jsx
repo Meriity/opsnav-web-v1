@@ -105,9 +105,17 @@ export default function Header() {
         const topFields = [
           String(item.matterNumber || item.orderId || ""),
           String(item.clientName || item.client_name || ""),
-          String(item.propertyAddress || item.property_address || ""),
+          String(
+            item.propertyAddress ||
+              item.property_address ||
+              item.businessAddress ||
+              ""
+          ),
           String(item.state || ""),
           String(item.referral || item.referralName || ""),
+          String(item.businessName || ""),
+          String(item.businessAddress || ""),
+          String(item.clientType || item.type || ""),
         ];
 
         // collect referral (or similar) from any nested stage objects (stage1, stage2, ...)
@@ -116,9 +124,28 @@ export default function Header() {
           .map((k) => String(item[k]?.referral || item[k]?.referralName || ""))
           .filter(Boolean);
 
-        const fields = topFields
-          .concat(stageRefValues)
-          .map((x) => String(x).toLowerCase());
+        let commercialStageRefs = [];
+        if (item.stages && Array.isArray(item.stages)) {
+          item.stages.forEach((stageObj) => {
+            if (stageObj && typeof stageObj === "object") {
+              Object.values(stageObj).forEach((stageData) => {
+                if (
+                  stageData &&
+                  typeof stageData === "object" &&
+                  stageData.referral
+                ) {
+                  commercialStageRefs.push(String(stageData.referral));
+                }
+              });
+            }
+          });
+        }
+
+        const fields = [
+          ...topFields,
+          ...stageRefValues,
+          ...commercialStageRefs,
+        ].map((x) => String(x).toLowerCase());
 
         // Match ANY word against ANY field
         return searchWords.some((word) =>
