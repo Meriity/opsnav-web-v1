@@ -113,6 +113,7 @@ const ViewClients = () => {
       finance_approval_date: client.financeApprovalDate,
       building_and_pest_date: client.buildingAndPestDate,
       dataentryby: client.dataEntryBy || "",
+      referral: client.referral || "",
       status: client.status || "active",
       ...client,
     }));
@@ -230,7 +231,8 @@ const ViewClients = () => {
             client.state,
             client.clientType,
             client.dataEntryBy,
-            client.postcode
+            client.postcode,
+            client.referral
           );
         } else if (company === "idg") {
           searchableFields.push(
@@ -252,6 +254,27 @@ const ViewClients = () => {
             client.state,
             client.referral || client.referralName
           );
+        }
+
+        if (
+          client.stages &&
+          Array.isArray(client.stages) &&
+          client.stages.length > 0
+        ) {
+          // Check each stage object for referral fields
+          client.stages.forEach((stageObj) => {
+            if (stageObj && typeof stageObj === "object") {
+              Object.values(stageObj).forEach((stageData) => {
+                if (
+                  stageData &&
+                  typeof stageData === "object" &&
+                  stageData.referral
+                ) {
+                  searchableFields.push(String(stageData.referral));
+                }
+              });
+            }
+          });
         }
 
         return searchableFields.some(
