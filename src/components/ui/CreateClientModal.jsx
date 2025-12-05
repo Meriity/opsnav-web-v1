@@ -428,6 +428,7 @@ export default function CreateClientModal({
           "postcode",
           "matterDate",
           "settlementDate",
+          "isTrustee"
         ];
         if (requiredFields.some((field) => !formData[field])) {
           toast.error("Please fill all required fields.");
@@ -649,10 +650,10 @@ export default function CreateClientModal({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block mb-1 font-medium">State*</label>
-                      <div className="flex gap-4 flex-wrap">
+                      <div className="flex gap-2 flex-wrap">
                         {["VIC", "NSW", "QLD", "SA"].map((stateOption) => (
                           <label
                             key={stateOption}
@@ -677,7 +678,7 @@ export default function CreateClientModal({
                       <label className="block mb-1 font-medium">
                         Client Type*
                       </label>
-                      <div className="flex gap-4 flex-wrap">
+                      <div className="flex gap-2 flex-wrap">
                         {["Buyer", "Seller", "Transfer"].map((type) => (
                           <label
                             key={type}
@@ -697,7 +698,33 @@ export default function CreateClientModal({
                         ))}
                       </div>
                     </div>
+                     <div>
+                      <label className="block mb-1 font-medium">
+                        Is purchaser a trustee?
+                      </label>
+                      <div className="flex gap-3 flex-wrap">
+                        {["Yes", "No"].map((type) => (
+                          <label
+                            key={type}
+                            className="inline-flex items-center gap-1"
+                          >
+                            <input
+                              type="radio"
+                              name="isTrustee"
+                              value={type}
+                              checked={formData.isTrustee === type}
+                              onChange={handleChange}
+                              className="w-4 h-4"
+                              required
+                            />
+                            <span>{type}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                                     
+                  
 
                   <div>
                     <label className="block mb-1 font-medium">
