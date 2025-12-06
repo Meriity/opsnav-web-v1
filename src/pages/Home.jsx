@@ -435,7 +435,7 @@ export default function Home() {
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     isPastHero
                       ? "bg-[#FB4A50] text-white border border-[#FB4A50] hover:bg-[#FB4A50]/90 shadow-md"
-                      : "text-[#2E3D99] border border-[#2E3D99] hover:bg-[#2E3D99]/5"
+                      : "text-[#2E3D99] border border-[#2E3D99] hover:bg-[#FB4A50] hover:text-white hover:border-[#FB4A50]"
                   }`}
                 >
                   Login
