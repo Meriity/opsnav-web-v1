@@ -131,7 +131,6 @@ function LoginForm() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleHome}
-            // UPDATED: Styling matches WorkSelection Sign Out (Blue Default -> Red Solid Hover)
             className="px-3.5 py-1.5 text-[#2E3D99] border border-[#2E3D99] rounded-lg hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] font-medium transition-all duration-300 text-sm flex items-center gap-2 [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:430px)]:px-2.5 [@media(max-width:430px)]:text-xs"
           >
             <HomeIcon className="w-4 h-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-3 [@media(max-width:1024px)_and_(max-height:800px)]:h-3" />
@@ -164,11 +163,11 @@ function LoginForm() {
             </div>
 
             <div className="mb-4 sm:mb-5 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2">
-              <img
+              {/* <img
                 src="/Logo.png"
                 alt="Opsnav Logo"
                 className="h-10 sm:h-12 md:h-14 mx-auto lg:mx-0 [@media(max-width:1024px)_and_(max-height:800px)]:h-10 [@media(max-width:430px)]:h-8"
-              />
+              /> */}
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-2xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:430px)]:text-2xl">

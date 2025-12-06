@@ -48,22 +48,44 @@ const useDashboardStore = create((set) => ({
 
   setDashboardData: (data, currentModule = "") =>
     set(() => {
-      const arr = Array.isArray(data.monthlyStats)
-        ? data.monthlyStats.slice(-6) // Changed from slice(-10) to slice(-6)
+      // Get the available 6 months data (could be monthlyStats or last10MonthsStats)
+      const sixMonthsData = Array.isArray(data.monthlyStats)
+        ? data.monthlyStats
+        : Array.isArray(data.last10MonthsStats)
+        ? data.last10MonthsStats
         : [];
-      const lastRec =
-        arr[arr.length - 1]?.closedMatters ??
-        arr[arr.length - 1]?.closedProjects ??
-        arr[arr.length - 1]?.closedOrders ??
-        arr[arr.length - 1]?.count ??
-        arr[arr.length - 1]?.total ??
-        0;
+
+      // Get the last 6 months of data
+      const arr = sixMonthsData.slice(-6);
+      const reversedArr = [...arr].reverse();
+      const mostRecentWithData = reversedArr.find((item) => {
+        const closedCount =
+          item?.closedMatters ??
+          item?.closedProjects ??
+          item?.completedProjects ??
+          item?.closedOrders ??
+          item?.count ??
+          item?.total ??
+          0;
+        return closedCount > 0;
+      });
+
+      const lastRec = mostRecentWithData
+        ? mostRecentWithData.closedMatters ??
+          mostRecentWithData.closedProjects ??
+          mostRecentWithData.completedProjects ??
+          mostRecentWithData.closedOrders ??
+          mostRecentWithData.count ??
+          mostRecentWithData.total ??
+          0
+        : 0;
 
       // Calculate total completed from lifetime totals
       const totalCompleted =
         data.lifetimeTotals?.totalClosedOrders ||
         data.lifetimeTotals?.totalClosedProjects ||
         data.lifetimeTotals?.totalClosedMatters ||
+        data.lifetimeTotals?.totalArchivedClients ||
         0;
 
       return {
@@ -288,7 +310,46 @@ const fetchDashboardData = async (currentModule, company) => {
   const commercialApi = new CommercialAPI();
 
   if (currentModule === "commercial") {
-    return await commercialApi.getDashboardData("combined");
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+    try {
+      // Fetch both endpoints in parallel
+      const [sixMonthsRes, allTimeRes] = await Promise.all([
+        fetch(`${baseUrl}/commercial/dashboard?range=sixMonths`, {
+          method: "GET",
+          headers: commercialApi.getHeaders(),
+        }),
+        fetch(`${baseUrl}/commercial/dashboard?range=all`, {
+          method: "GET",
+          headers: commercialApi.getHeaders(),
+        }),
+      ]);
+
+      const sixMonthsData = await sixMonthsRes.json();
+      const allTimeData = await allTimeRes.json();
+
+      return {
+        lifetimeTotals:
+          sixMonthsData?.lifetimeTotals || allTimeData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(sixMonthsData?.monthlyStats)
+          ? sixMonthsData.monthlyStats
+          : [],
+        allTimeStats: Array.isArray(allTimeData?.monthlyStats)
+          ? allTimeData.monthlyStats
+          : [],
+      };
+    } catch (error) {
+      console.error("Error fetching commercial dashboard data:", error);
+      // Fallback to API method
+      const fallbackData = await commercialApi.getDashboardData("combined");
+      return {
+        lifetimeTotals: fallbackData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(fallbackData?.monthlyStats)
+          ? fallbackData.monthlyStats
+          : [],
+        allTimeStats: [],
+      };
+    }
   } else if (company === "idg") {
     return await clientApi.getIDGDashboardData();
   } else {
@@ -522,10 +583,26 @@ function Dashboard() {
   // Process dashboard data when it loads
   useEffect(() => {
     if (dashboardData) {
+      if (currentModule === "commercial") {
+        console.log("Commercial Dashboard Data:", dashboardData);
+        if (
+          dashboardData.monthlyStats &&
+          dashboardData.monthlyStats.length > 0
+        ) {
+          const lastSix = dashboardData.monthlyStats.slice(-6);
+          const reversed = [...lastSix].reverse();
+          const mostRecent = reversed.find((item) => item?.closedMatters > 0);
+          console.log("Most recent with data:", mostRecent);
+          console.log("Expected lastrecord:", mostRecent?.closedMatters || 0);
+        }
+      }
+
       setDashboardData(dashboardData, currentModule);
       setAllChartData({
-        monthlyStats: Array.isArray(dashboardData.monthlyStats) // Changed from last6MonthsStats to monthlyStats
+        monthlyStats: Array.isArray(dashboardData.monthlyStats)
           ? dashboardData.monthlyStats
+          : Array.isArray(dashboardData.last10MonthsStats)
+          ? dashboardData.last10MonthsStats
           : [],
         allTimeStats: Array.isArray(dashboardData.allTimeStats)
           ? dashboardData.allTimeStats
@@ -666,7 +743,17 @@ function Dashboard() {
   const chartPeriodTotal = useMemo(() => {
     if (!currentChartData || currentChartData.length === 0) return 0;
     return currentChartData.reduce(
-      (sum, item) => sum + (item.closedMatters || 0),
+      (sum, item) => {
+        const closedCount = 
+          item.closedMatters ??
+          item.closedProjects ??
+          item.completedProjects ??
+          item.closedOrders ??
+          item.count ??
+          item.total ??
+          0;
+        return sum + closedCount;
+      },
       0
     );
   }, [currentChartData]);

@@ -549,11 +549,11 @@ class ClientAPI {
     };
 
     try {
-      let tenData;
+      let sixData;
       try {
-        tenData = await fetchRange("tenmonths");
+        sixData = await fetchRange("sixMonths");
       } catch {
-        tenData = await fetchRange("tenMonths");
+        sixData = await fetchRange("sixMonths");
       }
 
       // All time
@@ -561,9 +561,9 @@ class ClientAPI {
 
       return {
         lifetimeTotals:
-          tenData?.lifetimeTotals || allData?.lifetimeTotals || {},
-        last10MonthsStats: Array.isArray(tenData?.monthlyStats)
-          ? tenData.monthlyStats
+          sixData?.lifetimeTotals || allData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(sixData?.monthlyStats)
+          ? sixData.monthlyStats
           : [],
         allTimeStats: Array.isArray(allData?.monthlyStats)
           ? allData.monthlyStats
@@ -586,11 +586,11 @@ class ClientAPI {
     };
 
     try {
-      let tenData;
+      let sixData;
       try {
-        tenData = await fetchRange("tenmonths");
+        sixData = await fetchRange("sixMonths");
       } catch {
-        tenData = await fetchRange("tenMonths");
+        sixData = await fetchRange("sixMonths");
       }
 
       // All time
@@ -598,9 +598,9 @@ class ClientAPI {
 
       return {
         lifetimeTotals:
-          tenData?.lifetimeTotals || allData?.lifetimeTotals || {},
-        last10MonthsStats: Array.isArray(tenData?.monthlyStats)
-          ? tenData.monthlyStats
+          sixData?.lifetimeTotals || allData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(sixData?.monthlyStats)
+          ? sixData.monthlyStats
           : [],
         allTimeStats: Array.isArray(allData?.monthlyStats)
           ? allData.monthlyStats
