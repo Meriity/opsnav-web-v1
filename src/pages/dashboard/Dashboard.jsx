@@ -1073,6 +1073,7 @@ function Dashboard() {
         companyName={company}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+        onClose={()=>setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
