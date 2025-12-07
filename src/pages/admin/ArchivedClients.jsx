@@ -546,6 +546,7 @@ export default function ArchivedClients() {
                   cellWrappingClass="whitespace-normal"
                   headerBgColor="bg-[#A6E7FF]"
                   OnEye={handleViewClient}
+                  EditOrder={true}
                   sortedColumn={sortedColumn}
                   sortDirection={sortDirection}
                   handleSort={handleSort}

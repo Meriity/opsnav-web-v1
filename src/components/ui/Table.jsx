@@ -287,7 +287,7 @@ const Table = ({
                           column.render ? column.render(item) : item[column.key]
                         }
                       >
-                        {column.key === "access" ? (
+                        {column.key === "access" && !localStorage.getItem("company")==="idg" ? (
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
@@ -367,7 +367,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && (
+                      {OnEye && localStorage.getItem("company")!="idg" && (
                         <button
                           onClick={() => {
                             console.log("Table: Eye clicked for item:", item);
@@ -380,7 +380,7 @@ const Table = ({
                           <span className="text-xs">View</span>
                         </button>
                       )}
-                      {EditOrder && (
+                      {EditOrder && localStorage.getItem("company")==="idg"  && (
                         <button
                           onClick={() => {
                             console.log("clicked!");

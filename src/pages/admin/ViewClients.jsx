@@ -4,13 +4,13 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
-  DialogTitle,
+  DialogTitle
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useState, Fragment, useMemo, useCallback, useEffect } from "react";
+import { useEffect, useState, Fragment, useMemo } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import Header from "../../components/layout/Header";
@@ -20,8 +20,11 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
+import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
+import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { delay } from "framer-motion";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -34,34 +37,25 @@ const ViewClients = () => {
     reshareEmail: "",
   });
   const [email, setemail] = useState("");
+  const [isClicked, setIsClicked] = useState(false);
+  const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-  const [settlementDate, setSettlementDate] = useState(["", ""]);
+  const [dateFilter, setDateFilter] = useState(() => {
+  const saved = localStorage.getItem("viewClientsDateFilter");
+  return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };  
+  });
   const [showDateRange, setShowDateRange] = useState(false);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
-
   const [showTAR, setShowTar] = useState(false);
+  const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
   const [allocatedUser, setallocatedUser] = useState("");
-  const [user, setUser] = useState([]);
-
   const { searchQuery } = useSearchStore();
+  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [commercialLoading, setCommercialLoading] = useState(false);
+  const [commercialClients, setCommercialClients] = useState([]);
+  const [selectedClientName, setSelectedClientName] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(true);
+
   const currentModule = localStorage.getItem("currentModule");
-
-  useEffect(() => {
-    try {
-      const reloadFlag = sessionStorage.getItem("opsnav_clients_should_reload");
-      if (reloadFlag === "1") {
-        // clear the flag so we don't loop
-        sessionStorage.removeItem("opsnav_clients_should_reload");
-        // hard reload once so the server / list is absolutely fresh
-        window.location.reload();
-      }
-    } catch (e) {
-      // ignore any storage errors and continue regular mount
-      console.warn("Reload flag check failed", e);
-    }
-    // run only once on mount
-  }, []);
-
   const company = localStorage.getItem("company");
 
   const api = useMemo(() => {
@@ -72,158 +66,135 @@ const ViewClients = () => {
     }
   }, [currentModule]);
 
-  const { mutate: handelReShareEmail, isPending: isSendingEmail } = useMutation(
-    {
-      mutationFn: () =>
-        api.resendLinkToClient(email, shareDetails?.matterNumber),
-      onSuccess: () => {
-        toast.success("Email sent successfully.");
-        handelShareEmailModalClose();
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to send email.");
-        handelShareEmailModalClose();
-      },
-    }
-  );
-
-  const fetchCommercialProjects = useCallback(async () => {
-    const response = await api.getActiveProjects();
-
-    let data =
-      response?.data ||
-      response?.clients ||
-      response?.projects ||
-      response ||
-      [];
-    if (!Array.isArray(data)) data = [];
-
-    return data.map((client) => ({
-      id: client.id || client.matterNumber || client._id,
-      matternumber: client.matterNumber || client.id || client._id,
-      client_name: client.clientName || client.client_name,
-      businessAddress: client.businessAddress || client.business_address,
-      businessName: client.businessName,
-      state: client.state || "",
-      client_type: client.clientType || client.type,
-      settlement_date: client.settlementDate || client.settlement_date,
-      matterDate: client.matterDate,
-      dataEntryBy: client.dataEntryBy || "",
-      postcode: client.postcode || "",
-      finance_approval_date: client.financeApprovalDate,
-      building_and_pest_date: client.buildingAndPestDate,
-      dataentryby: client.dataEntryBy || "",
-      referral: client.referral || "",
-      status: client.status || "active",
-      ...client,
-    }));
-  }, [api]);
-
-  const fetchVKLClients = useCallback(async () => {
-    const response = await api.getClients();
-
-    let data = response?.data || response?.clients || response || [];
-    if (!Array.isArray(data)) data = [];
-
-    return data.map((client) => ({
-      id: client.id || client.matterNumber || client._id,
-      matternumber: client.matterNumber || client.id || client._id,
-      client_name: client.clientName || client.client_name,
-      businessAddress: client.businessAddress || client.business_address,
-      property_address: client.propertyAddress || client.property_address,
-      state: client.state || "",
-      client_type: client.clientType || client.type,
-      settlement_date: client.settlementDate || client.settlement_date,
-      matterDate: client.matterDate,
-      dataEntryBy: client.dataEntryBy || "",
-      postcode: client.postcode || "",
-      finance_approval_date: client.financeApprovalDate,
-      building_and_pest_date: client.buildingAndPestDate,
-      dataentryby: client.dataEntryBy || "",
-      status: client.status || "active",
-      ...client,
-    }));
-  }, [api]);
-
-  const fetchIDGOrders = useCallback(async () => {
-    const response = await api.getIDGOrders();
-
-    let data =
-      response?.data || response?.orders || response?.clients || response || [];
-    if (!Array.isArray(data)) data = [];
-
-    return response.activeOrders.map((client) => ({
-      id: client.id || client.orderId || client.clientId || client._id,
-      clientId: client.clientId || client.id,
-      orderId: client.orderId || client.id,
-      client_name: client.clientName || client.client_name,
-      client_type: client.orderType || client.client_type,
-      allocatedUser: client.allocatedUser || client.allocated_user,
-      order_date: client.orderDate || client.order_date,
-      delivery_date: client.deliveryDate || client.delivery_date,
-      orderDetails: client.orderDetails || client.order_details,
-      billing_address: client.billingAddress || client.billing_address,
-      postcode: client.postcode || "",
-      status: client.status || "active",
-      ...client,
-    }));
-  }, [api]);
-
-  const {
-    data: clientData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["clients", currentModule, company],
-    queryFn: async () => {
+  // Fetch clients based on module
+  useEffect(() => {
+    // In the fetchData function, improve commercial data handling:
+    const fetchData = async () => {
       if (currentModule === "commercial") {
-        return await fetchCommercialProjects();
-      } else if (company === "idg") {
-        return await fetchIDGOrders();
-      } else {
-        return await fetchVKLClients();
-      }
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
+        setCommercialLoading(true);
+        try {
+          const response = await api.getActiveProjects();
+          console.log("Commercial clients response:", response);
 
-  const activeData = clientData || [];
+          let data = [];
+          if (Array.isArray(response)) {
+            data = response;
+          } else if (response && Array.isArray(response.data)) {
+            data = response.data;
+          } else if (response && Array.isArray(response.clients)) {
+            data = response.clients;
+          } else if (response && Array.isArray(response.projects)) {
+            data = response.projects;
+          } else {
+            // Handle empty or null response
+            console.warn("Empty or unexpected response format:", response);
+            data = [];
+          }
 
-  const clientList = useMemo(() => {
-    if (!activeData.length) return [];
+          const transformedData = data.map((client) => ({
+            ...client,
+            id: client.id || client.matterNumber || client._id,
+            matternumber: client.matterNumber || client.id || client._id,
+            client_name: client.clientName || client.client_name,
+            businessAddress: client.businessAddress || client.business_address,
+            businessName: client.businessName,
+            state: client.state || "",
+            client_type: client.clientType || client.type,
+            settlement_date: client.settlementDate || client.settlement_date,
+            matterDate: client.matterDate,
+            dataEntryBy: client.dataEntryBy || "",
+            postcode: client.postcode || "",
+            finance_approval_date: client.financeApprovalDate,
+            building_and_pest_date: client.buildingAndPestDate,
+            dataentryby: client.dataEntryBy || "",
+            status: client.status || "active",
+          }));
 
-    let filteredData = [...activeData];
-    const [startDate, endDate] = settlementDate;
-    if (startDate && endDate) {
-      const startMoment = moment(startDate);
-      const endMoment = moment(endDate);
-
-      filteredData = filteredData.filter((client) => {
-        let clientDate;
-        if (currentModule === "commercial") {
-          clientDate = moment(client.settlement_date || client.settlementDate);
-        } else if (company === "idg") {
-          clientDate = moment(client.delivery_date || client.order_date);
-        } else {
-          clientDate = moment(client.settlement_date);
+          setCommercialClients(transformedData);
+        } catch (error) {
+          console.error("Error fetching commercial clients:", error);
+          // Don't show error toast for empty responses, just set empty array
+          if (error.response?.status !== 404) {
+            toast.error("Failed to load commercial projects");
+          }
+          setCommercialClients([]);
+        } finally {
+          setCommercialLoading(false);
         }
-        return clientDate.isBetween(startMoment, endMoment, "day", "[]");
+      } else {
+        fetchClients();
+      }
+    };
+
+    fetchData();
+  }, [currentModule, api, fetchClients]);
+
+  useEffect(() => {
+    console.log(user);
+    let filteredData =
+      currentModule === "commercial" ? commercialClients : Clients;
+
+    const [startDate, endDate] = Array.isArray(dateFilter?.range)
+      ? dateFilter.range
+      : ["", ""];
+
+    // Fix: Use lowercase comparison to match localStorage value
+    if (company?.toLowerCase() === "idg" && startDate && endDate) {
+      filteredData = filteredData.filter((client) => {
+        let deliveryDateObj = moment(client.delivery_date);
+        let orderDateObj = moment(client.order_date || client.orderDate);
+
+        // Check if delivery or order date falls within range
+        const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
+          moment(startDate),
+          moment(endDate),
+          "day",
+          "[]"
+        );
+
+        const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
+          moment(startDate),
+          moment(endDate),
+          "day",
+          "[]"
+        );
+
+        if (dateFilter.type === "delivery_date") {
+          return inDeliveryRange;
+        } else if (dateFilter.type === "order_date") {
+          return inOrderRange;
+        } else if (dateFilter.type === "both_date") {
+          return inDeliveryRange && inOrderRange;
+        }
+
+        return;
       });
     }
+    else {
+      if (startDate && endDate) {
+        filteredData = filteredData.filter((client) => {
+          let clientDate;
+          if (currentModule === "commercial") {
+            clientDate = moment(client.settlement_date || client.settlementDate);
+          } else {
+            clientDate = moment(client.settlement_date);
+          }
+          return clientDate.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
+        });
+      }
+    }
 
-    if (searchQuery && searchQuery.trim().length > 0) {
-      const lowercasedQuery = searchQuery.toLowerCase().trim();
-
+    // Apply search query filter
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
       filteredData = filteredData.filter((client) => {
-        const searchableFields = [];
-
         if (currentModule === "commercial") {
-          searchableFields.push(
+          const searchableFields = [
             client.matterNumber,
             client.clientName,
             client.businessName,
@@ -232,60 +203,129 @@ const ViewClients = () => {
             client.clientType,
             client.dataEntryBy,
             client.postcode,
-            client.referral
-          );
-        } else if (company === "idg") {
-          searchableFields.push(
-            client.clientId,
-            client.orderId,
-            client.client_name,
-            client.client_type,
-            client.allocatedUser,
-            client.orderDetails,
-            client.billing_address,
-            client.postcode
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
           );
         } else {
-          searchableFields.push(
+          const searchableFields = [
             client.client_name || client.clientName,
             client.matternumber || client.matterNumber || client.orderId,
             client.businessAddress || client.business_address,
             client.property_address || client.propertyAddress,
             client.state,
-            client.referral || client.referralName
+            client.referral || client.referralName,
+          ];
+
+          return searchableFields.some(
+            (field) =>
+              field && String(field).toLowerCase().includes(lowercasedQuery)
           );
         }
-
-        if (
-          client.stages &&
-          Array.isArray(client.stages) &&
-          client.stages.length > 0
-        ) {
-          // Check each stage object for referral fields
-          client.stages.forEach((stageObj) => {
-            if (stageObj && typeof stageObj === "object") {
-              Object.values(stageObj).forEach((stageData) => {
-                if (
-                  stageData &&
-                  typeof stageData === "object" &&
-                  stageData.referral
-                ) {
-                  searchableFields.push(String(stageData.referral));
-                }
-              });
-            }
-          });
-        }
-
-        return searchableFields.some(
-          (field) =>
-            field && String(field).toLowerCase().includes(lowercasedQuery)
-        );
       });
     }
 
-    return filteredData;
-  }, [settlementDate, activeData, searchQuery, currentModule, company]);
+    setClientList(filteredData);
+  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
+
+  let columns = [];
+  if (localStorage.getItem("company") === "vkl") {
+    if (currentModule === "commercial") {
+      // Commercial projects columns
+      columns = [
+        { key: "matterNumber", title: "Project Number", width: "10%" },
+        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
+        { key: "clientName", title: "Client Name", width: "12%" },
+        { key: "businessName", title: "Business Name", width: "12%" },
+        { key: "businessAddress", title: "Business Address", width: "15%" },
+        { key: "state", title: "State", width: "6%" },
+        { key: "clientType", title: "Client Type", width: "8%" },
+        { key: "settlementDate", title: "Completion Date", width: "10%" },
+        { key: "matterDate", title: "Project Date", width: "10%" },
+        // { key: "postcode", title: "Postcode", width: "7%" },
+      ];
+    } else {
+      // Regular VKL clients
+      columns = [
+        { key: "matternumber", title: "Matter Number", width: "8%" },
+        { key: "dataentryby", title: "Data Entry By", width: "10%" },
+        { key: "client_name", title: "Client Name", width: "10%" },
+        { key: "property_address", title: "Property Address", width: "10%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "client_type", title: "Client Type", width: "7%" },
+        { key: "settlement_date", title: "Settlement Date", width: "10%" },
+        {
+          key: "finance_approval_date",
+          title: "Finance Approval Date",
+          width: "10%",
+        },
+        {
+          key: "building_and_pest_date",
+          title: "Building & Pest Date",
+          width: "10%",
+        },
+      ];
+    }
+  } else if (localStorage.getItem("company") === "idg") {
+    columns = [
+      { key: "clientId", title: "Client ID", width: "8%" },
+      { key: "orderId", title: "Order ID", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "9%" },
+      { key: "client_type", title: "Order Type", width: "12%" },
+      { key: "allocatedUser", title: "Allocated User", width: "15%" },
+      { key: "order_date", title: "Order Date", width: "12%" },
+      { key: "delivery_date", title: "Delivery Date", width: "12%" },
+      { key: "orderDetails", title: "Order Details", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "10%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" },
+    ];
+  }
+
+  async function handelReShareEmail() {
+    try {
+      setIsClicked(true);
+      await api.resendLinkToClient(email, shareDetails?.matterNumber);
+      toast.success("Email sent successfully.");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      handelShareEmailModalClose();
+    }
+  }
+
+  async function changeUser(user, orderId) {
+    console.log(user, orderId);
+    try {
+      const res = api.changeUser(user, orderId);
+    } catch (error) {
+      console.log("Error occured!!", error);
+    }
+  }
+
+  const handleClientFilterChange = (selectedName) => {
+    setSelectedClientName(selectedName);
+
+    if (!selectedName) {
+      setClientList(
+        currentModule === "commercial" ? commercialClients : Clients
+      );
+    } else {
+      const filtered = (currentModule === "commercial" ? commercialClients : Clients)
+        .filter(client => client.client_name === selectedName);
+
+      setClientList(filtered);
+    }
+  };
+
+
+  const handelShareEmailModalClose = () => {
+    setShowShareDialog(false);
+    setIsClicked(false);
+    setemail("");
+    setShareDetails({ matterNumber: "", reshareEmail: "" });
+  };
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "View Projects";
@@ -309,6 +349,15 @@ const ViewClients = () => {
     }
   };
 
+  const reloadPage = () => {
+    window.location.reload();
+  };
+
+  useEffect(() => {
+  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+}, [dateFilter]);
+
+
   const shouldShowOutstandingTasks = () => {
     return currentModule === "commercial" || company === "vkl";
   };
@@ -317,61 +366,8 @@ const ViewClients = () => {
     return company === "idg";
   };
 
-  const handelShareEmailModalClose = () => {
-    setShowShareDialog(false);
-    setemail("");
-    setShareDetails({ matterNumber: "", reshareEmail: "" });
-  };
-
-  let columns = [];
-  if (company === "vkl") {
-    if (currentModule === "commercial") {
-      columns = [
-        { key: "matterNumber", title: "Project Number", width: "10%" },
-        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
-        { key: "clientName", title: "Client Name", width: "12%" },
-        { key: "businessName", title: "Business Name", width: "12%" },
-        { key: "businessAddress", title: "Business Address", width: "15%" },
-        { key: "state", title: "State", width: "6%" },
-        { key: "clientType", title: "Client Type", width: "8%" },
-        { key: "settlementDate", title: "Completion Date", width: "10%" },
-        { key: "matterDate", title: "Project Date", width: "10%" },
-      ];
-    } else {
-      columns = [
-        { key: "matternumber", title: "Matter Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "property_address", title: "Property Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Settlement Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    }
-  } else if (company === "idg") {
-    columns = [
-      { key: "clientId", title: "Client ID", width: "8%" },
-      { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "9%" },
-      { key: "client_type", title: "Order Type", width: "12%" },
-      { key: "allocatedUser", title: "Allocated User", width: "10%" },
-      { key: "order_date", title: "Order Date", width: "12%" },
-      { key: "delivery_date", title: "Delivery Date", width: "12%" },
-      { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "10%" },
-      { key: "postcode", title: "Post Code", width: "6.5%" },
-    ];
-  }
+  const isLoading =
+    currentModule === "commercial" ? commercialLoading : loading;
 
   return (
     <>
@@ -383,7 +379,6 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
-
       <CreateClientModal
         createType={currentModule === "commercial" ? "project" : "client"}
         companyName={company}
@@ -392,30 +387,29 @@ const ViewClients = () => {
           setcreateuser(false);
           setCreateProject(false);
         }}
+        onClose={()=>setcreateuser(false)}
       />
-
       <CreateClientModal
         createType="order"
         companyName={company}
         isOpen={createOrder}
+        onClose={reloadPage}
         setIsOpen={() => setcreateOrder(false)}
       />
 
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial"
-            ? "projects"
-            : company === "idg"
-            ? "orders"
-            : "clients"
-        }.`}
-        handelSubmitFun={(fromDate, toDate) => {
-          setSettlementDate([fromDate, toDate]);
+        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+          }.`}
+        handelSubmitFun={(fromDate, toDate, dateType) => {
+          setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
         }}
-        onReset={() => setSettlementDate(["", ""])}
+        onReset={() => {
+          setDateFilter({ type: "settlement_date", range: ["", ""] }) 
+          setShowDateRange(false); 
+        }}
       />
 
       <Dialog
@@ -437,12 +431,7 @@ const ViewClients = () => {
             </h2>
             <p className="text-sm text-center text-gray-700 mb-4">
               Please enter the client email for{" "}
-              {currentModule === "commercial"
-                ? "project"
-                : company === "idg"
-                ? "order"
-                : "matter"}{" "}
-              No. :{" "}
+              {currentModule === "commercial" ? "project" : "matter"} No. :{" "}
               <span className="text-blue-500 underline cursor-pointer">
                 {shareDetails?.matterNumber}
               </span>
@@ -466,13 +455,18 @@ const ViewClients = () => {
                 </svg>
               </span>
             </div>
-            <button
-              className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3 disabled:opacity-50"
-              onClick={handelReShareEmail}
-              disabled={isSendingEmail}
-            >
-              {isSendingEmail ? "Sending..." : "Send Link"}
-            </button>
+            {isClicked ? (
+              <button className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3">
+                Sending...
+              </button>
+            ) : (
+              <button
+                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+                onClick={handelReShareEmail}
+              >
+                Send Link
+              </button>
+            )}
             <button className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition">
               Manage Access
             </button>
@@ -488,9 +482,7 @@ const ViewClients = () => {
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-            <DialogTitle className={"text-xl mb-5"}>
-              Task Allocation Report
-            </DialogTitle>
+            <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle>
             <div className="flex items-center gap-2 mb-5">
               <label
                 htmlFor="items-per-page"
@@ -506,7 +498,7 @@ const ViewClients = () => {
               >
                 <option value="">All Users</option>
                 {user.map((user) => (
-                  <option key={user.name} value={user.name}>
+                  <option value={user.name}>
                     {user.name}
                   </option>
                 ))}
@@ -516,12 +508,14 @@ const ViewClients = () => {
             <button
               className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
               onClick={() => {
-                generateTaskAllocationPDF(allocatedUser);
-                setShowTar(false);
+                generateTaskAllocationPDF(allocatedUser)
+                setShowTar(false)
               }}
             >
               Download
             </button>
+
+
           </DialogPanel>
         </div>
       </Dialog>
@@ -534,17 +528,14 @@ const ViewClients = () => {
             {getPageTitle()}
           </h3>
           <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
+            {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
               <label
                 htmlFor="items-per-page"
                 className="text-sm font-medium text-gray-700"
               >
-                {currentModule === "commercial"
-                  ? "Projects"
-                  : company === "idg"
-                  ? "Orders"
-                  : "Clients"}{" "}
-                per page:
+                {currentModule === "commercial" ? "Projects" : "Clients"} per
+                page:
               </label>
               <select
                 id="items-per-page"
@@ -552,21 +543,48 @@ const ViewClients = () => {
                 onChange={(e) => setItemsPerPage(Number(e.target.value))}
                 className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
                 <option value={500}>500</option>
-                <option value={1000}>1000</option>
               </select>
             </div>
+            {localStorage.getItem("company") == "idg" &&
+              <div className="flex items-center gap-2">
+                {/* <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by clients
+              </label> */}
+                <select
+                  name="Client"
+                  className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={selectedClientName}
+                  onChange={(e) => handleClientFilterChange(e.target.value)}
+                  disabled={localStorage.getItem("role") !== "admin"}
+                >
+                  <option value="">All Clients</option>
+                  {list.map((client) => (
+                    <option key={client.name} value={client.name}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            }
 
-            <div className="hidden lg:flex items-center gap-4">
-              {company === "vkl" && (
+            {/* Consolidated Desktop Buttons */}
+            <div className="hidden lg:flex items-center gap-1.5">
+              {localStorage.getItem("company") === "vkl" && (
                 <>
                   <Button
-                    label={getCreateButtonLabel()}
+                    label="Create Client"
                     Icon1={userplus}
-                    onClick={handleCreateButtonClick}
+                    onClick={() => setcreateuser(true)}
                     width="w-[150px]"
                   />
                   <Button
@@ -581,7 +599,7 @@ const ViewClients = () => {
                   />
                 </>
               )}
-              {company === "idg" && (
+              {localStorage.getItem("company") === "idg" && (
                 <>
                   <Button
                     label="Create Client"
@@ -599,10 +617,17 @@ const ViewClients = () => {
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
                   />
+                  <Button
+                    label="Task Report"
+                    onClick={() => setShowTar(true)}
+                    width="w-[100px]"
+                  />
                 </>
               )}
             </div>
 
+
+            {/* Mobile Menu */}
             <div className="flex lg:hidden items-center gap-2">
               <Menu as="div" className="relative">
                 <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -622,61 +647,41 @@ const ViewClients = () => {
                 >
                   <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
+                      {/* Create Client/Project option */}
                       <Menu.Item>
                         {({ active }) => (
                           <button
-                            onClick={handleCreateButtonClick}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
-                                ? "bg-sky-50 text-sky-700"
-                                : "text-gray-700"
-                            }`}
+                            onClick={() => setcreateuser(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
+                              }`}
                           >
                             {getCreateButtonLabel()}
                           </button>
                         )}
                       </Menu.Item>
-                      {shouldShowCreateOrder() && (
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setcreateOrder(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active
-                                  ? "bg-sky-50 text-sky-700"
-                                  : "text-gray-700"
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowOutstandingTask(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
                               }`}
-                            >
-                              Create Order
-                            </button>
-                          )}
-                        </Menu.Item>
-                      )}
-                      {shouldShowOutstandingTasks() && (
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setShowOutstandingTask(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active
-                                  ? "bg-sky-50 text-sky-700"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              Outstanding Tasks
-                            </button>
-                          )}
-                        </Menu.Item>
-                      )}
+                          >
+                            Outstanding Tasks
+                          </button>
+                        )}
+                      </Menu.Item>
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
-                                ? "bg-sky-50 text-sky-700"
-                                : "text-gray-700"
-                            }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                              ? "bg-sky-50 text-sky-700"
+                              : "text-gray-700"
+                              }`}
                           >
                             Select Date Range
                           </button>
@@ -690,25 +695,23 @@ const ViewClients = () => {
           </div>
         </div>
 
-        {error && (
-          <div
-            className="p-4 text-red-700 bg-red-100 border-l-4 border-red-500"
-            role="alert"
+        {/* {error && (
+          <ConfirmationModal
+            isOpen={showConfirmModal}
+            onClose={() => console.log("")}
+            title="Session Expired!"
+            isLogout={true}
           >
-            <p>{error.message || "Error loading data"}</p>
-          </div>
-        )}
+            Please Login Again
+          </ConfirmationModal>
+        )} */}
 
-        {isLoading ? (
-          <div className="text-center py-10">
-            <Loader />
-          </div>
-        ) : !clientList || clientList.length === 0 ? (
+        {isLoading || !clientList ? (
+          <Loader />
+        ) : clientList.length === 0 ? (
           <div className="py-10 text-center text-gray-500">
             {currentModule === "commercial"
               ? "No projects found"
-              : company === "idg"
-              ? "No orders found"
               : "No clients found"}
           </div>
         ) : (
@@ -716,6 +719,8 @@ const ViewClients = () => {
             <ViewClientsTable
               data={clientList}
               columns={columns}
+              users={user}
+              handleChangeUser={changeUser}
               onEdit={true}
               onShare={(matterNumber, reshareEmail) => {
                 setShareDetails({ matterNumber, reshareEmail });

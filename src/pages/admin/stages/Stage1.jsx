@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "../../../components/ui/Button";
 import ClientAPI from "../../../api/clientAPI";
 import CommercialAPI from "../../../api/commercialAPI";
@@ -105,21 +104,20 @@ const commonFields = [
 export default function Stage1({
   changeStage,
   data,
-  stageNumber = 1,
-  onStageUpdate,
+  reloadTrigger,
+  setReloadTrigger,
 }) {
   const [formData, setFormData] = useState({});
-
   const [statuses, setStatuses] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const originalData = useRef({});
-  const hasLoadedData = useRef(false);
 
+  console.log("Initial data prop:", data);
   const stage = 1;
+  const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
-
-  // Memoize API instances so they are stable
-  const api = useMemo(() => new ClientAPI(), []);
-  const commercialApi = useMemo(() => new CommercialAPI(), []);
 
   // Stabilize company + fields so they can be safely used in hooks' deps
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
@@ -128,45 +126,11 @@ export default function Stage1({
     []
   );
 
-  // Safely get current fields, including IDG admin logic
   const currentFields = useMemo(() => {
-    let baseFields;
-
     if (currentModule === "commercial") {
-      baseFields = formConfig.commercial || formConfig.vkl;
-    } else {
-      baseFields = formConfig[company] || formConfig.vkl;
+      return formConfig.commercial || formConfig.vkl;
     }
-
-    // Safely add IDG admin fields without mutating the original config
-    if (
-      company === "idg" &&
-      (localStorage.getItem("role") === "admin" ||
-        localStorage.getItem("role") === "superadmin")
-    ) {
-      const hasCostingFields = baseFields.some(
-        (field) => field.name === "costing_amount"
-      );
-
-      if (!hasCostingFields) {
-        // Return a *new* array
-        return [
-          ...baseFields,
-          {
-            name: "costingType",
-            label: "Confirm Costing Type",
-            type: "radio",
-            options: ["Fixed", "Variable"],
-          },
-          {
-            name: "costing_amount",
-            label: "Costing Amount",
-            type: "text",
-          },
-        ];
-      }
-    }
-    return baseFields;
+    return formConfig[company] || formConfig.vkl;
   }, [company, currentModule]);
 
   // Helper to normalize/standardize values for comparison and storage
@@ -184,18 +148,14 @@ export default function Stage1({
       const completed = new Set([
         "yes",
         "nr",
-        "n/r",
         "na",
-        "n/a",
         "variable",
         "fixed",
         "approved",
       ]);
       if (completed.has(val)) return "Completed";
       if (val === "no") return "Not Completed";
-      if (["processing", "inprogress", "pending"].includes(val))
-        return "In Progress";
-      if (val.length > 0) return "Completed";
+      if (["processing", "inprogress"].includes(val)) return "In Progress";
       return "Not Completed";
     },
     [normalizeValue]
@@ -255,595 +215,254 @@ export default function Stage1({
     return `${notReceived.join(", ")} not received`;
   };
 
-  const queryClient = useQueryClient();
-  const fetchStageData = useCallback(async () => {
-    if (!matterNumber) return null;
-
-    let stageData = data;
-
-    if (currentModule === "commercial") {
-      try {
-        const stageResponse = await commercialApi.getStageData(1, matterNumber);
-
-        if (stageResponse && stageResponse.data) {
-          stageData = { ...data, ...stageResponse.data };
-        } else if (stageResponse) {
-          stageData = { ...data, ...stageResponse };
-        }
-      } catch (error) {
-        console.log("No existing stage 1 data found, using default data");
-      }
-    }
-    return stageData;
-  }, [matterNumber, currentModule, data, commercialApi]);
-
-  const { data: stageData, isLoading } = useQuery({
-    queryKey: ["stageData", 1, matterNumber, currentModule],
-    queryFn: fetchStageData,
-    enabled: !!matterNumber,
-  });
-
+  // UPDATED: Data initialization effect
   useEffect(() => {
-    // Don't reload if we've already loaded initial data (prevents clobbering user selection)
-    if (!stageData || hasLoadedData.current) return;
+    const initializeData = async () => {
+      if (!matterNumber) return;
 
-    const { systemNote, clientComment } = extractNotes(stageData.noteForClient);
-    const initialFormData = {};
-    const initialStatuses = {};
+      setIsLoading(true);
+      try {
+        let stageData = data;
 
-    currentFields.forEach((field) => {
-      const raw = stageData[field.name];
-
-      if (field.name === "quoteAmount") {
-        initialFormData[field.name] =
-          stageData[field.name]?.$numberDecimal || stageData[field.name] || "";
-      } else {
-        if (field.type === "radio") {
-          // Normalize and map stored value back to one of the configured options when possible
-          const rawVal = raw ?? "";
-          const normalizedValue = normalizeValue(rawVal);
-          const fieldConfig = currentFields.find((f) => f.name === field.name);
-          let chosen = "";
-          if (fieldConfig && fieldConfig.options) {
-            const exactOption = fieldConfig.options.find(
-              (opt) => normalizeValue(opt) === normalizedValue
+        // For commercial stage 1, fetch the actual stage data from API
+        if (currentModule === "commercial") {
+          console.log("Commercial stage 1 - fetching actual stage data");
+          try {
+            const stageResponse = await commercialApi.getStageData(
+              1,
+              matterNumber
             );
-            chosen = exactOption || (rawVal ? String(rawVal) : "");
-          } else {
-            chosen = rawVal ?? "";
+            console.log("Commercial stage 1 API response:", stageResponse);
+
+            if (stageResponse && stageResponse.data) {
+              stageData = { ...data, ...stageResponse.data };
+            } else if (stageResponse) {
+              stageData = { ...data, ...stageResponse };
+            }
+            console.log("Combined stage data for commercial:", stageData);
+          } catch (error) {
+            console.log("No existing stage 1 data found, using default data");
+            stageData = data;
           }
-          initialFormData[field.name] = chosen;
-        } else {
-          initialFormData[field.name] = raw ?? "";
         }
+
+        // Process the data for stage 1
+        console.log("Processing stage data:", stageData);
+
+        const { systemNote, clientComment } = extractNotes(
+          stageData.noteForClient
+        );
+        const initialFormData = {};
+        const initialStatuses = {};
+
+        currentFields.forEach((field) => {
+          if (field.name === "quoteAmount") {
+            initialFormData[field.name] =
+              stageData[field.name]?.$numberDecimal ||
+              stageData[field.name] ||
+              "";
+          } else {
+            if (field.type === "radio") {
+              initialFormData[field.name] = normalizeValue(
+                stageData[field.name] || ""
+              );
+            } else {
+              initialFormData[field.name] = stageData[field.name] || "";
+            }
+          }
+
+          if (field.type === "radio") {
+            initialStatuses[field.name] = getStatus(
+              initialFormData[field.name]
+            );
+          }
+        });
+
+        initialFormData.systemNote = systemNote;
+        initialFormData.clientComment = clientComment;
+
+        setFormData(initialFormData);
+        setStatuses(initialStatuses);
+        originalData.current = initialFormData;
+
+        console.log("Initialized form data:", initialFormData);
+      } catch (error) {
+        console.error("Error initializing form data:", error);
+        toast.error("Failed to load stage data");
+      } finally {
+        setIsLoading(false);
       }
-
-      if (field.type === "radio") {
-        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
-      }
-    });
-
-    currentFields.forEach((field) => {
-      if (
-        initialFormData[field.name] === undefined ||
-        initialFormData[field.name] === null
-      ) {
-        initialFormData[field.name] = "";
-      }
-    });
-
-    initialFormData.systemNote = systemNote;
-    initialFormData.clientComment = clientComment || "";
-
-    setFormData(initialFormData);
-    setStatuses(initialStatuses);
-
-    // Keep originalData in the same shape Stage6 uses so isChanged can compare reliably
-    originalData.current = {
-      formData: JSON.parse(JSON.stringify(initialFormData)),
-      noteForClient: clientComment || "",
-      noteForSystem: systemNote || "",
     };
 
-    // Mark we've loaded initial data once
-    hasLoadedData.current = true;
+    initializeData();
+  }, [
+    data,
+    matterNumber,
+    currentModule,
+    company,
+    reloadTrigger,
+    currentFields,
+    getStatus,
+    normalizeValue,
+  ]);
 
-    // Reset loaded flag when matterNumber changes (cleanup handled below)
-  }, [stageData, currentFields, getStatus, normalizeValue, matterNumber]);
-
-  // Reset the loaded flag whenever matterNumber changes (so new matter can reload)
+  // Add costing fields for IDG admins
   useEffect(() => {
-    hasLoadedData.current = false;
-  }, [matterNumber]);
+    if (
+      localStorage.getItem("company") === "idg" &&
+      (localStorage.getItem("role") === "admin" ||
+        localStorage.getItem("role") === "superadmin")
+    ) {
+      const hasCostingFields = formConfig.idg.some(
+        (field) => field.name === "costing_amount"
+      );
 
-  const handleChange = useCallback(
-    (field, value) => {
-      const fieldConfig = currentFields.find((f) => f.name === field);
-
-      let processedValue = value;
-
-      // For radios we prefer the exact option text (Stage6 pattern)
-      if (fieldConfig && fieldConfig.type === "radio") {
-        processedValue = value;
-        setStatuses((prev) => ({
-          ...(prev || {}),
-          [field]: getStatus(processedValue),
-        }));
-      } else {
-        setStatuses((prev) => ({
-          ...(prev || {}),
-          [field]: getStatus(processedValue),
-        }));
+      if (!hasCostingFields) {
+        formConfig.idg.push(
+          {
+            name: "costingType",
+            label: "Confirm Costing Type",
+            type: "radio",
+            options: ["Fixed", "Variable"],
+          },
+          {
+            name: "costing_amount",
+            label: "Costing Amount",
+            type: "text",
+          }
+        );
       }
+    }
+  }, []);
 
-      setFormData((prev) => {
-        const next = { ...(prev || {}), [field]: processedValue };
-        return next;
-      });
-    },
-    [currentFields, getStatus]
-  );
+  const handleChange = (field, value) => {
+    const fieldConfig = currentFields.find((f) => f.name === field);
+    let processedValue = value;
+
+    if (fieldConfig && fieldConfig.type === "radio") {
+      processedValue = normalizeValue(value);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+
+    if (fieldConfig && fieldConfig.type === "radio") {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
+    }
+  };
 
   function isChanged() {
-    // If we don't have an original snapshot, consider whether the current form has any filled values
-    const original = originalData.current || {};
-    if (!original.formData) {
-      // If user has entered anything at all, that's a change
-      const anyFilled = Object.keys(formData || {}).some(
-        (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
-      );
-      return (
-        anyFilled ||
-        (formData.clientComment && String(formData.clientComment).trim() !== "")
-      );
-    }
-
-    // Deep compare JSON of the form states (Stage6 approach)
-    try {
-      const currentFormJSON = JSON.stringify(formData || {});
-      const originalFormJSON = JSON.stringify(original.formData || {});
-      const clientNoteCurrent = (formData.clientComment || "").trim();
-      const clientNoteOriginal = (original.noteForClient || "").trim();
-      const systemNoteChanged =
-        (generateSystemNote() || "").trim() !==
-        (original.noteForSystem || "").trim();
-
-      return (
-        currentFormJSON !== originalFormJSON ||
-        clientNoteCurrent !== clientNoteOriginal ||
-        systemNoteChanged
-      );
-    } catch (e) {
-      // fallback to conservative true if stringify fails
-      return true;
-    }
+    return Object.keys(formData).some(
+      (key) => formData[key] !== originalData.current[key]
+    );
   }
-
-  // 4. USE THE useMutation HOOK
-  const { mutate: saveStage, isPending: isSaving } = useMutation({
-    mutationFn: async (payload) => {
-      if (currentModule === "commercial") {
-        return commercialApi.upsertStage(1, matterNumber, payload);
-      } else if (company === "vkl") {
-        payload.matterNumber = matterNumber;
-        return api.upsertStageOne(payload);
-      } else if (company === "idg") {
-        payload.orderId = matterNumber;
-        return api.upsertIDGStages(payload.orderId, 1, payload);
-      }
-    },
-
-    // Perform optimistic updates
-    onMutate: async (payload) => {
-      const companyKey = localStorage.getItem("company") || company;
-      const moduleKey = localStorage.getItem("currentModule") || currentModule;
-
-      // cancel outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: ["clientData", matterNumber, companyKey, moduleKey],
-      });
-      await queryClient.cancelQueries({
-        queryKey: ["clientMatter", matterNumber],
-      });
-      await queryClient.cancelQueries({
-        queryKey: ["viewClients", moduleKey],
-      });
-
-      // snapshot previous values
-      const previousClientData = queryClient.getQueryData([
-        "clientData",
-        matterNumber,
-        companyKey,
-        moduleKey,
-      ]);
-      const previousClientMatter = queryClient.getQueryData([
-        "clientMatter",
-        matterNumber,
-      ]);
-      const previousViewClients = queryClient.getQueryData([
-        "viewClients",
-        moduleKey,
-      ]);
-
-      const optimisticColor = payload.colorStatus;
-
-      // apply optimistic updates
-      if (previousClientData) {
-        queryClient.setQueryData(
-          ["clientData", matterNumber, companyKey, moduleKey],
-          (old) => {
-            const copy = { ...(old || {}) };
-            copy[`stage${stageNumber}`] = {
-              ...(copy[`stage${stageNumber}`] || {}),
-              colorStatus: optimisticColor,
-            };
-            return copy;
-          }
-        );
-      } else {
-        queryClient.setQueryData(
-          ["clientData", matterNumber, companyKey, moduleKey],
-          { [`stage${stageNumber}`]: { colorStatus: optimisticColor } }
-        );
-      }
-
-      if (previousClientMatter) {
-        queryClient.setQueryData(["clientMatter", matterNumber], (old) => {
-          const copy = { ...(old || {}) };
-          copy[`stage${stageNumber}`] = {
-            ...(copy[`stage${stageNumber}`] || {}),
-            colorStatus: optimisticColor,
-          };
-          return copy;
-        });
-      } else {
-        queryClient.setQueryData(["clientMatter", matterNumber], {
-          [`stage${stageNumber}`]: { colorStatus: optimisticColor },
-        });
-      }
-
-      if (Array.isArray(previousViewClients)) {
-        queryClient.setQueryData(["viewClients", moduleKey], (list) => {
-          return list.map((c) => {
-            if (String(c.matterNumber) !== String(matterNumber)) return c;
-            const updated = { ...c };
-            updated[`stage${stageNumber}`] = {
-              ...(updated[`stage${stageNumber}`] || {}),
-              colorStatus: optimisticColor,
-            };
-            if (moduleKey === "commercial")
-              updated.colorStatus = optimisticColor;
-            return updated;
-          });
-        });
-      }
-
-      // fire the immediate callback so StagesLayout re-renders
-      if (onStageUpdate) {
-        try {
-          onStageUpdate(
-            { ...payload, colorStatus: optimisticColor },
-            stageNumber
-          );
-        } catch (e) {
-          console.warn("onStageUpdate optimistic call failed", e);
-        }
-      }
-
-      return {
-        previousClientData,
-        previousClientMatter,
-        previousViewClients,
-      };
-    },
-
-    onError: (err, payload, context) => {
-      const companyKey = localStorage.getItem("company") || company;
-      const moduleKey = localStorage.getItem("currentModule") || currentModule;
-
-      if (context?.previousClientData) {
-        queryClient.setQueryData(
-          ["clientData", matterNumber, companyKey, moduleKey],
-          context.previousClientData
-        );
-      }
-      if (context?.previousClientMatter) {
-        queryClient.setQueryData(
-          ["clientMatter", matterNumber],
-          context.previousClientMatter
-        );
-      }
-      if (context?.previousViewClients) {
-        queryClient.setQueryData(
-          ["viewClients", moduleKey],
-          context.previousViewClients
-        );
-      }
-
-      if (context?.previousClientData) {
-        originalData.current = {
-          ...(context.previousClientData[`stage${stageNumber}`] || {}),
-        };
-      }
-
-      let errorMessage = "Failed to save Stage 1. Please try again.";
-      if (err?.response?.data?.message)
-        errorMessage = err.response.data.message;
-      else if (err?.message) errorMessage = err.message;
-      toast.error(errorMessage);
-    },
-
-    onSuccess: (responseData, payload) => {
-      const res = responseData?.data || responseData;
-
-      localStorage.setItem("current_stage", "1");
-
-      try {
-        sessionStorage.setItem("opsnav_clients_should_reload", "1");
-      } catch (e) {}
-
-      const companyKey = localStorage.getItem("company") || company;
-      const moduleKey = localStorage.getItem("currentModule") || currentModule;
-
-      const currentFormDataSnapshot = { ...formData };
-
-      try {
-        queryClient.setQueryData(
-          ["clientData", matterNumber, companyKey, moduleKey],
-          (old) => {
-            const stageProp = `stage${stageNumber}`;
-            const stagePayload =
-              (res && (res[stageProp] || res.stageData)) ||
-              (res &&
-                Object.keys(res).reduce((acc, key) => {
-                  if (
-                    currentFields.some((field) => field.name === key) ||
-                    key === "colorStatus" ||
-                    key === "noteForClient" ||
-                    key === "noteForSystem"
-                  ) {
-                    const value = res[key];
-                    if (
-                      currentFields.find(
-                        (f) => f.name === key && f.type === "radio"
-                      )
-                    ) {
-                      // For radio fields, ensure we have the exact option value
-                      const fieldConfig = currentFields.find(
-                        (f) => f.name === key
-                      );
-                      const normalizedValue = normalizeValue(value);
-                      const exactOption = fieldConfig.options.find(
-                        (opt) => normalizeValue(opt) === normalizedValue
-                      );
-                      acc[key] = exactOption || currentFormDataSnapshot[key];
-                    } else {
-                      acc[key] = value;
-                    }
-                  }
-                  return acc;
-                }, {}));
-
-            if (!old) {
-              const base = { ...(res || {}) };
-              base[stageProp] = { ...(stagePayload || {}) };
-              return base;
-            }
-
-            const merged = { ...old };
-            merged[stageProp] = {
-              ...(old[stageProp] || {}),
-              ...(stagePayload || {}),
-            };
-
-            if (payload.colorStatus && merged[stageProp]) {
-              merged[stageProp].colorStatus = payload.colorStatus;
-            }
-            return merged;
-          }
-        );
-      } catch (err) {
-        queryClient.invalidateQueries([
-          "clientData",
-          matterNumber,
-          companyKey,
-          moduleKey,
-        ]);
-      }
-
-      try {
-        queryClient.setQueryData(["clientMatter", matterNumber], (old) => {
-          const stageProp = `stage${stageNumber}`;
-          const stagePayload =
-            (res && (res[stageProp] || res.stageData)) ||
-            (res &&
-              Object.keys(res).reduce((acc, key) => {
-                if (
-                  currentFields.some((field) => field.name === key) ||
-                  key === "colorStatus" ||
-                  key === "noteForClient" ||
-                  key === "noteForSystem"
-                ) {
-                  acc[key] = res[key];
-                }
-                return acc;
-              }, {}));
-
-          if (!old) {
-            const base = { ...(res || {}) };
-            base[stageProp] = { ...(stagePayload || {}) };
-            return base;
-          }
-
-          const merged = { ...old };
-          merged[stageProp] = {
-            ...(old[stageProp] || {}),
-            ...(stagePayload || {}),
-          };
-
-          if (payload.colorStatus && merged[stageProp]) {
-            merged[stageProp].colorStatus = payload.colorStatus;
-          }
-          return merged;
-        });
-      } catch (err) {
-        queryClient.invalidateQueries(["clientMatter", matterNumber]);
-      }
-
-      try {
-        queryClient.setQueryData(["viewClients", moduleKey], (list) => {
-          if (!Array.isArray(list)) return list;
-          return list.map((c) => {
-            if (String(c.matterNumber) !== String(matterNumber)) return c;
-            const updated = { ...c };
-            if (payload.colorStatus) {
-              updated[`stage${stageNumber}`] = updated[`stage${stageNumber}`]
-                ? {
-                    ...updated[`stage${stageNumber}`],
-                    colorStatus: payload.colorStatus,
-                  }
-                : { colorStatus: payload.colorStatus };
-              if (moduleKey === "commercial")
-                updated.colorStatus = payload.colorStatus;
-            }
-            return updated;
-          });
-        });
-      } catch (err) {
-        queryClient.invalidateQueries(["viewClients", moduleKey]);
-      }
-
-      originalData.current = { ...currentFormDataSnapshot };
-
-      if (onStageUpdate) {
-        try {
-          onStageUpdate(
-            { ...payload, colorStatus: payload.colorStatus },
-            stageNumber
-          );
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      const statusMap = {
-        green: "Completed",
-        red: "Not Completed",
-        amber: "In Progress",
-      };
-      const newStatus = statusMap[payload.colorStatus] || "Not Completed";
-      const currentStatuses = JSON.parse(
-        localStorage.getItem("stageStatuses") || "{}"
-      );
-      currentStatuses[`status${stageNumber}`] = newStatus;
-      localStorage.setItem("stageStatuses", JSON.stringify(currentStatuses));
-
-      try {
-        toast.success("Stage 1 Saved Successfully!", {
-          autoClose: 3000,
-          hideProgressBar: false,
-        });
-      } catch (e) {
-        // non-critical: swallow toast errors
-      }
-
-      try {
-        queryClient.invalidateQueries({
-          queryKey: ["stageData", 1, matterNumber, moduleKey],
-        });
-      } catch (err) {
-        // ignore
-      }
-    },
-
-    onSettled: () => {
-      const companyKey = localStorage.getItem("company") || company;
-      const moduleKey = localStorage.getItem("currentModule") || currentModule;
-      queryClient.invalidateQueries({
-        queryKey: ["clientData", matterNumber, companyKey, moduleKey],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["clientMatter", matterNumber],
-      });
-      queryClient.invalidateQueries({ queryKey: ["viewClients", moduleKey] });
-    },
-  });
 
   async function handleSave() {
-    // Snapshot the current formData to avoid races with async setState
-    const snapshotFormData = { ...formData };
+    if (!isChanged() || isSaving) return;
+    setIsSaving(true);
 
-    if (!isChanged(snapshotFormData) || isSaving) return;
+    try {
+      const systemNote = generateSystemNote();
+      let noteForClient = `${systemNote} - ${formData.clientComment}`.trim();
 
-    const systemNote = generateSystemNote();
-    let noteForClient = `${systemNote} - ${
-      snapshotFormData.clientComment || ""
-    }`.trim();
+      let payload = {
+        ...formData,
+      };
 
-    let payload = {
-      ...snapshotFormData,
-    };
-    currentFields.forEach((field) => {
-      if (field.type === "radio" && payload[field.name]) {
-        // Find the exact matching option value (case-sensitive)
-        const exactValue = field.options.find(
-          (opt) => normalizeValue(opt) === normalizeValue(payload[field.name])
+      // FIXED: Filter commercial fields and ensure correct payload structure
+      if (currentModule === "commercial") {
+        // Only include fields that exist in the commercial schema
+        const commercialFields = [
+          "referral",
+          "retainer",
+          "contractReview",
+          "quoteType",
+          "quoteAmount",
+          "noteForSystem",
+          "noteForClient",
+          "colorStatus",
+          "matterNumber",
+        ];
+        const filteredPayload = {};
+
+        commercialFields.forEach((field) => {
+          if (payload[field] !== undefined) {
+            filteredPayload[field] = payload[field];
+          }
+        });
+
+        payload = filteredPayload;
+
+        // Generate system note
+        payload.noteForSystem = systemNote;
+        payload.noteForClient = noteForClient;
+
+        // Calculate and add color status
+        const allCompleted = currentFields.every(
+          (field) => getStatus(formData[field.name]) === "Completed"
         );
-        if (exactValue) {
-          payload[field.name] = exactValue;
-        }
+        payload.colorStatus = allCompleted ? "green" : "amber";
+      } else {
+        // For other modules, use combined note structure
+        payload.noteForClient = noteForClient;
       }
-    });
 
-    if (currentModule === "commercial") {
-      const commercialFields = [
-        "referral",
-        "retainer",
-        "contractReview",
-        "quoteType",
-        "quoteAmount",
-        "noteForSystem",
-        "noteForClient",
-        "colorStatus",
-        "matterNumber",
-      ];
-      const filteredPayload = {};
+      // remove temporary fields
+      delete payload.systemNote;
+      delete payload.clientComment;
 
-      commercialFields.forEach((field) => {
-        if (payload[field] !== undefined) {
-          filteredPayload[field] = payload[field];
-        }
+      console.log("=== SAVE DEBUG ===");
+      console.log("Current module:", currentModule);
+      console.log("Company:", company);
+      console.log("Matter number:", matterNumber);
+      console.log("Payload:", payload);
+
+      // API CALL SECTION
+      if (currentModule === "commercial") {
+        console.log("Using Commercial API for stage 1");
+        payload.matterNumber = matterNumber;
+        await commercialApi.upsertStage(1, matterNumber, payload);
+      } else if (company === "vkl") {
+        console.log("Using VKL API for stage 1");
+        payload.matterNumber = matterNumber;
+        await api.upsertStageOne(payload);
+      } else if (company === "idg") {
+        console.log("Using IDG API for stage 1");
+        payload.orderId = matterNumber;
+        await api.upsertIDGStages(payload.orderId, 1, payload);
+      }
+
+      console.log("API call successful");
+
+      originalData.current = { ...formData };
+      // setReloadTrigger((prev) => !prev);
+      toast.success("Stage 1 Saved Successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
       });
+    } catch (error) {
+      console.error("=== SAVE ERROR ===");
+      console.error("Failed to update stage 1:", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
 
-      payload = filteredPayload;
-      payload.noteForSystem = systemNote;
-      payload.noteForClient = noteForClient;
+      let errorMessage = "Failed to save Stage 1. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
 
-      const allCompleted = currentFields.every(
-        (field) => getStatus(snapshotFormData[field.name]) === "Completed"
-      );
-      payload.colorStatus = allCompleted ? "green" : "amber";
-    } else {
-      payload.noteForClient = noteForClient;
-
-      // --- NEW: compute colorStatus for non-commercial modules (VKL / IDG)
-      // Mirror Stage2: if all relevant fields are completed, mark green, else amber.
-      const relevantFields = currentFields.filter((f) => {
-        // include all fields that matter for status (radio/text). Adjust if you
-        // want to exclude some fields.
-        return true;
-      });
-      const allCompleted = relevantFields.every(
-        (f) => getStatus(snapshotFormData[f.name]) === "Completed"
-      );
-      payload.colorStatus = allCompleted ? "green" : "amber";
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
-
-    delete payload.systemNote;
-    delete payload.clientComment;
-
-    saveStage(payload);
   }
+
   const renderField = (field) => {
     switch (field.type) {
       case "text":
@@ -854,7 +473,7 @@ export default function Stage1({
             </label>
             <input
               type="text"
-              value={formData[field.name] ?? ""}
+              value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base"
             />
@@ -889,7 +508,10 @@ export default function Stage1({
                     type="radio"
                     name={field.name}
                     value={val}
-                    checked={formData[field.name] === val}
+                    checked={
+                      normalizeValue(formData[field.name]) ===
+                      normalizeValue(val)
+                    }
                     onChange={() => handleChange(field.name, val)}
                   />
                   <span className="truncate">{val}</span>
@@ -921,7 +543,7 @@ export default function Stage1({
               {field.label}
             </label>
             <textarea
-              value={formData[field.name] ?? ""}
+              value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none"
             />
@@ -933,7 +555,6 @@ export default function Stage1({
     }
   };
 
-  // This isLoading now comes from useQuery
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -959,7 +580,6 @@ export default function Stage1({
         />
         <div className="flex gap-2">
           <Button
-            // isSaving now comes from useMutation
             label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
             bg="bg-blue-500"
