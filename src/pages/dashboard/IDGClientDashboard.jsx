@@ -873,8 +873,10 @@ export default function IDGClientDashboard() {
                                     ? "Booked"
                                     : "Completed"}
                                 </span>
+                                {job?.imageUrl?.[0] && 
+                                <>
                                 <img
-                                  src={job.imageUrl[0]}
+                                  src={job?.imageUrl?.[0] || null}
                                   onClick={() =>
                                     window.open(
                                       selectedJob.imageUrl[0],
@@ -887,6 +889,8 @@ export default function IDGClientDashboard() {
                                 <p className="text-gray-600 text-[12px]">
                                   Click to open
                                 </p>
+                                </>
+                                }
                               </div>
                             </div>
 
