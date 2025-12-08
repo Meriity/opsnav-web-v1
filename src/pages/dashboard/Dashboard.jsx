@@ -742,20 +742,17 @@ function Dashboard() {
   // Calculate current period total based on chart view
   const chartPeriodTotal = useMemo(() => {
     if (!currentChartData || currentChartData.length === 0) return 0;
-    return currentChartData.reduce(
-      (sum, item) => {
-        const closedCount = 
-          item.closedMatters ??
-          item.closedProjects ??
-          item.completedProjects ??
-          item.closedOrders ??
-          item.count ??
-          item.total ??
-          0;
-        return sum + closedCount;
-      },
-      0
-    );
+    return currentChartData.reduce((sum, item) => {
+      const closedCount =
+        item.closedMatters ??
+        item.closedProjects ??
+        item.completedProjects ??
+        item.closedOrders ??
+        item.count ??
+        item.total ??
+        0;
+      return sum + closedCount;
+    }, 0);
   }, [currentChartData]);
 
   // Handle chart data processing
@@ -872,7 +869,7 @@ function Dashboard() {
         <div className="max-w-7xl mx-auto space-y-4">
           {/* Welcome Banner */}
           <div className="bg-[#A6E7FF] p-6 rounded-lg shadow-sm">
-            <h1 className="text-2xl font-bold">Welcome to Opsnav</h1>
+            <h1 className="text-2xl font-bold">Welcome to OpsNav</h1>
             <p className="text-sm mt-1 text-gray-800 max-w-5xl">
               Your operations. Simplified. Amplified.
             </p>

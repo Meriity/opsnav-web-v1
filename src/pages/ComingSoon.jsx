@@ -14,7 +14,7 @@ const handleLogin = () => {
                     {/* <div className="absolute inset-0 bg-black/60" /> */}
 
                     <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-24 md:py-32">
-                        <img src="/Logo.png" alt="Opsnav Logo" className="h-8 mx-auto sm:h-8 md:h-12 lg:h-12" />
+                        <img src="/Logo.png" alt="OpsNav Logo" className="h-8 mx-auto sm:h-8 md:h-12 lg:h-12" />
                     <h1 className="text-3xl md:text-3xl lg:text-5xl font-bold pt-20 max-w-7xl">
                         We are temporarily redirecting users to our legacy system for maintenance. All services remain fully accessible at the new location. 
                     </h1>

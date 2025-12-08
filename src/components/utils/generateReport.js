@@ -106,7 +106,7 @@ export const generateTaskAllocationPDF = (Allocated) => {
         // 🔹 Footer
         doc.setFontSize(10);
         doc.setTextColor(180, 180, 180);
-        doc.text("Powered by Opsnav", pageWidth / 2, pageHeight - 10, {
+        doc.text("Powered by OpsNav", pageWidth / 2, pageHeight - 10, {
             align: "center",
         });
 

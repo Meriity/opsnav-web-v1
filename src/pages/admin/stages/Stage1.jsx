@@ -747,6 +747,13 @@ export default function Stage1({
         // non-critical: swallow toast errors
       }
 
+      if (company === "vkl") {
+        console.log("Stage 1 saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
+
       try {
         queryClient.invalidateQueries({
           queryKey: ["stageData", 1, matterNumber, moduleKey],
