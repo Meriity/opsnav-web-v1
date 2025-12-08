@@ -1080,6 +1080,7 @@ function Dashboard() {
         companyName={company}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
+        onClose={()=>setcreateuser(false)}
       />
     </div>
   );
