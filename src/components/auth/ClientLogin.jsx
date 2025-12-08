@@ -2,57 +2,59 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
-import {
-  ArrowRight,
-  Lock,
-  User,
-  Shield,
-  Sparkles,
-  Building,
-  Zap,
-  HomeIcon,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { HomeIcon, Eye, EyeOff } from "lucide-react";
 
 function LoginForm() {
   const api = new AuthAPI();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [matterNumber, setmatterNumber] = useState("");
+  const [postcode, setPostcode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
+  const [showPostcode, setShowPostcode] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     try {
-      const response = await api.signIn(email, password);
+      const response = await api.signInClient(matterNumber, postcode);
+      console.log("API Response:", response); // Good to log the whole response for debugging
 
-      if (!response.token) {
-        throw new Error(response.message || "Authentication failed");
+      // Prioritize checking for orderId first
+      if (response.clientId) {
+        localStorage.removeItem("logo");
+        localStorage.setItem("name", response.clientName);
+        localStorage.setItem("orders", JSON.stringify(response.orders));
+        localStorage.setItem("logo", response.logo);
+        localStorage.setItem("company", response.company);
+        localStorage.setItem("authToken", response.token);
+        console.log("Navigating with orderId:", response.orderId);
+        navigate(
+          `/idg/client/dashboard/${encodeURIComponent(
+            btoa(String(response.clientId))
+          )}`
+        );
       }
-
-      // Store token and role
-      localStorage.setItem("authToken", response.token);
-      localStorage.setItem("user", response.user.displayName);
-      localStorage.setItem("role", response.role);
-
-      // Navigate to work-selection and pass success state
-      const targetPath =
-        response.role === "admin"
-          ? "/admin/work-selection"
-          : "/user/work-selection";
-
-      navigate(targetPath, { state: { loginSuccess: true } });
+      // Fallback to matterNumber if orderId is not present
+      else if (response.matterNumber) {
+        localStorage.removeItem("matterNumber");
+        localStorage.removeItem("logo");
+        localStorage.setItem("matterNumber", response.matterNumber);
+        localStorage.setItem("logo", response.logo);
+        localStorage.setItem("company", response.company);
+        navigate(`/client/dashboard/${btoa(String(response.matterNumber))}`);
+      } else {
+        throw new Error(
+          "Login failed: No valid identifier found in the response."
+        );
+      }
     } catch (err) {
       toast.error(
         err.message ||
-          "Authentication failed! Please check credentials and try again.",
-        { position: "bottom-center" }
+          "Authentication failed! Please check your credentials and try again."
       );
-      setError(err.message || "Authentication failed!");
     } finally {
       setIsLoading(false);
     }
@@ -60,30 +62,6 @@ function LoginForm() {
 
   const handleHome = async (e) => {
     navigate("/");
-  };
-
-  // Floating background elements
-  const FloatingElement = ({ top, left, delay, size = 60 }) => {
-    return (
-      <motion.div
-        className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20"
-        style={{
-          width: size,
-          height: size,
-          top: `${top}%`,
-          left: `${left}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          x: [0, 10, 0],
-        }}
-        transition={{
-          duration: 3 + delay,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-    );
   };
 
   return (
@@ -131,16 +109,11 @@ function LoginForm() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleHome}
-            className="px-3.5 py-1.5 text-[#2E3D99] border border-[#2E3D99] rounded-lg hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] font-medium transition-all duration-300 text-sm flex items-center gap-2 [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:430px)]:px-2.5 [@media(max-width:430px)]:text-xs"
+            className="w-[80px] mt-2 bg-sky-600 mx-auto cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition flex gap-2 px-2"
           >
-            <HomeIcon className="w-4 h-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-3 [@media(max-width:1024px)_and_(max-height:800px)]:h-3" />
-            <span className="[@media(max-width:340px)]:hidden">
-              Back to Home
-            </span>
-            <span className="hidden [@media(max-width:340px)]:inline">
-              Home
-            </span>
-          </motion.button>
+            <HomeIcon />
+            Home
+          </button>
         </div>
       </motion.header>
 
@@ -170,62 +143,24 @@ function LoginForm() {
               /> */}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-2xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:430px)]:text-2xl">
-              Streamline with{" "}
-              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                Precision
-              </span>
-            </h1>
+        {/* Right Section - Login Box */}
+        <div className="w-full md:w-1/2 max-w-md bg-white shadow-md rounded-xl p-8">
+          <h2 className="text-xl font-semibold text-center mb-6">
+            CLIENT PORTAL LOGIN
+          </h2>
 
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-7 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:1024px)_and_(max-height:800px)]:mb-4">
-              Access your centralized workspace for streamlined legal
-              operations, automated processes, and real-time insights that keep
-              your team productive.
-            </p>
-
-            {/* Feature List Grid: Hidden on Mobile & Tablet (768px), Visible on 1024px (lg:grid) */}
-            <div className="hidden lg:grid grid-cols-2 gap-3 sm:gap-4 [@media(max-width:1024px)_and_(max-height:800px)]:gap-2">
-              {[
-                {
-                  icon: Shield,
-                  title: "Secure",
-                  description: "Enterprise-grade security",
-                },
-                {
-                  icon: Zap,
-                  title: "Fast",
-                  description: "Lightning-fast performance",
-                },
-                {
-                  icon: Building,
-                  title: "Scalable",
-                  description: "Grow without bottlenecks",
-                },
-                {
-                  icon: Lock,
-                  title: "Reliable",
-                  description: "99.9% uptime guarantee",
-                },
-              ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="bg-white/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:p-2"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center flex-shrink-0">
-                      <feature.icon className="w-4 h-4 text-[#2E3D99]" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-gray-800 text-sm [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
-                        {feature.title}
-                      </h3>
-                      <p className="text-xs text-gray-600 hidden xl:block">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Matter Number / Email
+              </label>
+              <input
+                type="matternumber"
+                value={matterNumber}
+                onChange={(e) => setmatterNumber(e.target.value)}
+                required
+                className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
             </div>
           </motion.div>
 
@@ -254,49 +189,21 @@ function LoginForm() {
                 onSubmit={handleSubmit}
                 className="space-y-4 sm:space-y-5 [@media(max-width:1024px)_and_(max-height:800px)]:space-y-2 [@media(min-width:1024px)_and_(max-height:800px)]:space-y-4"
               >
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 [@media(max-width:1024px)_and_(max-height:800px)]:h-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-4" />
-                    </div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="you@company.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 [@media(max-width:1024px)_and_(max-height:800px)]:h-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-4" />
-                    </div>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                </div>
-
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-50 border border-red-100 rounded-lg p-3 sm:p-4 [@media(max-width:1024px)_and_(max-height:800px)]:p-2"
+                {showPostcode ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-sky-600 cursor-pointer text-white py-2 rounded-md hover:bg-sky-700 transition"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="w-4 h-4 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
                   >
                     <div className="flex items-center gap-2 text-red-600">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -370,7 +277,7 @@ function LoginForm() {
                 </div>
               </form>
             </div>
-          </motion.div>
+          )}
         </div>
       </div>
 
