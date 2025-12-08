@@ -226,8 +226,9 @@ const ViewClients = () => {
         }
       });
     }
-
+    filteredData = [...filteredData].reverse();
     setClientList(filteredData);
+
   }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
 
   let columns = [];
