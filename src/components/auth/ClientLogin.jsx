@@ -122,7 +122,7 @@ function LoginForm() {
           >
             <img
               src="/Logo.png"
-              alt="Opsnav"
+              alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
           </motion.div>
@@ -165,7 +165,7 @@ function LoginForm() {
             <div className="mb-4 sm:mb-5 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2">
               {/* <img
                 src="/Logo.png"
-                alt="Opsnav Logo"
+                alt="OpsNav Logo"
                 className="h-10 sm:h-12 md:h-14 mx-auto lg:mx-0 [@media(max-width:1024px)_and_(max-height:800px)]:h-10 [@media(max-width:430px)]:h-8"
               /> */}
             </div>
@@ -246,7 +246,7 @@ function LoginForm() {
                   Sign In
                 </h2>
                 <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:mt-0 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
-                  Access your Opsnav account
+                  Access your OpsNav account
                 </p>
               </div>
 
@@ -359,7 +359,7 @@ function LoginForm() {
 
                 <div className="text-center pt-3 sm:pt-4 border-t border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:pt-2">
                   <p className="text-xs sm:text-sm text-gray-500">
-                    New to Opsnav?{" "}
+                    New to OpsNav?{" "}
                     <a
                       href="#"
                       className="text-[#2E3D99] hover:underline font-medium"
@@ -377,7 +377,7 @@ function LoginForm() {
       {/* Footer - Static on mobile, Absolute on Desktop */}
       <footer className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-0 right-0 text-center px-3 [@media(max-width:640px)]:relative [@media(max-width:640px)]:pb-4 [@media(max-width:640px)]:pt-6 [@media(min-width:768px)_and_(max-height:750px)]:static [@media(min-width:768px)_and_(max-height:750px)]:pb-2">
         <p className="text-xs sm:text-sm text-gray-600 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
-          Powered by <span className="font-bold text-[#2E3D99]">Opsnav™</span> |
+          Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
           Streamline with Precision • Scale Without Bottlenecks
         </p>
       </footer>

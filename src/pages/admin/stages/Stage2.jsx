@@ -831,11 +831,14 @@ export default function Stage2({
           stageNumber
         );
       }
-      // Important: do NOT call window.location.reload() or reloadArchivedClients() here.
-      // The Back button should handle global list refresh when the user exits.
+      if (company === "vkl") {
+        console.log("Conveyancing stage saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
     },
 
-    // Settled callback - ADDED THIS
     onSettled: () => {
       const companyKey = localStorage.getItem("company") || company;
       const moduleKey = localStorage.getItem("currentModule") || currentModule;

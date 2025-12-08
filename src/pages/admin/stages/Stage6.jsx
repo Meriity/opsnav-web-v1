@@ -654,6 +654,13 @@ export default function Stage6({ changeStage, data, onStageUpdate }) {
         });
       } catch (e) {}
 
+      if (company === "vkl") {
+        console.log("Stage 4 saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
+
       const statusMap = {
         green: "Completed",
         red: "Not Completed",
