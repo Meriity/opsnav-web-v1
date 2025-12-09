@@ -55,7 +55,7 @@ function SetPassword() {
       <div className="max-w-6xl w-full px-6 flex flex-col md:flex-row items-center justify-between">
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0">
           <img src="/Logo.png" alt="VK Lawyers Logo" className="h-24 mx-auto md:mx-0" />
-          <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OPSNAV</h1>
+          <h1 className="text-3xl font-bold mt-4 font-poppins">WELCOME TO OpsNav</h1>
           <p className="text-gray-600 mt-2 font-poppins">
             Secure. Simple. Seamless conveyancing.
           </p>
@@ -104,7 +104,7 @@ function SetPassword() {
       </div>
 
       <div className="absolute bottom-4 text-sm text-center w-full text-gray-700 font-semibold">
-        Powered By Opsnav™
+        Powered By OpsNav™
       </div>
       <Footer />
     </div>

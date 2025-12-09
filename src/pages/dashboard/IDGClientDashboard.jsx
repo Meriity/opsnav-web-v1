@@ -177,50 +177,55 @@ export default function IDGClientDashboard() {
                       <div key={stage} className="flex items-center flex-1">
                         <div className="flex flex-col items-center flex-1">
                           <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${isComplete || isCurrent
+                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${
+                              isComplete || isCurrent
                                 ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30"
                                 : "bg-gray-200"
-                              }`}
+                            }`}
                           >
                             {stage === "ordered" && (
                               <Package
-                                className={`${isComplete || isCurrent
+                                className={`${
+                                  isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
-                                  }`}
+                                }`}
                                 size={28}
                               />
                             )}
                             {stage === "booked" && (
                               <Calendar
-                                className={`${isComplete || isCurrent
+                                className={`${
+                                  isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
-                                  }`}
+                                }`}
                                 size={28}
                               />
                             )}
                             {stage === "completed" && (
                               <CheckCircle2
-                                className={`${isComplete || isCurrent
+                                className={`${
+                                  isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
-                                  }`}
+                                }`}
                                 size={28}
                               />
                             )}
                           </div>
                           <p
-                            className={`mt-3 font-semibold capitalize ${isComplete || isCurrent
+                            className={`mt-3 font-semibold capitalize ${
+                              isComplete || isCurrent
                                 ? "text-gray-900"
                                 : "text-gray-400"
-                              }`}
+                            }`}
                           >
                             {stage === "ordered"
                               ? "Job Ordered"
                               : stage === "booked"
-                                ? "Job Booked"
-                                : "Job Completed"}
+                              ? "Job Booked"
+                              : "Job Completed"}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
                             {stage === "ordered" &&
@@ -235,13 +240,14 @@ export default function IDGClientDashboard() {
                         {index < 2 && (
                           <div className="flex-1 h-1 -mt-12 mx-4">
                             <div
-                              className={`h-full ${getStageStatus(
-                                selectedJob,
-                                ["booked", "completed"][index]
-                              ) !== "pending"
+                              className={`h-full ${
+                                getStageStatus(
+                                  selectedJob,
+                                  ["booked", "completed"][index]
+                                ) !== "pending"
                                   ? "bg-[#00AEEF]"
                                   : "bg-gray-200"
-                                }`}
+                              }`}
                             ></div>
                           </div>
                         )}
@@ -383,18 +389,19 @@ export default function IDGClientDashboard() {
                     </p>
                   </div>
                   <div
-                    className={`px-6 py-3 rounded-full font-semibold ${selectedJob.status === "completed"
+                    className={`px-6 py-3 rounded-full font-semibold ${
+                      selectedJob.status === "completed"
                         ? "bg-green-500"
                         : selectedJob.status === "booked"
-                          ? "bg-yellow-500"
-                          : "bg-orange-500"
-                      }`}
+                        ? "bg-yellow-500"
+                        : "bg-orange-500"
+                    }`}
                   >
                     {selectedJob.status === "ordered"
                       ? "Job Ordered"
                       : selectedJob.status === "booked"
-                        ? "Job Booked"
-                        : "Job Completed"}
+                      ? "Job Booked"
+                      : "Job Completed"}
                   </div>
                 </div>
               </div>
@@ -475,80 +482,86 @@ export default function IDGClientDashboard() {
                         <div key={stage} className="flex items-center flex-1">
                           <div className="flex flex-col items-center flex-1">
                             <div
-                              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${isComplete || isCurrent
+                              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${
+                                isComplete || isCurrent
                                   ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
                                   : "bg-gray-200 scale-90"
-                                }`}
+                              }`}
                             >
                               {stage === "ordered" && (
                                 <Package
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 ${
+                                    isComplete || isCurrent
                                       ? "text-white"
                                       : "text-gray-400"
-                                    }`}
+                                  }`}
                                   size={32}
                                 />
                               )}
                               {stage === "booked" && (
                                 <Calendar
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 ${
+                                    isComplete || isCurrent
                                       ? "text-white"
                                       : "text-gray-400"
-                                    }`}
+                                  }`}
                                   size={32}
                                 />
                               )}
                               {stage === "completed" && (
                                 <CheckCircle2
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 ${
+                                    isComplete || isCurrent
                                       ? "text-white"
                                       : "text-gray-400"
-                                    }`}
+                                  }`}
                                   size={32}
                                 />
                               )}
                             </div>
                             <p
-                              className={`mt-4 font-bold capitalize transition-colors text-center ${isComplete || isCurrent
+                              className={`mt-4 font-bold capitalize transition-colors text-center ${
+                                isComplete || isCurrent
                                   ? "text-gray-900"
                                   : "text-gray-400"
-                                }`}
+                              }`}
                             >
                               {stage === "ordered"
                                 ? "Job Ordered"
                                 : stage === "booked"
-                                  ? "Job Booked"
-                                  : "Job Completed"}
+                                ? "Job Booked"
+                                : "Job Completed"}
                             </p>
                             {(stage === "ordered" ||
                               (stage === "booked" && selectedJob.orderDate) ||
                               (stage === "completed" &&
                                 selectedJob.deliveryDate)) && (
-                                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                                  <Clock size={14} />
-                                  <span>
-                                    {stage === "ordered" &&
-                                      formatDate(selectedJob.orderDate)}
-                                    {stage === "booked" &&
-                                      selectedJob.orderDate &&
-                                      formatDate(selectedJob.orderDate)}
-                                    {stage === "completed" &&
-                                      selectedJob.deliveryDate &&
-                                      formatDate(selectedJob.deliveryDate)}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                <Clock size={14} />
+                                <span>
+                                  {stage === "ordered" &&
+                                    formatDate(selectedJob.orderDate)}
+                                  {stage === "booked" &&
+                                    selectedJob.orderDate &&
+                                    formatDate(selectedJob.orderDate)}
+                                  {stage === "completed" &&
+                                    selectedJob.deliveryDate &&
+                                    formatDate(selectedJob.deliveryDate)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           {index < 2 && (
                             <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
                               <div
-                                className={`h-full transition-all duration-700 ease-in-out ${getStageStatus(
-                                  selectedJob,
-                                  ["booked", "completed"][index]
-                                ) !== "pending"
+                                className={`h-full transition-all duration-700 ease-in-out ${
+                                  getStageStatus(
+                                    selectedJob,
+                                    ["booked", "completed"][index]
+                                  ) !== "pending"
                                     ? "bg-[#00AEEF] w-full"
                                     : "bg-gray-200 w-0"
-                                  }`}
+                                }`}
                               ></div>
                             </div>
                           )}
@@ -638,8 +651,9 @@ export default function IDGClientDashboard() {
                           className="bg-white/90 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
                           onClick={() => setSelectedJob(job)}
                           style={{
-                            animation: `slideIn 0.5s ease-out ${index * 0.1
-                              }s backwards`,
+                            animation: `slideIn 0.5s ease-out ${
+                              index * 0.1
+                            }s backwards`,
                           }}
                         >
                           <div className="p-6">
@@ -664,18 +678,19 @@ export default function IDGClientDashboard() {
 
                               <div className="flex flex-col items-center">
                                 <span
-                                  className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === "completed"
+                                  className={`px-4 py-1 rounded-full text-sm font-semibold ${
+                                    job.status === "completed"
                                       ? "bg-green-100 text-green-700"
                                       : job.status === "booked"
-                                        ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-orange-100 text-orange-700"
-                                    }`}
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-orange-100 text-orange-700"
+                                  }`}
                                 >
                                   {job.status === "ordered"
                                     ? "Ordered"
                                     : job.status === "booked"
-                                      ? "Booked"
-                                      : "Completed"}
+                                    ? "Booked"
+                                    : "Completed"}
                                 </span>
                                 <img
                                   src="/undraw_booked_bb22.svg"
@@ -698,26 +713,29 @@ export default function IDGClientDashboard() {
                                     {/* Stage Circle */}
                                     <div className="flex flex-col items-center flex-1">
                                       <div
-                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${
+                                          stageActive
                                             ? "bg-green-500 shadow-lg shadow-[#00AEEF]/30 scale-100"
                                             : "bg-yellow-500 scale-90"
-                                          }`}
+                                        }`}
                                       >
                                         {stage === "ordered" && (
                                           <Package
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 ${
+                                              stageActive
                                                 ? "text-white"
                                                 : "text-gray-400"
-                                              }`}
+                                            }`}
                                             size={32}
                                           />
                                         )}
                                         {stage === "booked" && (
                                           <Calendar
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 ${
+                                              stageActive
                                                 ? "text-white"
                                                 : "text-gray-400"
-                                              }`}
+                                            }`}
                                             size={32}
                                           />
                                         )}
@@ -732,16 +750,17 @@ export default function IDGClientDashboard() {
 
                                       {/* Stage Label */}
                                       <p
-                                        className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive
+                                        className={`mt-4 font-bold capitalize transition-colors text-center ${
+                                          stageActive
                                             ? "text-gray-900"
                                             : "text-gray-400"
-                                          }`}
+                                        }`}
                                       >
                                         {stage === "ordered"
                                           ? "Job Ordered"
                                           : stage === "booked"
-                                            ? "Job Booked"
-                                            : "Job Completed"}
+                                          ? "Job Booked"
+                                          : "Job Completed"}
                                       </p>
 
                                       {/* Date Display */}
@@ -762,10 +781,11 @@ export default function IDGClientDashboard() {
                                     {i < stages.length - 1 && (
                                       <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
                                         <div
-                                          className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                          className={`h-full transition-all duration-700 ease-in-out ${
+                                            i < currentStageIndex
                                               ? "bg-green-500 w-full"
                                               : "bg-yellow-500 w-full"
-                                            }`}
+                                          }`}
                                         ></div>
                                       </div>
                                     )}
@@ -786,7 +806,7 @@ export default function IDGClientDashboard() {
                 Order History
               </h2>
               {orders.filter((job) => job.status === "completed").length ===
-                0 ? (
+              0 ? (
                 <div className="flex flex-col items-center justify-center py-10">
                   <img
                     src="/undraw_no-data_ig65.svg"
@@ -812,8 +832,9 @@ export default function IDGClientDashboard() {
                           className="bg-white/90 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#00AEEF]/30 transition-all duration-300 overflow-hidden cursor-pointer group"
                           onClick={() => setSelectedJob(job)}
                           style={{
-                            animation: `slideIn 0.5s ease-out ${index * 0.1
-                              }s backwards`,
+                            animation: `slideIn 0.5s ease-out ${
+                              index * 0.1
+                            }s backwards`,
                           }}
                         >
                           <div className="p-6">
@@ -838,35 +859,34 @@ export default function IDGClientDashboard() {
 
                               <div className="flex flex-col items-center">
                                 <span
-                                  className={`px-4 py-1 rounded-full text-sm font-semibold ${job.status === "completed"
+                                  className={`px-4 py-1 rounded-full text-sm font-semibold ${
+                                    job.status === "completed"
                                       ? "bg-green-100 text-green-700"
                                       : job.status === "booked"
-                                        ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-orange-100 text-orange-700"
-                                    }`}
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-orange-100 text-orange-700"
+                                  }`}
                                 >
                                   {job.status === "ordered"
                                     ? "Ordered"
                                     : job.status === "booked"
-                                      ? "Booked"
-                                      : "Completed"}
+                                    ? "Booked"
+                                    : "Completed"}
                                 </span>
-                                {job?.imageUrl?.[0] && (
-                                  <>
-                                    <img
-                                      src={job.imageUrl[0] || null}
-                                      onClick={() =>
-                                        window.open(selectedJob.imageUrl[0], "_blank")
-                                      }
-                                      className="mt-4 w-[90px]"
-                                      alt="Order Illustration"
-                                    />
-
-                                    <p className="text-gray-600 text-[12px]">
-                                      Click to open
-                                    </p>
-                                  </>
-                                )}
+                                <img
+                                  src={job.imageUrl[0]}
+                                  onClick={() =>
+                                    window.open(
+                                      selectedJob.imageUrl[0],
+                                      "_blank"
+                                    )
+                                  }
+                                  className="mt-4 w-[90px]"
+                                  alt="Order Illustration"
+                                />
+                                <p className="text-gray-600 text-[12px]">
+                                  Click to open
+                                </p>
                               </div>
                             </div>
 
@@ -883,35 +903,39 @@ export default function IDGClientDashboard() {
                                     {/* Stage Circle */}
                                     <div className="flex flex-col items-center flex-1">
                                       <div
-                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${
+                                          stageActive
                                             ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
                                             : "bg-gray-200 scale-90"
-                                          }`}
+                                        }`}
                                       >
                                         {stage === "ordered" && (
                                           <Package
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 ${
+                                              stageActive
                                                 ? "text-white"
                                                 : "text-gray-400"
-                                              }`}
+                                            }`}
                                             size={32}
                                           />
                                         )}
                                         {stage === "booked" && (
                                           <Calendar
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 ${
+                                              stageActive
                                                 ? "text-white"
                                                 : "text-gray-400"
-                                              }`}
+                                            }`}
                                             size={32}
                                           />
                                         )}
                                         {stage === "completed" && (
                                           <CheckCircle2
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 ${
+                                              stageActive
                                                 ? "text-white"
                                                 : "text-gray-400"
-                                              }`}
+                                            }`}
                                             size={32}
                                           />
                                         )}
@@ -919,16 +943,17 @@ export default function IDGClientDashboard() {
 
                                       {/* Stage Label */}
                                       <p
-                                        className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive
+                                        className={`mt-4 font-bold capitalize transition-colors text-center ${
+                                          stageActive
                                             ? "text-gray-900"
                                             : "text-gray-400"
-                                          }`}
+                                        }`}
                                       >
                                         {stage === "ordered"
                                           ? "Job Ordered"
                                           : stage === "booked"
-                                            ? "Job Booked"
-                                            : "Job Completed"}
+                                          ? "Job Booked"
+                                          : "Job Completed"}
                                       </p>
 
                                       {/* Date Display */}
@@ -949,10 +974,11 @@ export default function IDGClientDashboard() {
                                     {i < stages.length - 1 && (
                                       <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
                                         <div
-                                          className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                          className={`h-full transition-all duration-700 ease-in-out ${
+                                            i < currentStageIndex
                                               ? "bg-[#00AEEF] w-full"
                                               : "bg-gray-200 w-0"
-                                            }`}
+                                          }`}
                                         ></div>
                                       </div>
                                     )}

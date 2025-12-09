@@ -585,6 +585,13 @@ export default function Stage3({
         // non-critical - swallow any toast errors
       }
 
+      if (company === "vkl") {
+        console.log("Stage 3 saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
+
       // refetch per-stage data in background
       try {
         queryClient.invalidateQueries({

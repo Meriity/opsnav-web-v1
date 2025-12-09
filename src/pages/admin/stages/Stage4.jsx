@@ -561,14 +561,12 @@ export default function Stage4({
         ]);
       }
 
-      // 2) invalidate/fetch stageData for this stage so any other derived queries refresh
       try {
         queryClient.invalidateQueries({
           queryKey: ["stageData", 4, matterNumber, currentModuleKey],
         });
       } catch (e) {}
 
-      // 3) show success toast
       try {
         toast.success("Stage 4 Saved Successfully!", {
           autoClose: 2500,
@@ -576,14 +574,18 @@ export default function Stage4({
         });
       } catch (e) {}
 
-      // 4) Update local original snapshot using server-returned values (ensures isChanged becomes false)
+    if (company === "vkl") {
+        console.log("Stage 4 saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
+
       try {
-        // prefer the stage object inside response data
         const serverStage =
           (res && (res.stage4 || res.data || res)) ||
           (typeof payload === "object" ? payload : {});
 
-        // Extract client/system notes depending on module
         const serverNoteForClient = serverStage.noteForClient || "";
         const serverSystemNote =
           serverStage.noteForSystem ||

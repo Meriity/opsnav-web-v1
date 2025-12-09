@@ -4,13 +4,13 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
-  DialogTitle
+  DialogTitle,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
-import { useEffect, useState, Fragment, useMemo } from "react";
+import { useState, Fragment, useMemo, useCallback, useEffect } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import Header from "../../components/layout/Header";
@@ -20,11 +20,26 @@ import Loader from "../../components/ui/Loader";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
-import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
-import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
-import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
-import { delay } from "framer-motion";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import {
+  Users,
+  FolderOpen,
+  Archive,
+  Building,
+  Plus,
+  Calendar,
+  Filter,
+  ChevronRight,
+  Search,
+  Download,
+  BarChart3,
+  Clock,
+  Target,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -37,26 +52,30 @@ const ViewClients = () => {
     reshareEmail: "",
   });
   const [email, setemail] = useState("");
-  const [isClicked, setIsClicked] = useState(false);
-  const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-  const [dateFilter, setDateFilter] = useState(() => {
-  const saved = localStorage.getItem("viewClientsDateFilter");
-  return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };  
-  });
+  const [settlementDate, setSettlementDate] = useState(["", ""]);
   const [showDateRange, setShowDateRange] = useState(false);
-  const [showTAR, setShowTar] = useState(false);
-  const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
-  const [allocatedUser, setallocatedUser] = useState("");
-  const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
-  const [commercialLoading, setCommercialLoading] = useState(false);
-  const [commercialClients, setCommercialClients] = useState([]);
-  const [selectedClientName, setSelectedClientName] = useState("");
-  const [showConfirmModal, setShowConfirmModal] = useState(true);
 
+  const [showTAR, setShowTar] = useState(false);
+  const [allocatedUser, setallocatedUser] = useState("");
+  const [user, setUser] = useState([]);
+
+  const { searchQuery } = useSearchStore();
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
+
+  useEffect(() => {
+    try {
+      const reloadFlag = sessionStorage.getItem("opsnav_clients_should_reload");
+      if (reloadFlag === "1") {
+        sessionStorage.removeItem("opsnav_clients_should_reload");
+        window.location.reload();
+      }
+    } catch (e) {
+      console.warn("Reload flag check failed", e);
+    }
+  }, []);
 
   const api = useMemo(() => {
     if (currentModule === "commercial") {
@@ -66,135 +85,158 @@ const ViewClients = () => {
     }
   }, [currentModule]);
 
-  // Fetch clients based on module
-  useEffect(() => {
-    // In the fetchData function, improve commercial data handling:
-    const fetchData = async () => {
+  const { mutate: handelReShareEmail, isPending: isSendingEmail } = useMutation(
+    {
+      mutationFn: () =>
+        api.resendLinkToClient(email, shareDetails?.matterNumber),
+      onSuccess: () => {
+        toast.success("Email sent successfully.");
+        handelShareEmailModalClose();
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to send email.");
+        handelShareEmailModalClose();
+      },
+    }
+  );
+
+  const fetchCommercialProjects = useCallback(async () => {
+    const response = await api.getActiveProjects();
+
+    let data =
+      response?.data ||
+      response?.clients ||
+      response?.projects ||
+      response ||
+      [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.matterNumber || client._id,
+      matternumber: client.matterNumber || client.id || client._id,
+      client_name: client.clientName || client.client_name,
+      businessAddress: client.businessAddress || client.business_address,
+      businessName: client.businessName,
+      state: client.state || "",
+      client_type: client.clientType || client.type,
+      settlement_date: client.settlementDate || client.settlement_date,
+      matterDate: client.matterDate,
+      dataEntryBy: client.dataEntryBy || "",
+      postcode: client.postcode || "",
+      finance_approval_date: client.financeApprovalDate,
+      building_and_pest_date: client.buildingAndPestDate,
+      dataentryby: client.dataEntryBy || "",
+      referral: client.referral || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  const fetchVKLClients = useCallback(async () => {
+    const response = await api.getClients();
+
+    let data = response?.data || response?.clients || response || [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.matterNumber || client._id,
+      matternumber: client.matterNumber || client.id || client._id,
+      client_name: client.clientName || client.client_name,
+      businessAddress: client.businessAddress || client.business_address,
+      property_address: client.propertyAddress || client.property_address,
+      state: client.state || "",
+      client_type: client.clientType || client.type,
+      settlement_date: client.settlementDate || client.settlement_date,
+      matterDate: client.matterDate,
+      dataEntryBy: client.dataEntryBy || "",
+      postcode: client.postcode || "",
+      finance_approval_date: client.financeApprovalDate,
+      building_and_pest_date: client.buildingAndPestDate,
+      dataentryby: client.dataEntryBy || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  const fetchIDGOrders = useCallback(async () => {
+    const response = await api.getIDGOrders();
+
+    let data =
+      response?.data || response?.orders || response?.clients || response || [];
+    if (!Array.isArray(data)) data = [];
+
+    return data.map((client) => ({
+      id: client.id || client.orderId || client.clientId || client._id,
+      clientId: client.clientId || client.id,
+      orderId: client.orderId || client.id,
+      client_name: client.clientName || client.client_name,
+      client_type: client.orderType || client.client_type,
+      allocatedUser: client.allocatedUser || client.allocated_user,
+      order_date: client.orderDate || client.order_date,
+      delivery_date: client.deliveryDate || client.delivery_date,
+      orderDetails: client.orderDetails || client.order_details,
+      billing_address: client.billingAddress || client.billing_address,
+      postcode: client.postcode || "",
+      status: client.status || "active",
+      ...client,
+    }));
+  }, [api]);
+
+  const {
+    data: clientData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["clients", currentModule, company],
+    queryFn: async () => {
       if (currentModule === "commercial") {
-        setCommercialLoading(true);
-        try {
-          const response = await api.getActiveProjects();
-          console.log("Commercial clients response:", response);
-
-          let data = [];
-          if (Array.isArray(response)) {
-            data = response;
-          } else if (response && Array.isArray(response.data)) {
-            data = response.data;
-          } else if (response && Array.isArray(response.clients)) {
-            data = response.clients;
-          } else if (response && Array.isArray(response.projects)) {
-            data = response.projects;
-          } else {
-            // Handle empty or null response
-            console.warn("Empty or unexpected response format:", response);
-            data = [];
-          }
-
-          const transformedData = data.map((client) => ({
-            ...client,
-            id: client.id || client.matterNumber || client._id,
-            matternumber: client.matterNumber || client.id || client._id,
-            client_name: client.clientName || client.client_name,
-            businessAddress: client.businessAddress || client.business_address,
-            businessName: client.businessName,
-            state: client.state || "",
-            client_type: client.clientType || client.type,
-            settlement_date: client.settlementDate || client.settlement_date,
-            matterDate: client.matterDate,
-            dataEntryBy: client.dataEntryBy || "",
-            postcode: client.postcode || "",
-            finance_approval_date: client.financeApprovalDate,
-            building_and_pest_date: client.buildingAndPestDate,
-            dataentryby: client.dataEntryBy || "",
-            status: client.status || "active",
-          }));
-
-          setCommercialClients(transformedData);
-        } catch (error) {
-          console.error("Error fetching commercial clients:", error);
-          // Don't show error toast for empty responses, just set empty array
-          if (error.response?.status !== 404) {
-            toast.error("Failed to load commercial projects");
-          }
-          setCommercialClients([]);
-        } finally {
-          setCommercialLoading(false);
-        }
+        return await fetchCommercialProjects();
+      } else if (company === "idg") {
+        return await fetchIDGOrders();
       } else {
-        fetchClients();
+        return await fetchVKLClients();
       }
-    };
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
 
-    fetchData();
-  }, [currentModule, api, fetchClients]);
+  const activeData = clientData || [];
 
-  useEffect(() => {
-    console.log(user);
-    let filteredData =
-      currentModule === "commercial" ? commercialClients : Clients;
+  const clientList = useMemo(() => {
+    if (!activeData.length) return [];
 
-    const [startDate, endDate] = Array.isArray(dateFilter?.range)
-      ? dateFilter.range
-      : ["", ""];
+    let filteredData = [...activeData];
+    const [startDate, endDate] = settlementDate;
+    if (startDate && endDate) {
+      const startMoment = moment(startDate);
+      const endMoment = moment(endDate);
 
-    // Fix: Use lowercase comparison to match localStorage value
-    if (company?.toLowerCase() === "idg" && startDate && endDate) {
       filteredData = filteredData.filter((client) => {
-        let deliveryDateObj = moment(client.delivery_date);
-        let orderDateObj = moment(client.order_date || client.orderDate);
-
-        // Check if delivery or order date falls within range
-        const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
-
-        const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
-
-        if (dateFilter.type === "delivery_date") {
-          return inDeliveryRange;
-        } else if (dateFilter.type === "order_date") {
-          return inOrderRange;
-        } else if (dateFilter.type === "both_date") {
-          return inDeliveryRange && inOrderRange;
+        let clientDate;
+        if (currentModule === "commercial") {
+          clientDate = moment(client.settlement_date || client.settlementDate);
+        } else if (company === "idg") {
+          clientDate = moment(client.delivery_date || client.order_date);
+        } else {
+          clientDate = moment(client.settlement_date);
         }
-
-        return;
+        return clientDate.isBetween(startMoment, endMoment, "day", "[]");
       });
     }
-    else {
-      if (startDate && endDate) {
-        filteredData = filteredData.filter((client) => {
-          let clientDate;
-          if (currentModule === "commercial") {
-            clientDate = moment(client.settlement_date || client.settlementDate);
-          } else {
-            clientDate = moment(client.settlement_date);
-          }
-          return clientDate.isBetween(
-            moment(startDate),
-            moment(endDate),
-            "day",
-            "[]"
-          );
-        });
-      }
-    }
 
-    // Apply search query filter
-    if (searchQuery) {
-      const lowercasedQuery = searchQuery.toLowerCase();
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const lowercasedQuery = searchQuery.toLowerCase().trim();
+
       filteredData = filteredData.filter((client) => {
+        const searchableFields = [];
+
         if (currentModule === "commercial") {
-          const searchableFields = [
+          searchableFields.push(
             client.matterNumber,
             client.clientName,
             client.businessName,
@@ -203,130 +245,59 @@ const ViewClients = () => {
             client.clientType,
             client.dataEntryBy,
             client.postcode,
-          ];
-
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
+            client.referral
+          );
+        } else if (company === "idg") {
+          searchableFields.push(
+            client.clientId,
+            client.orderId,
+            client.client_name,
+            client.client_type,
+            client.allocatedUser,
+            client.orderDetails,
+            client.billing_address,
+            client.postcode
           );
         } else {
-          const searchableFields = [
+          searchableFields.push(
             client.client_name || client.clientName,
             client.matternumber || client.matterNumber || client.orderId,
             client.businessAddress || client.business_address,
             client.property_address || client.propertyAddress,
             client.state,
-            client.referral || client.referralName,
-          ];
-
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
+            client.referral || client.referralName
           );
         }
+
+        if (
+          client.stages &&
+          Array.isArray(client.stages) &&
+          client.stages.length > 0
+        ) {
+          client.stages.forEach((stageObj) => {
+            if (stageObj && typeof stageObj === "object") {
+              Object.values(stageObj).forEach((stageData) => {
+                if (
+                  stageData &&
+                  typeof stageData === "object" &&
+                  stageData.referral
+                ) {
+                  searchableFields.push(String(stageData.referral));
+                }
+              });
+            }
+          });
+        }
+
+        return searchableFields.some(
+          (field) =>
+            field && String(field).toLowerCase().includes(lowercasedQuery)
+        );
       });
     }
-    filteredData = [...filteredData].reverse();
-    setClientList(filteredData);
 
-  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
-
-  let columns = [];
-  if (localStorage.getItem("company") === "vkl") {
-    if (currentModule === "commercial") {
-      // Commercial projects columns
-      columns = [
-        { key: "matterNumber", title: "Project Number", width: "10%" },
-        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
-        { key: "clientName", title: "Client Name", width: "12%" },
-        { key: "businessName", title: "Business Name", width: "12%" },
-        { key: "businessAddress", title: "Business Address", width: "15%" },
-        { key: "state", title: "State", width: "6%" },
-        { key: "clientType", title: "Client Type", width: "8%" },
-        { key: "settlementDate", title: "Completion Date", width: "10%" },
-        { key: "matterDate", title: "Project Date", width: "10%" },
-        // { key: "postcode", title: "Postcode", width: "7%" },
-      ];
-    } else {
-      // Regular VKL clients
-      columns = [
-        { key: "matternumber", title: "Matter Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "property_address", title: "Property Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Settlement Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    }
-  } else if (localStorage.getItem("company") === "idg") {
-    columns = [
-      { key: "clientId", title: "Client ID", width: "8%" },
-      { key: "orderId", title: "Order ID", width: "10%" },
-      { key: "client_name", title: "Client Name", width: "9%" },
-      { key: "client_type", title: "Order Type", width: "12%" },
-      { key: "allocatedUser", title: "Allocated User", width: "15%" },
-      { key: "order_date", title: "Order Date", width: "12%" },
-      { key: "delivery_date", title: "Delivery Date", width: "12%" },
-      { key: "orderDetails", title: "Order Details", width: "10%" },
-      { key: "billing_address", title: "Delivery Address", width: "10%" },
-      { key: "postcode", title: "Post Code", width: "6.5%" },
-    ];
-  }
-
-  async function handelReShareEmail() {
-    try {
-      setIsClicked(true);
-      await api.resendLinkToClient(email, shareDetails?.matterNumber);
-      toast.success("Email sent successfully.");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      handelShareEmailModalClose();
-    }
-  }
-
-  async function changeUser(user, orderId) {
-    console.log(user, orderId);
-    try {
-      const res = api.changeUser(user, orderId);
-    } catch (error) {
-      console.log("Error occured!!", error);
-    }
-  }
-
-  const handleClientFilterChange = (selectedName) => {
-    setSelectedClientName(selectedName);
-
-    if (!selectedName) {
-      setClientList(
-        currentModule === "commercial" ? commercialClients : Clients
-      );
-    } else {
-      const filtered = (currentModule === "commercial" ? commercialClients : Clients)
-        .filter(client => client.client_name === selectedName);
-
-      setClientList(filtered);
-    }
-  };
-
-
-  const handelShareEmailModalClose = () => {
-    setShowShareDialog(false);
-    setIsClicked(false);
-    setemail("");
-    setShareDetails({ matterNumber: "", reshareEmail: "" });
-  };
+    return filteredData;
+  }, [settlementDate, activeData, searchQuery, currentModule, company]);
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "View Projects";
@@ -350,15 +321,6 @@ const ViewClients = () => {
     }
   };
 
-  const reloadPage = () => {
-    window.location.reload();
-  };
-
-  useEffect(() => {
-  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-}, [dateFilter]);
-
-
   const shouldShowOutstandingTasks = () => {
     return currentModule === "commercial" || company === "vkl";
   };
@@ -367,11 +329,410 @@ const ViewClients = () => {
     return company === "idg";
   };
 
-  const isLoading =
-    currentModule === "commercial" ? commercialLoading : loading;
+  const handelShareEmailModalClose = () => {
+    setShowShareDialog(false);
+    setemail("");
+    setShareDetails({ matterNumber: "", reshareEmail: "" });
+  };
+
+  let columns = [];
+  if (company === "vkl") {
+    if (currentModule === "commercial") {
+      columns = [
+        { key: "matterNumber", title: "Project Number", width: "10%" },
+        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
+        { key: "clientName", title: "Client Name", width: "12%" },
+        { key: "businessName", title: "Business Name", width: "12%" },
+        { key: "businessAddress", title: "Business Address", width: "15%" },
+        { key: "state", title: "State", width: "6%" },
+        { key: "clientType", title: "Client Type", width: "8%" },
+        { key: "settlementDate", title: "Completion Date", width: "10%" },
+        { key: "matterDate", title: "Project Date", width: "10%" },
+      ];
+    } else {
+      columns = [
+        { key: "matternumber", title: "Matter Number", width: "8%" },
+        { key: "dataentryby", title: "Data Entry By", width: "10%" },
+        { key: "client_name", title: "Client Name", width: "10%" },
+        { key: "property_address", title: "Property Address", width: "10%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "client_type", title: "Client Type", width: "7%" },
+        { key: "settlement_date", title: "Settlement Date", width: "10%" },
+        {
+          key: "finance_approval_date",
+          title: "Finance Approval Date",
+          width: "10%",
+        },
+        {
+          key: "building_and_pest_date",
+          title: "Building & Pest Date",
+          width: "10%",
+        },
+      ];
+    }
+  } else if (company === "idg") {
+    columns = [
+      { key: "clientId", title: "Client ID", width: "8%" },
+      { key: "orderId", title: "Order ID", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "9%" },
+      { key: "client_type", title: "Order Type", width: "12%" },
+      { key: "allocatedUser", title: "Allocated User", width: "10%" },
+      { key: "order_date", title: "Order Date", width: "12%" },
+      { key: "delivery_date", title: "Delivery Date", width: "12%" },
+      { key: "orderDetails", title: "Order Details", width: "10%" },
+      { key: "billing_address", title: "Delivery Address", width: "10%" },
+      { key: "postcode", title: "Post Code", width: "6.5%" },
+    ];
+  }
+
+  // Floating Background Elements
+  const FloatingElement = ({ top, left, delay, size = 60 }) => (
+    <motion.div
+      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+      style={{
+        width: size,
+        height: size,
+        top: `${top}%`,
+        left: `${left}%`,
+      }}
+      animate={{
+        y: [0, -20, 0],
+        x: [0, 10, 0],
+      }}
+      transition={{
+        duration: 3 + delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.06]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                              linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="relative z-10">
+        <Header />
+
+        <main className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+          {/* Welcome Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 sm:mb-8"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                    {getPageTitle()}
+                  </span>
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+                  Manage and track all{" "}
+                  {currentModule === "commercial"
+                    ? "projects"
+                    : company === "idg"
+                    ? "orders"
+                    : "clients"}{" "}
+                  in one place
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleCreateButtonClick}
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">
+                    {getCreateButtonLabel()}
+                  </span>
+                  <span className="xs:hidden">Add New</span>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Action Bar - Updated with consistent colors */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6"
+          >
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                    All{" "}
+                    {currentModule === "commercial"
+                      ? "Projects"
+                      : company === "idg"
+                      ? "Orders"
+                      : "Clients"}
+                  </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="items-per-page"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Show:
+                    </label>
+                    <select
+                      id="items-per-page"
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-sm"
+                    >
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={200}>200</option>
+                      <option value={500}>500</option>
+                      <option value={1000}>1000</option>
+                    </select>
+                  </div>
+
+                  <div className="hidden lg:flex items-center gap-2">
+                    {company === "vkl" && (
+                      <>
+                        {shouldShowOutstandingTasks() && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowOutstandingTask(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                            Outstanding Tasks
+                          </motion.button>
+                        )}
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowDateRange(true)}
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          Date Range
+                        </motion.button>
+                      </>
+                    )}
+                    {company === "idg" && (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setcreateOrder(true)}
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Create Order
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowDateRange(true)}
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          Date Range
+                        </motion.button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Mobile Actions Menu */}
+                  <div className="flex lg:hidden items-center">
+                    <Menu as="div" className="relative">
+                      <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
+                      </Menu.Button>
+                      <Transition
+                        as={Fragment}
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                      >
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div className="py-1">
+                            {shouldShowOutstandingTasks() && (
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowOutstandingTask(true)}
+                                    className={`block w-full text-left px-4 py-2 text-sm ${
+                                      active
+                                        ? "bg-blue-50 text-blue-700"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <AlertCircle className="w-4 h-4" />
+                                      Outstanding Tasks
+                                    </div>
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            )}
+                            {shouldShowCreateOrder() && (
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateOrder(true)}
+                                    className={`block w-full text-left px-4 py-2 text-sm ${
+                                      active
+                                        ? "bg-blue-50 text-blue-700"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Plus className="w-4 h-4" />
+                                      Create Order
+                                    </div>
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            )}
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() => setShowDateRange(true)}
+                                  className={`block w-full text-left px-4 py-2 text-sm ${
+                                    active
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    Date Range
+                                  </div>
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </div>
+                        </Menu.Items>
+                      </Transition>
+                    </Menu>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Content Area */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300"
+          >
+            {error && (
+              <div
+                className="p-4 m-4 text-red-700 bg-red-100 border-l-4 border-red-500 rounded-r-lg"
+                role="alert"
+              >
+                <p className="font-medium">Error loading data</p>
+                <p className="text-sm">{error.message}</p>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
+              </div>
+            ) : !clientList || clientList.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                  <Search className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  No{" "}
+                  {currentModule === "commercial"
+                    ? "projects"
+                    : company === "idg"
+                    ? "orders"
+                    : "clients"}{" "}
+                  found
+                </h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  {searchQuery || settlementDate[0]
+                    ? "Try adjusting your search or filter criteria"
+                    : `Get started by creating your first ${
+                        currentModule === "commercial"
+                          ? "project"
+                          : company === "idg"
+                          ? "order"
+                          : "client"
+                      }`}
+                </p>
+                {!searchQuery && !settlementDate[0] && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCreateButtonClick}
+                    className="mt-4 px-6 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg transition-all"
+                  >
+                    Create{" "}
+                    {currentModule === "commercial"
+                      ? "Project"
+                      : company === "idg"
+                      ? "Order"
+                      : "Client"}
+                  </motion.button>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 sm:p-6">
+                <ViewClientsTable
+                  data={clientList}
+                  columns={columns}
+                  onEdit={true}
+                  onShare={(matterNumber, reshareEmail) => {
+                    setShareDetails({ matterNumber, reshareEmail });
+                    setShowShareDialog(true);
+                  }}
+                  itemsPerPage={itemsPerPage}
+                  status={true}
+                  ot={shouldShowOutstandingTasks()}
+                  handelOTOpen={() => setShowOutstandingTask(true)}
+                  handelOT={setOTActiveMatterNumber}
+                  currentModule={currentModule}
+                />
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </div>
+
+      {/* Modals */}
       <OutstandingTasksModal
         open={showOutstandingTask}
         onClose={() => {
@@ -380,6 +741,7 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
+
       <CreateClientModal
         createType={currentModule === "commercial" ? "project" : "client"}
         companyName={company}
@@ -388,356 +750,115 @@ const ViewClients = () => {
           setcreateuser(false);
           setCreateProject(false);
         }}
-        onClose={()=>setcreateuser(false)}
       />
+
       <CreateClientModal
         createType="order"
         companyName={company}
         isOpen={createOrder}
-        onClose={reloadPage}
         setIsOpen={() => setcreateOrder(false)}
       />
 
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
-          }.`}
-        handelSubmitFun={(fromDate, toDate, dateType) => {
-          setDateFilter({ type: dateType, range: [fromDate, toDate] });
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial"
+            ? "projects"
+            : company === "idg"
+            ? "orders"
+            : "clients"
+        }.`}
+        handelSubmitFun={(fromDate, toDate) => {
+          setSettlementDate([fromDate, toDate]);
           setShowDateRange(false);
         }}
-        onReset={() => {
-          setDateFilter({ type: "settlement_date", range: ["", ""] }) 
-          setShowDateRange(false); 
-        }}
+        onReset={() => setSettlementDate(["", ""])}
       />
 
+      {/* Share Dialog - Updated */}
       <Dialog
         open={showShareDialog}
         onClose={handelShareEmailModalClose}
         className="relative z-50"
       >
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
-        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-            <button
-              onClick={handelShareEmailModalClose}
-              className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
+        <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md"
             >
-              &times;
-            </button>
-            <h2 className="text-xl font-semibold mb-2 text-center">
-              Share to Client
-            </h2>
-            <p className="text-sm text-center text-gray-700 mb-4">
-              Please enter the client email for{" "}
-              {currentModule === "commercial" ? "project" : "matter"} No. :{" "}
-              <span className="text-blue-500 underline cursor-pointer">
-                {shareDetails?.matterNumber}
-              </span>
-            </p>
-            <div className="relative mb-4">
-              <input
-                type="email"
-                placeholder="Enter email address"
-                value={email}
-                onChange={(e) => setemail(e.target.value)}
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
-              />
-              <span className="absolute inset-y-0 right-3 flex items-center text-gray-600">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
+                <button
+                  onClick={handelShareEmailModalClose}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
                 >
-                  <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
-                </svg>
-              </span>
-            </div>
-            {isClicked ? (
-              <button className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3">
-                Sending...
-              </button>
-            ) : (
-              <button
-                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
-                onClick={handelReShareEmail}
-              >
-                Send Link
-              </button>
-            )}
-            <button className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition">
-              Manage Access
-            </button>
-          </DialogPanel>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={showTAR}
-        onClose={() => setShowTar(false)}
-        className="relative z-50"
-      >
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
-        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-            <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle>
-            <div className="flex items-center gap-2 mb-5">
-              <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                Select by Users
-              </label>
-              <select
-                name="alloactedUser"
-                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={allocatedUser}
-                onChange={(e) => setallocatedUser(e.target.value)}
-              >
-                <option value="">All Users</option>
-                {user.map((user) => (
-                  <option value={user.name}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
-              onClick={() => {
-                generateTaskAllocationPDF(allocatedUser)
-                setShowTar(false)
-              }}
-            >
-              Download
-            </button>
-
-
-          </DialogPanel>
-        </div>
-      </Dialog>
-
-      <div className="space-y-4 p-2">
-        <Header />
-
-        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
-          <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            {getPageTitle()}
-          </h3>
-          <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
-            {/* Search input is now only in Header.jsx */}
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                {currentModule === "commercial" ? "Projects" : "Clients"} per
-                page:
-              </label>
-              <select
-                id="items-per-page"
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-            </div>
-            {localStorage.getItem("company") == "idg" &&
-              <div className="flex items-center gap-2">
-                {/* <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                Select by clients
-              </label> */}
-                <select
-                  name="Client"
-                  className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  value={selectedClientName}
-                  onChange={(e) => handleClientFilterChange(e.target.value)}
-                  disabled={localStorage.getItem("role") !== "admin"}
-                >
-                  <option value="">All Clients</option>
-                  {list.map((client) => (
-                    <option key={client.name} value={client.name}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            }
-
-            {/* Consolidated Desktop Buttons */}
-            <div className="hidden lg:flex items-center gap-1.5">
-              {localStorage.getItem("company") === "vkl" && (
-                <>
-                  <Button
-                    label="Create Client"
-                    Icon1={userplus}
-                    onClick={() => setcreateuser(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Outstanding Tasks"
-                    onClick={() => setShowOutstandingTask(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Select Date Range"
-                    onClick={() => setShowDateRange(true)}
-                    width="w-[150px]"
-                  />
-                </>
-              )}
-              {localStorage.getItem("company") === "idg" && (
-                <>
-                  <Button
-                    label="Create Client"
-                    Icon1={userplus}
-                    onClick={() => setcreateuser(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Create Order"
-                    onClick={() => setcreateOrder(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Select Date Range"
-                    onClick={() => setShowDateRange(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Task Report"
-                    onClick={() => setShowTar(true)}
-                    width="w-[100px]"
-                  />
-                </>
-              )}
-            </div>
-
-
-            {/* Mobile Menu */}
-            <div className="flex lg:hidden items-center gap-2">
-              <Menu as="div" className="relative">
-                <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                  <EllipsisVerticalIcon
-                    className="h-5 w-5 text-gray-600"
-                    aria-hidden="true"
-                  />
-                </Menu.Button>
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="py-1">
-                      {/* Create Client/Project option */}
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
-                          >
-                            {getCreateButtonLabel()}
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
-                          >
-                            Outstanding Tasks
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
-                          >
-                            Select Date Range
-                          </button>
-                        )}
-                      </Menu.Item>
+                  &times;
+                </button>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">
+                      Share to Client
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Send access link to client
+                    </p>
+                  </div>
+                </div>
+                <div className="mb-4 p-3 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    {currentModule === "commercial"
+                      ? "Project"
+                      : company === "idg"
+                      ? "Order"
+                      : "Matter"}{" "}
+                    No:{" "}
+                    <span className="font-semibold text-[#2E3D99]">
+                      {shareDetails?.matterNumber}
+                    </span>
+                  </p>
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Client Email
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      placeholder="Enter email address"
+                      value={email}
+                      onChange={(e) => setemail(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
+                      </svg>
                     </div>
-                  </Menu.Items>
-                </Transition>
-              </Menu>
-            </div>
+                  </div>
+                </div>
+                <button
+                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  onClick={handelReShareEmail}
+                  disabled={isSendingEmail}
+                >
+                  {isSendingEmail ? "Sending..." : "Send Access Link"}
+                </button>
+              </div>
+            </motion.div>
           </div>
         </div>
-
-        {/* {error && (
-          <ConfirmationModal
-            isOpen={showConfirmModal}
-            onClose={() => console.log("")}
-            title="Session Expired!"
-            isLogout={true}
-          >
-            Please Login Again
-          </ConfirmationModal>
-        )} */}
-
-        {isLoading || !clientList ? (
-          <Loader />
-        ) : clientList.length === 0 ? (
-          <div className="py-10 text-center text-gray-500">
-            {currentModule === "commercial"
-              ? "No projects found"
-              : "No clients found"}
-          </div>
-        ) : (
-          <div className="px-5">
-            <ViewClientsTable
-              data={clientList}
-              columns={columns}
-              users={user}
-              handleChangeUser={changeUser}
-              onEdit={true}
-              onShare={(matterNumber, reshareEmail) => {
-                setShareDetails({ matterNumber, reshareEmail });
-                setShowShareDialog(true);
-              }}
-              itemsPerPage={itemsPerPage}
-              status={true}
-              ot={shouldShowOutstandingTasks()}
-              handelOTOpen={() => setShowOutstandingTask(true)}
-              handelOT={setOTActiveMatterNumber}
-              currentModule={currentModule}
-            />
-          </div>
-        )}
-      </div>
-    </>
+      </Dialog>
+    </div>
   );
 };
 

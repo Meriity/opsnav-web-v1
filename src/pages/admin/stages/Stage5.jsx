@@ -490,6 +490,13 @@ export default function Stage5({ changeStage, data, onStageUpdate }) {
         // non-critical: swallow toast errors
       }
 
+      if (company === "vkl") {
+        console.log("Stage 5 saved - performing hard reload...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      }
+
       // Keep local snapshot so UI remains stable while user navigates stages
       const currentClientNote =
         currentModule === "commercial"
