@@ -192,7 +192,12 @@ export default function CostComponent({ changeStage }) {
           );
         }
 
-        costData = stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
+        if (company === "vkl") {
+          costData = stageResponse?.cost || {};
+        } else {
+          costData =
+            stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
+        }
         stage1Data = stageResponse?.stage1 || {};
       }
 
@@ -270,25 +275,25 @@ export default function CostComponent({ changeStage }) {
             costData.landInformationCertificateNote || "",
           "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
           "Water Certificate Note": costData.waterCertificateNote || "",
-          "Other fee (1)": costData.otherFee_1?.$numberDecimal || "",
+          "Other fee (1)": getDecimalValue(costData.otherFee_1) || "",
           "Note 1": costData.otherFee1Note || "",
-          "Other fee (2)": costData.otherFee_2?.$numberDecimal || "",
+          "Other fee (2)": getDecimalValue(costData.otherFee_2) || "",
           "Note 2": costData.otherFee2Note || "",
-          "Other fee (3)": costData.otherFee_3?.$numberDecimal || "",
+          "Other fee (3)": getDecimalValue(costData.otherFee_3) || "",
           "Note 3": costData.otherFee3Note || "",
-          "Other fee (4)": costData.otherFee_4?.$numberDecimal || "",
+          "Other fee (4)": getDecimalValue(costData.otherFee_4) || "",
           "Note 4": costData.otherFee4Note || "",
           ...commonMapped,
         };
       } else {
         mappedData = {
-          "Other fee (1)": costData.fee1 || "",
+          "Other fee (1)": getDecimalValue(costData.fee1) || "",
           "Note 1": costData.fee1Note || "",
-          "Other fee (2)": costData.fee2 || "",
+          "Other fee (2)": getDecimalValue(costData.fee2) || "",
           "Note 2": costData.fee2Note || "",
-          "Other fee (3)": costData.fee3 || "",
+          "Other fee (3)": getDecimalValue(costData.fee3) || "",
           "Note 3": costData.fee3Note || "",
-          "Other fee (4)": costData.fee4 || "",
+          "Other fee (4)": getDecimalValue(costData.fee4) || "",
           "Note 4": costData.fee4Note || "",
           ...commonMapped,
         };
@@ -315,8 +320,6 @@ export default function CostComponent({ changeStage }) {
     enabled: !!matterNumber,
   });
 
-  // --- Effects ---
-
   // Effect to populate form when query data is loaded
   useEffect(() => {
     if (loadedData) {
@@ -330,7 +333,7 @@ export default function CostComponent({ changeStage }) {
   useEffect(() => {
     setFormValues((prev) => calculateTotals(prev));
   }, [
-    calculateTotals, // Add memoized function
+    calculateTotals,
     formValues["Other fee (1)"],
     formValues["Other fee (2)"],
     formValues["Other fee (3)"],
@@ -348,6 +351,9 @@ export default function CostComponent({ changeStage }) {
     formValues["Water Certificate"],
     formValues["Quote Type"],
     formValues["Quote Amount"],
+    formValues["Other (total)"],
+    formValues["Total Costs"],
+    formValues["Invoice Amount"],
   ]);
 
   // --- Change Handlers ---
