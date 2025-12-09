@@ -924,6 +924,17 @@ function Dashboard() {
         0;
       return sum + closedCount;
     }, 0);
+    return currentChartData.reduce((sum, item) => {
+      const closedCount =
+        item.closedMatters ??
+        item.closedProjects ??
+        item.completedProjects ??
+        item.closedOrders ??
+        item.count ??
+        item.total ??
+        0;
+      return sum + closedCount;
+    }, 0);
   }, [currentChartData]);
 
   // Handle chart data processing - OPTIMIZED FOR MOBILE ALL TIME VIEW
