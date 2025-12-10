@@ -1,9 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { create } from "zustand";
-import { Search, Plus, Edit, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  Users,
+  Calendar,
+  AlertCircle,
+  Mail,
+  UserPlus,
+} from "lucide-react";
 import Button from "../../components/ui/Button";
-import Table from "../../components/ui/Table"; // Used for desktop view
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import Table from "../../components/ui/Table";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Menu,
+  Transition,
+} from "@headlessui/react";
+import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import AdminApi from "../../api/adminAPI";
 import ClientApi from "../../api/userAPI.js";
 import CommercialAPI from "../../api/commercialAPI";
@@ -13,10 +32,10 @@ import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
-
 import NotificationAPI from "../../api/notificationAPI";
+import { motion } from "framer-motion";
 
-// 🔸 Zustand Store
+// 🔸 Zustand Store (unchanged)
 const useUserStore = create((set) => ({
   users: [],
   isFetched: false,
@@ -39,11 +58,9 @@ const useUserStore = create((set) => ({
     try {
       let response;
       if (currentModule === "commercial") {
-        // For commercial module, we need to fetch commercial clients
         response = await api.getActiveProjects();
         console.log("Commercial clients response:", response);
 
-        // Handle different response structures for commercial
         let data = [];
         if (Array.isArray(response)) {
           data = response;
@@ -73,7 +90,6 @@ const useUserStore = create((set) => ({
         }));
         set({ users: formatted, isFetched: true });
       } else if (company === "idg") {
-        // IDG clients
         response = await api.getIDGClients();
         console.log("IDG Response:", response);
         const formatted = response.map((user) => ({
@@ -90,7 +106,6 @@ const useUserStore = create((set) => ({
         }));
         set({ users: formatted, isFetched: true });
       } else {
-        // VKL clients - you might want to add VKL client fetching here
         set({ users: [], isFetched: true });
       }
     } catch (err) {
@@ -102,7 +117,7 @@ const useUserStore = create((set) => ({
   },
 }));
 
-// UsersPerPage dropdown component
+// UsersPerPage dropdown component with enhanced UI
 function UsersPerPage({ value, onChange }) {
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
@@ -121,7 +136,7 @@ function UsersPerPage({ value, onChange }) {
         id="users-per-page"
         value={value}
         onChange={onChange}
-        className="block px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-sm"
       >
         <option>5</option>
         <option>10</option>
@@ -132,6 +147,28 @@ function UsersPerPage({ value, onChange }) {
     </div>
   );
 }
+
+// Floating Background Elements (from ViewClients theme)
+const FloatingElement = ({ top, left, delay, size = 60 }) => (
+  <motion.div
+    className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+    style={{
+      width: size,
+      height: size,
+      top: `${top}%`,
+      left: `${left}%`,
+    }}
+    animate={{
+      y: [0, -20, 0],
+      x: [0, 10, 0],
+    }}
+    transition={{
+      duration: 3 + delay,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
+);
 
 export default function ManageUsers() {
   const { users, isFetched, loading, fetchUsers, setIsFetched } =
@@ -190,27 +227,27 @@ export default function ManageUsers() {
   const getColumns = () => {
     if (currentModule === "commercial") {
       return [
-        { key: "clientId", title: "Project Number" },
-        { key: "name", title: "Client Name" },
-        { key: "email", title: "Email" },
-        { key: "contact", title: "Contact" },
-        { key: "address", title: "Property Address" },
-        { key: "country", title: "Country" },
-        { key: "state", title: "State" },
-        { key: "postcode", title: "PostCode" },
-        { key: "abn", title: "ABN" },
+        { key: "clientId", title: "Project Number", width: "10%" },
+        { key: "name", title: "Client Name", width: "12%" },
+        { key: "email", title: "Email", width: "15%" },
+        { key: "contact", title: "Contact", width: "10%" },
+        { key: "address", title: "Property Address", width: "18%" },
+        { key: "country", title: "Country", width: "8%" },
+        { key: "state", title: "State", width: "8%" },
+        { key: "postcode", title: "PostCode", width: "8%" },
+        { key: "abn", title: "ABN", width: "8%" },
       ];
     } else if (company === "idg") {
       return [
-        { key: "clientId", title: "Client ID" },
-        { key: "name", title: "Name" },
-        { key: "email", title: "Email" },
-        { key: "contact", title: "Contact" },
-        { key: "address", title: "Address" },
-        { key: "country", title: "Country" },
-        { key: "state", title: "State" },
-        { key: "postcode", title: "PostCode" },
-        { key: "abn", title: "ABN" },
+        { key: "clientId", title: "Client ID", width: "8%" },
+        { key: "name", title: "Name", width: "12%" },
+        { key: "email", title: "Email", width: "15%" },
+        { key: "contact", title: "Contact", width: "10%" },
+        { key: "address", title: "Address", width: "20%" },
+        { key: "country", title: "Country", width: "8%" },
+        { key: "state", title: "State", width: "8%" },
+        { key: "postcode", title: "PostCode", width: "8%" },
+        { key: "abn", title: "ABN", width: "8%" },
       ];
     }
     return [];
@@ -233,14 +270,11 @@ export default function ManageUsers() {
     try {
       setIsLoading(true);
       if (currentModule === "commercial") {
-        // For commercial, we'll use the commercial API
-        // You might need to adjust this based on your commercial API structure
         await api.createUser(email, role, display_name);
       } else {
         await api.createUser(email, role, display_name);
       }
 
-      // Create notification
       const notificationAPI = new NotificationAPI();
       await notificationAPI.createNotification({
         type: "client",
@@ -285,28 +319,10 @@ export default function ManageUsers() {
     try {
       console.log(selectedUser);
       if (currentModule === "commercial") {
-        // For commercial, use commercial update method
         await api.editIDGClient(selectedUser);
       } else {
         await api.editIDGClient(selectedUser);
       }
-
-      // Create notification
-      // const notificationAPI = new NotificationAPI();
-      // await notificationAPI.createNotification({
-      //   type: "client",
-      //   message: `${
-      //     currentModule === "commercial" ? "Project" : "Client"
-      //   } updated: ${selectedUser.name}`,
-      //   metadata: {
-      //     clientName: selectedUser.name,
-      //     clientId: selectedUser.clientId,
-      //     route:
-      //       currentModule === "commercial"
-      //         ? "/admin/view-clients"
-      //         : "/admin/manage-clients",
-      //   },
-      // });
 
       toast.success(
         `${
@@ -330,7 +346,6 @@ export default function ManageUsers() {
       setDeleteLoading(true);
       console.log(id.clientId);
       if (currentModule === "commercial") {
-        // For commercial, use commercial delete method
         await api.deleteIDGClient(id.clientId);
       } else {
         await api.deleteIDGClient(id.clientId);
@@ -376,406 +391,709 @@ export default function ManageUsers() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
-      <Header />
-      <main className="w-full max-w-8xl mx-auto p-5">
-        {/* Manage Users Header */}
-        <div className="flex justify-between items-center mb-[15px]">
-          <CreateClientModal
-            createType={currentModule === "commercial" ? "project" : "client"}
-            companyName={company}
-            isOpen={createuser}
-            setIsOpen={() => setcreateuser(false)}
-          />
-          <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
-          <Button
-            label={getCreateButtonLabel()}
-            Icon1={userplus}
-            onClick={() => setcreateuser(true)}
-            width="w-[150px]"
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.06]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                              linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
           />
         </div>
+      </div>
 
-        {/* Table or Loader */}
-        {loading ? (
-          <Loader />
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden lg:block">
-              <div className="flex justify-start mb-4">
-                <UsersPerPage
-                  value={usersPerPage}
-                  onChange={(e) => setUsersPerPage(Number(e.target.value))}
-                />
+      <div className="relative z-10">
+        <Header />
+
+        <main className="px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 w-full">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 sm:mb-8 mt-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 truncate">
+                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                    {getPageTitle()}
+                  </span>
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base lg:text-lg mt-2 truncate">
+                  Manage all{" "}
+                  {currentModule === "commercial"
+                    ? "projects"
+                    : company === "idg"
+                    ? "clients"
+                    : "users"}{" "}
+                  in one place
+                </p>
               </div>
-              <Table
-                data={userList}
-                columns={columns}
-                onEdit={(u) => {
-                  console.log(u);
-                  setSelectedUser(u);
-                  setOpenEdit(true);
-                }}
-                onReset={handleReset}
-                onDelete={(id) => {
-                  setId(id);
-                  setOpenDelete(true);
-                }}
-                itemsPerPage={usersPerPage}
-                headerBgColor="bg-[#A6E7FF]"
-                cellWrappingClass="whitespace-normal"
-                resetLoadingEmail={resetLoadingEmail}
-                resetSuccessEmail={resetSuccessEmail}
-                showActions={true}
-                isClients={true}
-              />
+              <div className="flex items-center gap-2">
+                <CreateClientModal
+                  createType={
+                    currentModule === "commercial" ? "project" : "client"
+                  }
+                  companyName={company}
+                  isOpen={createuser}
+                  setIsOpen={() => setcreateuser(false)}
+                />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setcreateuser(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 sm:py-3 lg:py-3.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl lg:rounded-2xl font-semibold text-sm sm:text-base lg:text-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                  <span className="hidden xs:inline">
+                    {getCreateButtonLabel()}
+                  </span>
+                  <span className="xs:hidden">Add New</span>
+                </motion.button>
+              </div>
             </div>
-            {/* Mobile & Tablet Card View */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-              <div className="sm:col-span-2">
-                <UsersPerPage
-                  value={usersPerPage}
-                  onChange={(e) => setUsersPerPage(Number(e.target.value))}
-                />
+          </motion.div>
+
+          {/* Action Bar*/}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6"
+          >
+            <div className="p-4 sm:p-5 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-7 lg:h-8 bg-[#FB4A50] rounded-full"></div>
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">
+                    All{" "}
+                    {currentModule === "commercial" ? "Projects" : "Clients"}
+                  </h3>
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 text-[#2E3D99] text-sm lg:text-base font-medium rounded-full">
+                    {userList.length} total
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                  <UsersPerPage
+                    value={usersPerPage}
+                    onChange={(e) => setUsersPerPage(Number(e.target.value))}
+                  />
+                </div>
               </div>
-              {userList.slice(0, usersPerPage).map((user) => {
-                const isRowLoading = resetLoadingEmail === user.email;
-                const isRowSuccess = resetSuccessEmail === user.email;
-                return (
-                  <div
-                    key={user.id}
-                    className="bg-white p-4 rounded-2xl shadow space-y-3"
+            </div>
+          </motion.div>
+
+          {/* Main Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300"
+          >
+            {loading ? (
+              <div className="flex justify-center items-center py-20 lg:py-24">
+                <Loader />
+              </div>
+            ) : userList.length === 0 ? (
+              <div className="py-20 lg:py-24 text-center">
+                <div className="w-24 h-24 lg:w-28 lg:h-28 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 lg:w-14 lg:h-14 text-gray-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
                   >
-                    <div className="flex justify-between items-start space-x-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold truncate">
-                          {user.name || user.displayName}
-                        </h3>
-                        <p className="text-sm text-gray-500 truncate">
-                          {currentModule === "commercial"
-                            ? "Project"
-                            : "Client"}{" "}
-                          ID: {user.clientId}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-1 flex-shrink-0">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenEdit(true);
-                          }}
-                          title="Edit"
-                          className="flex flex-col items-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
-                        >
-                          <Edit size={16} />
-                          <span className="text-xs mt-1">Edit</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setId(user);
-                            setOpenDelete(true);
-                          }}
-                          title="Delete"
-                          className="flex flex-col items-center p-2 text-red-600 hover:bg-red-100 rounded-lg"
-                        >
-                          <Trash2 size={16} />
-                          <span className="text-xs mt-1">Delete</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between text-sm">
-                        <div>
-                          <span className="font-semibold text-gray-500">
-                            Address:
-                          </span>{" "}
-                          {user.address}
+                    <path
+                      d="M21 21l-4.35-4.35"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></path>
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></circle>
+                  </svg>
+                </div>
+                <h3 className="text-xl lg:text-2xl font-semibold text-gray-800 mb-2">
+                  No {currentModule === "commercial" ? "projects" : "clients"}{" "}
+                  found
+                </h3>
+                <p className="text-gray-600 max-w-md lg:max-w-lg mx-auto text-base lg:text-lg">
+                  {searchQuery
+                    ? "Try adjusting your search criteria"
+                    : `Get started by creating your first ${
+                        currentModule === "commercial" ? "project" : "client"
+                      }`}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setcreateuser(true)}
+                    className="mt-4 px-6 py-2.5 lg:px-7 lg:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg lg:rounded-xl font-medium hover:shadow-lg transition-all text-base lg:text-lg"
+                  >
+                    Create{" "}
+                    {currentModule === "commercial" ? "Project" : "Client"}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 sm:p-4 lg:p-5 xl:p-6">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <div className="min-w-full">
+                    <Table
+                      data={userList}
+                      columns={columns}
+                      onEdit={(u) => {
+                        console.log(u);
+                        setSelectedUser(u);
+                        setOpenEdit(true);
+                      }}
+                      onReset={handleReset}
+                      onDelete={(id) => {
+                        setId(id);
+                        setOpenDelete(true);
+                      }}
+                      itemsPerPage={usersPerPage}
+                      headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
+                      headerTextColor="text-white"
+                      cellWrappingClass="whitespace-normal"
+                      resetLoadingEmail={resetLoadingEmail}
+                      resetSuccessEmail={resetSuccessEmail}
+                      showActions={true}
+                      isClients={true}
+                      tableClassName="w-full" // Added to make table full width
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4 md:gap-5">
+                  {userList.slice(0, usersPerPage).map((user) => {
+                    const isRowLoading = resetLoadingEmail === user.email;
+                    const isRowSuccess = resetSuccessEmail === user.email;
+                    return (
+                      <motion.div
+                        key={user.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-white p-4 sm:p-5 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 space-y-4"
+                      >
+                        <div className="flex justify-between items-start space-x-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              <h3 className="text-lg sm:text-xl font-bold truncate text-gray-800">
+                                {user.name || user.displayName}
+                              </h3>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm sm:text-base text-gray-500 truncate">
+                                <span className="font-medium text-gray-700">
+                                  {currentModule === "commercial"
+                                    ? "Project"
+                                    : "Client"}{" "}
+                                  ID:
+                                </span>{" "}
+                                {user.clientId}
+                              </p>
+                              <p className="text-sm sm:text-base text-gray-500 truncate">
+                                <span className="font-medium text-gray-700">
+                                  Email:
+                                </span>{" "}
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setOpenEdit(true);
+                              }}
+                              title="Edit"
+                              className="flex flex-col items-center p-2 sm:p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            >
+                              <Edit size={18} className="sm:w-5 sm:h-5" />
+                              <span className="text-xs sm:text-sm mt-1">
+                                Edit
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setId(user);
+                                setOpenDelete(true);
+                              }}
+                              title="Delete"
+                              className="flex flex-col items-center p-2 sm:p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <Trash2 size={18} className="sm:w-5 sm:h-5" />
+                              <span className="text-xs sm:text-sm mt-1">
+                                Delete
+                              </span>
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-semibold text-gray-500">
-                            Email:
-                          </span>{" "}
-                          {user.email}
+                        <div className="pt-4 border-t border-gray-100">
+                          <div className="grid grid-cols-1 gap-2 text-sm sm:text-base">
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Address:
+                              </span>{" "}
+                              <span className="text-gray-600">
+                                {user.address}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Contact:
+                              </span>{" "}
+                              <span className="text-gray-600">
+                                {user.contact || "N/A"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </div>
+
+      {/* Create User Dialog */}
+      <Dialog open={openUser} onClose={setOpenUser} className="relative z-50">
+        <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-lg"
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = new FormData(e.target);
+                  const email = form.get("email");
+                  const display_name = form.get("name");
+                  handleUserCreation(display_name, email, role);
+                }}
+                className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenUser(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-all"
+                >
+                  &times;
+                </button>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
+                    <UserPlus className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">
+                      Create{" "}
+                      {currentModule === "commercial" ? "Project" : "Client"}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Add new{" "}
+                      {currentModule === "commercial" ? "project" : "client"}{" "}
+                      details
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <input
+                        name="email"
+                        type="email"
+                        required
+                        placeholder="client@example.com"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      />
+                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                        <Mail className="w-5 h-5 text-gray-400" />
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </main>
-
-      {/* Create User Dialog */}
-      <Dialog open={openUser} onClose={setOpenUser} className="relative z-10">
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = new FormData(e.target);
-                const email = form.get("email");
-                const display_name = form.get("name");
-                handleUserCreation(display_name, email, role);
-              }}
-              className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative"
-            >
-              <button
-                type="button"
-                onClick={() => setOpenUser(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-4">
-                Create {currentModule === "commercial" ? "Project" : "Client"}
-              </h2>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="Email"
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <input
-                name="name"
-                type="text"
-                required
-                placeholder={
-                  currentModule === "commercial"
-                    ? "Client Name"
-                    : "Display Name"
-                }
-                className="w-full mb-4 px-4 py-3 border rounded"
-              />
-              <label className="block font-medium mb-2">Role</label>
-              <div className="flex gap-6 mb-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="user"
-                    checked={role === "user"}
-                    onChange={handleChange}
-                    className="form-radio text-blue-600"
-                  />
-                  User
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="admin"
-                    checked={role === "admin"}
-                    onChange={handleChange}
-                    className="form-radio text-pink-600"
-                  />
-                  Admin
-                </label>
-              </div>
-              <button
-                type={isLoading ? "button" : "submit"}
-                disabled={isLoading}
-                className="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded hover:bg-blue-600"
-              >
-                {isLoading
-                  ? "Creating..."
-                  : `Create ${
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {currentModule === "commercial"
+                        ? "Client Name"
+                        : "Display Name"}
+                    </label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      placeholder={
+                        currentModule === "commercial"
+                          ? "Enter client name"
+                          : "Enter display name"
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Role
+                    </label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="relative">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="user"
+                            checked={role === "user"}
+                            onChange={handleChange}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              role === "user"
+                                ? "border-[#2E3D99]"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {role === "user" && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-[#2E3D99]"></div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-gray-700">User</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="relative">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="admin"
+                            checked={role === "admin"}
+                            onChange={handleChange}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              role === "admin"
+                                ? "border-[#2E3D99]"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {role === "admin" && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-[#2E3D99]"></div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-gray-700">Admin</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type={isLoading ? "button" : "submit"}
+                  disabled={isLoading}
+                  className="w-full mt-6 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    `Create ${
                       currentModule === "commercial" ? "Project" : "Client"
-                    }`}
-              </button>
-            </form>
+                    }`
+                  )}
+                </button>
+              </form>
+            </motion.div>
           </div>
         </div>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-10">
-        {console.log(selectedUser)}
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
+      {/* Edit Dialog - Enhanced */}
+      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-50">
+        <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button
-                onClick={() => setOpenEdit(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-lg"
+            >
+              <DialogPanel className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
+                <button
+                  onClick={() => setOpenEdit(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-all"
+                >
+                  &times;
+                </button>
 
-              <h2 className="text-lg font-bold mb-4">
-                Edit {currentModule === "commercial" ? "Project" : "Client"} ID
-                : {selectedUser.clientId}
-              </h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
+                    <Edit className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">
+                      Edit{" "}
+                      {currentModule === "commercial" ? "Project" : "Client"}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {currentModule === "commercial" ? "Project" : "Client"}{" "}
+                      ID:{" "}
+                      <span className="font-semibold text-[#2E3D99]">
+                        {selectedUser.clientId}
+                      </span>
+                    </p>
+                  </div>
+                </div>
 
-  {/* Name */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Name
-  </label>
-  <input
-    value={selectedUser.name}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        name: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                  {/* Name */}
+                  <div>
+                    <label className="block mb-2 font-medium text-sm text-gray-700">
+                      Name
+                    </label>
+                    <input
+                      value={selectedUser.name}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                  </div>
 
-  {/* Email */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Email
-  </label>
-  <input
-    type="email"
-    value={selectedUser.email || ""}
-    onChange={(e) =>
-      setSelectedUser({ ...selectedUser, email: e.target.value })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                  {/* Email */}
+                  <div>
+                    <label className="block mb-2 font-medium text-sm text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={selectedUser.email || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          email: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                  </div>
 
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Password
-  </label>
-  <input
-    placeholder="Update new password here and click edit"
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        password: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                  {/* Password */}
+                  <div>
+                    <label className="block mb-2 font-medium text-sm text-gray-700">
+                      Password (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Enter new password to update"
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          password: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                  </div>
 
-  {/* Address */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Address
-  </label>
-  <input
-    value={selectedUser.address || ""}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        address: e.target.value,  // fixed to update address
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
-  {/* Country */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Country
-  </label>
-  <input
-    value={selectedUser.country}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        country: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                  {/* Address */}
+                  <div>
+                    <label className="block mb-2 font-medium text-sm text-gray-700">
+                      Address
+                    </label>
+                    <input
+                      value={selectedUser.address || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          address: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                    />
+                  </div>
 
-  {/* State */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    State
-  </label>
-  <input
-    value={selectedUser.state}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        state: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
-    {/* Postcode */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Postcode
-  </label>
-  <input
-    value={selectedUser.postcode}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        postcode: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Country */}
+                    <div>
+                      <label className="block mb-2 font-medium text-sm text-gray-700">
+                        Country
+                      </label>
+                      <input
+                        value={selectedUser.country}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            country: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      />
+                    </div>
 
-      {/* ABN */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    ABN
-  </label>
-  <input
-    value={selectedUser.abn}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        abn: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+                    {/* State */}
+                    <div>
+                      <label className="block mb-2 font-medium text-sm text-gray-700">
+                        State
+                      </label>
+                      <input
+                        value={selectedUser.state}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            state: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
 
-              <Button
-                label={`Edit ${
-                  currentModule === "commercial" ? "Project" : "Client"
-                }`}
-                onClick={handleUserUpdate}
-              />
-            </DialogPanel>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Postcode */}
+                    <div>
+                      <label className="block mb-2 font-medium text-sm text-gray-700">
+                        Postcode
+                      </label>
+                      <input
+                        value={selectedUser.postcode}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            postcode: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      />
+                    </div>
+
+                    {/* ABN */}
+                    <div>
+                      <label className="block mb-2 font-medium text-sm text-gray-700">
+                        ABN
+                      </label>
+                      <input
+                        value={selectedUser.abn}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            abn: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleUserUpdate}
+                  className="w-full mt-6 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Update {currentModule === "commercial" ? "Project" : "Client"}
+                </button>
+              </DialogPanel>
+            </motion.div>
           </div>
         </div>
       </Dialog>
 
-      {/* Delete Dialog */}
+      {/* Delete Dialog - Enhanced */}
       <Dialog
         open={openDelete}
         onClose={setOpenDelete}
-        className="relative z-10"
+        className="relative z-50"
       >
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
+        <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-md relative">
-              <button
-                onClick={() => setOpenDelete(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-4">
-                Delete {currentModule === "commercial" ? "Project" : "Client"}
-              </h2>
-              <p className="mb-6">
-                Are you sure you want to delete this{" "}
-                {currentModule === "commercial" ? "project" : "client"}?
-              </p>
-              <button
-                onClick={handleUserDelete}
-                disabled={deleteLoading}
-                className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {deleteLoading && (
-                  <Loader2 size={16} className="animate-spin" />
-                )}
-                {deleteLoading ? "Deleting..." : "Delete"}
-              </button>
-            </DialogPanel>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md"
+            >
+              <DialogPanel className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
+                <button
+                  onClick={() => setOpenDelete(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-all"
+                >
+                  &times;
+                </button>
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-red-100 to-red-200 flex items-center justify-center">
+                    <Trash2 className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">
+                    Delete{" "}
+                    {currentModule === "commercial" ? "Project" : "Client"}
+                  </h2>
+                  <p className="text-gray-600 mb-6">
+                    Are you sure you want to delete this{" "}
+                    {currentModule === "commercial" ? "project" : "client"}?
+                    This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setOpenDelete(false)}
+                      className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUserDelete}
+                      disabled={deleteLoading}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {deleteLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </DialogPanel>
+            </motion.div>
           </div>
         </div>
       </Dialog>
 
-      {/* a11y live announcements (non-visual) */}
+      {/* a11y live announcements */}
       <div className="sr-only" aria-live="polite">
         {resetLoadingEmail && `Sending reset link to ${resetLoadingEmail}`}
         {resetSuccessEmail && `Reset link sent to ${resetSuccessEmail}`}

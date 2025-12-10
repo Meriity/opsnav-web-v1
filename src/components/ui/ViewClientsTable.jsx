@@ -20,7 +20,7 @@ const ViewClientsTable = ({
   handelOT,
   currentModule,
   users,
-  handleChangeUser
+  handleChangeUser,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -62,15 +62,16 @@ const ViewClientsTable = ({
       {/* Desktop Table View */}
       <div className="hidden lg:block">
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
-          <thead className="bg-[#A6E7FF]">
+          <thead className="bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white">
             <tr>
               {columns.map((column, colIndex) => (
                 <th
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm text-black ${colIndex === 0 ? "rounded-l-2xl" : ""
-                    } cursor-pointer select-none`}
+                  className={`px-2 py-3 text-center text-sm ${
+                    colIndex === 0 ? "rounded-l-2xl" : ""
+                  } cursor-pointer select-none`}
                 >
                   <div className="flex flex-col items-center">
                     <span>{column.title}</span>
@@ -89,19 +90,19 @@ const ViewClientsTable = ({
                 </th>
               ))}
               <th
-                className="pl-6 pr-5 py-3 text-center text-sm text-black"
+                className="pl-6 pr-5 py-3 text-center text-sm"
                 style={{ width: "11%" }}
               >
                 Stages
               </th>
               <th
-                className="py-3 pl-6 text-center text-sm text-black"
+                className="py-3 pl-6 text-center text-sm"
                 style={{ width: "6.5%" }}
               >
                 OT
               </th>
               <th
-                className="pl-2 pr-2 py-3 text-center text-sm text-black rounded-r-2xl"
+                className="pl-2 pr-2 py-3 text-center text-sm rounded-r-2xl"
                 style={{ width: "6.5%" }}
               >
                 Action
@@ -118,8 +119,9 @@ const ViewClientsTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key}
-                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${colIndex === 0 ? "rounded-l-2xl" : ""
-                        }`}
+                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
+                        colIndex === 0 ? "rounded-l-2xl" : ""
+                      }`}
                     >
                       <div
                         className="lg:font-normal 2xl:text-center"
@@ -135,8 +137,8 @@ const ViewClientsTable = ({
                           "matterDate",
                         ].includes(column.key) ? (
                           item[column.key] &&
-                            item[column.key] !== "-" &&
-                            item[column.key] !== "N/A" ? (
+                          item[column.key] !== "-" &&
+                          item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
                             <span className="text-sm font-bold text-gray-700">
@@ -144,8 +146,8 @@ const ViewClientsTable = ({
                             </span>
                           )
                         ) : (column.key === "billing_address" ||
-                          column.key === "businessAddress" ||
-                          column.key === "property_address") &&
+                            column.key === "businessAddress" ||
+                            column.key === "property_address") &&
                           item[column.key] ? (
                           <a
                             href={`https://www.google.com/maps?q=${encodeURIComponent(
@@ -169,23 +171,30 @@ const ViewClientsTable = ({
                                 }
                                 value={item.allocatedUser || ""}
                                 onChange={(e) => {
-                                  handleChangeUser(e.target.value, item.orderId);
-                                  item.allocatedUser = e.target.value; 
-                                  setRefresh((prev) => !prev); 
+                                  handleChangeUser(
+                                    e.target.value,
+                                    item.orderId
+                                  );
+                                  item.allocatedUser = e.target.value;
+                                  setRefresh((prev) => !prev);
                                 }}
-                                disabled={localStorage.getItem("role") !== "admin"}
+                                disabled={
+                                  localStorage.getItem("role") !== "admin"
+                                }
                               >
                                 <option value="">
                                   {item?.allocatedUser || "Select User"}
                                 </option>
 
                                 {users.map((user) => (
-                                  <option key={user.id} value={`${user.id}-${user.name}`}>
+                                  <option
+                                    key={user.id}
+                                    value={`${user.id}-${user.name}`}
+                                  >
                                     {user.name}
                                   </option>
                                 ))}
                               </select>
-
                             ) : (
                               ""
                             )}
@@ -201,10 +210,11 @@ const ViewClientsTable = ({
                       {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
-                            href={`/admin/client/stages/${currentModule === "commercial"
-                              ? item.matterNumber
-                              : item.matternumber || item.orderId
-                              }/${index + 1}`}
+                            href={`/admin/client/stages/${
+                              currentModule === "commercial"
+                                ? item.matterNumber
+                                : item.matternumber || item.orderId
+                            }/${index + 1}`}
                             key={keyName}
                             className="px-1 py-1 text-white rounded text-xs cursor-pointer"
                             style={{
@@ -227,7 +237,7 @@ const ViewClientsTable = ({
                       <button
                         type="button"
                         title="View Outstanding Tasks"
-                        className="p-1 text-gray-700 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => {
                           handelOTOpen();
                           handelOT(
@@ -251,7 +261,7 @@ const ViewClientsTable = ({
                               : item.matternumber || item.orderId;
                           navigate(`/admin/client/stages/${id}`);
                         }}
-                        className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                        className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                         title="Edit"
                       >
                         <Edit size={12} />
@@ -278,7 +288,6 @@ const ViewClientsTable = ({
 
       {/* Mobile & Tablet Card View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {console.log(currentData)}
         {currentData.map((item) => (
           <div
             key={item.id}
@@ -290,20 +299,20 @@ const ViewClientsTable = ({
                   {currentModule === "commercial"
                     ? "Business Address"
                     : localStorage.getItem("company") === "vkl"
-                      ? "Property Address"
-                      : localStorage.getItem("company") === "idg"
-                        ? "Billing Address"
-                        : "Address"}
+                    ? "Property Address"
+                    : localStorage.getItem("company") === "idg"
+                    ? "Billing Address"
+                    : "Address"}
                 </p>
                 <p className="text-sm break-words">
                   {item.businessAddress ||
-                    item.property_address ||
-                    item.billing_address ? (
+                  item.property_address ||
+                  item.billing_address ? (
                     <a
                       href={`https://www.google.com/maps?q=${encodeURIComponent(
                         item.businessAddress ||
-                        item.property_address ||
-                        item.billing_address
+                          item.property_address ||
+                          item.billing_address
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -344,7 +353,7 @@ const ViewClientsTable = ({
                         : item.matternumber || item.orderId;
                     navigate(`/admin/client/stages/${id}`);
                   }}
-                  className="p-1 text-blue-600"
+                  className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                   title="Edit"
                 >
                   <Edit size={16} />
@@ -378,10 +387,10 @@ const ViewClientsTable = ({
                 {currentModule === "commercial"
                   ? "Business Address"
                   : localStorage.getItem("company") === "vkl"
-                    ? "Property Address"
-                    : localStorage.getItem("company") === "idg"
-                      ? "Billing Address"
-                      : "Address"}
+                  ? "Property Address"
+                  : localStorage.getItem("company") === "idg"
+                  ? "Billing Address"
+                  : "Address"}
               </p>
               <p className="text-sm break-words">
                 {item.businessAddress ||
@@ -396,16 +405,16 @@ const ViewClientsTable = ({
                   {currentModule === "commercial"
                     ? "Completion Date"
                     : localStorage.getItem("company") === "vkl"
-                      ? "Settlement Date"
-                      : localStorage.getItem("company") === "idg"
-                        ? "Delivery Date"
-                        : "Date"}
+                    ? "Settlement Date"
+                    : localStorage.getItem("company") === "idg"
+                    ? "Delivery Date"
+                    : "Date"}
                 </p>
                 <p>
                   {formatDate(
                     item.settlementDate ||
-                    item.settlement_date ||
-                    item.delivery_date
+                      item.settlement_date ||
+                      item.delivery_date
                   )}
                 </p>
               </div>
@@ -423,10 +432,11 @@ const ViewClientsTable = ({
                 {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
                   <button
                     onClick={() => {
-                      const path = `/admin/client/stages/${currentModule === "commercial"
-                        ? item.matterNumber
-                        : item.matternumber || item.orderId
-                        }/${index + 1}`;
+                      const path = `/admin/client/stages/${
+                        currentModule === "commercial"
+                          ? item.matterNumber
+                          : item.matternumber || item.orderId
+                      }/${index + 1}`;
                       navigate(path);
                     }}
                     key={keyName}

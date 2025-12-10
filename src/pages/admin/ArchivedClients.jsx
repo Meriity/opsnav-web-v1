@@ -17,6 +17,21 @@ import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MatterDetailsModal from "@/components/ui/MatterDetailsModal";
 import { useClientDetails } from "@/hooks/useClientDetails";
+import { motion } from "framer-motion";
+import {
+  Archive,
+  Download,
+  Filter,
+  Calendar,
+  Search,
+  FileText,
+  Building,
+  FolderOpen,
+  ChevronRight,
+  Plus,
+  AlertCircle,
+  Users,
+} from "lucide-react";
 
 function ClientsPerPage({ value, onChange }) {
   return (
@@ -40,6 +55,28 @@ function ClientsPerPage({ value, onChange }) {
     </div>
   );
 }
+
+// Floating Background Elements
+const FloatingElement = ({ top, left, delay, size = 60 }) => (
+  <motion.div
+    className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+    style={{
+      width: size,
+      height: size,
+      top: `${top}%`,
+      left: `${left}%`,
+    }}
+    animate={{
+      y: [0, -20, 0],
+      x: [0, 10, 0],
+    }}
+    transition={{
+      duration: 3 + delay,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
+);
 
 export default function ArchivedClients() {
   const navigate = useNavigate();
@@ -494,225 +531,409 @@ export default function ArchivedClients() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
-      <Header />
-      <main className="w-full max-w-8xl mx-auto p-5">
-        {/* Toolbar */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
-          {/* --- Desktop-only Buttons --- */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Button
-                label={isExporting ? "Exporting..." : "Export"}
-                onClick={() => setOpenExcel(true)}
-                disabled={isExporting}
-                className="bg-[#00AEEF] hover:bg-blue-600 text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-              />
-              <Button
-                label="Filter"
-                onClick={() => setShowSettlementDateModal(true)}
-                className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-              />
-              <Button
-                label="Select Date Range"
-                onClick={() => setShowSettlementDateModal(true)}
-                className="text-sm px-2 py-1 sm:text-base sm:px-4 sm:py-2"
-              />
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden overflow-x-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.06]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                              linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
+          />
         </div>
+      </div>
 
-        {/* Use consolidated isLoading */}
-        {isLoading ? (
-          <Loader />
-        ) : (
-          <>
-            {/* --- Desktop Table View --- */}
-            <div className="hidden lg:block">
-              <div className="flex justify-start mb-4">
-                <ClientsPerPage
-                  value={clientsPerPage}
-                  onChange={(e) => setClientsPerPage(Number(e.target.value))}
-                />
-              </div>
-              {/* Use sortedClientList */}
-              {sortedClientList.length > 0 ? (
-                <Table
-                  data={sortedClientList}
-                  columns={columns}
-                  itemsPerPage={clientsPerPage}
-                  showActions={true}
-                  cellWrappingClass="whitespace-normal"
-                  headerBgColor="bg-[#A6E7FF]"
-                  OnEye={handleViewClient}
-                  EditOrder={true}
-                  sortedColumn={sortedColumn}
-                  sortDirection={sortDirection}
-                  handleSort={handleSort}
-                />
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No{" "}
+      <div className="relative z-10 w-full box-border">
+        <Header />
+
+        <main className="p-3 sm:p-4 md:p-6 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 w-full max-w-screen-2xl mx-auto box-border">
+          {/* Welcome Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 sm:mb-8"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                    {getPageTitle()}
+                  </span>
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+                  View and manage{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
-                    : "archived clients"}{" "}
-                  found
-                </div>
-              )}
-            </div>
-
-            {/* --- Mobile & Tablet Card View --- */}
-            <div className="grid grid-cols-1 gap-4 lg:hidden">
-              {/* Container for Dropdown and Three-Dots Menu */}
-              <div className="flex justify-between items-center mb-4">
-                <ClientsPerPage
-                  value={clientsPerPage}
-                  onChange={(e) => setClientsPerPage(Number(e.target.value))}
-                />
-
-                <Menu as="div" className="relative">
-                  <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    <EllipsisVerticalIcon
-                      className="h-5 w-5 text-gray-600"
-                      aria-hidden="true"
-                    />
-                  </Menu.Button>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
-                  >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <div className="py-1">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setOpenExcel(true)}
-                              disabled={isExporting}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              } ${
-                                isExporting
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                            >
-                              {isExporting ? "Exporting..." : "Export"}
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
-                            >
-                              Filter
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => setShowSettlementDateModal(true)}
-                              className={`block w-full text-left px-4 py-2 text-sm ${
-                                active ? "bg-gray-100" : "text-gray-700"
-                              }`}
-                            >
-                              Select Date Range
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </div>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                    : company === "idg"
+                    ? "completed orders"
+                    : "archived clients"}
+                </p>
               </div>
+            </div>
+          </motion.div>
 
-              {/* Mobile Client Cards */}
-              {/* Use sortedClientList */}
-              {sortedClientList.length > 0 ? (
-                sortedClientList.slice(0, clientsPerPage).map((client) => (
-                  <div
-                    key={client.id || client.matterNumber || client.orderId}
-                    className="bg-white p-4 rounded-lg shadow"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-bold truncate">
-                        {client.client_name || client.clientName}
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {client.matternumber ||
-                          client.matterNumber ||
-                          client.orderId}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {/* Show business address for commercial, property address for others */}
-                      {currentModule === "commercial"
-                        ? client.business_address || client.businessAddress
-                        : client.property_address || client.propertyAddress}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="font-semibold">State: </span>
-                        {client.state || client.dataEntryBy}
-                      </div>
-                      <div>
-                        <span className="font-semibold">Type: </span>
-                        {client.type || client.clientType || client.ordertype}
-                      </div>
-                      <div>
-                        <span className="font-semibold">
-                          {currentModule === "commercial"
-                            ? "Project Date:"
-                            : company === "vkl"
-                            ? "Matter Date:"
-                            : "Order Date"}
-                        </span>
-                        {client.matter_date || client.orderDate}
-                      </div>
-                      <div>
-                        <span className="font-semibold">
-                          {getDateFieldLabel()}:{" "}
-                        </span>
-                        {client.settlement_date || client.deliveryDate}
-                      </div>
-                      <div>
-                        <span className="font-semibold">Status: </span>
-                        {client.status}
-                      </div>
-                    </div>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        onClick={() => handleViewClient(client)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                    </div>
+          {/* Action Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 w-full"
+          >
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                    All{" "}
+                    {currentModule === "commercial"
+                      ? "Archived Projects"
+                      : company === "idg"
+                      ? "Completed Orders"
+                      : "Archived Clients"}
+                  </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="clients-per-page"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Show:
+                    </label>
+                    <select
+                      id="clients-per-page"
+                      value={clientsPerPage}
+                      onChange={(e) =>
+                        setClientsPerPage(Number(e.target.value))
+                      }
+                      className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-sm"
+                    >
+                      <option>5</option>
+                      <option>10</option>
+                      <option>20</option>
+                      <option>50</option>
+                      <option>100</option>
+                      <option>200</option>
+                      <option>500</option>
+                    </select>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
+
+                  <div className="hidden lg:flex items-center gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setOpenExcel(true)}
+                      disabled={isExporting}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      {isExporting ? "Exporting..." : "Export"}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowSettlementDateModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                    >
+                      <Filter className="w-4 h-4" />
+                      Filter
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowSettlementDateModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Date Range
+                    </motion.button>
+                  </div>
+
+                  {/* Mobile Actions Menu */}
+                  <div className="flex lg:hidden items-center">
+                    <Menu as="div" className="relative">
+                      <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
+                      </Menu.Button>
+                      <Transition
+                        as={Fragment}
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                      >
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div className="py-1">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() => setOpenExcel(true)}
+                                  disabled={isExporting}
+                                  className={`block w-full text-left px-4 py-2 text-sm ${
+                                    active
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "text-gray-700"
+                                  } ${
+                                    isExporting
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Download className="w-4 h-4" />
+                                    {isExporting ? "Exporting..." : "Export"}
+                                  </div>
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() =>
+                                    setShowSettlementDateModal(true)
+                                  }
+                                  className={`block w-full text-left px-4 py-2 text-sm ${
+                                    active
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Filter className="w-4 h-4" />
+                                    Filter
+                                  </div>
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() =>
+                                    setShowSettlementDateModal(true)
+                                  }
+                                  className={`block w-full text-left px-4 py-2 text-sm ${
+                                    active
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    Date Range
+                                  </div>
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </div>
+                        </Menu.Items>
+                      </Transition>
+                    </Menu>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Content Area */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 w-full"
+          >
+            {error && (
+              <div
+                className="p-4 m-4 text-red-700 bg-red-100 border-l-4 border-red-500 rounded-r-lg"
+                role="alert"
+              >
+                <p className="font-medium">Error loading data</p>
+                <p className="text-sm">{error.message}</p>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader />
+              </div>
+            ) : !sortedClientList || sortedClientList.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                  <Archive className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   No{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
+                    : company === "idg"
+                    ? "completed orders"
                     : "archived clients"}{" "}
                   found
+                </h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  {searchQuery || fromDate
+                    ? "Try adjusting your search or filter criteria"
+                    : `No ${
+                        currentModule === "commercial"
+                          ? "projects have been archived yet"
+                          : company === "idg"
+                          ? "orders have been completed yet"
+                          : "clients have been archived yet"
+                      }`}
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-6">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block">
+                  <Table
+                    data={sortedClientList}
+                    columns={columns}
+                    itemsPerPage={clientsPerPage}
+                    showActions={true}
+                    cellWrappingClass="whitespace-normal"
+                    headerBgColor="bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white"
+                    OnEye={handleViewClient}
+                    EditOrder={true}
+                    sortedColumn={sortedColumn}
+                    sortDirection={sortDirection}
+                    handleSort={handleSort}
+                  />
                 </div>
-              )}
-            </div>
-          </>
-        )}
-      </main>
+
+                {/* Mobile & Tablet Card View */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+                  {sortedClientList.slice(0, clientsPerPage).map((client) => (
+                    <motion.div
+                      key={client.id || client.matterNumber || client.orderId}
+                      whileHover={{ y: -4 }}
+                      className="bg-white/90 backdrop-blur-lg border border-white/50 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <div className="flex justify-between items-start space-x-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
+                              {currentModule === "commercial" ? (
+                                <Building className="w-4 h-4 text-white" />
+                              ) : company === "idg" ? (
+                                <FolderOpen className="w-4 h-4 text-white" />
+                              ) : (
+                                <Users className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-800 truncate">
+                                {client.client_name || client.clientName}
+                              </h3>
+                              <p className="text-sm text-gray-500 truncate">
+                                {client.matternumber ||
+                                  client.matterNumber ||
+                                  client.orderId}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-gray-100/50">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="space-y-1 col-span-2">
+                            <span className="font-semibold text-gray-500">
+                              {getAddressFieldLabel()}:
+                            </span>
+                            <p className="text-gray-600">
+                              {currentModule === "commercial"
+                                ? client.business_address ||
+                                  client.businessAddress
+                                : client.property_address ||
+                                  client.propertyAddress}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-semibold text-gray-500">
+                              State:
+                            </span>
+                            <div className="text-gray-600">{client.state}</div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-semibold text-gray-500">
+                              Type:
+                            </span>
+                            <div className="text-gray-600">
+                              {client.type ||
+                                client.clientType ||
+                                client.ordertype}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-semibold text-gray-500">
+                              {currentModule === "commercial"
+                                ? "Project Date:"
+                                : company === "idg"
+                                ? "Order Date:"
+                                : "Matter Date:"}
+                            </span>
+                            <div className="text-gray-600">
+                              {client.matter_date || client.orderDate}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-semibold text-gray-500">
+                              {getDateFieldLabel()}:
+                            </span>
+                            <div className="text-gray-600">
+                              {client.settlement_date || client.deliveryDate}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-semibold text-gray-500">
+                              Status:
+                            </span>
+                            <div
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                client.status === "archived"
+                                  ? "bg-gray-100 text-gray-700"
+                                  : client.status === "completed"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              {client.status}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => handleViewClient(client)}
+                          className="flex items-center gap-1 text-sm text-[#2E3D99] hover:text-[#1D97D7] font-medium"
+                        >
+                          View Details
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </div>
+
+      {/* Modals */}
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
