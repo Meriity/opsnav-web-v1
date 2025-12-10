@@ -1,43 +1,61 @@
 import { useState } from "react";
+
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+
 import Button from "./Button";
+
 import { RefreshCcw } from "lucide-react";
+
 import { toast } from "react-toastify";
 
 export default function DateRangeModal({
   isOpen,
+
   setIsOpen,
+
   subTitle = "",
+
   handelSubmitFun,
+
   onReset,
 }) {
   const [isLoading, setIsLoading] = useState(false);
+
   const [fromDate, setFromDate] = useState("");
+
   const [toDate, setToDate] = useState("");
+
   const [dateType, setDateType] = useState("settlement_date"); // default
 
   const handelSubmit = async () => {
     setIsLoading(true);
+
     if (fromDate && toDate) {
       try {
         // Pass dateType along with range
+
         await handelSubmitFun(fromDate, toDate, dateType);
       } catch (error) {
         toast.error(error.message);
       } finally {
         setIsLoading(false);
+
         setIsOpen(false);
       }
     } else {
       toast.error("Please select a valid date range");
+
       setIsLoading(false);
     }
   };
 
   const handelDateReset = () => {
     setFromDate("");
+
     setToDate("");
+
     setDateType("settlement_date");
+
     if (onReset) {
       onReset();
     }
@@ -67,22 +85,23 @@ export default function DateRangeModal({
             <p className="text-sm text-gray-600 mb-5">{subTitle}</p>
 
             {/* Select which date type */}
-            {localStorage.getItem("company")==="idg" && 
-            <div className="space-y-2 mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Filter By
-              </label>
-              <select
-                value={dateType}
-                onChange={(e) => setDateType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="delivery_date">Delivery Date</option>
-                <option value="order_date">Order Date</option>
-                <option value="both_date">Both date</option>
-              </select>
-            </div>
-            }
+
+            {localStorage.getItem("company") === "idg" && (
+              <div className="space-y-2 mb-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Filter By
+                </label>
+                <select
+                  value={dateType}
+                  onChange={(e) => setDateType(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="delivery_date">Delivery Date</option>
+                  <option value="order_date">Order Date</option>
+                  <option value="both_date">Both date</option>
+                </select>
+              </div>
+            )}
 
             {/* From / To Dates */}
             <div className="space-y-2">
@@ -106,7 +125,7 @@ export default function DateRangeModal({
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />
+              />  
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

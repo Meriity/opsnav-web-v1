@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import userplus from "../../icons/Button icons/Group 313 (1).png";
-
+import { motion } from "framer-motion";
 import NotificationAPI from "../../api/notificationAPI";
 
 // 🔸 Zustand Store
@@ -111,8 +111,8 @@ function UsersPerPage({ value, onChange }) {
     currentModule === "commercial"
       ? "Projects"
       : company === "idg"
-      ? "Clients"
-      : "Clients";
+        ? "Clients"
+        : "Clients";
 
   return (
     <div className="flex items-center space-x-2 text-sm text-gray-700">
@@ -244,9 +244,8 @@ export default function ManageUsers() {
       const notificationAPI = new NotificationAPI();
       await notificationAPI.createNotification({
         type: "client",
-        message: `New ${
-          currentModule === "commercial" ? "project" : "client"
-        } created: ${display_name}`,
+        message: `New ${currentModule === "commercial" ? "project" : "client"
+          } created: ${display_name}`,
         metadata: {
           clientName: display_name,
           email: email,
@@ -259,8 +258,7 @@ export default function ManageUsers() {
       });
 
       toast.success(
-        `${
-          currentModule === "commercial" ? "Project" : "Client"
+        `${currentModule === "commercial" ? "Project" : "Client"
         } created successfully!`
       );
       setOpenUser(false);
@@ -273,7 +271,7 @@ export default function ManageUsers() {
       } else {
         toast.error(
           err.response?.data?.message ||
-            "Something went wrong. Please try again!"
+          "Something went wrong. Please try again!"
         );
       }
     } finally {
@@ -309,16 +307,14 @@ export default function ManageUsers() {
       // });
 
       toast.success(
-        `${
-          currentModule === "commercial" ? "Project" : "Client"
+        `${currentModule === "commercial" ? "Project" : "Client"
         } updated successfully!`
       );
       setOpenEdit(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to update ${
-          currentModule === "commercial" ? "project" : "client"
+        `Failed to update ${currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Update Error:", err);
@@ -336,16 +332,14 @@ export default function ManageUsers() {
         await api.deleteIDGClient(id.clientId);
       }
       toast.success(
-        `${
-          currentModule === "commercial" ? "Project" : "Client"
+        `${currentModule === "commercial" ? "Project" : "Client"
         } deleted successfully!`
       );
       setOpenDelete(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to delete ${
-          currentModule === "commercial" ? "project" : "client"
+        `Failed to delete ${currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Delete Error:", err);
@@ -388,12 +382,20 @@ export default function ManageUsers() {
             setIsOpen={() => setcreateuser(false)}
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
-          <Button
+          {/* <Button
             label={getCreateButtonLabel()}
             Icon1={userplus}
             onClick={() => setcreateuser(true)}
             width="w-[150px]"
-          />
+          /> */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setcreateuser(true)}
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+          >
+            <span className="xs:hidden">Add Client</span>
+          </motion.button>
         </div>
 
         {/* Table or Loader */}
@@ -423,7 +425,7 @@ export default function ManageUsers() {
                   setOpenDelete(true);
                 }}
                 itemsPerPage={usersPerPage}
-                headerBgColor="bg-[#A6E7FF]"
+                headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                 cellWrappingClass="whitespace-normal"
                 resetLoadingEmail={resetLoadingEmail}
                 resetSuccessEmail={resetSuccessEmail}
@@ -583,9 +585,8 @@ export default function ManageUsers() {
               >
                 {isLoading
                   ? "Creating..."
-                  : `Create ${
-                      currentModule === "commercial" ? "Project" : "Client"
-                    }`}
+                  : `Create ${currentModule === "commercial" ? "Project" : "Client"
+                  }`}
               </button>
             </form>
           </div>
@@ -611,125 +612,124 @@ export default function ManageUsers() {
                 : {selectedUser.clientId}
               </h2>
 
-  {/* Name */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Name
-  </label>
-  <input
-    value={selectedUser.name}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        name: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              {/* Name */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Name
+              </label>
+              <input
+                value={selectedUser.name}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    name: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
-  {/* Email */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Email
-  </label>
-  <input
-    type="email"
-    value={selectedUser.email || ""}
-    onChange={(e) =>
-      setSelectedUser({ ...selectedUser, email: e.target.value })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              {/* Email */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                value={selectedUser.email || ""}
+                onChange={(e) =>
+                  setSelectedUser({ ...selectedUser, email: e.target.value })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Password
-  </label>
-  <input
-    placeholder="Update new password here and click edit"
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        password: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Password
+              </label>
+              <input
+                placeholder="Update new password here and click edit"
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    password: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
-  {/* Address */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Address
-  </label>
-  <input
-    value={selectedUser.address || ""}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        address: e.target.value,  // fixed to update address
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
-  {/* Country */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Country
-  </label>
-  <input
-    value={selectedUser.country}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        country: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              {/* Address */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Address
+              </label>
+              <input
+                value={selectedUser.address || ""}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    address: e.target.value,  // fixed to update address
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
+              {/* Country */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Country
+              </label>
+              <input
+                value={selectedUser.country}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    country: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
-  {/* State */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    State
-  </label>
-  <input
-    value={selectedUser.state}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        state: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
-    {/* Postcode */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    Postcode
-  </label>
-  <input
-    value={selectedUser.postcode}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        postcode: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              {/* State */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                State
+              </label>
+              <input
+                value={selectedUser.state}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    state: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
+              {/* Postcode */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                Postcode
+              </label>
+              <input
+                value={selectedUser.postcode}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    postcode: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
-      {/* ABN */}
-  <label className="block mb-1 font-medium text-sm text-gray-700">
-    ABN
-  </label>
-  <input
-    value={selectedUser.abn}
-    onChange={(e) =>
-      setSelectedUser({
-        ...selectedUser,
-        abn: e.target.value,   // changed to update name, not displayName
-      })
-    }
-    className="w-full mb-2 px-4 py-3 border rounded"
-  />
+              {/* ABN */}
+              <label className="block mb-1 font-medium text-sm text-gray-700">
+                ABN
+              </label>
+              <input
+                value={selectedUser.abn}
+                onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                    abn: e.target.value,   // changed to update name, not displayName
+                  })
+                }
+                className="w-full mb-2 px-4 py-3 border rounded"
+              />
 
               <Button
-                label={`Edit ${
-                  currentModule === "commercial" ? "Project" : "Client"
-                }`}
+                label={`Edit ${currentModule === "commercial" ? "Project" : "Client"
+                  }`}
                 onClick={handleUserUpdate}
               />
             </DialogPanel>

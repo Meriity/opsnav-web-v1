@@ -4,7 +4,7 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
-  DialogTitle
+  DialogTitle,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
@@ -21,10 +21,28 @@ import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
-import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js"
+import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import { delay } from "framer-motion";
+import { motion } from "framer-motion";
+import {
+  Users,
+  FolderOpen,
+  Archive,
+  Building,
+  Plus,
+  Calendar,
+  Filter,
+  ChevronRight,
+  Search,
+  Download,
+  BarChart3,
+  Clock,
+  Target,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -41,12 +59,21 @@ const ViewClients = () => {
   const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
-  const saved = localStorage.getItem("viewClientsDateFilter");
-  return saved ? JSON.parse(saved) : { type: "delivery_date", range: ["", ""] };  
+    const saved = localStorage.getItem("viewClientsDateFilter");
+    return saved
+      ? JSON.parse(saved)
+      : { type: "delivery_date", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
-  const { clients: Clients, fetchClients, list, user, loading, error } = useClientStore();
+  const {
+    clients: Clients,
+    fetchClients,
+    list,
+    user,
+    loading,
+    error,
+  } = useClientStore();
   const [allocatedUser, setallocatedUser] = useState("");
   const { searchQuery } = useSearchStore();
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -145,19 +172,23 @@ const ViewClients = () => {
         let orderDateObj = moment(client.order_date || client.orderDate);
 
         // Check if delivery or order date falls within range
-        const inDeliveryRange = deliveryDateObj.isValid() && deliveryDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
+        const inDeliveryRange =
+          deliveryDateObj.isValid() &&
+          deliveryDateObj.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
 
-        const inOrderRange = orderDateObj.isValid() && orderDateObj.isBetween(
-          moment(startDate),
-          moment(endDate),
-          "day",
-          "[]"
-        );
+        const inOrderRange =
+          orderDateObj.isValid() &&
+          orderDateObj.isBetween(
+            moment(startDate),
+            moment(endDate),
+            "day",
+            "[]"
+          );
 
         if (dateFilter.type === "delivery_date") {
           return inDeliveryRange;
@@ -169,13 +200,14 @@ const ViewClients = () => {
 
         return;
       });
-    }
-    else {
+    } else {
       if (startDate && endDate) {
         filteredData = filteredData.filter((client) => {
           let clientDate;
           if (currentModule === "commercial") {
-            clientDate = moment(client.settlement_date || client.settlementDate);
+            clientDate = moment(
+              client.settlement_date || client.settlementDate
+            );
           } else {
             clientDate = moment(client.settlement_date);
           }
@@ -226,10 +258,16 @@ const ViewClients = () => {
         }
       });
     }
-    filteredData = [...filteredData].reverse();
-    setClientList(filteredData);
 
-  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
+    setClientList(filteredData);
+  }, [
+    dateFilter,
+    Clients,
+    commercialClients,
+    searchQuery,
+    currentModule,
+    company,
+  ]);
 
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
@@ -313,13 +351,13 @@ const ViewClients = () => {
         currentModule === "commercial" ? commercialClients : Clients
       );
     } else {
-      const filtered = (currentModule === "commercial" ? commercialClients : Clients)
-        .filter(client => client.client_name === selectedName);
+      const filtered = (
+        currentModule === "commercial" ? commercialClients : Clients
+      ).filter((client) => client.client_name === selectedName);
 
       setClientList(filtered);
     }
   };
-
 
   const handelShareEmailModalClose = () => {
     setShowShareDialog(false);
@@ -355,9 +393,8 @@ const ViewClients = () => {
   };
 
   useEffect(() => {
-  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-}, [dateFilter]);
-
+    localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+  }, [dateFilter]);
 
   const shouldShowOutstandingTasks = () => {
     return currentModule === "commercial" || company === "vkl";
@@ -388,7 +425,7 @@ const ViewClients = () => {
           setcreateuser(false);
           setCreateProject(false);
         }}
-        onClose={()=>setcreateuser(false)}
+        onClose={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
@@ -401,15 +438,16 @@ const ViewClients = () => {
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
-          }.`}
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial" ? "projects" : "clients"
+        }.`}
         handelSubmitFun={(fromDate, toDate, dateType) => {
           setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
         }}
         onReset={() => {
-          setDateFilter({ type: "settlement_date", range: ["", ""] }) 
-          setShowDateRange(false); 
+          setDateFilter({ type: "settlement_date", range: ["", ""] });
+          setShowDateRange(false);
         }}
       />
 
@@ -483,7 +521,9 @@ const ViewClients = () => {
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
         <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-            <DialogTitle className={"text-xl mb-5"}>Task Allocation Report</DialogTitle>
+            <DialogTitle className={"text-xl mb-5"}>
+              Task Allocation Report
+            </DialogTitle>
             <div className="flex items-center gap-2 mb-5">
               <label
                 htmlFor="items-per-page"
@@ -499,9 +539,7 @@ const ViewClients = () => {
               >
                 <option value="">All Users</option>
                 {user.map((user) => (
-                  <option value={user.name}>
-                    {user.name}
-                  </option>
+                  <option value={user.name}>{user.name}</option>
                 ))}
               </select>
             </div>
@@ -509,14 +547,12 @@ const ViewClients = () => {
             <button
               className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
               onClick={() => {
-                generateTaskAllocationPDF(allocatedUser)
-                setShowTar(false)
+                generateTaskAllocationPDF(allocatedUser);
+                setShowTar(false);
               }}
             >
               Download
             </button>
-
-
           </DialogPanel>
         </div>
       </Dialog>
@@ -553,7 +589,7 @@ const ViewClients = () => {
                 <option value={500}>500</option>
               </select>
             </div>
-            {localStorage.getItem("company") == "idg" &&
+            {localStorage.getItem("company") == "idg" && (
               <div className="flex items-center gap-2">
                 {/* <label
                 htmlFor="items-per-page"
@@ -576,7 +612,7 @@ const ViewClients = () => {
                   ))}
                 </select>
               </div>
-            }
+            )}
 
             {/* Consolidated Desktop Buttons */}
             <div className="hidden lg:flex items-center gap-1.5">
@@ -587,22 +623,26 @@ const ViewClients = () => {
                     Icon1={userplus}
                     onClick={() => setcreateuser(true)}
                     width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   />
+
                   <Button
                     label="Outstanding Tasks"
                     onClick={() => setShowOutstandingTask(true)}
                     width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   />
                   <Button
                     label="Select Date Range"
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   />
                 </>
               )}
               {localStorage.getItem("company") === "idg" && (
                 <>
-                  <Button
+                  {/* <Button
                     label="Create Client"
                     Icon1={userplus}
                     onClick={() => setcreateuser(true)}
@@ -617,16 +657,49 @@ const ViewClients = () => {
                     label="Select Date Range"
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
-                  />
-                  <Button
-                    label="Task Report"
+                  /> */}
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setcreateuser(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Create Client
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setcreateOrder(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Create Order
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    Date Range
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setShowTar(true)}
-                    width="w-[100px]"
-                  />
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    Task Report
+                  </motion.button>
                 </>
               )}
             </div>
-
 
             {/* Mobile Menu */}
             <div className="flex lg:hidden items-center gap-2">
@@ -653,10 +726,7 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setcreateuser(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
                           >
                             {getCreateButtonLabel()}
                           </button>
@@ -666,10 +736,7 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowOutstandingTask(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
                           >
                             Outstanding Tasks
                           </button>
@@ -679,10 +746,11 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
-                              ? "bg-sky-50 text-sky-700"
-                              : "text-gray-700"
-                              }`}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
                           >
                             Select Date Range
                           </button>

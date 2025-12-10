@@ -287,7 +287,8 @@ const Table = ({
                           column.render ? column.render(item) : item[column.key]
                         }
                       >
-                        {column.key === "access" && !localStorage.getItem("company")==="idg" ? (
+                        {column.key === "access" &&
+                        !localStorage.getItem("company") === "idg" ? (
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
@@ -367,7 +368,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && localStorage.getItem("company")!="idg" && (
+                      {OnEye && localStorage.getItem("company") != "idg" && (
                         <button
                           onClick={() => {
                             console.log("Table: Eye clicked for item:", item);
@@ -380,19 +381,20 @@ const Table = ({
                           <span className="text-xs">View</span>
                         </button>
                       )}
-                      {EditOrder && localStorage.getItem("company")==="idg"  && (
-                        <button
-                          onClick={() => {
-                            console.log("clicked!");
-                            navigate(`/admin/client/stages/${item.orderId}`);
-                          }}
-                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                          title="Edit"
-                        >
-                          <Edit size={12} />
-                          <span className="text-xs">Edit</span>
-                        </button>
-                      )}
+                      {EditOrder &&
+                        localStorage.getItem("company") === "idg" && (
+                          <button
+                            onClick={() => {
+                              console.log("clicked!");
+                              navigate(`/admin/client/stages/${item.orderId}`);
+                            }}
+                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                            title="Edit"
+                          >
+                            <Edit size={12} />
+                            <span className="text-xs">Edit</span>
+                          </button>
+                        )}
                     </div>
                   </td>
                 )}
