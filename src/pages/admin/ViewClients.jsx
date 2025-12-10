@@ -4,6 +4,7 @@ import {
   Transition,
   DialogBackdrop,
   DialogPanel,
+  DialogTitle,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import Button from "../../components/ui/Button";
@@ -23,8 +24,25 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
 import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
+import { delay } from "framer-motion";
 import { motion } from "framer-motion";
-import { Users, Plus, Calendar, AlertCircle } from "lucide-react";
+import {
+  Users,
+  FolderOpen,
+  Archive,
+  Building,
+  Plus,
+  Calendar,
+  Filter,
+  ChevronRight,
+  Search,
+  Download,
+  BarChart3,
+  Clock,
+  Target,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -40,7 +58,6 @@ const ViewClients = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
-
   const [dateFilter, setDateFilter] = useState(() => {
     const saved = localStorage.getItem("viewClientsDateFilter");
     return saved
@@ -76,12 +93,15 @@ const ViewClients = () => {
     }
   }, [currentModule]);
 
+  // Fetch clients based on module
   useEffect(() => {
+    // In the fetchData function, improve commercial data handling:
     const fetchData = async () => {
       if (currentModule === "commercial") {
         setCommercialLoading(true);
         try {
           const response = await api.getActiveProjects();
+          console.log("Commercial clients response:", response);
 
           let data = [];
           if (Array.isArray(response)) {
@@ -93,6 +113,8 @@ const ViewClients = () => {
           } else if (response && Array.isArray(response.projects)) {
             data = response.projects;
           } else {
+            // Handle empty or null response
+            console.warn("Empty or unexpected response format:", response);
             data = [];
           }
 
@@ -118,6 +140,7 @@ const ViewClients = () => {
           setCommercialClients(transformedData);
         } catch (error) {
           console.error("Error fetching commercial clients:", error);
+          // Don't show error toast for empty responses, just set empty array
           if (error.response?.status !== 404) {
             toast.error("Failed to load commercial projects");
           }
@@ -136,17 +159,19 @@ const ViewClients = () => {
   useEffect(() => {
     console.log(user);
     let filteredData =
-      currentModule === "commercial" ? commercialClients : Clients || [];
+      currentModule === "commercial" ? commercialClients : Clients;
 
     const [startDate, endDate] = Array.isArray(dateFilter?.range)
       ? dateFilter.range
       : ["", ""];
 
+    // Fix: Use lowercase comparison to match localStorage value
     if (company?.toLowerCase() === "idg" && startDate && endDate) {
       filteredData = filteredData.filter((client) => {
         let deliveryDateObj = moment(client.delivery_date);
         let orderDateObj = moment(client.order_date || client.orderDate);
 
+        // Check if delivery or order date falls within range
         const inDeliveryRange =
           deliveryDateObj.isValid() &&
           deliveryDateObj.isBetween(
@@ -196,7 +221,7 @@ const ViewClients = () => {
       }
     }
 
-    // Search filter
+    // Apply search query filter
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
       filteredData = filteredData.filter((client) => {
@@ -210,7 +235,6 @@ const ViewClients = () => {
             client.clientType,
             client.dataEntryBy,
             client.postcode,
-            client.referral,
           ];
 
           return searchableFields.some(
@@ -235,7 +259,6 @@ const ViewClients = () => {
       });
     }
 
-    filteredData = [...filteredData].reverse();
     setClientList(filteredData);
   }, [
     dateFilter,
@@ -247,8 +270,9 @@ const ViewClients = () => {
   ]);
 
   let columns = [];
-  if (company === "vkl") {
+  if (localStorage.getItem("company") === "vkl") {
     if (currentModule === "commercial") {
+      // Commercial projects columns
       columns = [
         { key: "matterNumber", title: "Project Number", width: "10%" },
         { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
@@ -259,8 +283,10 @@ const ViewClients = () => {
         { key: "clientType", title: "Client Type", width: "8%" },
         { key: "settlementDate", title: "Completion Date", width: "10%" },
         { key: "matterDate", title: "Project Date", width: "10%" },
+        // { key: "postcode", title: "Postcode", width: "7%" },
       ];
     } else {
+      // Regular VKL clients
       columns = [
         { key: "matternumber", title: "Matter Number", width: "8%" },
         { key: "dataentryby", title: "Data Entry By", width: "10%" },
@@ -281,7 +307,7 @@ const ViewClients = () => {
         },
       ];
     }
-  } else if (company === "idg") {
+  } else if (localStorage.getItem("company") === "idg") {
     columns = [
       { key: "clientId", title: "Client ID", width: "8%" },
       { key: "orderId", title: "Order ID", width: "10%" },
@@ -308,9 +334,10 @@ const ViewClients = () => {
     }
   }
 
-  async function changeUser(userName, orderId) {
+  async function changeUser(user, orderId) {
+    console.log(user, orderId);
     try {
-      const res = api.changeUser(userName, orderId);
+      const res = api.changeUser(user, orderId);
     } catch (error) {
       console.log("Error occured!!", error);
     }
@@ -380,369 +407,8 @@ const ViewClients = () => {
   const isLoading =
     currentModule === "commercial" ? commercialLoading : loading;
 
-
-  const FloatingElement = ({ top, left, delay, size = 60 }) => (
-    <motion.div
-      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
-      style={{
-        width: size,
-        height: size,
-        top: `${top}%`,
-        left: `${left}%`,
-      }}
-      animate={{
-        y: [0, -20, 0],
-        x: [0, 10, 0],
-      }}
-      transition={{
-        duration: 3 + delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-    />
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <FloatingElement top={10} left={10} delay={0} />
-        <FloatingElement top={20} left={85} delay={1} size={80} />
-        <FloatingElement top={70} left={5} delay={2} size={40} />
-        <FloatingElement top={80} left={90} delay={1.5} size={100} />
-
-        <div className="absolute inset-0 opacity-[0.06]">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
-                              linear-gradient(to bottom, #000 1px, transparent 1px)`,
-              backgroundSize: "30px 30px",
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="relative z-10">
-        <Header />
-
-        <main className="p-3 sm:p-4 md:p-6 mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 2xl:mx-12">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 sm:mb-8"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
-                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                    {getPageTitle()}
-                  </span>
-                </h1>
-                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
-                  Manage and track all{" "}
-                  {currentModule === "commercial"
-                    ? "projects"
-                    : company === "idg"
-                    ? "orders"
-                    : "clients"}{" "}
-                  in one place
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleCreateButtonClick}
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden xs:inline">
-                    {getCreateButtonLabel()}
-                  </span>
-                  <span className="xs:hidden">Add New</span>
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 w-full"
-          >
-            <div className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                    All{" "}
-                    {currentModule === "commercial"
-                      ? "Projects"
-                      : company === "idg"
-                      ? "Orders"
-                      : "Clients"}
-                  </h3>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <label
-                      htmlFor="items-per-page"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Show:
-                    </label>
-                    <select
-                      id="items-per-page"
-                      value={itemsPerPage}
-                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                      className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-sm"
-                    >
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                      <option value={200}>200</option>
-                      <option value={500}>500</option>
-                      <option value={1000}>1000</option>
-                    </select>
-                  </div>
-
-                  <div className="hidden lg:flex items-center gap-2">
-                    {company === "vkl" && (
-                      <>
-                        {shouldShowOutstandingTasks() && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setShowOutstandingTask(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                          >
-                            <AlertCircle className="w-4 h-4" />
-                            Outstanding Tasks
-                          </motion.button>
-                        )}
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowDateRange(true)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                        >
-                          <Calendar className="w-4 h-4" />
-                          Date Range
-                        </motion.button>
-                      </>
-                    )}
-                    {company === "idg" && (
-                      <>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setcreateOrder(true)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Create Order
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowDateRange(true)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                        >
-                          <Calendar className="w-4 h-4" />
-                          Date Range
-                        </motion.button>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex lg:hidden items-center">
-                    <Menu as="div" className="relative">
-                      <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
-                      </Menu.Button>
-                      <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-100"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                      >
-                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                          <div className="py-1">
-                            {shouldShowOutstandingTasks() && (
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setShowOutstandingTask(true)}
-                                    className={`block w-full text-left px-4 py-2 text-sm ${
-                                      active
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <AlertCircle className="w-4 h-4" />
-                                      Outstanding Tasks
-                                    </div>
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            )}
-                            {shouldShowCreateOrder() && (
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setcreateOrder(true)}
-                                    className={`block w-full text-left px-4 py-2 text-sm ${
-                                      active
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <Plus className="w-4 h-4" />
-                                      Create Order
-                                    </div>
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            )}
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  onClick={() => setShowDateRange(true)}
-                                  className={`block w-full text-left px-4 py-2 text-sm ${
-                                    active
-                                      ? "bg-blue-50 text-blue-700"
-                                      : "text-gray-700"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    Date Range
-                                  </div>
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </div>
-                        </Menu.Items>
-                      </Transition>
-                    </Menu>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 w-full"
-          >
-            {error && (
-              <div
-                className="p-4 m-4 text-red-700 bg-red-100 border-l-4 border-red-500 rounded-r-lg"
-                role="alert"
-              >
-                <p className="font-medium">Error loading data</p>
-                <p className="text-sm">{error.message}</p>
-              </div>
-            )}
-
-            {isLoading || !clientList ? (
-              <div className="flex justify-center items-center py-20">
-                <Loader />
-              </div>
-            ) : clientList.length === 0 ? (
-              <div className="py-20 text-center">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-gray-400"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M21 21l-4.35-4.35"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    ></path>
-                    <circle
-                      cx="11"
-                      cy="11"
-                      r="6"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    ></circle>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  No{" "}
-                  {currentModule === "commercial"
-                    ? "projects"
-                    : company === "idg"
-                    ? "orders"
-                    : "clients"}{" "}
-                  found
-                </h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  {searchQuery || (dateFilter.range && dateFilter.range[0])
-                    ? "Try adjusting your search or filter criteria"
-                    : `Get started by creating your first ${
-                        currentModule === "commercial"
-                          ? "project"
-                          : company === "idg"
-                          ? "order"
-                          : "client"
-                      }`}
-                </p>
-                {!searchQuery && !(dateFilter.range && dateFilter.range[0]) && (
-                  <button
-                    onClick={handleCreateButtonClick}
-                    className="mt-4 px-6 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg transition-all"
-                  >
-                    Create{" "}
-                    {currentModule === "commercial"
-                      ? "Project"
-                      : company === "idg"
-                      ? "Order"
-                      : "Client"}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="p-4 sm:p-6">
-                <ViewClientsTable
-                  data={clientList}
-                  columns={columns}
-                  users={user}
-                  handleChangeUser={changeUser}
-                  onEdit={true}
-                  onShare={(matterNumber, reshareEmail) => {
-                    setShareDetails({ matterNumber, reshareEmail });
-                    setShowShareDialog(true);
-                  }}
-                  itemsPerPage={itemsPerPage}
-                  status={true}
-                  ot={shouldShowOutstandingTasks()}
-                  handelOTOpen={() => setShowOutstandingTask(true)}
-                  handelOT={setOTActiveMatterNumber}
-                  currentModule={currentModule}
-                />
-              </div>
-            )}
-          </motion.div>
-        </main>
-      </div>
-
+    <>
       <OutstandingTasksModal
         open={showOutstandingTask}
         onClose={() => {
@@ -751,7 +417,6 @@ const ViewClients = () => {
         }}
         activeMatter={otActiveMatterNumber}
       />
-
       <CreateClientModal
         createType={currentModule === "commercial" ? "project" : "client"}
         companyName={company}
@@ -762,7 +427,6 @@ const ViewClients = () => {
         }}
         onClose={() => setcreateuser(false)}
       />
-
       <CreateClientModal
         createType="order"
         companyName={company}
@@ -792,88 +456,356 @@ const ViewClients = () => {
         onClose={handelShareEmailModalClose}
         className="relative z-50"
       >
-        <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-md"
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
+            <button
+              onClick={handelShareEmailModalClose}
+              className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform"
             >
-              <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
-                <button
-                  onClick={handelShareEmailModalClose}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              &times;
+            </button>
+            <h2 className="text-xl font-semibold mb-2 text-center">
+              Share to Client
+            </h2>
+            <p className="text-sm text-center text-gray-700 mb-4">
+              Please enter the client email for{" "}
+              {currentModule === "commercial" ? "project" : "matter"} No. :{" "}
+              <span className="text-blue-500 underline cursor-pointer">
+                {shareDetails?.matterNumber}
+              </span>
+            </p>
+            <div className="relative mb-4">
+              <input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setemail(e.target.value)}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
+              />
+              <span className="absolute inset-y-0 right-3 flex items-center text-gray-600">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  &times;
-                </button>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800">
-                      Share to Client
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Send access link to client
-                    </p>
-                  </div>
-                </div>
-                <div className="mb-4 p-3 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-lg">
-                  <p className="text-sm text-gray-700">
-                    {currentModule === "commercial"
-                      ? "Project"
-                      : company === "idg"
-                      ? "Order"
-                      : "Matter"}{" "}
-                    No:{" "}
-                    <span className="font-semibold text-[#2E3D99]">
-                      {shareDetails?.matterNumber}
-                    </span>
-                  </p>
-                </div>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Client Email
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      placeholder="Enter email address"
-                      value={email}
-                      onChange={(e) => setemail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
-                    />
-                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                      <svg
-                        className="w-5 h-5 text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                {isClicked ? (
-                  <button className="w-full bg-[#00AEEF] text-white font-semibold py-3 rounded-lg transition mb-3">
-                    Sending...
-                  </button>
-                ) : (
-                  <button
-                    className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                    onClick={handelReShareEmail}
-                  >
-                    Send Access Link
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </div>
+                  <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" />
+                </svg>
+              </span>
+            </div>
+            {isClicked ? (
+              <button className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition mb-3">
+                Sending...
+              </button>
+            ) : (
+              <button
+                className="w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+                onClick={handelReShareEmail}
+              >
+                Send Link
+              </button>
+            )}
+            <button className="w-full bg-[#EAF7FF] text-gray-700 font-medium py-2 rounded-md hover:bg-[#d1efff] transition">
+              Manage Access
+            </button>
+          </DialogPanel>
         </div>
       </Dialog>
-    </div>
+
+      <Dialog
+        open={showTAR}
+        onClose={() => setShowTar(false)}
+        className="relative z-50"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
+            <DialogTitle className={"text-xl mb-5"}>
+              Task Allocation Report
+            </DialogTitle>
+            <div className="flex items-center gap-2 mb-5">
+              <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by Users
+              </label>
+              <select
+                name="alloactedUser"
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={allocatedUser}
+                onChange={(e) => setallocatedUser(e.target.value)}
+              >
+                <option value="">All Users</option>
+                {user.map((user) => (
+                  <option value={user.name}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+              onClick={() => {
+                generateTaskAllocationPDF(allocatedUser);
+                setShowTar(false);
+              }}
+            >
+              Download
+            </button>
+          </DialogPanel>
+        </div>
+      </Dialog>
+
+      <div className="space-y-4 p-2">
+        <Header />
+
+        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
+          <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
+            {getPageTitle()}
+          </h3>
+          <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
+            {/* Search input is now only in Header.jsx */}
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                {currentModule === "commercial" ? "Projects" : "Clients"} per
+                page:
+              </label>
+              <select
+                id="items-per-page"
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+            </div>
+            {localStorage.getItem("company") == "idg" && (
+              <div className="flex items-center gap-2">
+                {/* <label
+                htmlFor="items-per-page"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select by clients
+              </label> */}
+                <select
+                  name="Client"
+                  className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={selectedClientName}
+                  onChange={(e) => handleClientFilterChange(e.target.value)}
+                  disabled={localStorage.getItem("role") !== "admin"}
+                >
+                  <option value="">All Clients</option>
+                  {list.map((client) => (
+                    <option key={client.name} value={client.name}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Consolidated Desktop Buttons */}
+            <div className="hidden lg:flex items-center gap-1.5">
+              {localStorage.getItem("company") === "vkl" && (
+                <>
+                  <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  />
+
+                  <Button
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  />
+                </>
+              )}
+              {localStorage.getItem("company") === "idg" && (
+                <>
+                  {/* <Button
+                    label="Create Client"
+                    Icon1={userplus}
+                    onClick={() => setcreateuser(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Create Order"
+                    onClick={() => setcreateOrder(true)}
+                    width="w-[150px]"
+                  />
+                  <Button
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    width="w-[150px]"
+                  /> */}
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setcreateuser(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Create Client
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setcreateOrder(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Create Order
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    Date Range
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowTar(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    Task Report
+                  </motion.button>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu */}
+            <div className="flex lg:hidden items-center gap-2">
+              <Menu as="div" className="relative">
+                <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <EllipsisVerticalIcon
+                    className="h-5 w-5 text-gray-600"
+                    aria-hidden="true"
+                  />
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="py-1">
+                      {/* Create Client/Project option */}
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setcreateuser(true)}
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                          >
+                            {getCreateButtonLabel()}
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowOutstandingTask(true)}
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                          >
+                            Outstanding Tasks
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowDateRange(true)}
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
+                                ? "bg-sky-50 text-sky-700"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            Select Date Range
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            </div>
+          </div>
+        </div>
+
+        {/* {error && (
+          <ConfirmationModal
+            isOpen={showConfirmModal}
+            onClose={() => console.log("")}
+            title="Session Expired!"
+            isLogout={true}
+          >
+            Please Login Again
+          </ConfirmationModal>
+        )} */}
+
+        {isLoading || !clientList ? (
+          <Loader />
+        ) : clientList.length === 0 ? (
+          <div className="py-10 text-center text-gray-500">
+            {currentModule === "commercial"
+              ? "No projects found"
+              : "No clients found"}
+          </div>
+        ) : (
+          <div className="px-5">
+            <ViewClientsTable
+              data={clientList}
+              columns={columns}
+              users={user}
+              handleChangeUser={changeUser}
+              onEdit={true}
+              onShare={(matterNumber, reshareEmail) => {
+                setShareDetails({ matterNumber, reshareEmail });
+                setShowShareDialog(true);
+              }}
+              itemsPerPage={itemsPerPage}
+              status={true}
+              ot={shouldShowOutstandingTasks()}
+              handelOTOpen={() => setShowOutstandingTask(true)}
+              handelOT={setOTActiveMatterNumber}
+              currentModule={currentModule}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

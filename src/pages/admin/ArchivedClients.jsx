@@ -41,7 +41,7 @@ function ClientsPerPage({ value, onChange }) {
         id="clients-per-page"
         value={value}
         onChange={onChange}
-        className="block px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
       >
         <option>5</option>
         <option>10</option>
@@ -531,7 +531,7 @@ export default function ArchivedClients() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
       {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <FloatingElement top={10} left={10} delay={0} />
@@ -552,10 +552,10 @@ export default function ArchivedClients() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full box-border">
+      <div className="relative z-10">
         <Header />
 
-        <main className="p-3 sm:p-4 md:p-6 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 w-full max-w-screen-2xl mx-auto box-border">
+        <main className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
           {/* Welcome Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -586,7 +586,7 @@ export default function ArchivedClients() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 w-full"
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6"
           >
             <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -751,7 +751,7 @@ export default function ArchivedClients() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 w-full"
+            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300"
           >
             {error && (
               <div
@@ -765,7 +765,7 @@ export default function ArchivedClients() {
 
             {isLoading ? (
               <div className="flex justify-center items-center py-20">
-                <Loader />
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#00AEEF]" />
               </div>
             ) : !sortedClientList || sortedClientList.length === 0 ? (
               <div className="py-20 text-center">
@@ -797,13 +797,26 @@ export default function ArchivedClients() {
               <div className="p-4 sm:p-6">
                 {/* Desktop Table View */}
                 <div className="hidden lg:block">
+                  {/* <Table
+                    data={sortedClientList}
+                    columns={columns}
+                    itemsPerPage={clientsPerPage}
+                    showActions={true}
+                    cellWrappingClass="whitespace-normal"
+                    // headerBgColor="bg-gradient-to-r from-[#2E3D99]/20 to-[#1D97D7]/30"
+                    OnEye={handleViewClient}
+                    sortedColumn={sortedColumn}
+                    sortDirection={sortDirection}
+                    handleSort={handleSort}
+                  /> */}
+
                   <Table
                     data={sortedClientList}
                     columns={columns}
                     itemsPerPage={clientsPerPage}
                     showActions={true}
                     cellWrappingClass="whitespace-normal"
-                    headerBgColor="bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white"
+                    headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                     OnEye={handleViewClient}
                     EditOrder={true}
                     sortedColumn={sortedColumn}

@@ -135,7 +135,7 @@ const Table = ({
   hoverEffect = true,
   tableClass = "",
   rowSpacing = "py-1",
-  headerBgColor = "bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white",
+  headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
   showReset = true,
   cellFontSize = "text-xs lg:text-sm xl:text-base",
@@ -207,7 +207,7 @@ const Table = ({
     <div className="w-full">
       <div className="grow overflow-auto">
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
-          <thead className={`${headerBgColor} font-semibold`}>
+          <thead className={`${headerBgColor} text-black`}>
             <tr>
               {columns.map((column, colIndex) => {
                 const isSorted = sortedColumn === column.key;

@@ -674,6 +674,7 @@ export default function ManageUsers() {
                       setId(user.id);
                       setOpenDelete(true);
                     }}
+                    headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                     itemsPerPage={usersPerPage}
                     cellWrappingClass="whitespace-normal"
                     compact={true}

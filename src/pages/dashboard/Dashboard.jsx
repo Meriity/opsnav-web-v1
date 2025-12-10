@@ -133,7 +133,6 @@ const useDashboardStore = create((set) => ({
     }),
 }));
 
-// CustomEvent Component with UI from second file
 const CustomEvent = ({ event }) => {
   let eventTypeLabel;
   const currentModule = localStorage.getItem("currentModule");
@@ -172,46 +171,17 @@ const CustomEvent = ({ event }) => {
       ? event.clientType.charAt(0)
       : "";
 
-  const displayTitle = `[${identifier}] - ${eventTypeLabel} - [${typeInitial}]`;
-
   return (
     <div className="custom-event-content">
-      <span className="event-title text-xs truncate">{displayTitle}</span>
+      <span className="event-title text-xs truncate">
+        [{identifier}] - {eventTypeLabel} - [{typeInitial}]
+      </span>
       {event.isApproved && (
         <CheckCircle className="w-3 h-3 text-green-500 ml-1 flex-shrink-0" />
       )}
     </div>
   );
 };
-
-// CustomAgendaEvent from second file (keep UI but preserve logic)
-const CustomAgendaEvent = ({ event }) => (
-  <div className="mb-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition shadow-sm">
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col">
-        <span className="font-semibold text-gray-800 text-sm sm:text-base">
-          {event?.title || "Untitled"}
-        </span>
-        <span className="text-xs text-gray-500 mt-1">
-          {event?.start ? moment(event.start).format("DD MMM YYYY") : ""}
-        </span>
-      </div>
-      <span
-        className={`mt-2 sm:mt-0 text-xs sm:text-sm px-3 py-1 rounded-full self-start sm:self-center ${
-          event.type === "buildingAndPest"
-            ? "bg-purple-100 text-purple-700"
-            : event.type === "financeApproval"
-            ? "bg-orange-100 text-orange-700"
-            : event.type === "commercial"
-            ? "bg-green-100 text-green-700"
-            : "bg-blue-100 text-blue-700"
-        }`}
-      >
-        {event?.clientType || event?.projectType || "Event"}
-      </span>
-    </div>
-  </div>
-);
 
 class CalendarErrorBoundary extends React.Component {
   constructor(props) {
@@ -254,7 +224,7 @@ const useWindowSize = () => {
   return windowSize;
 };
 
-// Responsive Calendar Toolbar with UI from second file
+// Responsive Calendar Toolbar Component
 const ResponsiveCalendarToolbar = ({
   label,
   onNavigate,
@@ -319,7 +289,7 @@ const ResponsiveCalendarToolbar = ({
   );
 };
 
-// Floating Background Elements (from second file)
+// Floating Background Elements (inspired by Home.jsx)
 const FloatingElement = ({ top, left, delay, size = 60 }) => (
   <motion.div
     className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
@@ -341,7 +311,7 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
   />
 );
 
-// --- API Functions (keeping original logic from first file) ---
+// --- API Functions ---
 const fetchDashboardData = async (currentModule, company) => {
   const clientApi = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -548,7 +518,7 @@ const processCalendarData = (data, currentModule, company) => {
     }));
 };
 
-// StatCard Component - Using UI from second file but preserving functionality
+// Responsive Stat Card Component - Enhanced with Home.jsx style
 const StatCard = ({
   icon: Icon,
   title,
@@ -568,6 +538,7 @@ const StatCard = ({
       whileHover={{ y: -8, transition: { duration: 0.2 } }}
       className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl dashboard-card group"
     >
+      {/* Gradient background inspired by Home.jsx */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${
           color === "blue"
@@ -591,7 +562,7 @@ const StatCard = ({
         }`}
       />
 
-      <div className="relative z-10 w-full box-border">
+      <div className="relative z-10">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -659,7 +630,7 @@ const StatCard = ({
   );
 };
 
-// Performance Trend Chart Component (from first file)
+// Performance Trend Chart Component
 const PerformanceTrendChart = ({
   data,
   title,
@@ -798,7 +769,7 @@ function Dashboard() {
     enabled: !!currentModule && !!company,
   });
 
-  // Process dashboard data when it loads (keeping original logic)
+  // Process dashboard data when it loads
   useEffect(() => {
     if (dashboardData) {
       setDashboardData(dashboardData, currentModule);
@@ -830,7 +801,7 @@ function Dashboard() {
     setLoading(isDashboardLoading);
   }, [isDashboardLoading, setLoading]);
 
-  // Handle event selection from calendar (keeping original logic)
+  // Handle event selection from calendar
   const handleEventSelect = useCallback(
     (event) => {
       const currentModule = localStorage.getItem("currentModule");
@@ -861,7 +832,7 @@ function Dashboard() {
     [navigate]
   );
 
-  // Event styling with clickable cursor (keeping original logic)
+  // Event styling with clickable cursor
   const eventStyleGetter = useCallback(
     (event) => {
       let backgroundColor = "#00aeef";
@@ -939,7 +910,7 @@ function Dashboard() {
     return { views: [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA] };
   }, [isMobile, isTablet]);
 
-  // Calculate current period total based on chart view (keeping original logic)
+  // Calculate current period total based on chart view
   const chartPeriodTotal = useMemo(() => {
     if (!currentChartData || currentChartData.length === 0) return 0;
     return currentChartData.reduce((sum, item) => {
@@ -953,9 +924,20 @@ function Dashboard() {
         0;
       return sum + closedCount;
     }, 0);
+    return currentChartData.reduce((sum, item) => {
+      const closedCount =
+        item.closedMatters ??
+        item.closedProjects ??
+        item.completedProjects ??
+        item.closedOrders ??
+        item.count ??
+        item.total ??
+        0;
+      return sum + closedCount;
+    }, 0);
   }, [currentChartData]);
 
-  // Chart data processing (keeping the complex logic from first file)
+
   useEffect(() => {
     if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
       return;
@@ -1166,13 +1148,15 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
+      {/* Floating Background Elements (inspired by Home.jsx) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <FloatingElement top={10} left={10} delay={0} />
         <FloatingElement top={20} left={85} delay={1} size={80} />
         <FloatingElement top={70} left={5} delay={2} size={40} />
         <FloatingElement top={80} left={90} delay={1.5} size={100} />
 
+        {/* Grid Background (inspired by Home.jsx hero section) */}
         <div className="absolute inset-0 opacity-[0.06]">
           <div
             className="absolute inset-0"
@@ -1212,8 +1196,8 @@ function Dashboard() {
 
         <Header />
 
-        <main className="p-3 sm:p-4 md:p-6 max-w-screen-2xl mx-auto w-full box-border">
-
+        <main className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+          {/* Welcome Section - Enhanced with Home.jsx styling */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1242,17 +1226,18 @@ function Dashboard() {
                   <span className="hidden xs:inline">
                     {getAddButtonLabel()}
                   </span>
-                  <span className="xs:hidden">Add New Client</span>
+                  <span className="xs:hidden">{localStorage.getItem("company")==="idg" ? "New Order" : "New Client"}</span>
                 </motion.button>
               </div>
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 w-full box-border">
+          {/* Stats Grid - Enhanced styling */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Total Users"
               value={totalusers}
-              change={12}
+              // change={12}
               icon={UserCog}
               color="blue"
               loading={loading}
@@ -1266,7 +1251,7 @@ function Dashboard() {
                   : "Clients"
               }
               value={totalactive}
-              change={8}
+              // change={8}
               icon={
                 currentModule === "commercial"
                   ? Building
@@ -1286,7 +1271,7 @@ function Dashboard() {
                   : "Archived"
               }
               value={totalCompleted}
-              change={-3}
+              // change={-3}
               icon={Archive}
               color="purple"
               loading={loading}
@@ -1294,25 +1279,27 @@ function Dashboard() {
             <StatCard
               title="Last Month"
               value={lastrecord}
-              change={24}
+              // change={24}
               icon={TrendingUp}
               color="orange"
               loading={loading}
             />
           </div>
 
+          {/* Main Content Grid - Enhanced with Home.jsx card styling */}
           <div
             className={`${
               isLaptop
                 ? "space-y-6"
                 : "grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8"
-            } w-full box-border`}
+            }`}
           >
+            {/* Calendar Section - Enhanced */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl dashboard-card w-full box-border"
+              className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl dashboard-card"
             >
               <div className="p-3 sm:p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -1333,7 +1320,7 @@ function Dashboard() {
                     isLaptop
                       ? "h-[500px] overflow-visible"
                       : "h-[350px] sm:h-[400px] overflow-visible"
-                  } w-full box-border`}
+                  }`}
                 >
                   <style>{`
                     .rbc-overlay, .rbc-popup, .rbc-overlay * , .rbc-popup * {
@@ -1372,7 +1359,6 @@ function Dashboard() {
                       onSelectEvent={handleEventSelect}
                       components={{
                         event: CustomEvent,
-                        agenda: { event: CustomAgendaEvent }, // Added from second file
                         toolbar: ResponsiveCalendarToolbar,
                       }}
                     />
@@ -1381,13 +1367,15 @@ function Dashboard() {
               </div>
             </motion.div>
 
+            {/* Charts Section - Enhanced */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl dashboard-card w-full box-border"
+              className="rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl dashboard-card"
             >
               <div className="p-3 sm:p-4 md:p-6">
+                {/* Completion Stats Chart with Time Toggle */}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4">
                     <div>
@@ -1407,6 +1395,7 @@ function Dashboard() {
                         Track completion rates over time
                       </p>
                     </div>
+                    {/* Time Toggle - Enhanced */}
                     <div className="flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm">
                       <button
                         onClick={() => setChartView("last6Months")}
@@ -1431,6 +1420,7 @@ function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Completion Chart */}
                   <div
                     className={`${
                       isLaptop ? "h-[300px]" : "h-[250px] sm:h-[280px]"
@@ -1542,7 +1532,7 @@ function Dashboard() {
                     )}
                   </div>
 
-
+                  {/* Summary Stats - Enhanced */}
                   {chartView === "last6Months" && (
                     <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-xl border border-[#2E3D99]/10">
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
@@ -1575,6 +1565,7 @@ function Dashboard() {
                     </div>
                   )}
 
+                  {/* All Time View Note for Mobile/Tablet */}
                   {chartView === "allTime" && (isMobile || isTablet) && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl text-xs text-amber-700">
                       <p className="font-medium">Note:</p>
@@ -1589,11 +1580,12 @@ function Dashboard() {
             </motion.div>
           </div>
 
+          {/* Bottom Metric Cards - Enhanced with gradient styling from Home.jsx */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-4 sm:mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full box-border"
+            className="mt-4 sm:mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6"
           >
             <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between">
@@ -1672,17 +1664,20 @@ function Dashboard() {
         </main>
       </div>
 
+      {/* Modals */}
       <CreateClientModal
         createType="client"
         companyName={company}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
+        onClose={()=>setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
         companyName={company}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
+        onClose={()=>setcreateuser(false)}
       />
       <CreateClientModal
         createType="project"
