@@ -937,7 +937,7 @@ function Dashboard() {
     }, 0);
   }, [currentChartData]);
 
-  // Handle chart data processing - OPTIMIZED FOR MOBILE ALL TIME VIEW
+
   useEffect(() => {
     if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
       return;
@@ -1226,7 +1226,7 @@ function Dashboard() {
                   <span className="hidden xs:inline">
                     {getAddButtonLabel()}
                   </span>
-                  <span className="xs:hidden">Add New Client</span>
+                  <span className="xs:hidden">{localStorage.getItem("company")==="idg" ? "New Order" : "New Client"}</span>
                 </motion.button>
               </div>
             </div>
@@ -1237,7 +1237,7 @@ function Dashboard() {
             <StatCard
               title="Total Users"
               value={totalusers}
-              change={12}
+              // change={12}
               icon={UserCog}
               color="blue"
               loading={loading}
@@ -1251,7 +1251,7 @@ function Dashboard() {
                   : "Clients"
               }
               value={totalactive}
-              change={8}
+              // change={8}
               icon={
                 currentModule === "commercial"
                   ? Building
@@ -1271,7 +1271,7 @@ function Dashboard() {
                   : "Archived"
               }
               value={totalCompleted}
-              change={-3}
+              // change={-3}
               icon={Archive}
               color="purple"
               loading={loading}
@@ -1279,7 +1279,7 @@ function Dashboard() {
             <StatCard
               title="Last Month"
               value={lastrecord}
-              change={24}
+              // change={24}
               icon={TrendingUp}
               color="orange"
               loading={loading}

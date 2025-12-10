@@ -797,7 +797,7 @@ export default function ArchivedClients() {
               <div className="p-4 sm:p-6">
                 {/* Desktop Table View */}
                 <div className="hidden lg:block">
-                  <Table
+                  {/* <Table
                     data={sortedClientList}
                     columns={columns}
                     itemsPerPage={clientsPerPage}
@@ -805,6 +805,20 @@ export default function ArchivedClients() {
                     cellWrappingClass="whitespace-normal"
                     // headerBgColor="bg-gradient-to-r from-[#2E3D99]/20 to-[#1D97D7]/30"
                     OnEye={handleViewClient}
+                    sortedColumn={sortedColumn}
+                    sortDirection={sortDirection}
+                    handleSort={handleSort}
+                  /> */}
+
+                  <Table
+                    data={sortedClientList}
+                    columns={columns}
+                    itemsPerPage={clientsPerPage}
+                    showActions={true}
+                    cellWrappingClass="whitespace-normal"
+                    headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
+                    OnEye={handleViewClient}
+                    EditOrder={true}
                     sortedColumn={sortedColumn}
                     sortDirection={sortDirection}
                     handleSort={handleSort}

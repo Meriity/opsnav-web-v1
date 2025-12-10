@@ -135,7 +135,7 @@ const Table = ({
   hoverEffect = true,
   tableClass = "",
   rowSpacing = "py-1",
-  headerBgColor = "bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white",
+  headerBgColor = "bg-[#D7F4FF]",
   itemsPerPage = 5,
   showReset = true,
   cellFontSize = "text-xs lg:text-sm xl:text-base",
@@ -207,7 +207,7 @@ const Table = ({
     <div className="w-full">
       <div className="grow overflow-auto">
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
-          <thead className={`${headerBgColor} font-semibold`}>
+          <thead className={`${headerBgColor} text-black`}>
             <tr>
               {columns.map((column, colIndex) => {
                 const isSorted = sortedColumn === column.key;
@@ -287,7 +287,8 @@ const Table = ({
                           column.render ? column.render(item) : item[column.key]
                         }
                       >
-                        {column.key === "access" ? (
+                        {column.key === "access" &&
+                        !localStorage.getItem("company") === "idg" ? (
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
@@ -367,7 +368,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && (
+                      {OnEye && localStorage.getItem("company") != "idg" && (
                         <button
                           onClick={() => {
                             console.log("Table: Eye clicked for item:", item);
@@ -380,19 +381,20 @@ const Table = ({
                           <span className="text-xs">View</span>
                         </button>
                       )}
-                      {EditOrder && (
-                        <button
-                          onClick={() => {
-                            console.log("clicked!");
-                            navigate(`/admin/client/stages/${item.orderId}`);
-                          }}
-                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                          title="Edit"
-                        >
-                          <Edit size={12} />
-                          <span className="text-xs">Edit</span>
-                        </button>
-                      )}
+                      {EditOrder &&
+                        localStorage.getItem("company") === "idg" && (
+                          <button
+                            onClick={() => {
+                              console.log("clicked!");
+                              navigate(`/admin/client/stages/${item.orderId}`);
+                            }}
+                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                            title="Edit"
+                          >
+                            <Edit size={12} />
+                            <span className="text-xs">Edit</span>
+                          </button>
+                        )}
                     </div>
                   </td>
                 )}
