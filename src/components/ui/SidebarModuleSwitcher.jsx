@@ -11,6 +11,7 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function SidebarModuleSwitcher() {
   const [currentModule, setCurrentModule] = useState("");
@@ -138,103 +139,110 @@ function SidebarModuleSwitcher() {
         />
       </button>
 
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 cursor-default"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full z-50 sm:mt-2">
-            <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden mx-0 sm:mx-0">
-              <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-white text-sm">
-                      Workspace
-                    </h3>
-                    <p className="text-slate-300 text-xs">Select module</p>
-                  </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="sm:hidden text-slate-300 hover:text-white p-1 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className={`p-1 space-y-1 ${
-                  availableModules.length > 6 ? "max-h-64 overflow-y-auto" : ""
-                }`}
-              >
-                {availableModules.map((module) => {
-                  const ModuleIcon = getModuleIcon(module);
-                  const moduleColors = getModuleColors(module);
-
-                  return (
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40 cursor-default"
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full z-50 sm:mt-2 sm:w-60"
+            >
+              <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden mx-0 sm:mx-0">
+                <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-white text-sm">
+                        Workspace
+                      </h3>
+                      <p className="text-slate-300 text-xs">Select module</p>
+                    </div>
                     <button
-                      key={module}
-                      onClick={() => handleModuleChange(module)}
-                      className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
-                        currentModule === module
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
+                      onClick={() => setIsOpen(false)}
+                      className="sm:hidden text-slate-300 hover:text-white p-1 cursor-pointer"
                     >
-                      <div
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${moduleColors} transition-all duration-200`}
+                      <X className="w-4 h-4" strokeWidth={2} />
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-1 space-y-1 ${
+                    availableModules.length > 6
+                      ? "max-h-64 overflow-y-auto"
+                      : ""
+                  }`}
+                >
+                  {availableModules.map((module) => {
+                    const ModuleIcon = getModuleIcon(module);
+                    const moduleColors = getModuleColors(module);
+                    const isActive = currentModule === module;
+
+                    return (
+                      <button
+                        key={module}
+                        onClick={() => handleModuleChange(module)}
+                        className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-200 cursor-pointer hover:scale-[1.02] ${
+                          isActive
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
-                        <ModuleIcon
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                          strokeWidth={2}
-                        />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="font-medium text-xs sm:text-sm truncate">
-                          {getModuleDisplayName(module)}
-                        </div>
                         <div
-                          className={`text-xs mt-0.5 ${
-                            currentModule === module
-                              ? "text-blue-600"
-                              : "text-gray-500"
-                          }`}
+                          className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${moduleColors} transition-all duration-200`}
                         >
-                          {currentModule === module
-                            ? "Active"
-                            : "Click to switch"}
-                        </div>
-                      </div>
-                      {currentModule === module && (
-                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Check
-                            className="w-2 h-2 text-white"
-                            strokeWidth={3}
+                          <ModuleIcon
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                            strokeWidth={2}
                           />
                         </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-medium text-xs sm:text-sm truncate">
+                            {getModuleDisplayName(module)}
+                          </div>
+                          <div
+                            className={`text-xs mt-0.5 ${
+                              isActive ? "text-blue-600" : "text-gray-500"
+                            }`}
+                          >
+                            {isActive ? "Active" : "Click to switch"}
+                          </div>
+                        </div>
+                        {isActive && (
+                          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Check
+                              className="w-2 h-2 text-white"
+                              strokeWidth={3}
+                            />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {availableModules.length > 6 && (
-                <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+                {availableModules.length > 6 && (
+                  <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+                    <p className="text-xs text-gray-500 text-center">
+                      {availableModules.length} modules available
+                    </p>
+                  </div>
+                )}
+                <div className="sm:hidden p-2 border-t border-gray-100 bg-gray-50">
                   <p className="text-xs text-gray-500 text-center">
-                    {availableModules.length} modules available
+                    Swipe down or tap outside to close
                   </p>
                 </div>
-              )}
-              <div className="sm:hidden p-2 border-t border-gray-100 bg-gray-50">
-                <p className="text-xs text-gray-500 text-center">
-                  Swipe down or tap outside to close
-                </p>
               </div>
-            </div>
-          </div>
-        </>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

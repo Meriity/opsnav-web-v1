@@ -1,12 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import useDebounce from "../../hooks/useDebounce";
-import { Search, Maximize2, Minimize2, X } from "lucide-react";
+import {
+  Search,
+  Maximize2,
+  Minimize2,
+  X,
+  ChevronRight,
+  Calendar,
+  Clock,
+  Command,
+} from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
-// import NotificationBell from "../ui/NotificationBell.jsx";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -14,18 +23,54 @@ export default function Header() {
   const [searchResult, setSearchResult] = useState([]);
   const [showDropdown, setShowDropdown] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  const [isMac, setIsMac] = useState(true);
+
   const api = new ClientAPI();
   const navigate = useNavigate();
   const company = localStorage.getItem("company");
 
   const searchBoxRef = useRef(null);
-  const [dropdownPos, setDropdownPos] = useState({
-    left: 0,
-    top: 0,
-    width: 0,
-  });
+  const inputRef = useRef(null);
 
+  const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 0 });
   const [isFullScreen, setIsFullScreen] = useState(false);
+
+  useEffect(() => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    setIsMac(userAgent.includes("mac"));
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setShowDropdown(true);
+        setIsFocused(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(currentTime);
+
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(currentTime);
 
   useEffect(() => {
     if (debouncedInput.trim()) {
@@ -54,8 +99,6 @@ export default function Header() {
     setShowDropdown(true);
     try {
       const lowercasedValue = value.toLowerCase();
-
-      // First try the existing search endpoint (fast / server-side results)
       let response =
         company === "vkl"
           ? await api.getSearchResult(value)
@@ -63,28 +106,21 @@ export default function Header() {
           ? await api.getIDGSearchResult(value)
           : [];
 
-      // If server returned nothing or might be missing referral-only matches,
-      // fetch the full client list and merge — this guarantees referral matches.
       if (!Array.isArray(response) || response.length === 0) {
         try {
           const allClients = await api.getClients();
-          // backend sometimes returns { data: [...] } — normalize:
           response = Array.isArray(allClients)
             ? allClients
             : allClients?.data || allClients?.clients || [];
         } catch (e) {
-          // if fetching full list fails, keep whatever we have from server search
-          console.warn("Fallback getClients failed:", e);
           response = Array.isArray(response) ? response : [];
         }
       } else {
-        // still attempt to include clients from the full list (de-duplicate)
         try {
           const allClients = await api.getClients();
           const list = Array.isArray(allClients)
             ? allClients
             : allClients?.data || [];
-          // merge server results + full list by matterNumber/orderId/_id to ensure referral-only items included
           const map = new Map();
           (response || []).forEach((r) =>
             map.set(String(r.matterNumber || r.orderId || r._id), r)
@@ -93,15 +129,11 @@ export default function Header() {
             map.set(String(r.matterNumber || r.orderId || r._id), r)
           );
           response = Array.from(map.values());
-        } catch {
-          /* ignore merge failures; we already have server response */
-        }
+        } catch {}
       }
 
       const searchWords = lowercasedValue.split(/\s+/).filter(Boolean);
-
       const filteredResults = (response || []).filter((item) => {
-        // collect top-level fields
         const topFields = [
           String(item.matterNumber || item.orderId || ""),
           String(item.clientName || item.client_name || ""),
@@ -113,49 +145,14 @@ export default function Header() {
           ),
           String(item.state || ""),
           String(item.referral || item.referralName || ""),
-          String(item.businessName || ""),
-          String(item.businessAddress || ""),
-          String(item.clientType || item.type || ""),
         ];
-
-        // collect referral (or similar) from any nested stage objects (stage1, stage2, ...)
-        const stageRefValues = Object.keys(item)
-          .filter((k) => /^stage\d/i.test(k))
-          .map((k) => String(item[k]?.referral || item[k]?.referralName || ""))
-          .filter(Boolean);
-
-        let commercialStageRefs = [];
-        if (item.stages && Array.isArray(item.stages)) {
-          item.stages.forEach((stageObj) => {
-            if (stageObj && typeof stageObj === "object") {
-              Object.values(stageObj).forEach((stageData) => {
-                if (
-                  stageData &&
-                  typeof stageData === "object" &&
-                  stageData.referral
-                ) {
-                  commercialStageRefs.push(String(stageData.referral));
-                }
-              });
-            }
-          });
-        }
-
-        const fields = [
-          ...topFields,
-          ...stageRefValues,
-          ...commercialStageRefs,
-        ].map((x) => String(x).toLowerCase());
-
-        // Match ANY word against ANY field
         return searchWords.some((word) =>
-          fields.some((field) => field.includes(word))
+          topFields.some((field) => field.toLowerCase().includes(word))
         );
       });
 
       setSearchResult(filteredResults);
     } catch (err) {
-      console.error("Error fetching suggestions:", err);
       setSearchResult([]);
     } finally {
       setLoading(false);
@@ -167,72 +164,27 @@ export default function Header() {
       const rect = searchBoxRef.current.getBoundingClientRect();
       setDropdownPos({
         left: rect.left,
-        top: rect.bottom + window.scrollY,
+        top: rect.bottom + window.scrollY + 12,
         width: rect.width,
       });
     }
-  }, [searchQuery]);
+  }, [searchQuery, isFocused]);
 
   const toggleFullScreen = () => {
-    const doc = window.document;
-    const docEl = doc.documentElement;
-
-    const requestFullScreen =
-      docEl.requestFullscreen ||
-      docEl.mozRequestFullScreen ||
-      docEl.webkitRequestFullScreen ||
-      docEl.msRequestFullscreen;
-
-    const cancelFullScreen =
-      doc.exitFullscreen ||
-      doc.mozCancelFullScreen ||
-      doc.webkitExitFullscreen ||
-      doc.msExitFullscreen;
-
-    if (
-      !doc.fullscreenElement &&
-      !doc.mozFullScreenElement &&
-      !doc.webkitFullscreenElement &&
-      !doc.msFullscreenElement
-    ) {
-      requestFullScreen.call(docEl);
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
     } else {
-      cancelFullScreen.call(doc);
+      document.exitFullscreen();
     }
   };
 
   useEffect(() => {
     const handleFullScreenChange = () => {
-      const doc = window.document;
-      const isCurrentlyFullScreen = !!(
-        doc.fullscreenElement ||
-        doc.mozFullScreenElement ||
-        doc.webkitFullscreenElement ||
-        doc.msFullscreenElement
-      );
-      setIsFullScreen(isCurrentlyFullScreen);
+      setIsFullScreen(!!document.fullscreenElement);
     };
-
     document.addEventListener("fullscreenchange", handleFullScreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullScreenChange);
-    document.addEventListener("mozfullscreenchange", handleFullScreenChange);
-    document.addEventListener("msfullscreenchange", handleFullScreenChange);
-
-    return () => {
+    return () =>
       document.removeEventListener("fullscreenchange", handleFullScreenChange);
-      document.removeEventListener(
-        "webkitfullscreenchange",
-        handleFullScreenChange
-      );
-      document.removeEventListener(
-        "mozfullscreenchange",
-        handleFullScreenChange
-      );
-      document.removeEventListener(
-        "msfullscreenchange",
-        handleFullScreenChange
-      );
-    };
   }, []);
 
   useEffect(() => {
@@ -242,142 +194,276 @@ export default function Header() {
         !searchBoxRef.current.contains(event.target)
       ) {
         setShowDropdown(false);
+        setIsFocused(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.2, ease: "easeOut" },
+    },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.15 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: i * 0.03, duration: 0.2 },
+    }),
+  };
+
   return (
     <>
-      <div className="top-0 p-4 bg-white mb-2 block md:flex justify-between items-center rounded-lg z-40">
-        <h2 className="text-xl font-semibold py-3">
-          Hello {localStorage.getItem("user")}
-        </h2>
+      {/* Header Container - Reduced z-index to z-40 so sidebar toggle is visible */}
+      <header className="sticky top-0 z-40 mb-6 group transition-all duration-500">
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300" />
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
-        <div className="flex items-center gap-8">
-          <SidebarModuleSwitcher />
-
-          <div
-            className="flex justify-center items-center relative w-full md:w-fit px-4 md:px-0"
-            ref={searchBoxRef}
-          >
-            <button
-              onClick={toggleFullScreen}
-              className="relative right-6 text-gray-500 hover:text-blue-500 cursor-pointer transition-all duration-200 hover:scale-110"
-              title={isFullScreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
+        <div className="relative px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col items-start min-w-[200px]">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 mb-1"
             >
-              {isFullScreen ? (
-                <Minimize2 className="w-5 h-5" strokeWidth={2} />
-              ) : (
-                <Maximize2 className="w-5 h-5" strokeWidth={2} />
-              )}
-            </button>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                Hello, {localStorage.getItem("user") || "Admin"}
+              </h1>
+              <span className="animate-pulse hidden md:block">👋</span>
+            </motion.div>
 
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-full md:max-w-xs border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-              <Search className="w-4 h-4 text-gray-500" />
-              <input
-                type="text"
-                placeholder={
-                  company === "vkl"
-                    ? "Search by Matter Number, Client Name"
-                    : "Search by OrderId, Name"
-                }
-                className="outline-none text-sm bg-transparent w-full placeholder-gray-400"
-                value={searchQuery}
-                onChange={handleSearchOnchange}
-                onFocus={() => setShowDropdown(true)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setShowDropdown(false);
-                  }
-                }}
-              />
-
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                >
-                  <X className="w-4 h-4" strokeWidth={2} />
-                </button>
-              )}
+            <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-[#2E3D99]" />
+                <span>{formattedDate}</span>
+              </div>
+              <div className="w-px h-3 bg-gray-300" />
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-[#1D97D7]" />
+                <span className="tabular-nums">{formattedTime}</span>
+              </div>
             </div>
           </div>
-          {/* <NotificationBell /> */}
-        </div>
-      </div>
 
-      {showDropdown &&
-        searchQuery.trim() &&
-        createPortal(
-          <div
-            className="fixed bg-white rounded-md shadow-lg z-50 max-h-60 overflow-y-auto border border-gray-200"
-            style={{
-              left: dropdownPos.left,
-              top: dropdownPos.top,
-              width: dropdownPos.width,
-            }}
-          >
-            {loading ? (
-              <div className="p-3 text-gray-500 text-sm flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                Searching...
-              </div>
-            ) : !loading &&
-              searchQuery.trim().length > 0 &&
-              searchResult.length === 0 ? (
-              <div className="p-3 text-gray-400 text-sm">
-                No results found for "{searchQuery.trim()}"
-              </div>
-            ) : (
-              <>
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 border-b border-gray-100">
-                  Found {searchResult.length} result
-                  {searchResult.length !== 1 ? "s" : ""}
-                </div>
-                <ul className="divide-y divide-gray-100">
-                  {searchResult.map((item, index) => (
-                    <li
-                      key={`${item.matterNumber || item.orderId}-${index}`}
-                      className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
-                      onClick={() => handelListClick(item)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className="font-medium text-gray-800 text-sm">
-                          {item?.matterNumber || item?.orderId}
-                        </span>
-                        {item?.status && (
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              item.status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : item.status === "closed"
-                                ? "bg-gray-100 text-gray-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
+          <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+            <div className="hidden md:block scale-90 origin-right">
+              <SidebarModuleSwitcher />
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto relative z-20">
+              <button
+                onClick={toggleFullScreen}
+                className="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
+              >
+                {isFullScreen ? (
+                  <Minimize2 className="w-5 h-5" />
+                ) : (
+                  <Maximize2 className="w-5 h-5" />
+                )}
+              </button>
+
+              <div
+                ref={searchBoxRef}
+                className={`
+                  relative transition-all duration-500 ease-out
+                  ${isFocused ? "w-full md:w-[380px]" : "w-full md:w-[280px]"}
+                `}
+              >
+                <div
+                  className={`
+                  absolute -inset-0.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-2xl opacity-0 transition-opacity duration-300 blur-sm
+                  ${isFocused ? "opacity-30" : "opacity-0"}
+                `}
+                />
+
+                <div
+                  className={`
+                  relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 bg-white
+                  ${
+                    isFocused
+                      ? "border-transparent shadow-lg ring-1 ring-[#2E3D99]/10"
+                      : "border-gray-200 shadow-sm hover:border-[#2E3D99]/30 hover:shadow-md"
+                  }
+                `}
+                >
+                  <Search
+                    className={`w-4 h-4 transition-colors duration-300 ${
+                      isFocused ? "text-[#2E3D99]" : "text-gray-400"
+                    }`}
+                  />
+
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={
+                      company === "vkl"
+                        ? "Search Matter # or Client..."
+                        : "Search Order ID..."
+                    }
+                    className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
+                    value={searchQuery}
+                    onChange={handleSearchOnchange}
+                    onFocus={() => {
+                      setShowDropdown(true);
+                      setIsFocused(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setIsFocused(false), 200);
+                    }}
+                  />
+
+                  <AnimatePresence>
+                    {searchQuery ? (
+                      <motion.button
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        onClick={() => {
+                          setSearchQuery("");
+                          inputRef.current?.focus();
+                        }}
+                        className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </motion.button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.5 }}
+                        className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] text-gray-400 font-medium cursor-pointer"
+                        onClick={() => inputRef.current?.focus()}
+                      >
+                        {isMac ? (
+                          <Command className="w-3 h-3" />
+                        ) : (
+                          <span className="text-[10px] font-bold">Ctrl</span>
                         )}
-                      </div>
-                      <div className="text-gray-500 text-sm mt-1">
-                        {item?.clientName}
-                      </div>
-                      {item?.clientEmail && (
-                        <div className="text-gray-400 text-xs mt-1 truncate">
-                          {item.clientEmail}
+                        <span>K</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {createPortal(
+        <AnimatePresence>
+          {showDropdown && searchQuery.trim() && (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              // Changed: Keep dropdown at z-[99] but ensure it doesn't overlap sidebar
+              className="fixed z-[99] flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden"
+              style={{
+                left: dropdownPos.left,
+                top: dropdownPos.top,
+                width: dropdownPos.width,
+                maxHeight: "450px",
+              }}
+            >
+              <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <span>
+                  {loading ? "Searching Database..." : "Best Matches"}
+                </span>
+                {!loading && (
+                  <span className="bg-[#2E3D99]/10 text-[#2E3D99] px-2 py-0.5 rounded-full">
+                    {searchResult.length} found
+                  </span>
+                )}
+              </div>
+
+              <div className="overflow-y-auto custom-scrollbar p-2">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                    <div className="w-6 h-6 border-2 border-[#2E3D99]/20 border-t-[#2E3D99] rounded-full animate-spin" />
+                    <span className="text-xs font-medium">Processing...</span>
+                  </div>
+                ) : searchResult.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">
+                      No results found
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Try searching for a specific ID or name
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-1">
+                    {searchResult.map((item, index) => (
+                      <motion.li
+                        key={`${item.matterNumber || item.orderId}-${index}`}
+                        custom={index}
+                        variants={itemVariants}
+                        onClick={() => handelListClick(item)}
+                        className="group relative flex items-center justify-between p-3 rounded-xl cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 border border-transparent hover:border-blue-100"
+                      >
+                        <div className="flex flex-col gap-1 overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-[#2E3D99] group-hover:scale-125 transition-transform" />
+                            <span className="font-bold text-gray-800 text-sm group-hover:text-[#2E3D99] transition-colors">
+                              {item?.matterNumber || item?.orderId}
+                            </span>
+                            {item?.status && (
+                              <span
+                                className={`
+                                 text-[10px] font-bold px-1.5 py-0.5 rounded border
+                                 ${
+                                   item.status === "active"
+                                     ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                     : item.status === "closed"
+                                     ? "bg-gray-50 text-gray-500 border-gray-200"
+                                     : "bg-blue-50 text-blue-600 border-blue-100"
+                                 }
+                               `}
+                              >
+                                {item.status.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="pl-4">
+                            <p className="text-sm font-medium text-gray-600 truncate">
+                              {item?.clientName}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate max-w-[200px]">
+                              {item?.propertyAddress ||
+                                item?.clientEmail ||
+                                "No detailed info"}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>,
-          document.body
-        )}
+
+                        <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                          <div className="p-1.5 rounded-lg bg-white shadow-sm border border-gray-100 text-[#2E3D99]">
+                            <ChevronRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
