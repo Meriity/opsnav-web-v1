@@ -62,7 +62,7 @@ const ViewClients = () => {
     const saved = localStorage.getItem("viewClientsDateFilter");
     return saved
       ? JSON.parse(saved)
-      : { type: "delivery_date", range: ["", ""] };
+      : { type: "deliveryDate", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
@@ -157,122 +157,89 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-    console.log(user);
-    let filteredData =
-      currentModule === "commercial" ? commercialClients : Clients;
+  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+}, [dateFilter])
 
-    const [startDate, endDate] = Array.isArray(dateFilter?.range)
-      ? dateFilter.range
+useEffect(() => {
+    // 1. Get the correct list
+    let data = currentModule === "commercial" ? commercialClients : Clients;
+
+    // Safety check
+    if (!Array.isArray(data) || data.length === 0) {
+      setClientList([]);
+      return;
+    }
+
+    // 2. Get Range from State
+    const [rawStart, rawEnd] = Array.isArray(dateFilter?.range) 
+      ? dateFilter.range 
       : ["", ""];
 
-    // Fix: Use lowercase comparison to match localStorage value
-    if (company?.toLowerCase() === "idg" && startDate && endDate) {
-      filteredData = filteredData.filter((client) => {
-        let deliveryDateObj = moment(client.delivery_date);
-        let orderDateObj = moment(client.order_date || client.orderDate);
+    // If no dates are selected, show everything and exit
+    if (!rawStart || !rawEnd) {
+      setClientList(data);
+      return;
+    }
 
-        // Check if delivery or order date falls within range
-        const inDeliveryRange =
-          deliveryDateObj.isValid() &&
-          deliveryDateObj.isBetween(
-            moment(startDate),
-            moment(endDate),
-            "day",
-            "[]"
-          );
+    // 3. THE FIX: Set Start to Beginning of Day (00:00:00) and End to End of Day (23:59:59)
+    // This ensures if you pick "11th", it covers the entire 11th day.
+    const start = moment(rawStart).startOf('day');
+    const end = moment(rawEnd).endOf('day');
 
-        const inOrderRange =
-          orderDateObj.isValid() &&
-          orderDateObj.isBetween(
-            moment(startDate),
-            moment(endDate),
-            "day",
-            "[]"
-          );
+    // 4. Determine Filter Type (Order, Delivery, or Settlement)
+    let filterType = (dateFilter?.type || "").toLowerCase();
+    
+    // If undefined, pick a safe default based on Company
+    if (!filterType || filterType === "undefined") {
+        filterType = company === "idg" ? "delivery" : "settlement";
+    }
 
-        if (dateFilter.type === "delivery_date") {
-          return inDeliveryRange;
-        } else if (dateFilter.type === "order_date") {
-          return inOrderRange;
-        } else if (dateFilter.type === "both_date") {
-          return inDeliveryRange && inOrderRange;
-        }
+    console.log(`Filtering ${filterType}: ${start.format()} to ${end.format()}`);
 
-        return;
-      });
-    } else {
-      if (startDate && endDate) {
-        filteredData = filteredData.filter((client) => {
-          let clientDate;
-          if (currentModule === "commercial") {
-            clientDate = moment(
-              client.settlement_date || client.settlementDate
-            );
-          } else {
-            clientDate = moment(client.settlement_date);
-          }
-          return clientDate.isBetween(
-            moment(startDate),
-            moment(endDate),
-            "day",
-            "[]"
-          );
-        });
+    // 5. Apply the Filter
+    data = data.filter((client) => {
+      // Get the date strings from your data
+      const orderDate = client.order_date || client.orderDate;
+      const deliveryDate = client.delivery_date || client.deliveryDate;
+      const settlementDate = client.settlement_date || client.settlementDate;
+      const matterDate = client.matterDate || client.matter_date;
+
+      // Helper: Checks if date is between Start and End (Inclusive)
+      const isIncluded = (dateStr) => {
+        if (!dateStr) return false;
+        // '[]' means inclusive: includes the start date AND the end date
+        return moment(dateStr).isBetween(start, end, null, '[]'); 
+      };
+
+      // Check against the correct column
+      if (filterType.includes("both")) {
+        return isIncluded(orderDate) || isIncluded(deliveryDate);
+      } 
+      else if (filterType.includes("order")) {
+        return isIncluded(orderDate);
+      } 
+      else if (filterType.includes("delivery")) {
+        return isIncluded(deliveryDate);
+      } 
+      else if (filterType.includes("settlement")) {
+        return isIncluded(settlementDate);
       }
-    }
+      else if (filterType.includes("project")) {
+        return isIncluded(matterDate);
+      }
 
-    // Apply search query filter
-    if (searchQuery) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      filteredData = filteredData.filter((client) => {
-        if (currentModule === "commercial") {
-          const searchableFields = [
-            client.matterNumber,
-            client.clientName,
-            client.businessName,
-            client.businessAddress,
-            client.state,
-            client.clientType,
-            client.dataEntryBy,
-            client.postcode,
-          ];
+      // Final Fallback if type is weird
+      if (company === "idg") return isIncluded(deliveryDate);
+      return isIncluded(settlementDate);
+    });
 
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
-          );
-        } else {
-          const searchableFields = [
-            client.client_name || client.clientName,
-            client.matternumber || client.matterNumber || client.orderId,
-            client.businessAddress || client.business_address,
-            client.property_address || client.propertyAddress,
-            client.state,
-            client.referral || client.referralName,
-          ];
+    setClientList(data);
 
-          return searchableFields.some(
-            (field) =>
-              field && String(field).toLowerCase().includes(lowercasedQuery)
-          );
-        }
-      });
-    }
-
-    setClientList(filteredData);
-  }, [
-    dateFilter,
-    Clients,
-    commercialClients,
-    searchQuery,
-    currentModule,
-    company,
-  ]);
+  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
 
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
     if (currentModule === "commercial") {
-      // Commercial projects columns
       columns = [
         { key: "matterNumber", title: "Project Number", width: "10%" },
         { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
@@ -438,9 +405,8 @@ const ViewClients = () => {
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${
-          currentModule === "commercial" ? "projects" : "clients"
-        }.`}
+        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+          }.`}
         handelSubmitFun={(fromDate, toDate, dateType) => {
           setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
@@ -746,11 +712,10 @@ const ViewClients = () => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${
-                              active
+                            className={`block w-full text-left px-4 py-2 text-sm ${active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             Select Date Range
                           </button>
