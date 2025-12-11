@@ -250,12 +250,12 @@ export default function Stage1({
         console.log("Processing stage data:", stageData);
 
         const { systemNote, clientComment } = extractNotes(
-          stageData.noteForClient
+          stageData?.noteForClient
         );
         const initialFormData = {};
         const initialStatuses = {};
 
-        currentFields.forEach((field) => {
+        currentFields?.forEach((field) => {
           if (field.name === "quoteAmount") {
             initialFormData[field.name] =
               stageData[field.name]?.$numberDecimal ||
@@ -263,11 +263,11 @@ export default function Stage1({
               "";
           } else {
             if (field.type === "radio") {
-              initialFormData[field.name] = normalizeValue(
-                stageData[field.name] || ""
+              initialFormData[field?.name] = normalizeValue(
+                stageData[field?.name] || ""
               );
             } else {
-              initialFormData[field.name] = stageData[field.name] || "";
+              initialFormData[field?.name] = stageData[field?.name] || "";
             }
           }
 
@@ -288,7 +288,7 @@ export default function Stage1({
         console.log("Initialized form data:", initialFormData);
       } catch (error) {
         console.error("Error initializing form data:", error);
-        toast.error("Failed to load stage data");
+        // toast.error("Failed to load stage data");
       } finally {
         setIsLoading(false);
       }

@@ -681,14 +681,11 @@ export default function StagesLayout() {
       setShowConfirmModal(false);
       return;
     }
-
     setIsUpdating(true);
     try {
       let payload = {};
       const currentModule = localStorage.getItem("currentModule");
-
       console.log("Client data before update:", clientData);
-
       if (currentModule === "commercial") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
@@ -708,12 +705,14 @@ export default function StagesLayout() {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
+          postcode : clientData?.postcode 
         };
       } else if (localStorage.getItem("company") === "idg") {
         payload = {
           deliveryDate: clientData?.data?.deliveryDate || null,
           order_details: clientData?.data?.order_details || null,
           notes: clientData?.data?.notes || "",
+          postCode: clientData?.data?.postcode || clientData?.data?.postCode
         };
       }
 
@@ -736,30 +735,31 @@ export default function StagesLayout() {
       }
 
       // Postcode is editable by all users
-      payload.postcode =
-        clientData?.postcode || clientData?.data?.postcode || "";
+      // payload.postcode =
+      //   clientData?.postcode || clientData?.data?.postcode || "";
 
       let resp = {};
-      if (currentModule === "commercial") {
-        // Check if this is a new project (has default empty structure)
-        const isNewProject =
-          !originalClientData?.clientName &&
-          !originalClientData?.businessName &&
-          !originalClientData?.state;
+      // if (currentModule === "commercial") {
+      //   // Check if this is a new project (has default empty structure)
+      //   const isNewProject =
+      //     !originalClientData?.clientName &&
+      //     !originalClientData?.businessName &&
+      //     !originalClientData?.state;
 
-        if (isNewProject) {
-          // Use create project for new projects
-          resp = await commercialApiRef.current.createProject(payload);
-          toast.success("Project created successfully!");
-        } else {
-          // Use update project for existing projects
-          resp = await commercialApiRef.current.updateProject(
-            originalMatterNumber,
-            payload
-          );
-          toast.success("Project details updated successfully");
-        }
-      } else if (localStorage.getItem("company") === "vkl") {
+      //   if (isNewProject) {
+      //     // Use create project for new projects
+      //     resp = await commercialApiRef.current.createProject(payload);
+      //     toast.success("Project created successfully!");
+      //   } else {
+      //     // Use update project for existing projects
+      //     resp = await commercialApiRef.current.updateProject(
+      //       originalMatterNumber,
+      //       payload
+      //     );
+      //     toast.success("Project details updated successfully");
+      //   }
+      // } else 
+        if (localStorage.getItem("company") === "vkl") {
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
@@ -769,6 +769,7 @@ export default function StagesLayout() {
           originalMatterNumber,
           payload
         );
+        console.log(originalMatterNumber,payload);
       }
 
       const updatedClient = resp.client || resp || clientData;
