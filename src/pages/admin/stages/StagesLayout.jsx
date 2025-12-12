@@ -1052,7 +1052,7 @@ export default function StagesLayout() {
                           ? (
                             <>
                               Order Details{" "}
-                              <span className="absolute right-8 text-sm font-medium text-gray-600">
+                              <span className="relative left-48 text-sm font-medium text-gray-600">
                                 Unit Number : ({clientData?.data?.unitNumber || "unset"})
                               </span>
                             </>
