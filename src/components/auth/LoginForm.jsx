@@ -121,7 +121,7 @@ function LoginForm() {
             <div className="mb-6">
               <img
                 src="/Logo.png"
-                alt="Opsnav Logo"
+                alt="OpsNav Logo"
                 className="h-16 mx-auto lg:mx-0"
               />
             </div>
@@ -193,7 +193,7 @@ function LoginForm() {
                   <Lock className="w-7 h-7 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">Sign In</h2>
-                <p className="text-gray-600 mt-2">Access your Opsnav account</p>
+                <p className="text-gray-600 mt-2">Access your OpsNav account</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -300,7 +300,7 @@ function LoginForm() {
 
                 <div className="text-center pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500">
-                    New to Opsnav?{" "}
+                    New to OpsNav?{" "}
                     <a
                       href="#"
                       className="text-[#2E3D99] hover:underline font-medium"
@@ -318,7 +318,7 @@ function LoginForm() {
       {/* Footer */}
       <footer className="absolute bottom-4 left-0 right-0 text-center">
         <p className="text-sm text-gray-600">
-          Powered by <span className="font-bold text-[#2E3D99]">Opsnav™</span> |
+          Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
           Streamline with Precision • Scale Without Bottlenecks
         </p>
       </footer>

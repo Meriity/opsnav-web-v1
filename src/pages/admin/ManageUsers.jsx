@@ -1,5 +1,3 @@
-// Merged ManageUsers.jsx
-// UI from second file, functionality from first file preserved
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import {
@@ -71,7 +69,6 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
   />
 );
 
-// Stat Card Component (from second file)
 const StatCard = ({
   icon: Icon,
   title,
@@ -173,41 +170,53 @@ function UsersPerPage({ value, onChange }) {
 }
 
 function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
+  const company = localStorage.getItem("company");
+
+  const filteredModules =
+    company === "pallegal"
+      ? ACCESS_MODULES.filter((module) => module.value === "CONVEYANCING")
+      : ACCESS_MODULES;
+
+  const isPallegal = company === "pallegal";
+
   return (
     <div className="mb-6">
       <label className="block font-medium mb-3 text-gray-700">
         Access Modules
       </label>
       <div className="grid grid-cols-2 gap-3">
-        {ACCESS_MODULES.map((module) => (
-          <label
-            key={module.value}
-            className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white/50 hover:bg-white transition-all cursor-pointer"
-          >
-            <input
-              type="checkbox"
-              value={module.value}
-              checked={selectedAccess.includes(module.value)}
-              onChange={(e) => {
-                if (e.target.checked)
-                  onAccessChange([...selectedAccess, module.value]);
-                else
-                  onAccessChange(
-                    selectedAccess.filter((a) => a !== module.value)
-                  );
-              }}
-              className="form-checkbox h-5 w-5 text-[#2E3D99] rounded border-gray-300 focus:ring-[#2E3D99]"
-            />
-            <div
-              className={`w-8 h-8 rounded-lg ${module.color} flex items-center justify-center`}
+        {filteredModules.map((module) => {
+          const checked = selectedAccess.includes(module.value);
+          return (
+            <label
+              key={module.value}
+              className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white/50 hover:bg-white transition-all cursor-pointer"
             >
-              <module.icon className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              {module.label}
-            </span>
-          </label>
-        ))}
+              <input
+                type="checkbox"
+                value={module.value}
+                checked={checked}
+                onChange={(e) => {
+                  if (e.target.checked)
+                    onAccessChange([...selectedAccess, module.value]);
+                  else
+                    onAccessChange(
+                      selectedAccess.filter((a) => a !== module.value)
+                    );
+                }}
+                className="form-checkbox h-5 w-5 text-[#2E3D99] rounded border-gray-300 focus:ring-[#2E3D99]"
+              />
+              <div
+                className={`w-8 h-8 rounded-lg ${module.color} flex items-center justify-center`}
+              >
+                <module.icon className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                {module.label}
+              </span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );
@@ -335,6 +344,7 @@ export default function ManageUsers() {
   const location = useLocation();
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
+  const currentUserRole = localStorage.getItem("role");
 
   // Stats
   const totalUsers = users.length;
@@ -362,7 +372,6 @@ export default function ManageUsers() {
     } else setUserList(users);
   }, [searchQuery, users]);
 
-  // Columns (from first file) - Modified for IDG and with proper render function for access modules
   const columns =
     company !== "idg"
       ? [
@@ -412,9 +421,6 @@ export default function ManageUsers() {
           { key: "createdAt", title: "Created At" },
         ];
 
-  /* -------------------------
-     Handlers (EXACTLY from first file - preserved)
-     ------------------------- */
   const handleUserCreation = async (display_name, email, role) => {
     setIsLoading(true);
     try {
@@ -531,17 +537,34 @@ export default function ManageUsers() {
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    setEditAccess(user.access || []);
+    if (company === "pallegal") {
+      setEditAccess([]);
+    } else {
+      setEditAccess(user.access || []);
+    }
     setOpenEdit(true);
   };
 
+  // const shouldShowCreateButton = () =>
+  //   currentModule === "commercial" || company === "vkl" || company === "idg";
+
   const shouldShowCreateButton = () =>
-    currentModule === "commercial" || company === "vkl" || company === "idg";
+    currentUserRole === "superadmin" || currentUserRole === "admin";
+
+  // const handleCreateUserClick = () => {
+  //   if (currentModule === "commercial") setOpenUser(true);
+  //   else if (company === "vkl") setOpenUser(true);
+  //   else if (company === "idg") setOpenUserIDG(true);
+  // };
 
   const handleCreateUserClick = () => {
-    if (currentModule === "commercial") setOpenUser(true);
-    else if (company === "vkl") setOpenUser(true);
-    else if (company === "idg") setOpenUserIDG(true);
+    if (!(currentUserRole === "superadmin" || currentUserRole === "admin")) {
+      toast.error("You don't have permission to create users.");
+      return;
+    } else {
+      setSelectedAccess([]);
+      setOpenUser(true);
+    }
   };
 
   if (loading) {
