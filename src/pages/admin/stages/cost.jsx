@@ -799,11 +799,13 @@ export default function CostComponent({ changeStage }) {
         <Button
           label="Back"
           width="w-full md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
           onClick={() => changeStage(stage - 1)}
         />
         <Button
           label={isSaving ? "Saving..." : "Save"}
           width="w-full md:w-[120px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
           onClick={handleSubmit}
           disabled={isSaving || !isChanged()}
         />

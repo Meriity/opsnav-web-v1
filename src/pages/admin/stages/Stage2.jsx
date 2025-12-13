@@ -533,7 +533,7 @@ export default function Stage2({
       // update original data
       originalData.current = { ...formData };
       console.log("Original data updated:", originalData.current);
-      // setReloadTrigger((prev) => !prev);
+      setReloadTrigger((prev) => !prev);
 
       toast.success("Stage 2 Saved Successfully!", {
         position: "top-right",
@@ -721,6 +721,7 @@ export default function Stage2({
         <Button
           label="Back"
           width="w-[70px] md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
@@ -728,13 +729,14 @@ export default function Stage2({
           <Button
             label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
-            bg="bg-blue-500"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

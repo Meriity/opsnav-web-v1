@@ -434,7 +434,7 @@ export default function Stage1({
       console.log("API call successful");
 
       originalData.current = { ...formData };
-      // setReloadTrigger((prev) => !prev);
+      setReloadTrigger((prev) => !prev);
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,
@@ -493,7 +493,7 @@ export default function Stage1({
                 )} flex items-center justify-center rounded-4xl px-2`}
               >
                 <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                  {statuses[field.name]}
+                  {statuses[field.name] || "Not Completed"}
                 </p>
               </div>
             </div>
@@ -575,6 +575,7 @@ export default function Stage1({
         <Button
           label="Back"
           width="w-[70px] md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
@@ -582,13 +583,14 @@ export default function Stage1({
           <Button
             label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
-            bg="bg-blue-500"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>

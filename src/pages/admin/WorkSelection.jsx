@@ -150,7 +150,7 @@ function WorkSelection() {
           animate={{ opacity: 1, scale: 1 }}
           className="z-10 bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl flex flex-col items-center border border-white/50"
         >
-          <img src="/Logo.png" alt="Opsnav" className="h-10 mb-6" />
+          <img src="/Logo.png" alt="OpsNav" className="h-10 mb-6" />
           <div className="relative w-16 h-16 mb-4">
             <div className="absolute inset-0 border-4 border-[#2E3D99]/20 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-[#2E3D99] border-t-transparent rounded-full animate-spin"></div>
@@ -202,7 +202,7 @@ function WorkSelection() {
           >
             <img
               src="/Logo.png"
-              alt="Opsnav"
+              alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
           </motion.div>
@@ -303,7 +303,7 @@ function WorkSelection() {
       {/* Footer */}
       <footer className="w-full text-center py-4 relative z-10 [@media(max-width:1024px)_and_(max-height:800px)]:py-2">
         <p className="text-sm text-gray-600 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
-          Powered by <span className="font-bold text-[#2E3D99]">Opsnav™</span> |
+          Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
           Secure Legal Operations Platform
         </p>
       </footer>

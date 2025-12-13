@@ -555,7 +555,7 @@ export default function ArchivedClients() {
       <div className="relative z-10">
         <Header />
 
-        <main className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+        <main className="p-3 sm:p-4 md:p-6 w-full">
           {/* Welcome Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}

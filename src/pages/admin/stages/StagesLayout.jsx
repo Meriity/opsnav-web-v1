@@ -15,6 +15,7 @@ import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 
 const formatDateForDisplay = (isoString) => {
   if (!isoString) return "";
@@ -204,6 +205,28 @@ export default function StagesLayout() {
       { id: 6, title: "Completion & Archiving" },
     ];
   }
+
+  // Floating Background Elements (same as ViewClients)
+  const FloatingElement = ({ top, left, delay, size = 60 }) => (
+    <motion.div
+      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+      style={{
+        width: size,
+        height: size,
+        top: `${top}%`,
+        left: `${left}%`,
+      }}
+      animate={{
+        y: [0, -20, 0],
+        x: [0, 10, 0],
+      }}
+      transition={{
+        duration: 3 + delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
 
   function bgcolor(status) {
     const statusColors = {
@@ -481,7 +504,7 @@ export default function StagesLayout() {
         if (serverRole) setRole(serverRole);
 
         console.log("Raw API response:", response);
-        console.log("Available fields in response:", Object.keys(response))
+        console.log("Available fields in response:", Object.keys(response));
 
         console.log("=== DEBUG STAGES ARRAY ===");
         if (response.stages && Array.isArray(response.stages)) {
@@ -561,7 +584,8 @@ export default function StagesLayout() {
                 section[`status${i}`] =
                   statusMap[stageObject[stageKey]] || "Not Completed";
                 console.log(
-                  `Stage ${i} (${stageKey}) status: ${stageObject[stageKey]
+                  `Stage ${i} (${stageKey}) status: ${
+                    stageObject[stageKey]
                   } -> ${section[`status${i}`]}`
                 );
               }
@@ -705,14 +729,14 @@ export default function StagesLayout() {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
-          postcode : clientData?.postcode 
+          postcode: clientData?.postcode,
         };
       } else if (localStorage.getItem("company") === "idg") {
         payload = {
           deliveryDate: clientData?.data?.deliveryDate || null,
           order_details: clientData?.data?.order_details || null,
           notes: clientData?.data?.notes || "",
-          postCode: clientData?.data?.postcode || clientData?.data?.postCode
+          postCode: clientData?.data?.postcode || clientData?.data?.postCode,
         };
       }
 
@@ -758,8 +782,8 @@ export default function StagesLayout() {
       //     );
       //     toast.success("Project details updated successfully");
       //   }
-      // } else 
-        if (localStorage.getItem("company") === "vkl") {
+      // } else
+      if (localStorage.getItem("company") === "vkl") {
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
@@ -769,7 +793,7 @@ export default function StagesLayout() {
           originalMatterNumber,
           payload
         );
-        console.log(originalMatterNumber,payload);
+        console.log(originalMatterNumber, payload);
       }
 
       const updatedClient = resp.client || resp || clientData;
@@ -839,677 +863,748 @@ export default function StagesLayout() {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen bg-gray-100 overflow-hidden">
-      <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
-        {/* Desktop layout - buttons next to Hello */}
-        <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
-          <h2 className="text-lg md:text-xl font-semibold">
-            Hello {localStorage.getItem("user")}
-          </h2>
-          <div className="flex items-center gap-1">
-            <Button
-              label="Back"
-              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[60px] md:w-[70px]"
-              onClick={() => {
-                isAnyAdmin
-                  ? navigate("/admin/view-clients")
-                  : navigate("/user/view-clients");
-                localStorage.removeItem("client-storage");
-              }}
-            />
-            {(localStorage.getItem("company") === "vkl" ||
-              (localStorage.getItem("company") === "idg" &&
-                ["admin", "superadmin"].includes(
-                  localStorage.getItem("role")
-                )) ||
-              currentModule === "commercial") && (
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.06]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                               linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Page Content */}
+      <div className="relative z-10 flex flex-col w-full h-screen overflow-hidden">
+        <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
+          {/* Desktop layout - buttons next to Hello */}
+          <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              Hello, {localStorage.getItem("user")}
+            </h2>
+
+            <div className="flex items-center gap-1">
+              <Button
+                label="Back"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                width="w-[60px] md:w-[70px]"
+                onClick={() => {
+                  isAnyAdmin
+                    ? navigate("/admin/view-clients")
+                    : navigate("/user/view-clients");
+                  localStorage.removeItem("client-storage");
+                }}
+              />
+              {(localStorage.getItem("company") === "vkl" ||
+                (localStorage.getItem("company") === "idg" &&
+                  ["admin", "superadmin"].includes(
+                    localStorage.getItem("role")
+                  )) ||
+                currentModule === "commercial") && (
                 <Button
                   label="Cost"
-                  bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
+                  bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
                   width="w-[60px] md:w-[70px]"
                   onClick={() => setSelectedStage(7)}
                 />
               )}
+            </div>
           </div>
-        </div>
 
-        {/* Mobile layout - buttons below Hello */}
-        <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
-          <h2 className="text-lg font-semibold mb-2">
-            Hello {localStorage.getItem("user")}
-          </h2>
-          <div className="flex justify-between w-full gap-1">
-            <Button
-              label="Upload Image"
-              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[48%]"
-              onClick={() => setIsOpen(true)}
-            />
-            <Button
-              label="Cost"
-              bg="bg-[#00AEEF] hover:bg-sky-600 active:bg-sky-700"
-              width="w-[48%]"
-              onClick={() => setSelectedStage(7)}
-            />
+          {/* Mobile layout - buttons below Hello */}
+          <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
+            <h2 className="text-lg font-semibold mb-2">
+              Hello {localStorage.getItem("user")}
+            </h2>
+            <div className="flex justify-between w-full gap-1">
+              <Button
+                label="Upload Image"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                width="w-[48%]"
+                onClick={() => setIsOpen(true)}
+              />
+              <Button
+                label="Cost"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                width="w-[48%]"
+                onClick={() => setSelectedStage(7)}
+              />
+            </div>
           </div>
-        </div>
 
-        {loading ? (
-          <Loader />
-        ) : (
-          <>
-            {/* Stages section with collapse button at the bottom */}
-            <div className="relative">
-              {/* Mobile stages with smooth transition */}
-              {isSmallScreen && (
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isStagesCollapsed ? "max-h-0" : "max-h-96"
+          {false ? (
+            <></>
+          ) : (
+            <>
+              {/* Stages section with collapse button at the bottom */}
+              <div className="relative">
+                {/* Mobile stages with smooth transition */}
+                {isSmallScreen && (
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      isStagesCollapsed ? "max-h-0" : "max-h-96"
                     }`}
-                >
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
-                    {stages.map((stage, index) => {
-                      const stageStatus = stageStatuses[`status${stage.id}`];
-                      return (
-                        <div
-                          key={stage.id}
-                          onClick={() => setSelectedStage(stage.id)}
-                          className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${selectedStage === stage.id
-                              ? "bg-[#FFFFFF] text-black border-gray-500"
-                              : `${bgcolor(stageStatus)} border-gray-300`
+                  >
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+                      {stages.map((stage, index) => {
+                        const stageStatus = stageStatuses[`status${stage.id}`];
+                        return (
+                          <div
+                            key={stage.id}
+                            onClick={() => setSelectedStage(stage.id)}
+                            className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
+                              selectedStage === stage.id
+                                ? "bg-[#FFFFFF] text-black border-gray-500"
+                                : `${bgcolor(stageStatus)} border-gray-300`
                             }`}
-                        >
-                          <div className="flex justify-between">
-                            <p className="font-bold font-poppins text-xs">
-                              Stage {index + 1}
-                            </p>
-                            <div
-                              className={`h-[18px] ${stageStatus === "In Progress" ||
-                                  stageStatus === "amber"
-                                  ? "text-[#FF9500]"
-                                  : "text-black"
-                                } flex items-center justify-center rounded-4xl`}
-                            >
-                              <p className="text-[10px] whitespace-nowrap font-bold">
-                                {getStatusDisplayText(stageStatus)}
-                              </p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-xs">{stage.title}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Desktop stages (always visible) */}
-              {!isSmallScreen && (
-                <div>
-                  <ul className="relative flex flex-col md:flex-row gap-2">
-                    {stages.map((stage, index) => {
-                      const stageStatus = stageStatuses[`status${stage.id}`];
-                      const isActive = selectedStage === stage.id;
-                      const isCompleted =
-                        stageStatus === "Completed" || stageStatus === "green";
-                      const isInProgress =
-                        stageStatus === "In Progress" ||
-                        stageStatus === "amber";
-
-                      return (
-                        <li
-                          key={stage.id}
-                          onClick={() => setSelectedStage(stage.id)}
-                          className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${isActive
-                              ? "bg-blue-50 border-[#00AEEF] scale-105 shadow-lg"
-                              : "scale-95 border-gray-300"
-                            }`}
-                        >
-                          <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
-                            <span
-                              className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${isActive
-                                  ? "bg-[#00AEEF] text-white border-[#00AEEF] shadow-[0_0_12px_3px_rgba(59,130,246,0.6)]"
-                                  : isCompleted
-                                    ? "bg-green-600 text-white border-green-600"
-                                    : isInProgress
-                                      ? "bg-amber-500 text-white border-amber-500"
-                                      : "bg-red-500 text-gray-100 border-gray-300"
-                                }`}
-                            >
-                              {index + 1}
-                            </span>
-                          </div>
-
-                          <div className="grow md:grow-0 md:mt-3">
-                            <div className="flex gap-1 items-center">
-                              <p className="font-bold font-poppins text-xl xl:text-sm">
+                          >
+                            <div className="flex justify-between">
+                              <p className="font-bold font-poppins text-xs">
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${isInProgress
+                                className={`h-[18px] ${
+                                  stageStatus === "In Progress" ||
+                                  stageStatus === "amber"
                                     ? "text-[#FF9500]"
-                                    : isCompleted
-                                      ? "text-green-600"
-                                      : isActive
-                                        ? "text-[red]"
-                                        : "text-gray-500"
-                                  }`}
+                                    : "text-black"
+                                } flex items-center justify-center rounded-4xl`}
                               >
-                                <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
+                                <p className="text-[10px] whitespace-nowrap font-bold">
                                   {getStatusDisplayText(stageStatus)}
                                 </p>
                               </div>
                             </div>
-
-                            <div className="mt-0.5">
-                              <p className="text-xl font-bold xl:text-sm">
-                                {stage.title}
-                              </p>
+                            <div>
+                              <p className="text-xs">{stage.title}</p>
                             </div>
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-              {/* Mobile-only collapse toggle button */}
-              {isSmallScreen && (
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={() => setIsStagesCollapsed(!isStagesCollapsed)}
-                    className="p-1 rounded-full bg-gray-200 shadow-md hover:bg-gray-300 transition-colors duration-200"
-                    title={isStagesCollapsed ? "Show Stages" : "Hide Stages"}
-                  >
-                    {isStagesCollapsed ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronUp size={16} />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+                {/* Desktop stages (always visible) */}
+                {!isSmallScreen && (
+                  <div>
+                    <ul className="relative flex flex-col md:flex-row gap-2">
+                      {stages.map((stage, index) => {
+                        const stageStatus = stageStatuses[`status${stage.id}`];
+                        const isActive = selectedStage === stage.id;
+                        const isCompleted =
+                          stageStatus === "Completed" ||
+                          stageStatus === "green";
+                        const isInProgress =
+                          stageStatus === "In Progress" ||
+                          stageStatus === "amber";
 
-            <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
-              <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
-                {clientData && Showstage(selectedStage)}
+                        return (
+                          <li
+                            key={stage.id}
+                            onClick={() => setSelectedStage(stage.id)}
+                            className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${
+                              isActive
+                                ? "bg-blue-50 border-[#2E3D99]/60 scale-105 shadow-lg"
+                                : "scale-95 border-gray-300"
+                            }`}
+                          >
+                            <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
+                              <span
+                                className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${
+                                  isActive
+                                    ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white border-[#2E3D99]] shadow-[0_0_12px_3px_rgba(59,130,246,0.4)]"
+                                    : isCompleted
+                                    ? "bg-green-600 text-white border-green-600"
+                                    : isInProgress
+                                    ? "bg-amber-500 text-white border-amber-500"
+                                    : "bg-red-500 text-gray-100 border-gray-300"
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                            </div>
+
+                            <div className="grow md:grow-0 md:mt-3">
+                              <div className="flex gap-1 items-center">
+                                <p className="font-bold font-poppins text-xl xl:text-sm">
+                                  Stage {index + 1}
+                                </p>
+                                <div
+                                  className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${
+                                    isInProgress
+                                      ? "text-[#FF9500]"
+                                      : isCompleted
+                                      ? "text-green-600"
+                                      : isActive
+                                      ? "text-[red]"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
+                                    {getStatusDisplayText(stageStatus)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="mt-0.5">
+                                <p className="text-xl font-bold xl:text-sm">
+                                  {stage.title}
+                                </p>
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Mobile-only collapse toggle button */}
+                {isSmallScreen && (
+                  <div className="flex justify-center mb-4">
+                    <button
+                      onClick={() => setIsStagesCollapsed(!isStagesCollapsed)}
+                      className="p-1 rounded-full bg-gray-200 shadow-md hover:bg-gray-300 transition-colors duration-200"
+                      title={isStagesCollapsed ? "Show Stages" : "Hide Stages"}
+                    >
+                      {isStagesCollapsed ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronUp size={16} />
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Project/Matter/Order Details - Desktop */}
-              <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
-                <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
-                  <h2 className="text-lg font-bold mb-2">
-                    {currentModule === "commercial"
-                      ? "Project Details"
-                      : company === "vkl"
-                        ? "Matter Details"
-                        : company === "idg"
-                          ? (
-                            <>
-                              Order Details{" "}
-                              <span className="absolute right-8 text-sm font-medium text-gray-600">
-                                Unit Number : ({clientData?.data?.unitNumber || "unset"})
-                              </span>
-                            </>
-                          )
-                          : ""}
-                  </h2>
-                  <form
-                    className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
-                    onSubmit={handleupdate}
-                  >
-                    {/* Date Field */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                        {currentModule === "commercial"
-                          ? "Project Date"
-                          : company === "vkl"
-                            ? "Matter Date"
-                            : company === "idg"
-                              ? "Order Date"
-                              : ""}
-                      </label>
-                      <input
-                        id="matterDate"
-                        name="matterDate"
-                        type={isSuperAdmin ? "date" : "text"}
-                        value={
-                          isSuperAdmin
-                            ? clientData?.matterDate
-                              ? new Date(clientData.matterDate)
-                                .toISOString()
-                                .substring(0, 10)
-                              : ""
-                            : clientData?.matterNumber
-                              ? formatDateForDisplay(clientData.matterDate)
-                              : clientData?.data?.orderDate
-                                ? formatDateForDisplay(clientData.data.orderDate)
-                                : ""
-                        }
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          const v = e.target.value
-                            ? new Date(e.target.value).toISOString()
-                            : "";
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            matterDate: v,
-                          }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
-                          }`}
-                        disabled={!isSuperAdmin}
-                      />
-                    </div>
+              <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
+                <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
+                  {clientData && Showstage(selectedStage)}
+                </div>
 
-                    {/* Number Field */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                        {currentModule === "commercial"
-                          ? "Project Number"
-                          : company === "vkl"
-                            ? "Matter Number"
-                            : company === "idg"
-                              ? "Order ID"
-                              : ""}
-                      </label>
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.matterNumber ||
-                            clientData?.data?.orderId ||
-                            ""
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              matterNumber: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
+                {/* Project/Matter/Order Details - Desktop */}
+                <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
+                  <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
+                    <h2 className="text-lg font-bold mb-2">
+                      {currentModule === "commercial" ? (
+                        "Project Details"
+                      ) : company === "vkl" ? (
+                        "Matter Details"
+                      ) : company === "idg" ? (
+                        <>
+                          Order Details{" "}
+                          <span className="relative left-48 text-sm font-medium text-gray-600">
+                            Unit Number : (
+                            {clientData?.data?.unitNumber || "unset"})
+                          </span>
+                        </>
                       ) : (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.matterNumber ||
-                            clientData?.data?.orderId ||
-                            ""
-                          }
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
+                        ""
                       )}
-                    </div>
-
-                    {/* Client Name */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                        Client Name
-                      </label>
-                      <input
-                        id="clientName"
-                        name="clientName"
-                        type="text"
-                        value={
-                          clientData?.clientName ||
-                          clientData?.data?.client?.name ||
-                          ""
-                        }
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            clientName: e.target.value,
-                          }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
-                          }`}
-                        disabled={!isSuperAdmin}
-                      />
-                    </div>
-
-                    {/* Business Name */}
-                    {currentModule === "commercial" && (
+                    </h2>
+                    <form
+                      className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
+                      onSubmit={handleupdate}
+                    >
+                      {/* Date Field */}
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                          Business Name
+                          {currentModule === "commercial"
+                            ? "Project Date"
+                            : company === "vkl"
+                            ? "Matter Date"
+                            : company === "idg"
+                            ? "Order Date"
+                            : ""}
+                        </label>
+                        <input
+                          id="matterDate"
+                          name="matterDate"
+                          type={isSuperAdmin ? "date" : "text"}
+                          value={
+                            isSuperAdmin
+                              ? clientData?.matterDate
+                                ? new Date(clientData.matterDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : clientData?.matterNumber
+                              ? formatDateForDisplay(clientData.matterDate)
+                              : clientData?.data?.orderDate
+                              ? formatDateForDisplay(clientData.data.orderDate)
+                              : ""
+                          }
+                          onChange={(e) => {
+                            if (!isSuperAdmin) return;
+                            const v = e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : "";
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              matterDate: v,
+                            }));
+                          }}
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                            !isSuperAdmin ? "bg-gray-100" : ""
+                          }`}
+                          disabled={!isSuperAdmin}
+                        />
+                      </div>
+
+                      {/* Number Field */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                          {currentModule === "commercial"
+                            ? "Project Number"
+                            : company === "vkl"
+                            ? "Matter Number"
+                            : company === "idg"
+                            ? "Order ID"
+                            : ""}
                         </label>
                         {isSuperAdmin ? (
                           <input
                             type="text"
-                            value={clientData?.businessName || ""}
-                            onChange={(e) => {
-                              console.log(
-                                "Setting businessName to:",
-                                e.target.value
-                              );
-
+                            value={
+                              clientData?.matterNumber ||
+                              clientData?.data?.orderId ||
+                              ""
+                            }
+                            onChange={(e) =>
                               setClientData((prev) => ({
                                 ...(prev || {}),
-                                businessName: e.target.value,
-                              }));
-                            }}
+                                matterNumber: e.target.value,
+                              }))
+                            }
                             className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
                           />
                         ) : (
                           <input
                             type="text"
-                            value={clientData?.businessName || ""}
+                            value={
+                              clientData?.matterNumber ||
+                              clientData?.data?.orderId ||
+                              ""
+                            }
                             className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                             disabled
                             readOnly
                           />
                         )}
                       </div>
-                    )}
 
-                    {/* Address Field */}
-                    <div className="md:col-span-2">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {currentModule === "commercial"
-                          ? "Business Address"
-                          : company === "vkl"
-                            ? "Property Address"
-                            : company === "idg"
-                              ? "Billing Address"
-                              : "Address"}
-                      </label>
-                      <input
-                        id={
-                          currentModule === "commercial"
-                            ? "businessAddress"
-                            : "propertyAddress"
-                        }
-                        name={
-                          currentModule === "commercial"
-                            ? "businessAddress"
-                            : "propertyAddress"
-                        }
-                        type="text"
-                        value={
-                          currentModule === "commercial"
-                            ? clientData?.businessAddress || ""
-                            : clientData?.propertyAddress ||
-                            clientData?.data?.deliveryAddress ||
+                      {/* Client Name */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                          Client Name
+                        </label>
+                        <input
+                          id="clientName"
+                          name="clientName"
+                          type="text"
+                          value={
+                            clientData?.clientName ||
+                            clientData?.data?.client?.name ||
                             ""
-                        }
-                        onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          const fieldName =
-                            currentModule === "commercial"
-                              ? "businessAddress"
-                              : "propertyAddress";
-                          console.log(
-                            `Setting ${fieldName} to:`,
-                            e.target.value
-                          );
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            [fieldName]: e.target.value,
-                          }));
-                        }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
+                          }
+                          onChange={(e) => {
+                            if (!isSuperAdmin) return;
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientName: e.target.value,
+                            }));
+                          }}
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                            !isSuperAdmin ? "bg-gray-100" : ""
                           }`}
-                        disabled={!isSuperAdmin}
-                      />
-                    </div>
-
-                    {/* State Field */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        State
-                      </label>
-                      {isSuperAdmin ? (
-                        <select
-                          id="state"
-                          name="state"
-                          value={
-                            clientData?.state || clientData?.data?.country || ""
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              state: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        >
-                          <option value="">Select state</option>
-                          {STATE_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.state || clientData?.data?.state || ""
-                          }
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
+                          disabled={!isSuperAdmin}
                         />
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Client Type Field */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {currentModule === "commercial"
-                          ? "Client Type"
-                          : company === "vkl"
-                            ? "Client Type"
-                            : company === "idg"
-                              ? "Order Type"
-                              : ""}
-                      </label>
-                      {isSuperAdmin ? (
-                        <select
-                          id="clientType"
-                          name="clientType"
-                          value={
-                            clientData?.clientType ||
-                            clientData?.data?.orderType
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              clientType: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                        >
-                          <option value="">Select client type</option>
-                          {CLIENT_TYPE_OPTIONS.map((ct) => (
-                            <option key={ct} value={ct}>
-                              {ct}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.clientType ||
-                            clientData?.data?.orderType
-                          }
-                          className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
-                    </div>
-
-                    {/* Post Code */}
-                    <div>
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Post Code
-                      </label>
-                      <input
-                        type="text"
-                        id="postcode"
-                        name="postcode"
-                        value={
-                          clientData?.postcode ||
-                          clientData?.data?.postCode ||
-                          ""
-                        }
-                        onChange={(e) => {
-                          setClientData((prev) => ({
-                            ...prev,
-                            postcode: e.target.value,
-                          }));
-                        }}
-                        pattern="^[0-9]{4}$"
-                        maxLength={4}
-                        inputMode="numeric"
-                        className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                      />
-                    </div>
-
-                    {/* Completion/Settlement/Delivery Date */}
-                    <div className="md:col-span-1">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        {currentModule === "commercial"
-                          ? "Completion Date"
-                          : company === "vkl"
-                            ? "Settlement Date"
-                            : company === "idg"
-                              ? "Delivery Date"
-                              : ""}
-                      </label>
-                      <input
-                        id={
-                          currentModule === "commercial"
-                            ? "completionDate"
-                            : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
-                        }
-                        name={
-                          currentModule === "commercial"
-                            ? "completionDate"
-                            : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
-                        }
-                        type="date"
-                        value={
-                          currentModule === "commercial"
-                            ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate)
-                                .toISOString()
-                                .substring(0, 10)
-                              : ""
-                            : company === "vkl"
-                              ? clientData?.settlementDate
-                                ? new Date(clientData.settlementDate)
-                                  .toISOString()
-                                  .substring(0, 10)
-                                : ""
-                              : company === "idg"
-                                ? clientData?.data?.deliveryDate
-                                  ? new Date(clientData.data.deliveryDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                  : ""
-                                : ""
-                        }
-                        onChange={(e) => {
-                          const dateValue = e.target.value;
-                          if (currentModule === "commercial") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              settlementDate: dateValue,
-                            }));
-                          } else if (company === "vkl") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              settlementDate: dateValue,
-                            }));
-                          } else if (company === "idg") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              data: {
-                                ...((prev && prev.data) || {}),
-                                deliveryDate: dateValue,
-                              },
-                            }));
-                          }
-                        }}
-                        className="w-full rounded p-2 border border-gray-200 text-xs md:text-sm"
-                      />
-                    </div>
-
-                    {/* Data Entry By */}
-                    <div className="md:col-span-3">
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
-                        Data Entry By
-                      </label>
-                      {isSuperAdmin ? (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data?.dataEntryBy
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              dataEntryBy: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={
-                            clientData?.dataEntryBy ||
-                            clientData?.data?.dataEntryBy
-                          }
-                          className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          disabled
-                          readOnly
-                        />
-                      )}
-                    </div>
-
-                    {/* Notes */}
-                    <div className="md:col-span-3">
-                      {company === "idg" ? (
-                        <div className="flex gap-1 w-full">
-                          <div className="flex-1">
-                            <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                              Order Details
-                            </label>
-                            <textarea
-                              rows={5}
-                              value={clientData?.data?.order_details || ""}
+                      {/* Business Name */}
+                      {currentModule === "commercial" && (
+                        <div className="md:col-span-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                            Business Name
+                          </label>
+                          {isSuperAdmin ? (
+                            <input
+                              type="text"
+                              value={clientData?.businessName || ""}
                               onChange={(e) => {
-                                const newOrderDetails = e.target.value;
+                                console.log(
+                                  "Setting businessName to:",
+                                  e.target.value
+                                );
+
                                 setClientData((prev) => ({
                                   ...(prev || {}),
-                                  data: {
-                                    ...((prev && prev.data) || {}),
-                                    order_details: newOrderDetails,
-                                  },
+                                  businessName: e.target.value,
                                 }));
                               }}
-                              placeholder="Enter order details here..."
-                              className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
                             />
+                          ) : (
+                            <input
+                              type="text"
+                              value={clientData?.businessName || ""}
+                              className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Address Field */}
+                      <div className="md:col-span-2">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          {currentModule === "commercial"
+                            ? "Business Address"
+                            : company === "vkl"
+                            ? "Property Address"
+                            : company === "idg"
+                            ? "Billing Address"
+                            : "Address"}
+                        </label>
+                        <input
+                          id={
+                            currentModule === "commercial"
+                              ? "businessAddress"
+                              : "propertyAddress"
+                          }
+                          name={
+                            currentModule === "commercial"
+                              ? "businessAddress"
+                              : "propertyAddress"
+                          }
+                          type="text"
+                          value={
+                            currentModule === "commercial"
+                              ? clientData?.businessAddress || ""
+                              : clientData?.propertyAddress ||
+                                clientData?.data?.deliveryAddress ||
+                                ""
+                          }
+                          onChange={(e) => {
+                            if (!isSuperAdmin) return;
+                            const fieldName =
+                              currentModule === "commercial"
+                                ? "businessAddress"
+                                : "propertyAddress";
+                            console.log(
+                              `Setting ${fieldName} to:`,
+                              e.target.value
+                            );
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              [fieldName]: e.target.value,
+                            }));
+                          }}
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                            !isSuperAdmin ? "bg-gray-100" : ""
+                          }`}
+                          disabled={!isSuperAdmin}
+                        />
+                      </div>
+
+                      {/* State Field */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          State
+                        </label>
+                        {isSuperAdmin ? (
+                          <select
+                            id="state"
+                            name="state"
+                            value={
+                              clientData?.state ||
+                              clientData?.data?.country ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                state: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          >
+                            <option value="">Select state</option>
+                            {STATE_OPTIONS.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              clientData?.state || clientData?.data?.state || ""
+                            }
+                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+
+                      {/* Client Type Field */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          {currentModule === "commercial"
+                            ? "Client Type"
+                            : company === "vkl"
+                            ? "Client Type"
+                            : company === "idg"
+                            ? "Order Type"
+                            : ""}
+                        </label>
+                        {isSuperAdmin ? (
+                          <select
+                            id="clientType"
+                            name="clientType"
+                            value={
+                              clientData?.clientType ||
+                              clientData?.data?.orderType
+                            }
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                clientType: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                          >
+                            <option value="">Select client type</option>
+                            {CLIENT_TYPE_OPTIONS.map((ct) => (
+                              <option key={ct} value={ct}>
+                                {ct}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              clientData?.clientType ||
+                              clientData?.data?.orderType
+                            }
+                            className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+
+                      {/* Post Code */}
+                      <div>
+                        <label className="block text-xs md:text-sm font-semibold mb-1 ">
+                          Post Code
+                        </label>
+                        <input
+                          type="text"
+                          id="postcode"
+                          name="postcode"
+                          disabled={localStorage.getItem("company") === "idg"}
+                          value={
+                            clientData?.postcode ||
+                            clientData?.data?.postCode ||
+                            ""
+                          }
+                          onChange={(e) => {
+                            setClientData((prev) => ({
+                              ...prev,
+                              postcode: e.target.value,
+                            }));
+                          }}
+                          pattern="^[0-9]{4}$"
+                          maxLength={4}
+                          inputMode="numeric"
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
+                        ${
+                          localStorage.getItem("company") === "idg" &&
+                          "bg-gray-100"
+                        }`}
+                        />
+                      </div>
+
+                      {/* Completion/Settlement/Delivery Date */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          {currentModule === "commercial"
+                            ? "Completion Date"
+                            : company === "vkl"
+                            ? "Settlement Date"
+                            : company === "idg"
+                            ? "Delivery Date"
+                            : ""}
+                        </label>
+                        <input
+                          id={
+                            currentModule === "commercial"
+                              ? "completionDate"
+                              : company === "vkl"
+                              ? "settlementDate"
+                              : "deliveryDate"
+                          }
+                          name={
+                            currentModule === "commercial"
+                              ? "completionDate"
+                              : company === "vkl"
+                              ? "settlementDate"
+                              : "deliveryDate"
+                          }
+                          type="date"
+                          value={
+                            currentModule === "commercial"
+                              ? clientData?.settlementDate
+                                ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : company === "vkl"
+                              ? clientData?.settlementDate
+                                ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : company === "idg"
+                              ? clientData?.data?.deliveryDate
+                                ? new Date(clientData.data.deliveryDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : ""
+                          }
+                          onChange={(e) => {
+                            const dateValue = e.target.value;
+                            if (currentModule === "commercial") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                settlementDate: dateValue,
+                              }));
+                            } else if (company === "vkl") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                settlementDate: dateValue,
+                              }));
+                            } else if (company === "idg") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                data: {
+                                  ...((prev && prev.data) || {}),
+                                  deliveryDate: dateValue,
+                                },
+                              }));
+                            }
+                          }}
+                          className="w-full rounded p-2 border border-gray-200 text-xs md:text-sm"
+                        />
+                      </div>
+
+                      {/* Data Entry By */}
+                      <div className="md:col-span-3">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          Data Entry By
+                        </label>
+                        {isSuperAdmin ? (
+                          <input
+                            type="text"
+                            value={
+                              clientData?.dataEntryBy ||
+                              clientData?.data?.dataEntryBy
+                            }
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                dataEntryBy: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              clientData?.dataEntryBy ||
+                              clientData?.data?.dataEntryBy
+                            }
+                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+
+                      {/* Notes */}
+                      <div className="md:col-span-3">
+                        {company === "idg" ? (
+                          <div className="flex gap-1 w-full">
+                            <div className="flex-1">
+                              <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                                Order Details
+                              </label>
+                              <textarea
+                                rows={5}
+                                value={clientData?.data?.order_details || ""}
+                                onChange={(e) => {
+                                  const newOrderDetails = e.target.value;
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    data: {
+                                      ...((prev && prev.data) || {}),
+                                      order_details: newOrderDetails,
+                                    },
+                                  }));
+                                }}
+                                placeholder="Enter order details here..."
+                                className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                                Notes / Comments
+                              </label>
+                              <textarea
+                                rows={5}
+                                value={
+                                  clientData?.notes ||
+                                  clientData?.data?.notes ||
+                                  ""
+                                }
+                                onChange={(e) => {
+                                  const newNote = e.target.value;
+                                  setClientData((prev) => {
+                                    const updated = { ...(prev || {}) };
+                                    updated.notes = newNote;
+                                    if (updated.data) {
+                                      updated.data.notes = newNote;
+                                    } else {
+                                      updated.data = { notes: newNote };
+                                    }
+                                    return updated;
+                                  });
+                                }}
+                                placeholder="Enter comments here..."
+                                className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
+                              />
+                            </div>
                           </div>
+                        ) : (
                           <div>
                             <label className="block text-xs md:text-sm font-semibold mb-0.5">
                               Notes / Comments
@@ -1538,144 +1633,118 @@ export default function StagesLayout() {
                               className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
                             />
                           </div>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-3 mt-2">
+                        <div className="mt-2">
+                          <button
+                            type="submit"
+                            className={`w-full ${
+                              hasChanges
+                                ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white cursor-pointer"
+                                : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                            } font-medium rounded py-2 text-base`}
+                            disabled={!hasChanges}
+                          >
+                            Update
+                          </button>
                         </div>
-                      ) : (
-                        <div>
-                          <label className="block text-xs md:text-sm font-semibold mb-0.5">
-                            Notes / Comments
-                          </label>
-                          <textarea
-                            rows={5}
-                            value={
-                              clientData?.notes || clientData?.data?.notes || ""
-                            }
-                            onChange={(e) => {
-                              const newNote = e.target.value;
-                              setClientData((prev) => {
-                                const updated = { ...(prev || {}) };
-                                updated.notes = newNote;
-                                if (updated.data) {
-                                  updated.data.notes = newNote;
-                                } else {
-                                  updated.data = { notes: newNote };
-                                }
-                                return updated;
-                              });
-                            }}
-                            placeholder="Enter comments here..."
-                            className="w-full border border-gray-200 rounded px-2 py-0.5 text-xs md:text-sm resize-none"
-                          />
-                        </div>
-                      )}
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Details */}
+              {isSmallScreen && (
+                <div className="w-full mt-4 bg-white rounded shadow border border-gray-200 p-4 overflow-y-auto max-h-96">
+                  <h2 className="text-lg font-bold mb-2">
+                    {currentModule === "commercial"
+                      ? "Project Details"
+                      : company === "vkl"
+                      ? "Matter Details"
+                      : company === "idg"
+                      ? "Order Details"
+                      : ""}
+                  </h2>
+                  <form
+                    className="grid grid-cols-1 gap-x-4 gap-y-2"
+                    onSubmit={handleupdate}
+                  >
+                    {/* Mobile form fields - similar structure but simplified */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                        {currentModule === "commercial"
+                          ? "Project Date"
+                          : company === "vkl"
+                          ? "Matter Date"
+                          : company === "idg"
+                          ? "Order Date"
+                          : ""}
+                      </label>
+                      <input
+                        id="matterDate"
+                        name="matterDate"
+                        type={isSuperAdmin ? "date" : "text"}
+                        value={
+                          isSuperAdmin
+                            ? clientData?.matterDate
+                              ? new Date(clientData.matterDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : clientData?.matterNumber
+                            ? formatDateForDisplay(clientData.matterDate)
+                            : clientData?.data?.orderDate
+                            ? formatDateForDisplay(clientData.data.orderDate)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          const v = e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "";
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            matterDate: v,
+                          }));
+                        }}
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          !isSuperAdmin ? "bg-gray-100" : ""
+                        }`}
+                        disabled={!isSuperAdmin}
+                      />
                     </div>
 
-                    <div className="md:col-span-3 mt-2">
-                      <div className="mt-2">
-                        <button
-                          type="submit"
-                          className={`w-full ${hasChanges
-                              ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
-                              : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                            } font-medium rounded py-2 text-base`}
-                          disabled={!hasChanges}
-                        >
-                          Update
-                        </button>
-                      </div>
+                    <div className="mt-3">
+                      <button
+                        type="submit"
+                        className={`w-full ${
+                          hasChanges
+                            ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white"
+                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                        } font-medium rounded py-2 text-base`}
+                        disabled={!hasChanges}
+                      >
+                        Update
+                      </button>
                     </div>
                   </form>
                 </div>
-              </div>
-            </div>
-
-            {/* Mobile Details */}
-            {isSmallScreen && (
-              <div className="w-full mt-4 bg-white rounded shadow border border-gray-200 p-4 overflow-y-auto max-h-96">
-                <h2 className="text-lg font-bold mb-2">
-                  {currentModule === "commercial"
-                    ? "Project Details"
-                    : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
-                        ? "Order Details"
-                        : ""}
-                </h2>
-                <form
-                  className="grid grid-cols-1 gap-x-4 gap-y-2"
-                  onSubmit={handleupdate}
-                >
-                  {/* Mobile form fields - similar structure but simplified */}
-                  <div>
-                    <label className="block text-xs md:text-sm font-semibold mb-1">
-                      {currentModule === "commercial"
-                        ? "Project Date"
-                        : company === "vkl"
-                          ? "Matter Date"
-                          : company === "idg"
-                            ? "Order Date"
-                            : ""}
-                    </label>
-                    <input
-                      id="matterDate"
-                      name="matterDate"
-                      type={isSuperAdmin ? "date" : "text"}
-                      value={
-                        isSuperAdmin
-                          ? clientData?.matterDate
-                            ? new Date(clientData.matterDate)
-                              .toISOString()
-                              .substring(0, 10)
-                            : ""
-                          : clientData?.matterNumber
-                            ? formatDateForDisplay(clientData.matterDate)
-                            : clientData?.data?.orderDate
-                              ? formatDateForDisplay(clientData.data.orderDate)
-                              : ""
-                      }
-                      onChange={(e) => {
-                        if (!isSuperAdmin) return;
-                        const v = e.target.value
-                          ? new Date(e.target.value).toISOString()
-                          : "";
-                        setClientData((prev) => ({
-                          ...(prev || {}),
-                          matterDate: v,
-                        }));
-                      }}
-                      className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!isSuperAdmin ? "bg-gray-100" : ""
-                        }`}
-                      disabled={!isSuperAdmin}
-                    />
-                  </div>
-
-                  {/* ... other mobile form fields similar to desktop but in single column ... */}
-
-                  <div className="mt-3">
-                    <button
-                      type="submit"
-                      className={`w-full ${hasChanges
-                          ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
-                          : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                        } font-medium rounded py-2 text-base`}
-                      disabled={!hasChanges}
-                    >
-                      Update
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </>
-        )}
-      </main>
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        title="Confirm update"
-        onConfirm={performUpdate}
-      >
-        Are you sure you want to update client data?
-      </ConfirmationModal>
+              )}
+            </>
+          )}
+        </main>
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          title="Confirm update"
+          onConfirm={performUpdate}
+        >
+          Are you sure you want to update client data?
+        </ConfirmationModal>
+      </div>
     </div>
   );
 }
