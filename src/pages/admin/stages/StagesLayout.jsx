@@ -705,7 +705,7 @@ export default function StagesLayout() {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
-          postcode : clientData?.postcode 
+          postcode: clientData?.postcode
         };
       } else if (localStorage.getItem("company") === "idg") {
         payload = {
@@ -759,7 +759,7 @@ export default function StagesLayout() {
       //     toast.success("Project details updated successfully");
       //   }
       // } else 
-        if (localStorage.getItem("company") === "vkl") {
+      if (localStorage.getItem("company") === "vkl") {
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
@@ -769,7 +769,7 @@ export default function StagesLayout() {
           originalMatterNumber,
           payload
         );
-        console.log(originalMatterNumber,payload);
+        console.log(originalMatterNumber, payload);
       }
 
       const updatedClient = resp.client || resp || clientData;
@@ -896,8 +896,8 @@ export default function StagesLayout() {
           </div>
         </div>
 
-        {loading ? (
-          <Loader />
+        {false ? (
+          <></>
         ) : (
           <>
             {/* Stages section with collapse button at the bottom */}
@@ -916,8 +916,8 @@ export default function StagesLayout() {
                           key={stage.id}
                           onClick={() => setSelectedStage(stage.id)}
                           className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${selectedStage === stage.id
-                              ? "bg-[#FFFFFF] text-black border-gray-500"
-                              : `${bgcolor(stageStatus)} border-gray-300`
+                            ? "bg-[#FFFFFF] text-black border-gray-500"
+                            : `${bgcolor(stageStatus)} border-gray-300`
                             }`}
                         >
                           <div className="flex justify-between">
@@ -926,9 +926,9 @@ export default function StagesLayout() {
                             </p>
                             <div
                               className={`h-[18px] ${stageStatus === "In Progress" ||
-                                  stageStatus === "amber"
-                                  ? "text-[#FF9500]"
-                                  : "text-black"
+                                stageStatus === "amber"
+                                ? "text-[#FF9500]"
+                                : "text-black"
                                 } flex items-center justify-center rounded-4xl`}
                             >
                               <p className="text-[10px] whitespace-nowrap font-bold">
@@ -964,19 +964,19 @@ export default function StagesLayout() {
                           key={stage.id}
                           onClick={() => setSelectedStage(stage.id)}
                           className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${isActive
-                              ? "bg-blue-50 border-[#00AEEF] scale-105 shadow-lg"
-                              : "scale-95 border-gray-300"
+                            ? "bg-blue-50 border-[#00AEEF] scale-105 shadow-lg"
+                            : "scale-95 border-gray-300"
                             }`}
                         >
                           <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
                             <span
                               className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${isActive
-                                  ? "bg-[#00AEEF] text-white border-[#00AEEF] shadow-[0_0_12px_3px_rgba(59,130,246,0.6)]"
-                                  : isCompleted
-                                    ? "bg-green-600 text-white border-green-600"
-                                    : isInProgress
-                                      ? "bg-amber-500 text-white border-amber-500"
-                                      : "bg-red-500 text-gray-100 border-gray-300"
+                                ? "bg-[#00AEEF] text-white border-[#00AEEF] shadow-[0_0_12px_3px_rgba(59,130,246,0.6)]"
+                                : isCompleted
+                                  ? "bg-green-600 text-white border-green-600"
+                                  : isInProgress
+                                    ? "bg-amber-500 text-white border-amber-500"
+                                    : "bg-red-500 text-gray-100 border-gray-300"
                                 }`}
                             >
                               {index + 1}
@@ -990,12 +990,12 @@ export default function StagesLayout() {
                               </p>
                               <div
                                 className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${isInProgress
-                                    ? "text-[#FF9500]"
-                                    : isCompleted
-                                      ? "text-green-600"
-                                      : isActive
-                                        ? "text-[red]"
-                                        : "text-gray-500"
+                                  ? "text-[#FF9500]"
+                                  : isCompleted
+                                    ? "text-green-600"
+                                    : isActive
+                                      ? "text-[red]"
+                                      : "text-gray-500"
                                   }`}
                               >
                                 <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
@@ -1352,13 +1352,14 @@ export default function StagesLayout() {
 
                     {/* Post Code */}
                     <div>
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                      <label className="block text-xs md:text-sm font-semibold mb-1 ">
                         Post Code
                       </label>
                       <input
                         type="text"
                         id="postcode"
                         name="postcode"
+                        disabled={localStorage.getItem("company") === "idg"}
                         value={
                           clientData?.postcode ||
                           clientData?.data?.postCode ||
@@ -1373,7 +1374,9 @@ export default function StagesLayout() {
                         pattern="^[0-9]{4}$"
                         maxLength={4}
                         inputMode="numeric"
-                        className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
+                        ${localStorage.getItem("company") === "idg" && "bg-gray-100"}`}
+
                       />
                     </div>
 
@@ -1574,8 +1577,8 @@ export default function StagesLayout() {
                         <button
                           type="submit"
                           className={`w-full ${hasChanges
-                              ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
-                              : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                            ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
+                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
                             } font-medium rounded py-2 text-base`}
                           disabled={!hasChanges}
                         >
@@ -1654,8 +1657,8 @@ export default function StagesLayout() {
                     <button
                       type="submit"
                       className={`w-full ${hasChanges
-                          ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
-                          : "bg-gray-300 text-gray-200 cursor-not-allowed"
+                        ? "bg-[#00AEEF] hover:bg-[#0086bf] text-white"
+                        : "bg-gray-300 text-gray-200 cursor-not-allowed"
                         } font-medium rounded py-2 text-base`}
                       disabled={!hasChanges}
                     >

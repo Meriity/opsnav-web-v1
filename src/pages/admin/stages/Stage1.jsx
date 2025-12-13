@@ -434,7 +434,7 @@ export default function Stage1({
       console.log("API call successful");
 
       originalData.current = { ...formData };
-      // setReloadTrigger((prev) => !prev);
+      setReloadTrigger((prev) => !prev);
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,

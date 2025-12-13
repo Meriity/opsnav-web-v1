@@ -533,7 +533,7 @@ export default function Stage2({
       // update original data
       originalData.current = { ...formData };
       console.log("Original data updated:", originalData.current);
-      // setReloadTrigger((prev) => !prev);
+      setReloadTrigger((prev) => !prev);
 
       toast.success("Stage 2 Saved Successfully!", {
         position: "top-right",

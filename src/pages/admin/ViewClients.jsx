@@ -7,8 +7,6 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
-import Button from "../../components/ui/Button";
-import userplus from "../../icons/Button icons/Group 313 (1).png";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment, useMemo } from "react";
 import ClientAPI from "../../api/userAPI";
@@ -27,21 +25,11 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import { delay } from "framer-motion";
 import { motion } from "framer-motion";
 import {
-  Users,
-  FolderOpen,
-  Archive,
-  Building,
-  Plus,
-  Calendar,
-  Filter,
-  ChevronRight,
-  Search,
-  Download,
-  BarChart3,
-  Clock,
-  Target,
-  CheckCircle,
-  AlertCircle,
+  UserPlus,
+  FolderPlus,
+  FilterIcon,
+  SheetIcon,
+  Clipboard,
 } from "lucide-react";
 
 const ViewClients = () => {
@@ -60,9 +48,7 @@ const ViewClients = () => {
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
     const saved = localStorage.getItem("viewClientsDateFilter");
-    return saved
-      ? JSON.parse(saved)
-      : { type: "deliveryDate", range: ["", ""] };
+    return saved ? JSON.parse(saved) : { type: "", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
@@ -157,10 +143,11 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-  localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-}, [dateFilter])
+    console.log(dateFilter);
+    localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
+  }, [dateFilter]);
 
-useEffect(() => {
+  useEffect(() => {
     // 1. Get the correct list
     let data = currentModule === "commercial" ? commercialClients : Clients;
 
@@ -171,8 +158,8 @@ useEffect(() => {
     }
 
     // 2. Get Range from State
-    const [rawStart, rawEnd] = Array.isArray(dateFilter?.range) 
-      ? dateFilter.range 
+    const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
+      ? dateFilter.range
       : ["", ""];
 
     // If no dates are selected, show everything and exit
@@ -183,18 +170,22 @@ useEffect(() => {
 
     // 3. THE FIX: Set Start to Beginning of Day (00:00:00) and End to End of Day (23:59:59)
     // This ensures if you pick "11th", it covers the entire 11th day.
-    const start = moment(rawStart).startOf('day');
-    const end = moment(rawEnd).endOf('day');
+    const start = moment(rawStart).startOf("day");
+    const end = moment(rawEnd).endOf("day");
 
     // 4. Determine Filter Type (Order, Delivery, or Settlement)
     let filterType = (dateFilter?.type || "").toLowerCase();
-    
+
+    console.log(filterType);
+
     // If undefined, pick a safe default based on Company
     if (!filterType || filterType === "undefined") {
-        filterType = company === "idg" ? "delivery" : "settlement";
+      filterType = company === "idg" ? "delivery" : "settlement";
     }
 
-    console.log(`Filtering ${filterType}: ${start.format()} to ${end.format()}`);
+    console.log(
+      `Filtering ${filterType}: ${start.format()} to ${end.format()}`
+    );
 
     // 5. Apply the Filter
     data = data.filter((client) => {
@@ -208,23 +199,19 @@ useEffect(() => {
       const isIncluded = (dateStr) => {
         if (!dateStr) return false;
         // '[]' means inclusive: includes the start date AND the end date
-        return moment(dateStr).isBetween(start, end, null, '[]'); 
+        return moment(dateStr).isBetween(start, end, null, "[]");
       };
 
       // Check against the correct column
       if (filterType.includes("both")) {
         return isIncluded(orderDate) || isIncluded(deliveryDate);
-      } 
-      else if (filterType.includes("order")) {
+      } else if (filterType.includes("order")) {
         return isIncluded(orderDate);
-      } 
-      else if (filterType.includes("delivery")) {
+      } else if (filterType.includes("delivery")) {
         return isIncluded(deliveryDate);
-      } 
-      else if (filterType.includes("settlement")) {
+      } else if (filterType.includes("settlement")) {
         return isIncluded(settlementDate);
-      }
-      else if (filterType.includes("project")) {
+      } else if (filterType.includes("project")) {
         return isIncluded(matterDate);
       }
 
@@ -234,8 +221,14 @@ useEffect(() => {
     });
 
     setClientList(data);
-
-  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule, company]);
+  }, [
+    dateFilter,
+    Clients,
+    commercialClients,
+    searchQuery,
+    currentModule,
+    company,
+  ]);
 
   let columns = [];
   if (localStorage.getItem("company") === "vkl") {
@@ -405,14 +398,15 @@ useEffect(() => {
       <DateRangeModal
         isOpen={showDateRange}
         setIsOpen={() => setShowDateRange(false)}
-        subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
-          }.`}
+        subTitle={`Select the date range to filter ${
+          currentModule === "commercial" ? "projects" : "clients"
+        }.`}
         handelSubmitFun={(fromDate, toDate, dateType) => {
           setDateFilter({ type: dateType, range: [fromDate, toDate] });
           setShowDateRange(false);
         }}
         onReset={() => {
-          setDateFilter({ type: "settlement_date", range: ["", ""] });
+          setDateFilter({ type: "", range: ["", ""] });
           setShowDateRange(false);
         }}
       />
@@ -526,10 +520,30 @@ useEffect(() => {
       <div className="space-y-4 p-2">
         <Header />
 
+        {/* <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+            <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              {getPageTitle()}
+            </span>
+          </h1> */}
+
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
-          <h3 className="text-2xl lg:text-2xl font-semibold shrink-0">
-            {getPageTitle()}
-          </h3>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                {getPageTitle()}
+              </span>
+            </h1>
+            {/* Dynamic subtitle similar to Manage Users */}
+            <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+              {currentModule === "commercial"
+                ? "Manage projects, tasks and related client details"
+                : company === "idg"
+                ? "Manage orders, deliveries and client records"
+                : "Manage clients, matters and client details"}
+            </p>
+          </div>
+
           <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
             {/* Search input is now only in Header.jsx */}
             <div className="flex items-center gap-2">
@@ -584,26 +598,60 @@ useEffect(() => {
             <div className="hidden lg:flex items-center gap-1.5">
               {localStorage.getItem("company") === "vkl" && (
                 <>
-                  <Button
+                  {/* <Button
                     label="Create Client"
                     Icon1={userplus}
                     onClick={() => setcreateuser(true)}
                     width="w-[150px]"
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  />
+                  /> */}
 
-                  <Button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setcreateuser(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Create Client
+                  </motion.button>
+
+                  {/* <Button
                     label="Outstanding Tasks"
                     onClick={() => setShowOutstandingTask(true)}
                     width="w-[150px]"
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  />
-                  <Button
+                  /> */}
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    label="Outstanding Tasks"
+                    onClick={() => setShowOutstandingTask(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Outstanding Tasks
+                  </motion.button>
+
+                  {/* <Button
+                  
                     label="Select Date Range"
                     onClick={() => setShowDateRange(true)}
                     width="w-[150px]"
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  />
+                  /> */}
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    label="Select Date Range"
+                    onClick={() => setShowDateRange(true)}
+                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                  >
+                    <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                    Date Range
+                  </motion.button>
                 </>
               )}
               {localStorage.getItem("company") === "idg" && (
@@ -631,7 +679,7 @@ useEffect(() => {
                     onClick={() => setcreateuser(true)}
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   >
-                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
                     Create Client
                   </motion.button>
 
@@ -641,7 +689,7 @@ useEffect(() => {
                     onClick={() => setcreateOrder(true)}
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   >
-                    <Plus className="w-3 h-3 sm:w-5 sm:h-5" />
+                    <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
                     Create Order
                   </motion.button>
 
@@ -652,6 +700,7 @@ useEffect(() => {
                     onClick={() => setShowDateRange(true)}
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   >
+                    <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
                     Date Range
                   </motion.button>
 
@@ -661,6 +710,7 @@ useEffect(() => {
                     onClick={() => setShowTar(true)}
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   >
+                    <SheetIcon className="w-3 h-3 sm:w-5 sm:h-5" />
                     Task Report
                   </motion.button>
                 </>
@@ -712,10 +762,11 @@ useEffect(() => {
                         {({ active }) => (
                           <button
                             onClick={() => setShowDateRange(true)}
-                            className={`block w-full text-left px-4 py-2 text-sm ${active
+                            className={`block w-full text-left px-4 py-2 text-sm ${
+                              active
                                 ? "bg-sky-50 text-sky-700"
                                 : "text-gray-700"
-                              }`}
+                            }`}
                           >
                             Select Date Range
                           </button>

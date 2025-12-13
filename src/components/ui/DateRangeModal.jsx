@@ -95,6 +95,7 @@ export default function DateRangeModal({
                   onChange={(e) => setDateType(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
+                  <option value="">Select date type</option>
                   <option value="orderDate">Order Date</option>
                   <option value="deliveryDate">Delivery Date</option>
                   <option value="both_date">Both date</option>

@@ -89,7 +89,7 @@ function ForgetPassword() {
 
       {/* Footer */}
       <div className="absolute bottom-4 text-sm text-center w-full text-gray-700 font-semibold">
-        Powered By Opsnav™
+        Powered By OpsNav™
       </div>
     </div>
   );
