@@ -9,7 +9,12 @@ import PropTypes from "prop-types";
 const formConfig = {
   vkl: {
     fields: [
-      { key: "titleSearch", label: "Title Search", type: "radio", hasDate: true },
+      {
+        key: "titleSearch",
+        label: "Title Search",
+        type: "radio",
+        hasDate: true,
+      },
       { key: "planImage", label: "Plan Image", type: "radio" },
       { key: "landTax", label: "Land Tax", type: "radio" },
       { key: "instrument", label: "Instrument", type: "radio" },
@@ -17,18 +22,30 @@ const formConfig = {
       { key: "water", label: "Water", type: "radio" },
       { key: "ownersCorp", label: "Owners Corp", type: "radio" },
       { key: "pexa", label: "PEXA", type: "radio" },
-      { key: "inviteBank", label: "Invite Bank", type: "radio" }
-    ]
+      { key: "inviteBank", label: "Invite Bank", type: "radio" },
+    ],
   },
   idg: {
     fields: [
       { key: "boardsPrinted", label: "Boards Printed", type: "radio" },
       { key: "packaged", label: "Packaged", type: "radio" },
-      { key: "qualityCheckPassed", label: "Quality Check Passed", type: "radio" },
-      { key: "onsiteStickersApplied", label: "Apply On-Site Stickers", type: "radio" },
+      {
+        key: "qualityCheckPassed",
+        label: "Quality Check Passed",
+        type: "radio",
+      },
+      {
+        key: "onsiteStickersApplied",
+        label: "Apply On-Site Stickers",
+        type: "radio",
+      },
       { key: "finalStatus", label: "Update Status", type: "text" },
-      { key: "invoiceGenerated", label: "Generate and send Invoice", type: "radio" }
-    ]
+      {
+        key: "invoiceGenerated",
+        label: "Generate and send Invoice",
+        type: "radio",
+      },
+    ],
   },
   commercial: {
     fields: [
@@ -36,16 +53,16 @@ const formConfig = {
       { key: "asicSearch", label: "ASIC Search", type: "radio" },
       { key: "ratesSearch", label: "Rates Search", type: "radio" },
       { key: "waterSearch", label: "Water Search", type: "radio" },
-      { key: "title", label: "Title", type: "radio" }
-    ]
-  }
+      { key: "title", label: "Title", type: "radio" },
+    ],
+  },
 };
 
 export default function Stage3({
   changeStage,
   data,
   stageNumber = 3,
-  setReloadTrigger
+  setReloadTrigger,
 }) {
   const { matterNumber } = useParams();
 
@@ -70,7 +87,12 @@ export default function Stage3({
       : formConfig[company].fields;
 
   const normalizeValue = (v) =>
-    v ? String(v).toLowerCase().trim().replace(/[^a-z0-9]/g, "") : "";
+    v
+      ? String(v)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]/g, "")
+      : "";
 
   const getStatus = (value) => {
     const val = normalizeValue(value);
@@ -128,10 +150,7 @@ export default function Stage3({
       const clientNote =
         currentModule === "commercial"
           ? stageData.noteForClient || ""
-          : (stageData.noteForClient || "")
-              .split(" - ")
-              .slice(1)
-              .join(" - ");
+          : (stageData.noteForClient || "").split(" - ").slice(1).join(" - ");
 
       setFormState(newForm);
       setStatusState(newStatus);
@@ -140,7 +159,7 @@ export default function Stage3({
       originalData.current = {
         ...newForm,
         noteForSystem: sysNote,
-        noteForClient: clientNote
+        noteForClient: clientNote,
       };
 
       setIsLoading(false);
@@ -159,7 +178,9 @@ export default function Stage3({
       )
       .map((f) => f.label);
 
-    return missing.length ? `${missing.join(" and ")} not received` : "Tasks completed";
+    return missing.length
+      ? `${missing.join(" and ")} not received`
+      : "Tasks completed";
   };
 
   const handleChange = (key, value) => {
@@ -223,7 +244,7 @@ export default function Stage3({
       originalData.current = {
         ...formState,
         noteForSystem: systemNote,
-        noteForClient
+        noteForClient,
       };
     } catch {
       toast.error("Failed to save Stage 3.");
@@ -277,7 +298,9 @@ export default function Stage3({
                 <label key={v} className="flex gap-2">
                   <input
                     type="radio"
-                    checked={normalizeValue(formState[f.key]) === normalizeValue(v)}
+                    checked={
+                      normalizeValue(formState[f.key]) === normalizeValue(v)
+                    }
                     onChange={() => handleChange(f.key, v)}
                   />
                   {v}
@@ -292,7 +315,7 @@ export default function Stage3({
                 onChange={(e) =>
                   setFormState((prev) => ({
                     ...prev,
-                    [`${f.key}Date`]: e.target.value
+                    [`${f.key}Date`]: e.target.value,
                   }))
                 }
                 className="border p-1 rounded"
@@ -321,18 +344,24 @@ export default function Stage3({
       </div>
 
       <div className="flex justify-between mt-10">
-        <Button label="Back" width="w-[70px]" onClick={() => changeStage(stageNumber - 1)} />
+        <Button
+          label="Back"
+          width="w-[70px] md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+          onClick={() => changeStage(stageNumber - 1)}
+        />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving..." : "Save"}
-            width="w-[100px]"
-            bg="bg-blue-500"
+            width="w-[100px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={handleSave}
             disabled={isSaving}
           />
           <Button
             label="Next"
-            width="w-[70px]"
+            width="w-[70px]  md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stageNumber + 1)}
           />
         </div>
@@ -345,5 +374,5 @@ Stage3.propTypes = {
   changeStage: PropTypes.func.isRequired,
   data: PropTypes.object,
   stageNumber: PropTypes.number,
-  setReloadTrigger: PropTypes.func.isRequired
+  setReloadTrigger: PropTypes.func.isRequired,
 };

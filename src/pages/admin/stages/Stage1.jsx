@@ -575,6 +575,7 @@ export default function Stage1({
         <Button
           label="Back"
           width="w-[70px] md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
           onClick={() => changeStage(stage - 1)}
           disabled={stage === 1}
         />
@@ -582,13 +583,14 @@ export default function Stage1({
           <Button
             label={isSaving ? "Saving..." : "Save"}
             width="w-[70px] md:w-[100px]"
-            bg="bg-blue-500"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={handleSave}
             disabled={isSaving || !isChanged()}
           />
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stage + 1)}
           />
         </div>
