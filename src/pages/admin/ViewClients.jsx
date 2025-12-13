@@ -25,11 +25,27 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import { delay } from "framer-motion";
 import { motion } from "framer-motion";
 import {
+  Users,
+  FolderOpen,
+  Archive,
+  Building,
+  Plus,
+  Calendar,
+  Filter,
+  ChevronRight,
+  Search,
+  Download,
+  BarChart3,
+  Clock,
+  Target,
+  CheckCircle,
+  AlertCircle,
+  User,
   UserPlus,
+  FolderCheck,
   FolderPlus,
   FilterIcon,
   SheetIcon,
-  Clipboard,
 } from "lucide-react";
 
 const ViewClients = () => {
@@ -48,7 +64,9 @@ const ViewClients = () => {
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
     const saved = localStorage.getItem("viewClientsDateFilter");
-    return saved ? JSON.parse(saved) : { type: "", range: ["", ""] };
+    return saved
+      ? JSON.parse(saved)
+      : { type: "", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
@@ -145,8 +163,9 @@ const ViewClients = () => {
   useEffect(() => {
     console.log(dateFilter);
     localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-  }, [dateFilter]);
+  }, [dateFilter])
 
+  useEffect(() => {
   useEffect(() => {
     // 1. Get the correct list
     let data = currentModule === "commercial" ? commercialClients : Clients;
@@ -158,6 +177,8 @@ const ViewClients = () => {
     }
 
     // 2. Get Range from State
+    const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
+      ? dateFilter.range
     const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
       ? dateFilter.range
       : ["", ""];
@@ -205,11 +226,15 @@ const ViewClients = () => {
       // Check against the correct column
       if (filterType.includes("both")) {
         return isIncluded(orderDate) || isIncluded(deliveryDate);
-      } else if (filterType.includes("order")) {
+      }
+      else if (filterType.includes("order")) {
         return isIncluded(orderDate);
+      }
+      else if (filterType.includes("delivery")) {
       } else if (filterType.includes("delivery")) {
         return isIncluded(deliveryDate);
-      } else if (filterType.includes("settlement")) {
+      }
+      else if (filterType.includes("settlement")) {
         return isIncluded(settlementDate);
       } else if (filterType.includes("project")) {
         return isIncluded(matterDate);
@@ -600,7 +625,7 @@ const ViewClients = () => {
                 <>
                   {/* <Button
                     label="Create Client"
-                    Icon1={userplus}
+                    Icon1={user}
                     onClick={() => setcreateuser(true)}
                     width="w-[150px]"
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"

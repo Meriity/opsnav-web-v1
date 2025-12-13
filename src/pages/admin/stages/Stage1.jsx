@@ -493,7 +493,7 @@ export default function Stage1({
                 )} flex items-center justify-center rounded-4xl px-2`}
               >
                 <p className="text-[10px] md:text-[12px] whitespace-nowrap">
-                  {statuses[field.name]}
+                  {statuses[field.name] || "Not Completed"}
                 </p>
               </div>
             </div>
