@@ -46,6 +46,7 @@ import {
   FolderPlus,
   FilterIcon,
   SheetIcon,
+  Clipboard,
 } from "lucide-react";
 
 const ViewClients = () => {
@@ -64,9 +65,7 @@ const ViewClients = () => {
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
     const saved = localStorage.getItem("viewClientsDateFilter");
-    return saved
-      ? JSON.parse(saved)
-      : { type: "", range: ["", ""] };
+    return saved ? JSON.parse(saved) : { type: "", range: ["", ""] };
   });
   const [showDateRange, setShowDateRange] = useState(false);
   const [showTAR, setShowTar] = useState(false);
@@ -161,12 +160,6 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   useEffect(() => {
-    console.log(dateFilter);
-    localStorage.setItem("viewClientsDateFilter", JSON.stringify(dateFilter));
-  }, [dateFilter])
-
-  useEffect(() => {
-  useEffect(() => {
     // 1. Get the correct list
     let data = currentModule === "commercial" ? commercialClients : Clients;
 
@@ -176,9 +169,6 @@ const ViewClients = () => {
       return;
     }
 
-    // 2. Get Range from State
-    const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
-      ? dateFilter.range
     const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
       ? dateFilter.range
       : ["", ""];
@@ -226,15 +216,11 @@ const ViewClients = () => {
       // Check against the correct column
       if (filterType.includes("both")) {
         return isIncluded(orderDate) || isIncluded(deliveryDate);
-      }
-      else if (filterType.includes("order")) {
+      } else if (filterType.includes("order")) {
         return isIncluded(orderDate);
-      }
-      else if (filterType.includes("delivery")) {
       } else if (filterType.includes("delivery")) {
         return isIncluded(deliveryDate);
-      }
-      else if (filterType.includes("settlement")) {
+      } else if (filterType.includes("settlement")) {
         return isIncluded(settlementDate);
       } else if (filterType.includes("project")) {
         return isIncluded(matterDate);
