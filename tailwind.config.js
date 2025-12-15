@@ -13,7 +13,7 @@ export default {
         xl: "1280px",
         "2xl": "1536px",
 
-        // custom compact-only breakpoint (exactly 768–1023)
+        // custom compact-only breakpoint (exactly 768-1023)
         mdx: { min: "768px", max: "1023px" },
 
         // your extra large breakpoints

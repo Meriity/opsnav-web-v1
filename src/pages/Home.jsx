@@ -31,7 +31,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
@@ -1146,8 +1146,8 @@ export default function Home() {
               Ready to transform your operations?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-10 max-w-2xl mx-auto">
-              Join thousands of professionals who trust OpsNav to
-              streamline their workflow.
+              Join thousands of professionals who trust OpsNav to streamline
+              their workflow.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <motion.button
@@ -1224,9 +1224,9 @@ export default function Home() {
               <a href="#" className="hover:text-white transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-white transition-colors">
+              <Link to="/terms" className="hover:text-white transition-colors">
                 Terms of Service
-              </a>
+              </Link>
               <a href="#" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>
