@@ -31,7 +31,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
@@ -392,7 +392,7 @@ export default function Home() {
             <div className="relative">
               <img
                 src="/Logo.png"
-                alt="Opsnav"
+                alt="OpsNav"
                 className="h-10 sm:h-12 w-auto"
               />
             </div>
@@ -440,7 +440,7 @@ export default function Home() {
               <div className="relative">
                 <img
                   src="/Logo.png"
-                  alt="Opsnav"
+                  alt="OpsNav"
                   className="h-10 sm:h-12 w-auto"
                 />
               </div>
@@ -496,7 +496,7 @@ export default function Home() {
           >
             <Sparkles className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium text-gray-700 truncate">
-              Trusted by 500+ legal professionals worldwide
+              Trusted by 500+ professionals worldwide
             </span>
           </motion.div>
 
@@ -521,7 +521,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl leading-relaxed px-4"
           >
-            Opsnav brings clarity and control to your most complex workflows -
+            OpsNav brings clarity and control to your most complex workflows -
             with centralized task tracking, automated processes, and real-time
             insights that keep your team aligned, productive, and moving
             forward.
@@ -654,7 +654,7 @@ export default function Home() {
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Comprehensive tools designed specifically for legal operations
+              Comprehensive tools designed specifically for operations
               management
             </p>
           </motion.div>
@@ -872,7 +872,7 @@ export default function Home() {
               All Features at a Glance
             </h3>
             <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
-              Explore our complete suite of tools designed for legal operations
+              Explore our complete suite of tools designed for operations
               excellence
             </p>
           </motion.div>
@@ -918,7 +918,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Why Choose Opsnav */}
+      {/* Why Choose OpsNav */}
       <div className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
@@ -937,7 +937,7 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
               Built for the modern{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                legal practice
+                practice
               </span>
             </h2>
           </motion.div>
@@ -982,9 +982,9 @@ export default function Home() {
                   },
                   {
                     icon: Building,
-                    title: "Legal Expertise",
+                    title: "Expertise",
                     description:
-                      "Built by legal professionals who understand your workflow.",
+                      "Built by professionals who understand your workflow.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
@@ -1095,9 +1095,9 @@ export default function Home() {
               },
               {
                 icon: Building,
-                title: "Legal Expertise",
+                title: "Expertise",
                 description:
-                  "Built by legal professionals who understand your workflow.",
+                  "Built by professionals who understand your workflow.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
@@ -1143,11 +1143,11 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
-              Ready to transform your legal operations?
+              Ready to transform your operations?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-10 max-w-2xl mx-auto">
-              Join thousands of legal professionals who trust Opsnav to
-              streamline their workflow.
+              Join thousands of professionals who trust OpsNav to streamline
+              their workflow.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <motion.button
@@ -1180,10 +1180,10 @@ export default function Home() {
             <div className="text-center md:text-left">
               <div className="flex flex-col items-center md:items-start">
                 <span className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  Opsnav
+                  OpsNav
                 </span>
                 <p className="text-gray-400 max-w-md text-sm sm:text-base">
-                  Streamline legal operations with precision and scale without
+                  Streamline operations with precision and scale without
                   bottlenecks.
                 </p>
               </div>
@@ -1218,15 +1218,15 @@ export default function Home() {
 
           <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-400">
             <p className="text-sm sm:text-base">
-              © {new Date().getFullYear()} Opsnav. All rights reserved.
+              © {new Date().getFullYear()} OpsNav. All rights reserved.
             </p>
             <div className="mt-3 sm:mt-4 flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
               <a href="#" className="hover:text-white transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-white transition-colors">
+              <Link to="/terms" className="hover:text-white transition-colors">
                 Terms of Service
-              </a>
+              </Link>
               <a href="#" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>

@@ -15,6 +15,7 @@ import SetClientPassword from "./pages/clients/SetPassword";
 import WorkSelection from "./pages/admin/WorkSelection";
 import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
+import TermsOfService from "./pages/TermsPage";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
 import IDGClientDashboard from "./pages/dashboard/IDGClientDashboard";
@@ -53,6 +54,7 @@ function App() {
         {/* 🔓 Public Routes */}
         {/* <Route path="/" element={<ComingSoon/>}  /> */}
         <Route path="/" element={<Home />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />
@@ -97,11 +99,11 @@ function App() {
         <Route
           path="idg/client/dashboard/:orderId"
           element={
-          <RequireAuth>
-            <AutoLogoutWrapper>
-              <IDGClientDashboard />
-            </AutoLogoutWrapper>
-          </RequireAuth>
+            <RequireAuth>
+              <AutoLogoutWrapper>
+                <IDGClientDashboard />
+              </AutoLogoutWrapper>
+            </RequireAuth>
           }
         />
 

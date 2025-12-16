@@ -129,7 +129,7 @@ function AdminLogin() {
           >
             <img
               src="/Logo.png"
-              alt="Opsnav"
+              alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
           </motion.div>
@@ -173,7 +173,7 @@ function AdminLogin() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-2xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:430px)]:text-2xl [@media(max-width:340px)]:text-xl">
               Welcome to{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                Opsnav Admin
+                OpsNav Admin
               </span>
             </h1>
 
@@ -379,7 +379,7 @@ function AdminLogin() {
       {/* Footer */}
       <footer className="absolute bottom-4 left-0 right-0 text-center [@media(max-width:640px)]:relative [@media(max-width:640px)]:pb-4 [@media(max-width:640px)]:pt-6 [@media(min-width:768px)_and_(max-height:750px)]:static [@media(min-width:768px)_and_(max-height:750px)]:pb-2">
         <p className="text-sm text-gray-600 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
-          Powered by <span className="font-bold text-[#2E3D99]">Opsnav™</span> |
+          Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
           Secure Legal Operations Platform
         </p>
       </footer>

@@ -32,8 +32,16 @@ const formConfig = {
   },
   idg: {
     fields: [
-      { name: "uploadImageConfirmation", label: "Image Uploaded Correctly", type: "radio" },
-      { name: "completionPhotos", label: "Capture Proof of Completion Photos", type: "image" },
+      {
+        name: "uploadImageConfirmation",
+        label: "Image Uploaded Correctly",
+        type: "radio",
+      },
+      {
+        name: "completionPhotos",
+        label: "Capture Proof of Completion Photos",
+        type: "image",
+      },
       { name: "closeOrder", label: "Close Order", type: "radio" },
     ],
     noteGroups: [
@@ -50,7 +58,11 @@ const formConfig = {
   },
   commercial: {
     fields: [
-      { name: "employeesEntitlements", label: "Employees Entitlements", type: "radio" },
+      {
+        name: "employeesEntitlements",
+        label: "Employees Entitlements",
+        type: "radio",
+      },
       { name: "purchaseContracts", label: "Purchase Contracts", type: "radio" },
       { name: "customerContracts", label: "Customer Contracts", type: "radio" },
       { name: "leaseAgreement", label: "Lease Agreement", type: "radio" },
@@ -76,13 +88,17 @@ const formConfig = {
 
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
-  return String(v).toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+  return String(v)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "");
 };
 
 const getStatus = (value) => {
   const val = normalizeValue(value);
   if (!val) return "Not Completed";
-  if (["yes", "na", "n/a", "nr", "cancelled", "completed"].includes(val)) return "Completed";
+  if (["yes", "na", "n/a", "nr", "cancelled", "completed"].includes(val))
+    return "Completed";
   if (val === "no") return "Not Completed";
   if (["processing", "inprogress"].includes(val)) return "In Progress";
   return "Not Completed";
@@ -98,10 +114,18 @@ function bgcolor(status) {
 }
 
 const extractNotes = (noteForSystem = "", noteForClient = "") => {
-  return { systemNote: noteForSystem || "", clientComment: noteForClient || "" };
+  return {
+    systemNote: noteForSystem || "",
+    clientComment: noteForClient || "",
+  };
 };
 
-export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrigger }) {
+export default function Stage4({
+  changeStage,
+  data,
+  onStageUpdate,
+  setReloadTrigger,
+}) {
   const stage = 4;
   const { matterNumber } = useParams();
 
@@ -120,7 +144,10 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
   const [isDeleting, setIsDeleting] = useState(false);
 
   const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
-  const currentModule = useMemo(() => localStorage.getItem("currentModule"), []);
+  const currentModule = useMemo(
+    () => localStorage.getItem("currentModule"),
+    []
+  );
 
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
@@ -132,16 +159,29 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
     return formConfig.vkl;
   }, [currentModule, company]);
 
-  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
+  const reloadArchivedClients = useArchivedClientStore(
+    (s) => s.reloadArchivedClients
+  );
 
   const generateSystemNote = useCallback(
     (noteGroupId) => {
-      const noteGroup = currentConfig.noteGroups.find((ng) => ng.id === noteGroupId);
+      const noteGroup = currentConfig.noteGroups.find(
+        (ng) => ng.id === noteGroupId
+      );
       if (!noteGroup) return "";
 
-      const greenValues = new Set(["yes", "nr", "na", "approved", "completed", "cancelled"]);
+      const greenValues = new Set([
+        "yes",
+        "nr",
+        "na",
+        "approved",
+        "completed",
+        "cancelled",
+      ]);
 
-      const fieldsToCheck = currentConfig.fields.filter((f) => noteGroup.fieldsForNote.includes(f.name));
+      const fieldsToCheck = currentConfig.fields.filter((f) =>
+        noteGroup.fieldsForNote.includes(f.name)
+      );
 
       const notReceived = fieldsToCheck
         .filter((field) => {
@@ -203,22 +243,33 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
           if (field.type === "number") {
             const rawPrice = rawValue;
-            initialFormData[field.name] = typeof rawPrice === "object" && rawPrice?.$numberDecimal ? rawPrice.$numberDecimal : rawPrice?.toString() ?? "";
+            initialFormData[field.name] =
+              typeof rawPrice === "object" && rawPrice?.$numberDecimal
+                ? rawPrice.$numberDecimal
+                : rawPrice?.toString() ?? "";
           } else if (field.type === "radio") {
             initialFormData[field.name] = normalizeValue(rawValue ?? "");
-            initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+            initialStatuses[field.name] = getStatus(
+              initialFormData[field.name]
+            );
           } else if (field.type === "text") {
             initialFormData[field.name] = rawValue ?? "";
           }
 
-          if (initialFormData[field.name] === undefined || initialFormData[field.name] === null) {
+          if (
+            initialFormData[field.name] === undefined ||
+            initialFormData[field.name] === null
+          ) {
             initialFormData[field.name] = "";
           }
         });
 
         // notes
         if (currentModule === "commercial") {
-          const { systemNote, clientComment } = extractNotes(stageData.noteForSystem, stageData.noteForClient);
+          const { systemNote, clientComment } = extractNotes(
+            stageData.noteForSystem,
+            stageData.noteForClient
+          );
           loadedSystemNote = systemNote || "";
           loadedClientComment = clientComment || "";
           setNoteForClient(loadedClientComment);
@@ -227,7 +278,8 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
             const noteString = stageData[group.noteForClientKey] || "";
             const noteParts = noteString.split(" - ");
             loadedSystemNote = noteParts[0]?.trim() || "";
-            loadedClientComment = noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+            loadedClientComment =
+              noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
             initialFormData[group.clientCommentKey] = loadedClientComment;
           });
         }
@@ -253,7 +305,14 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
         toast.error("Failed to load stage data");
       }
     })();
-  }, [data, fetchStageData, currentConfig, company, currentModule, matterNumber]);
+  }, [
+    data,
+    fetchStageData,
+    currentConfig,
+    company,
+    currentModule,
+    matterNumber,
+  ]);
 
   // reset loaded flag when matter changes
   useEffect(() => {
@@ -266,10 +325,17 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
       let processedValue = value;
 
       if (fieldConfig && fieldConfig.type === "radio") {
-        if (typeof processedValue === "string") processedValue = normalizeValue(processedValue);
-        setStatuses((prev) => ({ ...(prev || {}), [field]: getStatus(processedValue) }));
+        if (typeof processedValue === "string")
+          processedValue = normalizeValue(processedValue);
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
       } else {
-        setStatuses((prev) => ({ ...(prev || {}), [field]: getStatus(processedValue) }));
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          [field]: getStatus(processedValue),
+        }));
       }
 
       setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
@@ -280,8 +346,12 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
   const isChanged = () => {
     const original = originalData.current || {};
     if (!original || !original.formData) {
-      const anyFilled = Object.keys(formData || {}).some((k) => formData[k] !== undefined && String(formData[k]).trim() !== "");
-      return anyFilled || (noteForClient && String(noteForClient).trim() !== "");
+      const anyFilled = Object.keys(formData || {}).some(
+        (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
+      );
+      return (
+        anyFilled || (noteForClient && String(noteForClient).trim() !== "")
+      );
     }
 
     try {
@@ -291,20 +361,27 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
         return acc;
       }, {});
 
-      const originalForm = Object.keys(original.formData || {}).reduce((acc, k) => {
-        if (currentConfig.fields.some((f) => f.name === k && f.type !== "image")) {
-          acc[k] = original.formData[k] ?? "";
-        }
-        return acc;
-      }, {});
+      const originalForm = Object.keys(original.formData || {}).reduce(
+        (acc, k) => {
+          if (
+            currentConfig.fields.some((f) => f.name === k && f.type !== "image")
+          ) {
+            acc[k] = original.formData[k] ?? "";
+          }
+          return acc;
+        },
+        {}
+      );
 
-      const formChanged = JSON.stringify(currentForm) !== JSON.stringify(originalForm);
+      const formChanged =
+        JSON.stringify(currentForm) !== JSON.stringify(originalForm);
 
       let clientNoteChanged = false;
       if (currentModule === "commercial") {
         const currentNote = noteForClient ?? "";
         const originalNote = original.noteForClient ?? "";
-        clientNoteChanged = String(currentNote).trim() !== String(originalNote).trim();
+        clientNoteChanged =
+          String(currentNote).trim() !== String(originalNote).trim();
       } else {
         clientNoteChanged = currentConfig.noteGroups.some((group) => {
           const currentNote = formData[group.clientCommentKey] ?? "";
@@ -315,8 +392,15 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
       const currentSystemNote = generateSystemNote("main");
       const originalSystemNote = original.noteForSystem ?? "";
-      const normalizeSystemNote = (note) => (note ? String(note).replace(/\s*-+\s*$/, "").trim() : "");
-      const systemNoteChanged = normalizeSystemNote(currentSystemNote) !== normalizeSystemNote(originalSystemNote) && formChanged;
+      const normalizeSystemNote = (note) =>
+        note
+          ? String(note)
+              .replace(/\s*-+\s*$/, "")
+              .trim()
+          : "";
+      const systemNoteChanged =
+        normalizeSystemNote(currentSystemNote) !==
+          normalizeSystemNote(originalSystemNote) && formChanged;
 
       return formChanged || clientNoteChanged || systemNoteChanged;
     } catch (e) {
@@ -382,7 +466,9 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
       toast.success("Image deleted successfully!");
       try {
-        setReloadTrigger((prev) => (typeof prev === "number" ? prev + 1 : (prev || 0) + 1));
+        setReloadTrigger((prev) =>
+          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        );
       } catch (e) {}
     } catch (err) {
       toast.error("Failed to delete image.");
@@ -407,7 +493,8 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
       if (field.type === "radio") {
         payload[field.name] = raw ?? "";
       } else if (field.type === "number") {
-        if (payload[field.name] === "" || payload[field.name] === undefined) payload[field.name] = null;
+        if (payload[field.name] === "" || payload[field.name] === undefined)
+          payload[field.name] = null;
         else if (typeof payload[field.name] === "string") {
           const n = Number(payload[field.name]);
           payload[field.name] = Number.isFinite(n) ? n : null;
@@ -418,10 +505,26 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
     });
 
     // compute colorStatus
-    const completedSet = new Set(["yes", "nr", "n/r", "na", "n/a", "fixed", "variable", "approved"]);
-    const fieldsValues = currentConfig.fields.map((f) => normalizeValue(String(payload[f.name] ?? "")));
+    const completedSet = new Set([
+      "yes",
+      "nr",
+      "n/r",
+      "na",
+      "n/a",
+      "fixed",
+      "variable",
+      "approved",
+    ]);
+    const fieldsValues = currentConfig.fields.map((f) =>
+      normalizeValue(String(payload[f.name] ?? ""))
+    );
     const nonEmpty = fieldsValues.filter((v) => v !== "");
-    const computedColorStatus = nonEmpty.length > 0 && nonEmpty.every((v) => completedSet.has(v)) ? "green" : nonEmpty.length === 0 ? "red" : "amber";
+    const computedColorStatus =
+      nonEmpty.length > 0 && nonEmpty.every((v) => completedSet.has(v))
+        ? "green"
+        : nonEmpty.length === 0
+        ? "red"
+        : "amber";
 
     if (currentModule === "commercial") {
       const commercialFields = currentConfig.fields.map((f) => f.name);
@@ -437,7 +540,8 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
     } else {
       currentConfig.noteGroups.forEach((group) => {
         const clientComment = formData[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] = `${systemNote} - ${clientComment}`.trim();
+        payload[group.noteForClientKey] =
+          `${systemNote} - ${clientComment}`.trim();
         delete payload[group.clientCommentKey];
       });
       if (company === "vkl") payload.matterNumber = matterNumber;
@@ -457,42 +561,71 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
       const server = res?.data || res || {};
 
-      toast.success("Stage 4 Saved Successfully!", { autoClose: 2500, hideProgressBar: false });
+      toast.success("Stage 4 Saved Successfully!", {
+        autoClose: 2500,
+        hideProgressBar: false,
+      });
 
       // update original snapshot from server response (preferred) or payload
       try {
-        const serverStage = (server && (server.stage4 || server.data || server)) || payload;
+        const serverStage =
+          (server && (server.stage4 || server.data || server)) || payload;
 
         originalData.current = {
           formData: (() => {
             const snap = {};
             currentConfig.fields.forEach((f) => {
-              snap[f.name] = serverStage[f.name] !== undefined ? serverStage[f.name] : payload[f.name] ?? "";
+              snap[f.name] =
+                serverStage[f.name] !== undefined
+                  ? serverStage[f.name]
+                  : payload[f.name] ?? "";
             });
             currentConfig.noteGroups.forEach((group) => {
-              snap[group.clientCommentKey] = serverStage[group.clientCommentKey] ?? payload[group.clientCommentKey] ?? "";
+              snap[group.clientCommentKey] =
+                serverStage[group.clientCommentKey] ??
+                payload[group.clientCommentKey] ??
+                "";
             });
             return snap;
           })(),
           noteForClient: serverStage.noteForClient || "",
-          noteForSystem: serverStage.noteForSystem || (typeof serverStage.noteForClient === "string" ? serverStage.noteForClient.split(" - ")[0] || "" : ""),
+          noteForSystem:
+            serverStage.noteForSystem ||
+            (typeof serverStage.noteForClient === "string"
+              ? serverStage.noteForClient.split(" - ")[0] || ""
+              : ""),
         };
       } catch (e) {
         originalData.current = {
           formData: JSON.parse(JSON.stringify(formData || {})),
-          noteForClient: currentModule === "commercial" ? noteForClient || "" : formData.clientComment || "",
+          noteForClient:
+            currentModule === "commercial"
+              ? noteForClient || ""
+              : formData.clientComment || "",
           noteForSystem: systemNote,
         };
       }
 
       // update local visual statuses from server colorStatus if present
       try {
-        const serverColor = server.colorStatus || (server.stage4 && server.stage4.colorStatus) || server.data?.colorStatus;
-        setStatuses((prev) => ({ ...(prev || {}), colorStatus: serverColor || payload.colorStatus }));
+        const serverColor =
+          server.colorStatus ||
+          (server.stage4 && server.stage4.colorStatus) ||
+          server.data?.colorStatus;
+        setStatuses((prev) => ({
+          ...(prev || {}),
+          colorStatus: serverColor || payload.colorStatus,
+        }));
 
         if (typeof onStageUpdate === "function") {
           try {
-            onStageUpdate({ ...(server || {}), colorStatus: serverColor || payload.colorStatus }, 4);
+            onStageUpdate(
+              {
+                ...(server || {}),
+                colorStatus: serverColor || payload.colorStatus,
+              },
+              4
+            );
           } catch (e) {}
         }
       } catch (e) {}
@@ -504,11 +637,16 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
           // reinitialize fields that may have changed (images, generated values, etc.)
           currentConfig.fields.forEach((field) => {
             const val = refreshed[field.name];
-            setFormData((prev) => ({ ...(prev || {}), [field.name]: field.type === "radio" ? normalizeValue(val ?? "") : val ?? "" }));
+            setFormData((prev) => ({
+              ...(prev || {}),
+              [field.name]:
+                field.type === "radio" ? normalizeValue(val ?? "") : val ?? "",
+            }));
           });
 
           if (company === "idg") {
-            const lastImage = refreshed?.images?.[refreshed?.images?.length - 1];
+            const lastImage =
+              refreshed?.images?.[refreshed?.images?.length - 1];
             setPreview(lastImage?.url || null);
             setfileName(lastImage?.filename || "");
           }
@@ -518,7 +656,15 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
             setNoteForClient(refreshed.noteForClient || "");
           } else {
             currentConfig.noteGroups.forEach((group) => {
-              setFormData((prev) => ({ ...(prev || {}), [group.clientCommentKey]: (refreshed[group.noteForClientKey] || "").split(" - ").slice(1).join(" - ") }));
+              setFormData((prev) => ({
+                ...(prev || {}),
+                [group.clientCommentKey]: (
+                  refreshed[group.noteForClientKey] || ""
+                )
+                  .split(" - ")
+                  .slice(1)
+                  .join(" - "),
+              }));
             });
           }
         }
@@ -526,7 +672,9 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
       // notify parent / listings to refresh
       try {
-        setReloadTrigger((prev) => (typeof prev === "number" ? prev + 1 : (prev || 0) + 1));
+        setReloadTrigger((prev) =>
+          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        );
       } catch (e) {}
     } catch (err) {
       let errorMessage = "Failed to save Stage 4. Please try again.";
@@ -544,16 +692,39 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
         return (
           <div key={field.name} className="mt-5">
             <div className="flex gap-4 items-center justify-between mb-2">
-              <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
-              <div className={`w-[90px] h-[18px] ${bgcolor(statuses[field.name])} flex items-center justify-center rounded-4xl`}>
-                <p className="text-[10px] md:text-[12px] whitespace-nowrap">{statuses[field.name] || "Not Completed"}</p>
+              <label className="block mb-1 text-sm md:text-base font-bold">
+                {field.label}
+              </label>
+              <div
+                className={`w-[90px] h-[18px] ${bgcolor(
+                  statuses[field.name]
+                )} flex items-center justify-center rounded-4xl`}
+              >
+                <p className="text-[10px] md:text-[12px] whitespace-nowrap">
+                  {statuses[field.name] || "Not Completed"}
+                </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-              {(field.name !== "closeOrder" ? ["Yes", "No", "Processing", "N/R"] : ["Completed", "Cancelled"]).map((val) => (
-                <label key={val} className="flex items-center gap-2 text-sm md:text-base">
-                  <input type="radio" name={field.name} value={val} checked={normalizeValue(formData[field.name] ?? "") === normalizeValue(val)} onChange={() => handleChange(field.name, val)} />
+              {(field.name !== "closeOrder"
+                ? ["Yes", "No", "Processing", "N/R"]
+                : ["Completed", "Cancelled"]
+              ).map((val) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 text-sm md:text-base"
+                >
+                  <input
+                    type="radio"
+                    name={field.name}
+                    value={val}
+                    checked={
+                      normalizeValue(formData[field.name] ?? "") ===
+                      normalizeValue(val)
+                    }
+                    onChange={() => handleChange(field.name, val)}
+                  />
                   {val}
                 </label>
               ))}
@@ -564,46 +735,95 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
       case "number":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
-            <input type="number" step="0.01" value={formData[field.name] ?? ""} onChange={(e) => handleChange(field.name, e.target.value)} className="w-full rounded p-2 bg-gray-100" />
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData[field.name] ?? ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
           </div>
         );
 
       case "text":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
-            <input type="text" value={formData[field.name] ?? ""} onChange={(e) => handleChange(field.name, e.target.value)} className="w-full rounded p-2 bg-gray-100" />
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={formData[field.name] ?? ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full rounded p-2 bg-gray-100"
+            />
           </div>
         );
 
       case "image":
         return (
           <div className="w-full mt-5" key={field.name}>
-            <label className="block mb-1 text-sm md:text-base font-bold">{field.label}</label>
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
 
             <div className="relative w-full">
               {!preview ? (
-                <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition ${isUploading ? "opacity-50" : ""} border-gray-300 bg-gray-50 hover:bg-gray-100 `}>
+                <label
+                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition ${
+                    isUploading ? "opacity-50" : ""
+                  } border-gray-300 bg-gray-50 hover:bg-gray-100 `}
+                >
                   {isUploading ? (
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   ) : (
                     <CloudArrowUpIcon className="w-10 h-10 text-gray-400 hover:text-[#00AEEF]" />
                   )}
                   <p className="mt-2 text-sm text-gray-500">
-                    <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">{isUploading ? "Uploading..." : "Click here to upload"}</span>
+                    <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
+                      {isUploading ? "Uploading..." : "Click here to upload"}
+                    </span>
                   </p>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isUploading} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
                 </label>
               ) : (
                 <div className="relative w-full text-center">
-                  <img src={preview} alt="Uploaded preview" className="inline-block rounded-lg border max-w-full" />
-                  <button type="button" onClick={() => setShowConfirmModal(true)} disabled={isDeleting} className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50 disabled:opacity-50">
+                  <img
+                    src={preview}
+                    alt="Uploaded preview"
+                    className="inline-block rounded-lg border max-w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={isDeleting}
+                    className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50 disabled:opacity-50"
+                  >
                     {isDeleting ? (
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="size-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                        />
                       </svg>
                     )}
                   </button>
@@ -621,12 +841,25 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
   const renderNoteGroup = (group) => (
     <div key={group.id}>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">{group.systemNoteLabel}</label>
-        <input type="text" value={generateSystemNote(group.id)} disabled className="w-full rounded p-2 bg-gray-100" />
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.systemNoteLabel}
+        </label>
+        <input
+          type="text"
+          value={generateSystemNote(group.id)}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">{group.clientCommentLabel}</label>
-        <textarea value={formData[group.clientCommentKey] ?? ""} onChange={(e) => handleChange(group.clientCommentKey, e.target.value)} className="w-full rounded p-2 bg-gray-100" />
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          {group.clientCommentLabel}
+        </label>
+        <textarea
+          value={formData[group.clientCommentKey] ?? ""}
+          onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
     </div>
   );
@@ -634,12 +867,25 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
   const renderCommercialNotes = () => (
     <div>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">System Note for Client</label>
-        <input type="text" value={generateSystemNote("main")} disabled className="w-full rounded p-2 bg-gray-100" />
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          System Note for Client
+        </label>
+        <input
+          type="text"
+          value={generateSystemNote("main")}
+          disabled
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
       <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">Comment for Client</label>
-        <textarea value={noteForClient} onChange={(e) => setNoteForClient(e.target.value)} className="w-full rounded p-2 bg-gray-100" />
+        <label className="block mb-1 text-sm md:text-base font-bold">
+          Comment for Client
+        </label>
+        <textarea
+          value={noteForClient}
+          onChange={(e) => setNoteForClient(e.target.value)}
+          className="w-full rounded p-2 bg-gray-100"
+        />
       </div>
     </div>
   );
@@ -659,17 +905,40 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
     <div className="overflow-y-auto">
       {currentConfig.fields.map((f) => renderField(f))}
 
-      {currentModule === "commercial" ? renderCommercialNotes() : currentConfig.noteGroups.map((g) => renderNoteGroup(g))}
+      {currentModule === "commercial"
+        ? renderCommercialNotes()
+        : currentConfig.noteGroups.map((g) => renderNoteGroup(g))}
 
       <div className="flex mt-10 justify-between">
-        <Button label="Back" width="w-[70px] md:w-[100px]" onClick={() => changeStage(stage - 1)} />
+        <Button
+          label="Back"
+          width="w-[70px] md:w-[100px]"
+          bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+          onClick={() => changeStage(stage - 1)}
+        />
         <div className="flex gap-2">
-          <Button label={isSaving ? "Saving..." : "Save"} width="w-[70px] md:w-[100px]" bg="bg-blue-500" onClick={handleSave} disabled={isSaving || !isChanged()} />
-          <Button label="Next" width="w-[70px] md:w-[100px]" onClick={() => changeStage(stage + 1)} />
+          <Button
+            label={isSaving ? "Saving..." : "Save"}
+            width="w-[70px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+            onClick={handleSave}
+            disabled={isSaving || !isChanged()}
+          />
+          <Button
+            label="Next"
+            width="w-[70px] md:w-[100px]"
+            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+            onClick={() => changeStage(stage + 1)}
+          />
         </div>
       </div>
 
-      <ConfirmationModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Delete Image" onConfirm={handleDeleteConfirm}>
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Delete Image"
+        onConfirm={handleDeleteConfirm}
+      >
         Do you really want to delete this Image?
       </ConfirmationModal>
     </div>

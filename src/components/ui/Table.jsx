@@ -307,7 +307,7 @@ const Table = ({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="flex flex-col items-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                          className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                           title="Edit"
                         >
                           <Edit size={14} />
@@ -377,8 +377,10 @@ const Table = ({
                           className="flex flex-col items-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
                           title="View Details"
                         >
-                          <img src={Eye} alt="View" className="h-4" />
-                          <span className="text-xs">View</span>
+                          <img src={Eye} alt="View" className="h-4 " />
+                          <span className="text-xs text-[#2E3D99]">
+                            View
+                          </span>
                         </button>
                       )}
                       {EditOrder &&
