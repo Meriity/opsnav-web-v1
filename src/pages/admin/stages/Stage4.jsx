@@ -161,20 +161,20 @@ export default function Stage4({ changeStage, data, onStageUpdate, setReloadTrig
 
   const fetchStageData = useCallback(async () => {
     if (!data) return null;
-    setIsLoading(true);
+    // setIsLoading(true);
 
     let stageData = data;
     try {
-      if (currentModule === "commercial") {
-        const stageResponse = await commercialApi.getStageData(4, matterNumber);
-        stageData = stageResponse?.data ? { ...data, ...stageResponse.data } : stageData;
-      } else if (company === "vkl") {
-        const resp = await api.getStageFour(matterNumber);
-        stageData = resp?.data ? { ...data, ...resp.data } : stageData;
-      } else if (company === "idg") {
-        const resp = await api.getIDGStages(matterNumber, 4);
-        stageData = resp?.data ? { ...data, ...resp.data } : stageData;
-      }
+      // if (currentModule === "commercial") {
+      //   const stageResponse = await commercialApi.getStageData(4, matterNumber);
+      //   stageData = stageResponse?.data ? { ...data, ...stageResponse.data } : stageData;
+      // } else if (company === "vkl") {
+      //   const resp = await api.getStageFour(matterNumber);
+      //   stageData = resp?.data ? { ...data, ...resp.data } : stageData;
+      // } else if (company === "idg") {
+      //   const resp = await api.getIDGStages(matterNumber, 4);
+      //   stageData = resp?.data ? { ...data, ...resp.data } : stageData;
+      // }
     } catch (e) {
       console.warn("Stage4: fetchStageData fallback to base data", e);
     }

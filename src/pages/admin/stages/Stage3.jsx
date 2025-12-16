@@ -88,21 +88,21 @@ export default function Stage3({
     hasLoaded.current = true;
 
     const load = async () => {
-      setIsLoading(true);
+      // setIsLoading(true);
 
       let stageData = data;
 
       try {
-        if (currentModule === "commercial") {
-          const res = await commercialApi.getStageData(3, matterNumber);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        } else if (company === "vkl") {
-          const res = await api.getStageThree(matterNumber);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        } else if (company === "idg") {
-          const res = await api.getIDGStages(matterNumber, 3);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        }
+        // if (currentModule === "commercial") {
+        //   const res = await commercialApi.getStageData(3, matterNumber);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // } else if (company === "vkl") {
+        //   const res = await api.getStageThree(matterNumber);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // } else if (company === "idg") {
+        //   const res = await api.getIDGStages(matterNumber, 3);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // }
       } catch {}
 
       const newForm = {};
