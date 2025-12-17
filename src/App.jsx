@@ -7,6 +7,7 @@ import ViewClients from "./pages/admin/ViewClients";
 import ArchivedClients from "./pages/admin/ArchivedClients";
 import AdminLogin from "./components/auth/AdminLogin";
 import ClientLogin from "./components/auth/ClientLogin";
+import SignUp from "./components/auth/SignUp";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
 import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
@@ -55,6 +56,7 @@ function App() {
         {/* <Route path="/" element={<ComingSoon/>}  /> */}
         <Route path="/" element={<Home />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />

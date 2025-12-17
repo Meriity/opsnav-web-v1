@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
+
 import {
   X,
   Search,
@@ -12,7 +14,6 @@ import {
   ChevronRight,
   ChevronLeft,
   ExternalLink,
-  Printer,
   BookOpen,
   AlertCircle,
   CheckCircle,
@@ -30,6 +31,7 @@ import {
   BarChart3,
   Target,
   Zap,
+  HomeIcon,
   ShieldCheck,
   TrendingUp,
   MessageSquare,
@@ -61,6 +63,8 @@ const TermsOfService = ({ onClose }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isMac, setIsMac] = useState(true);
 
+  const navigate = useNavigate();
+
   // Refs for section navigation
   const sectionRefs = useRef({});
   const tocRef = useRef(null);
@@ -68,71 +72,495 @@ const TermsOfService = ({ onClose }) => {
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const hasMountedRef = useRef(false);
 
-  // TOC sections with full content mapping
-  const tocSections = [
-    { id: "overview", title: "Overview", icon: BookOpen, level: 0 },
-    {
-      id: "subscription",
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // Auto-expand all sections on mobile for better UX
+    if (window.innerWidth < 768) {
+      const allExpanded = {};
+      tocSections.forEach((section) => {
+        allExpanded[section.id] = true;
+      });
+      setExpandedSections(allExpanded);
+    }
+  }, []);
+
+  // JSON data structure for legal content
+  const legalContent = {
+    overview: {
+      title: "Overview",
+      icon: Info,
+      color: "from-blue-500 to-cyan-500",
+      clauses: [
+        {
+          label: null,
+          text: "These Terms and Conditions govern your access to and use of the OpsNav online portal available at www.opsnav.com (Portal), operated by TechAliyan Pty Ltd (ACN 688 247 421) trading as OpsNav (we, us, our).",
+        },
+        {
+          label: null,
+          text: "By creating an account, subscribing to, or accessing the Portal, you agree to be bound by these Terms and Conditions and our Privacy Policy.",
+        },
+      ],
+    },
+
+    subscription: {
       title: "1. Subscription and Access",
-      icon: FileText,
-      level: 1,
+      icon: FileCheck,
+      color: "from-purple-500 to-pink-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You may access the Portal only by creating an account and purchasing a subscription (Subscription).",
+        },
+        {
+          label: "b)",
+          text: "Your Subscription type, fees, inclusions and term (e.g. monthly/annual) will be set out on the Portal or in the order/sign-up page at the time you subscribe.",
+        },
+        {
+          label: "c)",
+          text: "Subject to your payment of all applicable fees and compliance with these Terms, we grant you a non-exclusive, non-transferable, limited licence to access and use the Portal for your internal business purposes only.",
+        },
+      ],
     },
-    { id: "accounts", title: "2. User Accounts", icon: User, level: 1 },
-    {
-      id: "pricing",
+
+    accounts: {
+      title: "2. User Accounts",
+      icon: Users,
+      color: "from-green-500 to-emerald-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You are responsible for keeping your login details and passwords secure and must not share them with any other person.",
+        },
+        {
+          label: "b)",
+          text: "You are responsible for all activity that occurs under your account, whether authorised by you or not.",
+        },
+        {
+          label: "c)",
+          text: "You must notify us immediately if you become aware of any unauthorised use of your account.",
+        },
+      ],
+    },
+
+    pricing: {
       title: "3. Subscription Plans, Pricing and Billing",
-      icon: DollarSign,
-      level: 1,
+      icon: CreditCard,
+      color: "from-amber-500 to-orange-500",
+      clauses: [
+        {
+          label: "a)",
+          title: "Subscription plans",
+          children: [
+            {
+              label: "i)",
+              text: "We offer different subscription plans for access to the Portal (for example, Starter, Professional and Enterprise), which may vary by features, user limits and support levels. The details and current pricing for each plan are set out on the Portal or in your order form at the time you subscribe.",
+            },
+          ],
+        },
+        {
+          label: "b)",
+          title: "Fees and GST",
+          children: [
+            {
+              label: "i)",
+              text: "All Subscription fees are in Australian dollars (AUD) and, unless stated otherwise, are exclusive of GST.",
+            },
+            {
+              label: "ii)",
+              text: "If GST is payable on a supply under these Terms, you must pay the applicable GST amount in addition to the Subscription fee.",
+            },
+          ],
+        },
+        {
+          label: "c)",
+          title: "Billing cycle and payment",
+          children: [
+            {
+              label: "i)",
+              text: "Subscriptions are billed in advance on a monthly or annual basis, as selected by you at the time of sign-up.",
+            },
+            {
+              label: "ii)",
+              text: "You authorise us (and our third-party payment processor) to automatically charge your nominated payment method (e.g. credit card or direct debit) on or around the start of each billing period for the applicable Subscription fees.",
+            },
+            {
+              label: "iii)",
+              text: "If a payment is unsuccessful, we may retry the charge; if payment remains outstanding, we may suspend or restrict access to the Portal until all amounts are paid.",
+            },
+          ],
+        },
+        {
+          label: "d)",
+          title: "Auto-renewal and price changes",
+          children: [
+            {
+              label: "i)",
+              text: "Your Subscription will automatically renew at the end of each billing period for a further period of the same length, unless you cancel it in accordance with clause 4 before the renewal date.",
+            },
+            {
+              label: "ii)",
+              text: "We may change our Subscription fees from time to time. Any change will not apply until your next renewal. We will give you reasonable notice (for example, by email or via the Portal) before a fee change takes effect so you can decide whether to continue or cancel.",
+            },
+          ],
+        },
+        {
+          label: "e)",
+          title: "Upgrades, downgrades and additional users",
+          children: [
+            {
+              label: "i)",
+              text: "You may upgrade your plan or add additional users at any time. Any additional fees will be prorated for the remainder of your current billing period, unless stated otherwise.",
+            },
+            {
+              label: "ii)",
+              text: "If you downgrade your plan or reduce users, the change will generally take effect from the next billing period. We do not provide pro-rated refunds for downgrades, except where required by law.",
+            },
+          ],
+        },
+        {
+          label: "f)",
+          title: "No refunds",
+          children: [
+            {
+              label: "i)",
+              text: "Except as required under the Australian Consumer Law or expressly stated in these Terms, all Subscription fees are non-refundable, including where you cancel part way through a billing period or do not use the Portal.",
+            },
+          ],
+        },
+        {
+          label: "g)",
+          title: "Invoicing (for approved customers)",
+          children: [
+            {
+              label: "i)",
+              text: "Where we agree in writing to invoice you directly (for example, Enterprise customers), payment is due within 14 days of the invoice date, unless otherwise specified. If you fail to pay an invoice on time, we may charge interest on overdue amounts at a reasonable commercial rate and/or suspend access to the Portal until payment is received.",
+            },
+          ],
+        },
+        {
+          label: "h)",
+          title: "Trial periods",
+          children: [
+            {
+              label: "i)",
+              text: "We may offer a free or discounted trial of certain Subscription plans for a limited period (Trial Period), as described on the Portal or in your sign-up offer.",
+            },
+            {
+              label: "ii)",
+              text: "Unless we state otherwise, Trial Periods are available once per organisation and may be withdrawn or modified at any time.",
+            },
+            {
+              label: "iii)",
+              text: "At the end of the Trial Period, your Subscription will automatically convert to a paid Subscription on the plan you selected at sign-up (or, if not specified, the then-current entry-level paid plan), and we will begin charging the applicable fees to your nominated payment method, unless you cancel before the Trial Period ends.",
+            },
+            {
+              label: "iv)",
+              text: "It is your responsibility to monitor the Trial Period end date and cancel in time if you do not wish to continue with a paid Subscription.",
+            },
+          ],
+        },
+        {
+          label: "i)",
+          title: "Customer Support",
+          children: [
+            {
+              label: "i)",
+              text: "Support levels, availability and response times may vary depending on your Subscription plan. We will use reasonable endeavours to respond to support requests; however, no response times are guaranteed unless expressly stated.",
+            },
+          ],
+        },
+      ],
     },
-    {
-      id: "cancellation",
+
+    cancellation: {
       title: "4. Cancellation and Termination",
       icon: XCircle,
-      level: 1,
+      color: "from-red-500 to-rose-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You may cancel your Subscription at any time by contacting us. A registered account holder must make cancellation requests. Cancellation takes effect at the end of your current billing period; we do not provide pro-rata refunds except where required by law.",
+        },
+        {
+          label: "b)",
+          text: "We may suspend or terminate your access to the Portal immediately if:",
+          children: [
+            { label: "i)", text: "you fail to pay any fees when due;" },
+            {
+              label: "ii)",
+              text: "you breach these Terms and do not remedy the breach within a reasonable time after we ask you to; or",
+            },
+            {
+              label: "iii)",
+              text: "we reasonably suspect fraud, misuse or unauthorised use of the Portal.",
+            },
+            {
+              label: "iv)",
+              text: "On termination or expiry, your right to access the Portal ceases, and we may deactivate or delete your account in accordance with our data retention policies.",
+            },
+          ],
+        },
+        {
+          label: "c)",
+          title: "Automatic Renewal",
+          children: [
+            {
+              label: "i)",
+              text: "Unless cancelled in accordance with these Terms, your Subscription will automatically renew at the end of each billing period for a further period of the same length (for example, monthly to monthly, annual to annual).",
+            },
+            {
+              label: "ii)",
+              text: "On renewal, we will charge your nominated payment method for the Subscription fees applicable to your plan at the time of renewal.",
+            },
+            {
+              label: "iii)",
+              text: "You can cancel automatic renewal at any time via your account settings or by contacting us. Cancellation will take effect at the end of your current billing period; you will continue to have access to the Portal until then.",
+            },
+            {
+              label: "iv)",
+              text: "If we make a material change to your plan or fees for the next renewal period, we will give you reasonable prior notice so you can decide whether to continue or cancel before the renewal takes effect.",
+            },
+          ],
+        },
+      ],
     },
-    {
-      id: "usage",
+
+    usage: {
       title: "5. Permitted Use and Restrictions",
       icon: Shield,
-      level: 1,
+      color: "from-indigo-500 to-blue-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You must use the Portal only for lawful purposes and in accordance with these Terms.",
+        },
+        {
+          label: "b)",
+          text: "You must not (and must not permit anyone else to):",
+          children: [
+            {
+              label: "i)",
+              text: "copy, modify, reverse engineer, decompile, or attempt to extract the source code of the Portal, except to the extent permitted by law;",
+            },
+            {
+              label: "ii)",
+              text: "resell, sub-licence, lease, distribute or otherwise make the Portal available to any third party (other than your authorised employees/contractors) without our written consent;",
+            },
+            {
+              label: "iii)",
+              text: "introduce any viruses, malware or harmful code into the Portal;",
+            },
+            {
+              label: "iv)",
+              text: "use the Portal to infringe any third-party rights, or to send spam, offensive or unlawful content; or",
+            },
+            {
+              label: "v)",
+              text: "bypass or attempt to circumvent any security features or access controls.",
+            },
+          ],
+        },
+      ],
     },
-    { id: "data", title: "6. Data and Privacy", icon: Lock, level: 1 },
-    { id: "ip", title: "7. Intellectual Property", icon: Copyright, level: 1 },
-    {
-      id: "availability",
+
+    data: {
+      title: "6. Data and Privacy",
+      icon: Database,
+      color: "from-teal-500 to-cyan-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You retain ownership of all data and content you input or upload into the Portal (Your Data). You grant us a non-exclusive, royalty-free licence to store, use and process Your Data solely for the purpose of providing the Portal and related services to you.",
+        },
+        {
+          label: "b)",
+          text: "Your data will be stored on reputable public cloud platforms (such as Google and Amazon), and will be protected by the security measures those providers implement.",
+        },
+        {
+          label: "c)",
+          text: "It is your sole responsibility to conduct regular back-ups of Your Data. We do not back up Your Data.",
+        },
+      ],
+    },
+
+    ip: {
+      title: "7. Intellectual Property",
+      icon: Copyright,
+      color: "from-violet-500 to-purple-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "All intellectual property rights in the Portal (including software, code, design, text, graphics, logos, and underlying databases) are owned by or licensed to TechAliyan Pty Ltd t/a OpsNav.",
+        },
+        {
+          label: "b)",
+          text: "Except for the limited licence in clause 1(c), nothing in these Terms transfers any intellectual property rights to you.",
+        },
+      ],
+    },
+
+    availability: {
       title: "8. Service Availability and Changes",
       icon: Cloud,
-      level: 1,
+      color: "from-sky-500 to-blue-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "We aim to keep the Portal available and functioning, but we do not guarantee uninterrupted or error-free operation. The Portal may be unavailable from time to time for maintenance, upgrades or other reasons.",
+        },
+        {
+          label: "b)",
+          text: "We may modify, update or discontinue features of the Portal at any time. Where a change materially reduces the core functionality of your paid Subscription, we will use reasonable endeavours to notify you in advance.",
+        },
+      ],
     },
-    {
-      id: "warranties",
+
+    warranties: {
       title: "9. Warranties and Consumer Rights",
       icon: ShieldCheck,
-      level: 1,
+      color: "from-emerald-500 to-green-500",
+      clauses: [
+        {
+          label: "a)",
+          text: 'To the extent permitted by law, the Portal is provided "as is" and "as available", and we exclude all warranties, representations and guarantees not expressly set out in these Terms.',
+        },
+        {
+          label: "b)",
+          text: "Nothing in these Terms excludes, restricts or modifies any consumer guarantees, rights or remedies you may have under the Australian Consumer Law (ACL) or other applicable law that cannot be excluded.",
+        },
+        {
+          label: "c)",
+          text: "Where our liability for breach of a non-excludable guarantee can be limited, our liability is limited (at our option) to resupplying the services or paying the cost of having the services supplied again.",
+        },
+      ],
     },
-    { id: "liability", title: "10. Liability", icon: AlertCircle, level: 1 },
-    { id: "indemnity", title: "11. Indemnity", icon: TrendingUp, level: 1 },
-    {
-      id: "thirdparty",
+
+    liability: {
+      title: "10. Liability",
+      icon: AlertCircle,
+      color: "from-rose-500 to-pink-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "To the maximum extent permitted by law, we are not liable for:",
+          children: [
+            {
+              label: "i)",
+              text: "any loss of profit, revenue, data, goodwill, or any indirect or consequential loss; or",
+            },
+            {
+              label: "ii)",
+              text: "any loss arising from your misuse of the Portal or failure to comply with these Terms.",
+            },
+            {
+              label: "iii)",
+              text: "Our total aggregate liability to you for all claims arising out of or in connection with the Portal or these Terms is limited to the total Subscription fees you paid to us in the 12 months immediately before the event giving rise to the claim.",
+            },
+          ],
+        },
+      ],
+    },
+
+    indemnity: {
+      title: "11. Indemnity",
+      icon: TrendingUp,
+      color: "from-orange-500 to-amber-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "You indemnify us (and our officers, employees and contractors) against any loss, damage, liability, cost or expense (including reasonable legal costs) arising from:",
+          children: [
+            { label: "i)", text: "Your Data;" },
+            { label: "ii)", text: "your breach of these Terms; or" },
+            {
+              label: "iii)",
+              text: "your misuse of the Portal, except to the extent caused by our own negligence or wrongful act.",
+            },
+          ],
+        },
+      ],
+    },
+
+    thirdparty: {
       title: "12. Third-party Services",
       icon: Globe,
-      level: 1,
+      color: "from-cyan-500 to-blue-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "The Portal may contain links or integrations to third-party websites or services. We do not control and are not responsible for those third-party services. Your use of them is subject to their own terms and conditions.",
+        },
+      ],
     },
-    {
-      id: "changes",
+
+    changes: {
       title: "13. Changes to these Terms",
       icon: RefreshCw,
-      level: 1,
+      color: "from-blue-500 to-indigo-500",
+      clauses: [
+        {
+          label: "a)",
+          text: "We may update these Terms from time to time. If we make material changes, we will notify you by email or via the Portal. Your continued use of the Portal after the effective date of any changes constitutes your acceptance of the updated Terms.",
+        },
+      ],
     },
-    {
-      id: "governance",
+
+    governance: {
       title: "14. Governing Law and Jurisdiction",
       icon: Building,
-      level: 1,
+      color: "from-gray-600 to-gray-700",
+      clauses: [
+        {
+          label: "a)",
+          text: "These Terms are governed by the laws of Victoria, Australia. Each party submits to the non-exclusive jurisdiction of the courts of Victoria and the courts competent to hear appeals from them.",
+        },
+      ],
     },
-    { id: "contact", title: "15. Contact Us", icon: MessageSquare, level: 1 },
-  ];
+
+    contact: {
+      title: "15. Contact Us",
+      icon: MessageSquare,
+      color: "from-[#2E3D99] to-[#1D97D7]",
+      clauses: [
+        {
+          label: "a)",
+          text: "If you have any questions about these Terms, please contact: TechAliyan Pty Ltd t/a OpsNav Email: support@opsnav.com Tel: 0435 332 279",
+        },
+      ],
+    },
+  };
+
+  // TOC sections based on legalContent
+  const tocSections = Object.keys(legalContent).map((key) => {
+    const section = legalContent[key];
+    const iconMapping = {
+      overview: BookOpen,
+      subscription: FileText,
+      accounts: User,
+      pricing: DollarSign,
+      cancellation: XCircle,
+      usage: Shield,
+      data: Lock,
+      ip: Copyright,
+      availability: Cloud,
+      warranties: ShieldCheck,
+      liability: AlertCircle,
+      indemnity: TrendingUp,
+      thirdparty: Globe,
+      changes: RefreshCw,
+      governance: Building,
+      contact: MessageSquare,
+    };
+
+    return {
+      id: key,
+      title: section.title,
+      icon: section.icon || iconMapping[key] || FileText,
+      level: key === "overview" ? 0 : 1,
+    };
+  });
 
   // Handle scroll for sections
   useEffect(() => {
@@ -164,6 +592,11 @@ const TermsOfService = ({ onClose }) => {
   }, [activeSection]);
 
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     const container = tocRef.current;
     const activeItem = tocItemRefs.current[activeSection];
 
@@ -176,7 +609,6 @@ const TermsOfService = ({ onClose }) => {
       itemRect.top >= containerRect.top &&
       itemRect.bottom <= containerRect.bottom;
 
-    // Only scroll TOC if item is OUTSIDE visible area
     if (!isVisible) {
       activeItem.scrollIntoView({
         block: "nearest",
@@ -248,45 +680,71 @@ const TermsOfService = ({ onClose }) => {
       const results = [];
 
       // Search through all sections
-      tocSections.forEach((section) => {
-        const content = sectionContent[section.id]?.content || "";
+      Object.entries(legalContent).forEach(([sectionId, section]) => {
         const title = section.title.toLowerCase();
-        const sectionContentLower = content.toLowerCase();
 
-        // Check if search term is in title or content
-        if (
-          title.includes(searchTerm) ||
-          sectionContentLower.includes(searchTerm)
-        ) {
-          // Find the context around the search term
-          let snippet = "";
-          if (sectionContentLower.includes(searchTerm)) {
-            const index = sectionContentLower.indexOf(searchTerm);
-            const start = Math.max(0, index - 50);
-            const end = Math.min(
-              content.length,
-              index + searchTerm.length + 100
-            );
-            snippet = content.substring(start, end);
-            if (start > 0) snippet = "..." + snippet;
-            if (end < content.length) snippet = snippet + "...";
-          } else {
-            snippet = content.substring(0, 150) + "...";
+        // Helper function to extract text from clauses
+        const extractClauseText = (clause) => {
+          let text = "";
+          if (clause.text) text += clause.text + " ";
+          if (clause.title) text += clause.title + " ";
+          if (clause.children) {
+            clause.children.forEach((child) => {
+              text += extractClauseText(child) + " ";
+            });
           }
+          return text;
+        };
 
+        // Search in title
+        if (title.includes(searchTerm)) {
           results.push({
-            id: section.id,
-            sectionId: section.id,
+            id: sectionId,
+            sectionId: sectionId,
             title: section.title,
-            snippet: snippet,
-            content: content,
-            icon: section.icon,
+            snippet: section.clauses[0]?.text?.substring(0, 150) + "...",
+            content: JSON.stringify(section.clauses),
+            icon: section.icon || FileText,
             type: "section",
           });
         }
+
+        // Search in content
+        section.clauses.forEach((clause, clauseIndex) => {
+          const clauseText = extractClauseText(clause).toLowerCase();
+          if (clauseText.includes(searchTerm)) {
+            // Create a snippet from the matched clause
+            const textToSearch = clause.text || clause.title || "";
+            const index = textToSearch.toLowerCase().indexOf(searchTerm);
+            let snippet = textToSearch;
+
+            if (index > -1) {
+              const start = Math.max(0, index - 50);
+              const end = Math.min(
+                textToSearch.length,
+                index + searchTerm.length + 100
+              );
+              snippet = textToSearch.substring(start, end);
+              if (start > 0) snippet = "..." + snippet;
+              if (end < textToSearch.length) snippet = snippet + "...";
+            } else if (textToSearch.length > 150) {
+              snippet = textToSearch.substring(0, 150) + "...";
+            }
+
+            results.push({
+              id: `${sectionId}-${clauseIndex}`,
+              sectionId: sectionId,
+              title: section.title,
+              snippet: snippet,
+              content: textToSearch,
+              icon: section.icon || FileText,
+              type: "clause",
+            });
+          }
+        });
       });
 
-      setSearchResults(results);
+      setSearchResults(results.slice(0, 20)); // Limit to 20 results
       setLoading(false);
     }, 300);
   }, []);
@@ -344,6 +802,7 @@ const TermsOfService = ({ onClose }) => {
       });
     }, 0);
   };
+
   // Animation variants (from your Header component)
   const containerVariants = {
     hidden: { opacity: 0, y: -10 },
@@ -402,393 +861,205 @@ const TermsOfService = ({ onClose }) => {
 
   // Download PDF function
   const handleDownloadPDF = () => {
-    const link = document.createElement("a");
     const pdfUrl =
       "https://storage.googleapis.com/opsnav_docs/OpsNav%20Portal-%20Subscription%20Terms%20%26%20Conditions.pdf";
-    link.href = pdfUrl;
-    link.download = "OpsNav-Terms-and-Conditions.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    alert("Terms of Service PDF download started!");
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
   };
 
-  // Format content with better readability
-  const formatContent = (content) => {
-    return content.split("\n\n").map((paragraph, index) => {
-      if (paragraph.trim().match(/^[a-z]\)/)) {
-        return (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="ml-6 mb-4"
-          >
-            <div className="flex">
-              <span className="font-semibold text-[#2E3D99] min-w-[24px]">
-                {paragraph.substring(0, 2)}
+  // Render clause content
+  const renderClause = (clause, depth = 0) => {
+    const marginLeft = depth * 20;
+
+    return (
+      <div
+        key={`${clause.label}-${clause.text?.substring(0, 20)}`}
+        className="mb-4"
+      >
+        {/* Clause with label and text */}
+        {clause.label && clause.text && !clause.title && !clause.children && (
+          <div className="flex">
+            <div className="w-8 md:w-10 flex-shrink-0">
+              <span className="font-semibold text-[#2E3D99] text-sm md:text-base">
+                {clause.label}
               </span>
-              <p className="text-gray-700">{paragraph.substring(3)}</p>
             </div>
-          </motion.div>
-        );
-      } else if (paragraph.trim().match(/^\s*i\)/)) {
-        // Subsubsection with roman numeral
-        return (
-          <div key={index} className="ml-12 mb-3">
-            <div className="flex">
-              <span className="font-medium text-gray-600 min-w-[24px]">
-                {paragraph.trim().substring(0, 3)}
-              </span>
-              <p className="text-gray-600 text-sm">{paragraph.substring(3)}</p>
+            <div className="flex-1">
+              <p className="text-gray-800 text-sm md:text-base leading-relaxed">
+                {clause.text}
+              </p>
             </div>
           </div>
-        );
-      } else if (
-        paragraph.trim().startsWith("**") &&
-        paragraph.trim().endsWith("**")
-      ) {
-        return (
-          <h4
-            key={index}
-            className="text-lg font-semibold text-gray-800 mt-6 mb-4"
-          >
-            {paragraph.replace(/\*\*/g, "")}
-          </h4>
-        );
-      } else {
-        return (
+        )}
+
+        {/* Clause with title (for subsections like "Subscription plans") */}
+        {clause.title && (
+          <div className="mb-4">
+            <div className="flex">
+              <div className="w-8 md:w-10 flex-shrink-0">
+                <span className="font-semibold text-[#2E3D99] text-sm md:text-base">
+                  {clause.label}
+                </span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-gray-900 font-semibold text-sm md:text-base mb-3">
+                  {clause.title}
+                </h4>
+                {/* Render children if they exist */}
+                {clause.children &&
+                  clause.children.map((child, childIndex) => (
+                    <div key={childIndex} className="mb-3 ml-10 md:ml-20">
+                      <div className="flex">
+                        <div className="w-8 md:w-10 flex-shrink-0">
+                          <span className="font-medium text-gray-700 text-xs md:text-sm italic">
+                            {child.label}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-gray-700 text-xs md:text-sm leading-relaxed">
+                            {child.text}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clause with children but no title (like list items) */}
+        {clause.text && clause.children && !clause.title && (
+          <div className="mb-4">
+            <div className="flex">
+              <div className="w-8 md:w-10 flex-shrink-0">
+                <span className="font-semibold text-[#2E3D99] text-sm md:text-base">
+                  {clause.label}
+                </span>
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-800 text-sm md:text-base mb-3 leading-relaxed">
+                  {clause.text}
+                </p>
+                {/* Render children */}
+                {clause.children.map((child, childIndex) => (
+                  <div key={childIndex} className="mb-3 ml-10 md:ml-20">
+                    <div className="flex">
+                      <div className="w-8 md:w-10 flex-shrink-0">
+                        <span className="font-medium text-gray-700 text-xs md:text-sm italic">
+                          {child.label || "•"}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-gray-700 text-xs md:text-sm leading-relaxed">
+                          {child.text}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Simple text clause without label */}
+        {!clause.label && clause.text && !clause.children && (
           <motion.p
-            key={index}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="text-gray-700 mb-6 leading-relaxed"
+            className="text-gray-800 text-sm md:text-base mb-4 md:mb-6 leading-relaxed"
           >
-            {paragraph}
+            {clause.text}
           </motion.p>
-        );
-      }
-    });
+        )}
+      </div>
+    );
   };
 
-  // Content for each section
-  const sectionContent = {
-    overview: {
-      title: "Overview",
-      content: `**OpsNav Portal - Subscription Terms and Conditions**
-
-These Terms and Conditions govern your access to and use of the OpsNav online portal available at www.opsnav.com (Portal), operated by **TechAliyan Pty Ltd (ACN 688 247 421) trading as OpsNav** (we, us, our).
-
-By creating an account, subscribing to, or accessing the Portal, you agree to be bound by these Terms and Conditions and our Privacy Policy.`,
-      icon: Info,
-      color: "from-blue-500 to-cyan-500",
-    },
-    subscription: {
-      title: "1. Subscription and Access",
-      content: `a) You may access the Portal only by creating an account and purchasing a subscription (Subscription).
-
-b) Your Subscription type, fees, inclusions and term (e.g. monthly/annual) will be set out on the Portal or in the order/sign-up page at the time you subscribe.
-
-c) Subject to your payment of all applicable fees and compliance with these Terms, we grant you a non-exclusive, non-transferable, limited licence to access and use the Portal for your internal business purposes only.`,
-      icon: FileCheck,
-      color: "from-purple-500 to-pink-500",
-    },
-    accounts: {
-      title: "2. User Accounts",
-      content: `a) You are responsible for keeping your login details and passwords secure and must not share them with any other person.
-
-b) You are responsible for all activity that occurs under your account, whether authorised by you or not.
-
-c) You must notify us immediately if you become aware of any unauthorised use of your account.`,
-      icon: Users,
-      color: "from-green-500 to-emerald-500",
-    },
-    pricing: {
-      title: "3. Subscription Plans, Pricing and Billing",
-      content: `**Subscription Plans**
-
-a) We offer different subscription plans for access to the Portal (for example, Starter, Professional and Enterprise), which may vary by features, user limits and support levels. The details and current pricing for each plan are set out on the Portal or in your order form at the time you subscribe.
-
-**Fees and GST**
-
-b) All Subscription fees are in Australian dollars (AUD) and, unless stated otherwise, are exclusive of GST.
-
-c) If GST is payable on a supply under these Terms, you must pay the applicable GST amount in addition to the Subscription fee.
-
-**Billing Cycle and Payment**
-
-d) Subscriptions are billed in advance on a monthly or annual basis, as selected by you at the time of sign-up.
-
-e) You authorise us (and our third-party payment processor) to automatically charge your nominated payment method (e.g. credit card or direct debit) on or around the start of each billing period for the applicable Subscription fees.
-
-f) If a payment is unsuccessful, we may retry the charge; if payment remains outstanding, we may suspend or restrict access to the Portal until all amounts are paid.
-
-**Auto-renewal and Price Changes**
-
-g) Your Subscription will automatically renew at the end of each billing period for a further period of the same length, unless you cancel it in accordance with clause 4 before the renewal date.
-
-h) We may change our Subscription fees from time to time. Any change will not apply until your next renewal. We will give you reasonable notice (for example, by email or via the Portal) before a fee change takes effect so you can decide whether to continue or cancel.
-
-**Upgrades, Downgrades and Additional Users**
-
-i) You may upgrade your plan or add additional users at any time. Any additional fees will be prorated for the remainder of your current billing period, unless stated otherwise.
-
-j) If you downgrade your plan or reduce users, the change will generally take effect from the next billing period. We do not provide pro-rated refunds for downgrades, except where required by law.
-
-**No Refunds**
-
-k) Except as required under the Australian Consumer Law or expressly stated in these Terms, all Subscription fees are non-refundable, including where you cancel part way through a billing period or do not use the Portal.
-
-**Invoicing (for approved customers)**
-
-l) Where we agree in writing to invoice you directly (for example, Enterprise customers), payment is due within 14 days of the invoice date, unless otherwise specified. If you fail to pay an invoice on time, we may charge interest on overdue amounts at a reasonable commercial rate and/or suspend access to the Portal until payment is received.
-
-**Trial Periods**
-
-m) We may offer a free or discounted trial of certain Subscription plans for a limited period (Trial Period), as described on the Portal or in your sign-up offer.
-
-n) Unless we state otherwise, Trial Periods are available once per organisation and may be withdrawn or modified at any time.
-
-o) At the end of the Trial Period, your Subscription will automatically convert to a paid Subscription on the plan you selected at sign-up (or, if not specified, the then-current entry-level paid plan), and we will begin charging the applicable fees to your nominated payment method, unless you cancel before the Trial Period ends.
-
-p) It is your responsibility to monitor the Trial Period end date and cancel in time if you do not wish to continue with a paid Subscription.
-
-**Customer Support**
-
-q) Support levels, availability and response times may vary depending on your Subscription plan. We will use reasonable endeavours to respond to support requests; however, no response times are guaranteed unless expressly stated.`,
-      icon: CreditCard,
-      color: "from-amber-500 to-orange-500",
-      subsections: [
-        "Subscription Plans",
-        "Fees and GST",
-        "Billing Cycle and Payment",
-        "Auto-renewal and Price Changes",
-        "Upgrades, Downgrades and Additional Users",
-        "No Refunds",
-        "Invoicing",
-        "Trial Periods",
-        "Customer Support",
-      ],
-    },
-    cancellation: {
-      title: "4. Cancellation and Termination",
-      content: `a) You may cancel your Subscription at any time by contacting us. A registered account holder must make cancellation requests. Cancellation takes effect at the end of your current billing period; we do not provide pro-rata refunds except where required by law.
-
-b) We may suspend or terminate your access to the Portal immediately if:
-
-i) you fail to pay any fees when due;
-
-ii) you breach these Terms and do not remedy the breach within a reasonable time after we ask you to; or
-
-iii) we reasonably suspect fraud, misuse or unauthorised use of the Portal.
-
-c) On termination or expiry, your right to access the Portal ceases, and we may deactivate or delete your account in accordance with our data retention policies.
-
-**Automatic Renewal**
-
-d) Unless cancelled in accordance with these Terms, your Subscription will automatically renew at the end of each billing period for a further period of the same length (for example, monthly to monthly, annual to annual).
-
-e) On renewal, we will charge your nominated payment method for the Subscription fees applicable to your plan at the time of renewal.
-
-f) You can cancel automatic renewal at any time via your account settings or by contacting us. Cancellation will take effect at the end of your current billing period; you will continue to have access to the Portal until then.
-
-g) If we make a material change to your plan or fees for the next renewal period, we will give you reasonable prior notice so you can decide whether to continue or cancel before the renewal takes effect.`,
-      icon: XCircle,
-      color: "from-red-500 to-rose-500",
-    },
-    usage: {
-      title: "5. Permitted Use and Restrictions",
-      content: `a) You must use the Portal only for lawful purposes and in accordance with these Terms.
-
-b) You must not (and must not permit anyone else to):
-
-i) copy, modify, reverse engineer, decompile, or attempt to extract the source code of the Portal, except to the extent permitted by law;
-
-ii) resell, sub-licence, lease, distribute or otherwise make the Portal available to any third party (other than your authorised employees/contractors) without our written consent;
-
-iii) introduce any viruses, malware or harmful code into the Portal;
-
-iv) use the Portal to infringe any third-party rights, or to send spam, offensive or unlawful content; or
-
-v) bypass or attempt to circumvent any security features or access controls.`,
-      icon: Shield,
-      color: "from-indigo-500 to-blue-500",
-    },
-    data: {
-      title: "6. Data and Privacy",
-      content: `a) You retain ownership of all data and content you input or upload into the Portal (Your Data). You grant us a non-exclusive, royalty-free licence to store, use and process Your Data solely for the purpose of providing the Portal and related services to you.
-
-b) Your data will be stored on reputable public cloud platforms (such as Google and Amazon), and will be protected by the security measures those providers implement.
-
-c) It is your sole responsibility to conduct regular back-ups of Your Data. We do not back up Your Data.`,
-      icon: Database,
-      color: "from-teal-500 to-cyan-500",
-    },
-    ip: {
-      title: "7. Intellectual Property",
-      content: `a) All intellectual property rights in the Portal (including software, code, design, text, graphics, logos, and underlying databases) are owned by or licensed to TechAliyan Pty Ltd t/a OpsNav.
-
-b) Except for the limited licence in clause 1(c), nothing in these Terms transfers any intellectual property rights to you.`,
-      icon: Copyright,
-      color: "from-violet-500 to-purple-500",
-    },
-    availability: {
-      title: "8. Service Availability and Changes",
-      content: `a) We aim to keep the Portal available and functioning, but we do not guarantee uninterrupted or error-free operation. The Portal may be unavailable from time to time for maintenance, upgrades or other reasons.
-
-b) We may modify, update or discontinue features of the Portal at any time. Where a change materially reduces the core functionality of your paid Subscription, we will use reasonable endeavours to notify you in advance.`,
-      icon: Cloud,
-      color: "from-sky-500 to-blue-500",
-    },
-    warranties: {
-      title: "9. Warranties and Consumer Rights",
-      content: `a) To the extent permitted by law, the Portal is provided "as is" and "as available", and we exclude all warranties, representations and guarantees not expressly set out in these Terms.
-
-b) Nothing in these Terms excludes, restricts or modifies any consumer guarantees, rights or remedies you may have under the Australian Consumer Law (ACL) or other applicable law that cannot be excluded.
-
-c) Where our liability for breach of a non-excludable guarantee can be limited, our liability is limited (at our option) to resupplying the services or paying the cost of having the services supplied again.`,
-      icon: ShieldCheck,
-      color: "from-emerald-500 to-green-500",
-    },
-    liability: {
-      title: "10. Liability",
-      content: `a) To the maximum extent permitted by law, we are not liable for:
-
-i) any loss of profit, revenue, data, goodwill, or any indirect or consequential loss; or
-
-ii) any loss arising from your misuse of the Portal or failure to comply with these Terms.
-
-b) Our total aggregate liability to you for all claims arising out of or in connection with the Portal or these Terms is limited to the total Subscription fees you paid to us in the 12 months immediately before the event giving rise to the claim.`,
-      icon: AlertCircle,
-      color: "from-rose-500 to-pink-500",
-    },
-    indemnity: {
-      title: "11. Indemnity",
-      content: `You indemnify us (and our officers, employees and contractors) against any loss, damage, liability, cost or expense (including reasonable legal costs) arising from:
-
-i) Your Data;
-
-ii) your breach of these Terms; or
-
-iii) your misuse of the Portal,
-
-except to the extent caused by our own negligence or wrongful act.`,
-      icon: TrendingUp,
-      color: "from-orange-500 to-amber-500",
-    },
-    thirdparty: {
-      title: "12. Third-party Services",
-      content: `The Portal may contain links or integrations to third-party websites or services. We do not control and are not responsible for those third-party services. Your use of them is subject to their own terms and conditions.`,
-      icon: Globe,
-      color: "from-cyan-500 to-blue-500",
-    },
-    changes: {
-      title: "13. Changes to these Terms",
-      content: `We may update these Terms from time to time. If we make material changes, we will notify you by email or via the Portal. Your continued use of the Portal after the effective date of any changes constitutes your acceptance of the updated Terms.`,
-      icon: RefreshCw,
-      color: "from-blue-500 to-indigo-500",
-    },
-    governance: {
-      title: "14. Governing Law and Jurisdiction",
-      content: `These Terms are governed by the laws of Victoria, Australia. Each party submits to the non-exclusive jurisdiction of the courts of Victoria and the courts competent to hear appeals from them.`,
-      icon: Building,
-      color: "from-gray-600 to-gray-700",
-    },
-    contact: {
-      title: "15. Contact Us",
-      content: `If you have any questions about these Terms, please contact:
-      
-TechAliyan Pty Ltd t/a OpsNav
-Email: support@opsnav.com
-Tel: 0435 332 279`,
-      icon: MessageSquare,
-      color: "from-[#2E3D99] to-[#1D97D7]",
-    },
-  };
-
-  // Render section with enhanced UI
+  // Render section with enhanced UI and proper indentation
   const renderSection = (sectionId) => {
-    const section = sectionContent[sectionId];
-    const Icon = section?.icon || FileText;
+    const section = legalContent[sectionId];
+    if (!section) return null;
+
+    const Icon = section.icon || FileText;
     const isExpanded = expandedSections[sectionId] !== false;
+    const isMobile = window.innerWidth < 768;
 
     return (
       <section
         key={sectionId}
         id={sectionId}
         ref={(el) => (sectionRefs.current[sectionId] = el)}
-        className={`mb-8 scroll-mt-24 bg-white rounded-2xl shadow-lg overflow-hidden ${
+        className={`mb-4 md:mb-6 scroll-mt-20 md:scroll-mt-24 bg-white rounded-lg md:rounded-xl overflow-hidden shadow-sm ${
           activeSection === sectionId
-            ? "ring-2 ring-[#2E3D99] ring-opacity-50"
+            ? "ring-1 md:ring-2 ring-[#2E3D99] ring-opacity-50"
             : ""
         }`}
       >
         {/* Section Header */}
-        <button
-          onClick={() => toggleSection(sectionId)}
-          className="w-full p-6 text-left hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        {!isMobile && (
+          <button
+            onClick={() => toggleSection(sectionId)}
+            className="w-full p-4 md:p-6 text-left hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3 md:space-x-4">
+                <div
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-gradient-to-r ${
+                    section.color || "from-gray-500 to-gray-600"
+                  } flex items-center justify-center`}
+                >
+                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                    {section.title}
+                  </h2>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 md:w-5 md-h-5 text-gray-400" />
+                )}
+              </div>
+            </div>
+          </button>
+        )}
+
+        {/* On mobile, always show header without toggle */}
+        {isMobile && (
+          <div className="w-full p-4 bg-gray-50">
+            <div className="flex items-center space-x-3">
               <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-r ${
-                  section?.color || "from-gray-500 to-gray-600"
+                className={`w-10 h-10 rounded-lg bg-gradient-to-r ${
+                  section.color || "from-gray-500 to-gray-600"
                 } flex items-center justify-center`}
               >
-                <Icon className="w-6 h-6 text-white" />
+                <Icon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {section?.title}
+                <h2 className="text-lg font-bold text-gray-900">
+                  {section.title}
                 </h2>
-                <div className="flex items-center space-x-2 mt-1">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      activeSection === sectionId
-                        ? "bg-[#2E3D99]"
-                        : "bg-gray-300"
-                    }`}
-                  />
-                  <span className="text-sm text-gray-500">
-                    {tocSections.find((s) => s.id === sectionId)?.level === 0
-                      ? "Introduction"
-                      : "Section"}
-                  </span>
-                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
             </div>
           </div>
-        </button>
+        )}
 
-        {/* Section Content */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="px-6 pb-6">
-                <div className="prose prose-lg max-w-none">
-                  <div className="space-y-4">
-                    {formatContent(section?.content)}
-                  </div>
-                </div>
+        {/* Section Content - Always visible on mobile, toggleable on desktop */}
+        {(isMobile || isExpanded) && (
+          <div className="overflow-hidden">
+            <div className="px-4 md:px-6 pb-4 md:pb-6">
+              <div className="text-gray-800 space-y-2 md:space-y-4">
+                {section.clauses.map((clause, index) =>
+                  renderClause(clause, 0)
+                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
       </section>
     );
   };
@@ -806,24 +1077,24 @@ Tel: 0435 332 279`,
         animate={{ y: 0, opacity: 1 }}
         className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14 md:h-16">
             {/* Logo */}
             <div className="flex items-center">
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="mr-2 md:mr-4 p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
                 </button>
               )}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 md:space-x-3">
                 <div className="relative">
-                  <FileText className="w-7 h-7 text-[#2E3D99]" />
+                  <FileText className="w-5 h-5 md:w-7 md:h-7 text-[#2E3D99]" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900">
+                  <h1 className="text-base md:text-lg font-semibold text-gray-900">
                     Terms of Service
                   </h1>
                 </div>
@@ -831,25 +1102,23 @@ Tel: 0435 332 279`,
             </div>
 
             {/* Actions with integrated search */}
-            <div className="flex items-center space-x-4">
-              {/* Search Box */}
+            <div className="flex items-center space-x-2 md:space-x-4">
+              {/* Search Box - Hidden on small mobile */}
               <div
                 ref={searchBoxRef}
-                className={`
-                  relative transition-all duration-500 ease-out
-                  ${isFocused ? "w-full md:w-[380px]" : "w-full md:w-[280px]"}
-                `}
+                className="hidden sm:block relative transition-all duration-500 ease-out"
+                style={{ width: isFocused ? "280px" : "220px" }}
               >
                 <div
                   className={`
-                    absolute -inset-0.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-2xl opacity-0 transition-opacity duration-300 blur-sm
+                    absolute -inset-0.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl opacity-0 transition-opacity duration-300 blur-sm
                     ${isFocused ? "opacity-30" : "opacity-0"}
                   `}
                 />
 
                 <div
                   className={`
-                    relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 bg-white
+                    relative flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg md:rounded-xl border transition-all duration-300 bg-white
                     ${
                       isFocused
                         ? "border-transparent shadow-lg ring-1 ring-[#2E3D99]/10"
@@ -858,7 +1127,7 @@ Tel: 0435 332 279`,
                   `}
                 >
                   <Search
-                    className={`w-4 h-4 transition-colors duration-300 ${
+                    className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors duration-300 ${
                       isFocused ? "text-[#2E3D99]" : "text-gray-400"
                     }`}
                   />
@@ -866,7 +1135,7 @@ Tel: 0435 332 279`,
                   <input
                     ref={inputRef}
                     type="text"
-                    placeholder="Search terms and conditions..."
+                    placeholder="Search terms..."
                     className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
                     value={searchQuery}
                     onChange={handleSearchChange}
@@ -894,9 +1163,9 @@ Tel: 0435 332 279`,
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
                         onClick={clearSearch}
-                        className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
+                        className="p-0.5 md:p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-2.5 h-2.5 md:w-3 md:h-3" />
                       </motion.button>
                     ) : (
                       <motion.div
@@ -917,24 +1186,46 @@ Tel: 0435 332 279`,
                 </div>
               </div>
 
+              {/* Mobile Search Button */}
+              <button
+                onClick={() => setShowMobileNav(true)}
+                className="sm:hidden p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <Search className="w-4 h-4 text-gray-600" />
+              </button>
+
               {/* Mobile Menu Button */}
               <button
-                onClick={() => setShowMobileNav(!showMobileNav)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setShowMobileNav(true)}
+                className="p-2 hover:bg-gray-100 rounded-lg md:hidden"
               >
                 <Menu className="w-5 h-5 text-gray-600" />
               </button>
 
               {/* Desktop Actions */}
-              <div className="hidden lg:flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
                 <button
                   onClick={handleDownloadPDF}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                  className="hidden lg:flex items-center space-x-2 px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm md:text-base"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
+                  <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <span className="hidden xl:inline">Download PDF</span>
+                  <span className="xl:hidden">PDF</span>
                 </button>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/")}
+                className="px-2.5 py-1 md:px-3.5 md:py-1.5 text-[#2E3D99] border border-[#2E3D99] rounded-lg
+              hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50]
+              font-medium transition-all duration-300 text-xs md:text-sm
+              flex items-center gap-1 md:gap-2"
+              >
+                <HomeIcon className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Back to Home</span>
+                <span className="sm:hidden">Home</span>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -947,7 +1238,7 @@ Tel: 0435 332 279`,
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
               onClick={() => setShowMobileNav(false)}
             />
             <motion.div
@@ -955,10 +1246,10 @@ Tel: 0435 332 279`,
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25 }}
-              className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 lg:hidden flex flex-col"
+              className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col"
             >
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex justify-between items-center mb-6">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold text-gray-900 text-lg">
                     Table of Contents
                   </h3>
@@ -971,7 +1262,7 @@ Tel: 0435 332 279`,
                 </div>
 
                 {/* Mobile Search */}
-                <div className="relative mb-6">
+                <div className="relative mb-4">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
@@ -994,7 +1285,10 @@ Tel: 0435 332 279`,
                     <button
                       key={section.id}
                       ref={(el) => (tocItemRefs.current[section.id] = el)}
-                      onClick={() => scrollToSection(section.id)}
+                      onClick={() => {
+                        scrollToSection(section.id);
+                        setShowMobileNav(false);
+                      }}
                       className={`flex items-center w-full p-3 rounded-lg transition-all text-left ${
                         activeSection === section.id
                           ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
@@ -1016,9 +1310,12 @@ Tel: 0435 332 279`,
                 </nav>
               </div>
 
-              <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <button
-                  onClick={handleDownloadPDF}
+                  onClick={() => {
+                    handleDownloadPDF();
+                    setShowMobileNav(false);
+                  }}
                   className="w-full py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Download className="w-5 h-5" />
@@ -1036,7 +1333,7 @@ Tel: 0435 332 279`,
         )}
       </AnimatePresence>
 
-      {/* Search Dropdown - FIXED: Always shows when search has results */}
+      {/* Search Dropdown */}
       {showDropdown && searchQuery.trim() && (
         <div className="search-dropdown-container">
           {createPortal(
@@ -1046,47 +1343,43 @@ Tel: 0435 332 279`,
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="fixed z-[9999] flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden"
+                className="fixed z-[9999] flex flex-col bg-white/95 backdrop-blur-xl rounded-xl md:rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden"
                 style={{
                   left: "50%",
-                  top: "120px",
+                  top: "100px",
                   transform: "translateX(-50%)",
-                  width: "600px",
-                  maxWidth: "90vw",
-                  maxHeight: "450px",
+                  width: "calc(100vw - 32px)",
+                  maxWidth: "600px",
+                  maxHeight: "400px",
                 }}
               >
                 {/* Dropdown header */}
-                <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  <span>
-                    {loading ? "Searching document..." : "Search Results"}
-                  </span>
+                <div className="px-3 md:px-4 py-2 bg-gray-50/80 border-b border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  <span>{loading ? "Searching..." : "Search Results"}</span>
                   {!loading && searchResults.length > 0 && (
-                    <span className="bg-[#2E3D99]/10 text-[#2E3D99] px-2 py-0.5 rounded-full">
+                    <span className="bg-[#2E3D99]/10 text-[#2E3D99] px-2 py-0.5 rounded-full text-xs">
                       {searchResults.length} found
                     </span>
                   )}
                 </div>
 
                 {/* Results list */}
-                <div className="overflow-y-auto custom-scrollbar p-2">
+                <div className="overflow-y-auto p-2">
                   {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                    <div className="flex flex-col items-center justify-center py-8 gap-3 text-gray-400">
                       <div className="w-6 h-6 border-2 border-[#2E3D99]/20 border-t-[#2E3D99] rounded-full animate-spin" />
-                      <span className="text-xs font-medium">
-                        Searching terms...
-                      </span>
+                      <span className="text-xs font-medium">Searching...</span>
                     </div>
                   ) : searchResults.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="text-center py-8">
+                      <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Search className="w-5 h-5 text-gray-300" />
                       </div>
                       <p className="text-sm font-medium text-gray-900">
                         No results found
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Try searching with different keywords
+                        Try different keywords
                       </p>
                     </div>
                   ) : (
@@ -1097,28 +1390,28 @@ Tel: 0435 332 279`,
                           custom={index}
                           variants={itemVariants}
                           onMouseDown={(e) => {
-                            e.preventDefault(); // prevents input blur
+                            e.preventDefault();
                             handleSearchItemClick(item);
                           }}
-                          className="group relative flex items-center justify-between p-3 rounded-xl cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 border border-transparent hover:border-blue-100"
+                          className="group relative flex items-center justify-between p-3 rounded-lg md:rounded-xl cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 border border-transparent hover:border-blue-100"
                         >
-                          <div className="flex flex-col gap-1 overflow-hidden">
+                          <div className="flex flex-col gap-1 overflow-hidden flex-1">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-[#2E3D99] group-hover:scale-125 transition-transform" />
-                              <span className="font-bold text-gray-800 text-sm group-hover:text-[#2E3D99] transition-colors">
+                              <span className="font-bold text-gray-800 text-sm group-hover:text-[#2E3D99] transition-colors truncate">
                                 {item.title}
                               </span>
                             </div>
 
                             <div className="pl-4">
-                              <p className="text-xs text-gray-500 truncate max-w-[500px]">
+                              <p className="text-xs text-gray-500 line-clamp-2">
                                 {item.snippet}
                               </p>
                             </div>
                           </div>
-                          <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                            <div className="p-1.5 rounded-lg bg-white shadow-sm border border-gray-100 text-[#2E3D99]">
-                              <ChevronRight className="w-4 h-4" />
+                          <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300 ml-2">
+                            <div className="p-1 rounded-lg bg-white shadow-sm border border-gray-100 text-[#2E3D99]">
+                              <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
                             </div>
                           </div>
                         </motion.li>
@@ -1134,22 +1427,22 @@ Tel: 0435 332 279`,
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Navigation */}
+      <div className="mx-auto px-4 sm:px-6 py-4 md:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
+          {/* Sidebar Navigation - Hidden on mobile, visible on desktop */}
           <motion.aside
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="lg:w-80 flex-shrink-0"
+            className="hidden lg:block lg:w-64 xl:w-72 2xl:w-80 flex-shrink-0"
           >
-            <div className="sticky top-24">
+            <div className="sticky top-20 xl:top-24">
               {/* Desktop Navigation */}
-              <div className="hidden lg:block bg-white rounded-2xl shadow-lg border border-gray-200">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200">
                 {/* TOC Header */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-4 md:p-6 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 text-lg flex items-center">
-                      <BookOpen className="w-5 h-5 mr-2 text-[#2E3D99]" />
+                    <h3 className="font-semibold text-gray-900 text-base md:text-lg flex items-center">
+                      <BookOpen className="w-4 h-4 md:w-5 md:h-5 mr-2 text-[#2E3D99]" />
                       Table of Contents
                     </h3>
                     <button
@@ -1157,14 +1450,14 @@ Tel: 0435 332 279`,
                       className="p-1 hover:bg-gray-100 rounded-lg"
                     >
                       {tocExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-500" />
+                        <ChevronUp className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                        <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
                       )}
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    16 sections • Click to navigate
+                  <p className="text-xs md:text-sm text-gray-500 mb-4">
+                    15 sections • Click to navigate
                   </p>
                 </div>
 
@@ -1179,7 +1472,7 @@ Tel: 0435 332 279`,
                     >
                       <div
                         ref={tocRef}
-                        className="p-4 overflow-y-auto"
+                        className="p-2 md:p-4 overflow-y-auto"
                         style={{ maxHeight: "calc(100vh - 300px)" }}
                       >
                         <nav className="space-y-1">
@@ -1190,7 +1483,7 @@ Tel: 0435 332 279`,
                                 (tocItemRefs.current[section.id] = el)
                               }
                               onClick={() => scrollToSection(section.id)}
-                              className={`flex items-center w-full p-3 rounded-lg transition-all text-left group ${
+                              className={`flex items-center w-full p-2 md:p-3 rounded-lg transition-all text-left group ${
                                 activeSection === section.id
                                   ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-sm"
                                   : "hover:bg-gray-100 text-gray-700"
@@ -1199,18 +1492,18 @@ Tel: 0435 332 279`,
                                   ? "font-semibold"
                                   : section.level === 1
                                   ? "ml-2"
-                                  : "ml-6"
+                                  : "ml-4"
                               }`}
                             >
                               <div
-                                className={`w-8 h-8 rounded-lg mr-3 flex items-center justify-center flex-shrink-0 ${
+                                className={`w-7 h-7 md:w-8 md:h-8 rounded-lg mr-2 md:mr-3 flex items-center justify-center flex-shrink-0 ${
                                   activeSection === section.id
                                     ? "bg-white/20"
                                     : "bg-gray-100 group-hover:bg-gray-200"
                                 }`}
                               >
                                 <section.icon
-                                  className={`w-4 h-4 ${
+                                  className={`w-3 h-3 md:w-4 md:h-4 ${
                                     activeSection === section.id
                                       ? "text-white"
                                       : "text-gray-500"
@@ -1218,7 +1511,7 @@ Tel: 0435 332 279`,
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">
+                                <div className="text-xs md:text-sm font-medium truncate">
                                   {section.title}
                                 </div>
                               </div>
@@ -1231,15 +1524,15 @@ Tel: 0435 332 279`,
                 </AnimatePresence>
 
                 {/* Quick Actions */}
-                <div className="p-6 border-t border-gray-200 bg-gray-50">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 border-t border-gray-200 bg-gray-50">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={handleDownloadPDF}
-                      className="flex flex-col items-center justify-center p-3 bg-white border border-gray-300 rounded-lg hover:border-[#2E3D99] hover:shadow-sm transition-all group"
+                      className="flex flex-col items-center justify-center p-2 md:p-3 bg-white border border-gray-300 rounded-lg hover:border-[#2E3D99] hover:shadow-sm transition-all group"
                     >
-                      <Download className="w-5 h-5 text-[#2E3D99] mb-2 group-hover:scale-110 transition-transform" />
+                      <Download className="w-4 h-4 md:w-5 md:h-5 text-[#2E3D99] mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-medium text-gray-700">
-                        Download
+                        Download PDF
                       </span>
                     </button>
                   </div>
@@ -1252,211 +1545,220 @@ Tel: 0435 332 279`,
           <motion.main
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex-1"
+            className="flex-1 min-w-0"
           >
             {/* Document Header */}
-            <div className="bg-gradient-to-r from-[#2E3D99]/5 via-[#1D97D7]/5 to-[#2E3D99]/5 rounded-2xl p-8 mb-8 border border-gray-200">
-              <div className="flex flex-col lg:flex-row items-start justify-between">
+            <div className="bg-gradient-to-r from-[#2E3D99]/5 via-[#1D97D7]/5 to-[#2E3D99]/5 rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 mb-4 md:mb-8 border border-gray-200">
+              <div className="lg:flex-row items-start justify-between">
                 <div className="lg:flex-1">
-                  <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full mb-4 shadow-sm">
-                    <FileText className="w-3 h-3 text-[#2E3D99]" />
+                  <div className="inline-flex items-center gap-2 bg-white px-2 py-1 md:px-3 md:py-1 rounded-full mb-3 md:mb-4 shadow-sm">
+                    <FileText className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#2E3D99]" />
                     <span className="text-xs font-medium text-gray-700">
                       Legal Document
                     </span>
                   </div>
-                  <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 md:mb-4 leading-tight">
                     OpsNav Portal -
-                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-lg md:text-2xl lg:text-3xl">
                       Subscription Terms and Conditions
                     </span>
                   </h1>
-                  <div className="flex flex-wrap gap-3">
-                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
-                      <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-                      <span className="text-sm text-gray-700">
-                        GDPR Compliant
+                  <div className="flex flex-wrap gap-2 md:gap-3">
+                    <div className="flex items-center space-x-1 md:space-x-2 px-2 py-1 md:px-3 md:py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
+                      <ShieldCheck className="w-3 h-3 md:w-3.5 md:h-3.5 text-green-600" />
+                      <span className="text-xs md:text-sm text-gray-700">
+                        Data Privacy Act Aligned
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
-                      <Globe className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="text-sm text-gray-700">
+                    <div className="flex items-center space-x-1 md:space-x-2 px-2 py-1 md:px-3 md:py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
+                      <Globe className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-600" />
+                      <span className="text-xs md:text-sm text-gray-700">
                         Australian Law
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
-                      <Lock className="w-3.5 h-3.5 text-purple-600" />
-                      <span className="text-sm text-gray-700">
-                        Secure & Encrypted
+                    <div className="flex items-center space-x-1 md:space-x-2 px-2 py-1 md:px-3 md:py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200">
+                      <Lock className="w-3 h-3 md:w-3.5 md:h-3.5 text-purple-600" />
+                      <span className="text-xs md:text-sm text-gray-700">
+                        Secure
                       </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="hidden lg:block mt-6 lg:mt-0">
-                  <div className="bg-white rounded-xl p-5 shadow-lg border border-gray-200">
-                    <div className="text-sm text-gray-500 mb-1">
-                      Document ID
-                    </div>
-                    <div className="font-mono font-bold text-gray-900 text-lg">
-                      OpsNav-TC-Ver1
-                    </div>
-                    <div className="mt-3 text-xs text-gray-500">
-                      Version 1.0
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Terms Content */}
-            <div className="space-y-6">
-              {/* Important Notice */}
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500 p-6 rounded-r-xl mb-6">
-                <div className="flex">
-                  <AlertCircle className="w-6 h-6 text-amber-600 mr-4 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-amber-900 mb-2">
-                      Important Notice
-                    </h3>
-                    <p className="text-amber-800 text-sm leading-relaxed">
-                      By accessing or using the OpsNav Portal, you agree to be
-                      bound by these Terms and Conditions. Please read them
-                      carefully. These terms contain important information about
-                      your rights and obligations, including limitations and
-                      exclusions of liability.
-                    </p>
-                    <button
-                      onClick={() => scrollToSection("overview")}
-                      className="mt-3 text-amber-700 hover:text-amber-800 font-medium text-sm flex items-center"
-                    >
-                      Read overview <ChevronRight className="w-4 h-4 ml-1" />
-                    </button>
-                  </div>
+            {/* Mobile TOC Button */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={() => setShowMobileNav(true)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center">
+                  <BookOpen className="w-5 h-5 text-[#2E3D99] mr-3" />
+                  <span className="font-medium text-gray-900">
+                    Table of Contents
+                  </span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Important Notice */}
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500 p-4 md:p-6 rounded-r-xl mb-4 md:mb-6">
+              <div className="flex">
+                <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-amber-600 mr-3 md:mr-4 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-amber-900 mb-2 text-sm md:text-base">
+                    Important Notice
+                  </h3>
+                  <p className="text-amber-800 text-xs md:text-sm leading-relaxed">
+                    By accessing or using the OpsNav Portal, you agree to be
+                    bound by these Terms and Conditions. Please read them
+                    carefully. These terms contain important information about
+                    your rights and obligations, including limitations and
+                    exclusions of liability.
+                  </p>
+                  <button
+                    onClick={() => scrollToSection("overview")}
+                    className="mt-2 md:mt-3 text-amber-700 hover:text-amber-800 font-medium text-xs md:text-sm flex items-center"
+                  >
+                    Read overview{" "}
+                    <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* Render all sections */}
+            {/* Render all sections */}
+            <div className="space-y-4 md:space-y-6">
               {tocSections.map((section) => renderSection(section.id))}
+            </div>
 
-              {/* Acceptance Section */}
-              <div className="mt-8 p-8 bg-gradient-to-r from-[#2E3D99]/5 to-[#1D97D7]/5 rounded-2xl border border-[#2E3D99]/20">
-                <div className="text-center mb-8">
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    Acceptance of Terms
-                  </h3>
-                  <p className="text-gray-600 max-w-2xl mx-auto">
-                    By using the OpsNav Portal, you acknowledge that you have
-                    read, understood, and agree to be bound by these Terms and
-                    Conditions.
+            {/* Acceptance Section */}
+            <div className="mt-6 md:mt-8 p-4 md:p-6 lg:p-8 bg-gradient-to-r from-[#2E3D99]/5 to-[#1D97D7]/5 rounded-xl md:rounded-2xl border border-[#2E3D99]/20">
+              <div className="text-center mb-6 md:mb-8">
+                <CheckCircle className="w-8 h-8 md:w-12 md:h-12 text-green-500 mx-auto mb-3 md:mb-4" />
+                <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                  Acceptance of Terms
+                </h3>
+                <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+                  By using the OpsNav Portal, you acknowledge that you have
+                  read, understood, and agree to be bound by these Terms and
+                  Conditions.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+                <div className="text-center p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm">
+                  <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+                    <FileText className="w-5 h-5 md:w-8 md:h-8 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-1 md:mb-2 text-sm md:text-base">
+                    Read Carefully
+                  </h4>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    Review all terms thoroughly
                   </p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                      <FileText className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      Read Carefully
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Review all terms and conditions thoroughly
-                    </p>
+                <div className="text-center p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm">
+                  <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 md:w-8 md:h-8 text-green-600" />
                   </div>
-                  <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-                      <HelpCircle className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      Seek Clarification
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Contact us if you have any questions
-                    </p>
+                  <h4 className="font-semibold text-gray-900 mb-1 md:mb-2 text-sm md:text-base">
+                    Seek Clarification
+                  </h4>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    Contact us for questions
+                  </p>
+                </div>
+                <div className="text-center p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm">
+                  <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 md:w-8 md:h-8 text-purple-600" />
                   </div>
-                  <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Shield className="w-8 h-8 text-purple-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      Legal Compliance
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Ensure compliance with applicable laws
-                    </p>
-                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-1 md:mb-2 text-sm md:text-base">
+                    Legal Compliance
+                  </h4>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    Ensure legal compliance
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Contact Information */}
-              <div className="p-8 bg-gradient-to-r from-gray-900 to-black text-white rounded-2xl">
-                <div className="flex flex-col lg:flex-row items-start justify-between gap-8">
-                  <div className="lg:flex-1">
-                    <h3 className="text-2xl font-bold mb-4 flex items-center">
-                      <MessageSquare className="w-6 h-6 mr-3 text-[#1D97D7]" />
-                      Questions or Concerns?
-                    </h3>
-                    <p className="text-gray-300 mb-6">
-                      If you have any questions about these Terms, need
-                      clarification on any point, or want to discuss your
-                      subscription, our team is here to help.
-                    </p>
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <Building className="w-5 h-5 text-gray-400 mr-3" />
-                        <div>
-                          <div className="text-gray-400 text-sm">Company</div>
-                          <div className="font-medium">
-                            TechAliyan Pty Ltd t/a OpsNav
-                          </div>
+            {/* Contact Information */}
+            <div className="mt-6 md:mt-8 p-4 md:p-6 lg:p-8 bg-gradient-to-r from-gray-900 to-black text-white rounded-xl md:rounded-2xl">
+              <div className="flex flex-col lg:flex-row items-start justify-between gap-4 md:gap-8">
+                <div className="lg:flex-1">
+                  <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4 flex items-center">
+                    <MessageSquare className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-[#1D97D7]" />
+                    Questions or Concerns?
+                  </h3>
+                  <p className="text-gray-300 mb-4 md:mb-6 text-sm md:text-base">
+                    If you have any questions about these Terms, need
+                    clarification on any point, or want to discuss your
+                    subscription, our team is here to help.
+                  </p>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="flex items-center">
+                      <Building className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3" />
+                      <div>
+                        <div className="text-gray-400 text-xs md:text-sm">
+                          Company
+                        </div>
+                        <div className="font-medium text-sm md:text-base">
+                          TechAliyan Pty Ltd t/a OpsNav
                         </div>
                       </div>
-                      <div className="flex items-center">
-                        <svg
-                          className="w-5 h-5 text-gray-400 mr-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <div>
-                          <div className="text-gray-400 text-sm">Email</div>
-                          <a
-                            href="mailto:support@opsnav.com"
-                            className="font-medium text-[#1D97D7] hover:underline"
-                          >
-                            support@opsnav.com
-                          </a>
+                    </div>
+                    <div className="flex items-center">
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div>
+                        <div className="text-gray-400 text-xs md:text-sm">
+                          Email
                         </div>
+                        <a
+                          href="mailto:support@opsnav.com"
+                          className="font-medium text-[#1D97D7] hover:underline text-sm md:text-base"
+                        >
+                          support@opsnav.com
+                        </a>
                       </div>
-                      <div className="flex items-center">
-                        <svg
-                          className="w-5 h-5 text-gray-400 mr-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                          />
-                        </svg>
-                        <div>
-                          <div className="text-gray-400 text-sm">Phone</div>
-                          <a
-                            href="tel:0435332279"
-                            className="font-medium text-[#1D97D7] hover:underline"
-                          >
-                            0435 332 279
-                          </a>
+                    </div>
+                    <div className="flex items-center">
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                      <div>
+                        <div className="text-gray-400 text-xs md:text-sm">
+                          Phone
                         </div>
+                        <a
+                          href="tel:0435332279"
+                          className="font-medium text-[#1D97D7] hover:underline text-sm md:text-base"
+                        >
+                          0435 332 279
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -1475,54 +1777,57 @@ Tel: 0435 332 279`,
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 w-12 h-12 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-40"
+            className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-40"
           >
-            <ArrowUp className="w-5 h-5" />
+            <ArrowUp className="w-4 h-4 md:w-5 md:h-5" />
           </motion.button>
         )}
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="mt-12 bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="mt-6 md:mt-12 bg-gray-900 text-white py-4 md:py-8">
+        <div className="mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-white" />
+            <div className="mb-3 md:mb-0">
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <div className="w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                  <Shield className="w-3 h-3 md:w-4 md:h-4 text-white" />
                 </div>
-                <span className="text-lg font-semibold">OpsNav Legal</span>
+                <span className="text-base md:text-lg font-semibold">
+                  OpsNav Legal
+                </span>
               </div>
-              <p className="text-gray-400 text-sm mt-2">
+              <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">
                 Ensuring transparency and trust in every subscription.
               </p>
             </div>
-            <div className="flex space-x-6">
+            <div className="flex space-x-4 md:space-x-6">
               <a
                 href="#"
-                className="text-gray-400 hover:text-white text-sm transition-colors"
+                className="text-gray-400 hover:text-white text-xs md:text-sm transition-colors"
               >
                 Privacy Policy
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-white text-sm transition-colors"
+                className="text-gray-400 hover:text-white text-xs md:text-sm transition-colors"
               >
                 Cookie Policy
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-white text-sm transition-colors"
+                className="text-gray-400 hover:text-white text-xs md:text-sm transition-colors"
               >
                 Security
               </a>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
+          <div className="mt-4 md:mt-6 text-center text-gray-500 text-xs">
             <p>
-              Document ID: OpsNav-TC-Ver1 • Version 1.0 • ©{" "}
-              {new Date().getFullYear()} OpsNav. All rights reserved.
+              © {new Date().getFullYear()} TechAliyan Pty Ltd t/a OpsNav. All
+              rights reserved.
             </p>
+            <p className="mt-1">ACN 688 247 421</p>
           </div>
         </div>
       </footer>

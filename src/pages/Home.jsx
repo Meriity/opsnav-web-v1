@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   Facebook,
   Instagram,
-  Twitter,
   Linkedin,
   Zap,
   Users,
@@ -35,6 +34,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaLinkedin,
+  FaXTwitter,
+} from "react-icons/fa6";
 
 const ScrollIndicator = "/down-arrow.png";
 
@@ -147,7 +152,7 @@ const featureSections = [
   },
   {
     id: 6,
-    title: "Fully Cloud Hosted on GCP",
+    title: "Scalable Cloud Hosted",
     description:
       "Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee.",
     points: [
@@ -416,8 +421,14 @@ export default function Home() {
             >
               Login
             </button>
-            <button className="w-full px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg">
-              Sign up
+            <button
+              onClick={() => {
+                navigate("/signup");
+                setShowMobileNav(false);
+              }}
+              className="w-full py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              Sign Up
             </button>
           </div>
         </motion.div>
@@ -471,6 +482,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/signup")}
                 className="px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg font-medium transition-all"
               >
                 Sign up
@@ -522,7 +534,7 @@ export default function Home() {
             className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl leading-relaxed px-4"
           >
             OpsNav brings clarity and control to your most complex workflows -
-            with centralized task tracking, automated processes, and real-time
+            with centralised task tracking, automated processes, and real-time
             insights that keep your team aligned, productive, and moving
             forward.
           </motion.p>
@@ -557,7 +569,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base px-4"
           >
-            No credit card required • Cancel anytime • 24/7 support
+            No credit card required • Cancel anytime
           </motion.div>
 
           <motion.div
@@ -910,7 +922,7 @@ export default function Home() {
             />
             <FeatureCard
               icon={Cloud}
-              title="Cloud Hosted on GCP"
+              title="Cloud Hosted"
               description="Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee."
               index={5}
             />
@@ -1167,7 +1179,7 @@ export default function Home() {
               </motion.button>
             </div>
             <p className="mt-4 sm:mt-6 text-gray-400 text-sm sm:text-base">
-              No credit card required • Cancel anytime • 24/7 support
+              No credit card required • Cancel anytime
             </p>
           </motion.div>
         </div>
@@ -1193,25 +1205,62 @@ export default function Home() {
               <h4 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">
                 Connect with us
               </h4>
+
+              {/* Social Icons */}
               <div className="flex justify-center md:justify-end gap-3 sm:gap-4">
-                {[
-                  { Icon: Facebook, label: "Facebook" },
-                  { Icon: Instagram, label: "Instagram" },
-                  { Icon: Twitter, label: "Twitter" },
-                  { Icon: Linkedin, label: "LinkedIn" },
-                ].map(({ Icon, label }, i) => (
-                  <motion.a
-                    key={i}
-                    href="#"
-                    whileHover={{ y: -5, scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#2E3D99]
-                    transition-colors duration-300 flex items-center justify-center cursor-pointer"
-                    aria-label={label}
-                  >
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </motion.a>
-                ))}
+                {/* Facebook */}
+                <motion.a
+                  href="https://www.facebook.com/opsnav"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Facebook"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaFacebook className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* Instagram */}
+                <motion.a
+                  href="#"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Instagram"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaInstagram className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* X */}
+                <motion.a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="X"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaXTwitter className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* LinkedIn */}
+                <motion.a
+                  href="https://www.linkedin.com/company/opsnav/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="LinkedIn"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaLinkedin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
               </div>
             </div>
           </div>
