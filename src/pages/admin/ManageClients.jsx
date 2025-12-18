@@ -381,6 +381,7 @@ export default function ManageUsers() {
             companyName={company}
             isOpen={createuser}
             setIsOpen={() => setcreateuser(false)}
+            onClose={()=> setcreateuser(false)}  
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
           {/* <Button
