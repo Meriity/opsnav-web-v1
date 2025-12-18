@@ -312,7 +312,7 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
 );
 
 // --- API Functions ---
-const fetchDashboardData = async (currentModule, company) => {
+const fetchDashboardData = async (currentModule) => {
   const clientApi = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
@@ -354,153 +354,85 @@ const fetchDashboardData = async (currentModule, company) => {
         allTimeStats: [],
       };
     }
-  } else if (company === "idg") {
+  } else if (currentModule === "print media") {
     return await clientApi.getIDGDashboardData();
   } else {
     return await clientApi.getDashboardData();
   }
 };
 
-const fetchCalendarData = async (currentModule, company) => {
+const fetchCalendarData = async (currentModule) => {
   const clientApi = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
   let data;
+
   if (currentModule === "commercial") {
     data = await commercialApi.getCalendarDates();
-  } else if (company === "vkl") {
-    data = await clientApi.getCalendarDates();
-  } else {
+  } else if (currentModule === "print media") {
     data = await clientApi.getIDGCalendarDates();
+  } else {
+    data = await clientApi.getCalendarDates();
   }
 
-  return processCalendarData(data, currentModule, company);
+  return processCalendarData(data, currentModule);
 };
 
-const processCalendarData = (data, currentModule, company) => {
+const processCalendarData = (data, currentModule) => {
   const events = [];
 
   if (currentModule === "commercial") {
     let calendarItems = [];
 
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
-      calendarItems = data.data;
-    } else if (data && Array.isArray(data.clients)) {
-      calendarItems = data.clients;
-    } else if (data && Array.isArray(data.events)) {
-      calendarItems = data.events;
-    }
+    if (Array.isArray(data)) calendarItems = data;
+    else if (data?.data) calendarItems = data.data;
+    else if (data?.clients) calendarItems = data.clients;
+    else if (data?.events) calendarItems = data.events;
 
     calendarItems.forEach((item) => {
       const eventDate =
         item.eventDate || item.date || item.settlementDate || item.projectDate;
-      if (eventDate) {
-        const clientType =
-          item.clientType || item.projectType || item.type || "Commercial";
-        const eventType = item.eventType || "Event";
-        const identifier =
-          item.projectCode || item.matterNumber || item.id || "N/A";
 
+      if (eventDate) {
         events.push({
-          title: `[${identifier}] - ${eventType} - [${clientType}]`,
+          title: `[${item.projectCode || item.matterNumber || "N/A"}]`,
           start: moment(eventDate).toDate(),
           end: moment(eventDate).toDate(),
           allDay: true,
-          type: eventType,
-          clientType: clientType,
-          projectType: item.projectType,
+          type: item.eventType || "Event",
           projectCode: item.projectCode,
           matterNumber: item.matterNumber,
-          id: identifier,
+          id: item.projectCode || item.matterNumber,
         });
       }
     });
-  } else if (company === "vkl") {
-    let calendarItems = [];
-
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
-      calendarItems = data.data;
-    } else if (data && Array.isArray(data.clients)) {
-      calendarItems = data.clients;
-    }
+  } else if (currentModule === "conveyancing" || currentModule === "wills") {
+    let calendarItems = Array.isArray(data?.data) ? data.data : data;
 
     calendarItems.forEach((item) => {
-      if (item.buildingAndPestDate) {
-        events.push({
-          title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
-          start: moment(item.buildingAndPestDate).toDate(),
-          end: moment(item.buildingAndPestDate).toDate(),
-          allDay: true,
-          type: "buildingAndPest",
-          clientType: item.clientType,
-          matterNumber: item.matterNumber,
-          isApproved: item.buildingAndPest?.toLowerCase() === "yes",
-          id: item.matterNumber,
-        });
-      }
-      if (item.financeApprovalDate) {
-        events.push({
-          title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
-          start: moment(item.financeApprovalDate).toDate(),
-          end: moment(item.financeApprovalDate).toDate(),
-          allDay: true,
-          type: "financeApproval",
-          clientType: item.clientType,
-          matterNumber: item.matterNumber,
-          isApproved: item.financeApproval?.toLowerCase() === "yes",
-          id: item.matterNumber,
-        });
-      }
-      if (item.titleSearchDate) {
-        events.push({
-          title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
-          start: moment(item.titleSearchDate).toDate(),
-          end: moment(item.titleSearchDate).toDate(),
-          allDay: true,
-          type: "titleSearch",
-          clientType: item.clientType,
-          matterNumber: item.matterNumber,
-          isApproved: item.titleSearch?.toLowerCase() === "yes",
-          id: item.matterNumber,
-        });
-      }
       if (item.settlementDate) {
         events.push({
-          title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
+          title: `[${item.matterNumber}] - Settlement`,
           start: moment(item.settlementDate).toDate(),
           end: moment(item.settlementDate).toDate(),
           allDay: true,
           type: "settlement",
-          clientType: item.clientType,
           matterNumber: item.matterNumber,
           id: item.matterNumber,
         });
       }
     });
-  } else {
-    let calendarItems = [];
-
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
-      calendarItems = data.data;
-    } else if (data && Array.isArray(data.orders)) {
-      calendarItems = data.orders;
-    }
+  } else if (currentModule === "print media") {
+    let calendarItems = Array.isArray(data?.orders) ? data.orders : data;
 
     calendarItems.forEach((item) => {
       if (item.deliveryDate) {
         events.push({
-          title: `[${item.orderId}] - ${item.orderType || "Order"}`,
+          title: `[${item.orderId}] - Order`,
           start: moment(item.deliveryDate).toDate(),
           end: moment(item.deliveryDate).toDate(),
           allDay: true,
           type: "deliveryDate",
-          clientType: item.orderType,
           orderId: item.orderId,
           id: item.orderId,
         });
@@ -508,14 +440,7 @@ const processCalendarData = (data, currentModule, company) => {
     });
   }
 
-  return events
-    .filter((e) => e && e.start && e.end)
-    .map((e) => ({
-      title:
-        e.title ||
-        `[${e.orderId || e.projectCode || e.matterNumber || "NoID"}]`,
-      ...e,
-    }));
+  return events;
 };
 
 // Responsive Stat Card Component - Enhanced with Home.jsx style
@@ -733,8 +658,8 @@ function Dashboard() {
   const isSmallLaptop = width >= 1024 && width < 1280;
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
   const userRole = localStorage.getItem("userRole") || "admin";
+  
 
   // Set calendar view based on screen size
   useEffect(() => {
@@ -753,20 +678,16 @@ function Dashboard() {
     isLoading: isDashboardLoading,
     error: dashboardError,
   } = useQuery({
-    queryKey: [QUERY_KEYS.DASHBOARD_DATA, currentModule, company],
-    queryFn: () => fetchDashboardData(currentModule, company),
-    enabled: !!currentModule && !!company,
+    queryKey: [QUERY_KEYS.DASHBOARD_DATA, currentModule],
+    queryFn: () => fetchDashboardData(currentModule),
+    enabled: !!currentModule,
   });
 
   // Use React Query for calendar events
-  const {
-    data: calendarEvents = [],
-    isLoading: isCalendarLoading,
-    error: calendarError,
-  } = useQuery({
-    queryKey: [QUERY_KEYS.CALENDAR_EVENTS, currentModule, company],
-    queryFn: () => fetchCalendarData(currentModule, company),
-    enabled: !!currentModule && !!company,
+  const { data: calendarEvents = [], error: calendarError } = useQuery({
+    queryKey: [QUERY_KEYS.CALENDAR_EVENTS, currentModule],
+    queryFn: () => fetchCalendarData(currentModule),
+    enabled: !!currentModule,
   });
 
   // Process dashboard data when it loads
@@ -805,14 +726,13 @@ function Dashboard() {
   const handleEventSelect = useCallback(
     (event) => {
       const currentModule = localStorage.getItem("currentModule");
-      const company = localStorage.getItem("company");
       const userRole = localStorage.getItem("userRole") || "admin";
 
       let matterNumber = "";
 
       if (currentModule === "commercial") {
         matterNumber = event.projectCode || event.matterNumber || event.id;
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         matterNumber = event.orderId || event.clientId || event.id;
       } else {
         matterNumber = event.matterNumber || event.clientId || event.id;
@@ -873,7 +793,7 @@ function Dashboard() {
       let closedLabel;
       if (currentModule === "commercial") {
         closedLabel = "Completed Projects";
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         closedLabel = "Closed Orders";
       } else {
         closedLabel = "Closed Matters";
@@ -924,19 +844,7 @@ function Dashboard() {
         0;
       return sum + closedCount;
     }, 0);
-    return currentChartData.reduce((sum, item) => {
-      const closedCount =
-        item.closedMatters ??
-        item.closedProjects ??
-        item.completedProjects ??
-        item.closedOrders ??
-        item.count ??
-        item.total ??
-        0;
-      return sum + closedCount;
-    }, 0);
   }, [currentChartData]);
-
 
   useEffect(() => {
     if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
@@ -1032,7 +940,7 @@ function Dashboard() {
           closedMatters: closedCount,
         };
       });
-    } else if (company === "vkl") {
+    } else if (currentModule === "conveyancing" || currentModule === "wills") {
       formattedData = sourceData.map((item, index) => {
         let name;
         if (isAllTimeView && (isMobile || isTablet)) {
@@ -1067,7 +975,7 @@ function Dashboard() {
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
         };
       });
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       formattedData = sourceData.map((item, index) => {
         let name;
         if (isAllTimeView && (isMobile || isTablet)) {
@@ -1105,18 +1013,18 @@ function Dashboard() {
     }
 
     setCurrentChartData(formattedData || []);
-  }, [chartView, allChartData, currentModule, company, isMobile, isTablet]);
+  }, [chartView, allChartData, currentModule, isMobile, isTablet]);
 
   const getAddButtonLabel = () => {
     if (currentModule === "commercial") return "New Project";
-    if (company === "idg") return "New Order";
+    if (currentModule === "print media") return "New Order";
     return "New Client";
   };
 
   const handleAddButtonClick = () => {
     if (currentModule === "commercial") {
       setCreateProject(true);
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       setcreateOrder(true);
     } else {
       setcreateuser(true);
@@ -1226,7 +1134,11 @@ function Dashboard() {
                   <span className="hidden xs:inline">
                     {getAddButtonLabel()}
                   </span>
-                  <span className="xs:hidden">{localStorage.getItem("company")==="idg" ? "New Order" : "New Client"}</span>
+                  <span className="xs:hidden">
+                    {currentModule === "print media"
+                      ? "New Order"
+                      : "New Client"}
+                  </span>
                 </motion.button>
               </div>
             </div>
@@ -1246,7 +1158,7 @@ function Dashboard() {
               title={
                 currentModule === "commercial"
                   ? "Projects"
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? "Orders"
                   : "Clients"
               }
@@ -1255,7 +1167,7 @@ function Dashboard() {
               icon={
                 currentModule === "commercial"
                   ? Building
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? FolderOpen
                   : Users
               }
@@ -1264,9 +1176,8 @@ function Dashboard() {
             />
             <StatCard
               title={
-                currentModule === "commercial"
-                  ? "Completed"
-                  : company === "idg"
+                currentModule === "commercial" ||
+                currentModule === "print media"
                   ? "Completed"
                   : "Archived"
               }
@@ -1384,11 +1295,9 @@ function Dashboard() {
                         <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                           {currentModule === "commercial"
                             ? "Project Completion"
-                            : company === "vkl"
-                            ? "Matter Completion"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Completion"
-                            : "Completion Statistics"}
+                            : "Matter Completion"}
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-gray-600">
@@ -1525,7 +1434,6 @@ function Dashboard() {
                         </div>
                         <div className="text-xs sm:text-sm text-center text-gray-400">
                           <div>Module: {currentModule}</div>
-                          <div>Company: {company}</div>
                           <div>View: {chartView}</div>
                         </div>
                       </div>
@@ -1553,11 +1461,9 @@ function Dashboard() {
                             <span className="text-xs sm:text-sm font-normal text-gray-600 ml-1">
                               {currentModule === "commercial"
                                 ? "projects"
-                                : company === "vkl"
-                                ? "matters"
-                                : company === "idg"
+                                : currentModule === "print media"
                                 ? "orders"
-                                : "completed"}
+                                : "matters"}
                             </span>
                           </p>
                         </div>
@@ -1667,26 +1573,25 @@ function Dashboard() {
       {/* Modals */}
       <CreateClientModal
         createType="client"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
-        onClose={()=>setcreateuser(false)}
+        onClose={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
-        onClose={()=>setcreateuser(false)}
+        onClose={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="project"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createProject}
         setIsOpen={() => setCreateProject(false)}
       />
     </div>
   );
 }
-
 export default Dashboard;

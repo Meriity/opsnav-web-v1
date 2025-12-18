@@ -172,10 +172,7 @@ function UsersPerPage({ value, onChange }) {
 function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
   const company = localStorage.getItem("company");
 
-  const filteredModules =
-    company === "pallegal"
-      ? ACCESS_MODULES.filter((module) => module.value === "CONVEYANCING")
-      : ACCESS_MODULES;
+  const filteredModules = ACCESS_MODULES;
 
   const isPallegal = company === "pallegal";
 
@@ -225,12 +222,14 @@ function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
 function MobileAccessModulesDisplay({ access = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
 
   // Hide for IDG
-  if (company === "idg") {
+  if (currentModule === "print media") {
     return (
-      <div className="text-gray-400 italic text-sm">Not applicable for IDG</div>
+      <div className="text-gray-400 italic text-sm">
+        Not applicable for Print Media
+      </div>
     );
   }
 
@@ -373,7 +372,7 @@ export default function ManageUsers() {
   }, [searchQuery, users]);
 
   const columns =
-    company !== "idg"
+    currentModule !== "print media"
       ? [
           { key: "displayName", title: "Display Name" },
           { key: "email", title: "Email" },
@@ -537,7 +536,7 @@ export default function ManageUsers() {
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    if (company === "pallegal") {
+    if (currentModule === "conveyancing") {
       setEditAccess([]);
     } else {
       setEditAccess(user.access || []);

@@ -13,7 +13,6 @@ export default function OutstandingTasksModal({
   activeMatter = null,
   onOpen = false,
 }) {
-  const company = localStorage.getItem("company");
   const currentModule = localStorage.getItem("currentModule");
   const api =
     currentModule === "commercial" ? new CommercialAPI() : new ClientAPI();
@@ -66,15 +65,18 @@ export default function OutstandingTasksModal({
         }
 
         response = await api.getOutstandingTasks(params);
+      } else if (currentModule === "print media") {
+        response = await api.getIDGOutstandingTasks(
+          page,
+          matterFilter,
+          activeMatter
+        );
       } else {
-        response =
-          company === "vkl"
-            ? await api.getAllOutstandingTasks(page, activeMatter, matterFilter)
-            : await api.getIDGOutstandingTasks(
-                page,
-                matterFilter,
-                activeMatter
-              );
+        response = await api.getAllOutstandingTasks(
+          page,
+          activeMatter,
+          matterFilter
+        );
       }
       if (activeMatter) {
         setData([response]);
@@ -129,11 +131,9 @@ export default function OutstandingTasksModal({
       }
     });
 
-    const company = localStorage.getItem("company");
-
     // dynamic head
     const head =
-      company === "idg"
+      currentModule === "print media"
         ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
         : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
 
@@ -169,17 +169,17 @@ export default function OutstandingTasksModal({
     });
 
     doc.save(
-      company === "idg"
-        ? "IDG_Outstanding_Tasks_Report.pdf"
-        : "VKL_Outstanding_Tasks_Report.pdf"
+      currentModule === "print media"
+        ? "Outstanding_Tasks_Orders.pdf"
+        : "Outstanding_Tasks_Matters.pdf"
     );
   };
 
   return (
-    <Dialog open={open} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+    <Dialog open={open} onClose={onClose} className="relative z-[100]">
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
+        <DialogPanel className="w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden rounded-lg bg-white/90 backdrop-blur-md border border-white/20 text-left align-middle shadow-2xl transition-all">
           {/* Header: Title and Dropdown */}
           <div className="flex-shrink-0 p-6 border-b">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -187,9 +187,9 @@ export default function OutstandingTasksModal({
               {!activeMatter && (
                 <div>
                   <label className="text-sm font-semibold block mb-1 text-gray-600">
-                    {company === "vkl"
-                      ? "Matters Settling in"
-                      : "Orders Delivery in"}
+                    {currentModule === "print media"
+                      ? "Orders Delivery in"
+                      : "Matters Settling in"}
                   </label>
                   <select
                     className="w-full sm:w-[150px] px-3 py-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -214,17 +214,17 @@ export default function OutstandingTasksModal({
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm text-left border">
-                  <thead className="bg-blue-600 text-white">
+                  <thead className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
                     <tr>
                       <th className="px-6 py-3 border">
-                        {company === "vkl"
-                          ? "Matter No. and Client"
-                          : "OrderId and Client"}
+                        {currentModule === "print media"
+                          ? "OrderId and Client"
+                          : "Matter No. and Client"}
                       </th>
                       <th className="px-6 py-3 border">
-                        {company === "vkl"
-                          ? "Settlement Date"
-                          : "Delivery Date"}
+                        {currentModule === "print media"
+                          ? "Delivery Date"
+                          : "Settlement Date"}
                       </th>
                       <th className="px-6 py-3 border">Stage</th>
                       <th className="px-6 py-3 border">Tasks</th>
@@ -241,7 +241,7 @@ export default function OutstandingTasksModal({
                         );
                         if (nonEmptyStages.length === 0) {
                           return (
-                            <tr key={idx} className="border bg-white">
+                            <tr key={idx} className="border-b border-gray-200/50 hover:bg-white/40 transition-colors">
                               <td className="px-6 py-4 border align-top">
                                 {item.matterNumber || item.orderId} -{" "}
                                 {item.clientName || item.name || item.clientId}
@@ -262,13 +262,13 @@ export default function OutstandingTasksModal({
                           ([stage, tasks], stageIdx) => (
                             <tr
                               key={`${idx}-${stage}`}
-                              className="border bg-white"
+                              className="border-b border-gray-200/50 hover:bg-white/40 transition-colors"
                             >
                               {stageIdx === 0 && (
                                 <>
                                   <td
                                     rowSpan={nonEmptyStages.length}
-                                    className="px-6 py-4 border align-top bg-gray-50 font-medium"
+                                    className="px-6 py-4 border align-top bg-gray-50/50 font-medium"
                                   >
                                     {item.matterNumber || item.orderId} -{" "}
                                     {item.clientName ||
@@ -277,7 +277,7 @@ export default function OutstandingTasksModal({
                                   </td>
                                   <td
                                     rowSpan={nonEmptyStages.length}
-                                    className="px-6 py-4 border align-top bg-gray-50"
+                                    className="px-6 py-4 border align-top bg-gray-50/50"
                                   >
                                     {formatDate(
                                       item.settlementDate || item.deliveryDate
@@ -351,7 +351,7 @@ export default function OutstandingTasksModal({
                 <button
                   onClick={handleDownloadPDF}
                   disabled={data.length === 0}
-                  className="bg-[#00AEEF] text-white px-6 py-2 rounded-md hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white px-6 py-2 rounded-md hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Download
                 </button>

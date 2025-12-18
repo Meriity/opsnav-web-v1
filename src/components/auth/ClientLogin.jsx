@@ -172,7 +172,7 @@ const handleSubmit = async (e) => {
             <div className="inline-flex [@media(max-width:340px)]:hidden md:hidden lg:inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:py-1">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
               <span className="text-xs sm:text-sm font-medium text-gray-700">
-                Secure Legal Operations Platform
+                Secure Operations Platform
               </span>
             </div>
 
@@ -192,7 +192,7 @@ const handleSubmit = async (e) => {
             </h1>
 
             <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-7 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:1024px)_and_(max-height:800px)]:mb-4">
-              Access your centralized workspace for streamlined legal
+              Access your centralized workspace for streamlined
               operations, automated processes, and real-time insights that keep
               your team productive.
             </p>

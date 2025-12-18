@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 
 const formConfig = {
-  vkl: {
+  conveyancing: {
     fields: [
       {
         key: "titleSearch",
@@ -25,7 +25,7 @@ const formConfig = {
       { key: "inviteBank", label: "Invite Bank", type: "radio" },
     ],
   },
-  idg: {
+  "print media": {
     fields: [
       { key: "boardsPrinted", label: "Boards Printed", type: "radio" },
       { key: "packaged", label: "Packaged", type: "radio" },
@@ -78,13 +78,12 @@ export default function Stage3({
   const originalData = useRef({});
   const hasLoaded = useRef(false);
 
-  const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
   const fields =
     currentModule === "commercial"
       ? formConfig.commercial.fields
-      : formConfig[company].fields;
+      : formConfig[currentModule].fields;
 
   const normalizeValue = (v) =>
     v
@@ -101,7 +100,6 @@ export default function Stage3({
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
-    if (company === "idg" && val) return "Completed";
     return "Not Completed";
   };
 
@@ -166,7 +164,7 @@ export default function Stage3({
     };
 
     load();
-  }, [data, company, currentModule, fields, api, commercialApi, matterNumber]);
+  }, [data, currentModule, fields, api, commercialApi, matterNumber]);
 
   const generateSystemNote = () => {
     const green = new Set(["yes", "nr", "na", "n/a", "n/r"]);
@@ -224,16 +222,19 @@ export default function Stage3({
         }
       });
 
-      if (company === "vkl") payload.matterNumber = matterNumber;
-      if (company === "idg") payload.orderId = matterNumber;
+      if (currentModule === "print media") {
+        payload.orderId = matterNumber;
+      } else {
+        payload.matterNumber = matterNumber;
+      }
     }
 
     try {
       if (currentModule === "commercial") {
         await commercialApi.upsertStage(3, matterNumber, payload);
-      } else if (company === "vkl") {
+      } else if (currentModule !== "print media") {
         await api.upsertStageThree(payload);
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 3, payload);
       }
 
