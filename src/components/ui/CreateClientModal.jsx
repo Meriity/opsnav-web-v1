@@ -1123,13 +1123,13 @@ export default function CreateClientModal({
                   </div>
                 </>
               )}
-
+              
               {/* Submit Button */}
               <div className="pt-4">
                 <button
                   type="submit"
                   disabled={isLoading || !!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${
+                  className={`w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md transition-all ${
                     isLoading || matterNumberError
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-sky-600 hover:shadow-lg"

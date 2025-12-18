@@ -1,31 +1,25 @@
 import { useState } from "react";
-
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-
 import Button from "./Button";
-
 import { RefreshCcw } from "lucide-react";
-
 import { toast } from "react-toastify";
 
 export default function DateRangeModal({
   isOpen,
-
   setIsOpen,
-
   subTitle = "",
-
   handelSubmitFun,
-
   onReset,
 }) {
   const [isLoading, setIsLoading] = useState(false);
-
   const [fromDate, setFromDate] = useState("");
-
   const [toDate, setToDate] = useState("");
+  const currentModule = localStorage.getItem("currentModule");
 
-  const [dateType, setDateType] = useState("settlement_date"); // default
+  const [dateType, setDateType] = useState(
+    currentModule === "print media" ? "orderDate" : "settlement_date"
+  );
+
 
   const handelSubmit = async () => {
     setIsLoading(true);
@@ -38,23 +32,18 @@ export default function DateRangeModal({
         toast.error(error.message);
       } finally {
         setIsLoading(false);
-
         setIsOpen(false);
       }
     } else {
       toast.error("Please select a valid date range");
-
       setIsLoading(false);
     }
   };
 
   const handelDateReset = () => {
     setFromDate("");
-
     setToDate("");
-
     setDateType("settlement_date");
-
     if (onReset) {
       onReset();
     }
@@ -85,7 +74,7 @@ export default function DateRangeModal({
 
             {/* Select which date type */}
 
-            {localStorage.getItem("company") === "idg" && (
+            {currentModule === "print media" && (
               <div className="space-y-2 mb-4">
                 <label className="block text-sm font-medium text-gray-700">
                   Filter By
@@ -125,7 +114,7 @@ export default function DateRangeModal({
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />  
+              />
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -143,7 +132,7 @@ export default function DateRangeModal({
                 label={isLoading ? "Processing..." : "Submit"}
                 onClick={handelSubmit}
                 disabled={isLoading}
-                className="bg-[#00AEEF] hover:bg-sky-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
               />
             </div>
           </DialogPanel>

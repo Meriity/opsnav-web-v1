@@ -29,7 +29,7 @@ export default function Header() {
 
   const api = new ClientAPI();
   const navigate = useNavigate();
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
 
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
@@ -100,11 +100,9 @@ export default function Header() {
       const lowercasedValue = value.toLowerCase();
 
       let response =
-        company === "vkl"
-          ? await api.getSearchResult(value)
-          : company === "idg"
+        currentModule === "print media"
           ? await api.getIDGSearchResult(value)
-          : [];
+          : await api.getSearchResult(value);
       if (!Array.isArray(response) || response.length === 0) {
         try {
           const allClients = await api.getClients();
@@ -385,9 +383,9 @@ export default function Header() {
                     ref={inputRef}
                     type="text"
                     placeholder={
-                      company === "vkl"
-                        ? "Search Matter # or Client..."
-                        : "Search Order ID..."
+                      currentModule === "print media"
+                        ? "Search Order ID..."
+                        : "Search Matter # or Client..."
                     }
                     className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
                     value={searchQuery}

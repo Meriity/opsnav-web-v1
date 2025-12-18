@@ -298,11 +298,9 @@ const ViewClientsTable = ({
                 <p className="text-xs text-gray-500">
                   {currentModule === "commercial"
                     ? "Business Address"
-                    : localStorage.getItem("company") === "vkl"
-                    ? "Property Address"
-                    : localStorage.getItem("company") === "idg"
+                    : currentModule === "print media"
                     ? "Billing Address"
-                    : "Address"}
+                    : "Property Address"}
                 </p>
                 <p className="text-sm break-words">
                   {item.businessAddress ||

@@ -28,7 +28,7 @@ export default function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
   const userRole = localStorage.getItem("role");
   const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -53,22 +53,15 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-      label:
-        company === "vkl"
-          ? "View Clients"
-          : company === "idg"
-          ? "View Orders"
-          : "View",
+      label: currentModule === "print media" ? "View Orders" : "View Clients",
       icon: ViewClientsIcon,
       to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
     },
     {
       label:
-        company === "vkl"
-          ? "Archived Clients"
-          : company === "idg"
+        currentModule === "print media"
           ? "Completed Orders"
-          : "Completed/Archived",
+          : "Archived Clients",
       icon: ArchivedChatsIcon,
       to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
     },
@@ -83,7 +76,7 @@ export default function Sidebar({
   }
 
   if (
-    company === "idg" &&
+    currentModule === "print media" &&
     isAdminRoute &&
     (userRole === "admin" || userRole === "superadmin")
   ) {
