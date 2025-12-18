@@ -32,7 +32,8 @@ const StageCard = ({ stage, stageIndex }) => {
   // // // // console.log(stage);
   const getNextStageIndex = (index) => {
     let stageMap = {};
-    if (localStorage.getItem("company") === "vkl") {
+    const currentModule = localStorage.getItem("currentModule");
+    if (currentModule === "conveyancing" || currentModule === "wills") {
       stageMap = {
         0: "1",
         1: "2A",
@@ -41,7 +42,7 @@ const StageCard = ({ stage, stageIndex }) => {
         4: "4",
         5: "5",
       };
-    } else {
+    } else if (currentModule === "print media") {
       stageMap = {
         0: "1",
         1: "2",
@@ -176,11 +177,11 @@ const StageCard = ({ stage, stageIndex }) => {
 export default function ClientDashboard() {
   const logo = localStorage.getItem("logo") || "/Logo.png";
   const navigate = useNavigate();
+  const currentModule = localStorage.getItem("currentModule");
   const [isOpen, setIsOpen] = useState(false);
   const api = new ClientAPI();
   let { matterNumber } = useParams();
   matterNumber = atob(matterNumber);
-  const company = localStorage.getItem("company");
 
   const [loading, setLoading] = useState(true);
   const [stageDetails, setStageDetails] = useState([]);
@@ -599,17 +600,15 @@ export default function ClientDashboard() {
   useEffect(() => {
     async function fetchMatter() {
       try {
-        if (localStorage.getItem("company") === "vkl") {
+        if (currentModule === "conveyancing" || currentModule === "wills") {
           const response = await api.getClientDetails(matterNumber);
           const formatted = formatMatterDetails(response);
           setMatterDetails(formatted);
           const stagedetails = await api.getAllStages(matterNumber);
           const stageformatted = mapStagesFromDB(stagedetails, formatted.type);
-          // // // console.log(stageformatted);
           setStageDetails(stageformatted);
-        } else if (localStorage.getItem("company") === "idg") {
-          const response = await api.getIDGClientDetails(matterNumber); // It is Order Only(Due to the above params function it looks like this)
-          console.log(response);
+        } else if (currentModule === "print media") {
+          const response = await api.getIDGClientDetails(matterNumber);
           const formatted = formatOrderDetails(response);
           setOrderDetails(formatted);
           const stageformatted = mapIDGStagesFromDB(response);
@@ -689,7 +688,9 @@ export default function ClientDashboard() {
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
                   <span className="border-b-2 border-b-[#00AEEF]">
-                    {company === "vkl" ? "Matter Overview" : "Order Overview"}
+                    {currentModule === "print media"
+                      ? "Order Overview"
+                      : "Matter Overview"}
                   </span>
                 </h4>
                 <div className="space-y-3">
@@ -708,8 +709,11 @@ export default function ClientDashboard() {
                     <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-x font-medium text-slate-600">
-                        {company === "vkl" ? "Matter Number" : "Order ID"}
+                        {currentModule === "print media"
+                          ? "Order ID"
+                          : "Matter Number"}
                       </p>
+
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.matter_number || orderDetails.orderId}
                       </p>
@@ -730,9 +734,9 @@ export default function ClientDashboard() {
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-x font-medium text-slate-600">
-                        {company === "vkl"
-                          ? "Unconditional Date"
-                          : "Order Date"}
+                        {currentModule === "print media"
+                          ? "Order Date"
+                          : "Unconditional Date"}
                       </p>
                       <p className="text-sm text-slate-800 font-semibold">
                         {stageDetails[1]?.financeApproval ||
@@ -744,10 +748,11 @@ export default function ClientDashboard() {
                     <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-x font-medium text-slate-600">
-                        {company === "vkl"
-                          ? "Settlement Date"
-                          : "Delivery Date"}
+                        {currentModule === "print media"
+                          ? "Delivery Date"
+                          : "Settlement Date"}
                       </p>
+
                       <p className="text-sm text-slate-800 font-semibold">
                         {matterDetails.settlement_date ||
                           orderDetails.delivery_date}
@@ -865,7 +870,7 @@ export default function ClientDashboard() {
                     />
                   )}
                 </div>
-                {company === "vkl" ? (
+                {currentModule !== "print media" ? (
                   <img
                     src="/Home.svg"
                     alt="Image"

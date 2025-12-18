@@ -83,6 +83,7 @@ function AccessModulesDisplay({ access = [] }) {
 
   const handleModuleClick = (module) => {
     // Save the module to localStorage
+    const currentModule = localStorage.getItem("currentModule");
     localStorage.setItem("currentModule", module.value.toLowerCase());
     localStorage.setItem("workType", module.value.toUpperCase());
 
@@ -149,6 +150,7 @@ const Table = ({
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const navigate = useNavigate();
+  const currentModule = localStorage.getItem("currentModule");
 
   useEffect(() => {
     setCurrentData(data.slice(0, itemsPerPage));
@@ -288,7 +290,7 @@ const Table = ({
                         }
                       >
                         {column.key === "access" &&
-                        !localStorage.getItem("company") === "idg" ? (
+                        currentModule !== "print media" ? (
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
@@ -327,7 +329,7 @@ const Table = ({
                       {!isClients &&
                         showReset &&
                         onReset &&
-                        localStorage.getItem("company") === "vkl" && (
+                        currentModule !== "print media" && (
                           <button
                             onClick={() => onReset(item.email)}
                             type="button"
@@ -368,7 +370,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && localStorage.getItem("company") != "idg" && (
+                      {OnEye && currentModule !== "print media" && (
                         <button
                           onClick={() => {
                             console.log("Table: Eye clicked for item:", item);
@@ -378,25 +380,22 @@ const Table = ({
                           title="View Details"
                         >
                           <img src={Eye} alt="View" className="h-4 " />
-                          <span className="text-xs text-[#2E3D99]">
-                            View
-                          </span>
+                          <span className="text-xs text-[#2E3D99]">View</span>
                         </button>
                       )}
-                      {EditOrder &&
-                        localStorage.getItem("company") === "idg" && (
-                          <button
-                            onClick={() => {
-                              console.log("clicked!");
-                              navigate(`/admin/client/stages/${item.orderId}`);
-                            }}
-                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                            title="Edit"
-                          >
-                            <Edit size={12} />
-                            <span className="text-xs">Edit</span>
-                          </button>
-                        )}
+                      {EditOrder && currentModule === "print media" && (
+                        <button
+                          onClick={() => {
+                            console.log("clicked!");
+                            navigate(`/admin/client/stages/${item.orderId}`);
+                          }}
+                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                          title="Edit"
+                        >
+                          <Edit size={12} />
+                          <span className="text-xs">Edit</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 )}

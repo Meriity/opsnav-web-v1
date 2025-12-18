@@ -292,7 +292,7 @@ export default function ArchivedClients() {
         { key: "settlement_date", title: "Completion Date" },
         { key: "status", title: "Status" },
       ];
-    } else if (company === "vkl") {
+    } else if (currentModule === "conveyancing" || currentModule === "wills") {
       return [
         { key: "matternumber", title: "Matter Number" },
         { key: "client_name", title: "Client Name" },
@@ -303,7 +303,7 @@ export default function ArchivedClients() {
         { key: "settlement_date", title: "Settlement Date" },
         { key: "status", title: "Status" },
       ];
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       return [
         { key: "orderId", title: "Order ID" },
         { key: "clientName", title: "Client Name" },

@@ -28,17 +28,13 @@ export const useClientStore = create(
         const api = new ClientAPI();
 
         try {
-          const company = localStorage.getItem("company");
+          const currentModule = localStorage.getItem("currentModule");
           const role = localStorage.getItem("role");
           const userId = localStorage.getItem("userID");
 
-          const response = await (
-            company === "vkl"
-              ? api.getClients()
-              : company === "idg"
-                ? api.getIDGOrders()
-                : api.getClients()
-          );
+          const response = await (currentModule === "print media"
+            ? api.getIDGOrders()
+            : api.getClients());
 
           console.log("Raw API response:", response);
 
@@ -46,7 +42,7 @@ export const useClientStore = create(
           let clients = [];
           let users = [];
 
-          if (company === "vkl") {
+          if (currentModule === "conveyancing" || currentModule === "wills") {
             formattedClients = response.map((client) => ({
               id: client._id || "N/A",
               matternumber: client.matterNumber || "N/A",
@@ -67,20 +63,22 @@ export const useClientStore = create(
               close_matter: client.closeMatter || "Active",
               stages: Array.isArray(client.stages) ? client.stages : [],
             }));
-          }
-          else if (company === "idg") {
+          } else if (currentModule === "print media") {
             let filteredResponse = response;
             console.log("User ID:", userId);
-            console.log("Allocated User ID:", response.activeOrders[0].allocatedUserID.split('-')[0]);
+            console.log(
+              "Allocated User ID:",
+              response.activeOrders[0].allocatedUserID.split("-")[0]
+            );
 
             if (role === "user") {
               filteredResponse = {
                 ...response,
-                activeOrders: response.activeOrders.filter((order) =>
-                  order.allocatedUserID?.split('-')?.[0] === userId
+                activeOrders: response.activeOrders.filter(
+                  (order) => order.allocatedUserID?.split("-")?.[0] === userId
                 ),
                 clients: response.clients,
-                users: response.users
+                users: response.users,
               };
             }
 
@@ -93,30 +91,33 @@ export const useClientStore = create(
               billing_address: client.deliveryAddress || "N/A",
               client_type: client.orderType || "N/A",
               stages: Array.isArray(client.stages) ? client.stages : [],
-              order_date: client.orderDate ? client.orderDate.split("T")[0] : "N/A",
+              order_date: client.orderDate
+                ? client.orderDate.split("T")[0]
+                : "N/A",
               delivery_date: client.deliveryDate
                 ? client.deliveryDate.split("T")[0]
                 : "2025-09-25",
               priority: client.priority || "N/A",
               postcode: client.postCode || "N/A",
               orderDetails: client.order_details || "N/A",
-              allocatedUser: client?.allocatedUserID ? client.allocatedUserID.split("-")[1] || "N/A" : "N/A"
+              allocatedUser: client?.allocatedUserID
+                ? client.allocatedUserID.split("-")[1] || "N/A"
+                : "N/A",
             }));
 
             clients = filteredResponse.clients.map((client) => ({
-              name: client.name
+              name: client.name,
             }));
 
             users = filteredResponse.users.map((user) => ({
               name: user.displayName,
-              id: user._id
+              id: user._id,
             }));
           }
           console.log("Formatted Clients:", formattedClients);
-          if (company == "idg") {
+          if (currentModule === "print media") {
             set({ clients: formattedClients, list: clients, user: users });
-          }
-          else {
+          } else {
             set({ clients: formattedClients });
           }
         } catch (err) {

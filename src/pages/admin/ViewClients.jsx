@@ -85,8 +85,8 @@ const ViewClients = () => {
   const [selectedClientName, setSelectedClientName] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(true);
 
-  const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
 
   const api = useMemo(() => {
     if (currentModule === "commercial") {
@@ -182,7 +182,12 @@ const ViewClients = () => {
     let filterType = (dateFilter?.type || "").toLowerCase();
 
     if (!filterType || filterType === "undefined") {
-      filterType = company === "idg" ? "delivery" : "settlement";
+      filterType =
+        currentModule === "print media"
+          ? "delivery"
+          : currentModule === "commercial"
+          ? "project"
+          : "settlement";
     }
 
     console.log(
@@ -214,8 +219,8 @@ const ViewClients = () => {
         return isIncluded(matterDate);
       }
 
-      // Final Fallback if type is weird
-      if (company === "idg") return isIncluded(deliveryDate);
+      if (currentModule === "print media") return isIncluded(deliveryDate);
+      if (currentModule === "commercial") return isIncluded(matterDate);
       return isIncluded(settlementDate);
     });
 
@@ -230,43 +235,41 @@ const ViewClients = () => {
   ]);
 
   let columns = [];
-  if (localStorage.getItem("company") === "vkl") {
-    if (currentModule === "commercial") {
-      columns = [
-        { key: "matterNumber", title: "Project Number", width: "10%" },
-        { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
-        { key: "clientName", title: "Client Name", width: "12%" },
-        { key: "businessName", title: "Business Name", width: "12%" },
-        { key: "businessAddress", title: "Business Address", width: "15%" },
-        { key: "state", title: "State", width: "6%" },
-        { key: "clientType", title: "Client Type", width: "8%" },
-        { key: "settlementDate", title: "Completion Date", width: "10%" },
-        { key: "matterDate", title: "Project Date", width: "10%" },
-        // { key: "postcode", title: "Postcode", width: "7%" },
-      ];
-    } else {
-      // Regular VKL clients
-      columns = [
-        { key: "matternumber", title: "Matter Number", width: "8%" },
-        { key: "dataentryby", title: "Data Entry By", width: "10%" },
-        { key: "client_name", title: "Client Name", width: "10%" },
-        { key: "property_address", title: "Property Address", width: "10%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "client_type", title: "Client Type", width: "7%" },
-        { key: "settlement_date", title: "Settlement Date", width: "10%" },
-        {
-          key: "finance_approval_date",
-          title: "Finance Approval Date",
-          width: "10%",
-        },
-        {
-          key: "building_and_pest_date",
-          title: "Building & Pest Date",
-          width: "10%",
-        },
-      ];
-    }
-  } else if (localStorage.getItem("company") === "idg") {
+  if (currentModule === "commercial") {
+    columns = [
+      { key: "matterNumber", title: "Project Number", width: "10%" },
+      { key: "dataEntryBy", title: "Data Entry By", width: "10%" },
+      { key: "clientName", title: "Client Name", width: "12%" },
+      { key: "businessName", title: "Business Name", width: "12%" },
+      { key: "businessAddress", title: "Business Address", width: "15%" },
+      { key: "state", title: "State", width: "6%" },
+      { key: "clientType", title: "Client Type", width: "8%" },
+      { key: "settlementDate", title: "Completion Date", width: "10%" },
+      { key: "matterDate", title: "Project Date", width: "10%" },
+      // { key: "postcode", title: "Postcode", width: "7%" },
+    ];
+  } else if (currentModule === "conveyancing" || currentModule === "wills") {
+    // Regular VKL clients
+    columns = [
+      { key: "matternumber", title: "Matter Number", width: "8%" },
+      { key: "dataentryby", title: "Data Entry By", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "10%" },
+      { key: "property_address", title: "Property Address", width: "10%" },
+      { key: "state", title: "State", width: "5%" },
+      { key: "client_type", title: "Client Type", width: "7%" },
+      { key: "settlement_date", title: "Settlement Date", width: "10%" },
+      {
+        key: "finance_approval_date",
+        title: "Finance Approval Date",
+        width: "10%",
+      },
+      {
+        key: "building_and_pest_date",
+        title: "Building & Pest Date",
+        width: "10%",
+      },
+    ];
+  } else if (currentModule === "print media") {
     columns = [
       { key: "clientId", title: "Client ID", width: "8%" },
       { key: "orderId", title: "Order ID", width: "10%" },
@@ -348,20 +351,20 @@ const ViewClients = () => {
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "View Projects";
-    if (company === "idg") return "View Orders";
+    if (currentModule === "print media") return "View Orders";
     return "View Clients";
   };
 
   const getCreateButtonLabel = () => {
     if (currentModule === "commercial") return "Create Project";
-    if (company === "idg") return "Create Client";
+    if (currentModule === "print media") return "Create Order";
     return "Create Client";
   };
 
   const handleCreateButtonClick = () => {
     if (currentModule === "commercial") {
       setCreateProject(true);
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       setcreateuser(true);
     } else {
       setcreateuser(true);
@@ -377,11 +380,11 @@ const ViewClients = () => {
   }, [dateFilter]);
 
   const shouldShowOutstandingTasks = () => {
-    return currentModule === "commercial" || company === "vkl";
+    return currentModule === "commercial" || currentModule === "conveyancing";
   };
 
   const shouldShowCreateOrder = () => {
-    return company === "idg";
+    return currentModule === "print media";
   };
 
   const isLoading =
@@ -548,7 +551,7 @@ const ViewClients = () => {
                 </div>
 
                 <button
-                  className="w-full bg-[rgb(0,174,239)] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
+                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
                   onClick={() => {
                     generateTaskAllocationPDF(allocatedUser);
                     setShowTar(false);

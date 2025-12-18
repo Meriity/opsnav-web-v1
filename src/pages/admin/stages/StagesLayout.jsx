@@ -137,7 +137,6 @@ export default function StagesLayout() {
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
-  const company = localStorage.getItem("company");
   const currentModule = localStorage.getItem("currentModule");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [_isUpdating, setIsUpdating] = useState(false);
@@ -179,7 +178,7 @@ export default function StagesLayout() {
     { id: 6, title: "Final Letter/Close" },
   ];
 
-  if (localStorage.getItem("company") === "vkl") {
+  if (currentModule === "conveyancing" || currentModule === "wills") {
     stages = [
       { id: 1, title: "Retainer/Declaration" },
       { id: 2, title: "VOI/CAF/Approvals" },
@@ -188,7 +187,7 @@ export default function StagesLayout() {
       { id: 5, title: "Notify/Transfer/Disb" },
       { id: 6, title: "Final Letter/Close" },
     ];
-  } else if (localStorage.getItem("company") === "idg") {
+  } else if (currentModule === "print media") {
     stages = [
       { id: 1, title: "Initiate & Approve" },
       { id: 2, title: "Plan & Prepare" },
@@ -278,15 +277,15 @@ export default function StagesLayout() {
     setSelectedStage(newStage);
     setReloadStage((prev) => !prev);
   }
-  // Replace your getStageData function with this version
   const getStageData = (stageNumber) => {
     if (!clientData) return null;
 
-    console.log(`=== GET STAGE ${stageNumber} DATA ===`);
-    console.log("Client data structure:", clientData);
-
     // For commercial projects
     if (currentModule === "commercial") {
+      // Prioritize the full stage object if available
+      let stageData = clientData[`stage${stageNumber}`] || {};
+      
+      // If we have a stages array (status summary), merge the color status
       if (
         clientData.stages &&
         Array.isArray(clientData.stages) &&
@@ -295,21 +294,9 @@ export default function StagesLayout() {
         const stageObject = clientData.stages[0];
         const stageKey = `S${stageNumber}`;
         if (stageObject[stageKey]) {
-          console.log(
-            `Found stage ${stageNumber} in stages array as ${stageKey}:`,
-            stageObject[stageKey]
-          );
-          // Return a mock stage object with the colorStatus
-          return { colorStatus: stageObject[stageKey] };
+            stageData = { ...stageData, colorStatus: stageObject[stageKey] };
         }
       }
-
-      // Check for individual stage properties (stage1, stage2, etc.)
-      const stageData = clientData[`stage${stageNumber}`] || null;
-      console.log(
-        `Found stage ${stageNumber} as individual property:`,
-        stageData
-      );
       return stageData;
     }
 
@@ -334,8 +321,6 @@ export default function StagesLayout() {
     }
 
     const stageData = getStageData(stage);
-    console.log(`=== RENDERING STAGE ${stage} ===`);
-    console.log("Stage data to pass:", stageData);
 
     switch (stage) {
       case 1:
@@ -389,7 +374,7 @@ export default function StagesLayout() {
         return (
           <Stage6
             data={
-              localStorage.getItem("company") === "vkl"
+              currentModule !== "print media"
                 ? normalizeCloseMatterForClient(stageData)
                 : stageData
             }
@@ -424,101 +409,125 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        const localCompany = localStorage.getItem("company");
         const currentModule = localStorage.getItem("currentModule");
 
         let response = null;
         if (currentModule === "commercial") {
           try {
-            // First, get all active projects
-            const activeProjectsResponse =
-              await commercialApiRef.current.getActiveProjects();
-            console.log("All active projects:", activeProjectsResponse);
+            // Try to get full client data directly which includes stage details
+             try {
+                // Fetch main client data and ALL stages in parallel to ensure we have the latest data
+                const [clientData, s1, s2, s3, s4, s5, s6] = await Promise.all([
+                  commercialApiRef.current.getClientAllData(matterNumber).catch(e => {
+                    console.warn("getClientAllData failed", e);
+                    return null;
+                  }),
+                  commercialApiRef.current.getStageData(1, matterNumber).catch(() => ({})),
+                  commercialApiRef.current.getStageData(2, matterNumber).catch(() => ({})),
+                  commercialApiRef.current.getStageData(3, matterNumber).catch(() => ({})),
+                  commercialApiRef.current.getStageData(4, matterNumber).catch(() => ({})),
+                  commercialApiRef.current.getStageData(5, matterNumber).catch(() => ({})),
+                  commercialApiRef.current.getStageData(6, matterNumber).catch(() => ({}))
+                ]);
 
-            // Find the specific project by matterNumber from the active projects list
-            let data = [];
-            if (Array.isArray(activeProjectsResponse)) {
-              data = activeProjectsResponse;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.data)
-            ) {
-              data = activeProjectsResponse.data;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.clients)
-            ) {
-              data = activeProjectsResponse.clients;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.projects)
-            ) {
-              data = activeProjectsResponse.projects;
-            }
+                if (clientData) {
+                    // Helper to safely extract stage data
+                    const getS = (s, key, altKey) => {
+                        const direct = s?.data || s || {};
+                        // If direct is not empty (has keys), use it
+                        if (direct && Object.keys(direct).length > 0) return direct;
+                        // Fallback to clientData keys
+                        return clientData[key] || clientData[altKey] || {};
+                    };
 
-            // Find the project with matching matterNumber
-            response = data.find(
-              (project) =>
-                String(project.matterNumber) === String(matterNumber) ||
-                String(project._id) === String(matterNumber) ||
-                String(project.id) === String(matterNumber)
-            );
+                    
+                    // Helper to merge root fields for Stage 6 if they exist there
+                    const getStage6Data = () => {
+                        const base = getS(s6, "stage6", "stageSix");
+                        // List of Commercial Stage 6 fields that might be on root
+                        const rootFields = [
+                            "notifySoaToClient", "council", "settlementNotificationToClient",
+                            "settlementNotificationToCouncil", "settlementNotificationToWater",
+                            "finalLetterToClient", "invoiced", "closeMatter", "colorStatus"
+                        ];
+                        
+                        const merged = { ...base };
+                        rootFields.forEach(field => {
+                            if (clientData[field] !== undefined && clientData[field] !== null && clientData[field] !== "") {
+                                merged[field] = clientData[field];
+                            }
+                        });
+                        return merged;
+                    };
 
-            console.log("Found project:", response);
+                    response = {
+                        ...clientData,
+                        stage1: getS(s1, "stage1", "stageOne"),
+                        stage2: getS(s2, "stage2", "stageTwo"),
+                        stage3: getS(s3, "stage3", "stageThree"),
+                        stage4: getS(s4, "stage4", "stageFour"),
+                        stage5: getS(s5, "stage5", "stageFive"),
+                        stage6: getStage6Data(),
+                    };
+                } else {
+                     // Fallback if main fetch fails but we have stage data?
+                     const backupData = await commercialApiRef.current.getProjectFullData(matterNumber);
+                     const safeBackup = backupData || createDefaultProjectData(matterNumber);
+                     
+                     const getSBackup = (s, key, altKey) => {
+                        const direct = s?.data || s || {};
+                        if (direct && Object.keys(direct).length > 0) return direct;
+                        return safeBackup[key] || safeBackup[altKey] || {};
+                     };
 
-            if (!response) {
-              // If not found in active projects, try the full data endpoint as fallback
-              try {
-                response = await commercialApiRef.current.getProjectFullData(
-                  matterNumber
-                );
-              } catch (error) {
-                console.log("Full data endpoint also failed");
-              }
+                     response = {
+                        ...safeBackup,
+                        stage1: getSBackup(s1, "stage1", "stageOne"),
+                        stage2: getSBackup(s2, "stage2", "stageTwo"),
+                        stage3: getSBackup(s3, "stage3", "stageThree"),
+                        stage4: getSBackup(s4, "stage4", "stageFour"),
+                        stage5: getSBackup(s5, "stage5", "stageFive"),
+                        stage6: getSBackup(s6, "stage6", "stageSix"),
+                     };
+                }
 
-              // If still not found, create default structure
-              if (!response) {
-                response = createDefaultProjectData(matterNumber);
-                console.log(
-                  "Project not found, created default structure for:",
-                  matterNumber
-                );
-              }
-            }
+             } catch (e) {
+                console.warn("Parallel fetch failed, falling back", e);
+                response = await commercialApiRef.current.getProjectFullData(matterNumber);
+             }
           } catch (error) {
-            console.log(
-              "Commercial API error, creating default project:",
-              error.message
-            );
+            console.error("Failed to load commercial details", error);
             response = createDefaultProjectData(matterNumber);
           }
-        } else if (localCompany === "vkl") {
-          response = await apiRef.current.getAllStages(matterNumber);
-        } else if (localCompany === "idg") {
+        } else if (currentModule === "print media") {
           response = await apiRef.current.getIDGStages(matterNumber);
+        } else {
+          response = await apiRef.current.getAllStages(matterNumber);
         }
 
         // Handle server role
         const serverRole =
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
-
-        console.log("Raw API response:", response);
-        console.log("Available fields in response:", Object.keys(response));
-
-        console.log("=== DEBUG STAGES ARRAY ===");
         if (response.stages && Array.isArray(response.stages)) {
           response.stages.forEach((stage, index) => {
-            console.log(`Stage ${index}:`, stage);
-            console.log(`Stage ${index} keys:`, Object.keys(stage));
           });
         } else {
-          console.log("No stages array found in response");
+
         }
+
 
         // Normalize dates for the response AND ensure business fields are included
         const normalized = {
-          ...response,
+          ...response,  // Preserve ALL original data including stage1, stage2, etc.
+          // Map commercial stage names (stageOne -> stage1) if necessary
+          stage1: response.stage1 || response.stageOne || response.data?.stage1 || response.data?.stageOne || {},
+          stage2: response.stage2 || response.stageTwo || response.data?.stage2 || response.data?.stageTwo || {},
+          stage3: response.stage3 || response.stageThree || response.data?.stage3 || response.data?.stageThree || {},
+          stage4: response.stage4 || response.stageFour || response.data?.stage4 || response.data?.stageFour || {},
+          stage5: response.stage5 || response.stageFive || response.data?.stage5 || response.data?.stageFive || {},
+          stage6: response.stage6 || response.stageSix || response.data?.stage6 || response.data?.stageSix || {},
+          
           matterDate: response.matterDate
             ? typeof response.matterDate === "string"
               ? response.matterDate
@@ -547,8 +556,6 @@ export default function StagesLayout() {
           postcode: response.postcode || response.postCode || "",
         };
 
-        console.log("Normalized client data:", normalized);
-
         setClientData(normalized);
         setOriginalClientData(JSON.parse(JSON.stringify(normalized)));
 
@@ -556,7 +563,6 @@ export default function StagesLayout() {
         const section = {};
 
         if (currentModule === "commercial") {
-          console.log("Setting commercial stage statuses");
 
           // Initialize all stages as "Not Completed"
           for (let i = 1; i <= 6; i++) {
@@ -569,7 +575,6 @@ export default function StagesLayout() {
             Array.isArray(response.stages) &&
             response.stages.length > 0
           ) {
-            console.log("Found stages array:", response.stages);
             const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
 
             // Process each stage (S1, S2, S3, S4, S5, S6)
@@ -603,12 +608,6 @@ export default function StagesLayout() {
               };
               section[`status${i}`] =
                 statusMap[response[stageKey].colorStatus] || "Not Completed";
-              console.log(
-                `Found ${stageKey} colorStatus:`,
-                response[stageKey].colorStatus,
-                "->",
-                section[`status${i}`]
-              );
             }
           }
 
@@ -622,13 +621,8 @@ export default function StagesLayout() {
             // If there's a global colorStatus, apply it to stage 1
             section.status1 =
               statusMap[response.colorStatus] || section.status1;
-            console.log(
-              `Found global colorStatus: ${response.colorStatus} -> Stage 1: ${section.status1}`
-            );
           }
-
-          // REMOVED: The field evaluation logic that was overriding the API colorStatus
-        } else if (localStorage.getItem("company") === "vkl") {
+        } else if (currentModule !== "print media") {
           // VKL stage status logic
           section.status1 = response.stage1?.colorStatus || "Not Completed";
           section.status2 = response.stage2?.colorStatus || "Not Completed";
@@ -636,7 +630,7 @@ export default function StagesLayout() {
           section.status4 = response.stage4?.colorStatus || "Not Completed";
           section.status5 = response.stage5?.colorStatus || "Not Completed";
           section.status6 = response.stage6?.colorStatus || "Not Completed";
-        } else if (localStorage.getItem("company") === "idg") {
+        } else if (currentModule === "print media") {
           // IDG stage status logic
           section.status1 =
             response.data?.stage1?.colorStatus || "Not Completed";
@@ -647,11 +641,8 @@ export default function StagesLayout() {
           section.status4 =
             response.data?.stage4?.colorStatus || "Not Completed";
         }
-
-        console.log("Final stage statuses:", section);
         setStageStatuses(section);
       } catch (e) {
-        console.error("Error fetching stage details:", e);
 
         // For commercial module, create default structure on any error
         if (currentModule === "commercial") {
@@ -709,7 +700,6 @@ export default function StagesLayout() {
     try {
       let payload = {};
       const currentModule = localStorage.getItem("currentModule");
-      console.log("Client data before update:", clientData);
       if (currentModule === "commercial") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
@@ -724,14 +714,13 @@ export default function StagesLayout() {
           postcode: clientData?.postcode || "",
         };
 
-        console.log("Commercial update payload:", payload);
-      } else if (localStorage.getItem("company") === "vkl") {
+      } else if (currentModule !== "print media") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
           postcode: clientData?.postcode,
         };
-      } else if (localStorage.getItem("company") === "idg") {
+      } else if (currentModule === "print media") {
         payload = {
           deliveryDate: clientData?.data?.deliveryDate || null,
           order_details: clientData?.data?.order_details || null,
@@ -744,11 +733,17 @@ export default function StagesLayout() {
       if (isSuperAdmin) {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
-        payload.businessName = clientData?.businessName || "";
-        payload.businessAddress = clientData?.businessAddress || "";
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
+        
+        if (currentModule === "commercial") {
+            payload.businessName = clientData?.businessName || "";
+            payload.businessAddress = clientData?.businessAddress || "";
+        } else if (currentModule !== "print media") {
+            // FOR CONVEYANCING: Map the address to 'propertyAddress'
+            payload.propertyAddress = clientData?.businessAddress || "";
+        }
 
         if (
           clientData?.matterNumber &&
@@ -763,37 +758,36 @@ export default function StagesLayout() {
       //   clientData?.postcode || clientData?.data?.postcode || "";
 
       let resp = {};
-      // if (currentModule === "commercial") {
-      //   // Check if this is a new project (has default empty structure)
-      //   const isNewProject =
-      //     !originalClientData?.clientName &&
-      //     !originalClientData?.businessName &&
-      //     !originalClientData?.state;
+      if (currentModule === "commercial") {
+        // Check if this is a new project (has default empty structure)
+        const isNewProject =
+          !originalClientData?.clientName &&
+          !originalClientData?.businessName &&
+          !originalClientData?.state;
 
-      //   if (isNewProject) {
-      //     // Use create project for new projects
-      //     resp = await commercialApiRef.current.createProject(payload);
-      //     toast.success("Project created successfully!");
-      //   } else {
-      //     // Use update project for existing projects
-      //     resp = await commercialApiRef.current.updateProject(
-      //       originalMatterNumber,
-      //       payload
-      //     );
-      //     toast.success("Project details updated successfully");
-      //   }
-      // } else
-      if (localStorage.getItem("company") === "vkl") {
-        resp = await apiRef.current.updateClientData(
-          originalMatterNumber,
-          payload
-        );
-      } else {
+        if (isNewProject) {
+          // Use create project for new projects
+          resp = await commercialApiRef.current.createProject(payload);
+          toast.success("Project created successfully!");
+        } else {
+          // Use update project for existing projects
+          resp = await commercialApiRef.current.updateProject(
+            originalMatterNumber,
+            payload
+          );
+          toast.success("Project details updated successfully");
+        }
+      } else
+      if (currentModule === "print media") {
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
         );
-        console.log(originalMatterNumber, payload);
+      } else {
+        resp = await apiRef.current.updateClientData(
+          originalMatterNumber,
+          payload
+        );
       }
 
       const updatedClient = resp.client || resp || clientData;
@@ -850,7 +844,6 @@ export default function StagesLayout() {
         }, 450);
       }
     } catch (err) {
-      console.error("Update error:", err);
       let msg = "Failed to update. Please try again.";
       if (err?.message) msg = err.message;
       else if (err?.response?.data?.message) msg = err.response.data.message;
@@ -906,11 +899,7 @@ export default function StagesLayout() {
                   localStorage.removeItem("client-storage");
                 }}
               />
-              {(localStorage.getItem("company") === "vkl" ||
-                (localStorage.getItem("company") === "idg" &&
-                  ["admin", "superadmin"].includes(
-                    localStorage.getItem("role")
-                  )) ||
+              {(currentModule !== "print media" ||
                 currentModule === "commercial") && (
                 <Button
                   label="Cost"
@@ -1098,21 +1087,11 @@ export default function StagesLayout() {
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
                   <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
                     <h2 className="text-lg font-bold mb-2">
-                      {currentModule === "commercial" ? (
-                        "Project Details"
-                      ) : company === "vkl" ? (
-                        "Matter Details"
-                      ) : company === "idg" ? (
-                        <>
-                          Order Details{" "}
-                          <span className="relative left-48 text-sm font-medium text-gray-600">
-                            Unit Number : (
-                            {clientData?.data?.unitNumber || "unset"})
-                          </span>
-                        </>
-                      ) : (
-                        ""
-                      )}
+                      {currentModule === "commercial"
+                        ? "Project Details"
+                        : currentModule === "print media"
+                        ? "Order Details"
+                        : "Matter Details"}
                     </h2>
                     <form
                       className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
@@ -1123,11 +1102,9 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
                             ? "Project Date"
-                            : company === "vkl"
-                            ? "Matter Date"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Date"
-                            : ""}
+                            : "Matter Date"}
                         </label>
                         <input
                           id="matterDate"
@@ -1168,11 +1145,9 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
                             ? "Project Number"
-                            : company === "vkl"
-                            ? "Matter Number"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order ID"
-                            : ""}
+                            : "Matter Number"}
                         </label>
                         {isSuperAdmin ? (
                           <input
@@ -1244,10 +1219,6 @@ export default function StagesLayout() {
                               type="text"
                               value={clientData?.businessName || ""}
                               onChange={(e) => {
-                                console.log(
-                                  "Setting businessName to:",
-                                  e.target.value
-                                );
 
                                 setClientData((prev) => ({
                                   ...(prev || {}),
@@ -1273,11 +1244,9 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Business Address"
-                            : company === "vkl"
-                            ? "Property Address"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Billing Address"
-                            : "Address"}
+                            : "Property Address"}
                         </label>
                         <input
                           id={
@@ -1304,10 +1273,6 @@ export default function StagesLayout() {
                               currentModule === "commercial"
                                 ? "businessAddress"
                                 : "propertyAddress";
-                            console.log(
-                              `Setting ${fieldName} to:`,
-                              e.target.value
-                            );
                             setClientData((prev) => ({
                               ...(prev || {}),
                               [fieldName]: e.target.value,
@@ -1367,11 +1332,9 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Client Type"
-                            : company === "vkl"
-                            ? "Client Type"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Type"
-                            : ""}
+                            : "Client Type"}
                         </label>
                         {isSuperAdmin ? (
                           <select
@@ -1419,7 +1382,7 @@ export default function StagesLayout() {
                           type="text"
                           id="postcode"
                           name="postcode"
-                          disabled={localStorage.getItem("company") === "idg"}
+                          disabled={currentModule === "print media"}
                           value={
                             clientData?.postcode ||
                             clientData?.data?.postCode ||
@@ -1435,10 +1398,7 @@ export default function StagesLayout() {
                           maxLength={4}
                           inputMode="numeric"
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
-                        ${
-                          localStorage.getItem("company") === "idg" &&
-                          "bg-gray-100"
-                        }`}
+                       ${currentModule === "print media" && "bg-gray-100"}`}
                         />
                       </div>
 
@@ -1447,26 +1407,24 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Completion Date"
-                            : company === "vkl"
-                            ? "Settlement Date"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Delivery Date"
-                            : ""}
+                            : "Settlement Date"}
                         </label>
                         <input
                           id={
                             currentModule === "commercial"
                               ? "completionDate"
-                              : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
+                              : currentModule === "print media"
+                              ? "deliveryDate"
+                              : "settlementDate"
                           }
                           name={
                             currentModule === "commercial"
                               ? "completionDate"
-                              : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
+                              : currentModule === "print media"
+                              ? "deliveryDate"
+                              : "settlementDate"
                           }
                           type="date"
                           value={
@@ -1476,18 +1434,16 @@ export default function StagesLayout() {
                                     .toISOString()
                                     .substring(0, 10)
                                 : ""
-                              : company === "vkl"
+                              : currentModule !== "print media"
                               ? clientData?.settlementDate
                                 ? new Date(clientData.settlementDate)
                                     .toISOString()
                                     .substring(0, 10)
                                 : ""
-                              : company === "idg"
-                              ? clientData?.data?.deliveryDate
-                                ? new Date(clientData.data.deliveryDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
+                              : clientData?.data?.deliveryDate
+                              ? new Date(clientData.data.deliveryDate)
+                                  .toISOString()
+                                  .substring(0, 10)
                               : ""
                           }
                           onChange={(e) => {
@@ -1497,12 +1453,12 @@ export default function StagesLayout() {
                                 ...(prev || {}),
                                 settlementDate: dateValue,
                               }));
-                            } else if (company === "vkl") {
+                            } else if (currentModule !== "print media") {
                               setClientData((prev) => ({
                                 ...(prev || {}),
                                 settlementDate: dateValue,
                               }));
-                            } else if (company === "idg") {
+                            } else if (currentModule === "print media") {
                               setClientData((prev) => ({
                                 ...(prev || {}),
                                 data: {
@@ -1552,7 +1508,7 @@ export default function StagesLayout() {
 
                       {/* Notes */}
                       <div className="md:col-span-3">
-                        {company === "idg" ? (
+                        {currentModule === "print media" ? (
                           <div className="flex gap-1 w-full">
                             <div className="flex-1">
                               <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -1662,11 +1618,9 @@ export default function StagesLayout() {
                   <h2 className="text-lg font-bold mb-2">
                     {currentModule === "commercial"
                       ? "Project Details"
-                      : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
+                      : currentModule === "print media"
                       ? "Order Details"
-                      : ""}
+                      : "Matter Details"}
                   </h2>
                   <form
                     className="grid grid-cols-1 gap-x-4 gap-y-2"
@@ -1677,11 +1631,9 @@ export default function StagesLayout() {
                       <label className="block text-xs md:text-sm font-semibold mb-1">
                         {currentModule === "commercial"
                           ? "Project Date"
-                          : company === "vkl"
-                          ? "Matter Date"
-                          : company === "idg"
+                          : currentModule === "print media"
                           ? "Order Date"
-                          : ""}
+                          : "Matter Date"}
                       </label>
                       <input
                         id="matterDate"

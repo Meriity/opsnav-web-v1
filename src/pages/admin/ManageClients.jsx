@@ -72,7 +72,7 @@ const useUserStore = create((set) => ({
           settlementDate: user.settlementDate,
         }));
         set({ users: formatted, isFetched: true });
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         // IDG clients
         response = await api.getIDGClients();
         console.log("IDG Response:", response);
@@ -107,12 +107,7 @@ function UsersPerPage({ value, onChange }) {
   const currentModule = localStorage.getItem("currentModule");
   const company = localStorage.getItem("company");
 
-  const label =
-    currentModule === "commercial"
-      ? "Projects"
-      : company === "idg"
-        ? "Clients"
-        : "Clients";
+  const label = currentModule === "commercial" ? "Projects" : "Clients";
 
   return (
     <div className="flex items-center space-x-2 text-sm text-gray-700">
@@ -200,7 +195,7 @@ export default function ManageUsers() {
         { key: "postcode", title: "PostCode" },
         { key: "abn", title: "ABN" },
       ];
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       return [
         { key: "clientId", title: "Client ID" },
         { key: "name", title: "Name" },
@@ -220,7 +215,7 @@ export default function ManageUsers() {
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "Manage Projects";
-    if (company === "idg") return "Manage Clients";
+    if (currentModule === "print media") return "Manage Clients";
     return "Manage Users";
   };
 
@@ -244,8 +239,9 @@ export default function ManageUsers() {
       const notificationAPI = new NotificationAPI();
       await notificationAPI.createNotification({
         type: "client",
-        message: `New ${currentModule === "commercial" ? "project" : "client"
-          } created: ${display_name}`,
+        message: `New ${
+          currentModule === "commercial" ? "project" : "client"
+        } created: ${display_name}`,
         metadata: {
           clientName: display_name,
           email: email,
@@ -258,7 +254,8 @@ export default function ManageUsers() {
       });
 
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } created successfully!`
       );
       setOpenUser(false);
@@ -271,7 +268,7 @@ export default function ManageUsers() {
       } else {
         toast.error(
           err.response?.data?.message ||
-          "Something went wrong. Please try again!"
+            "Something went wrong. Please try again!"
         );
       }
     } finally {
@@ -307,14 +304,16 @@ export default function ManageUsers() {
       // });
 
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } updated successfully!`
       );
       setOpenEdit(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to update ${currentModule === "commercial" ? "project" : "client"
+        `Failed to update ${
+          currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Update Error:", err);
@@ -332,14 +331,16 @@ export default function ManageUsers() {
         await api.deleteIDGClient(id.clientId);
       }
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } deleted successfully!`
       );
       setOpenDelete(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to delete ${currentModule === "commercial" ? "project" : "client"
+        `Failed to delete ${
+          currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Delete Error:", err);
@@ -586,8 +587,9 @@ export default function ManageUsers() {
               >
                 {isLoading
                   ? "Creating..."
-                  : `Create ${currentModule === "commercial" ? "Project" : "Client"
-                  }`}
+                  : `Create ${
+                      currentModule === "commercial" ? "Project" : "Client"
+                    }`}
               </button>
             </form>
           </div>
@@ -622,7 +624,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    name: e.target.value,   // changed to update name, not displayName
+                    name: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -649,7 +651,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    password: e.target.value,   // changed to update name, not displayName
+                    password: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -664,7 +666,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    address: e.target.value,  // fixed to update address
+                    address: e.target.value, // fixed to update address
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -678,7 +680,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    country: e.target.value,   // changed to update name, not displayName
+                    country: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -693,7 +695,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    state: e.target.value,   // changed to update name, not displayName
+                    state: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -707,7 +709,7 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    postcode: e.target.value,   // changed to update name, not displayName
+                    postcode: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
@@ -722,15 +724,16 @@ export default function ManageUsers() {
                 onChange={(e) =>
                   setSelectedUser({
                     ...selectedUser,
-                    abn: e.target.value,   // changed to update name, not displayName
+                    abn: e.target.value, // changed to update name, not displayName
                   })
                 }
                 className="w-full mb-2 px-4 py-3 border rounded"
               />
 
               <Button
-                label={`Edit ${currentModule === "commercial" ? "Project" : "Client"
-                  }`}
+                label={`Edit ${
+                  currentModule === "commercial" ? "Project" : "Client"
+                }`}
                 onClick={handleUserUpdate}
               />
             </DialogPanel>
