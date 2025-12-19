@@ -30,9 +30,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import NotificationAPI from "../../api/notificationAPI";
 
-/* -------------------------
-   Config / Small Components
-   ------------------------- */
 const ACCESS_MODULES = [
   {
     value: "CONVEYANCING",
@@ -170,11 +167,11 @@ function UsersPerPage({ value, onChange }) {
 }
 
 function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
+
+  if (currentModule === "print media") return null;
 
   const filteredModules = ACCESS_MODULES;
-
-  const isPallegal = company === "pallegal";
 
   return (
     <div className="mb-6">
@@ -342,7 +339,6 @@ export default function ManageUsers() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
   const currentUserRole = localStorage.getItem("role");
 
   // Stats
@@ -544,17 +540,8 @@ export default function ManageUsers() {
     setOpenEdit(true);
   };
 
-  // const shouldShowCreateButton = () =>
-  //   currentModule === "commercial" || company === "vkl" || company === "idg";
-
   const shouldShowCreateButton = () =>
     currentUserRole === "superadmin" || currentUserRole === "admin";
-
-  // const handleCreateUserClick = () => {
-  //   if (currentModule === "commercial") setOpenUser(true);
-  //   else if (company === "vkl") setOpenUser(true);
-  //   else if (company === "idg") setOpenUserIDG(true);
-  // };
 
   const handleCreateUserClick = () => {
     if (!(currentUserRole === "superadmin" || currentUserRole === "admin")) {
@@ -802,7 +789,7 @@ export default function ManageUsers() {
                             {user.role}
                           </div>
                         </div>
-                        {company !== "idg" && (
+                        {currentModule !== "print media" && (
                           <div className="space-y-1 col-span-2">
                             <span className="font-semibold text-gray-500">
                               Access Modules:
@@ -829,7 +816,6 @@ export default function ManageUsers() {
         </main>
       </div>
 
-      {/* Create User Dialog - For VKL and Commercial */}
       <Dialog open={openUser} onClose={setOpenUser} className="relative z-50">
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -896,7 +882,7 @@ export default function ManageUsers() {
                     />
                   </div>
 
-                  {company !== "idg" && (
+                  {currentModule !== "print media" && (
                     <AccessModulesCheckbox
                       selectedAccess={selectedAccess}
                       onAccessChange={setSelectedAccess}
@@ -1048,7 +1034,7 @@ export default function ManageUsers() {
                     />
                   </div>
 
-                  {company !== "idg" && (
+                  {currentModule !== "print media" && (
                     <AccessModulesCheckbox
                       selectedAccess={selectedAccess}
                       onAccessChange={setSelectedAccess}
@@ -1179,7 +1165,7 @@ export default function ManageUsers() {
                     />
                   </div>
 
-                  {company !== "idg" && (
+                  {currentModule !== "print media" && (
                     <AccessModulesCheckbox
                       selectedAccess={editAccess}
                       onAccessChange={setEditAccess}

@@ -88,7 +88,6 @@ export default function CostComponent({ changeStage }) {
   // --- State ---
   const [formValues, setFormValues] = useState(getInitialState(currentModule));
   const originalData = useRef({});
-  // isLoading and isSaving are now handled by React Query
 
   // --- Calculation Logic ---
   const calculateTotals = useCallback(
@@ -494,8 +493,6 @@ export default function CostComponent({ changeStage }) {
         finalPayload = commonPayload;
       }
 
-      console.log("=== COST SAVE PAYLOAD ===", finalPayload);
-
       if (currentModule === "commercial") {
         return commercialApi.upsertCost(matterNumber, finalPayload);
       } else if (
@@ -508,7 +505,6 @@ export default function CostComponent({ changeStage }) {
       }
     },
     onSuccess: (response) => {
-      console.log("Cost save successful:", response);
       originalData.current = { ...formValues }; // Update original data
       toast.success("Cost data updated Successfully!");
       // Invalidate query to refetch
@@ -520,7 +516,6 @@ export default function CostComponent({ changeStage }) {
       } catch (e) {}
     },
     onError: (err) => {
-      console.error("=== COST SAVE ERROR ===", err);
       let errorMessage = "Failed to save cost data. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -544,7 +539,7 @@ export default function CostComponent({ changeStage }) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FB4A50] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading cost data...</p>
         </div>
       </div>

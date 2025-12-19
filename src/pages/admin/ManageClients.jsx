@@ -26,7 +26,6 @@ const useUserStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
   fetchUsers: async () => {
     const currentModule = localStorage.getItem("currentModule");
-    const company = localStorage.getItem("company");
 
     let api;
     if (currentModule === "commercial") {
@@ -90,7 +89,6 @@ const useUserStore = create((set) => ({
         }));
         set({ users: formatted, isFetched: true });
       } else {
-        // VKL clients - you might want to add VKL client fetching here
         set({ users: [], isFetched: true });
       }
     } catch (err) {
@@ -105,7 +103,6 @@ const useUserStore = create((set) => ({
 // UsersPerPage dropdown component
 function UsersPerPage({ value, onChange }) {
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
   const label = currentModule === "commercial" ? "Projects" : "Clients";
 
@@ -134,7 +131,6 @@ export default function ManageUsers() {
   const { searchQuery } = useSearchStore();
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
   const api = new AdminApi();
   const [selectedUser, setSelectedUser] = useState({});
@@ -280,8 +276,8 @@ export default function ManageUsers() {
     try {
       console.log(selectedUser);
       if (currentModule === "commercial") {
-        // For commercial, use commercial update method
-        await api.editIDGClient(selectedUser);
+        const commercialApi = new CommercialAPI();
+        await commercialApi.updateProject(selectedUser);
       } else {
         await api.editIDGClient(selectedUser);
       }
@@ -325,8 +321,8 @@ export default function ManageUsers() {
       setDeleteLoading(true);
       console.log(id.clientId);
       if (currentModule === "commercial") {
-        // For commercial, use commercial delete method
-        await api.deleteIDGClient(id.clientId);
+        const commercialApi = new CommercialAPI();
+        await commercialApi.deleteProject(id.clientId);
       } else {
         await api.deleteIDGClient(id.clientId);
       }
@@ -378,7 +374,7 @@ export default function ManageUsers() {
         <div className="flex justify-between items-center mb-[15px]">
           <CreateClientModal
             createType={currentModule === "commercial" ? "project" : "client"}
-            companyName={company}
+            module={currentModule}
             isOpen={createuser}
             setIsOpen={() => setcreateuser(false)}
             onClose={()=> setcreateuser(false)}  

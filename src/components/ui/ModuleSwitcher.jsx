@@ -58,7 +58,6 @@ function ModuleSwitcher() {
   };
 
   const handleModuleChange = async (module) => {
-    const company = localStorage.getItem("company");
 
     // Set the new module in localStorage
     localStorage.setItem("currentModule", module.toLowerCase());
