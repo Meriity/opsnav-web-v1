@@ -103,7 +103,6 @@ export default function ArchivedClients() {
   const [clientsPerPage, setClientsPerPage] = useState(100);
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
   const api = useMemo(() => {
     if (currentModule === "commercial") {
@@ -112,7 +111,6 @@ export default function ArchivedClients() {
       return new ClientAPI();
     }
   }, [currentModule]);
-
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -477,19 +475,19 @@ export default function ArchivedClients() {
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "Archived Projects";
-    if (company === "idg") return "Completed Orders";
+    if (currentModule === "print media") return "Completed Orders";
     return "Archived Clients";
   };
 
   const getDateFieldLabel = () => {
     if (currentModule === "commercial") return "Completion Date";
-    if (company === "idg") return "Delivery Date";
+    if (currentModule === "print media") return "Delivery Date";
     return "Settlement Date";
   };
 
   const getAddressFieldLabel = () => {
     if (currentModule === "commercial") return "Business Address";
-    if (company === "idg") return "Billing Address";
+    if (currentModule === "print media") return "Billing Address";
     return "Property Address";
   };
 
@@ -573,7 +571,7 @@ export default function ArchivedClients() {
                   View and manage{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
-                    : company === "idg"
+                    : currentModule === "print media"
                     ? "completed orders"
                     : "archived clients"}
                 </p>
@@ -596,7 +594,7 @@ export default function ArchivedClients() {
                     All{" "}
                     {currentModule === "commercial"
                       ? "Archived Projects"
-                      : company === "idg"
+                      : currentModule === "print media"
                       ? "Completed Orders"
                       : "Archived Clients"}
                   </h3>
@@ -776,7 +774,7 @@ export default function ArchivedClients() {
                   No{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
-                    : company === "idg"
+                    : currentModule === "print media"
                     ? "completed orders"
                     : "archived clients"}{" "}
                   found
@@ -787,7 +785,7 @@ export default function ArchivedClients() {
                     : `No ${
                         currentModule === "commercial"
                           ? "projects have been archived yet"
-                          : company === "idg"
+                          : currentModule === "print media"
                           ? "orders have been completed yet"
                           : "clients have been archived yet"
                       }`}
@@ -839,7 +837,7 @@ export default function ArchivedClients() {
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
                               {currentModule === "commercial" ? (
                                 <Building className="w-4 h-4 text-white" />
-                              ) : company === "idg" ? (
+                              ) : currentModule === "print media" ? (
                                 <FolderOpen className="w-4 h-4 text-white" />
                               ) : (
                                 <Users className="w-4 h-4 text-white" />
@@ -893,7 +891,7 @@ export default function ArchivedClients() {
                             <span className="font-semibold text-gray-500">
                               {currentModule === "commercial"
                                 ? "Project Date:"
-                                : company === "idg"
+                                : currentModule === "print media"
                                 ? "Order Date:"
                                 : "Matter Date:"}
                             </span>
@@ -984,7 +982,6 @@ export default function ArchivedClients() {
         }}
         matter={selectedClient}
         currentModule={currentModule}
-        company={company}
         isLoading={clientDetailsLoading}
       />
     </div>

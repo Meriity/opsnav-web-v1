@@ -36,7 +36,7 @@ const loadGoogleMapsScript = (apiKey) => {
 };
 
 // Helper function to get the initial form structure based on company and module
-const getInitialFormData = (company, user, currentModule) => {
+const getInitialFormData = (user, currentModule) => {
   if (currentModule === "commercial") {
     return {
       matterNumber: "",
@@ -51,7 +51,7 @@ const getInitialFormData = (company, user, currentModule) => {
       settlementDate: "",
       dataEntryBy: user,
     };
-  } else if (company === "vkl") {
+  } else if (currentModule === "conveyancing") {
     return {
       matterNumber: "",
       clientName: "",
@@ -63,7 +63,7 @@ const getInitialFormData = (company, user, currentModule) => {
       settlementDate: "",
       dataEntryBy: user,
     };
-  } else if (company === "idg") {
+  } else if (currentModule === "print media") {
     return {
       clientId: "",
       clientName: "",
@@ -89,7 +89,6 @@ const getInitialFormData = (company, user, currentModule) => {
 export default function CreateClientModal({
   isOpen,
   setIsOpen,
-  companyName,
   createType,
   onClose,
 }) {
@@ -109,10 +108,9 @@ export default function CreateClientModal({
   const currentModule = localStorage.getItem("currentModule");
 
   // --- DERIVED STATE & CONSTANTS ---
-  const isVkl = companyName === "vkl";
-  const isIdg = companyName === "idg";
   const isCommercial = currentModule === "commercial";
-  const todayISO = new Date().toISOString().split("T")[0];
+  const isConveyancing = currentModule === "conveyancing";
+  const isPrintMedia = currentModule === "print media";
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
@@ -121,7 +119,7 @@ export default function CreateClientModal({
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if (isIdg && createType === "order") {
+    if (isPrintMedia && createType === "order") {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -131,12 +129,12 @@ export default function CreateClientModal({
           toast.error("Failed to load Google Maps. Please check your API key.");
         });
     }
-  }, [isIdg, createType, GOOGLE_MAPS_API_KEY]);
+  }, [isPrintMedia, createType, GOOGLE_MAPS_API_KEY]);
 
   // --- GOOGLE MAPS AUTOCOMPLETE INITIALIZATION ---
   useEffect(() => {
     // Only run this effect for the IDG order form.
-    if (!isIdg || createType !== "order") {
+    if (!isPrintMedia || createType !== "order") {
       return;
     }
 
@@ -221,15 +219,15 @@ export default function CreateClientModal({
         window.google.maps.event.clearInstanceListeners(autocompleteInstance);
       }
     };
-  }, [isOpen, isIdg, createType]);
+  }, [isOpen, isPrintMedia, createType]);
 
   // --- EFFECTS ---
   useEffect(() => {
     if (isOpen) {
-      setFormData(getInitialFormData(companyName, user, currentModule));
+      setFormData(getInitialFormData(user, currentModule));
       setMatterNumberError("");
 
-      if (isIdg) {
+      if (isPrintMedia) {
         if (createType === "client") {
           setId({
             clientId: `IDG${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -253,7 +251,7 @@ export default function CreateClientModal({
         }
       }
     }
-  }, [isOpen, companyName, createType, isIdg, currentModule, user]);
+  }, [isOpen, createType, isPrintMedia, currentModule, user]);
 
   // --- HANDLERS ---
   const handleChange = (e) => {
@@ -417,7 +415,7 @@ export default function CreateClientModal({
             throw err;
           }
         }
-      } else if (isVkl) {
+      } else if (isConveyancing) {
         // VKL CLIENT CREATION
         const requiredFields = [
           "matterNumber",
@@ -428,7 +426,7 @@ export default function CreateClientModal({
           "postcode",
           "matterDate",
           "settlementDate",
-          "isTrustee"
+          "isTrustee",
         ];
         if (requiredFields.some((field) => !formData[field])) {
           toast.error("Please fill all required fields.");
@@ -465,7 +463,7 @@ export default function CreateClientModal({
             throw err;
           }
         }
-      } else if (isIdg) {
+      } else if (isPrintMedia) {
         // IDG CLIENT/ORDER CREATION
         if (createType === "client") {
           const requiredFields = [
@@ -593,7 +591,7 @@ export default function CreateClientModal({
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               {/* COMMERCIAL & VKL FIELDS */}
-              {(isCommercial || isVkl) && (
+              {(isCommercial || isConveyancing) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -698,7 +696,7 @@ export default function CreateClientModal({
                         ))}
                       </div>
                     </div>
-                     <div>
+                    <div>
                       <label className="block mb-1 font-medium">
                         Is purchaser a trustee?
                       </label>
@@ -723,8 +721,6 @@ export default function CreateClientModal({
                       </div>
                     </div>
                   </div>
-                                     
-                  
 
                   <div>
                     <label className="block mb-1 font-medium">
@@ -793,7 +789,7 @@ export default function CreateClientModal({
               )}
 
               {/* IDG Client Fields */}
-              {isIdg && createType === "client" && (
+              {isPrintMedia && createType === "client" && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -934,7 +930,7 @@ export default function CreateClientModal({
               )}
 
               {/* IDG ORDER FIELDS */}
-              {isIdg && createType === "order" && (
+              {isPrintMedia && createType === "order" && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -1123,7 +1119,7 @@ export default function CreateClientModal({
                   </div>
                 </>
               )}
-              
+
               {/* Submit Button */}
               <div className="pt-4">
                 <button

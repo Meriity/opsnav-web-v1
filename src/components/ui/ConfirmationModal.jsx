@@ -95,6 +95,7 @@ export default function ConfirmationModal({
                       disabled={isConfirming}
                       textColor="text-gray-700"
                       border="border border-gray-300"
+                      bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
                       width="w-24"
                     />
                     <Button
@@ -102,6 +103,7 @@ export default function ConfirmationModal({
                       onClick={handleConfirm}
                       disabled={isConfirming}
                       textColor="text-white"
+                      bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
                       width="w-24"
                     />
                   </>

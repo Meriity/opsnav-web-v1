@@ -85,7 +85,6 @@ const ViewClients = () => {
   const [selectedClientName, setSelectedClientName] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(true);
 
-  const company = localStorage.getItem("company");
   const currentModule = localStorage.getItem("currentModule");
 
   const api = useMemo(() => {
@@ -225,14 +224,7 @@ const ViewClients = () => {
     });
 
     setClientList(data);
-  }, [
-    dateFilter,
-    Clients,
-    commercialClients,
-    searchQuery,
-    currentModule,
-    company,
-  ]);
+  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule]);
 
   let columns = [];
   if (currentModule === "commercial") {
@@ -249,7 +241,6 @@ const ViewClients = () => {
       // { key: "postcode", title: "Postcode", width: "7%" },
     ];
   } else if (currentModule === "conveyancing" || currentModule === "wills") {
-    // Regular VKL clients
     columns = [
       { key: "matternumber", title: "Matter Number", width: "8%" },
       { key: "dataentryby", title: "Data Entry By", width: "10%" },
@@ -425,7 +416,7 @@ const ViewClients = () => {
           />
           <CreateClientModal
             createType={currentModule === "commercial" ? "project" : "client"}
-            companyName={company}
+            companyName={currentModule}
             isOpen={createuser || createProject}
             setIsOpen={() => {
               setcreateuser(false);
@@ -435,7 +426,7 @@ const ViewClients = () => {
           />
           <CreateClientModal
             createType="order"
-            companyName={company}
+            companyName={currentModule}
             isOpen={createOrder}
             onClose={reloadPage}
             setIsOpen={() => setcreateOrder(false)}
@@ -584,7 +575,7 @@ const ViewClients = () => {
                 <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
                   {currentModule === "commercial"
                     ? "Manage projects, tasks and related client details"
-                    : company === "idg"
+                    : currentModule === "print media"
                     ? "Manage orders, deliveries and client records"
                     : "Manage clients, matters and client details"}
                 </p>
@@ -615,7 +606,7 @@ const ViewClients = () => {
                     <option value={500}>500</option>
                   </select>
                 </div>
-                {localStorage.getItem("company") == "idg" && (
+                {currentModule === "print media" && (
                   <div className="flex items-center gap-2">
                     {/* <label
                 htmlFor="items-per-page"
@@ -642,7 +633,8 @@ const ViewClients = () => {
 
                 {/* Consolidated Desktop Buttons */}
                 <div className="hidden lg:flex items-center gap-1.5">
-                  {localStorage.getItem("company") === "vkl" && (
+                  {(currentModule === "conveyancing" ||
+                    currentModule === "wills") && (
                     <>
                       {/* <Button
                     label="Create Client"
@@ -700,7 +692,7 @@ const ViewClients = () => {
                       </motion.button>
                     </>
                   )}
-                  {localStorage.getItem("company") === "idg" && (
+                  {currentModule === "print media" && (
                     <>
                       {/* <Button
                     label="Create Client"

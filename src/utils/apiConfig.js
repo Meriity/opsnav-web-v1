@@ -1,49 +1,41 @@
 export const getApiBaseUrl = (module = null) => {
-  const currentModule = module || localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
+  const currentModule = +(
+    module ||
+    localStorage.getItem("currentModule") ||
+    ""
+  ).toLowerCase();
 
-  // Handle different companies and their modules
-  if (company === "vkl") {
-    if (currentModule === "commercial") {
-      return (
-        import.meta.env.VITE_COMMERCIAL_API_BASE_URL ||
-        import.meta.env.VITE_API_BASE_URL + "/commercial"
-      );
-    }
-    // VKL other modules use base URL
-    return import.meta.env.VITE_API_BASE_URL;
-  } else if (company === "idg") {
-    // IDG specific API endpoints
+  if (currentModule === "commercial") {
+    return (
+      import.meta.env.VITE_COMMERCIAL_API_BASE_URL ||
+      import.meta.env.VITE_API_BASE_URL + "/commercial"
+    );
+  }
+
+  if (currentModule === "print media") {
     return (
       import.meta.env.VITE_IDG_API_BASE_URL ||
       import.meta.env.VITE_API_BASE_URL + "/idg"
     );
   }
 
-  // Default fallback
   return import.meta.env.VITE_API_BASE_URL;
 };
 
 export const getApiHeaders = () => {
   const token = localStorage.getItem("authToken");
-  const company = localStorage.getItem("company");
   const currentModule = localStorage.getItem("currentModule");
 
   const headers = {
-    "Content-Type": "application/json", 
+    "Content-Type": "application/json",
   };
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  // Add module and company context for better server-side handling
   if (currentModule) {
     headers["X-Current-Module"] = currentModule;
-  }
-
-  if (company) {
-    headers["X-Company"] = company;
   }
 
   // Add work type if available
@@ -57,28 +49,29 @@ export const getApiHeaders = () => {
 
 // Helper function to get module-specific configuration
 export const getModuleConfig = () => {
-  const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
+  const currentModule = (
+    localStorage.getItem("currentModule") || ""
+  ).toLowerCase();
 
   return {
     module: currentModule,
-    company: company,
     workType: localStorage.getItem("workType"),
     isCommercial: currentModule === "commercial",
-    isIDG: company === "idg",
-    isVKL: company === "vkl",
+    isPrintMedia: currentModule === "print media",
   };
 };
 
 // Helper to validate if user has access to current module
 export const validateModuleAccess = () => {
-  const currentModule = localStorage.getItem("currentModule");
+  const currentModule = (
+    localStorage.getItem("currentModule") || ""
+  ).toLowerCase();
   const accessList = (localStorage.getItem("access") || "")
     .split(",")
     .map((item) => item.trim().toLowerCase())
     .filter((item) => item.length > 0);
 
-  return !currentModule || accessList.includes(currentModule.toLowerCase());
+  return !currentModule || accessList.includes(currentModule);
 };
 
 // Helper to switch modules safely
@@ -94,7 +87,7 @@ export const switchModule = (newModule) => {
 
   if (accessList.includes(moduleKey)) {
     localStorage.setItem("currentModule", moduleKey);
-    localStorage.setItem("workType", newModule.toUpperCase());
+    localStorage.setItem("workType", moduleKey.replace(" ", "_").toUpperCase());
     return true;
   }
 
