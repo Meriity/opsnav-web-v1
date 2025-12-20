@@ -147,6 +147,7 @@ const Table = ({
   resetSuccessEmail,
   isClients = false,
   compact = false,
+  hideDeleteForSuperadmin,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const navigate = useNavigate();
@@ -316,16 +317,18 @@ const Table = ({
                           <span className="text-xs">Edit</span>
                         </button>
                       )}
-                      {onDelete && (
-                        <button
-                          onClick={() => onDelete(item)}
-                          className="flex flex-col items-center p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                          <span className="text-xs">Delete</span>
-                        </button>
-                      )}
+                      {onDelete &&
+                        (!hideDeleteForSuperadmin ||
+                          !hideDeleteForSuperadmin(item)) && (
+                          <button
+                            onClick={() => onDelete(item)}
+                            className="flex flex-col items-center p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                            <span className="text-xs">Delete</span>
+                          </button>
+                        )}
                       {!isClients &&
                         showReset &&
                         onReset &&

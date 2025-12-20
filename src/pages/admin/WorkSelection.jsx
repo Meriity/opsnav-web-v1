@@ -84,7 +84,7 @@ function WorkSelection() {
     const moduleMap = {
       conveyancing: "Conveyancing",
       wills: "Wills & Estates",
-      "print media": "Print Media",
+      "print media": "Signage & Print",
       commercial: "Commercial Law",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };

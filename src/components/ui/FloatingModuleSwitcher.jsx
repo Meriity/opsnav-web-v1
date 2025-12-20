@@ -81,7 +81,6 @@ function FloatingModuleSwitcher() {
       wills: "📝",
       "print media": "📰",
       commercial: "💼",
-      idg: "🖨️",
       default: "📁",
     };
     return iconMap[module.toLowerCase()] || iconMap.default;

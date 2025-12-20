@@ -29,7 +29,6 @@ ChartJS.register(ArcElement, Tooltip);
 
 // Card for each individual stage
 const StageCard = ({ stage, stageIndex }) => {
-  // // // // console.log(stage);
   const getNextStageIndex = (index) => {
     let stageMap = {};
     const currentModule = localStorage.getItem("currentModule");
@@ -93,7 +92,7 @@ const StageCard = ({ stage, stageIndex }) => {
         className="absolute top-1/2 left-1/2 
                -translate-x-1/2 -translate-y-1/2 
                w-3/4 h-3/4 
-               bg-sky-400 opacity-20 blur-3xl rounded-full 
+               bg-[#2E3D99]/70 opacity-20 blur-3xl rounded-full 
                hidden group-hover:block z-0 transition duration-500"
       ></div>
 
@@ -156,8 +155,8 @@ const StageCard = ({ stage, stageIndex }) => {
         </div>
 
         {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-          <div className="mt-4 pt-4 border-t-2 border-sky-300 flex">
-            <blockquote className="text-sm text-slate-600 border-l-4 border-sky-300 pl-3">
+          <div className="mt-4 pt-4 border-t-2 border-[#FB4A50] flex">
+            <blockquote className="text-sm text-slate-600 border-l-4 border-[#FB4A50] pl-3">
               <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
                 <NotepadText className="w-4 h-4" />
                 Notes
@@ -677,7 +676,7 @@ export default function ClientDashboard() {
               onClick={() => setIsOpen(false)}
               className="absolute right-3 top-3 lg:hidden"
             >
-              <X className="w-5 h-5 text-[#00AEEF]" />
+              <X className="w-5 h-5 text-[#FB4A50]" />
             </button>
           </div>
 
@@ -687,7 +686,7 @@ export default function ClientDashboard() {
               {/* Matter Overview */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
+                  <span className="border-b-2 border-b-[#FB4A50]">
                     {currentModule === "print media"
                       ? "Order Overview"
                       : "Matter Overview"}
@@ -725,7 +724,7 @@ export default function ClientDashboard() {
               {/* Key Dates */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
+                  <span className="border-b-2 border-b-[#FB4A50]">
                     Key Dates
                   </span>
                 </h4>
@@ -765,7 +764,7 @@ export default function ClientDashboard() {
               {/* Property */}
               <div>
                 <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#00AEEF]">
+                  <span className="border-b-2 border-b-[#FB4A50]">
                     Property
                   </span>
                 </h4>
@@ -791,7 +790,7 @@ export default function ClientDashboard() {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="w-full justify-center bg-[#00AEEF] hover:bg-[#007A9E] text-white active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded"
+                className="w-full justify-center bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#FB4A50] text-white active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -803,7 +802,7 @@ export default function ClientDashboard() {
 
       <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
         <div className="p-6 sm:p-6">
-          <div className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#00AEEF] to-[#007A9E]">
+          <div className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
             {/* LEFT SECTION: Glassmorphism card */}
             <motion.div
               className="flex-1 min-w-0 gap-2"
@@ -816,7 +815,7 @@ export default function ClientDashboard() {
                   onClick={() => setIsOpen(true)}
                   className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
                 >
-                  <ChevronsRight className="w-8 h-8  text-[#00AEEF]" />
+                  <ChevronsRight className="w-8 h-8  text-[#FB4A50]" />
                   <span>Matter Details</span>
                 </button>
 

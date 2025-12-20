@@ -134,7 +134,7 @@ function LoginForm() {
             </h1>
 
             <p className="text-lg text-gray-600 mb-8 max-w-xl">
-              Access your centralized workspace for streamlined
+              Access your centralised workspace for streamlined
               operations, automated processes, and real-time insights that keep
               your team productive and moving forward.
             </p>

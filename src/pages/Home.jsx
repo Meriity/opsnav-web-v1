@@ -154,9 +154,9 @@ const featureSections = [
     id: 6,
     title: "Scalable Cloud Hosted",
     description:
-      "Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee.",
+      "Enterprise-grade security on Cloud with 99.9% uptime guarantee.",
     points: [
-      "Google Cloud Platform hosting",
+      "Cloud hosting",
       "Enterprise-grade security",
       "99.9% uptime SLA",
     ],
@@ -923,7 +923,7 @@ export default function Home() {
             <FeatureCard
               icon={Cloud}
               title="Cloud Hosted"
-              description="Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee."
+              description="Enterprise-grade security on Cloud with 99.9% uptime guarantee."
               index={5}
             />
           </div>
@@ -975,7 +975,7 @@ export default function Home() {
                     icon: Globe,
                     title: "Global Infrastructure",
                     description:
-                      "Hosted on Google Cloud Platform with multi-region redundancy.",
+                      "Hosted on Cloud with multi-region redundancy.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
@@ -1088,7 +1088,7 @@ export default function Home() {
                 icon: Globe,
                 title: "Global Infrastructure",
                 description:
-                  "Hosted on Google Cloud Platform with multi-region redundancy.",
+                  "Hosted on Cloud with multi-region redundancy.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
