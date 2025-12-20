@@ -18,7 +18,6 @@ const MatterDetailsModal = ({
   onClose,
   matter,
   currentModule,
-  company,
   isLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -298,7 +297,7 @@ const MatterDetailsModal = ({
               <p className="text-xs sm:text-sm text-green-600 font-medium truncate">
                 {currentModule === "commercial"
                   ? "Completion Date"
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? "Delivery Date"
                   : "Settlement Date"}
               </p>
@@ -385,7 +384,7 @@ const MatterDetailsModal = ({
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
           {currentModule === "commercial"
             ? "Business Information"
-            : company === "idg"
+            : currentModule === "print media"
             ? "Billing Information"
             : "Property Information"}
         </h3>
@@ -625,7 +624,7 @@ const MatterDetailsModal = ({
               <p className="font-semibold text-gray-900 text-sm sm:text-base">
                 {currentModule === "commercial"
                   ? "Project Completed"
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? "Order Delivered"
                   : "Settlement Completed"}
               </p>
@@ -639,7 +638,7 @@ const MatterDetailsModal = ({
               <p className="text-xs sm:text-sm text-gray-500">
                 {currentModule === "commercial"
                   ? "Project marked as completed"
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? "Order delivered to client"
                   : "Settlement process completed"}
               </p>
@@ -691,7 +690,7 @@ const MatterDetailsModal = ({
         <div className="flex min-h-full items-center justify-center p-2 sm:p-4 text-center">
           <DialogPanel className="w-full max-w-6xl transform overflow-hidden rounded-xl sm:rounded-2xl bg-white text-left align-middle shadow-xl transition-all max-h-[90vh] sm:max-h-[95vh] flex flex-col">
             {/* Header with logo */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-700 px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   <div className="flex-shrink-0">
@@ -721,9 +720,9 @@ const MatterDetailsModal = ({
                       <span className="truncate">
                         {currentModule === "commercial"
                           ? "Commercial Project"
-                          : company === "idg"
-                          ? "IDG Order"
-                          : "VKL Matter"}
+                          : currentModule === "print media"
+                          ? "Print Media Order"
+                          : "Conveyancing Matter"}
                       </span>
                     </p>
 

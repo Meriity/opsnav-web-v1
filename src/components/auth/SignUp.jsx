@@ -148,7 +148,7 @@ function SignUp() {
     { id: "conveyancing", label: "Conveyancing", icon: "🏠" },
     { id: "commercial", label: "Commercial", icon: "💼" },
     { id: "wills", label: "Wills", icon: "📝" },
-    { id: "printMedia", label: "Print Media", icon: "📰" },
+    { id: "printMedia", label: "Signage & Print", icon: "📰" },
   ];
 
   // Step 1: Basic Information - Compact

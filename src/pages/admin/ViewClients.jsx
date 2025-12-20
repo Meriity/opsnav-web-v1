@@ -634,7 +634,8 @@ const ViewClients = () => {
                 {/* Consolidated Desktop Buttons */}
                 <div className="hidden lg:flex items-center gap-1.5">
                   {(currentModule === "conveyancing" ||
-                    currentModule === "wills") && (
+                    currentModule === "wills" ||
+                    currentModule === "commercial") && (
                     <>
                       {/* <Button
                     label="Create Client"
@@ -647,11 +648,17 @@ const ViewClients = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setcreateuser(true)}
+                        onClick={() =>
+                          currentModule === "commercial"
+                            ? setCreateProject(true)
+                            : setcreateuser(true)
+                        }
                         className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                       >
                         <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Create Client
+                        {currentModule === "commercial"
+                          ? "Create Project"
+                          : "Create Client"}
                       </motion.button>
 
                       {/* <Button

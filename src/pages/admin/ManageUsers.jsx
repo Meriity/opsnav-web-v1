@@ -17,6 +17,7 @@ import {
   Key,
   Mail,
   Calendar,
+  Info,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
@@ -168,10 +169,48 @@ function UsersPerPage({ value, onChange }) {
 
 function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
   const currentModule = localStorage.getItem("currentModule");
+  const currentUserAccess = localStorage.getItem("access") || "";
 
+  // Parse the current user's access modules
+  const userAccessModules = currentUserAccess
+    .split(",")
+    .map((m) => m.trim())
+    .filter((m) => m);
+
+  // Filter modules based on user's access
+  const availableModules = ACCESS_MODULES.filter((module) =>
+    userAccessModules.includes(module.value)
+  );
+
+  // If user only has access to one module, auto-select it and make it read-only
+  const hasSingleAccess = availableModules.length === 1;
+
+  // Auto-select the single module if user only has one
+  useEffect(() => {
+    if (hasSingleAccess && selectedAccess.length === 0) {
+      const singleModule = availableModules[0].value;
+      onAccessChange([singleModule]);
+    }
+  }, [hasSingleAccess, selectedAccess, availableModules, onAccessChange]);
+
+  // Hide for IDG (Print Media)
   if (currentModule === "print media") return null;
 
-  const filteredModules = ACCESS_MODULES;
+  // If user has no access modules defined, show none
+  if (availableModules.length === 0) {
+    return (
+      <div className="mb-6">
+        <label className="block font-medium mb-3 text-gray-700">
+          Access Modules
+        </label>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-gray-500 text-sm italic">
+            No access modules available for assignment
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">
@@ -179,39 +218,86 @@ function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
         Access Modules
       </label>
       <div className="grid grid-cols-2 gap-3">
-        {filteredModules.map((module) => {
+        {availableModules.map((module) => {
           const checked = selectedAccess.includes(module.value);
+          const isDisabled = hasSingleAccess; // Disable if only one module available
+
           return (
             <label
               key={module.value}
-              className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white/50 hover:bg-white transition-all cursor-pointer"
+              className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+                isDisabled
+                  ? "bg-gray-100 border-gray-200 cursor-not-allowed"
+                  : "bg-white/50 border-gray-200 hover:bg-white cursor-pointer"
+              }`}
+              title={
+                isDisabled ? "Only one module available - auto-assigned" : ""
+              }
             >
               <input
                 type="checkbox"
                 value={module.value}
                 checked={checked}
+                disabled={isDisabled}
                 onChange={(e) => {
-                  if (e.target.checked)
+                  if (isDisabled) return;
+
+                  if (e.target.checked) {
                     onAccessChange([...selectedAccess, module.value]);
-                  else
+                  } else {
                     onAccessChange(
                       selectedAccess.filter((a) => a !== module.value)
                     );
+                  }
                 }}
-                className="form-checkbox h-5 w-5 text-[#2E3D99] rounded border-gray-300 focus:ring-[#2E3D99]"
+                className={`form-checkbox h-5 w-5 rounded ${
+                  isDisabled
+                    ? "text-gray-400 border-gray-300 cursor-not-allowed"
+                    : "text-[#2E3D99] border-gray-300 focus:ring-[#2E3D99]"
+                }`}
               />
               <div
-                className={`w-8 h-8 rounded-lg ${module.color} flex items-center justify-center`}
+                className={`w-8 h-8 rounded-lg ${
+                  module.color
+                } flex items-center justify-center ${
+                  isDisabled ? "opacity-70" : ""
+                }`}
               >
                 <module.icon className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-700">
+              <span
+                className={`text-sm font-medium ${
+                  isDisabled ? "text-gray-500" : "text-gray-700"
+                }`}
+              >
                 {module.label}
+                {isDisabled && (
+                  <span className="text-xs text-gray-400 ml-1">
+                    (auto-assigned)
+                  </span>
+                )}
               </span>
             </label>
           );
         })}
       </div>
+
+      {hasSingleAccess && (
+        <div className="mt-2 flex items-center gap-1">
+          <div className="relative group">
+            <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center cursor-help">
+              <Info className="w-3 h-3 text-black" />
+            </div>
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-50">
+              <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
+                Only one module available
+                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          </div>
+          <span className="text-xs text-gray-500">Module auto-assigned</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -220,6 +306,18 @@ function MobileAccessModulesDisplay({ access = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentModule = localStorage.getItem("currentModule");
+  const currentUserAccess = localStorage.getItem("access") || "";
+
+  // Parse the current user's access modules
+  const userAccessModules = currentUserAccess
+    .split(",")
+    .map((m) => m.trim())
+    .filter((m) => m);
+
+  // Filter ACCESS_MODULES based on user's access
+  const userAllowedModules = ACCESS_MODULES.filter((module) =>
+    userAccessModules.includes(module.value)
+  );
 
   // Hide for IDG
   if (currentModule === "print media") {
@@ -230,7 +328,12 @@ function MobileAccessModulesDisplay({ access = [] }) {
     );
   }
 
-  if (!access || access.length === 0)
+  // Filter the provided access to only show modules the user has permission for
+  const filteredAccess = access.filter((moduleValue) =>
+    userAccessModules.includes(moduleValue)
+  );
+
+  if (filteredAccess.length === 0)
     return <span className="text-gray-400">None</span>;
 
   const getTargetPath = (currentPath) => {
@@ -259,8 +362,8 @@ function MobileAccessModulesDisplay({ access = [] }) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {ACCESS_MODULES.map((module) =>
-        access.includes(module.value) ? (
+      {userAllowedModules.map((module) =>
+        filteredAccess.includes(module.value) ? (
           <button
             key={module.value}
             onClick={() => handleModuleClick(module)}
@@ -540,6 +643,10 @@ export default function ManageUsers() {
     setOpenEdit(true);
   };
 
+  const hideDeleteForSuperadmin = (user) => {
+    return user.role === "superadmin";
+  };
+
   const shouldShowCreateButton = () =>
     currentUserRole === "superadmin" || currentUserRole === "admin";
 
@@ -684,6 +791,7 @@ export default function ManageUsers() {
                       setOpenDelete(true);
                     }}
                     headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
+                    hideDeleteForSuperadmin={hideDeleteForSuperadmin}
                     itemsPerPage={usersPerPage}
                     cellWrappingClass="whitespace-normal"
                     compact={true}
@@ -750,6 +858,7 @@ export default function ManageUsers() {
                           onClick={() => {
                             setId(user.id);
                             setOpenDelete(true);
+                            if (user.role === "superadmin") return;
                           }}
                           title="Delete"
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

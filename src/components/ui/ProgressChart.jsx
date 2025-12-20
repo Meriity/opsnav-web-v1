@@ -14,7 +14,7 @@ const ProgressChart = ({ completed, total, processing}) => {
     datasets: [
       {
         data: [safe(completed), safe(pending), safe(processing)],
-        backgroundColor: ["#00AEEF", "#EEF5FF", "#B4D4FF"],
+        backgroundColor: ["#2E3C99", "#EEF5FF", "#B4D4FF"],
         borderColor: ["#FFFFFF", "#FFFFFF", "#FFFFFF"],
         borderWidth: 0,
         hoverBorderWidth: 0,
