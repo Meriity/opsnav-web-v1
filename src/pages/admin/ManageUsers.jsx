@@ -46,7 +46,7 @@ const ACCESS_MODULES = [
   },
   {
     value: "PRINT MEDIA",
-    label: "Print Media",
+    label: "Signage & Print ",
     icon: Newspaper,
     color: "bg-gradient-to-r from-amber-500 to-orange-500",
   },
@@ -470,6 +470,12 @@ export default function ManageUsers() {
     } else setUserList(users);
   }, [searchQuery, users]);
 
+  useEffect(() => {
+    if (openEdit && selectedUser?.access) {
+      setEditAccess([...selectedUser.access]);
+    }
+  }, [openEdit, selectedUser]);
+
   const columns =
     currentModule !== "print media"
       ? [
@@ -634,12 +640,16 @@ export default function ManageUsers() {
   };
 
   const handleEditClick = (user) => {
+    // setSelectedUser(user);
+    // if (currentModule === "conveyancing") {
+    //   setEditAccess([]);
+    // } else {
+    //   setEditAccess(user.access || []);
+    // }
+    // setOpenEdit(true);
+
     setSelectedUser(user);
-    if (currentModule === "conveyancing") {
-      setEditAccess([]);
-    } else {
-      setEditAccess(user.access || []);
-    }
+    setEditAccess([...(user.access ?? [])]);
     setOpenEdit(true);
   };
 

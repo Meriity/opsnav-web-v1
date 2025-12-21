@@ -107,6 +107,7 @@ export default function Stage1({
   data,
   reloadTrigger,
   setReloadTrigger,
+  setHasChanges,
   stageNumber = 1,
 }) {
   const [formData, setFormData] = useState({});
@@ -243,7 +244,6 @@ export default function Stage1({
     }
   }, [currentModule]);
 
-
   // Initialize from props
   useEffect(() => {
     if (!data) return;
@@ -251,44 +251,46 @@ export default function Stage1({
 
     const initializeData = () => {
       // Use data prop directly
-      const stageData = data; 
-      
+      const stageData = data;
+
       const { systemNote, clientComment } = extractNotes(
-          stageData?.noteForClient
+        stageData?.noteForClient
       );
 
       const initialFormData = {};
       const initialStatuses = {};
 
       currentFields.forEach((field) => {
-          let value = "";
+        let value = "";
 
-          if (field.name === "quoteAmount") {
-            value =
-              stageData[field.name]?.$numberDecimal ??
-              stageData[field.name] ??
-              "";
-          } else if (field.type === "radio") {
-            value = normalizeValue(stageData[field.name] ?? "");
-          } else {
-            value = stageData[field.name] ?? "";
-          }
+        if (field.name === "quoteAmount") {
+          value =
+            stageData[field.name]?.$numberDecimal ??
+            stageData[field.name] ??
+            "";
+        } else if (field.type === "radio") {
+          value = normalizeValue(stageData[field.name] ?? "");
+        } else {
+          value = stageData[field.name] ?? "";
+        }
 
-          initialFormData[field.name] = value;
+        initialFormData[field.name] = value;
 
-          if (field.type === "radio") {
-            initialStatuses[field.name] = getStatus(value);
-          }
+        if (field.type === "radio") {
+          initialStatuses[field.name] = getStatus(value);
+        }
       });
-      
+
       // Also handle costing fields if they exist in data but maybe not in config yet (race condition safety) or just standard mapping
       if (currentModule === "print media") {
-         if (stageData.costingType) initialFormData.costingType = normalizeValue(stageData.costingType);
-         if (stageData.costing_amount) initialFormData.costing_amount = stageData.costing_amount;
-         
-         if (initialFormData.costingType) initialStatuses.costingType = getStatus(initialFormData.costingType);
-      }
+        if (stageData.costingType)
+          initialFormData.costingType = normalizeValue(stageData.costingType);
+        if (stageData.costing_amount)
+          initialFormData.costing_amount = stageData.costing_amount;
 
+        if (initialFormData.costingType)
+          initialStatuses.costingType = getStatus(initialFormData.costingType);
+      }
 
       initialFormData.systemNote = systemNote;
       initialFormData.clientComment = clientComment;
@@ -297,11 +299,12 @@ export default function Stage1({
       setStatuses(initialStatuses);
 
       originalData.current = {
-          ...initialFormData,
+        ...initialFormData,
       };
 
       hasLoaded.current = true;
       setIsLoading(false);
+      setHasChanges(false);
     };
 
     initializeData();
@@ -311,16 +314,22 @@ export default function Stage1({
     hasLoaded.current = false;
   }, [matterNumber]);
 
-
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
     // fallback for dynamic fields like costing
-    const dynamicFieldType = (field === "costingType") ? "radio" : (field === "costing_amount" ? "text" : "text");
-    const isRadio = fieldConfig?.type === "radio" || dynamicFieldType === "radio";
+    const dynamicFieldType =
+      field === "costingType"
+        ? "radio"
+        : field === "costing_amount"
+        ? "text"
+        : "text";
+    const isRadio =
+      fieldConfig?.type === "radio" || dynamicFieldType === "radio";
 
     const processed = isRadio ? normalizeValue(value) : value;
 
     setFormData((prev) => ({ ...prev, [field]: processed }));
+    setHasChanges(true);
 
     if (isRadio) {
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
@@ -403,10 +412,11 @@ export default function Stage1({
       }
 
       originalData.current = { ...formData };
-      
+      setHasChanges(false);
+
       // Notify parent
       setReloadTrigger((prev) => !prev);
-      
+
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,
@@ -522,6 +532,17 @@ export default function Stage1({
     }
   };
 
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -584,5 +605,5 @@ Stage1.propTypes = {
   data: PropTypes.object,
   reloadTrigger: PropTypes.bool,
   setReloadTrigger: PropTypes.func.isRequired,
-  stageNumber: PropTypes.number
+  stageNumber: PropTypes.number,
 };

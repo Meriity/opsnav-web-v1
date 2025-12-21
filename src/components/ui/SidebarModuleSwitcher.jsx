@@ -76,9 +76,8 @@ function SidebarModuleSwitcher() {
     const moduleMap = {
       conveyancing: "Conveyancing",
       wills: "Wills & Estates",
-      "print media": "Print Media",
+      "print media": "Signage & Print",
       commercial: "Commercial",
-      idg: "IDG",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };
     return moduleMap[module.toLowerCase()] || moduleMap.default;

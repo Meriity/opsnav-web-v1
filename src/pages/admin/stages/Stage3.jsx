@@ -63,6 +63,7 @@ export default function Stage3({
   data,
   stageNumber = 3,
   setReloadTrigger,
+  setHasChanges,
 }) {
   const { matterNumber } = useParams();
 
@@ -161,6 +162,7 @@ export default function Stage3({
       };
 
       setIsLoading(false);
+      setHasChanges(false);
     };
 
     load();
@@ -187,6 +189,7 @@ export default function Stage3({
 
     setFormState((prev) => ({ ...prev, [key]: processed }));
     setStatusState((prev) => ({ ...prev, [key]: getStatus(processed) }));
+    setHasChanges(true);
   };
 
   const isChanged = () =>
@@ -247,12 +250,24 @@ export default function Stage3({
         noteForSystem: systemNote,
         noteForClient,
       };
+      setHasChanges(false);
     } catch {
       toast.error("Failed to save Stage 3.");
     }
 
     setIsSaving(false);
   };
+
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
 
   if (isLoading) {
     return (
@@ -313,12 +328,13 @@ export default function Stage3({
               <input
                 type="date"
                 value={formState[`${f.key}Date`] || ""}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormState((prev) => ({
                     ...prev,
                     [`${f.key}Date`]: e.target.value,
-                  }))
-                }
+                  }));
+                  setHasChanges(true);
+                }}
                 className="border p-1 rounded"
               />
             )}
@@ -339,7 +355,10 @@ export default function Stage3({
         <label className="font-bold">Comment for Client</label>
         <textarea
           value={noteForClient}
-          onChange={(e) => setNoteForClient(e.target.value)}
+          onChange={(e) => {
+            setNoteForClient(e.target.value);
+            setHasChanges(true);
+          }}
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
@@ -376,4 +395,5 @@ Stage3.propTypes = {
   data: PropTypes.object,
   stageNumber: PropTypes.number,
   setReloadTrigger: PropTypes.func.isRequired,
+  setHasChanges: PropTypes.func.isRequired,
 };
