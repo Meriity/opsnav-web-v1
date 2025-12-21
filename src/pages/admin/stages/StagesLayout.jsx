@@ -273,7 +273,15 @@ export default function StagesLayout() {
     return "In Progress";
   }
 
+  const pendingStageRef = useRef(null);
+
   function RenderStage(newStage) {
+    if (hasChanges) {
+      pendingStageRef.current = newStage;
+      setShowConfirmModal(true);
+      return;
+    }
+
     setSelectedStage(newStage);
     setReloadStage((prev) => !prev);
   }
@@ -284,7 +292,7 @@ export default function StagesLayout() {
     if (currentModule === "commercial") {
       // Prioritize the full stage object if available
       let stageData = clientData[`stage${stageNumber}`] || {};
-      
+
       // If we have a stages array (status summary), merge the color status
       if (
         clientData.stages &&
@@ -294,7 +302,7 @@ export default function StagesLayout() {
         const stageObject = clientData.stages[0];
         const stageKey = `S${stageNumber}`;
         if (stageObject[stageKey]) {
-            stageData = { ...stageData, colorStatus: stageObject[stageKey] };
+          stageData = { ...stageData, colorStatus: stageObject[stageKey] };
         }
       }
       return stageData;
@@ -330,6 +338,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 2:
@@ -341,6 +350,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 3:
@@ -350,6 +360,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 4:
@@ -359,6 +370,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 5:
@@ -368,6 +380,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 6:
@@ -381,6 +394,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       case 7:
@@ -390,6 +404,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
       default:
@@ -399,6 +414,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setHasChanges}
           />
         );
     }
@@ -415,86 +431,114 @@ export default function StagesLayout() {
         if (currentModule === "commercial") {
           try {
             // Try to get full client data directly which includes stage details
-             try {
-                // Fetch main client data and ALL stages in parallel to ensure we have the latest data
-                const [clientData, s1, s2, s3, s4, s5, s6] = await Promise.all([
-                  commercialApiRef.current.getClientAllData(matterNumber).catch(e => {
+            try {
+              // Fetch main client data and ALL stages in parallel to ensure we have the latest data
+              const [clientData, s1, s2, s3, s4, s5, s6] = await Promise.all([
+                commercialApiRef.current
+                  .getClientAllData(matterNumber)
+                  .catch((e) => {
                     console.warn("getClientAllData failed", e);
                     return null;
                   }),
-                  commercialApiRef.current.getStageData(1, matterNumber).catch(() => ({})),
-                  commercialApiRef.current.getStageData(2, matterNumber).catch(() => ({})),
-                  commercialApiRef.current.getStageData(3, matterNumber).catch(() => ({})),
-                  commercialApiRef.current.getStageData(4, matterNumber).catch(() => ({})),
-                  commercialApiRef.current.getStageData(5, matterNumber).catch(() => ({})),
-                  commercialApiRef.current.getStageData(6, matterNumber).catch(() => ({}))
-                ]);
+                commercialApiRef.current
+                  .getStageData(1, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(2, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(3, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(4, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(5, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(6, matterNumber)
+                  .catch(() => ({})),
+              ]);
 
-                if (clientData) {
-                    // Helper to safely extract stage data
-                    const getS = (s, key, altKey) => {
-                        const direct = s?.data || s || {};
-                        // If direct is not empty (has keys), use it
-                        if (direct && Object.keys(direct).length > 0) return direct;
-                        // Fallback to clientData keys
-                        return clientData[key] || clientData[altKey] || {};
-                    };
+              if (clientData) {
+                // Helper to safely extract stage data
+                const getS = (s, key, altKey) => {
+                  const direct = s?.data || s || {};
+                  // If direct is not empty (has keys), use it
+                  if (direct && Object.keys(direct).length > 0) return direct;
+                  // Fallback to clientData keys
+                  return clientData[key] || clientData[altKey] || {};
+                };
 
-                    
-                    // Helper to merge root fields for Stage 6 if they exist there
-                    const getStage6Data = () => {
-                        const base = getS(s6, "stage6", "stageSix");
-                        // List of Commercial Stage 6 fields that might be on root
-                        const rootFields = [
-                            "notifySoaToClient", "council", "settlementNotificationToClient",
-                            "settlementNotificationToCouncil", "settlementNotificationToWater",
-                            "finalLetterToClient", "invoiced", "closeMatter", "colorStatus"
-                        ];
-                        
-                        const merged = { ...base };
-                        rootFields.forEach(field => {
-                            if (clientData[field] !== undefined && clientData[field] !== null && clientData[field] !== "") {
-                                merged[field] = clientData[field];
-                            }
-                        });
-                        return merged;
-                    };
+                // Helper to merge root fields for Stage 6 if they exist there
+                const getStage6Data = () => {
+                  const base = getS(s6, "stage6", "stageSix");
+                  // List of Commercial Stage 6 fields that might be on root
+                  const rootFields = [
+                    "notifySoaToClient",
+                    "council",
+                    "settlementNotificationToClient",
+                    "settlementNotificationToCouncil",
+                    "settlementNotificationToWater",
+                    "finalLetterToClient",
+                    "invoiced",
+                    "closeMatter",
+                    "colorStatus",
+                  ];
 
-                    response = {
-                        ...clientData,
-                        stage1: getS(s1, "stage1", "stageOne"),
-                        stage2: getS(s2, "stage2", "stageTwo"),
-                        stage3: getS(s3, "stage3", "stageThree"),
-                        stage4: getS(s4, "stage4", "stageFour"),
-                        stage5: getS(s5, "stage5", "stageFive"),
-                        stage6: getStage6Data(),
-                    };
-                } else {
-                     // Fallback if main fetch fails but we have stage data?
-                     const backupData = await commercialApiRef.current.getProjectFullData(matterNumber);
-                     const safeBackup = backupData || createDefaultProjectData(matterNumber);
-                     
-                     const getSBackup = (s, key, altKey) => {
-                        const direct = s?.data || s || {};
-                        if (direct && Object.keys(direct).length > 0) return direct;
-                        return safeBackup[key] || safeBackup[altKey] || {};
-                     };
+                  const merged = { ...base };
+                  rootFields.forEach((field) => {
+                    if (
+                      clientData[field] !== undefined &&
+                      clientData[field] !== null &&
+                      clientData[field] !== ""
+                    ) {
+                      merged[field] = clientData[field];
+                    }
+                  });
+                  return merged;
+                };
 
-                     response = {
-                        ...safeBackup,
-                        stage1: getSBackup(s1, "stage1", "stageOne"),
-                        stage2: getSBackup(s2, "stage2", "stageTwo"),
-                        stage3: getSBackup(s3, "stage3", "stageThree"),
-                        stage4: getSBackup(s4, "stage4", "stageFour"),
-                        stage5: getSBackup(s5, "stage5", "stageFive"),
-                        stage6: getSBackup(s6, "stage6", "stageSix"),
-                     };
-                }
+                response = {
+                  ...clientData,
+                  stage1: getS(s1, "stage1", "stageOne"),
+                  stage2: getS(s2, "stage2", "stageTwo"),
+                  stage3: getS(s3, "stage3", "stageThree"),
+                  stage4: getS(s4, "stage4", "stageFour"),
+                  stage5: getS(s5, "stage5", "stageFive"),
+                  stage6: getStage6Data(),
+                };
+              } else {
+                // Fallback if main fetch fails but we have stage data?
+                const backupData =
+                  await commercialApiRef.current.getProjectFullData(
+                    matterNumber
+                  );
+                const safeBackup =
+                  backupData || createDefaultProjectData(matterNumber);
 
-             } catch (e) {
-                console.warn("Parallel fetch failed, falling back", e);
-                response = await commercialApiRef.current.getProjectFullData(matterNumber);
-             }
+                const getSBackup = (s, key, altKey) => {
+                  const direct = s?.data || s || {};
+                  if (direct && Object.keys(direct).length > 0) return direct;
+                  return safeBackup[key] || safeBackup[altKey] || {};
+                };
+
+                response = {
+                  ...safeBackup,
+                  stage1: getSBackup(s1, "stage1", "stageOne"),
+                  stage2: getSBackup(s2, "stage2", "stageTwo"),
+                  stage3: getSBackup(s3, "stage3", "stageThree"),
+                  stage4: getSBackup(s4, "stage4", "stageFour"),
+                  stage5: getSBackup(s5, "stage5", "stageFive"),
+                  stage6: getSBackup(s6, "stage6", "stageSix"),
+                };
+              }
+            } catch (e) {
+              console.warn("Parallel fetch failed, falling back", e);
+              response = await commercialApiRef.current.getProjectFullData(
+                matterNumber
+              );
+            }
           } catch (error) {
             console.error("Failed to load commercial details", error);
             response = createDefaultProjectData(matterNumber);
@@ -510,24 +554,51 @@ export default function StagesLayout() {
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
         if (response.stages && Array.isArray(response.stages)) {
-          response.stages.forEach((stage, index) => {
-          });
+          response.stages.forEach((stage, index) => {});
         } else {
-
         }
-
 
         // Normalize dates for the response AND ensure business fields are included
         const normalized = {
-          ...response,  // Preserve ALL original data including stage1, stage2, etc.
+          ...response, // Preserve ALL original data including stage1, stage2, etc.
           // Map commercial stage names (stageOne -> stage1) if necessary
-          stage1: response.stage1 || response.stageOne || response.data?.stage1 || response.data?.stageOne || {},
-          stage2: response.stage2 || response.stageTwo || response.data?.stage2 || response.data?.stageTwo || {},
-          stage3: response.stage3 || response.stageThree || response.data?.stage3 || response.data?.stageThree || {},
-          stage4: response.stage4 || response.stageFour || response.data?.stage4 || response.data?.stageFour || {},
-          stage5: response.stage5 || response.stageFive || response.data?.stage5 || response.data?.stageFive || {},
-          stage6: response.stage6 || response.stageSix || response.data?.stage6 || response.data?.stageSix || {},
-          
+          stage1:
+            response.stage1 ||
+            response.stageOne ||
+            response.data?.stage1 ||
+            response.data?.stageOne ||
+            {},
+          stage2:
+            response.stage2 ||
+            response.stageTwo ||
+            response.data?.stage2 ||
+            response.data?.stageTwo ||
+            {},
+          stage3:
+            response.stage3 ||
+            response.stageThree ||
+            response.data?.stage3 ||
+            response.data?.stageThree ||
+            {},
+          stage4:
+            response.stage4 ||
+            response.stageFour ||
+            response.data?.stage4 ||
+            response.data?.stageFour ||
+            {},
+          stage5:
+            response.stage5 ||
+            response.stageFive ||
+            response.data?.stage5 ||
+            response.data?.stageFive ||
+            {},
+          stage6:
+            response.stage6 ||
+            response.stageSix ||
+            response.data?.stage6 ||
+            response.data?.stageSix ||
+            {},
+
           matterDate: response.matterDate
             ? typeof response.matterDate === "string"
               ? response.matterDate
@@ -563,7 +634,6 @@ export default function StagesLayout() {
         const section = {};
 
         if (currentModule === "commercial") {
-
           // Initialize all stages as "Not Completed"
           for (let i = 1; i <= 6; i++) {
             section[`status${i}`] = "Not Completed";
@@ -643,7 +713,6 @@ export default function StagesLayout() {
         }
         setStageStatuses(section);
       } catch (e) {
-
         // For commercial module, create default structure on any error
         if (currentModule === "commercial") {
           const defaultData = createDefaultProjectData(matterNumber);
@@ -713,7 +782,6 @@ export default function StagesLayout() {
           dataEntryBy: clientData?.dataEntryBy || "",
           postcode: clientData?.postcode || "",
         };
-
       } else if (currentModule !== "print media") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
@@ -736,13 +804,13 @@ export default function StagesLayout() {
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
-        
+
         if (currentModule === "commercial") {
-            payload.businessName = clientData?.businessName || "";
-            payload.businessAddress = clientData?.businessAddress || "";
+          payload.businessName = clientData?.businessName || "";
+          payload.businessAddress = clientData?.businessAddress || "";
         } else if (currentModule !== "print media") {
-            // FOR CONVEYANCING: Map the address to 'propertyAddress'
-            payload.propertyAddress = clientData?.businessAddress || "";
+          // FOR CONVEYANCING: Map the address to 'propertyAddress'
+          payload.propertyAddress = clientData?.businessAddress || "";
         }
 
         if (
@@ -777,8 +845,7 @@ export default function StagesLayout() {
           );
           toast.success("Project details updated successfully");
         }
-      } else
-      if (currentModule === "print media") {
+      } else if (currentModule === "print media") {
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
@@ -951,7 +1018,7 @@ export default function StagesLayout() {
                         return (
                           <div
                             key={stage.id}
-                            onClick={() => setSelectedStage(stage.id)}
+                            onClick={() => RenderStage(stage.id)}
                             className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
                               selectedStage === stage.id
                                 ? "bg-[#FFFFFF] text-black border-gray-500"
@@ -1002,7 +1069,7 @@ export default function StagesLayout() {
                         return (
                           <li
                             key={stage.id}
-                            onClick={() => setSelectedStage(stage.id)}
+                            onClick={() => RenderStage(stage.id)}
                             className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${
                               isActive
                                 ? "bg-blue-50 border-[#2E3D99]/60 scale-105 shadow-lg"
@@ -1219,7 +1286,6 @@ export default function StagesLayout() {
                               type="text"
                               value={clientData?.businessName || ""}
                               onChange={(e) => {
-
                                 setClientData((prev) => ({
                                   ...(prev || {}),
                                   businessName: e.target.value,
@@ -1696,6 +1762,36 @@ export default function StagesLayout() {
         >
           Are you sure you want to update client data?
         </ConfirmationModal>
+
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          title="Unsaved Changes"
+          message="You have unsaved changes in this stage. Would you like to save before leaving?"
+          onClose={() => {
+            setShowConfirmModal(false);
+            pendingStageRef.current = null;
+          }}
+          onDiscard={() => {
+          setShowConfirmModal(false);
+          if (pendingStageRef.current !== null) {
+            setSelectedStage(pendingStageRef.current);
+            setReloadStage((p) => !p);
+            pendingStageRef.current = null;
+          }
+        }}
+          onConfirm={async () => {
+            // Let current stage save itself
+            window.dispatchEvent(new Event("saveCurrentStage"));
+            setHasChanges(false);
+            setShowConfirmModal(false);
+
+            if (pendingStageRef.current !== null) {
+              setSelectedStage(pendingStageRef.current);
+              setReloadStage((prev) => !prev);
+              pendingStageRef.current = null;
+            }
+          }}
+        />
       </div>
     </div>
   );

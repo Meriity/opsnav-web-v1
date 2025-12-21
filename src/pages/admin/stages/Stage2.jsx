@@ -174,39 +174,39 @@ const normalizeValue = (v) => {
 };
 
 const getStatus = (value) => {
-    if (value === undefined || value === null || value === "") {
-      return "Not Completed";
-    }
-    const val = normalizeValue(value);
-    const completed = new Set([
-      "yes",
-      "nr",
-      "na",
-      "variable",
-      "fixed",
-      "approved",
-    ]);
-    if (completed.has(val)) return "Completed";
-    if (val === "no") return "Not Completed";
-    if (["processing", "inprogress", "pending"].includes(val))
-      return "In Progress";
+  if (value === undefined || value === null || value === "") {
     return "Not Completed";
+  }
+  const val = normalizeValue(value);
+  const completed = new Set([
+    "yes",
+    "nr",
+    "na",
+    "variable",
+    "fixed",
+    "approved",
+  ]);
+  if (completed.has(val)) return "Completed";
+  if (val === "no") return "Not Completed";
+  if (["processing", "inprogress", "pending"].includes(val))
+    return "In Progress";
+  return "Not Completed";
 };
 
 function bgcolor(status) {
-    const statusColors = {
-      Completed: "bg-[#00A506] text-white",
-      "Not Completed": "bg-[#FF0000] text-white",
-      "In Progress": "bg-[#FFEECF] text-[#FF9500]",
-    };
-    return statusColors[status] || "bg-[#FF0000] text-white";
+  const statusColors = {
+    Completed: "bg-[#00A506] text-white",
+    "Not Completed": "bg-[#FF0000] text-white",
+    "In Progress": "bg-[#FFEECF] text-[#FF9500]",
+  };
+  return statusColors[status] || "bg-[#FF0000] text-white";
 }
 
 const extractNotes = (noteForSystem = "", noteForClient = "") => {
-    return {
-      systemNote: noteForSystem || "",
-      clientComment: noteForClient || "",
-    };
+  return {
+    systemNote: noteForSystem || "",
+    clientComment: noteForClient || "",
+  };
 };
 
 export default function Stage2({
@@ -214,6 +214,7 @@ export default function Stage2({
   data,
   reloadTrigger,
   setReloadTrigger,
+  setHasChanges,
   clientType,
   user,
   stageNumber = 2,
@@ -221,7 +222,7 @@ export default function Stage2({
   const { matterNumber } = useParams();
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
-  
+
   const originalData = useRef({});
   const hasLoaded = useRef(false);
 
@@ -268,65 +269,65 @@ export default function Stage2({
   useEffect(() => {
     if (!data) return;
     if (hasLoaded.current) return;
-    
+
     // Use prop data directly
     const stageData = data;
-    
+
     try {
-        const initialFormData = {};
-        const initialStatuses = {};
-        const formatDate = (dateString) => {
-          if (!dateString) return "";
-          return new Date(dateString).toISOString().split("T")[0];
-        };
+      const initialFormData = {};
+      const initialStatuses = {};
+      const formatDate = (dateString) => {
+        if (!dateString) return "";
+        return new Date(dateString).toISOString().split("T")[0];
+      };
 
-        // Process fields
-        currentConfig.fields.forEach((field) => {
-          if (field.type === "number") {
-            const rawPrice = stageData[field.name];
-            initialFormData[field.name] =
-              typeof rawPrice === "object" && rawPrice?.$numberDecimal
-                ? rawPrice.$numberDecimal
-                : rawPrice?.toString() || "";
-          } else if (field.type === "radio") {
-            initialFormData[field.name] = normalizeValue(
-              stageData[field.name] || ""
-            );
-          } else {
-            initialFormData[field.name] = stageData[field.name] || "";
-          }
-
-          if (field.hasDate) {
-            initialFormData[field.dateFieldName] = formatDate(
-              stageData[field.dateFieldName]
-            );
-          }
-
-          initialStatuses[field.name] = getStatus(initialFormData[field.name]);
-        });
-
-        // Handle notes
-        if (currentModule === "commercial") {
-          const { systemNote, clientComment } = extractNotes(
-            stageData.noteForSystem,
-            stageData.noteForClient
+      // Process fields
+      currentConfig.fields.forEach((field) => {
+        if (field.type === "number") {
+          const rawPrice = stageData[field.name];
+          initialFormData[field.name] =
+            typeof rawPrice === "object" && rawPrice?.$numberDecimal
+              ? rawPrice.$numberDecimal
+              : rawPrice?.toString() || "";
+        } else if (field.type === "radio") {
+          initialFormData[field.name] = normalizeValue(
+            stageData[field.name] || ""
           );
-          initialFormData.noteForSystem = systemNote;
-          initialFormData.noteForClient = clientComment;
         } else {
-          currentConfig.noteGroups.forEach((group) => {
-            const notes = extractNotes(stageData[group.noteForClientKey]);
-            initialFormData[group.clientCommentKey] = notes.clientComment;
-          });
+          initialFormData[field.name] = stageData[field.name] || "";
         }
 
-        setFormData(initialFormData);
-        setStatuses(initialStatuses);
-        originalData.current = JSON.parse(JSON.stringify(initialFormData));
-        hasLoaded.current = true;
-        setIsLoading(false); // Should be instant basically
+        if (field.hasDate) {
+          initialFormData[field.dateFieldName] = formatDate(
+            stageData[field.dateFieldName]
+          );
+        }
+
+        initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+      });
+
+      // Handle notes
+      if (currentModule === "commercial") {
+        const { systemNote, clientComment } = extractNotes(
+          stageData.noteForSystem,
+          stageData.noteForClient
+        );
+        initialFormData.noteForSystem = systemNote;
+        initialFormData.noteForClient = clientComment;
+      } else {
+        currentConfig.noteGroups.forEach((group) => {
+          const notes = extractNotes(stageData[group.noteForClientKey]);
+          initialFormData[group.clientCommentKey] = notes.clientComment;
+        });
+      }
+
+      setFormData(initialFormData);
+      setStatuses(initialStatuses);
+      originalData.current = JSON.parse(JSON.stringify(initialFormData));
+      hasLoaded.current = true;
+      setIsLoading(false); // Should be instant basically
     } catch (e) {
-        toast.error("Failed to load stage data");
+      toast.error("Failed to load stage data");
     }
   }, [data, currentConfig, currentModule, clientType]);
 
@@ -341,6 +342,7 @@ export default function Stage2({
       fieldConfig?.type === "radio" ? normalizeValue(value) : value;
 
     setFormData((prev) => ({ ...prev, [field]: processed }));
+    setHasChanges(true);
 
     if (fieldConfig?.type === "radio") {
       setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
@@ -354,110 +356,111 @@ export default function Stage2({
   async function handleSave() {
     if (!isChanged() || isSaving) return;
     setIsSaving(true);
-    
+
     let payload = { ...formData };
-    
-     // Handle notes differently for commercial vs other modules
+
+    // Handle notes differently for commercial vs other modules
     if (currentModule === "commercial") {
-        const commercialFields = [
-          "voi",
-          "leaseTransfer",
-          "contractOfSale",
-          "noteForSystem",
-          "noteForClient",
-        ];
-        const filteredPayload = {};
+      const commercialFields = [
+        "voi",
+        "leaseTransfer",
+        "contractOfSale",
+        "noteForSystem",
+        "noteForClient",
+      ];
+      const filteredPayload = {};
 
-        commercialFields.forEach((field) => {
-          if (payload[field] !== undefined) {
-            filteredPayload[field] = payload[field];
-          }
-        });
+      commercialFields.forEach((field) => {
+        if (payload[field] !== undefined) {
+          filteredPayload[field] = payload[field];
+        }
+      });
 
-        payload = filteredPayload;
+      payload = filteredPayload;
 
-        // Generate system note
-        const noteForSystem = generateSystemNote("main");
-        const noteForClient = formData.noteForClient || "";
-        payload.noteForSystem = noteForSystem;
-        payload.noteForClient = noteForClient;
+      // Generate system note
+      const noteForSystem = generateSystemNote("main");
+      const noteForClient = formData.noteForClient || "";
+      payload.noteForSystem = noteForSystem;
+      payload.noteForClient = noteForClient;
 
-        // Remove temporary fields
-        delete payload.systemNote;
-        delete payload.clientComment;
+      // Remove temporary fields
+      delete payload.systemNote;
+      delete payload.clientComment;
     } else {
-        // For other modules, use the existing note structure
-        currentConfig.noteGroups.forEach((group) => {
-          const systemNote = generateSystemNote(group.id);
-          const clientComment = formData[group.clientCommentKey] || "";
-          payload[group.noteForClientKey] =
-            `${systemNote} - ${clientComment}`.trim();
+      // For other modules, use the existing note structure
+      currentConfig.noteGroups.forEach((group) => {
+        const systemNote = generateSystemNote(group.id);
+        const clientComment = formData[group.clientCommentKey] || "";
+        payload[group.noteForClientKey] =
+          `${systemNote} - ${clientComment}`.trim();
 
-          // remove temporary fields
-          delete payload[group.systemNoteKey];
-          delete payload[group.clientCommentKey];
-        });
+        // remove temporary fields
+        delete payload[group.systemNoteKey];
+        delete payload[group.clientCommentKey];
+      });
     }
 
     // Calculate color status
     const relevantFields = currentConfig.fields.filter((field) => {
-        if (
-          field.name === "obtainDaSeller" &&
-          (clientType || "").toLowerCase() !== "seller"
-        ) {
-          return false;
-        }
-        return true;
+      if (
+        field.name === "obtainDaSeller" &&
+        (clientType || "").toLowerCase() !== "seller"
+      ) {
+        return false;
+      }
+      return true;
     });
 
     const allCompleted = relevantFields.every(
-        (f) => getStatus(formData[f.name]) === "Completed"
+      (f) => getStatus(formData[f.name]) === "Completed"
     );
     const colorStatus = allCompleted ? "green" : "amber";
-    
+
     // Seller specific cleanup
     if ((clientType || "").toLowerCase() !== "seller") {
-        delete payload.obtainDaSeller;
-        delete payload.obtainDaSellerDate;
+      delete payload.obtainDaSeller;
+      delete payload.obtainDaSellerDate;
     }
 
     try {
-        let apiResponse;
-        if (currentModule === "commercial") {
-            payload.matterNumber = matterNumber;
-            payload.colorStatus = colorStatus;
-            apiResponse = await commercialApi.upsertStage(2, matterNumber, payload);
-        } else if (currentModule === "print media") {
-            payload.orderId = matterNumber;
-            apiResponse = await api.upsertIDGStages(payload.orderId, 2, {
-              ...payload,
-              colorStatus,
-            });
-        } else {
-            // standard conveyancing
-            payload.matterNumber = matterNumber;
-            apiResponse = await api.upsertStageTwo(
-              matterNumber,
-              colorStatus,
-              payload
-            );
-        }
+      let apiResponse;
+      if (currentModule === "commercial") {
+        payload.matterNumber = matterNumber;
+        payload.colorStatus = colorStatus;
+        apiResponse = await commercialApi.upsertStage(2, matterNumber, payload);
+      } else if (currentModule === "print media") {
+        payload.orderId = matterNumber;
+        apiResponse = await api.upsertIDGStages(payload.orderId, 2, {
+          ...payload,
+          colorStatus,
+        });
+      } else {
+        // standard conveyancing
+        payload.matterNumber = matterNumber;
+        apiResponse = await api.upsertStageTwo(
+          matterNumber,
+          colorStatus,
+          payload
+        );
+      }
 
-        toast.success("Stage 2 Saved Successfully!");
-        
-        // Update original data
-        originalData.current = { ...formData };
-        
-        // Notify Parent
-        setReloadTrigger((prev) => !prev);
-        
+      toast.success("Stage 2 Saved Successfully!");
+
+      // Update original data
+      originalData.current = { ...formData };
+      setHasChanges(false);
+
+      // Notify Parent
+      setReloadTrigger((prev) => !prev);
     } catch (error) {
-        let errorMessage = "Failed to save Stage 2. Please try again.";
-        if (error.response?.data?.message) errorMessage = error.response.data.message;
-        else if (error.message) errorMessage = error.message;
-        toast.error(errorMessage);
+      let errorMessage = "Failed to save Stage 2. Please try again.";
+      if (error.response?.data?.message)
+        errorMessage = error.response.data.message;
+      else if (error.message) errorMessage = error.message;
+      toast.error(errorMessage);
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   }
 
@@ -495,14 +498,15 @@ export default function Stage2({
             disabled={localStorage.getItem("role") !== "admin"}
           >
             <option value="">Select Agent</option>
-            {user && user.map((agent) => (
-              <option
-                key={agent._id}
-                value={agent._id + "-" + agent.displayName}
-              >
-                {agent.displayName}
-              </option>
-            ))}
+            {user &&
+              user.map((agent) => (
+                <option
+                  key={agent._id}
+                  value={agent._id + "-" + agent.displayName}
+                >
+                  {agent.displayName}
+                </option>
+              ))}
           </select>
         ) : (
           ["Yes", "No", "Processing", "N/R"].map((val) => (
@@ -587,6 +591,17 @@ export default function Stage2({
     </div>
   );
 
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -650,5 +665,5 @@ Stage2.propTypes = {
   reloadTrigger: PropTypes.bool.isRequired,
   setReloadTrigger: PropTypes.func.isRequired,
   user: PropTypes.array,
-  stageNumber: PropTypes.number
+  stageNumber: PropTypes.number,
 };

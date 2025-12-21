@@ -6,6 +6,7 @@ export default function ConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
+  onDiscard,
   title,
   children,
   message,
@@ -90,21 +91,20 @@ export default function ConfirmationModal({
                 ) : (
                   <>
                     <Button
-                      label="Cancel"
-                      onClick={onClose}
+                      label="Leave"
+                      onClick={onDiscard}
                       disabled={isConfirming}
-                      textColor="text-gray-700"
-                      border="border border-gray-300"
-                      bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+                      bg="bg-red-500"
+                      textColor="text-white"
                       width="w-24"
                     />
                     <Button
-                      label={isConfirming ? "Saving..." : "Confirm"}
+                      label={isConfirming ? "Saving..." : "Save & Continue"}
                       onClick={handleConfirm}
                       disabled={isConfirming}
                       textColor="text-white"
                       bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-                      width="w-24"
+                      width="w-40"
                     />
                   </>
                 )}

@@ -95,7 +95,7 @@ const TermsOfService = ({ onClose }) => {
       clauses: [
         {
           label: null,
-          text: "These Terms and Conditions govern your access to and use of the OpsNav online portal available at www.opsnav.com (Portal), operated by TechAliyan Pty Ltd (ACN 688 247 421) trading as OpsNav (we, us, our).",
+          text: "These Terms and Conditions govern your access to and use of the OpsNav online portal available at <a href='https://www.opsnav.com' target='_blank' rel='noopener noreferrer' class='text-[#2E3D99] hover:underline font-medium'>www.opsnav.com</a> (Portal), operated by <strong>TechAliyan Pty Ltd (ACN 688 247 421) trading as OpsNav</strong>(we, us, our).",
         },
         {
           label: null,
@@ -105,7 +105,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     subscription: {
-      title: "1. Subscription and Access",
+      title: "1. Subscription and access",
       icon: FileCheck,
       color: "from-purple-500 to-pink-500",
       clauses: [
@@ -125,7 +125,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     accounts: {
-      title: "2. User Accounts",
+      title: "2. User accounts",
       icon: Users,
       color: "from-green-500 to-emerald-500",
       clauses: [
@@ -145,7 +145,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     pricing: {
-      title: "3. Subscription Plans, Pricing and Billing",
+      title: "3. Subscription plans, pricing and billing",
       icon: CreditCard,
       color: "from-amber-500 to-orange-500",
       clauses: [
@@ -275,7 +275,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     cancellation: {
-      title: "4. Cancellation and Termination",
+      title: "4. Cancellation and termination",
       icon: XCircle,
       color: "from-red-500 to-rose-500",
       clauses: [
@@ -304,7 +304,7 @@ const TermsOfService = ({ onClose }) => {
         },
         {
           label: "c)",
-          title: "Automatic Renewal",
+          title: "Automatic renewal",
           children: [
             {
               label: "i)",
@@ -328,7 +328,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     usage: {
-      title: "5. Permitted Use and Restrictions",
+      title: "5. Permitted use and restrictions",
       icon: Shield,
       color: "from-indigo-500 to-blue-500",
       clauses: [
@@ -338,7 +338,7 @@ const TermsOfService = ({ onClose }) => {
         },
         {
           label: "b)",
-          text: "You must not (and must not permit anyone else to):",
+          text: "You must <strong>not</strong> use the Portal: (and must not permit anyone else to):",
           children: [
             {
               label: "i)",
@@ -366,7 +366,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     data: {
-      title: "6. Data and Privacy",
+      title: "6. Data and privacy",
       icon: Database,
       color: "from-teal-500 to-cyan-500",
       clauses: [
@@ -386,7 +386,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     ip: {
-      title: "7. Intellectual Property",
+      title: "7. Intellectual property",
       icon: Copyright,
       color: "from-violet-500 to-purple-500",
       clauses: [
@@ -402,7 +402,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     availability: {
-      title: "8. Service Availability and Changes",
+      title: "8. Service availability and changes",
       icon: Cloud,
       color: "from-sky-500 to-blue-500",
       clauses: [
@@ -418,17 +418,17 @@ const TermsOfService = ({ onClose }) => {
     },
 
     warranties: {
-      title: "9. Warranties and Consumer Rights",
+      title: "9. Warranties and consumer rights",
       icon: ShieldCheck,
       color: "from-emerald-500 to-green-500",
       clauses: [
         {
           label: "a)",
-          text: 'To the extent permitted by law, the Portal is provided "as is" and "as available", and we exclude all warranties, representations and guarantees not expressly set out in these Terms.',
+          text: 'To the extent permitted by law, the Portal is provided <strong>"as is"</strong> and <strong>"as available",</strong> and we exclude all warranties, representations and guarantees not expressly set out in these Terms.',
         },
         {
           label: "b)",
-          text: "Nothing in these Terms excludes, restricts or modifies any consumer guarantees, rights or remedies you may have under the Australian Consumer Law (ACL) or other applicable law that cannot be excluded.",
+          text: "Nothing in these Terms excludes, restricts or modifies any consumer guarantees, rights or remedies you may have under the <strong>Australian Consumer Law</strong> (ACL) or other applicable law that cannot be excluded.",
         },
         {
           label: "c)",
@@ -444,7 +444,7 @@ const TermsOfService = ({ onClose }) => {
       clauses: [
         {
           label: "a)",
-          text: "To the maximum extent permitted by law, we are not liable for:",
+          text: "To the maximum extent permitted by law, we are <strong>not liable</strong> for:",
           children: [
             {
               label: "i)",
@@ -484,7 +484,7 @@ const TermsOfService = ({ onClose }) => {
     },
 
     thirdparty: {
-      title: "12. Third-party Services",
+      title: "12. Third-party services",
       icon: Globe,
       color: "from-cyan-500 to-blue-500",
       clauses: [
@@ -508,25 +508,25 @@ const TermsOfService = ({ onClose }) => {
     },
 
     governance: {
-      title: "14. Governing Law and Jurisdiction",
+      title: "14. Governing law and jurisdiction",
       icon: Building,
       color: "from-gray-600 to-gray-700",
       clauses: [
         {
           label: "a)",
-          text: "These Terms are governed by the laws of Victoria, Australia. Each party submits to the non-exclusive jurisdiction of the courts of Victoria and the courts competent to hear appeals from them.",
+          text: "These Terms are governed by the laws of <strong>Victoria, Australia.</strong> Each party submits to the non-exclusive jurisdiction of the courts of Victoria and the courts competent to hear appeals from them.",
         },
       ],
     },
 
     contact: {
-      title: "15. Contact Us",
+      title: "15. Contact us",
       icon: MessageSquare,
       color: "from-[#2E3D99] to-[#1D97D7]",
       clauses: [
         {
           label: "a)",
-          text: "If you have any questions about these Terms, please contact: TechAliyan Pty Ltd t/a OpsNav Email: support@opsnav.com Tel: 0435 332 279",
+          text: "If you have any questions about these Terms, please contact: <strong>TechAliyan Pty Ltd t/a OpsNav</strong> Email: <a href='mailto:support@opsnav.com' class='text-[#2E3D99] hover:underline'>support@opsnav.com</a> Tel: <a href='tel:0435332279' class='text-[#2E3D99] hover:underline'>0435 332 279</a>",
         },
       ],
     },
@@ -679,6 +679,10 @@ const TermsOfService = ({ onClose }) => {
       const searchTerm = value.toLowerCase();
       const results = [];
 
+      const stripHtml = (html) => {
+        return html.replace(/<\/?[^>]+(>|$)/g, "");
+      };
+
       // Search through all sections
       Object.entries(legalContent).forEach(([sectionId, section]) => {
         const title = section.title.toLowerCase();
@@ -686,7 +690,8 @@ const TermsOfService = ({ onClose }) => {
         // Helper function to extract text from clauses
         const extractClauseText = (clause) => {
           let text = "";
-          if (clause.text) text += clause.text + " ";
+          // if (clause.text) text += clause.text + " ";
+          if (clause.text) text += stripHtml(clause.text) + " ";
           if (clause.title) text += clause.title + " ";
           if (clause.children) {
             clause.children.forEach((child) => {
@@ -702,7 +707,9 @@ const TermsOfService = ({ onClose }) => {
             id: sectionId,
             sectionId: sectionId,
             title: section.title,
-            snippet: section.clauses[0]?.text?.substring(0, 150) + "...",
+            // snippet: section.clauses[0]?.text?.substring(0, 150) + "...",
+            snippet:
+              stripHtml(section.clauses[0]?.text)?.substring(0, 150) + "...",
             content: JSON.stringify(section.clauses),
             icon: section.icon || FileText,
             type: "section",
@@ -714,7 +721,8 @@ const TermsOfService = ({ onClose }) => {
           const clauseText = extractClauseText(clause).toLowerCase();
           if (clauseText.includes(searchTerm)) {
             // Create a snippet from the matched clause
-            const textToSearch = clause.text || clause.title || "";
+            // const textToSearch = clause.text || clause.title || "";
+            const textToSearch = stripHtml(clause.text) || clause.title || "";
             const index = textToSearch.toLowerCase().indexOf(searchTerm);
             let snippet = textToSearch;
 
@@ -884,9 +892,10 @@ const TermsOfService = ({ onClose }) => {
               </span>
             </div>
             <div className="flex-1">
-              <p className="text-gray-800 text-sm md:text-base leading-relaxed">
-                {clause.text}
-              </p>
+              <p
+                className="text-gray-800 text-sm md:text-base leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: clause.text }}
+              />
             </div>
           </div>
         )}
@@ -915,9 +924,10 @@ const TermsOfService = ({ onClose }) => {
                           </span>
                         </div>
                         <div className="flex-1">
-                          <p className="text-gray-700 text-xs md:text-sm leading-relaxed">
-                            {child.text}
-                          </p>
+                          <p
+                            className="text-gray-700 text-xs md:text-sm leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: child.text }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -937,9 +947,10 @@ const TermsOfService = ({ onClose }) => {
                 </span>
               </div>
               <div className="flex-1">
-                <p className="text-gray-800 text-sm md:text-base mb-3 leading-relaxed">
-                  {clause.text}
-                </p>
+                <p
+                  className="text-gray-800 text-sm md:text-base mb-3 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: clause.text }}
+                />
                 {/* Render children */}
                 {clause.children.map((child, childIndex) => (
                   <div key={childIndex} className="mb-3 ml-10 md:ml-20">
@@ -950,9 +961,10 @@ const TermsOfService = ({ onClose }) => {
                         </span>
                       </div>
                       <div className="flex-1">
-                        <p className="text-gray-700 text-xs md:text-sm leading-relaxed">
-                          {child.text}
-                        </p>
+                        <p
+                          className="text-gray-700 text-xs md:text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: child.text }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -968,9 +980,8 @@ const TermsOfService = ({ onClose }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-gray-800 text-sm md:text-base mb-4 md:mb-6 leading-relaxed"
-          >
-            {clause.text}
-          </motion.p>
+            dangerouslySetInnerHTML={{ __html: clause.text }}
+          />
         )}
       </div>
     );

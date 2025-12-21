@@ -70,7 +70,7 @@ const getInitialState = (currentModule) => {
   return commonState;
 };
 
-export default function CostComponent({ changeStage }) {
+export default function CostComponent({ changeStage, setHasChanges }) {
   const { matterNumber } = useParams();
   const queryClient = useQueryClient();
 
@@ -326,6 +326,7 @@ export default function CostComponent({ changeStage }) {
       setFormValues(loadedData);
       originalData.current = loadedData;
       console.log("Final initialized form data:", loadedData);
+      setHasChanges(false);
     }
   }, [loadedData]);
 
@@ -356,9 +357,21 @@ export default function CostComponent({ changeStage }) {
     formValues["Invoice Amount"],
   ]);
 
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSubmit();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [formValues]);
+
   // --- Change Handlers ---
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
   const handleNumberChange = (field, value) => {
@@ -506,6 +519,7 @@ export default function CostComponent({ changeStage }) {
     },
     onSuccess: (response) => {
       originalData.current = { ...formValues }; // Update original data
+      setHasChanges(false);
       toast.success("Cost data updated Successfully!");
       // Invalidate query to refetch
       queryClient.invalidateQueries({
@@ -554,7 +568,7 @@ export default function CostComponent({ changeStage }) {
           <>
             <CostInputRow
               label="VOI"
-              amountValue={formValues["VOI"]}
+              amountValue={formValues["VOI"] ?? ""}
               noteValue={formValues["VOI Note"]}
               onAmountChange={(e) => handleNumberChange("VOI", e.target.value)}
               onNoteChange={(e) => handleChange("VOI Note", e.target.value)}

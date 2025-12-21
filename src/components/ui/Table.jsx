@@ -38,7 +38,7 @@ const ACCESS_MODULES = [
   },
   {
     value: "PRINT MEDIA",
-    label: "Print Media",
+    label: "Signage & Print",
     icon: Newspaper,
     color: "bg-amber-500",
   },

@@ -126,6 +126,7 @@ export default function Stage4({
   onStageUpdate,
   setReloadTrigger,
   stageNumber = 4,
+  setHasChanges,
 }) {
   const { matterNumber } = useParams();
 
@@ -203,80 +204,79 @@ export default function Stage4({
 
     // Use data prop directly
     const stageData = data;
-    
+
     try {
-        const initialFormData = {};
-        const initialStatuses = {};
-        let loadedClientComment = "";
-        let loadedSystemNote = "";
+      const initialFormData = {};
+      const initialStatuses = {};
+      let loadedClientComment = "";
+      let loadedSystemNote = "";
 
-        currentConfig.fields.forEach((field) => {
-          const rawValue = stageData[field.name];
+      currentConfig.fields.forEach((field) => {
+        const rawValue = stageData[field.name];
 
-          if (field.type === "number") {
-            const rawPrice = rawValue;
-            initialFormData[field.name] =
-              typeof rawPrice === "object" && rawPrice?.$numberDecimal
-                ? rawPrice.$numberDecimal
-                : rawPrice?.toString() ?? "";
-          } else if (field.type === "radio") {
-            initialFormData[field.name] = normalizeValue(rawValue ?? "");
-            initialStatuses[field.name] = getStatus(
-              initialFormData[field.name]
-            );
-          } else if (field.type === "text") {
-            initialFormData[field.name] = rawValue ?? "";
-          }
+        if (field.type === "number") {
+          const rawPrice = rawValue;
+          initialFormData[field.name] =
+            typeof rawPrice === "object" && rawPrice?.$numberDecimal
+              ? rawPrice.$numberDecimal
+              : rawPrice?.toString() ?? "";
+        } else if (field.type === "radio") {
+          initialFormData[field.name] = normalizeValue(rawValue ?? "");
+          initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+        } else if (field.type === "text") {
+          initialFormData[field.name] = rawValue ?? "";
+        }
 
-          if (
-            initialFormData[field.name] === undefined ||
-            initialFormData[field.name] === null
-          ) {
-            initialFormData[field.name] = "";
-          }
+        if (
+          initialFormData[field.name] === undefined ||
+          initialFormData[field.name] === null
+        ) {
+          initialFormData[field.name] = "";
+        }
+      });
+
+      // notes
+      if (currentModule === "commercial") {
+        const { systemNote, clientComment } = extractNotes(
+          stageData.noteForSystem,
+          stageData.noteForClient
+        );
+        loadedSystemNote = systemNote || "";
+        loadedClientComment = clientComment || "";
+        setNoteForClient(loadedClientComment);
+      } else {
+        currentConfig.noteGroups.forEach((group) => {
+          const noteString = stageData[group.noteForClientKey] || "";
+          const noteParts = noteString.split(" - ");
+          loadedSystemNote = noteParts[0]?.trim() || "";
+          loadedClientComment =
+            noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+          initialFormData[group.clientCommentKey] = loadedClientComment;
         });
-
-        // notes
-        if (currentModule === "commercial") {
-          const { systemNote, clientComment } = extractNotes(
-            stageData.noteForSystem,
-            stageData.noteForClient
-          );
-          loadedSystemNote = systemNote || "";
-          loadedClientComment = clientComment || "";
-          setNoteForClient(loadedClientComment);
-        } else {
-          currentConfig.noteGroups.forEach((group) => {
-            const noteString = stageData[group.noteForClientKey] || "";
-            const noteParts = noteString.split(" - ");
-            loadedSystemNote = noteParts[0]?.trim() || "";
-            loadedClientComment =
-              noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
-            initialFormData[group.clientCommentKey] = loadedClientComment;
-          });
-        }
-
-        // idg images
-        if (currentModule === "print media") {
-          const lastImage = stageData?.images?.[stageData?.images?.length - 1];
-          setPreview(lastImage?.url || null);
-          setfileName(lastImage?.filename || "");
-        }
-
-        setFormData(initialFormData);
-        setStatuses(initialStatuses);
-
-        originalData.current = {
-          formData: JSON.parse(JSON.stringify(initialFormData)),
-          noteForClient: loadedClientComment,
-          noteForSystem: loadedSystemNote,
-        };
-
-        hasLoadedData.current = true;
-        setIsLoading(false);
-      } catch (e) {
-        toast.error("Failed to load stage data");
       }
+
+      // idg images
+      if (currentModule === "print media") {
+        const lastImage = stageData?.images?.[stageData?.images?.length - 1];
+        setPreview(lastImage?.url || null);
+        setfileName(lastImage?.filename || "");
+      }
+
+      setFormData(initialFormData);
+      setStatuses(initialStatuses);
+
+      originalData.current = {
+        formData: JSON.parse(JSON.stringify(initialFormData)),
+        noteForClient: loadedClientComment,
+        noteForSystem: loadedSystemNote,
+      };
+
+      hasLoadedData.current = true;
+      setIsLoading(false);
+      setHasChanges(false);
+    } catch (e) {
+      toast.error("Failed to load stage data");
+    }
   }, [data, currentConfig, currentModule]);
 
   // Reset loaded flag when matter changes
@@ -304,6 +304,7 @@ export default function Stage4({
       }
 
       setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
+      setHasChanges(true);
     },
     [currentConfig.fields]
   );
@@ -311,11 +312,11 @@ export default function Stage4({
   const isChanged = () => {
     const original = originalData.current || {};
     if (!original || !original.formData) {
-       // if no original data yet, check if any field is filled
-       const anyFilled = Object.keys(formData || {}).some(
+      // if no original data yet, check if any field is filled
+      const anyFilled = Object.keys(formData || {}).some(
         (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
-       );
-       return anyFilled;
+      );
+      return anyFilled;
     }
 
     try {
@@ -372,7 +373,6 @@ export default function Stage4({
     }
   };
 
-
   // ---------- IMAGE UPLOAD / DELETE (IDG) ----------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -383,7 +383,10 @@ export default function Stage4({
       try {
         await api.uploadImageForOrder(matterNumber, file);
         toast.success("Image uploaded successfully!");
-        setReloadTrigger((prev) => (typeof prev === "number" ? prev + 1 : (prev || 0) + 1));
+        setHasChanges(true);
+        setReloadTrigger((prev) =>
+          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        );
       } catch (err) {
         toast.error("Image upload failed.");
         setPreview(null);
@@ -407,8 +410,9 @@ export default function Stage4({
       setShowConfirmModal(false);
 
       toast.success("Image deleted successfully!");
+      setHasChanges(true);
       setReloadTrigger((prev) =>
-          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
       );
     } catch (err) {
       toast.error("Failed to delete image.");
@@ -509,22 +513,23 @@ export default function Stage4({
 
       // Update original ref with new state
       const serverStage = (res && (res.data || res.stage4 || res)) || payload;
-      
+
       originalData.current = {
-          formData: JSON.parse(JSON.stringify(formData)),
-          noteForClient: currentModule === "commercial" ? noteForClient : undefined,
-          noteForSystem: systemNote
+        formData: JSON.parse(JSON.stringify(formData)),
+        noteForClient:
+          currentModule === "commercial" ? noteForClient : undefined,
+        noteForSystem: systemNote,
       };
+      setHasChanges(false);
 
       // notify parent / listings to refresh
       setReloadTrigger((prev) =>
-          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
       );
-      
-      if (onStageUpdate) {
-         onStageUpdate({ ...payload, colorStatus: computedColorStatus }, 4);
-      }
 
+      if (onStageUpdate) {
+        onStageUpdate({ ...payload, colorStatus: computedColorStatus }, 4);
+      }
     } catch (err) {
       console.error(err);
       let errorMessage = "Failed to save Stage 4. Please try again.";
@@ -656,7 +661,7 @@ export default function Stage4({
                     className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full text-xs"
                     disabled={isDeleting}
                   >
-                     X
+                    X
                   </button>
                 </div>
               )}
@@ -667,6 +672,17 @@ export default function Stage4({
         return null;
     }
   };
+
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
 
   if (isLoading) {
     return (
@@ -684,45 +700,51 @@ export default function Stage4({
       {currentConfig.fields.map(renderField)}
 
       {currentModule === "commercial" ? (
-         <>
-            <div className="mt-5">
-                <label className="font-bold">System Note for Client</label>
-                <input
-                   disabled
-                   value={generateSystemNote("main")}
-                   className="w-full rounded p-2 bg-gray-100"
-                />
-            </div>
-            <div className="mt-5">
-                <label className="font-bold">Comment for Client</label>
-                <textarea
-                   value={noteForClient}
-                   onChange={(e) => setNoteForClient(e.target.value)}
-                   className="w-full rounded p-2 bg-gray-100"
-                />
-            </div>
-         </>
+        <>
+          <div className="mt-5">
+            <label className="font-bold">System Note for Client</label>
+            <input
+              disabled
+              value={generateSystemNote("main")}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+          <div className="mt-5">
+            <label className="font-bold">Comment for Client</label>
+            <textarea
+              value={noteForClient}
+              onChange={(e) => {
+                setNoteForClient(e.target.value);
+                setHasChanges(true);
+              }}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        </>
       ) : (
-         currentConfig.noteGroups.map(group => (
-            <div key={group.id}>
-                <div className="mt-5">
-                    <label className="font-bold">{group.systemNoteLabel}</label>
-                    <input
-                       disabled
-                       value={generateSystemNote(group.id)}
-                       className="w-full rounded p-2 bg-gray-100"
-                    />
-                </div>
-                <div className="mt-5">
-                    <label className="font-bold">{group.clientCommentLabel}</label>
-                    <textarea
-                       value={formData[group.clientCommentKey] || ""}
-                       onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
-                       className="w-full rounded p-2 bg-gray-100"
-                    />
-                </div>
+        currentConfig.noteGroups.map((group) => (
+          <div key={group.id}>
+            <div className="mt-5">
+              <label className="font-bold">{group.systemNoteLabel}</label>
+              <input
+                disabled
+                value={generateSystemNote(group.id)}
+                className="w-full rounded p-2 bg-gray-100"
+              />
             </div>
-         ))
+            <div className="mt-5">
+              <label className="font-bold">{group.clientCommentLabel}</label>
+              <textarea
+                value={formData[group.clientCommentKey] || ""}
+                onChange={(e) => {
+                  handleChange(group.clientCommentKey, e.target.value);
+                  setHasChanges(true);
+                }}
+                className="w-full rounded p-2 bg-gray-100"
+              />
+            </div>
+          </div>
+        ))
       )}
 
       <div className="flex justify-between mt-10">
@@ -766,4 +788,5 @@ Stage4.propTypes = {
   onStageUpdate: PropTypes.func,
   setReloadTrigger: PropTypes.func.isRequired,
   stageNumber: PropTypes.number,
+  setHasChanges: PropTypes.func.isRequired,
 };
