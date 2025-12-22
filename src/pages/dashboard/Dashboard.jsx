@@ -36,6 +36,7 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
+  Legend,
 } from "recharts";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
@@ -67,6 +68,7 @@ const useDashboardStore = create((set) => ({
   totalactive: 0,
   totalCompleted: 0,
   lastrecord: 0,
+  totalPending: 0,
   loading: true,
 
   setDashboardData: (data, currentModule = "") =>
@@ -101,6 +103,15 @@ const useDashboardStore = create((set) => ({
           0
         : 0;
 
+      const lastPending = mostRecentWithData
+        ? mostRecentWithData.pendingMatters || 0
+        : 0;
+
+      const totalPending = sixMonthsData.reduce(
+        (sum, item) => sum + (item.pendingMatters || 0),
+        0
+      );
+
       const totalCompleted =
         data.lifetimeTotals?.totalClosedOrders ||
         data.lifetimeTotals?.totalClosedProjects ||
@@ -117,6 +128,7 @@ const useDashboardStore = create((set) => ({
           0,
         totalCompleted: totalCompleted,
         lastrecord: lastRec,
+        totalPending: totalPending,
         loading: false,
       };
     }),
@@ -128,6 +140,7 @@ const useDashboardStore = create((set) => ({
       totalusers: 0,
       totalactive: 0,
       totalCompleted: 0,
+      totalPending: 0,
       lastrecord: 0,
       loading: true,
     }),
@@ -635,6 +648,7 @@ function Dashboard() {
     totalactive,
     totalCompleted,
     lastrecord,
+    totalPending,
     loading,
     setDashboardData,
     setLoading,
@@ -659,7 +673,6 @@ function Dashboard() {
 
   const currentModule = localStorage.getItem("currentModule");
   const userRole = localStorage.getItem("userRole") || "admin";
-  
 
   // Set calendar view based on screen size
   useEffect(() => {
@@ -802,7 +815,15 @@ function Dashboard() {
       return (
         <div className="bg-white border border-gray-200 p-2 sm:p-3 rounded-lg shadow-lg text-xs sm:text-sm">
           <p className="font-semibold text-gray-800">{label}</p>
-          <p className="text-gray-600">{`${closedLabel}: ${payload[0].value}`}</p>
+          {payload.map((entry, index) => (
+            <p
+              key={index}
+              className="text-gray-600"
+              style={{ color: entry.color }}
+            >
+              {entry.name}: <span className="font-semibold">{entry.value}</span>
+            </p>
+          ))}
         </div>
       );
     }
@@ -973,6 +994,7 @@ function Dashboard() {
           ...item,
           name: name,
           closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
+          pendingMatters: item.pendingMatters ?? 0,
         };
       });
     } else if (currentModule === "print media") {
@@ -1187,14 +1209,25 @@ function Dashboard() {
               color="purple"
               loading={loading}
             />
-            <StatCard
-              title="Last Month"
-              value={lastrecord}
-              // change={24}
-              icon={TrendingUp}
-              color="orange"
-              loading={loading}
-            />
+
+            {currentModule === "conveyancing" && (
+              <StatCard
+                title="Pending Matters"
+                value={totalPending || 0}
+                icon={Clock}
+                color="#FB4A50"
+                loading={loading}
+              />
+            )}
+            {currentModule !== "conveyancing" && (
+              <StatCard
+                title="Last Month"
+                value={lastrecord}
+                icon={TrendingUp}
+                color="orange"
+                loading={loading}
+              />
+            )}
           </div>
 
           {/* Main Content Grid - Enhanced with Home.jsx card styling */}
@@ -1400,8 +1433,10 @@ function Dashboard() {
                             width={isMobile ? 30 : 40}
                           />
                           <Tooltip content={<CustomTooltip />} />
+                          <Legend />
                           <Bar
                             dataKey="closedMatters"
+                            name="Closed Matters"
                             fill="url(#barGradient)"
                             barSize={
                               isMobile
@@ -1412,6 +1447,23 @@ function Dashboard() {
                             }
                             radius={[4, 4, 0, 0]}
                           />
+
+                          {currentModule === "conveyancing" &&
+                            chartView === "last6Months" && (
+                              <Bar
+                                dataKey="pendingMatters"
+                                name="Pending Matters"
+                                fill="#FB4A50"
+                                barSize={
+                                  isMobile
+                                    ? chartView === "allTime"
+                                      ? 15
+                                      : 20
+                                    : 30
+                                }
+                                radius={[4, 4, 0, 0]}
+                              />
+                            )}
                           <defs>
                             <linearGradient
                               id="barGradient"
@@ -1448,16 +1500,28 @@ function Dashboard() {
                           <p className="text-xs sm:text-sm font-medium text-gray-600">
                             Total in last 6 months
                           </p>
-                          <p className="text-lg sm:text-xl font-bold text-gray-900">
+                          {/* <p className="text-lg sm:text-xl font-bold text-gray-900">
                             {chartPeriodTotal.toLocaleString()}
-                          </p>
+                            {currentModule === "conveyancing" && (
+                              <span className="block text-sm text-gray-600 mt-1">
+                                {currentChartData
+                                  .reduce(
+                                    (sum, item) =>
+                                      sum + (item.pendingMatters || 0),
+                                    0
+                                  )
+                                  .toLocaleString()}{" "}
+                                Pending
+                              </span>
+                            )}
+                          </p> */}
                         </div>
                         <div className="text-right">
                           <p className="text-xs sm:text-sm font-medium text-gray-600">
-                            Last month achievement
+                            Total Pending (6 months)
                           </p>
                           <p className="text-lg sm:text-xl font-bold text-gray-900">
-                            {lastrecord || totalCompleted}
+                            {totalPending || 0}
                             <span className="text-xs sm:text-sm font-normal text-gray-600 ml-1">
                               {currentModule === "commercial"
                                 ? "projects"

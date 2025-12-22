@@ -138,7 +138,8 @@ export default function StagesLayout() {
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
   const currentModule = localStorage.getItem("currentModule");
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [_isUpdating, setIsUpdating] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
 
@@ -278,7 +279,7 @@ export default function StagesLayout() {
   function RenderStage(newStage) {
     if (hasChanges) {
       pendingStageRef.current = newStage;
-      setShowConfirmModal(true);
+      setShowUnsavedConfirm(true);
       return;
     }
 
@@ -755,20 +756,29 @@ export default function StagesLayout() {
   }, [clientData, originalClientData]);
 
   async function handleupdate(e) {
+    console.log(
+      "🟡 [UPDATE CLICKED]",
+      "hasChanges =",
+      hasChanges,
+      "module =",
+      localStorage.getItem("currentModule")
+    );
     e.preventDefault();
     if (!hasChanges) return;
-    setShowConfirmModal(true);
+    setShowUpdateConfirm(true);
   }
 
   async function performUpdate() {
+    console.log("🟢 [CONFIRM CLICKED] performUpdate() started");
     if (!hasChanges) {
-      setShowConfirmModal(false);
+      setShowUpdateConfirm(false);
       return;
     }
     setIsUpdating(true);
     try {
-      let payload = {};
       const currentModule = localStorage.getItem("currentModule");
+      console.log("🚀 [MODULE]", currentModule);
+      let payload = {};
       if (currentModule === "commercial") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
@@ -796,6 +806,8 @@ export default function StagesLayout() {
           postCode: clientData?.data?.postcode || clientData?.data?.postCode,
         };
       }
+
+      console.log("📦 [FINAL PAYLOAD]", payload);
 
       // Include superadmin fields
       if (isSuperAdmin) {
@@ -827,6 +839,7 @@ export default function StagesLayout() {
 
       let resp = {};
       if (currentModule === "commercial") {
+        console.log("🚀 [API] Commercial update/create");
         // Check if this is a new project (has default empty structure)
         const isNewProject =
           !originalClientData?.clientName &&
@@ -846,16 +859,19 @@ export default function StagesLayout() {
           toast.success("Project details updated successfully");
         }
       } else if (currentModule === "print media") {
+        console.log("🚀 [API] Print Media update");
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
         );
       } else {
+        console.log("🚀 [API] Conveyancing update");
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
         );
       }
+      console.log("✅ [API RESPONSE]", resp);
 
       const updatedClient = resp.client || resp || clientData;
       const normalizedUpdated = {
@@ -918,7 +934,7 @@ export default function StagesLayout() {
       toast.error(msg);
     } finally {
       setIsUpdating(false);
-      setShowConfirmModal(false);
+      setShowUpdateConfirm(false);
     }
   }
 
@@ -1152,7 +1168,7 @@ export default function StagesLayout() {
 
                 {/* Project/Matter/Order Details - Desktop */}
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
-                  <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
+                  <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-180px)] lg:overflow-y-auto">
                     <h2 className="text-lg font-bold mb-2">
                       {currentModule === "commercial"
                         ? "Project Details"
@@ -1161,7 +1177,7 @@ export default function StagesLayout() {
                         : "Matter Details"}
                     </h2>
                     <form
-                      className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
+                      className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 pb-4"
                       onSubmit={handleupdate}
                     >
                       {/* Date Field */}
@@ -1329,9 +1345,7 @@ export default function StagesLayout() {
                           value={
                             currentModule === "commercial"
                               ? clientData?.businessAddress || ""
-                              : clientData?.propertyAddress ||
-                                clientData?.data?.deliveryAddress ||
-                                ""
+                              : clientData?.propertyAddress || ""
                           }
                           onChange={(e) => {
                             if (!isSuperAdmin) return;
@@ -1408,7 +1422,8 @@ export default function StagesLayout() {
                             name="clientType"
                             value={
                               clientData?.clientType ||
-                              clientData?.data?.orderType
+                              clientData?.data?.orderType ||
+                              ""
                             }
                             onChange={(e) =>
                               setClientData((prev) => ({
@@ -1548,7 +1563,7 @@ export default function StagesLayout() {
                             type="text"
                             value={
                               clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy
+                              clientData?.data?.dataEntryBy || ""
                             }
                             onChange={(e) =>
                               setClientData((prev) => ({
@@ -1563,7 +1578,8 @@ export default function StagesLayout() {
                             type="text"
                             value={
                               clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy
+                              clientData?.data?.dataEntryBy ||
+                              ""
                             }
                             className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                             disabled
@@ -1658,7 +1674,7 @@ export default function StagesLayout() {
                         )}
                       </div>
 
-                      <div className="md:col-span-3 mt-2">
+                      <div className="md:col-span-3 mt-6 mb-6">
                         <div className="mt-2">
                           <button
                             type="submit"
@@ -1689,7 +1705,7 @@ export default function StagesLayout() {
                       : "Matter Details"}
                   </h2>
                   <form
-                    className="grid grid-cols-1 gap-x-4 gap-y-2"
+                    className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
                     onSubmit={handleupdate}
                   >
                     {/* Mobile form fields - similar structure but simplified */}
@@ -1755,8 +1771,8 @@ export default function StagesLayout() {
           )}
         </main>
         <ConfirmationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
+          isOpen={showUpdateConfirm}
+          onClose={() => setShowUpdateConfirm(false)}
           title="Confirm update"
           onConfirm={performUpdate}
         >
@@ -1764,26 +1780,25 @@ export default function StagesLayout() {
         </ConfirmationModal>
 
         <ConfirmationModal
-          isOpen={showConfirmModal}
+          isOpen={showUnsavedConfirm}
           title="Unsaved Changes"
           message="You have unsaved changes in this stage. Would you like to save before leaving?"
           onClose={() => {
-            setShowConfirmModal(false);
+            setShowUnsavedConfirm(false);
             pendingStageRef.current = null;
           }}
           onDiscard={() => {
-          setShowConfirmModal(false);
-          if (pendingStageRef.current !== null) {
-            setSelectedStage(pendingStageRef.current);
-            setReloadStage((p) => !p);
-            pendingStageRef.current = null;
-          }
-        }}
+            setShowUnsavedConfirm(false);
+            if (pendingStageRef.current !== null) {
+              setSelectedStage(pendingStageRef.current);
+              setReloadStage((p) => !p);
+              pendingStageRef.current = null;
+            }
+          }}
           onConfirm={async () => {
-            // Let current stage save itself
             window.dispatchEvent(new Event("saveCurrentStage"));
             setHasChanges(false);
-            setShowConfirmModal(false);
+            setShowUnsavedConfirm(false);
 
             if (pendingStageRef.current !== null) {
               setSelectedStage(pendingStageRef.current);

@@ -17,6 +17,8 @@ import WorkSelection from "./pages/admin/WorkSelection";
 import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
 import TermsOfService from "./pages/TermsPage";
+import GetStartedFree from "./pages/GetStartedFree";
+import BookDemo from "./pages/BookDemo";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
 import IDGClientDashboard from "./pages/dashboard/IDGClientDashboard";
@@ -57,6 +59,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/get-started-free" element={<GetStartedFree />} />
+        <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />

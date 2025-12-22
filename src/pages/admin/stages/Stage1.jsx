@@ -408,7 +408,12 @@ export default function Stage1({
       } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 1, payload);
       } else {
-        await api.upsertStageOne(payload);
+        const res = await api.upsertStageOne(payload);
+
+        // Store authoritative Stage 1 color from POST response
+        if (res?.data?.colorStatus) {
+          sessionStorage.setItem("stage1ColorOverride", res.data.colorStatus);
+        }
       }
 
       originalData.current = { ...formData };
