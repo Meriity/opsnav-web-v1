@@ -155,11 +155,7 @@ const featureSections = [
     title: "Scalable Cloud Hosted",
     description:
       "Enterprise-grade security on Cloud with 99.9% uptime guarantee.",
-    points: [
-      "Cloud hosting",
-      "Enterprise-grade security",
-      "99.9% uptime SLA",
-    ],
+    points: ["Cloud hosting", "Enterprise-grade security", "99.9% uptime SLA"],
     image: {
       desktop:
         "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
@@ -548,6 +544,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/get-started-free")}
               className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
             >
               <span>Get Started Free</span>
@@ -556,6 +553,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/book-demo")}
               className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 border-2 border-gray-200 font-semibold rounded-xl hover:border-[#2E3D99] hover:text-[#2E3D99] transition-all flex items-center justify-center gap-2"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1087,8 +1085,7 @@ export default function Home() {
               {
                 icon: Globe,
                 title: "Global Infrastructure",
-                description:
-                  "Hosted on Cloud with multi-region redundancy.",
+                description: "Hosted on Cloud with multi-region redundancy.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
@@ -1165,7 +1162,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogin}
+                onClick={() => navigate("/get-started-free")}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 Start Free Trial - 14 Days
@@ -1173,6 +1170,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/book-demo")}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-transparent text-white border-2 border-gray-700 font-semibold rounded-xl hover:border-white transition-all"
               >
                 Schedule a Demo

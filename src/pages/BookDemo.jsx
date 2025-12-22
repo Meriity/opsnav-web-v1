@@ -1,4 +1,3 @@
-// pages/auth/SignUp.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,10 +10,11 @@ import {
   FileText,
   CheckCircle,
   Sparkles,
+  Video,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-function SignUp() {
+function BookDemo() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -126,6 +126,7 @@ function SignUp() {
               }
             }),
           comments: formData.additionalComments,
+          type: "demo_request",
         };
 
         const response = await fetch(
@@ -141,16 +142,15 @@ function SignUp() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Lead submission failed");
+          throw new Error(errorData.message || "Demo booking failed");
         }
 
-        // Show success message and redirect
         alert(
-          "Thank you for your interest! Our team will contact you shortly."
+          "Thank you for booking a demo! Our team will contact you shortly to schedule your personalized demo."
         );
         navigate("/");
       } catch (error) {
-        console.error("Lead submit error:", error);
+        console.error("Demo booking error:", error);
         setFormError(
           error.message || "Something went wrong. Please try again."
         );
@@ -465,17 +465,17 @@ function SignUp() {
             </>
           ) : (
             <>
-              Start Free Trial
+              Book Demo
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </motion.button>
       </div>
 
-      {/* Terms & Privacy Note - ONLY in Step 2 */}
+      {/* Note - ONLY in Step 2 */}
       <div className="pt-3 border-t border-gray-100">
         <p className="text-xs text-gray-500 text-center">
-          By clicking "Start Free Trial", you agree to our{" "}
+          By clicking "Book Demo", you agree to our{" "}
           <a href="/terms" className="text-[#2E3D99] hover:underline">
             Terms of Service
           </a>{" "}
@@ -554,24 +554,24 @@ function SignUp() {
           >
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20">
-              <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+              <Video className="w-3.5 h-3.5 text-[#2E3D99]" />
               <span className="text-xs font-medium text-gray-700">
-                Start Your Free Trial
+                Book a Personalized Demo
               </span>
             </div>
 
             {/* Title */}
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3">
-              Get Started with{" "}
+              Schedule Your{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                OpsNav
+                Demo
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
-              Join thousands of professionals who trust OpsNav to streamline
-              their operations. Fill out the form and our team will contact you
-              to set up your free 14-day trial.
+              See OpsNav in action with a live, personalized demo. Our experts
+              will show you how to streamline your operations and answer all
+              your questions.
             </p>
 
             {/* Progress Steps - Main indicator (Desktop) */}
@@ -626,16 +626,21 @@ function SignUp() {
             <div className="space-y-3 hidden lg:block">
               {[
                 {
-                  icon: "🚀",
-                  title: "14-Day Free Trial",
+                  icon: "🎯",
+                  title: "Tailored Demo",
                   description:
-                    "Full access to all features, no credit card required",
+                    "See features relevant to your specific use case",
                 },
                 {
-                  icon: "🔒",
-                  title: "Secure & Compliant",
+                  icon: "👨‍💼",
+                  title: "Live Q&A",
                   description:
-                    "Enterprise-grade security aligned with Data Privacy Act",
+                    "Get answers directly from our product specialists",
+                },
+                {
+                  icon: "📅",
+                  title: "Flexible Scheduling",
+                  description: "Choose a time that works best for your team",
                 },
               ].map((benefit, index) => (
                 <div key={index} className="flex items-start gap-2">
@@ -661,7 +666,7 @@ function SignUp() {
             </div>
           </motion.div>
 
-          {/* Right Side - Compact Sign Up Form */}
+          {/* Right Side - Compact Form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -671,10 +676,10 @@ function SignUp() {
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
               {/* Mobile: Step indicator instead of icon */}
               <div className="text-center mb-4">
-                {/* Desktop: Show User icon */}
+                {/* Desktop: Show Video icon */}
                 <div className="hidden sm:block">
                   <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] mb-3">
-                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <Video className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                 </div>
 
@@ -729,9 +734,7 @@ function SignUp() {
                 </div>
 
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-                  {currentStep === 1
-                    ? "Create Your Account"
-                    : "Select Services"}
+                  {currentStep === 1 ? "Book Your Demo" : "Select Services"}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   {currentStep === 1
@@ -772,6 +775,6 @@ function SignUp() {
       </footer>
     </div>
   );
-} 
+}
 
-export default SignUp;
+export default BookDemo;

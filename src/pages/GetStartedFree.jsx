@@ -1,4 +1,3 @@
-// pages/auth/SignUp.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-function SignUp() {
+function GetStartedFree() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -126,6 +125,7 @@ function SignUp() {
               }
             }),
           comments: formData.additionalComments,
+          type: "free_trial",
         };
 
         const response = await fetch(
@@ -141,16 +141,15 @@ function SignUp() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Lead submission failed");
+          throw new Error(errorData.message || "Free trial request failed");
         }
 
-        // Show success message and redirect
         alert(
-          "Thank you for your interest! Our team will contact you shortly."
+          "Thank you for requesting a free trial! Our team will contact you shortly."
         );
         navigate("/");
       } catch (error) {
-        console.error("Lead submit error:", error);
+        console.error("Free trial request error:", error);
         setFormError(
           error.message || "Something went wrong. Please try again."
         );
@@ -564,14 +563,14 @@ function SignUp() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3">
               Get Started with{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                OpsNav
+                OpsNav Free Trial
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
-              Join thousands of professionals who trust OpsNav to streamline
-              their operations. Fill out the form and our team will contact you
-              to set up your free 14-day trial.
+              Experience the power of OpsNav with our 14-day free trial. No
+              credit card required. Fill out the form and our team will contact
+              you to set up your personalized trial.
             </p>
 
             {/* Progress Steps - Main indicator (Desktop) */}
@@ -661,7 +660,7 @@ function SignUp() {
             </div>
           </motion.div>
 
-          {/* Right Side - Compact Sign Up Form */}
+          {/* Right Side - Compact Form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -730,7 +729,7 @@ function SignUp() {
 
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                   {currentStep === 1
-                    ? "Create Your Account"
+                    ? "Create Your Free Trial"
                     : "Select Services"}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -772,6 +771,6 @@ function SignUp() {
       </footer>
     </div>
   );
-} 
+}
 
-export default SignUp;
+export default GetStartedFree;
