@@ -1436,7 +1436,13 @@ function Dashboard() {
                           <Legend />
                           <Bar
                             dataKey="closedMatters"
-                            name="Closed Matters"
+                            name={
+                              currentModule === "commercial"
+                                ? "Completed Projects"
+                                : currentModule === "print media"
+                                ? "Completed Orders"
+                                : "Closed Matters"
+                            }
                             fill="url(#barGradient)"
                             barSize={
                               isMobile
