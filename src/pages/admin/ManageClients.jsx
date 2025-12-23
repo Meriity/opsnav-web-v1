@@ -367,9 +367,9 @@ export default function ManageUsers() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
+    <div className="min-h-screen w-full bg-gray-100 flex flex-col p-2">
       <Header />
-      <main className="w-full max-w-8xl mx-auto p-5">
+      <main className="w-full max-w-8xl mx-auto p-5 flex-1 flex flex-col">
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <CreateClientModal
@@ -377,7 +377,6 @@ export default function ManageUsers() {
             module={currentModule}
             isOpen={createuser}
             setIsOpen={() => setcreateuser(false)}
-            onClose={()=> setcreateuser(false)}  
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
           {/* <Button
@@ -409,30 +408,32 @@ export default function ManageUsers() {
                   onChange={(e) => setUsersPerPage(Number(e.target.value))}
                 />
               </div>
-              <Table
-                data={userList}
-                columns={columns}
-                onEdit={(u) => {
-                  console.log(u);
-                  setSelectedUser(u);
-                  setOpenEdit(true);
-                }}
-                onReset={handleReset}
-                onDelete={(id) => {
-                  setId(id);
-                  setOpenDelete(true);
-                }}
-                itemsPerPage={usersPerPage}
-                headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
-                cellWrappingClass="whitespace-normal"
-                resetLoadingEmail={resetLoadingEmail}
-                resetSuccessEmail={resetSuccessEmail}
-                showActions={true}
-                isClients={true}
-              />
+              <div className="bg-white rounded-lg shadow">
+                <Table
+                  data={userList}
+                  columns={columns}
+                  onEdit={(u) => {
+                    console.log(u);
+                    setSelectedUser(u);
+                    setOpenEdit(true);
+                  }}
+                  onReset={handleReset}
+                  onDelete={(id) => {
+                    setId(id);
+                    setOpenDelete(true);
+                  }}
+                  itemsPerPage={usersPerPage}
+                  headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
+                  cellWrappingClass="whitespace-normal"
+                  resetLoadingEmail={resetLoadingEmail}
+                  resetSuccessEmail={resetSuccessEmail}
+                  showActions={true}
+                  isClients={true}
+                />
+              </div>
             </div>
             {/* Mobile & Tablet Card View */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+            <div className="lg:hidden">
               <div className="sm:col-span-2">
                 <UsersPerPage
                   value={usersPerPage}

@@ -558,74 +558,99 @@ export default function StagesLayout() {
           response.stages.forEach((stage, index) => {});
         } else {
         }
-
-        // Normalize dates for the response AND ensure business fields are included
         const normalized = {
-          ...response, // Preserve ALL original data including stage1, stage2, etc.
-          // Map commercial stage names (stageOne -> stage1) if necessary
+          ...response,
+          // FORCE business fields from ALL possible API response locations (ROBUST)
+          businessName:
+            response.businessName ||
+            response.businessname ||
+            response.client?.businessName ||
+            response.data?.businessName ||
+            "",
+          businessAddress:
+            response.businessAddress ||
+            response.businessaddress ||
+            response.propertyAddress ||
+            response.client?.businessAddress ||
+            "",
+          postcode:
+            response.postcode ||
+            response.postCode ||
+            response.client?.postcode ||
+            "",
+          clientName:
+            response.clientName ||
+            response.client_name ||
+            response.client?.clientName ||
+            "",
+          clientType:
+            response.clientType ||
+            response.client_type ||
+            response.client?.clientType ||
+            "",
+          dataEntryBy:
+            response.dataEntryBy ||
+            response.dataentryby ||
+            response.client?.dataEntryBy ||
+            "",
+          notes:
+            response.notes !== undefined
+              ? response.notes
+              : response.client?.notes ?? "",
+          state: response.state || clientData?.state || "",
+          matterDate: response.matterDate
+            ? typeof response.matterDate === "string"
+              ? response.matterDate
+              : new Date(response.matterDate).toISOString()
+            : clientData?.matterDate || "",
+          settlementDate: response.settlementDate
+            ? typeof response.settlementDate === "string"
+              ? response.settlementDate
+              : new Date(response.settlementDate).toISOString()
+            : clientData?.settlementDate || "",
+          // Map stage data properly, preserving existing if not in response
           stage1:
             response.stage1 ||
             response.stageOne ||
             response.data?.stage1 ||
             response.data?.stageOne ||
+            clientData?.stage1 ||
             {},
           stage2:
             response.stage2 ||
             response.stageTwo ||
             response.data?.stage2 ||
             response.data?.stageTwo ||
+            clientData?.stage2 ||
             {},
           stage3:
             response.stage3 ||
             response.stageThree ||
             response.data?.stage3 ||
             response.data?.stageThree ||
+            clientData?.stage3 ||
             {},
           stage4:
             response.stage4 ||
             response.stageFour ||
             response.data?.stage4 ||
             response.data?.stageFour ||
+            clientData?.stage4 ||
             {},
           stage5:
             response.stage5 ||
             response.stageFive ||
             response.data?.stage5 ||
             response.data?.stageFive ||
+            clientData?.stage5 ||
             {},
           stage6:
             response.stage6 ||
             response.stageSix ||
             response.data?.stage6 ||
             response.data?.stageSix ||
+            clientData?.stage6 ||
             {},
-
-          matterDate: response.matterDate
-            ? typeof response.matterDate === "string"
-              ? response.matterDate
-              : new Date(response.matterDate).toISOString()
-            : "",
-          settlementDate: response.settlementDate
-            ? typeof response.settlementDate === "string"
-              ? response.settlementDate
-              : new Date(response.settlementDate).toISOString()
-            : "",
-          notes:
-            response.notes !== undefined
-              ? response.notes
-              : response.notes ?? "",
-          // Ensure business fields are included with proper fallbacks
-          businessName: response.businessName || response.business_name || "",
-          businessAddress:
-            response.businessAddress ||
-            response.business_address ||
-            response.propertyAddress ||
-            "",
-          // Map the data structure properly
-          clientName: response.clientName || response.client_name || "",
-          clientType: response.clientType || response.client_type || "",
-          dataEntryBy: response.dataEntryBy || response.dataentryby || "",
-          postcode: response.postcode || response.postCode || "",
         };
 
         setClientData(normalized);
@@ -659,11 +684,6 @@ export default function StagesLayout() {
                 };
                 section[`status${i}`] =
                   statusMap[stageObject[stageKey]] || "Not Completed";
-                console.log(
-                  `Stage ${i} (${stageKey}) status: ${
-                    stageObject[stageKey]
-                  } -> ${section[`status${i}`]}`
-                );
               }
             }
           }
@@ -671,14 +691,15 @@ export default function StagesLayout() {
           // Check individual stage properties (stage1, stage2, etc.) as fallback
           for (let i = 1; i <= 6; i++) {
             const stageKey = `stage${i}`;
-            if (response[stageKey] && response[stageKey].colorStatus) {
+            const stageData = normalized[stageKey] || response[stageKey];
+            if (stageData && stageData.colorStatus) {
               const statusMap = {
                 green: "Completed",
                 red: "Not Completed",
                 amber: "In Progress",
               };
               section[`status${i}`] =
-                statusMap[response[stageKey].colorStatus] || "Not Completed";
+                statusMap[stageData.colorStatus] || "Not Completed";
             }
           }
 
@@ -695,22 +716,22 @@ export default function StagesLayout() {
           }
         } else if (currentModule !== "print media") {
           // VKL stage status logic
-          section.status1 = response.stage1?.colorStatus || "Not Completed";
-          section.status2 = response.stage2?.colorStatus || "Not Completed";
-          section.status3 = response.stage3?.colorStatus || "Not Completed";
-          section.status4 = response.stage4?.colorStatus || "Not Completed";
-          section.status5 = response.stage5?.colorStatus || "Not Completed";
-          section.status6 = response.stage6?.colorStatus || "Not Completed";
+          section.status1 = normalized.stage1?.colorStatus || "Not Completed";
+          section.status2 = normalized.stage2?.colorStatus || "Not Completed";
+          section.status3 = normalized.stage3?.colorStatus || "Not Completed";
+          section.status4 = normalized.stage4?.colorStatus || "Not Completed";
+          section.status5 = normalized.stage5?.colorStatus || "Not Completed";
+          section.status6 = normalized.stage6?.colorStatus || "Not Completed";
         } else if (currentModule === "print media") {
           // IDG stage status logic
           section.status1 =
-            response.data?.stage1?.colorStatus || "Not Completed";
+            normalized.data?.stage1?.colorStatus || "Not Completed";
           section.status2 =
-            response.data?.stage2?.colorStatus || "Not Completed";
+            normalized.data?.stage2?.colorStatus || "Not Completed";
           section.status3 =
-            response.data?.stage3?.colorStatus || "Not Completed";
+            normalized.data?.stage3?.colorStatus || "Not Completed";
           section.status4 =
-            response.data?.stage4?.colorStatus || "Not Completed";
+            normalized.data?.stage4?.colorStatus || "Not Completed";
         }
         setStageStatuses(section);
       } catch (e) {
@@ -785,7 +806,7 @@ export default function StagesLayout() {
           notes: clientData?.notes || "",
           clientName: clientData?.clientName || "",
           businessName: clientData?.businessName || "",
-          businessAddress: clientData?.businessAddress || "",
+          businessAddress: clientData.businessAddress || "",
           state: clientData?.state || "",
           clientType: clientData?.clientType || "",
           matterDate: clientData?.matterDate || null,
@@ -800,7 +821,7 @@ export default function StagesLayout() {
         };
       } else if (currentModule === "print media") {
         payload = {
-          deliveryDate: clientData?.data?.deliveryDate || null,
+          deliveryAddress: clientData?.data?.deliveryAddress || "",
           order_details: clientData?.data?.order_details || null,
           notes: clientData?.data?.notes || "",
           postCode: clientData?.data?.postcode || clientData?.data?.postCode,
@@ -822,7 +843,7 @@ export default function StagesLayout() {
           payload.businessAddress = clientData?.businessAddress || "";
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
-          payload.propertyAddress = clientData?.businessAddress || "";
+          payload.propertyAddress = clientData?.propertyAddress || "";
         }
 
         if (
@@ -872,31 +893,50 @@ export default function StagesLayout() {
         );
       }
       console.log("✅ [API RESPONSE]", resp);
-
       const updatedClient = resp.client || resp || clientData;
-      const normalizedUpdated = {
-        ...updatedClient,
-        matterDate: updatedClient?.matterDate
-          ? typeof updatedClient.matterDate === "string"
-            ? updatedClient.matterDate
-            : new Date(updatedClient.matterDate).toISOString()
-          : "",
-        settlementDate: updatedClient?.settlementDate
-          ? typeof updatedClient.settlementDate === "string"
-            ? updatedClient.settlementDate
-            : new Date(updatedClient.settlementDate).toISOString()
-          : "",
-      };
+      if (currentModule === "commercial") {
+        const mergedData = {
+          ...clientData,
+          ...updatedClient,
+          stage1: clientData?.stage1 || updatedClient?.stage1,
+          stage2: clientData?.stage2 || updatedClient?.stage2,
+          stage3: clientData?.stage3 || updatedClient?.stage3,
+          stage4: clientData?.stage4 || updatedClient?.stage4,
+          stage5: clientData?.stage5 || updatedClient?.stage5,
+          stage6: clientData?.stage6 || updatedClient?.stage6,
+        };
 
-      setClientData(normalizedUpdated);
-      setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
+        setClientData(mergedData);
+        setTimeout(() => {
+          setReloadStage((prev) => !prev);
+        }, 500);
+        setOriginalClientData(JSON.parse(JSON.stringify(mergedData)));
+      } else {
+        // For other modules, use the existing logic
+        const normalizedUpdated = {
+          ...updatedClient,
+          matterDate: updatedClient?.matterDate
+            ? typeof updatedClient.matterDate === "string"
+              ? updatedClient.matterDate
+              : new Date(updatedClient.matterDate).toISOString()
+            : "",
+          settlementDate: updatedClient?.settlementDate
+            ? typeof updatedClient.settlementDate === "string"
+              ? updatedClient.settlementDate
+              : new Date(updatedClient.settlementDate).toISOString()
+            : "",
+        };
+
+        setClientData(normalizedUpdated);
+        setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
+      }
 
       // Update matter number if it changed
       if (
-        normalizedUpdated.matterNumber &&
-        normalizedUpdated.matterNumber !== originalMatterNumber
+        updatedClient.matterNumber &&
+        updatedClient.matterNumber !== originalMatterNumber
       ) {
-        setOriginalMatterNumber(normalizedUpdated.matterNumber);
+        setOriginalMatterNumber(updatedClient.matterNumber);
       }
 
       // Handle navigation
@@ -915,14 +955,14 @@ export default function StagesLayout() {
       }
 
       if (
-        normalizedUpdated?.matterNumber &&
-        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
+        updatedClient?.matterNumber &&
+        String(updatedClient.matterNumber) !== String(originalMatterNumber)
       ) {
         setTimeout(() => {
           try {
-            navigate(`/admin/client/stages/${normalizedUpdated.matterNumber}`);
+            navigate(`/admin/client/stages/${updatedClient.matterNumber}`);
           } catch {
-            window.location.href = `/admin/client/stages/${normalizedUpdated.matterNumber}`;
+            window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
           }
         }, 450);
       }
@@ -1331,32 +1371,35 @@ export default function StagesLayout() {
                             : "Property Address"}
                         </label>
                         <input
-                          id={
-                            currentModule === "commercial"
-                              ? "businessAddress"
-                              : "propertyAddress"
-                          }
-                          name={
-                            currentModule === "commercial"
-                              ? "businessAddress"
-                              : "propertyAddress"
-                          }
+                          id="address"
+                          name="address"
                           type="text"
                           value={
                             currentModule === "commercial"
                               ? clientData?.businessAddress || ""
+                              : currentModule === "print media"
+                              ? clientData?.data?.deliveryAddress || ""
                               : clientData?.propertyAddress || ""
                           }
                           onChange={(e) => {
                             if (!isSuperAdmin) return;
-                            const fieldName =
-                              currentModule === "commercial"
-                                ? "businessAddress"
-                                : "propertyAddress";
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              [fieldName]: e.target.value,
-                            }));
+                            const value = e.target.value;
+                            setClientData((prev) => {
+                              if (!prev) return prev;
+                              if (currentModule === "commercial") {
+                                return { ...prev, businessAddress: value };
+                              }
+                              if (currentModule === "print media") {
+                                return {
+                                  ...prev,
+                                  data: {
+                                    ...(prev?.data || {}),
+                                    deliveryAddress: value,
+                                  },
+                                };
+                              }
+                              return { ...prev, propertyAddress: value };
+                            });
                           }}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
                             !isSuperAdmin ? "bg-gray-100" : ""
@@ -1563,7 +1606,8 @@ export default function StagesLayout() {
                             type="text"
                             value={
                               clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy || ""
+                              clientData?.data?.dataEntryBy ||
+                              ""
                             }
                             onChange={(e) =>
                               setClientData((prev) => ({

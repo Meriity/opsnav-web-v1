@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import moment from "moment";
+
 import {
   Edit,
   Trash2,
@@ -287,7 +289,18 @@ const Table = ({
                           isLeftAligned ? "text-left pl-3" : "text-center"
                         }`}
                         title={
-                          column.render ? column.render(item) : item[column.key]
+                          column.render
+                            ? column.render(item)
+                            : column.key === "matter_date" ||
+                              column.key === "settlement_date" ||
+                              column.key === "orderDate" ||
+                              column.key === "deliveryDate"
+                            ? item[column.key]
+                              ? moment(item[column.key]).isValid()
+                                ? moment(item[column.key]).format("DD-MM-YYYY")
+                                : "-"
+                              : "-"
+                            : item[column.key]
                         }
                       >
                         {column.key === "access" &&
@@ -295,6 +308,19 @@ const Table = ({
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
+                        ) : column.key === "matter_date" ||
+                          column.key === "settlement_date" ||
+                          column.key === "orderDate" ||
+                          column.key === "deliveryDate" ? (
+                          item[column.key] ? (
+                            moment(item[column.key]).isValid() ? (
+                              moment(item[column.key]).format("DD-MM-YYYY")
+                            ) : (
+                              "-"
+                            )
+                          ) : (
+                            "-"
+                          )
                         ) : (
                           item[column.key]
                         )}

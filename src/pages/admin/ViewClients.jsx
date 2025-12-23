@@ -564,15 +564,18 @@ const ViewClients = () => {
             </span>
           </h1> */}
 
-            <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
-              <div className="min-w-0">
+            <div className="flex flex-col gap-3 p-5">
+              <div className="max-w-3xl">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
                   <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     {getPageTitle()}
                   </span>
                 </h1>
                 {/* Dynamic subtitle similar to Manage Users */}
-                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+                <p
+                  className="text-gray-600 text-sm sm:text-base mt-1
+                    line-clamp-2 lg:line-clamp-1 wrap-break-word"
+                >
                   {currentModule === "commercial"
                     ? "Manage projects, tasks and related client details"
                     : currentModule === "print media"
@@ -581,7 +584,7 @@ const ViewClients = () => {
                 </p>
               </div>
 
-              <div className="flex w-full flex-wrap items-center justify-between md:w-auto md:justify-end gap-4">
+              <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 {/* Search input is now only in Header.jsx */}
                 <div className="flex items-center gap-2">
                   <label
@@ -622,8 +625,13 @@ const ViewClients = () => {
                       disabled={localStorage.getItem("role") !== "admin"}
                     >
                       <option value="">All Clients</option>
-                      {list.map((client) => (
-                        <option key={client.name} value={client.name}>
+                      {list.map((client, index) => (
+                        <option
+                          key={
+                            client._id || client.id || `${client.name}-${index}`
+                          }
+                          value={client.name}
+                        >
                           {client.name}
                         </option>
                       ))}

@@ -148,16 +148,9 @@ export default function ArchivedClients() {
           ? client.businessAddress
           : client.propertyAddress || client.property_address,
       business_address: client.businessAddress,
-      matter_date:
-        currentModule === "commercial"
-          ? moment(client.matterDate || client.matter_date).format("DD-MM-YYYY")
-          : client.matterDate || client.matter_date,
-      settlement_date:
-        currentModule === "commercial"
-          ? moment(client.settlementDate || client.settlement_date).format(
-              "DD-MM-YYYY"
-            )
-          : client.settlementDate || client.settlement_date,
+      matter_date: client.matterDate || client.matter_date || null,
+      settlement_date: client.settlementDate || client.settlement_date || null,
+
       state: client.state || "",
       clientType: client.clientType || client.type,
       status: client.status || "archived",
@@ -210,10 +203,34 @@ export default function ArchivedClients() {
           detailedClientData.businessAddress,
         business_address:
           selectedClient.business_address || detailedClientData.businessAddress,
+
         matter_date:
-          selectedClient.matter_date || detailedClientData.matterDate,
+          currentModule === "commercial"
+            ? detailedClientData.matter_date ||
+              detailedClientData.matterDate ||
+              selectedClient.matter_date
+            : undefined,
         settlement_date:
-          selectedClient.settlement_date || detailedClientData.settlementDate,
+          currentModule === "commercial"
+            ? detailedClientData.settlement_date ||
+              detailedClientData.settlementDate ||
+              selectedClient.settlement_date
+            : undefined,
+
+        // CONVEYANCING: Strict camelCase mapping
+        matterDate:
+          currentModule !== "commercial"
+            ? detailedClientData.matterDate ||
+              detailedClientData.matter_date ||
+              selectedClient.matterDate
+            : undefined,
+        settlementDate:
+          currentModule !== "commercial"
+            ? detailedClientData.settlementDate ||
+              detailedClientData.settlement_date ||
+              selectedClient.settlementDate
+            : undefined,
+
         logo: selectedClient.logo || detailedClientData.logo,
         __fullyLoaded: true,
       };
@@ -228,14 +245,28 @@ export default function ArchivedClients() {
       ? commercialLoading
       : vklLoading || zustandLoading;
   const error = currentModule === "commercial" ? commercialError : vklError;
+
   const activeData =
     currentModule === "commercial"
       ? commercialData || []
       : archivedClients || [];
 
+  const normalizedActiveData = useMemo(() => {
+    if (currentModule === "commercial") return activeData;
+
+    return (activeData || []).map((client) => ({
+      ...client,
+      matternumber: client.matterNumber || client.matternumber,
+      client_name: client.clientName || client.client_name,
+      property_address: client.propertyAddress || client.property_address,
+      matterDate: client.matterDate || client.matter_date || null,
+      settlementDate: client.settlementDate || client.settlement_date || null,
+    }));
+  }, [activeData, currentModule]);
+
   // Apply date & search filters using useMemo
   const filteredClientList = useMemo(() => {
-    let filteredData = activeData;
+    let filteredData = normalizedActiveData;
 
     if (fromDate && toDate) {
       filteredData = filteredData.filter((client) => {
@@ -245,7 +276,8 @@ export default function ArchivedClients() {
             new Date(client?.settlement_date || client?.settlementDate)
           );
         } else {
-          clientDate = moment(new Date(client?.settlement_date));
+          if (!client?.settlement_date) return false;
+          clientDate = moment(client.settlement_date);
         }
         return clientDate.isBetween(fromDate, toDate, "day", "[]");
       });
@@ -297,8 +329,8 @@ export default function ArchivedClients() {
         { key: "property_address", title: "Property Address" },
         { key: "state", title: "State" },
         { key: "type", title: "Client Type" },
-        { key: "matter_date", title: "Matter Date" },
-        { key: "settlement_date", title: "Settlement Date" },
+        { key: "matterDate", title: "Matter Date" },
+        { key: "settlementDate", title: "Settlement Date" },
         { key: "status", title: "Status" },
       ];
     } else if (currentModule === "print media") {
@@ -326,6 +358,7 @@ export default function ArchivedClients() {
 
   const sortedClientList = useMemo(() => {
     let sortableItems = [...filteredClientList];
+
     if (sortedColumn !== null) {
       sortableItems.sort((a, b) => {
         const aVal = a[sortedColumn];
@@ -341,19 +374,8 @@ export default function ArchivedClients() {
           sortedColumn === "orderDate" ||
           sortedColumn === "deliveryDate"
         ) {
-          let dateA, dateB;
-
-          if (
-            currentModule === "commercial" &&
-            (sortedColumn === "matter_date" ||
-              sortedColumn === "settlement_date")
-          ) {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          } else {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          }
+          const dateA = moment(aVal);
+          const dateB = moment(bVal);
 
           if (dateA.isBefore(dateB)) return sortDirection === "asc" ? -1 : 1;
           if (dateA.isAfter(dateB)) return sortDirection === "asc" ? 1 : -1;
@@ -365,8 +387,9 @@ export default function ArchivedClients() {
         return 0;
       });
     }
+
     return sortableItems;
-  }, [filteredClientList, sortedColumn, sortDirection, currentModule]);
+  }, [filteredClientList, sortedColumn, sortDirection]);
 
   // ----- Export helpers -----
   async function handleExcelExport(withFrom, withTo) {
