@@ -17,6 +17,7 @@ import WorkSelection from "./pages/admin/WorkSelection";
 import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
 import TermsOfService from "./pages/TermsPage";
+import ContactSupport from "./pages/ContactSupport";
 import GetStartedFree from "./pages/GetStartedFree";
 import BookDemo from "./pages/BookDemo";
 import ComingSoon from "./pages/ComingSoon";
@@ -60,6 +61,7 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/get-started-free" element={<GetStartedFree />} />
+        <Route path="/contact-support" element={<ContactSupport />} />
         <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
