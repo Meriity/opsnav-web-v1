@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import useDebounce from "../../hooks/useDebounce";
+import { useLocation } from "react-router-dom";
 import {
   Search,
   Maximize2,
@@ -14,8 +15,10 @@ import {
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
+import { useArchivedClientStore } from "../../pages/ArchivedClientStore/UseArchivedClientStore.js";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
 import { motion, AnimatePresence } from "framer-motion";
+import CommercialAPI from "../../api/commercialAPI";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -28,11 +31,18 @@ export default function Header() {
   const [isMac, setIsMac] = useState(true);
 
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
+  const { archivedClients } = useArchivedClientStore();
+
   const navigate = useNavigate();
   const currentModule = localStorage.getItem("currentModule");
+  const isPrintMedia = currentModule === "print media";
 
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
+
+  const location = useLocation();
+  const isArchivedPage = location.pathname.includes("archived");
 
   const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 0 });
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -99,89 +109,92 @@ export default function Header() {
     try {
       const lowercasedValue = value.toLowerCase();
 
-      let response =
-        currentModule === "print media"
-          ? await api.getIDGSearchResult(value)
-          : await api.getSearchResult(value);
-      if (!Array.isArray(response) || response.length === 0) {
-        try {
-          const allClients = await api.getClients();
-          response = Array.isArray(allClients)
-            ? allClients
-            : allClients?.data || allClients?.clients || [];
-        } catch (e) {
-          console.warn("Fallback getClients failed:", e);
-          response = Array.isArray(response) ? response : [];
-        }
-      } else {
-        try {
-          const allClients = await api.getClients();
-          const list = Array.isArray(allClients)
-            ? allClients
-            : allClients?.data || [];
-          const map = new Map();
-          (response || []).forEach((r) =>
-            map.set(String(r.matterNumber || r.orderId || r._id), r)
-          );
-          (list || []).forEach((r) =>
-            map.set(String(r.matterNumber || r.orderId || r._id), r)
-          );
-          response = Array.from(map.values());
-        } catch {
-          /* ignore merge failures; we already have server response */
-        }
+      let response = [];
+
+      // 🔹 COMMERCIAL (FIX)
+      if (currentModule === "commercial") {
+        response = isArchivedPage
+          ? await commercialApi.getArchivedProjects()
+          : await commercialApi.getActiveProjects();
       }
+
+      // 🔹 PRINT MEDIA
+      else if (currentModule === "print media") {
+        const stored = JSON.parse(
+          localStorage.getItem("client-storage") || "{}"
+        );
+        response = stored?.state?.clients || [];
+      }
+
+      // 🔹 ARCHIVED
+      else if (archivedClients && archivedClients.length > 0) {
+        response = archivedClients.map((c) => c.__raw || c);
+      }
+      // 🔹 DEFAULT (Conveyancing)
+      else {
+        response = await api.getSearchResult(value);
+      }
+
+      // Normalize
+      response = Array.isArray(response)
+        ? response
+        : response?.data || response?.clients || [];
 
       const searchWords = lowercasedValue.split(/\s+/).filter(Boolean);
 
+      const getNumericIdentifiers = (item) => {
+        const raw = item.__raw || item;
+
+        return [raw.matterNumber, raw.orderId, raw.clientId, raw.id, raw._id]
+          .filter(Boolean)
+          .map((v) => String(v));
+      };
+
       const filteredResults = (response || []).filter((item) => {
-        const topFields = [
-          String(item.matterNumber || item.orderId || ""),
-          String(item.clientName || item.client_name || ""),
-          String(
-            item.propertyAddress ||
-              item.property_address ||
-              item.businessAddress ||
-              ""
-          ),
-          String(item.state || ""),
-          String(item.referral || item.referralName || ""),
-          String(item.businessName || ""),
-          String(item.businessAddress || ""),
-          String(item.clientType || item.type || ""),
-        ];
+        const raw = item.__raw || item;
 
-        const stageRefValues = Object.keys(item)
-          .filter((k) => /^stage\d/i.test(k))
-          .map((k) => String(item[k]?.referral || item[k]?.referralName || ""))
-          .filter(Boolean);
+        const printMediaIds = [raw.orderId, raw.clientId]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
 
-        let commercialStageRefs = [];
-        if (item.stages && Array.isArray(item.stages)) {
-          item.stages.forEach((stageObj) => {
-            if (stageObj && typeof stageObj === "object") {
-              Object.values(stageObj).forEach((stageData) => {
-                if (
-                  stageData &&
-                  typeof stageData === "object" &&
-                  stageData.referral
-                ) {
-                  commercialStageRefs.push(String(stageData.referral));
-                }
-              });
-            }
-          });
-        }
+        const numericFields = [raw.matterNumber]
+          .filter(Boolean)
+          .map((v) => String(v));
 
-        const fields = [
-          ...topFields,
-          ...stageRefValues,
-          ...commercialStageRefs,
-        ].map((x) => String(x).toLowerCase());
+        const textFields = [
+          raw.clientName || raw.client_name,
+          raw.businessName,
+          raw.businessAddress || raw.propertyAddress || raw.property_address,
+          raw.state,
+          raw.clientType || raw.type,
+          raw.referral || raw.referralName,
+        ]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
 
-        return searchWords.some((word) =>
-          fields.some((field) => field.includes(word))
-        );
+        return searchWords.every((word) => {
+          const lowerWord = word.toLowerCase();
+          const numericWord = word.replace(/\D/g, "");
+          const isPureNumeric = /^\d+$/.test(word);
+
+          // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
+          if (isPrintMedia) {
+            return (
+              printMediaIds.some((id) => id.includes(lowerWord)) ||
+              textFields.some((field) => field.includes(lowerWord))
+            );
+          }
+
+          // 🔵 COMMERCIAL / CONVEYANCING — STRICT NUMERIC
+          if (isPureNumeric) {
+            return numericFields.some(
+              (field) => field === numericWord || field.startsWith(numericWord)
+            );
+          }
+
+          // 🔵 TEXT SEARCH
+          return textFields.some((field) => field.includes(lowerWord));
+        });
       });
 
       setSearchResult(filteredResults);
