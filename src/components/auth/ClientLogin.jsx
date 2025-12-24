@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -24,7 +24,7 @@ function LoginForm() {
   // const [showPostcode, setShowPostcode] = useState(false);
   const navigate = useNavigate();
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -60,7 +60,7 @@ const handleSubmit = async (e) => {
           "Login failed: No valid identifier found in the response."
         );
       }
-    }catch (err) {
+    } catch (err) {
       toast.error(
         err.message ||
           "Authentication failed! Please check credentials and try again.",
@@ -192,9 +192,9 @@ const handleSubmit = async (e) => {
             </h1>
 
             <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-7 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:1024px)_and_(max-height:800px)]:mb-4">
-              Access your centralised workspace for streamlined
-              operations, automated processes, and real-time insights that keep
-              your team productive.
+              Access your centralised workspace for streamlined operations,
+              automated processes, and real-time insights that keep your team
+              productive.
             </p>
 
             {/* Feature List Grid: Hidden on Mobile & Tablet (768px), Visible on 1024px (lg:grid) */}
@@ -270,7 +270,7 @@ const handleSubmit = async (e) => {
               >
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Email Address / Matter Number
+                    Matter Number
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -374,12 +374,13 @@ const handleSubmit = async (e) => {
                 <div className="text-center pt-3 sm:pt-4 border-t border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:pt-2">
                   <p className="text-xs sm:text-sm text-gray-500">
                     New to OpsNav?{" "}
-                    <a
+                    <Link
+                      to="/get-started-free"
                       href="#"
                       className="text-[#2E3D99] hover:underline font-medium"
                     >
                       Start your free trial
-                    </a>
+                    </Link>
                   </p>
                 </div>
               </form>

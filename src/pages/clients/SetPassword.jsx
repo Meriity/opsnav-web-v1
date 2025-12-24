@@ -82,8 +82,17 @@ function SetPassword() {
         }, 1500);
       }
     } catch (err) {
-      const errorMessage =
-        err.message || "Failed to set password. Please try again.";
+      const errorResponse = err.response?.data;
+      let errorMessage = "Failed to set password. Please try again.";
+
+      if (errorResponse?.error === "Invalid or expired token") {
+        errorMessage =
+          "This password reset link has expired or is invalid. Please request a new password reset link from the login page.";
+      } else if (errorResponse?.error) {
+        errorMessage = errorResponse.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
       toast.error(errorMessage, {
         position: "bottom-center",
