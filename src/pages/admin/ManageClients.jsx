@@ -379,7 +379,7 @@ export default function ManageUsers() {
             setIsOpen={() => setcreateuser(false)}
             onClose={() => {
               setcreateuser(false);
-              // window.location.reload();
+              window.location.reload();
             }}
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
