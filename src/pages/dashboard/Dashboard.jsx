@@ -108,7 +108,12 @@ const useDashboardStore = create((set) => ({
         : 0;
 
       const totalPending = sixMonthsData.reduce(
-        (sum, item) => sum + (item.pendingMatters || 0),
+        (sum, item) =>
+          sum +
+          (item.pendingMatters ??
+            item.pendingOrders ??
+            item.pendingProjects ??
+            0),
         0
       );
 
@@ -395,32 +400,32 @@ const processCalendarData = (data, currentModule) => {
   const events = [];
 
   if (currentModule === "commercial") {
-    let calendarItems = [];
-
-    if (Array.isArray(data)) calendarItems = data;
-    else if (data?.data) calendarItems = data.data;
-    else if (data?.clients) calendarItems = data.clients;
-    else if (data?.events) calendarItems = data.events;
+    const calendarItems = Array.isArray(data) ? data : [];
 
     calendarItems.forEach((item) => {
-      const eventDate =
-        item.eventDate || item.date || item.settlementDate || item.projectDate;
+      if (!item.settlementDate) return;
 
-      if (eventDate) {
-        events.push({
-          title: `[${item.projectCode || item.matterNumber || "N/A"}]`,
-          start: moment(eventDate).toDate(),
-          end: moment(eventDate).toDate(),
-          allDay: true,
-          type: item.eventType || "Event",
-          projectCode: item.projectCode,
-          matterNumber: item.matterNumber,
-          id: item.projectCode || item.matterNumber,
-        });
-      }
+      events.push({
+        title: `[${item.matterNumber}] - Settlement`,
+        start: moment(item.settlementDate).toDate(),
+        end: moment(item.settlementDate).toDate(),
+        allDay: true,
+        type: "settlement",
+        clientType: item.clientType,
+        matterNumber: item.matterNumber,
+        id: `${item.matterNumber}-settlement`,
+      });
     });
   } else if (currentModule === "conveyancing" || currentModule === "wills") {
-    let calendarItems = Array.isArray(data?.data) ? data.data : data;
+    let calendarItems = [];
+
+    if (Array.isArray(data?.data?.data)) {
+      calendarItems = data.data.data;
+    } else if (Array.isArray(data?.data)) {
+      calendarItems = data.data;
+    } else if (Array.isArray(data)) {
+      calendarItems = data;
+    }
 
     calendarItems.forEach((item) => {
       if (item.settlementDate) {
@@ -430,8 +435,52 @@ const processCalendarData = (data, currentModule) => {
           end: moment(item.settlementDate).toDate(),
           allDay: true,
           type: "settlement",
+          clientType: item.clientType,
           matterNumber: item.matterNumber,
-          id: item.matterNumber,
+          id: `${item.matterNumber}-settlement`,
+        });
+      }
+      if (item.financeApprovalDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Finance`,
+          start: moment(item.financeApprovalDate).toDate(),
+          end: moment(item.financeApprovalDate).toDate(),
+          allDay: true,
+          type: "financeApproval",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          isApproved: item.financeApproval?.toLowerCase() === "yes",
+          id: `${item.matterNumber}-finance`,
+        });
+      }
+
+      // Building & Pest
+      if (item.buildingAndPestDate) {
+        events.push({
+          title: `[${item.matterNumber}] - B&P`,
+          start: moment(item.buildingAndPestDate).toDate(),
+          end: moment(item.buildingAndPestDate).toDate(),
+          allDay: true,
+          type: "buildingAndPest",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          isApproved: item.buildingAndPest?.toLowerCase() === "yes",
+          id: `${item.matterNumber}-bp`,
+        });
+      }
+
+      // Title Search
+      if (item.titleSearchDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Title Search`,
+          start: moment(item.titleSearchDate).toDate(),
+          end: moment(item.titleSearchDate).toDate(),
+          allDay: true,
+          type: "titleSearch",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          isApproved: item.titleSearch?.toLowerCase() === "yes",
+          id: `${item.matterNumber}-title`,
         });
       }
     });
@@ -851,31 +900,34 @@ function Dashboard() {
     return { views: [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA] };
   }, [isMobile, isTablet]);
 
-  // Calculate current period total based on chart view
-  const chartPeriodTotal = useMemo(() => {
-    if (!currentChartData || currentChartData.length === 0) return 0;
-    return currentChartData.reduce((sum, item) => {
-      const closedCount =
-        item.closedMatters ??
-        item.closedProjects ??
-        item.completedProjects ??
-        item.closedOrders ??
-        item.count ??
-        item.total ??
-        0;
-      return sum + closedCount;
-    }, 0);
-  }, [currentChartData]);
+  const CustomBarLabel = (props) => {
+    const { x, y, width, value } = props;
+    const { width: screenWidth } = useWindowSize();
+    const isMobile = screenWidth < 768;
+
+    if (value === 0 || !value) return null;
+
+    return (
+      <text
+        x={x + width / 2}
+        y={y - (isMobile ? 5 : 8)}
+        fill="#374151"
+        textAnchor="middle"
+        fontSize={isMobile ? 9 : 11}
+        fontWeight="600"
+      >
+        {value}
+      </text>
+    );
+  };
 
   useEffect(() => {
     if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
       return;
 
     let sourceData;
-    let isAllTimeView = chartView === "allTime";
-
-    if (isAllTimeView) {
-      // For "All Time" view on mobile/tablet, show aggregated yearly data instead of all months
+    if (chartView === "allTime") {
+      // For "All Time" view
       const allTimeData = allChartData.allTimeStats || [];
       if (isMobile || isTablet) {
         // Group by year for mobile/tablet
@@ -885,18 +937,16 @@ function Dashboard() {
           if (!yearlyData[year]) {
             yearlyData[year] = {
               name: year.toString(),
-              closedMatters: 0,
               year: year,
+              closedMatters: 0,
             };
           }
-          yearlyData[year].closedMatters +=
-            item.closedMatters ??
-            item.closedProjects ??
-            item.completedProjects ??
-            item.closedOrders ??
-            item.count ??
-            item.total ??
-            0;
+          yearlyData[year].closedMatters += item.closedMatters || 0;
+          if (item.pendingMatters !== undefined) {
+            yearlyData[year].pendingMatters =
+              (yearlyData[year].pendingMatters || 0) +
+              (item.pendingMatters || 0);
+          }
         });
         sourceData = Object.values(yearlyData).slice(-5); // Show last 5 years
       } else {
@@ -908,131 +958,17 @@ function Dashboard() {
       sourceData = (allChartData.monthlyStats || []).slice(-6);
     }
 
-    let formattedData;
-
-    if (currentModule === "commercial") {
-      formattedData = sourceData.map((item, index) => {
-        const closedCount =
-          item.closedProjects ??
-          item.completedProjects ??
-          item.count ??
-          item.total ??
-          item.closedMatters ??
-          item.value ??
-          item.closedMatters ?? // For yearly aggregated data
-          0;
-
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          // For mobile/tablet all time view, show years
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          // For 6 months view
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name =
-            monthIndex !== -1
-              ? item.month
-              : item.name || item.label || `M${index + 1}`;
-        } else {
-          // For desktop all time view
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : item.name || item.label || `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: closedCount,
-        };
-      });
-    } else if (currentModule === "conveyancing" || currentModule === "wills") {
-      formattedData = sourceData.map((item, index) => {
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name = monthIndex !== -1 ? item.month : item.name || `M${index + 1}`;
-        } else {
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-          pendingMatters: item.pendingMatters ?? 0,
-        };
-      });
-    } else if (currentModule === "print media") {
-      formattedData = sourceData.map((item, index) => {
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name = monthIndex !== -1 ? item.month : item.name || `M${index + 1}`;
-        } else {
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
-        };
-      });
-    }
+    const formattedData = sourceData.map((item) => ({
+      ...item,
+      closedValue:
+        item.closedMatters ??
+        item.closedProjects ??
+        item.completedProjects ??
+        item.closedOrders ??
+        0,
+      pendingValue:
+        item.pendingMatters ?? item.pendingProjects ?? item.pendingOrders ?? 0,
+    }));
 
     setCurrentChartData(formattedData || []);
   }, [chartView, allChartData, currentModule, isMobile, isTablet]);
@@ -1435,7 +1371,7 @@ function Dashboard() {
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
                           <Bar
-                            dataKey="closedMatters"
+                            dataKey="closedValue"
                             name={
                               currentModule === "commercial"
                                 ? "Completed Projects"
@@ -1451,9 +1387,26 @@ function Dashboard() {
                                   : 20
                                 : 30
                             }
+                            label={<CustomBarLabel />}
                             radius={[4, 4, 0, 0]}
                           />
-
+                          {currentModule === "commercial" &&
+                            chartView === "last6Months" && (
+                              <Bar
+                                dataKey="pendingValue"
+                                name="Pending Projects"
+                                fill="#FB4A50"
+                                barSize={
+                                  isMobile
+                                    ? chartView === "allTime"
+                                      ? 15
+                                      : 20
+                                    : 30
+                                }
+                                label={<CustomBarLabel />}
+                                radius={[4, 4, 0, 0]}
+                              />
+                            )}
                           {currentModule === "conveyancing" &&
                             chartView === "last6Months" && (
                               <Bar
@@ -1467,6 +1420,7 @@ function Dashboard() {
                                       : 20
                                     : 30
                                 }
+                                label={<CustomBarLabel />}
                                 radius={[4, 4, 0, 0]}
                               />
                             )}
