@@ -777,6 +777,7 @@ export default function Stage4({
       <ConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
+        onDiscard={() => setShowConfirmModal(false)}
         onConfirm={handleDeleteConfirm}
         title="Remove Picture"
         message="Are you sure you want to delete this image? This action cannot be undone."

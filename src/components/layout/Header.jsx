@@ -384,7 +384,7 @@ export default function Header() {
                     type="text"
                     placeholder={
                       currentModule === "print media"
-                        ? "Search Order ID..."
+                        ? "Search..."
                         : "Search Matter # or Client..."
                     }
                     className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"

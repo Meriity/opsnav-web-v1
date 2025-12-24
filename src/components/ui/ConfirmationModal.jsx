@@ -92,7 +92,7 @@ export default function ConfirmationModal({
                   <>
                     <Button
                       label="Leave"
-                      onClick={onDiscard}
+                      onClick={onDiscard || onClose}
                       disabled={isConfirming}
                       bg="bg-red-500"
                       textColor="text-white"

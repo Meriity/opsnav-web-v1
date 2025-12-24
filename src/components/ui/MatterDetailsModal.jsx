@@ -644,10 +644,10 @@ const MatterDetailsModal = ({
             {/* Footer */}
             <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
+                {/* <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Last updated: {formatDate(display.updatedAt)}</span>
-                </div>
+                </div> */}
                 <div className="flex space-x-2 sm:space-x-3 justify-end">
                   <button
                     onClick={onClose}
