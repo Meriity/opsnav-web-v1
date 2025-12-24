@@ -7,6 +7,7 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
 const formConfig = {
@@ -658,10 +659,12 @@ export default function Stage4({
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
-                    className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full text-xs"
+                    className="absolute top-2 right-2 text-black p-1.5 rounded-full hover:bg-gray-200 transition-colors"
                     disabled={isDeleting}
+                    title="Delete image"
                   >
-                    X
+                    <TrashIcon className="w-4 h-4" />
+                    {isDeleting && <span className="sr-only">Deleting...</span>}
                   </button>
                 </div>
               )}
@@ -775,7 +778,7 @@ export default function Stage4({
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Image"
+        title="Remove Picture"
         message="Are you sure you want to delete this image? This action cannot be undone."
       />
     </div>
