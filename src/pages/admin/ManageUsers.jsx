@@ -730,7 +730,7 @@ export default function ManageUsers() {
                   >
                     <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="hidden xs:inline">Create User</span>
-                    <span className="xs:hidden">Add User</span>
+                    <span className="xs:hidden">Create User</span>
                   </motion.button>
                 )}
               </div>

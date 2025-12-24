@@ -379,7 +379,7 @@ export default function ManageUsers() {
             setIsOpen={() => setcreateuser(false)}
             onClose={() => {
               setcreateuser(false);
-              // window.location.reload();
+              window.location.reload();
             }}
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
@@ -395,7 +395,7 @@ export default function ManageUsers() {
             onClick={() => setcreateuser(true)}
             className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
           >
-            <span className="xs:hidden">Add Client</span>
+            <span className="xs:hidden">Create Client</span>
           </motion.button>
         </div>
 
