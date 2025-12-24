@@ -377,6 +377,10 @@ export default function ManageUsers() {
             module={currentModule}
             isOpen={createuser}
             setIsOpen={() => setcreateuser(false)}
+            onClose={() => {
+              setcreateuser(false);
+              // window.location.reload();
+            }}
           />
           <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
           {/* <Button
@@ -408,32 +412,30 @@ export default function ManageUsers() {
                   onChange={(e) => setUsersPerPage(Number(e.target.value))}
                 />
               </div>
-              <div className="bg-white rounded-lg shadow">
-                <Table
-                  data={userList}
-                  columns={columns}
-                  onEdit={(u) => {
-                    console.log(u);
-                    setSelectedUser(u);
-                    setOpenEdit(true);
-                  }}
-                  onReset={handleReset}
-                  onDelete={(id) => {
-                    setId(id);
-                    setOpenDelete(true);
-                  }}
-                  itemsPerPage={usersPerPage}
-                  headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
-                  cellWrappingClass="whitespace-normal"
-                  resetLoadingEmail={resetLoadingEmail}
-                  resetSuccessEmail={resetSuccessEmail}
-                  showActions={true}
-                  isClients={true}
-                />
-              </div>
+              <Table
+                data={userList}
+                columns={columns}
+                onEdit={(u) => {
+                  console.log(u);
+                  setSelectedUser(u);
+                  setOpenEdit(true);
+                }}
+                onReset={handleReset}
+                onDelete={(id) => {
+                  setId(id);
+                  setOpenDelete(true);
+                }}
+                itemsPerPage={usersPerPage}
+                headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
+                cellWrappingClass="whitespace-normal"
+                resetLoadingEmail={resetLoadingEmail}
+                resetSuccessEmail={resetSuccessEmail}
+                showActions={true}
+                isClients={true}
+              />
             </div>
             {/* Mobile & Tablet Card View */}
-            <div className="lg:hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
               <div className="sm:col-span-2">
                 <UsersPerPage
                   value={usersPerPage}
@@ -593,148 +595,284 @@ export default function ManageUsers() {
         </div>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-10">
+      {/* Edit Dialog - UPDATED UI */}
+      <Dialog
+        open={openEdit}
+        onClose={setOpenEdit}
+        className="relative z-[100]"
+      >
         {console.log(selectedUser)}
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button
-                onClick={() => setOpenEdit(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
+        <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="relative bg-white/90 backdrop-blur-md rounded-xl w-full max-w-3xl shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setOpenEdit(false)}
+              className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform z-10"
+            >
+              &times;
+            </button>
 
-              <h2 className="text-lg font-bold mb-4">
-                Edit {currentModule === "commercial" ? "Project" : "Client"} ID
-                : {selectedUser.clientId}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-6 text-center">
+                Edit {currentModule === "commercial" ? "Project" : "Client"}
               </h2>
 
-              {/* Name */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Name
-              </label>
-              <input
-                value={selectedUser.name}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    name: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+              <div className="space-y-5">
+                {/* Display Client/Project ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      {currentModule === "commercial"
+                        ? "Project ID"
+                        : "Client ID"}
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedUser.clientId || ""}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100/80 backdrop-blur-sm"
+                      disabled
+                    />
+                  </div>
 
-              {/* Email */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                value={selectedUser.email || ""}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                  {/* Name field */}
+                  <div>
+                    <label className="block mb-1 font-medium">Name*</label>
+                    <input
+                      type="text"
+                      value={selectedUser.name || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Password
-              </label>
-              <input
-                placeholder="Update new password here and click edit"
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    password: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Email field */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Email*</label>
+                    <input
+                      type="email"
+                      value={selectedUser.email || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          email: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
 
-              {/* Address */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Address
-              </label>
-              <input
-                value={selectedUser.address || ""}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    address: e.target.value, // fixed to update address
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
-              {/* Country */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Country
-              </label>
-              <input
-                value={selectedUser.country}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    country: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                  {/* Contact field */}
+                  <div>
+                    <label className="block mb-1 font-medium">Contact*</label>
+                    <input
+                      type="text"
+                      value={selectedUser.contact || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          contact: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-              {/* State */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                State
-              </label>
-              <input
-                value={selectedUser.state}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    state: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
-              {/* Postcode */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Postcode
-              </label>
-              <input
-                value={selectedUser.postcode}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    postcode: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Password field (optional) */}
+                <div>
+                  <label className="block mb-1 font-medium">Password </label>
+                  <input
+                    type="password"
+                    placeholder="Update new password here and click edit"
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        password: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
 
-              {/* ABN */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                ABN
-              </label>
-              <input
-                value={selectedUser.abn}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    abn: e.target.value, // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Address field */}
+                <div>
+                  <label className="block mb-1 font-medium">Address*</label>
+                  <input
+                    type="text"
+                    value={selectedUser.address || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        address: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    required
+                  />
+                </div>
 
-              <Button
-                label={`Edit ${
-                  currentModule === "commercial" ? "Project" : "Client"
-                }`}
-                onClick={handleUserUpdate}
-              />
-            </DialogPanel>
-          </div>
+                {/* Location fields - Country, State, Postcode */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Country</label>
+                    <input
+                      type="text"
+                      value={selectedUser.country || "Australia"}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          country: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">State</label>
+                    <select
+                      value={selectedUser.state || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          state: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    >
+                      <option value="">Select State</option>
+                      <option value="ACT">ACT</option>
+                      <option value="NSW">NSW</option>
+                      <option value="NT">NT</option>
+                      <option value="QLD">QLD</option>
+                      <option value="SA">SA</option>
+                      <option value="TAS">TAS</option>
+                      <option value="VIC">VIC</option>
+                      <option value="WA">WA</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode</label>
+                    <input
+                      type="text"
+                      value={selectedUser.postcode || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          postcode: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* ABN field */}
+                <div>
+                  <label className="block mb-1 font-medium">ABN</label>
+                  <input
+                    type="text"
+                    value={selectedUser.abn || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        abn: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
+
+                {/* Additional fields for Commercial module */}
+                {currentModule === "commercial" && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-1 font-medium">
+                          Client Type
+                        </label>
+                        <select
+                          value={selectedUser.clientType || ""}
+                          onChange={(e) =>
+                            setSelectedUser({
+                              ...selectedUser,
+                              clientType: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Buyer">Buyer</option>
+                          <option value="Seller">Seller</option>
+                          <option value="Transfer">Transfer</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block mb-1 font-medium">
+                          Matter Date
+                        </label>
+                        <input
+                          type="date"
+                          value={selectedUser.matterDate || ""}
+                          onChange={(e) =>
+                            setSelectedUser({
+                              ...selectedUser,
+                              matterDate: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Settlement Date
+                      </label>
+                      <input
+                        type="date"
+                        value={selectedUser.settlementDate || ""}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            settlementDate: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Submit Button */}
+                <div className="pt-4">
+                  <button
+                    onClick={handleUserUpdate}
+                    disabled={deleteLoading}
+                    className={`w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md transition-all ${
+                      deleteLoading
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-sky-600 hover:shadow-lg"
+                    }`}
+                  >
+                    {deleteLoading ? "Updating..." : "Update"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </DialogPanel>
         </div>
       </Dialog>
 
