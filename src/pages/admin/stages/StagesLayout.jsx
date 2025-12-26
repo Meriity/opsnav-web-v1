@@ -962,13 +962,14 @@ export default function StagesLayout() {
         let direct = resp.directUrl;
         if (!direct.startsWith("/")) direct = `/${direct}`;
         if (!direct.match(/^\/admin/)) direct = `/admin${direct}`;
-        setTimeout(() => {
-          try {
-            navigate(direct);
-          } catch {
-            window.location.href = direct;
-          }
-        }, 450);
+        // setTimeout(() => {
+        //   try {
+        //     navigate(direct);
+        //   } catch {
+        //     window.location.href = direct;
+        //   }
+        // }, 450);
+        window.location.href = direct;
         return;
       }
 
@@ -976,13 +977,17 @@ export default function StagesLayout() {
         updatedClient?.matterNumber &&
         String(updatedClient.matterNumber) !== String(originalMatterNumber)
       ) {
-        setTimeout(() => {
-          try {
-            navigate(`/admin/client/stages/${updatedClient.matterNumber}`);
-          } catch {
-            window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
-          }
-        }, 450);
+        // setTimeout(() => {
+        //   try {
+        //     navigate(`/admin/client/stages/${updatedClient.matterNumber}`);
+        //   } catch {
+        //     window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
+        //   }
+        // }, 450);
+        window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
+      } else {
+        // Force hard reload on the current page
+        window.location.reload();
       }
     } catch (err) {
       let msg = "Failed to update. Please try again.";
