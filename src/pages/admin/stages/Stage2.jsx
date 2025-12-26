@@ -41,6 +41,13 @@ const formConfig = {
         type: "radio",
       },
       { name: "obtainDaSeller", label: "Obtain DA(Seller)", type: "radio" },
+      {
+        name: "vendorDisclosure",
+        label: "Vendor Disclosure",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "vendorDisclosureDate",
+      },
     ],
     noteGroups: [
       {
@@ -50,7 +57,13 @@ const formConfig = {
         systemNoteKey: "systemNoteA",
         clientCommentKey: "clientCommentA",
         noteForClientKey: "noteForClientA",
-        fieldsForNote: ["voi", "caf", "depositReceipt", "obtainDaSeller"],
+        fieldsForNote: [
+          "voi",
+          "caf",
+          "depositReceipt",
+          "obtainDaSeller",
+          "vendorDisclosure",
+        ],
       },
       {
         id: "B",
@@ -257,6 +270,12 @@ export default function Stage2({
         ) {
           return false;
         }
+        if (
+          field.name === "vendorDisclosure" &&
+          (clientType || "").toLowerCase() !== "seller"
+        ) {
+          return false;
+        }
         return !greenValues.has(normalizeValue(formData[field.name] || ""));
       })
       .map((field) => field.label);
@@ -409,6 +428,12 @@ export default function Stage2({
       ) {
         return false;
       }
+      if (
+        field.name === "vendorDisclosure" &&
+        (clientType || "").toLowerCase() !== "seller"
+      ) {
+        return false;
+      }
       return true;
     });
 
@@ -421,6 +446,8 @@ export default function Stage2({
     if ((clientType || "").toLowerCase() !== "seller") {
       delete payload.obtainDaSeller;
       delete payload.obtainDaSellerDate;
+      delete payload.vendorDisclosure;
+      delete payload.vendorDisclosureDate;
     }
 
     try {
@@ -618,6 +645,12 @@ export default function Stage2({
       {currentConfig.fields.map((field) => {
         if (
           field.name === "obtainDaSeller" &&
+          (clientType || "").toLowerCase() !== "seller"
+        ) {
+          return null;
+        }
+        if (
+          field.name === "vendorDisclosure" &&
           (clientType || "").toLowerCase() !== "seller"
         ) {
           return null;

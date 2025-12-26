@@ -795,7 +795,7 @@ const ViewClients = () => {
                             {({ active }) => (
                               <button
                                 onClick={() => setcreateuser(true)}
-                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
                               >
                                 {getCreateButtonLabel()}
                               </button>
@@ -805,7 +805,7 @@ const ViewClients = () => {
                             {({ active }) => (
                               <button
                                 onClick={() => setShowOutstandingTask(true)}
-                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
                               >
                                 Outstanding Tasks
                               </button>
@@ -815,11 +815,7 @@ const ViewClients = () => {
                             {({ active }) => (
                               <button
                                 onClick={() => setShowDateRange(true)}
-                                className={`block w-full text-left px-4 py-2 text-sm ${
-                                  active
-                                    ? "bg-sky-50 text-sky-700"
-                                    : "text-gray-700"
-                                }`}
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
                               >
                                 Select Date Range
                               </button>
