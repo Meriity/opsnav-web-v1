@@ -443,8 +443,11 @@ const processCalendarData = (data, currentModule) => {
       if (item.financeApprovalDate) {
         events.push({
           title: `[${item.matterNumber}] - Finance`,
-          start: moment(item.financeApprovalDate).toDate(),
-          end: moment(item.financeApprovalDate).toDate(),
+          start: moment(item.financeApprovalDate).startOf("day").toDate(),
+          end: moment(item.financeApprovalDate)
+            .add(1, "day")
+            .startOf("day")
+            .toDate(),
           allDay: true,
           type: "financeApproval",
           clientType: item.clientType,
@@ -458,8 +461,11 @@ const processCalendarData = (data, currentModule) => {
       if (item.buildingAndPestDate) {
         events.push({
           title: `[${item.matterNumber}] - B&P`,
-          start: moment(item.buildingAndPestDate).toDate(),
-          end: moment(item.buildingAndPestDate).toDate(),
+          start: moment(item.buildingAndPestDate).startOf("day").toDate(),
+          end: moment(item.buildingAndPestDate)
+            .add(1, "day")
+            .startOf("day")
+            .toDate(),
           allDay: true,
           type: "buildingAndPest",
           clientType: item.clientType,
@@ -1274,7 +1280,7 @@ function Dashboard() {
                       </p>
                     </div>
                     {/* Time Toggle - Enhanced */}
-                    <div className="flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm">
+                    <div className="inline-flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm w-fit self-start">
                       <button
                         onClick={() => setChartView("last6Months")}
                         className={`time-toggler-button px-2 sm:px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
@@ -1455,7 +1461,7 @@ function Dashboard() {
                   {/* Summary Stats - Enhanced */}
                   {chartView === "last6Months" && (
                     <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-xl border border-[#2E3D99]/10">
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+                      <div className="flex flex-row sm:flex-row items-center justify-between gap-4">
                         <div>
                           <p className="text-xs sm:text-sm font-medium text-gray-600">
                             Total in last 6 months
