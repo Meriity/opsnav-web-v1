@@ -142,6 +142,7 @@ export default function StagesLayout() {
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [_isUpdating, setIsUpdating] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState("stage");
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -825,6 +826,17 @@ export default function StagesLayout() {
           order_details: clientData?.data?.order_details || null,
           notes: clientData?.data?.notes || "",
           postCode: clientData?.data?.postcode || clientData?.data?.postCode,
+          orderDate:
+            clientData?.data?.orderDate || clientData?.matterDate || null,
+          orderId: clientData?.data?.orderId || clientData?.matterNumber || "",
+          clientName:
+            clientData?.data?.client?.name || clientData?.clientName || "",
+          state: clientData?.data?.state || clientData?.state || "",
+          orderType:
+            clientData?.data?.orderType || clientData?.clientType || "",
+          deliveryDate: clientData?.data?.deliveryDate || null,
+          dataEntryBy:
+            clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
         };
       }
 
@@ -881,6 +893,12 @@ export default function StagesLayout() {
         }
       } else if (currentModule === "print media") {
         console.log("🚀 [API] Print Media update");
+        if (!payload.orderId && clientData?.data?.orderId) {
+          payload.orderId = clientData.data.orderId;
+        }
+        if (!payload.orderId && clientData?.matterNumber) {
+          payload.orderId = clientData.matterNumber;
+        }
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
@@ -1003,7 +1021,7 @@ export default function StagesLayout() {
       {/* Page Content */}
       <div className="relative z-10 flex flex-col w-full h-screen overflow-hidden">
         <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-        <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
+        <main className="flex-grow flex flex-col p-2 md:p-4 w-full max-w-screen-xl mx-auto overflow-auto scrollbar-hide">
           {/* Desktop layout - buttons next to Hello */}
           <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
             <h2 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
@@ -1035,20 +1053,20 @@ export default function StagesLayout() {
           </div>
 
           {/* Mobile layout - buttons below Hello */}
-          <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
-            <h2 className="text-lg font-semibold mb-2">
-              Hello {localStorage.getItem("user")}
+          <div className="flex flex-col md:hidden mb-4 flex-shrink-0">
+            <h2 className="text-xl font-bold mb-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              Hello, {localStorage.getItem("user")}
             </h2>
-            <div className="flex justify-between w-full gap-1">
+            <div className="flex justify-between w-full gap-3">
               <Button
                 label="Upload Image"
-                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-md hover:shadow-lg transition-all"
                 width="w-[48%]"
                 onClick={() => setIsOpen(true)}
               />
               <Button
                 label="Cost"
-                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-md hover:shadow-lg transition-all"
                 width="w-[48%]"
                 onClick={() => setSelectedStage(7)}
               />
@@ -1068,38 +1086,53 @@ export default function StagesLayout() {
                       isStagesCollapsed ? "max-h-0" : "max-h-96"
                     }`}
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 flex-shrink-0 px-0.5">
                       {stages.map((stage, index) => {
                         const stageStatus = stageStatuses[`status${stage.id}`];
                         return (
                           <div
                             key={stage.id}
                             onClick={() => RenderStage(stage.id)}
-                            className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
+                            className={`cursor-pointer p-2 rounded-xl shadow-sm transition-all duration-200 h-[70px] border flex flex-col justify-center relative overflow-hidden ${
                               selectedStage === stage.id
-                                ? "bg-[#FFFFFF] text-black border-gray-500"
-                                : `${bgcolor(stageStatus)} border-gray-300`
+                                ? "bg-white ring-2 ring-[#2E3D99] ring-offset-1 border-transparent z-10"
+                                : `${bgcolor(
+                                    stageStatus
+                                  )} border-transparent opacity-90 hover:opacity-100`
                             }`}
                           >
-                            <div className="flex justify-between">
-                              <p className="font-bold font-poppins text-xs">
+                            {selectedStage === stage.id && (
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2E3D99] to-[#1D97D7]" />
+                            )}
+
+                            <div className="flex justify-between items-start mb-1 pl-1">
+                              <p
+                                className={`font-bold font-poppins text-xs ${
+                                  selectedStage === stage.id
+                                    ? "text-[#2E3D99]"
+                                    : "text-gray-800"
+                                }`}
+                              >
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`h-[18px] ${
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                                   stageStatus === "In Progress" ||
                                   stageStatus === "amber"
-                                    ? "text-[#FF9500]"
-                                    : "text-black"
-                                } flex items-center justify-center rounded-4xl`}
+                                    ? "bg-amber-100 text-amber-700"
+                                    : stageStatus === "Completed" ||
+                                      stageStatus === "green"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
                               >
-                                <p className="text-[10px] whitespace-nowrap font-bold">
-                                  {getStatusDisplayText(stageStatus)}
-                                </p>
+                                {getStatusDisplayText(stageStatus)}
                               </div>
                             </div>
-                            <div>
-                              <p className="text-xs">{stage.title}</p>
+                            <div className="pl-1">
+                              <p className="text-[11px] font-medium leading-tight truncate text-gray-700">
+                                {stage.title}
+                              </p>
                             </div>
                           </div>
                         );
@@ -1185,10 +1218,10 @@ export default function StagesLayout() {
 
                 {/* Mobile-only collapse toggle button */}
                 {isSmallScreen && (
-                  <div className="flex justify-center mb-4">
+                  <div className="flex justify-center mb-3">
                     <button
                       onClick={() => setIsStagesCollapsed(!isStagesCollapsed)}
-                      className="p-1 rounded-full bg-gray-200 shadow-md hover:bg-gray-300 transition-colors duration-200"
+                      className="p-1.5 rounded-full bg-white/80 backdrop-blur border border-gray-200 shadow-sm text-gray-500 hover:text-[#2E3D99] hover:bg-white transition-all duration-200"
                       title={isStagesCollapsed ? "Show Stages" : "Hide Stages"}
                     >
                       {isStagesCollapsed ? (
@@ -1201,10 +1234,38 @@ export default function StagesLayout() {
                 )}
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
-                <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
-                  {clientData && Showstage(selectedStage)}
+              {/* Mobile Tab Switcher - Added for better viewport management */}
+              {isSmallScreen && (
+                <div className="flex w-full bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-3 border border-gray-200/60 shadow-sm">
+                  <button
+                    onClick={() => setActiveMobileTab("stage")}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                      activeMobileTab === "stage"
+                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Stage Tasks
+                  </button>
+                  <button
+                    onClick={() => setActiveMobileTab("details")}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                      activeMobileTab === "details"
+                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Matter Details
+                  </button>
                 </div>
+              )}
+
+              <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
+                {(!isSmallScreen || activeMobileTab === "stage") && (
+                  <div className="w-full lg:w-[calc(100%-300px)] p-2 md:p-4 rounded-xl bg-white shadow-sm border border-gray-100/50 overflow-y-auto">
+                    {clientData && Showstage(selectedStage)}
+                  </div>
+                )}
 
                 {/* Project/Matter/Order Details - Desktop */}
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
@@ -1220,7 +1281,6 @@ export default function StagesLayout() {
                       className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 pb-4"
                       onSubmit={handleupdate}
                     >
-                      {/* Date Field */}
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
@@ -1263,7 +1323,6 @@ export default function StagesLayout() {
                         />
                       </div>
 
-                      {/* Number Field */}
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
@@ -1385,7 +1444,6 @@ export default function StagesLayout() {
                             if (!isSuperAdmin) return;
                             const value = e.target.value;
                             setClientData((prev) => {
-                              if (!prev) return prev;
                               if (currentModule === "commercial") {
                                 return { ...prev, businessAddress: value };
                               }
@@ -1739,9 +1797,9 @@ export default function StagesLayout() {
               </div>
 
               {/* Mobile Details */}
-              {isSmallScreen && (
-                <div className="w-full mt-4 bg-white rounded shadow border border-gray-200 p-4 overflow-y-auto max-h-96">
-                  <h2 className="text-lg font-bold mb-2">
+              {isSmallScreen && activeMobileTab === "details" && (
+                <div className="w-full mt-4 bg-white rounded-xl shadow-lg shadow-gray-200/50 border border-gray-100 p-5 overflow-y-auto">
+                  <h2 className="text-lg font-bold mb-4 text-gray-800 border-b pb-2">
                     {currentModule === "commercial"
                       ? "Project Details"
                       : currentModule === "print media"
@@ -1749,12 +1807,12 @@ export default function StagesLayout() {
                       : "Matter Details"}
                   </h2>
                   <form
-                    className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2"
+                    className="grid grid-cols-1 gap-y-4"
                     onSubmit={handleupdate}
                   >
                     {/* Mobile form fields - similar structure but simplified */}
                     <div>
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                         {currentModule === "commercial"
                           ? "Project Date"
                           : currentModule === "print media"
@@ -1788,11 +1846,457 @@ export default function StagesLayout() {
                             matterDate: v,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
                         }`}
                         disabled={!isSuperAdmin}
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Project Number"
+                          : currentModule === "print media"
+                          ? "Order ID"
+                          : "Matter Number"}
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data?.orderId ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              matterNumber: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data?.orderId ||
+                            ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Client Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Client Name
+                      </label>
+                      <input
+                        id="clientName"
+                        name="clientName"
+                        type="text"
+                        value={
+                          clientData?.clientName ||
+                          clientData?.data?.client?.name ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            clientName: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                        }`}
+                        disabled={!isSuperAdmin}
+                      />
+                    </div>
+
+                    {/* Business Name */}
+                    {currentModule === "commercial" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Business Name
+                        </label>
+                        {isSuperAdmin ? (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            onChange={(e) => {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                businessName: e.target.value,
+                              }));
+                            }}
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Address Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Business Address"
+                          : currentModule === "print media"
+                          ? "Billing Address"
+                          : "Property Address"}
+                      </label>
+                      <input
+                        id="address"
+                        name="address"
+                        type="text"
+                        value={
+                          currentModule === "commercial"
+                            ? clientData?.businessAddress || ""
+                            : currentModule === "print media"
+                            ? clientData?.data?.deliveryAddress || ""
+                            : clientData?.propertyAddress || ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          const value = e.target.value;
+                          setClientData((prev) => {
+                            if (currentModule === "commercial") {
+                              return { ...prev, businessAddress: value };
+                            }
+                            if (currentModule === "print media") {
+                              return {
+                                ...prev,
+                                data: {
+                                  ...(prev?.data || {}),
+                                  deliveryAddress: value,
+                                },
+                              };
+                            }
+                            return { ...prev, propertyAddress: value };
+                          });
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                        }`}
+                        disabled={!isSuperAdmin}
+                      />
+                    </div>
+
+                    {/* State Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        State
+                      </label>
+                      {isSuperAdmin ? (
+                        <select
+                          id="state"
+                          name="state"
+                          value={
+                            clientData?.state || clientData?.data?.country || ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              state: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        >
+                          <option value="">Select state</option>
+                          {STATE_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.state || clientData?.data?.state || ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Client Type Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Client Type"
+                          : currentModule === "print media"
+                          ? "Order Type"
+                          : "Client Type"}
+                      </label>
+                      {isSuperAdmin ? (
+                        <select
+                          id="clientType"
+                          name="clientType"
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientType: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        >
+                          <option value="">Select client type</option>
+                          {CLIENT_TYPE_OPTIONS.map((ct) => (
+                            <option key={ct} value={ct}>
+                              {ct}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Post Code */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Post Code
+                      </label>
+                      <input
+                        type="text"
+                        id="postcode"
+                        name="postcode"
+                        disabled={currentModule === "print media"}
+                        value={
+                          clientData?.postcode ||
+                          clientData?.data?.postCode ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          setClientData((prev) => ({
+                            ...prev,
+                            postcode: e.target.value,
+                          }));
+                        }}
+                        pattern="^[0-9]{4}$"
+                        maxLength={4}
+                        inputMode="numeric"
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none
+                     ${
+                       currentModule === "print media"
+                         ? "bg-gray-50 text-gray-500"
+                         : "bg-white"
+                     }`}
+                      />
+                    </div>
+
+                    {/* Completion/Settlement/Delivery Date */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Completion Date"
+                          : currentModule === "print media"
+                          ? "Delivery Date"
+                          : "Settlement Date"}
+                      </label>
+                      <input
+                        id="settlementDate"
+                        type="date"
+                        value={
+                          currentModule === "commercial"
+                            ? clientData?.settlementDate
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : currentModule !== "print media"
+                            ? clientData?.settlementDate
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : clientData?.data?.deliveryDate
+                            ? new Date(clientData.data.deliveryDate)
+                                .toISOString()
+                                .substring(0, 10)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const dateValue = e.target.value;
+                          if (currentModule === "commercial") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              settlementDate: dateValue,
+                            }));
+                          } else if (currentModule !== "print media") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              settlementDate: dateValue,
+                            }));
+                          } else if (currentModule === "print media") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              data: {
+                                ...((prev && prev.data) || {}),
+                                deliveryDate: dateValue,
+                              },
+                            }));
+                          }
+                        }}
+                        className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                      />
+                    </div>
+
+                    {/* Data Entry By */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Data Entry By
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data?.dataEntryBy ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              dataEntryBy: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data?.dataEntryBy ||
+                            ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    <div className="md:col-span-3">
+                      {currentModule === "print media" ? (
+                        <div className="flex flex-col gap-4 w-full">
+                          <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Order Details
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={clientData?.data?.order_details || ""}
+                              onChange={(e) => {
+                                const newOrderDetails = e.target.value;
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  data: {
+                                    ...((prev && prev.data) || {}),
+                                    order_details: newOrderDetails,
+                                  },
+                                }));
+                              }}
+                              placeholder="Enter order details here..."
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Notes / Comments
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={
+                                clientData?.notes ||
+                                clientData?.data?.notes ||
+                                ""
+                              }
+                              onChange={(e) => {
+                                const newNote = e.target.value;
+                                setClientData((prev) => {
+                                  const updated = { ...(prev || {}) };
+                                  updated.notes = newNote;
+                                  if (updated.data) {
+                                    updated.data.notes = newNote;
+                                  } else {
+                                    updated.data = { notes: newNote };
+                                  }
+                                  return updated;
+                                });
+                              }}
+                              placeholder="Enter comments here..."
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                            Notes / Comments
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={
+                              clientData?.notes || clientData?.data?.notes || ""
+                            }
+                            onChange={(e) => {
+                              const newNote = e.target.value;
+                              setClientData((prev) => {
+                                const updated = { ...(prev || {}) };
+                                updated.notes = newNote;
+                                if (updated.data) {
+                                  updated.data.notes = newNote;
+                                } else {
+                                  updated.data = { notes: newNote };
+                                }
+                                return updated;
+                              });
+                            }}
+                            placeholder="Enter comments here..."
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-3">
@@ -1800,9 +2304,9 @@ export default function StagesLayout() {
                         type="submit"
                         className={`w-full ${
                           hasChanges
-                            ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white"
-                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                        } font-medium rounded py-2 text-base`}
+                            ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl active:scale-[0.98]"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        } font-bold rounded-lg py-3 text-sm tracking-wide text-white transition-all duration-200`}
                         disabled={!hasChanges}
                       >
                         Update

@@ -30,6 +30,7 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import NotificationAPI from "../../api/notificationAPI";
+import Pagination from "../../components/ui/Pagination";
 
 const ACCESS_MODULES = [
   {
@@ -361,7 +362,7 @@ function MobileAccessModulesDisplay({ access = [] }) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 items-center">
       {userAllowedModules.map((module) =>
         filteredAccess.includes(module.value) ? (
           <button
@@ -443,6 +444,7 @@ export default function ManageUsers() {
   const location = useLocation();
   const currentModule = localStorage.getItem("currentModule");
   const currentUserRole = localStorage.getItem("role");
+  const [currentMobilePageData, setCurrentMobilePageData] = useState([]);
 
   // Stats
   const totalUsers = users.length;
@@ -469,6 +471,10 @@ export default function ManageUsers() {
       setUserList(filtered);
     } else setUserList(users);
   }, [searchQuery, users]);
+
+  useEffect(() => {
+    setCurrentMobilePageData(userList.slice(0, usersPerPage));
+  }, [userList, usersPerPage]);
 
   useEffect(() => {
     if (openEdit && selectedUser?.access) {
@@ -499,7 +505,7 @@ export default function ManageUsers() {
                       return (
                         <div
                           key={module.value}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${module.color} text-white shadow-sm`}
+                          className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center ${module.color} text-white shadow-sm`}
                           title={module.label}
                         >
                           <ModuleIcon
@@ -829,7 +835,7 @@ export default function ManageUsers() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {userList.slice(0, usersPerPage).map((user) => (
+                {currentMobilePageData.map((user) => (
                   <motion.div
                     key={user.id}
                     whileHover={{ y: -4 }}
@@ -838,7 +844,7 @@ export default function ManageUsers() {
                     <div className="flex justify-between items-start space-x-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
+                          <div className="w-10 h-10 shrink-0 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
                             <Users className="w-4 h-4 text-white" />
                           </div>
                           <div>
@@ -930,6 +936,11 @@ export default function ManageUsers() {
                   </motion.div>
                 ))}
               </div>
+              <Pagination
+                data={userList}
+                itemsPerPage={usersPerPage}
+                setCurrentData={setCurrentMobilePageData}
+              />
             </motion.div>
           </div>
         </main>

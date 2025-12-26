@@ -607,7 +607,7 @@ export default function ArchivedClients() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6"
+            className="rounded-2xl sm:rounded-3xl overflow-visible bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 relative z-20"
           >
             <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -682,7 +682,7 @@ export default function ArchivedClients() {
 
                   {/* Mobile Actions Menu */}
                   <div className="flex lg:hidden items-center">
-                    <Menu as="div" className="relative">
+                    <Menu as="div" className="relative z-30">
                       <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
                       </Menu.Button>
@@ -693,9 +693,9 @@ export default function ArchivedClients() {
                         enterTo="transform opacity-100 scale-100"
                         leave="transition ease-in duration-75"
                         leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
+                        leaveTo="transform opacity-0 scale-95"  
                       >
-                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Items className="absolute right-0 z-[999] mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <div className="py-1">
                             <Menu.Item>
                               {({ active }) => (

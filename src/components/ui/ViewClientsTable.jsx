@@ -293,6 +293,22 @@ const ViewClientsTable = ({
             key={item.id}
             className="bg-white rounded-2xl shadow p-4 space-y-3"
           >
+            <div className="flex justify-between items-center border-b pb-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {currentModule === "commercial"
+                  ? "Project No"
+                  : currentModule === "print media"
+                  ? "Order ID"
+                  : "Matter No"}  
+              </p>
+              <p className="text-sm font-bold text-[#2E3D99] break-all">
+                {currentModule === "commercial"
+                  ? item.matterNumber
+                  : currentModule === "print media"
+                  ? item.orderId
+                  : item.matternumber}
+              </p>
+            </div>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs text-gray-500">
