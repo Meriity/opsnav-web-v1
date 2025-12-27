@@ -403,18 +403,18 @@ const processCalendarData = (data, currentModule) => {
     const calendarItems = Array.isArray(data) ? data : [];
 
     calendarItems.forEach((item) => {
-      if (!item.settlementDate) return;
-
-      events.push({
-        title: `[${item.matterNumber}] - Settlement`,
-        start: moment(item.settlementDate).toDate(),
-        end: moment(item.settlementDate).toDate(),
-        allDay: true,
-        type: "settlement",
-        clientType: item.clientType,
-        matterNumber: item.matterNumber,
-        id: `${item.matterNumber}-settlement`,
-      });
+      if (item.settlementDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Settlement`,
+          start: moment(item.settlementDate).toDate(),
+          end: moment(item.settlementDate).toDate(),
+          allDay: true,
+          type: "settlement",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          id: `${item.matterNumber}-settlement`,
+        });
+      }
     });
   } else if (currentModule === "conveyancing" || currentModule === "wills") {
     let calendarItems = [];
@@ -1512,7 +1512,7 @@ function Dashboard() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>  
             </motion.div>
           </div>
 

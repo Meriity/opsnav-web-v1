@@ -298,8 +298,8 @@ const Table = ({
                             ? item[column.key]
                               ? moment(item[column.key]).isValid()
                                 ? moment(item[column.key]).format("DD-MM-YYYY")
-                                : "-"
-                              : "-"
+                                : <span className="font-bold text-gray-500">—</span>
+                              : <span className="font-bold text-gray-500">—</span>
                             : item[column.key]
                         }
                       >
@@ -316,13 +316,13 @@ const Table = ({
                             moment(item[column.key]).isValid() ? (
                               moment(item[column.key]).format("DD-MM-YYYY")
                             ) : (
-                              "-"
+                              <span className="font-bold text-gray-500">—</span>
                             )
                           ) : (
-                            "-"
+                            <span className="font-bold text-gray-500">—</span>
                           )
                         ) : (
-                          item[column.key]
+                          item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
                       </div>
                     </td>
