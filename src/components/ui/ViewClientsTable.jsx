@@ -141,9 +141,7 @@ const ViewClientsTable = ({
                           item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
-                            <span className="text-sm font-bold text-gray-700">
-                              —
-                            </span>
+                            <span className="font-bold text-gray-500">—</span>
                           )
                         ) : (column.key === "billing_address" ||
                             column.key === "businessAddress" ||
@@ -200,7 +198,7 @@ const ViewClientsTable = ({
                             )}
                           </div>
                         ) : (
-                          item[column.key]
+                          item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
                       </div>
                     </td>

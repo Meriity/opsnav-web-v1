@@ -623,7 +623,7 @@ export default function ArchivedClients() {
                   </h3>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                <div className="flex flex-row items-center justify-between w-full sm:w-auto sm:justify-start gap-3 sm:gap-4">
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="clients-per-page"

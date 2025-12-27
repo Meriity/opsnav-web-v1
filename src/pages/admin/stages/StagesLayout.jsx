@@ -132,7 +132,8 @@ export default function StagesLayout() {
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
   const [originalClientData, setOriginalClientData] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [stageDirty, setStageDirty] = useState(false);
+  const [matterDirty, setMatterDirty] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
@@ -278,7 +279,7 @@ export default function StagesLayout() {
   const pendingStageRef = useRef(null);
 
   function RenderStage(newStage) {
-    if (hasChanges) {
+    if (stageDirty) {
       pendingStageRef.current = newStage;
       setShowUnsavedConfirm(true);
       return;
@@ -340,7 +341,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 2:
@@ -352,7 +353,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 3:
@@ -362,7 +363,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 4:
@@ -372,7 +373,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 5:
@@ -382,7 +383,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 6:
@@ -396,7 +397,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       case 7:
@@ -406,7 +407,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
       default:
@@ -416,7 +417,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
-            setHasChanges={setHasChanges}
+            setHasChanges={setStageDirty}
           />
         );
     }
@@ -472,10 +473,15 @@ export default function StagesLayout() {
                   return clientData[key] || clientData[altKey] || {};
                 };
 
-                // Helper to merge root fields for Stage 6 if they exist there
                 const getStage6Data = () => {
-                  const base = getS(s6, "stage6", "stageSix");
-                  // List of Commercial Stage 6 fields that might be on root
+                  let base = getS(s6, "stage6", "stageSix");
+                  
+                  // FIX: If the response is the full client object, unwrap the stage6 data
+                  if (base && base.stage6) {
+                    base = base.stage6;
+                  }
+
+                  const merged = { ...base };
                   const rootFields = [
                     "notifySoaToClient",
                     "council",
@@ -488,14 +494,19 @@ export default function StagesLayout() {
                     "colorStatus",
                   ];
 
-                  const merged = { ...base };
                   rootFields.forEach((field) => {
+                    const stageVal = merged[field];
+                    const rootVal = clientData[field];
+
                     if (
-                      clientData[field] !== undefined &&
-                      clientData[field] !== null &&
-                      clientData[field] !== ""
+                      (stageVal === undefined ||
+                        stageVal === null ||
+                        stageVal === "") &&
+                      rootVal !== undefined &&
+                      rootVal !== null &&
+                      rootVal !== ""
                     ) {
-                      merged[field] = clientData[field];
+                      merged[field] = rootVal;
                     }
                   });
                   return merged;
@@ -765,34 +776,34 @@ export default function StagesLayout() {
 
   useEffect(() => {
     if (!clientData || !originalClientData) {
-      setHasChanges(false);
+      setMatterDirty(false);
       return;
     }
     try {
       const a = JSON.stringify(clientData);
       const b = JSON.stringify(originalClientData);
-      setHasChanges(a !== b);
+      setMatterDirty(a !== b);
     } catch {
-      setHasChanges(true);
+      setMatterDirty(true);
     }
   }, [clientData, originalClientData]);
 
   async function handleupdate(e) {
     console.log(
       "🟡 [UPDATE CLICKED]",
-      "hasChanges =",
-      hasChanges,
+      "matterDirty =",
+      matterDirty,
       "module =",
       localStorage.getItem("currentModule")
     );
     e.preventDefault();
-    if (!hasChanges) return;
+    if (!matterDirty) return;
     setShowUpdateConfirm(true);
   }
 
   async function performUpdate() {
     console.log("🟢 [CONFIRM CLICKED] performUpdate() started");
-    if (!hasChanges) {
+    if (!matterDirty) {
       setShowUpdateConfirm(false);
       return;
     }
@@ -958,17 +969,11 @@ export default function StagesLayout() {
       }
 
       // Handle navigation
-      if (resp.directUrl) {
+      if (resp.directUrl && currentModule !== "commercial") {
         let direct = resp.directUrl;
         if (!direct.startsWith("/")) direct = `/${direct}`;
         if (!direct.match(/^\/admin/)) direct = `/admin${direct}`;
-        // setTimeout(() => {
-        //   try {
-        //     navigate(direct);
-        //   } catch {
-        //     window.location.href = direct;
-        //   }
-        // }, 450);
+
         window.location.href = direct;
         return;
       }
@@ -1786,11 +1791,11 @@ export default function StagesLayout() {
                           <button
                             type="submit"
                             className={`w-full ${
-                              hasChanges
+                              matterDirty
                                 ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white cursor-pointer"
                                 : "bg-gray-300 text-gray-200 cursor-not-allowed"
                             } font-medium rounded py-2 text-base`}
-                            disabled={!hasChanges}
+                            disabled={!matterDirty}
                           >
                             Update
                           </button>
@@ -2308,11 +2313,11 @@ export default function StagesLayout() {
                       <button
                         type="submit"
                         className={`w-full ${
-                          hasChanges
+                          matterDirty
                             ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl active:scale-[0.98]"
                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
                         } font-bold rounded-lg py-3 text-sm tracking-wide text-white transition-all duration-200`}
-                        disabled={!hasChanges}
+                        disabled={!matterDirty}
                       >
                         Update
                       </button>
@@ -2350,7 +2355,7 @@ export default function StagesLayout() {
           }}
           onConfirm={async () => {
             window.dispatchEvent(new Event("saveCurrentStage"));
-            setHasChanges(false);
+            setStageDirty(false);
             setShowUnsavedConfirm(false);
 
             if (pendingStageRef.current !== null) {
