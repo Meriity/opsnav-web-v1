@@ -142,7 +142,7 @@ function App() {
           <Route path="view-clients" element={<ViewClients />} />
           <Route path="manage-clients" element={<ManageClients />} />
           <Route path="archived-clients" element={<ArchivedClients />} />
-          <Route path="client/:clientId/stages" element={<StagesLayout />} />
+          <Route path="client/:matterNumber/stages/:stageNo?" element={<StagesLayout />} />
         </Route>
 
         {/* Work Selection Route — Protected but no AppLayout */}
