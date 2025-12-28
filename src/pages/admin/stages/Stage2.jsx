@@ -337,8 +337,15 @@ export default function Stage2({
         initialFormData.noteForClient = clientComment;
       } else {
         currentConfig.noteGroups.forEach((group) => {
-          const notes = extractNotes(stageData[group.noteForClientKey]);
-          initialFormData[group.clientCommentKey] = notes.clientComment;
+          const rawNote = stageData[group.noteForClientKey] || "";
+          const parts = rawNote.split(" - ");
+          // If there's a separator, everything after the first " - " is the client comment
+          // usage: "System Note Text - Client Comment Text"
+          let clientComment = "";
+          if (parts.length > 1) {
+            clientComment = parts.slice(1).join(" - ");
+          }
+          initialFormData[group.clientCommentKey] = clientComment;
         });
       }
 
@@ -445,12 +452,6 @@ export default function Stage2({
     const colorStatus = allCompleted ? "green" : "amber";
 
     // Seller specific cleanup
-    if ((clientType || "").toLowerCase() !== "seller") {
-      delete payload.obtainDaSeller;
-      delete payload.obtainDaSellerDate;
-      delete payload.vendorDisclosure;
-      delete payload.vendorDisclosureDate;
-    }
 
     try {
       let apiResponse;
