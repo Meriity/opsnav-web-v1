@@ -230,6 +230,27 @@ export default function StagesLayout() {
     />
   );
 
+  const navigateToCost = () => {
+    const baseUrl = isAnyAdmin ? "/admin/client/stages" : "/user/client";
+    // For user route: /user/client/:matterNumber/stages/:stageNo
+    // For admin route: /admin/client/stages/:matterNumber/:stageNo
+    
+    let targetUrl;
+    if (isAnyAdmin) {
+      targetUrl = `${baseUrl}/${matterNumber}/7`;
+    } else {
+       // Match the new User route structure: client/:matterNumber/stages/:stageNo
+      targetUrl = `${baseUrl}/${matterNumber}/stages/7`;
+    }
+
+    // Force hard reload if already on the cost page or just navigation if not
+    if (String(selectedStage) === "7") {
+       window.location.reload();
+    } else {
+       window.location.href = targetUrl;
+    }
+  };
+
   function bgcolor(status) {
     const statusColors = {
       "In Progress": "bg-[#FFEECF]",
@@ -1056,7 +1077,7 @@ export default function StagesLayout() {
                   label="Cost"
                   bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
                   width="w-[60px] md:w-[70px]"
-                  onClick={() => setSelectedStage(7)}
+                  onClick={navigateToCost}
                 />
               )}
             </div>
@@ -1078,7 +1099,7 @@ export default function StagesLayout() {
                 label="Cost"
                 bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-md hover:shadow-lg transition-all"
                 width="w-[48%]"
-                onClick={() => setSelectedStage(7)}
+                onClick={navigateToCost}
               />
             </div>
           </div>
