@@ -245,122 +245,102 @@ const commercialBusinessAddressRef = useRef(null);
   }, [isOpen, isPrintMedia, createType]);
 
   // --- GOOGLE MAPS AUTOCOMPLETE FOR CONVEYANCING PROPERTY ADDRESS ---
-  useEffect(() => {
-    if (!isConveyancing || !isOpen) return;
+useEffect(() => {
+  if (!isConveyancing || !isOpen) return;
 
-    let autocompleteInstance = null;
-    let placeChangedListener = null;
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
 
-    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
-      .then(() => {
-        if (conveyancingPropertyAddressRef.current && window.google) {
-          autocompleteInstance = new window.google.maps.places.Autocomplete(
-            conveyancingPropertyAddressRef.current,
-            {
-              types: ["address"],
-              componentRestrictions: { country: ["au"] },
-            }
-          );
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      if (conveyancingPropertyAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          conveyancingPropertyAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
 
-          placeChangedListener = autocompleteInstance.addListener(
-            "place_changed",
-            () => {
-              const place = autocompleteInstance.getPlace();
-              if (!place.geometry || !place.address_components) {
-                toast.warning("Please select a valid address from the dropdown.");
-                return;
-              }
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
 
-              // Extract postcode from address components
-              let postcode = "";
-              place.address_components.forEach((component) => {
-                if (component.types.includes("postal_code")) {
-                  postcode = component.long_name;
-                }
-              });
+            let postcode = "";
+            let state = "";
 
-              // Update form data with property address and postcode
-              setFormData((prev) => ({
-                ...prev,
-                propertyAddress: place.formatted_address,
-                postcode: postcode,
-              }));
-            }
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading Google Maps for conveyancing:", error);
-      });
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
 
-    return () => {
-      if (placeChangedListener) {
-        window.google.maps.event.removeListener(placeChangedListener);
+            setFormData((prev) => ({
+              ...prev,
+              propertyAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
       }
-      if (autocompleteInstance && window.google) {
-        window.google.maps.event.clearInstanceListeners(autocompleteInstance);
-      }
-    };
-  }, [isOpen, isConveyancing]);
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isConveyancing]);
 
   // --- GOOGLE MAPS AUTOCOMPLETE FOR COMMERCIAL BUSINESS ADDRESS ---
-  useEffect(() => {
-    if (!isCommercial || !isOpen) return;
 
-    let autocompleteInstance = null;
-    let placeChangedListener = null;
+useEffect(() => {
+  if (!isCommercial || !isOpen) return;
 
-    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
-      .then(() => {
-        if (commercialBusinessAddressRef.current && window.google) {
-          autocompleteInstance = new window.google.maps.places.Autocomplete(
-            commercialBusinessAddressRef.current,
-            {
-              types: ["address"],
-              componentRestrictions: { country: ["au"] },
-            }
-          );
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
 
-          placeChangedListener = autocompleteInstance.addListener(
-            "place_changed",
-            () => {
-              const place = autocompleteInstance.getPlace();
-              if (!place.geometry || !place.address_components) {
-                toast.warning("Please select a valid address from the dropdown.");
-                return;
-              }
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      if (commercialBusinessAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          commercialBusinessAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
 
-              // Extract postcode from address components
-              let postcode = "";
-              place.address_components.forEach((component) => {
-                if (component.types.includes("postal_code")) {
-                  postcode = component.long_name;
-                }
-              });
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
 
-              // Update form data with business address and postcode
-              setFormData((prev) => ({
-                ...prev,
-                businessAddress: place.formatted_address,
-                postcode: postcode,
-              }));
-            }
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading Google Maps for commercial:", error);
-      });
+            let postcode = "";
+            let state = "";
 
-    return () => {
-      if (placeChangedListener) {
-        window.google.maps.event.removeListener(placeChangedListener);
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              businessAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
       }
-      if (autocompleteInstance && window.google) {
-        window.google.maps.event.clearInstanceListeners(autocompleteInstance);
-      }
-    };
-  }, [isOpen, isCommercial]);
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isCommercial]);
+
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -791,7 +771,7 @@ const commercialBusinessAddressRef = useRef(null);
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
+                    {/* <div>
                       <label className="block mb-1 font-medium">State*</label>
                       <div className="flex gap-2 flex-wrap">
                         {["VIC", "NSW", "QLD", "SA"].map((stateOption) => (
@@ -812,7 +792,7 @@ const commercialBusinessAddressRef = useRef(null);
                           </label>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     <div>
                       <label className="block mb-1 font-medium">
@@ -892,6 +872,19 @@ const commercialBusinessAddressRef = useRef(null);
                     </p>
                   </div>
                   
+<div>
+  <label className="block mb-1 font-medium">
+    State*
+    <span className="text-xs text-gray-500 ml-1">(Auto-filled)</span>
+  </label>
+  <input
+    type="text"
+    name="state"
+    value={formData.state || ""}
+    onChange={handleChange}
+    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100"
+  />
+</div>
 
                   <div>
                     <label className="block mb-1 font-medium">Post code*</label>
