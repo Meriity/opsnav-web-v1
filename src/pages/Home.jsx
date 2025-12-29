@@ -57,11 +57,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%202025-10-18%20113423.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1131).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/dashboard-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-20-57-496.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/dashboards-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-36-32_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "sky",
@@ -78,11 +78,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "green",
@@ -99,11 +99,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "purple",
@@ -120,11 +120,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "amber",
@@ -141,11 +141,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "rose",
@@ -158,11 +158,11 @@ const featureSections = [
     points: ["Cloud hosting", "Enterprise-grade security", "99.9% uptime SLA"],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "slate",
@@ -799,11 +799,11 @@ export default function Home() {
                 {/* Tablet */}
                 <div className="hidden md:block lg:hidden relative h-[250px] sm:h-[300px] rounded-2xl overflow-visible">
                   <div className="relative rounded-2xl w-full h-full bg-white">
-                    <BrowserTopBar />
+                    {/* <BrowserTopBar /> */}
                     <img
                       src={currentFeatureData.image.tablet}
                       alt={`${currentFeatureData.title} Tablet Screenshot`}
-                      className="w-full h-full object-contain rounded-b-2xl"
+                      className="w-full h-full object-cover rounded-b-2xl"
                     />
                   </div>
 
@@ -833,7 +833,7 @@ export default function Home() {
                 {/* Mobile */}
                 <div className="md:hidden relative h-[200px] sm:h-[250px] rounded-2xl overflow-visible">
                   <div className="relative rounded-2xl w-full h-full bg-white">
-                    <BrowserTopBar />
+                    {/* <BrowserTopBar /> */}
                     <img
                       src={currentFeatureData.image.mobile}
                       alt={`${currentFeatureData.title} Mobile Screenshot`}
