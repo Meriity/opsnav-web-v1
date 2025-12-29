@@ -469,8 +469,21 @@ export default function Stage5({
                 type={f.type === "number" ? "number" : "text"}
                 value={formState[f.name] || ""}
                 onChange={(e) => handleChange(f.name, e.target.value)}
-                className="border rounded p-2 w-full bg-gray-100"
+                onKeyDown={(e) => {
+                  if (
+                    f.type === "number" &&
+                    ["e", "E", "+", "-"].includes(e.key)
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`border rounded p-2 w-full bg-gray-100 ${
+                  f.type === "number"
+                    ? "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    : ""
+                }`}
                 step={f.type === "number" ? "0.01" : undefined}
+                placeholder={f.type === "number" ? "0.00" : ""}
               />
             </div>
           )}

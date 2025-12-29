@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -482,12 +482,12 @@ function SetPassword() {
                 <div className="text-center pt-4 border-t border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:pt-2">
                   <p className="text-sm text-gray-500 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
                     Need help?{" "}
-                    <a
-                      href="#"
+                    <Link
+                      to="/contact-support"
                       className="text-[#2E3D99] hover:underline font-medium"
                     >
                       Contact Support
-                    </a>
+                    </Link>
                   </p>
                 </div>
               </form>
