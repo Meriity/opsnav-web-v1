@@ -62,7 +62,7 @@ export default function Sidebar({
   icon: ViewClientsIcon,
   to:
     currentModule === "commercial"
-      ? "/admin/view-projects"
+      ? "/admin/view-clients"
       : isAdminRoute
       ? "/admin/view-clients"
       : "/user/view-clients",
@@ -77,7 +77,7 @@ export default function Sidebar({
   icon: ArchivedChatsIcon,
   to:
     currentModule === "commercial"
-      ? "/admin/archived-projects"
+      ? "/admin/archived-clients"
       : isAdminRoute
       ? "/admin/archived-clients"
       : "/user/archived-clients",
