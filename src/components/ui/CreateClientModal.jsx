@@ -102,7 +102,9 @@ export default function CreateClientModal({
   const navigate = useNavigate();
 
   // Google Maps Autocomplete refs
-  const addressInputRef = useRef(null);
+const idgDeliveryAddressRef = useRef(null);
+const conveyancingPropertyAddressRef = useRef(null);
+const commercialBusinessAddressRef = useRef(null);
 
   const user = localStorage.getItem("user") || "";
   const currentModule = localStorage.getItem("currentModule");
@@ -119,7 +121,7 @@ export default function CreateClientModal({
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if (isPrintMedia && createType === "order") {
+    if (isPrintMedia && createType === "order" || isConveyancing || isCommercial) {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -129,7 +131,29 @@ export default function CreateClientModal({
           toast.error("Failed to load Google Maps. Please check your API key.");
         });
     }
-  }, [isPrintMedia, createType, GOOGLE_MAPS_API_KEY]);
+  }, [isPrintMedia, isConveyancing, isCommercial, createType, GOOGLE_MAPS_API_KEY]);
+
+  // --- INITIALIZE GOOGLE MAPS AUTOCOMPLETE FOR ADDRESS FIELDS ---
+  const initializeAutocomplete = (inputRef, onPlaceSelected) => {
+    if (!inputRef.current || !window.google) return null;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ["address"],
+        componentRestrictions: { country: ["au", "us", "gb", "ca"] },
+      }
+    );
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.address_components) {
+        onPlaceSelected(place);
+      }
+    });
+
+    return { autocomplete, listener };
+  };
 
   // --- GOOGLE MAPS AUTOCOMPLETE INITIALIZATION ---
   useEffect(() => {
@@ -144,9 +168,9 @@ export default function CreateClientModal({
     loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
       .then(() => {
         // Ensure the input element is mounted before initializing.
-        if (addressInputRef.current && window.google) {
+        if (idgDeliveryAddressRef.current && window.google) {
           autocompleteInstance = new window.google.maps.places.Autocomplete(
-            addressInputRef.current,
+            idgDeliveryAddressRef.current,
             {
               types: ["address"],
               componentRestrictions: { country: ["au", "us", "gb", "ca"] },
@@ -210,8 +234,7 @@ export default function CreateClientModal({
       });
 
     // --- Cleanup function ---
-    // This runs when the component unmounts to prevent memory leaks.
-    return () => {
+      return () => {
       if (placeChangedListener) {
         window.google.maps.event.removeListener(placeChangedListener);
       }
@@ -220,6 +243,124 @@ export default function CreateClientModal({
       }
     };
   }, [isOpen, isPrintMedia, createType]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR CONVEYANCING PROPERTY ADDRESS ---
+  useEffect(() => {
+    if (!isConveyancing || !isOpen) return;
+
+    let autocompleteInstance = null;
+    let placeChangedListener = null;
+
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (conveyancingPropertyAddressRef.current && window.google) {
+          autocompleteInstance = new window.google.maps.places.Autocomplete(
+            conveyancingPropertyAddressRef.current,
+            {
+              types: ["address"],
+              componentRestrictions: { country: ["au"] },
+            }
+          );
+
+          placeChangedListener = autocompleteInstance.addListener(
+            "place_changed",
+            () => {
+              const place = autocompleteInstance.getPlace();
+              if (!place.geometry || !place.address_components) {
+                toast.warning("Please select a valid address from the dropdown.");
+                return;
+              }
+
+              // Extract postcode from address components
+              let postcode = "";
+              place.address_components.forEach((component) => {
+                if (component.types.includes("postal_code")) {
+                  postcode = component.long_name;
+                }
+              });
+
+              // Update form data with property address and postcode
+              setFormData((prev) => ({
+                ...prev,
+                propertyAddress: place.formatted_address,
+                postcode: postcode,
+              }));
+            }
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading Google Maps for conveyancing:", error);
+      });
+
+    return () => {
+      if (placeChangedListener) {
+        window.google.maps.event.removeListener(placeChangedListener);
+      }
+      if (autocompleteInstance && window.google) {
+        window.google.maps.event.clearInstanceListeners(autocompleteInstance);
+      }
+    };
+  }, [isOpen, isConveyancing]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR COMMERCIAL BUSINESS ADDRESS ---
+  useEffect(() => {
+    if (!isCommercial || !isOpen) return;
+
+    let autocompleteInstance = null;
+    let placeChangedListener = null;
+
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (commercialBusinessAddressRef.current && window.google) {
+          autocompleteInstance = new window.google.maps.places.Autocomplete(
+            commercialBusinessAddressRef.current,
+            {
+              types: ["address"],
+              componentRestrictions: { country: ["au"] },
+            }
+          );
+
+          placeChangedListener = autocompleteInstance.addListener(
+            "place_changed",
+            () => {
+              const place = autocompleteInstance.getPlace();
+              if (!place.geometry || !place.address_components) {
+                toast.warning("Please select a valid address from the dropdown.");
+                return;
+              }
+
+              // Extract postcode from address components
+              let postcode = "";
+              place.address_components.forEach((component) => {
+                if (component.types.includes("postal_code")) {
+                  postcode = component.long_name;
+                }
+              });
+
+              // Update form data with business address and postcode
+              setFormData((prev) => ({
+                ...prev,
+                businessAddress: place.formatted_address,
+                postcode: postcode,
+              }));
+            }
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading Google Maps for commercial:", error);
+      });
+
+    return () => {
+      if (placeChangedListener) {
+        window.google.maps.event.removeListener(placeChangedListener);
+      }
+      if (autocompleteInstance && window.google) {
+        window.google.maps.event.clearInstanceListeners(autocompleteInstance);
+      }
+    };
+  }, [isOpen, isCommercial]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -497,7 +638,8 @@ export default function CreateClientModal({
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
-          if (typeof onClose === "function") onClose();
+          navigate(`/admin/client/print-media/${id.clientId}`);
+          
         } else if (createType === "order") {
           const requiredFields = [
             "client",
@@ -737,10 +879,19 @@ export default function CreateClientModal({
                           : formData.propertyAddress || ""
                       }
                       onChange={handleChange}
+                      ref={
+                        isCommercial
+                          ? commercialBusinessAddressRef
+                          : conveyancingPropertyAddressRef
+                      }
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                       required
                     />
+                     <p className="text-xs text-gray-500 mt-1">
+                      (Start typing to see suggestions)
+                    </p>
                   </div>
+                  
 
                   <div>
                     <label className="block mb-1 font-medium">Post code*</label>
@@ -1007,7 +1158,7 @@ export default function CreateClientModal({
                         </span>
                       </label>
                       <input
-                        ref={addressInputRef}
+                        ref={idgDeliveryAddressRef}
                         type="text"
                         name="deliveryAddress"
                         value={formData.deliveryAddress || ""}
