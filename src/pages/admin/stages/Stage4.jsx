@@ -597,7 +597,13 @@ export default function Stage4({
               step="0.01"
               value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              className="w-full rounded p-2 bg-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              placeholder="0.00"
             />
           </div>
         );

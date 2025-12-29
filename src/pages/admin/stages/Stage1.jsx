@@ -34,7 +34,7 @@ const formConfig = {
       type: "radio",
       options: ["Variable", "Fixed"],
     },
-    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
     {
       name: "tenants",
       label: "Tenants",
@@ -92,7 +92,7 @@ const formConfig = {
       type: "radio",
       options: ["Fixed", "Variable"],
     },
-    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
   ],
 };
 
@@ -447,6 +447,28 @@ export default function Stage1({
 
   const renderField = (field) => {
     switch (field.type) {
+      case "number":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              placeholder="0.00"
+              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
+        );
+
       case "text":
         return (
           <div key={field.name} className="mt-5">

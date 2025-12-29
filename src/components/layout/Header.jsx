@@ -320,27 +320,34 @@ export default function Header() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
         <div className="relative px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3 lg:gap-4">
-          <div className="flex flex-col items-start w-full md:hidden lg:flex lg:w-auto lg:min-w-[200px]">
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 mb-1"
-            >
-              <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                Hello, {localStorage.getItem("user") || "Admin"}
-              </h1>
-              <span className="animate-pulse hidden md:block">👋</span>
-            </motion.div>
+          <div className="flex flex-row items-center gap-4 w-full md:hidden lg:flex lg:w-auto lg:min-w-[200px]">
+            <img
+              className={`h-auto object-contain w-12 transition-all duration-300 ease-in-out`}
+              src={localStorage.getItem("logo") || "/Logo.png"}
+              alt="Logo"
+            />
+            <div className="flex flex-col items-start gap-1">
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2"
+              >
+                <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                  Hello, {localStorage.getItem("user") || "Admin"}
+                </h1>
+                <span className="animate-pulse hidden md:block">👋</span>
+              </motion.div>
 
-            <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-[#2E3D99]" />
-                <span>{formattedDate}</span>
-              </div>
-              <div className="w-px h-3 bg-gray-300" />
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-[#1D97D7]" />
-                <span className="tabular-nums">{formattedTime}</span>
+              <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3 text-[#2E3D99]" />
+                  <span>{formattedDate}</span>
+                </div>
+                <div className="w-px h-3 bg-gray-300" />
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-[#1D97D7]" />
+                  <span className="tabular-nums">{formattedTime}</span>
+                </div>
               </div>
             </div>
           </div>
