@@ -53,18 +53,36 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-      label: currentModule === "print media" ? "View Orders" : "View Clients",
-      icon: ViewClientsIcon,
-      to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
-    },
-    {
-      label:
-        currentModule === "print media"
-          ? "Completed Orders"
-          : "Archived Clients",
-      icon: ArchivedChatsIcon,
-      to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
-    },
+  label:
+    currentModule === "print media"
+      ? "View Orders"
+      : currentModule === "commercial"
+      ? "View Projects"
+      : "View Clients",
+  icon: ViewClientsIcon,
+  to:
+    currentModule === "commercial"
+      ? "/admin/view-projects"
+      : isAdminRoute
+      ? "/admin/view-clients"
+      : "/user/view-clients",
+},
+{
+  label:
+    currentModule === "print media"
+      ? "Completed Orders"
+      : currentModule === "commercial"
+      ? "Archived Projects"
+      : "Archived Clients",
+  icon: ArchivedChatsIcon,
+  to:
+    currentModule === "commercial"
+      ? "/admin/archived-projects"
+      : isAdminRoute
+      ? "/admin/archived-clients"
+      : "/user/archived-clients",
+},
+
   ];
 
   if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
@@ -96,10 +114,12 @@ export default function Sidebar({
         return Users;
       case "View Clients":
       case "View Orders":
+      case "View Projects":
       case "View":
         return FolderOpen;
       case "Archived Clients":
       case "Completed Orders":
+      case "Archived Projects":
       case "Completed/Archived":
         return FolderArchive;
       default:
