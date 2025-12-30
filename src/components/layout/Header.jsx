@@ -120,14 +120,12 @@ export default function Header() {
 
       // 🔹 PRINT MEDIA
       else if (currentModule === "print media") {
-        if (isArchivedPage) {
-           response = archivedClients.map((c) => c.__raw || c);
-        } else {
-           const stored = JSON.parse(
-             localStorage.getItem("client-storage") || "{}"
-           );
-           response = stored?.state?.clients || [];
-        }
+         try {
+           response = await api.getIDGSearchResult(value);
+         } catch (e) {
+           console.warn("Error fetching IDG search results, falling back to empty:", e);
+           response = [];
+         }
       }
 
       // 🔹 ARCHIVED
@@ -136,7 +134,13 @@ export default function Header() {
       }
       // 🔹 DEFAULT (Conveyancing)
       else {
-        response = await api.getSearchResult(value);
+        // Fetch all active clients to allow frontend filtering on all fields (including Referral)
+        try {
+          response = await api.getClients();
+        } catch (e) {
+          console.warn("Error fetching clients for search, falling back to empty:", e);
+          response = [];
+        }
       }
 
       // Normalize

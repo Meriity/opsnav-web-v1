@@ -738,24 +738,77 @@ class ClientAPI {
     }
   }
 
-  async getIDGSearchResult(query) {
+  async getClients() {
     try {
-      const response = await fetch(
-        `${this.baseUrl}/idg/orders/search?keywords=${query}`,
-        {
-          method: "GET",
-          headers: this.getHeaders(),
-        }
-      );
-
+      const response = await fetch(`${this.baseUrl}/user/clients/active`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       return await response.json();
     } catch (error) {
-      console.error("Error sending notification to client:", error);
+      console.error("Error getting clients:", error);
       throw error;
+    }
+  }
+
+  async getIDGOrders() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/active`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting IDG orders:", error);
+      throw error;
+    }
+  }
+
+  async getCompletedIDGOrders() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/status/closed`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting completed IDG orders:", error);
+      throw error;
+    }
+  }
+
+  async getIDGSearchResult(query) {
+    try {
+      // Fetch both active and completed orders to search generally
+      const [active, completed] = await Promise.all([
+        this.getIDGOrders(),
+        this.getCompletedIDGOrders(),
+      ]);
+
+      // Extract arrays safely. 
+      // Active orders are often nested in 'activeOrders' property.
+      const activeList = Array.isArray(active)
+        ? active
+        : active.activeOrders || active.data || active.orders || [];
+      const completedList = Array.isArray(completed)
+        ? completed
+        : completed.closedOrders || completed.orders || completed.data || [];
+
+      // Combine and filter duplicates if any (though likely distinct by status)
+      return [...activeList, ...completedList];
+    } catch (error) {
+      console.error("Error searching IDG orders:", error);
+      // Fallback to empty array instead of crashing
+      return [];
     }
   }
 

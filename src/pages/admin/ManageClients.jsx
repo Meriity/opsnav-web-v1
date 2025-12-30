@@ -382,7 +382,17 @@ export default function ManageUsers() {
               window.location.reload();
             }}
           />
-          <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                {getPageTitle()}
+              </span>
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+              Manage {currentModule === "commercial" ? "project" : "client"}{" "}
+              accounts, permissions, and access modules
+            </p>
+          </div>
           {/* <Button
             label={getCreateButtonLabel()}
             Icon1={userplus}
