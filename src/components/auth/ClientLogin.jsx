@@ -270,7 +270,7 @@ function LoginForm() {
               >
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Matter Number
+                    Matter Number / Email
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -282,14 +282,14 @@ function LoginForm() {
                       onChange={(e) => setmatterNumber(e.target.value)}
                       required
                       className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="ex : 2580824"
-                    />
+                      placeholder="ex : 2580824 / test@gmail.com"
+                    />  
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Postcode
+                    Postcode / Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -301,7 +301,7 @@ function LoginForm() {
                       onChange={(e) => setPostcode(e.target.value)}
                       required
                       className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="ex : Postcode"
+                      placeholder="ex : Postcode / Password"
                     />
                   </div>
                 </div>

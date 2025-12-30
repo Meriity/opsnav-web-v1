@@ -17,6 +17,31 @@ import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
+// Helper function to load Google Maps script (copied from CreateClientModal)
+const loadGoogleMapsScript = (apiKey) => {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) {
+      resolve();
+      return;
+    }
+    const existingScript = document.querySelector(
+      'script[src*="maps.googleapis.com"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener("load", resolve);
+      existingScript.addEventListener("error", reject);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", resolve);
+    script.addEventListener("error", reject);
+    document.head.appendChild(script);
+  });
+};
+
 const formatDateForDisplay = (isoString) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -144,6 +169,112 @@ export default function StagesLayout() {
   const [_isUpdating, setIsUpdating] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState("stage");
+
+  // Google Maps Refs
+  const addressInputRef = useRef(null);
+  const mobileAddressInputRef = useRef(null);
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
+
+  // Handle Google Maps Place Selection
+  const handlePlaceSelected = (place) => {
+    if (!place.geometry || !place.address_components) return;
+
+    let postcode = "";
+    let state = "";
+    // address is formatted_address
+    const address = place.formatted_address; 
+
+    place.address_components.forEach((component) => {
+      if (component.types.includes("postal_code"))
+        postcode = component.long_name;
+      if (component.types.includes("administrative_area_level_1"))
+        state = component.short_name;
+    });
+
+    setClientData((prev) => {
+      const newData = { ...prev };
+      
+      // Update Address based on module
+      if (currentModule === "commercial") {
+        newData.businessAddress = address;
+      } else if (currentModule === "print media") {
+         if(!newData.data) newData.data = {};
+         newData.data.deliveryAddress = address;
+      } else {
+        newData.propertyAddress = address;
+      }
+
+      // Update State and Postcode
+      if(currentModule === "print media") {
+          if(!newData.data) newData.data = {};
+          
+          newData.data.state = state;
+          newData.state = state; // Sync root state
+          
+          newData.data.postCode = postcode; 
+          newData.data.postcode = postcode;
+          newData.postcode = postcode; // Sync root postcode
+      } else {
+          newData.state = state;
+          newData.postcode = postcode;
+      }
+
+      return newData;
+    });
+    // Mark as dirty so Update button enables
+    setMatterDirty(true); 
+  };
+
+  // Initialize Autocomplete Effect
+  useEffect(() => {
+    // Only load if we have inputs to attach to
+    if ((!addressInputRef.current && !mobileAddressInputRef.current)) return;
+
+    let desktopAutocomplete = null;
+    let mobileAutocomplete = null;
+    let desktopListener = null;
+    let mobileListener = null;
+
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (!window.google) return;
+
+        // Desktop Input
+        if (addressInputRef.current) {
+          desktopAutocomplete = new window.google.maps.places.Autocomplete(
+            addressInputRef.current,
+            { types: ["address"], componentRestrictions: { country: ["au"] } }
+          );
+          desktopListener = desktopAutocomplete.addListener("place_changed", () => {
+             handlePlaceSelected(desktopAutocomplete.getPlace());
+          });
+        }
+
+        // Mobile Input
+        if (mobileAddressInputRef.current) {
+          mobileAutocomplete = new window.google.maps.places.Autocomplete(
+             mobileAddressInputRef.current,
+             { types: ["address"], componentRestrictions: { country: ["au"] } }
+          );
+          mobileListener = mobileAutocomplete.addListener("place_changed", () => {
+              handlePlaceSelected(mobileAutocomplete.getPlace());
+          });
+        }
+      })
+      .catch((err) => console.error("Google Maps Load Error:", err));
+
+    return () => {
+      if(desktopListener) window.google.maps.event.removeListener(desktopListener);
+      if(mobileListener) window.google.maps.event.removeListener(mobileListener);
+      if(desktopAutocomplete) window.google.maps.event.clearInstanceListeners(desktopAutocomplete);
+      if(mobileAutocomplete) window.google.maps.event.clearInstanceListeners(mobileAutocomplete);
+    };
+  }, [
+    isSmallScreen, 
+    activeMobileTab, 
+    // Re-run if screen size changes or mobile tab switches to details (mounting the input)
+    currentModule
+  ]);
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -685,6 +816,20 @@ export default function StagesLayout() {
             clientData?.stage6 ||
             {},
         };
+
+        // Sync allocatedUser to stage2 agent if missing or mismatch
+        if (response.allocatedUser) {
+          const users = response.users || [];
+          const matchedUser = users.find(
+            (u) =>
+              u.displayName === response.allocatedUser ||
+              u.name === response.allocatedUser
+          );
+
+          if (matchedUser) {
+            normalized.stage2.agent = `${matchedUser._id}-${matchedUser.displayName}`;
+          }
+        }
 
         setClientData(normalized);
         setOriginalClientData(JSON.parse(JSON.stringify(normalized)));
@@ -1494,6 +1639,7 @@ export default function StagesLayout() {
                             !isSuperAdmin ? "bg-gray-100" : ""
                           }`}
                           disabled={!isSuperAdmin}
+                          ref={addressInputRef}
                         />
                       </div>
 
@@ -1503,29 +1649,28 @@ export default function StagesLayout() {
                           State
                         </label>
                         {isSuperAdmin ? (
-                          <select
+                        <input
                             id="state"
                             name="state"
+                            type="text"
                             value={
                               clientData?.state ||
-                              clientData?.data?.country ||
+                              clientData?.data?.state ||
                               ""
                             }
                             onChange={(e) =>
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                state: e.target.value,
-                              }))
+                              setClientData((prev) => {
+                                const val = e.target.value;
+                                const next = { ...(prev || {}), state: val };
+                                if (currentModule === "print media") {
+                                  if (!next.data) next.data = {};
+                                  next.data.state = val;
+                                }
+                                return next;
+                              })
                             }
                             className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          >
-                            <option value="">Select state</option>
-                            {STATE_OPTIONS.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         ) : (
                           <input
                             type="text"
@@ -2030,6 +2175,7 @@ export default function StagesLayout() {
                             : "bg-white"
                         }`}
                         disabled={!isSuperAdmin}
+                        ref={mobileAddressInputRef}
                       />
                     </div>
 
@@ -2039,27 +2185,24 @@ export default function StagesLayout() {
                         State
                       </label>
                       {isSuperAdmin ? (
-                        <select
-                          id="state"
-                          name="state"
+                        <input
+                          type="text"
                           value={
-                            clientData?.state || clientData?.data?.country || ""
+                            clientData?.state || clientData?.data?.state || ""
                           }
                           onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              state: e.target.value,
-                            }))
+                            setClientData((prev) => {
+                              const val = e.target.value;
+                              const next = { ...(prev || {}), state: val };
+                              if (currentModule === "print media") {
+                                if (!next.data) next.data = {};
+                                next.data.state = val;
+                              }
+                              return next;
+                            })
                           }
                           className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
-                        >
-                          <option value="">Select state</option>
-                          {STATE_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       ) : (
                         <input
                           type="text"

@@ -1,4 +1,4 @@
-// pages/auth/SignUp.jsx
+import { toast } from "react-toastify";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -145,10 +145,7 @@ function SignUp() {
         }
 
         // Show success message and redirect
-        alert(
-          "Thank you for your interest! Our team will contact you shortly."
-        );
-        navigate("/");
+        navigate("/signup-success");
       } catch (error) {
         console.error("Lead submit error:", error);
         setFormError(

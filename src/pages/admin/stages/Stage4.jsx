@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
 const formConfig = {
@@ -43,7 +44,13 @@ const formConfig = {
         label: "Capture Proof of Completion Photos",
         type: "image",
       },
-      { name: "closeOrder", label: "Close Order", type: "radio" },
+      { 
+        name: "closeOrder", 
+        label: "Close Order", 
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+        triggersModal: true 
+      },
     ],
     noteGroups: [
       {
@@ -138,6 +145,8 @@ export default function Stage4({
   const [statuses, setStatuses] = useState({});
   const [preview, setPreview] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [closeOrderModalOpen, setCloseOrderModalOpen] = useState(false);
+  const [pendingCloseOrder, setPendingCloseOrder] = useState(null);
   const [fileName, setfileName] = useState("");
   const [noteForClient, setNoteForClient] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -290,6 +299,17 @@ export default function Stage4({
       const fieldConfig = currentConfig.fields.find((f) => f.name === field);
       let processedValue = value;
 
+      // Special handling for Close Order triggering modal on selection
+      // This MUST block the state update until confirmed
+      if (
+        field === "closeOrder" &&
+        ["Completed", "Cancelled"].includes(value)
+      ) {
+        setPendingCloseOrder(value);
+        setCloseOrderModalOpen(true);
+        return; // Stop here, do not update formData yet
+      }
+
       if (fieldConfig && fieldConfig.type === "radio") {
         if (typeof processedValue === "string")
           processedValue = normalizeValue(processedValue);
@@ -424,7 +444,8 @@ export default function Stage4({
   };
 
   // ---------- SAVE ----------
-  async function handleSave() {
+  // ---------- SAVE ----------
+  async function performSave() {
     if (!isChanged() || isSaving) return;
 
     setIsSaving(true);
@@ -537,18 +558,35 @@ export default function Stage4({
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
+      setCloseOrderModalOpen(false);
     }
   }
+  
+  const handleSave = async () => {
+    if (!isChanged() || isSaving) return;
+    await performSave();
+  };
 
   const renderField = (field) => {
     switch (field.type) {
-      case "radio":
+      case "radio": {
+        const isDangerField = field.name === "closeOrder";
         return (
-          <div key={field.name} className="mt-5">
+          <div 
+            key={field.name} 
+            className={`mt-5 ${isDangerField ? "bg-red-50 border-2 border-red-200 p-4 rounded-xl" : ""}`}
+          >
             <div className="flex gap-4 items-center justify-between mb-2">
-              <label className="block mb-1 text-sm md:text-base font-bold">
+              <div className="flex items-center gap-2">
+                 {isDangerField && (
+                    <div className="bg-red-100 p-1.5 rounded-full text-red-600">
+                      <ExclamationTriangleIcon className="w-5 h-5" />
+                    </div>
+                  )}
+              <label className={`block mb-1 text-sm md:text-base font-bold ${isDangerField ? "text-red-900 text-lg" : ""}`}>
                 {field.label}
               </label>
+              </div>
               <div
                 className={`w-[90px] h-[18px] ${bgcolor(
                   statuses[field.name]
@@ -561,13 +599,13 @@ export default function Stage4({
             </div>
 
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-              {(field.name !== "closeOrder"
+              {(field.options || (field.name !== "closeOrder"
                 ? ["Yes", "No", "Processing", "N/R"]
-                : ["Completed", "Cancelled"]
+                : ["Completed", "Cancelled"])
               ).map((val) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 text-sm md:text-base"
+                  className={`flex items-center gap-2 text-sm md:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}
                 >
                   <input
                     type="radio"
@@ -578,13 +616,15 @@ export default function Stage4({
                       normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
+                    className={isDangerField ? "accent-red-600 w-4 h-4" : ""}
                   />
-                  {val}
+                  <span className={isDangerField ? "font-medium text-red-900" : ""}>{val}</span>
                 </label>
               ))}
             </div>
           </div>
         );
+      }
 
       case "number":
         return (
@@ -787,6 +827,27 @@ export default function Stage4({
         onConfirm={handleDeleteConfirm}
         title="Remove Picture"
         message="Are you sure you want to delete this image? This action cannot be undone."
+      />
+      
+      <ConfirmationModal
+        isOpen={closeOrderModalOpen}
+        onClose={() => {
+            setCloseOrderModalOpen(false);
+            setPendingCloseOrder(null);
+        }}
+        onConfirm={() => {
+            if (pendingCloseOrder) {
+                setFormData((prev) => ({ ...prev, closeOrder: pendingCloseOrder }));
+                setStatuses((prev) => ({ ...prev, closeOrder: getStatus(pendingCloseOrder) }));
+                setHasChanges(true);
+                setCloseOrderModalOpen(false);
+                setPendingCloseOrder(null);
+            }
+        }}
+        title="Confirm Status Change"
+        message={`Are you sure you want to mark this order as ${
+             pendingCloseOrder || "Completed"
+        }? This action will archive the order.`}
       />
     </div>
   );

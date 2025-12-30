@@ -120,10 +120,14 @@ export default function Header() {
 
       // 🔹 PRINT MEDIA
       else if (currentModule === "print media") {
-        const stored = JSON.parse(
-          localStorage.getItem("client-storage") || "{}"
-        );
-        response = stored?.state?.clients || [];
+        if (isArchivedPage) {
+           response = archivedClients.map((c) => c.__raw || c);
+        } else {
+           const stored = JSON.parse(
+             localStorage.getItem("client-storage") || "{}"
+           );
+           response = stored?.state?.clients || [];
+        }
       }
 
       // 🔹 ARCHIVED
@@ -550,6 +554,8 @@ export default function Header() {
                             </p>
                             <p className="text-xs text-gray-400 truncate max-w-[200px]">
                               {item?.propertyAddress ||
+                                item?.deliveryAddress ||
+                                item?.businessAddress ||
                                 item?.clientEmail ||
                                 "No detailed info"}
                             </p>
