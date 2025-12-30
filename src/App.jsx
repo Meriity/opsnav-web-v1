@@ -8,6 +8,7 @@ import ArchivedClients from "./pages/admin/ArchivedClients";
 import AdminLogin from "./components/auth/AdminLogin";
 import ClientLogin from "./components/auth/ClientLogin";
 import SignUp from "./components/auth/SignUp";
+import SignUpSuccess from "./components/auth/SignUpSuccess";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
 import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
@@ -60,6 +61,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/signup-success" element={<SignUpSuccess />} />
         <Route path="/get-started-free" element={<GetStartedFree />} />
         <Route path="/contact-support" element={<ContactSupport />} />
         <Route path="/book-demo" element={<BookDemo />} />

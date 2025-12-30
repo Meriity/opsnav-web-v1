@@ -214,6 +214,7 @@ export default function Stage6({
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingCloseMatter, setPendingCloseMatter] = useState(null);
   const [noteForClient, setNoteForClient] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -361,6 +362,14 @@ export default function Stage6({
     const field = currentConfig.fields.find((f) => f.name === key);
     let processed = value;
 
+    // Special handling for Close Matter triggering modal on selection
+    if (key === "closeMatter" && ["Completed", "Cancelled"].includes(value)) {
+       setPendingCloseMatter(value);
+       setIsModalOpen(true);
+       // DO NOT update form state yet
+       return;
+    }
+
     // Update form state
     setFormState((prev) => ({ ...prev, [key]: processed }));
     setHasChanges(true);
@@ -497,28 +506,12 @@ export default function Stage6({
     }
 
     setIsSaving(false);
-    setIsModalOpen(false);
+    setIsSaving(false);
+    // Modal is handled by selection now
   };
 
   const handleSave = async () => {
     if (!isChanged() || isSaving) return;
-
-    if (modalField) {
-      const originalValue = normalizeValue(
-        originalData.current?.formData?.[modalField.name]
-      );
-      const currentValue = normalizeValue(formState[modalField.name]);
-
-      if (currentValue && originalValue !== currentValue) {
-        setIsModalOpen(true);
-        return;
-      }
-    }
-
-    // strict compare for close matter if it's not empty?
-    // The logic above says if it CHANGED and is NOT empty, show modal.
-    // If it is empty, or didn't change, just save.
-
     await performSave();
   };
 
@@ -550,12 +543,27 @@ export default function Stage6({
 
   return (
     <div className="overflow-y-auto">
-      {currentConfig.fields.map((field) => (
-        <div key={field.name} className="mt-5">
+      {currentConfig.fields.map((field) => {
+        const isDangerField = field.name === "closeMatter";
+        
+        return (
+        <div 
+          key={field.name} 
+          className={`mt-5 ${isDangerField ? "bg-red-50 border-2 border-red-200 p-4 rounded-xl" : ""}`}
+        >
           {field.type === "radio" ? (
             <>
               <div className="flex justify-between items-center mb-3">
-                <label className="font-bold">{field.label}</label>
+                <div className="flex items-center gap-2">
+                  {isDangerField && (
+                    <div className="bg-red-100 p-1.5 rounded-full text-red-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                        <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                  <label className={`font-bold ${isDangerField ? "text-red-900 text-lg" : ""}`}>{field.label}</label>
+                </div>
                 <div
                   className={`w-[90px] h-[18px] flex items-center justify-center rounded-4xl ${bgcolor(
                     statusState[field.name]
@@ -567,7 +575,7 @@ export default function Stage6({
               <div className="flex flex-wrap gap-x-8 gap-y-2">
                 {(field.options || ["Yes", "No", "Processing", "N/R"]).map(
                   (opt) => (
-                    <label key={opt} className="flex gap-2">
+                    <label key={opt} className={`flex items-center gap-2 cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
                       <input
                         type="radio"
                         checked={
@@ -575,8 +583,9 @@ export default function Stage6({
                           normalizeValue(opt)
                         }
                         onChange={() => handleChange(field.name, opt)}
+                        className={isDangerField ? "accent-red-600 w-4 h-4" : ""}
                       />
-                      {opt}
+                      <span className={isDangerField ? "font-medium text-red-900" : ""}>{opt}</span>
                     </label>
                   )
                 )}
@@ -594,7 +603,7 @@ export default function Stage6({
             </div>
           )}
         </div>
-      ))}
+      )})}
 
       {currentModule === "commercial" ? (
         <>
@@ -673,12 +682,26 @@ export default function Stage6({
 
       <ConfirmationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={confirmSave}
-        title="Confirm Status Change"
-        message={`Are you sure you want to mark this matter as ${
-          formState[modalField?.name]
-        }? This action will archive the matter.`}
+        onClose={() => {
+            setIsModalOpen(false);
+            setPendingCloseMatter(null);
+        }}
+        onConfirm={() => {
+            if (pendingCloseMatter) {
+                // Apply the pending value
+                setFormState((prev) => ({ ...prev, closeMatter: pendingCloseMatter }));
+                setStatusState((prev) => ({ ...prev, closeMatter: getStatus(pendingCloseMatter) }));
+                setHasChanges(true);
+                setIsModalOpen(false);
+                setPendingCloseMatter(null);
+            }
+        }}
+        title="Confirm Matter Closure"
+        message={
+          pendingCloseMatter === "Completed"
+            ? "Are you sure you want to mark this matter as Completed?  This action will archive the matter."
+            : "Are you sure you want to mark this matter as Cancelled? This action cannot be undone."
+        }
       />
     </div>
   );
