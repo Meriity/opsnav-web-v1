@@ -451,7 +451,7 @@ const ViewClients = () => {
           <Dialog
             open={showShareDialog}
             onClose={handelShareEmailModalClose}
-            className="relative z-50"
+            className="relative z-[1000]"
           >
             <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
             <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
@@ -513,12 +513,12 @@ const ViewClients = () => {
           <Dialog
             open={showTAR}
             onClose={() => setShowTar(false)}
-            className="relative z-50"
+            className="relative z-[1000]"
           >
             <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
             <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
               <DialogPanel className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 relative">
-                <DialogTitle className={"text-xl mb-5"}>
+                <DialogTitle className={"text-xl mb-5 font-bold"}>
                   Task Allocation Report
                 </DialogTitle>
                 <div className="flex items-center gap-2 mb-5">
@@ -619,7 +619,7 @@ const ViewClients = () => {
               </label> */}
                     <select
                       name="Client"
-                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
                       value={selectedClientName}
                       onChange={(e) => handleClientFilterChange(e.target.value)}
                       disabled={localStorage.getItem("role") !== "admin"}

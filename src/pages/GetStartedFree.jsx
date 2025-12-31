@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
 
 function GetStartedFree() {
   const navigate = useNavigate();
@@ -144,7 +145,7 @@ function GetStartedFree() {
           throw new Error(errorData.message || "Free trial request failed");
         }
 
-        alert(
+        toast.success(
           "Thank you for requesting a free trial! Our team will contact you shortly."
         );
         navigate("/");

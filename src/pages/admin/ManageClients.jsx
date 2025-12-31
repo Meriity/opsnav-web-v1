@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { Search, Plus, Edit, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, RefreshCw, Loader2, UserPlus } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table"; // Used for desktop view
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -379,7 +379,7 @@ export default function ManageUsers() {
             setIsOpen={() => setcreateuser(false)}
             onClose={() => {
               setcreateuser(false);
-              window.location.reload();
+              fetchUsers();
             }}
           />
           <div className="flex-1 min-w-0">
@@ -402,9 +402,11 @@ export default function ManageUsers() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            
             onClick={() => setcreateuser(true)}
             className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
           >
+            <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
             <span className="xs:hidden">Create Client</span>
           </motion.button>
         </div>
@@ -886,39 +888,46 @@ export default function ManageUsers() {
         </div>
       </Dialog>
 
-      {/* Delete Dialog */}
       <Dialog
         open={openDelete}
         onClose={setOpenDelete}
-        className="relative z-10"
+        className="relative z-[1000]"
       >
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-md relative">
-              <button
-                onClick={() => setOpenDelete(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
-              <h2 className="text-lg font-bold mb-4">
-                Delete {currentModule === "commercial" ? "Project" : "Client"}
-              </h2>
-              <p className="mb-6">
-                Are you sure you want to delete this{" "}
-                {currentModule === "commercial" ? "project" : "client"}?
-              </p>
-              <button
-                onClick={handleUserDelete}
-                disabled={deleteLoading}
-                className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {deleteLoading && (
-                  <Loader2 size={16} className="animate-spin" />
-                )}
-                {deleteLoading ? "Deleting..." : "Delete"}
-              </button>
+            <DialogPanel className="w-full max-w-md">
+              <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
+                <button
+                  onClick={() => setOpenDelete(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                >
+                  &times;
+                </button>
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
+                    <Trash2 className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">
+                    Delete {currentModule === "commercial" ? "Project" : "Client"}
+                  </h2>
+                  <p className="text-gray-600">
+                    Are you sure you want to delete this{" "}
+                    {currentModule === "commercial" ? "project" : "client"}? This
+                    action cannot be undone.
+                  </p>
+                </div>
+                <button
+                  onClick={handleUserDelete}
+                  disabled={deleteLoading}
+                  className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {deleteLoading && (
+                    <Loader2 size={20} className="animate-spin" />
+                  )}
+                  {deleteLoading ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </DialogPanel>
           </div>
         </div>
