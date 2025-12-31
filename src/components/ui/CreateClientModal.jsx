@@ -103,6 +103,7 @@ export default function CreateClientModal({
 
   // Google Maps Autocomplete refs
 const idgDeliveryAddressRef = useRef(null);
+const idgBillingAddressRef = useRef(null);
 const conveyancingPropertyAddressRef = useRef(null);
 const commercialBusinessAddressRef = useRef(null);
 
@@ -121,7 +122,7 @@ const commercialBusinessAddressRef = useRef(null);
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if (isPrintMedia && createType === "order" || isConveyancing || isCommercial) {
+    if ((isPrintMedia && (createType === "order" || createType === "client")) || isConveyancing || isCommercial) {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -173,7 +174,7 @@ const commercialBusinessAddressRef = useRef(null);
             idgDeliveryAddressRef.current,
             {
               types: ["address"],
-              componentRestrictions: { country: ["au", "us", "gb", "ca"] },
+              // componentRestrictions: { country: ["au", "us", "gb", "ca"] },
             }
           );
 
@@ -235,6 +236,75 @@ const commercialBusinessAddressRef = useRef(null);
 
     // --- Cleanup function ---
       return () => {
+      if (placeChangedListener) {
+        window.google.maps.event.removeListener(placeChangedListener);
+      }
+      if (autocompleteInstance && window.google) {
+        window.google.maps.event.clearInstanceListeners(autocompleteInstance);
+      }
+    };
+  }, [isOpen, isPrintMedia, createType]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR IDG CLIENT BILLING ADDRESS ---
+  useEffect(() => {
+    // Only run for IDG client form
+    if (!isPrintMedia || createType !== "client") return;
+
+    let autocompleteInstance = null;
+    let placeChangedListener = null;
+
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (idgBillingAddressRef.current && window.google) {
+          autocompleteInstance = new window.google.maps.places.Autocomplete(
+            idgBillingAddressRef.current,
+            {
+              types: ["address"],
+              // componentRestrictions: { country: ["au", "us", "gb", "ca"] },
+            }
+          );
+
+          placeChangedListener = autocompleteInstance.addListener(
+            "place_changed",
+            () => {
+              const place = autocompleteInstance.getPlace();
+
+              if (!place.geometry || !place.address_components) {
+                toast.warning(
+                  "Please select a valid address from the dropdown."
+                );
+                return;
+              }
+
+              let state = "";
+              let country = "";
+              let postalCode = "";
+
+              place.address_components.forEach((component) => {
+                const types = component.types;
+                if (types.includes("administrative_area_level_1"))
+                  state = component.short_name;
+                if (types.includes("country")) country = component.long_name;
+                if (types.includes("postal_code"))
+                  postalCode = component.long_name;
+              });
+
+              setFormData((prev) => ({
+                ...prev,
+                billingAddress: place.formatted_address,
+                state: state,
+                country: country,
+                postcode: postalCode,
+              }));
+            }
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading Google Maps:", error);
+      });
+
+    return () => {
       if (placeChangedListener) {
         window.google.maps.event.removeListener(placeChangedListener);
       }
@@ -618,7 +688,8 @@ useEffect(() => {
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
-          navigate(`/admin/client/print-media/${id.clientId}`);
+          navigate(`/admin/manage-clients`);
+          if (typeof onClose === "function") onClose();
           
         } else if (createType === "order") {
           const requiredFields = [
@@ -689,7 +760,7 @@ useEffect(() => {
     <Dialog
       open={isOpen}
       onClose={() => setIsOpen(false)}
-      className="relative  z-[100]"
+      className="relative z-[1000]"
     >
       {/* Glass morphism backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm " />
@@ -1001,10 +1072,14 @@ useEffect(() => {
                   <div>
                     <label className="block mb-1 font-medium">
                       Billing Address*
+                      <span className="text-xs text-gray-500 ml-2">
+                          (Start typing to see suggestions)
+                        </span>
                     </label>
                     <input
                       type="text"
                       name="billingAddress"
+                      ref={idgBillingAddressRef}
                       value={formData.billingAddress || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
@@ -1017,7 +1092,7 @@ useEffect(() => {
                       <input
                         type="text"
                         name="country"
-                        value={"Australia"}
+                        value={formData.country || "Australia"}
                         readOnly
                         // onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
@@ -1025,29 +1100,13 @@ useEffect(() => {
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">State</label>
-                      {/* <input
+                      <input
                         type="text"
                         name="state"
                         value={formData.state || ""}
                         onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      /> */}
-                      <select
-                        name="state"
-                        value={formData.state || ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white"
-                      >
-                        <option value={""}>Select State</option>
-                        <option value={"ACT"}>ACT</option>
-                        <option value={"NSW"}>NSW</option>
-                        <option value={"NT"}>NT</option>
-                        <option value={"QLD"}>QLD</option>
-                        <option value={"SA"}>SA</option>
-                        <option value={"TAS"}>TAS</option>
-                        <option value={"VIC"}>VIC</option>
-                        <option value={"WA"}>WA</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">Postcode</label>

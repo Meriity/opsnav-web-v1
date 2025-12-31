@@ -170,8 +170,8 @@ export default function Stage1({
     return statusColors[status] || "bg-[#FF0000] text-white";
   }
 
-  function extractNotes(note = "") {
-    const [systemNote = "", clientComment = ""] = note
+  function extractNotes(note) {
+    const [systemNote = "", clientComment = ""] = (note || "")
       .split(" - ")
       .map((str) => str.trim());
     return { systemNote, clientComment };

@@ -96,7 +96,7 @@ const formConfig = {
       {
         name: "designArtwork",
         label: "Create / update Design Artwork",
-        type: "text",
+        type: "radio",
       },
       {
         name: "internalApproval",
@@ -121,7 +121,7 @@ const formConfig = {
       {
         name: "jobActivity",
         label: "Ensure Job Activity & Priority are correctly logged",
-        type: "text",
+        type: "radio",
       },
     ],
     noteGroups: [

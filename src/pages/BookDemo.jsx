@@ -13,6 +13,7 @@ import {
   Video,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
 
 function BookDemo() {
   const navigate = useNavigate();
@@ -145,7 +146,7 @@ function BookDemo() {
           throw new Error(errorData.message || "Demo booking failed");
         }
 
-        alert(
+        toast.success(
           "Thank you for booking a demo! Our team will contact you shortly to schedule your personalized demo."
         );
         navigate("/");
