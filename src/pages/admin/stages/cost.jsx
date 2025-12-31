@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Helper to define initial state structures for different companies
-const getInitialState = (company, currentModule) => {
+const getInitialState = (currentModule) => {
   const commonState = {
     "Other fee (1)": "",
     "Note 1": "",
@@ -48,7 +48,7 @@ const getInitialState = (company, currentModule) => {
       "Rates Note": "",
       ...commonState,
     };
-  } else if (company === "vkl") {
+  } else if (currentModule === "conveyancing" || currentModule === "wills") {
     return {
       "VOI/CAF": "",
       "VOI/CAF Note": "",
@@ -70,12 +70,11 @@ const getInitialState = (company, currentModule) => {
   return commonState;
 };
 
-export default function CostComponent({ changeStage }) {
+export default function CostComponent({ changeStage, setHasChanges }) {
   const { matterNumber } = useParams();
   const queryClient = useQueryClient();
 
   // --- Memoized Values ---
-  const company = useMemo(() => localStorage.getItem("company") || "idg", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
     []
@@ -87,11 +86,8 @@ export default function CostComponent({ changeStage }) {
   const commercialApi = useMemo(() => new CommercialAPI(), []);
 
   // --- State ---
-  const [formValues, setFormValues] = useState(
-    getInitialState(company, currentModule)
-  );
+  const [formValues, setFormValues] = useState(getInitialState(currentModule));
   const originalData = useRef({});
-  // isLoading and isSaving are now handled by React Query
 
   // --- Calculation Logic ---
   const calculateTotals = useCallback(
@@ -121,7 +117,10 @@ export default function CostComponent({ changeStage }) {
             (parseFloat(values["Rates"]) || 0) +
             (parseFloat(otherTotal) || 0)
         );
-      } else if (company === "vkl") {
+      } else if (
+        currentModule === "conveyancing" ||
+        currentModule === "wills"
+      ) {
         totalCosts = formatNum(
           (parseFloat(values["VOI/CAF"]) || 0) +
             (parseFloat(values["Title"]) || 0) +
@@ -152,13 +151,15 @@ export default function CostComponent({ changeStage }) {
         "Invoice Amount": invoiceAmount,
       };
     },
-    [company, currentModule]
+    [currentModule]
   );
 
   // --- Data Fetching with useQuery ---
   const fetchCostData = useCallback(async () => {
     try {
-      let stageResponse, costData, stage1Data;
+      let stageResponse,
+        costData = {},
+        stage1Data = {};
 
       if (currentModule === "commercial") {
         console.log("Fetching commercial cost data for:", matterNumber);
@@ -182,23 +183,26 @@ export default function CostComponent({ changeStage }) {
         }
       } else {
         stageResponse =
-          company === "vkl"
-            ? await StagesAPI.getAllStages(matterNumber)
-            : await StagesAPI.getIDGStages(matterNumber);
+          currentModule === "print media"
+            ? await StagesAPI.getIDGStages(matterNumber)
+            : await StagesAPI.getAllStages(matterNumber);
 
-        if (!stageResponse || (company === "idg" && !stageResponse.data)) {
+        if (!stageResponse) {
           throw new Error(
             "Failed to fetch stage data. The client may not exist."
           );
         }
 
-        if (company === "vkl") {
-          costData = stageResponse?.cost || {};
-        } else {
+        if (currentModule === "print media") {
           costData =
             stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
+          stage1Data =
+            stageResponse?.stage1?.[0] || stageResponse?.data?.stage1 || {};
+        } else {
+          costData = stageResponse?.cost || {};
+          // For conveyancing, stage1 is typically at the root of the response object
+          stage1Data = stageResponse?.stage1 || {};
         }
-        stage1Data = stageResponse?.stage1 || {};
       }
 
       const quoteType =
@@ -259,7 +263,10 @@ export default function CostComponent({ changeStage }) {
           "Note 4": costData.otherFee4Note || "",
           ...commonMapped,
         };
-      } else if (company === "vkl") {
+      } else if (
+        currentModule === "conveyancing" ||
+        currentModule === "wills"
+      ) {
         mappedData = {
           "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
           "VOI/CAF Note": costData.voiCafNote || "",
@@ -305,17 +312,10 @@ export default function CostComponent({ changeStage }) {
       toast.error("Failed to load cost data");
       throw err; // Re-throw to be caught by useQuery
     }
-  }, [
-    matterNumber,
-    currentModule,
-    company,
-    commercialApi,
-    StagesAPI,
-    calculateTotals,
-  ]);
+  }, [matterNumber, currentModule, commercialApi, StagesAPI, calculateTotals]);
 
   const { data: loadedData, isLoading } = useQuery({
-    queryKey: ["costData", matterNumber, currentModule, company],
+    queryKey: ["costData", matterNumber, currentModule],
     queryFn: fetchCostData,
     enabled: !!matterNumber,
   });
@@ -326,6 +326,7 @@ export default function CostComponent({ changeStage }) {
       setFormValues(loadedData);
       originalData.current = loadedData;
       console.log("Final initialized form data:", loadedData);
+      setHasChanges(false);
     }
   }, [loadedData]);
 
@@ -356,9 +357,21 @@ export default function CostComponent({ changeStage }) {
     formValues["Invoice Amount"],
   ]);
 
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSubmit();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [formValues]);
+
   // --- Change Handlers ---
   const handleChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
   const handleNumberChange = (field, value) => {
@@ -402,7 +415,10 @@ export default function CostComponent({ changeStage }) {
           invoiceAmount: formatNumber(formValues["Invoice Amount"]),
           invoiceAmountNote: formValues["Invoice Amount Note"],
         };
-      } else if (company === "vkl") {
+      } else if (
+        currentModule === "conveyancing" ||
+        currentModule === "wills"
+      ) {
         commonPayload = {
           matterNumber: matterNumber,
           otherFee_1: formatNumber(formValues["Other fee (1)"]),
@@ -465,7 +481,10 @@ export default function CostComponent({ changeStage }) {
           rates: formatNumber(formValues["Rates"]),
           ratesNote: formValues["Rates Note"],
         };
-      } else if (company === "vkl") {
+      } else if (
+        currentModule === "conveyancing" ||
+        currentModule === "wills"
+      ) {
         finalPayload = {
           ...commonPayload,
           voiCaf: formatNumber(formValues["VOI/CAF"]),
@@ -487,30 +506,30 @@ export default function CostComponent({ changeStage }) {
         finalPayload = commonPayload;
       }
 
-      console.log("=== COST SAVE PAYLOAD ===", finalPayload);
-
       if (currentModule === "commercial") {
         return commercialApi.upsertCost(matterNumber, finalPayload);
-      } else if (company === "vkl") {
+      } else if (
+        currentModule === "conveyancing" ||
+        currentModule === "wills"
+      ) {
         return api.upsertCost(finalPayload);
       } else {
         return api.upsertIDGCost(matterNumber, finalPayload);
       }
     },
     onSuccess: (response) => {
-      console.log("Cost save successful:", response);
       originalData.current = { ...formValues }; // Update original data
+      setHasChanges(false);
       toast.success("Cost data updated Successfully!");
       // Invalidate query to refetch
       queryClient.invalidateQueries({
-        queryKey: ["costData", matterNumber, currentModule, company],
+        queryKey: ["costData", matterNumber, currentModule],
       });
       try {
         sessionStorage.setItem("opsnav_clients_should_reload", "1");
       } catch (e) {}
     },
     onError: (err) => {
-      console.error("=== COST SAVE ERROR ===", err);
       let errorMessage = "Failed to save cost data. Please try again.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -534,7 +553,7 @@ export default function CostComponent({ changeStage }) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FB4A50] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading cost data...</p>
         </div>
       </div>
@@ -549,7 +568,7 @@ export default function CostComponent({ changeStage }) {
           <>
             <CostInputRow
               label="VOI"
-              amountValue={formValues["VOI"]}
+              amountValue={formValues["VOI"] ?? ""}
               noteValue={formValues["VOI Note"]}
               onAmountChange={(e) => handleNumberChange("VOI", e.target.value)}
               onNoteChange={(e) => handleChange("VOI Note", e.target.value)}
@@ -614,7 +633,7 @@ export default function CostComponent({ changeStage }) {
         )}
 
         {/* VKL specific fields */}
-        {company === "vkl" && currentModule !== "commercial" && (
+        {(currentModule === "conveyancing" || currentModule === "wills") && (
           <>
             <CostInputRow
               label="VOI/CAF"
@@ -685,7 +704,7 @@ export default function CostComponent({ changeStage }) {
           label={
             currentModule === "commercial"
               ? "Fee 1"
-              : company === "vkl"
+              : currentModule === "conveyancing" || currentModule === "wills"
               ? "Other fee (1)"
               : "Fee 1"
           }
@@ -700,7 +719,7 @@ export default function CostComponent({ changeStage }) {
           label={
             currentModule === "commercial"
               ? "Fee 2"
-              : company === "vkl"
+              : currentModule === "conveyancing" || currentModule === "wills"
               ? "Other fee (2)"
               : "Fee 2"
           }
@@ -715,7 +734,7 @@ export default function CostComponent({ changeStage }) {
           label={
             currentModule === "commercial"
               ? "Fee 3"
-              : company === "vkl"
+              : currentModule === "conveyancing" || currentModule === "wills"
               ? "Other fee (3)"
               : "Fee 3"
           }
@@ -730,7 +749,7 @@ export default function CostComponent({ changeStage }) {
           label={
             currentModule === "commercial"
               ? "Fee 4"
-              : company === "vkl"
+              : currentModule === "conveyancing" || currentModule === "wills"
               ? "Other fee (4)"
               : "Fee 4"
           }
@@ -749,7 +768,7 @@ export default function CostComponent({ changeStage }) {
           label={
             currentModule === "commercial"
               ? "Total Fees"
-              : company === "vkl"
+              : currentModule === "conveyancing" || currentModule === "wills"
               ? "Other (total)"
               : "Total Fees"
           }
@@ -760,7 +779,9 @@ export default function CostComponent({ changeStage }) {
           }
           isReadOnly={true}
         />
-        {(currentModule === "commercial" || company === "vkl") && (
+        {(currentModule === "commercial" ||
+          currentModule === "conveyancing" ||
+          currentModule === "wills") && (
           <CostInputRow
             label="Total Costs"
             amountValue={formValues["Total Costs"]}

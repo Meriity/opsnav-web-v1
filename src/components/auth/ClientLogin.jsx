@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -24,7 +24,7 @@ function LoginForm() {
   // const [showPostcode, setShowPostcode] = useState(false);
   const navigate = useNavigate();
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -60,7 +60,7 @@ const handleSubmit = async (e) => {
           "Login failed: No valid identifier found in the response."
         );
       }
-    }catch (err) {
+    } catch (err) {
       toast.error(
         err.message ||
           "Authentication failed! Please check credentials and try again.",
@@ -172,7 +172,7 @@ const handleSubmit = async (e) => {
             <div className="inline-flex [@media(max-width:340px)]:hidden md:hidden lg:inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:py-1">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
               <span className="text-xs sm:text-sm font-medium text-gray-700">
-                Secure Legal Operations Platform
+                Secure Operations Platform
               </span>
             </div>
 
@@ -192,9 +192,9 @@ const handleSubmit = async (e) => {
             </h1>
 
             <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-7 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:1024px)_and_(max-height:800px)]:mb-4">
-              Access your centralized workspace for streamlined legal
-              operations, automated processes, and real-time insights that keep
-              your team productive.
+              Access your centralised workspace for streamlined operations,
+              automated processes, and real-time insights that keep your team
+              productive.
             </p>
 
             {/* Feature List Grid: Hidden on Mobile & Tablet (768px), Visible on 1024px (lg:grid) */}
@@ -270,7 +270,7 @@ const handleSubmit = async (e) => {
               >
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Email Address / Matter Number
+                    Matter Number / Email
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -282,14 +282,14 @@ const handleSubmit = async (e) => {
                       onChange={(e) => setmatterNumber(e.target.value)}
                       required
                       className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="ex : 2580824 / you@company.com"
-                    />
+                      placeholder="ex : 2580824 / test@gmail.com"
+                    />  
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2 [@media(max-width:1024px)_and_(max-height:800px)]:mb-1">
-                    Password / Postcode
+                    Postcode / Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -301,7 +301,7 @@ const handleSubmit = async (e) => {
                       onChange={(e) => setPostcode(e.target.value)}
                       required
                       className="pl-9 sm:pl-10 w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-1.5 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-2.5"
-                      placeholder="ex : Password / Postcode"
+                      placeholder="ex : Postcode / Password"
                     />
                   </div>
                 </div>
@@ -374,12 +374,13 @@ const handleSubmit = async (e) => {
                 <div className="text-center pt-3 sm:pt-4 border-t border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:pt-2">
                   <p className="text-xs sm:text-sm text-gray-500">
                     New to OpsNav?{" "}
-                    <a
+                    <Link
+                      to="/get-started-free"
                       href="#"
                       className="text-[#2E3D99] hover:underline font-medium"
                     >
                       Start your free trial
-                    </a>
+                    </Link>
                   </p>
                 </div>
               </form>

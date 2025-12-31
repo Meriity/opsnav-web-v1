@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -179,7 +179,7 @@ function AdminLogin() {
 
             <p className="text-lg text-gray-600 mb-8 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:430px)]:text-sm [@media(max-width:430px)]:mb-6">
               Access your secure workspace with advanced security features and
-              role-based permissions for streamlined legal operations
+              role-based permissions for streamlined operations
               management.
             </p>
 
@@ -362,12 +362,12 @@ function AdminLogin() {
                 <div className="text-center pt-4 border-t border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:pt-2">
                   <p className="text-sm text-gray-500 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
                     Need help?{" "}
-                    <a
-                      href="#"
+                    <Link
+                      to="/contact-support"
                       className="text-[#2E3D99] hover:underline font-medium"
                     >
                       Contact Support
-                    </a>
+                    </Link>
                   </p>
                 </div>
               </form>
@@ -380,7 +380,7 @@ function AdminLogin() {
       <footer className="absolute bottom-4 left-0 right-0 text-center [@media(max-width:640px)]:relative [@media(max-width:640px)]:pb-4 [@media(max-width:640px)]:pt-6 [@media(min-width:768px)_and_(max-height:750px)]:static [@media(min-width:768px)_and_(max-height:750px)]:pb-2">
         <p className="text-sm text-gray-600 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
           Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
-          Secure Legal Operations Platform
+          Secure Operations Platform
         </p>
       </footer>
     </div>

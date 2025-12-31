@@ -17,6 +17,31 @@ import ConfirmationModal from "../../../components/ui/ConfirmationModal";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
+// Helper function to load Google Maps script (copied from CreateClientModal)
+const loadGoogleMapsScript = (apiKey) => {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) {
+      resolve();
+      return;
+    }
+    const existingScript = document.querySelector(
+      'script[src*="maps.googleapis.com"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener("load", resolve);
+      existingScript.addEventListener("error", reject);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", resolve);
+    script.addEventListener("error", reject);
+    document.head.appendChild(script);
+  });
+};
+
 const formatDateForDisplay = (isoString) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -132,16 +157,124 @@ export default function StagesLayout() {
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
   const [originalClientData, setOriginalClientData] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [stageDirty, setStageDirty] = useState(false);
+  const [matterDirty, setMatterDirty] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
-  const company = localStorage.getItem("company");
   const currentModule = localStorage.getItem("currentModule");
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [_isUpdating, setIsUpdating] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState("stage");
+
+  // Google Maps Refs
+  const addressInputRef = useRef(null);
+  const mobileAddressInputRef = useRef(null);
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
+
+  // Handle Google Maps Place Selection
+  const handlePlaceSelected = (place) => {
+    if (!place.geometry || !place.address_components) return;
+
+    let postcode = "";
+    let state = "";
+    // address is formatted_address
+    const address = place.formatted_address; 
+
+    place.address_components.forEach((component) => {
+      if (component.types.includes("postal_code"))
+        postcode = component.long_name;
+      if (component.types.includes("administrative_area_level_1"))
+        state = component.short_name;
+    });
+
+    setClientData((prev) => {
+      const newData = { ...prev };
+      
+      // Update Address based on module
+      if (currentModule === "commercial") {
+        newData.businessAddress = address;
+      } else if (currentModule === "print media") {
+         if(!newData.data) newData.data = {};
+         newData.data.deliveryAddress = address;
+      } else {
+        newData.propertyAddress = address;
+      }
+
+      // Update State and Postcode
+      if(currentModule === "print media") {
+          if(!newData.data) newData.data = {};
+          
+          newData.data.state = state;
+          newData.state = state; // Sync root state
+          
+          newData.data.postCode = postcode; 
+          newData.data.postcode = postcode;
+          newData.postcode = postcode; // Sync root postcode
+      } else {
+          newData.state = state;
+          newData.postcode = postcode;
+      }
+
+      return newData;
+    });
+    // Mark as dirty so Update button enables
+    setMatterDirty(true); 
+  };
+
+  // Initialize Autocomplete Effect
+  useEffect(() => {
+    // Only load if we have inputs to attach to
+    if ((!addressInputRef.current && !mobileAddressInputRef.current)) return;
+
+    let desktopAutocomplete = null;
+    let mobileAutocomplete = null;
+    let desktopListener = null;
+    let mobileListener = null;
+
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (!window.google) return;
+
+        // Desktop Input
+        if (addressInputRef.current) {
+          desktopAutocomplete = new window.google.maps.places.Autocomplete(
+            addressInputRef.current,
+            { types: ["address"], componentRestrictions: { country: ["au"] } }
+          );
+          desktopListener = desktopAutocomplete.addListener("place_changed", () => {
+             handlePlaceSelected(desktopAutocomplete.getPlace());
+          });
+        }
+
+        // Mobile Input
+        if (mobileAddressInputRef.current) {
+          mobileAutocomplete = new window.google.maps.places.Autocomplete(
+             mobileAddressInputRef.current,
+             { types: ["address"], componentRestrictions: { country: ["au"] } }
+          );
+          mobileListener = mobileAutocomplete.addListener("place_changed", () => {
+              handlePlaceSelected(mobileAutocomplete.getPlace());
+          });
+        }
+      })
+      .catch((err) => console.error("Google Maps Load Error:", err));
+
+    return () => {
+      if(desktopListener) window.google.maps.event.removeListener(desktopListener);
+      if(mobileListener) window.google.maps.event.removeListener(mobileListener);
+      if(desktopAutocomplete) window.google.maps.event.clearInstanceListeners(desktopAutocomplete);
+      if(mobileAutocomplete) window.google.maps.event.clearInstanceListeners(mobileAutocomplete);
+    };
+  }, [
+    isSmallScreen, 
+    activeMobileTab, 
+    // Re-run if screen size changes or mobile tab switches to details (mounting the input)
+    currentModule
+  ]);
 
   const [stageStatuses, setStageStatuses] = useState({
     status1: "Not Completed",
@@ -179,7 +312,7 @@ export default function StagesLayout() {
     { id: 6, title: "Final Letter/Close" },
   ];
 
-  if (localStorage.getItem("company") === "vkl") {
+  if (currentModule === "conveyancing" || currentModule === "wills") {
     stages = [
       { id: 1, title: "Retainer/Declaration" },
       { id: 2, title: "VOI/CAF/Approvals" },
@@ -188,7 +321,7 @@ export default function StagesLayout() {
       { id: 5, title: "Notify/Transfer/Disb" },
       { id: 6, title: "Final Letter/Close" },
     ];
-  } else if (localStorage.getItem("company") === "idg") {
+  } else if (currentModule === "print media") {
     stages = [
       { id: 1, title: "Initiate & Approve" },
       { id: 2, title: "Plan & Prepare" },
@@ -227,6 +360,27 @@ export default function StagesLayout() {
       }}
     />
   );
+
+  const navigateToCost = () => {
+    const baseUrl = isAnyAdmin ? "/admin/client/stages" : "/user/client";
+    // For user route: /user/client/:matterNumber/stages/:stageNo
+    // For admin route: /admin/client/stages/:matterNumber/:stageNo
+    
+    let targetUrl;
+    if (isAnyAdmin) {
+      targetUrl = `${baseUrl}/${matterNumber}/7`;
+    } else {
+       // Match the new User route structure: client/:matterNumber/stages/:stageNo
+      targetUrl = `${baseUrl}/${matterNumber}/stages/7`;
+    }
+
+    // Force hard reload if already on the cost page or just navigation if not
+    if (String(selectedStage) === "7") {
+       window.location.reload();
+    } else {
+       window.location.href = targetUrl;
+    }
+  };
 
   function bgcolor(status) {
     const statusColors = {
@@ -274,19 +428,27 @@ export default function StagesLayout() {
     return "In Progress";
   }
 
+  const pendingStageRef = useRef(null);
+
   function RenderStage(newStage) {
+    if (stageDirty) {
+      pendingStageRef.current = newStage;
+      setShowUnsavedConfirm(true);
+      return;
+    }
+
     setSelectedStage(newStage);
     setReloadStage((prev) => !prev);
   }
-  // Replace your getStageData function with this version
   const getStageData = (stageNumber) => {
     if (!clientData) return null;
 
-    console.log(`=== GET STAGE ${stageNumber} DATA ===`);
-    console.log("Client data structure:", clientData);
-
     // For commercial projects
     if (currentModule === "commercial") {
+      // Prioritize the full stage object if available
+      let stageData = clientData[`stage${stageNumber}`] || {};
+
+      // If we have a stages array (status summary), merge the color status
       if (
         clientData.stages &&
         Array.isArray(clientData.stages) &&
@@ -295,21 +457,9 @@ export default function StagesLayout() {
         const stageObject = clientData.stages[0];
         const stageKey = `S${stageNumber}`;
         if (stageObject[stageKey]) {
-          console.log(
-            `Found stage ${stageNumber} in stages array as ${stageKey}:`,
-            stageObject[stageKey]
-          );
-          // Return a mock stage object with the colorStatus
-          return { colorStatus: stageObject[stageKey] };
+          stageData = { ...stageData, colorStatus: stageObject[stageKey] };
         }
       }
-
-      // Check for individual stage properties (stage1, stage2, etc.)
-      const stageData = clientData[`stage${stageNumber}`] || null;
-      console.log(
-        `Found stage ${stageNumber} as individual property:`,
-        stageData
-      );
       return stageData;
     }
 
@@ -334,8 +484,6 @@ export default function StagesLayout() {
     }
 
     const stageData = getStageData(stage);
-    console.log(`=== RENDERING STAGE ${stage} ===`);
-    console.log("Stage data to pass:", stageData);
 
     switch (stage) {
       case 1:
@@ -345,6 +493,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 2:
@@ -356,6 +505,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 3:
@@ -365,6 +515,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 4:
@@ -374,6 +525,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 5:
@@ -383,19 +535,21 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 6:
         return (
           <Stage6
             data={
-              localStorage.getItem("company") === "vkl"
+              currentModule !== "print media"
                 ? normalizeCloseMatterForClient(stageData)
                 : stageData
             }
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       case 7:
@@ -405,6 +559,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
       default:
@@ -414,6 +569,7 @@ export default function StagesLayout() {
             changeStage={RenderStage}
             reloadTrigger={reloadStage}
             setReloadTrigger={setReloadStage}
+            setHasChanges={setStageDirty}
           />
         );
     }
@@ -424,130 +580,256 @@ export default function StagesLayout() {
     async function fetchDetails() {
       try {
         setLoading(true);
-        const localCompany = localStorage.getItem("company");
         const currentModule = localStorage.getItem("currentModule");
 
         let response = null;
         if (currentModule === "commercial") {
           try {
-            // First, get all active projects
-            const activeProjectsResponse =
-              await commercialApiRef.current.getActiveProjects();
-            console.log("All active projects:", activeProjectsResponse);
+            // Try to get full client data directly which includes stage details
+            try {
+              // Fetch main client data and ALL stages in parallel to ensure we have the latest data
+              const [clientData, s1, s2, s3, s4, s5, s6] = await Promise.all([
+                commercialApiRef.current
+                  .getClientAllData(matterNumber)
+                  .catch((e) => {
+                    console.warn("getClientAllData failed", e);
+                    return null;
+                  }),
+                commercialApiRef.current
+                  .getStageData(1, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(2, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(3, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(4, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(5, matterNumber)
+                  .catch(() => ({})),
+                commercialApiRef.current
+                  .getStageData(6, matterNumber)
+                  .catch(() => ({})),
+              ]);
 
-            // Find the specific project by matterNumber from the active projects list
-            let data = [];
-            if (Array.isArray(activeProjectsResponse)) {
-              data = activeProjectsResponse;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.data)
-            ) {
-              data = activeProjectsResponse.data;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.clients)
-            ) {
-              data = activeProjectsResponse.clients;
-            } else if (
-              activeProjectsResponse &&
-              Array.isArray(activeProjectsResponse.projects)
-            ) {
-              data = activeProjectsResponse.projects;
-            }
+              if (clientData) {
+                // Helper to safely extract stage data
+                const getS = (s, key, altKey) => {
+                  const direct = s?.data || s || {};
+                  // If direct is not empty (has keys), use it
+                  if (direct && Object.keys(direct).length > 0) return direct;
+                  // Fallback to clientData keys
+                  return clientData[key] || clientData[altKey] || {};
+                };
 
-            // Find the project with matching matterNumber
-            response = data.find(
-              (project) =>
-                String(project.matterNumber) === String(matterNumber) ||
-                String(project._id) === String(matterNumber) ||
-                String(project.id) === String(matterNumber)
-            );
+                const getStage6Data = () => {
+                  let base = getS(s6, "stage6", "stageSix");
+                  
+                  // FIX: If the response is the full client object, unwrap the stage6 data
+                  if (base && base.stage6) {
+                    base = base.stage6;
+                  }
 
-            console.log("Found project:", response);
+                  const merged = { ...base };
+                  const rootFields = [
+                    "notifySoaToClient",
+                    "council",
+                    "settlementNotificationToClient",
+                    "settlementNotificationToCouncil",
+                    "settlementNotificationToWater",
+                    "finalLetterToClient",
+                    "invoiced",
+                    "closeMatter",
+                    "colorStatus",
+                  ];
 
-            if (!response) {
-              // If not found in active projects, try the full data endpoint as fallback
-              try {
-                response = await commercialApiRef.current.getProjectFullData(
-                  matterNumber
-                );
-              } catch (error) {
-                console.log("Full data endpoint also failed");
+                  rootFields.forEach((field) => {
+                    const stageVal = merged[field];
+                    const rootVal = clientData[field];
+
+                    if (
+                      (stageVal === undefined ||
+                        stageVal === null ||
+                        stageVal === "") &&
+                      rootVal !== undefined &&
+                      rootVal !== null &&
+                      rootVal !== ""
+                    ) {
+                      merged[field] = rootVal;
+                    }
+                  });
+                  return merged;
+                };
+
+                response = {
+                  ...clientData,
+                  stage1: getS(s1, "stage1", "stageOne"),
+                  stage2: getS(s2, "stage2", "stageTwo"),
+                  stage3: getS(s3, "stage3", "stageThree"),
+                  stage4: getS(s4, "stage4", "stageFour"),
+                  stage5: getS(s5, "stage5", "stageFive"),
+                  stage6: getStage6Data(),
+                };
+              } else {
+                // Fallback if main fetch fails but we have stage data?
+                const backupData =
+                  await commercialApiRef.current.getProjectFullData(
+                    matterNumber
+                  );
+                const safeBackup =
+                  backupData || createDefaultProjectData(matterNumber);
+
+                const getSBackup = (s, key, altKey) => {
+                  const direct = s?.data || s || {};
+                  if (direct && Object.keys(direct).length > 0) return direct;
+                  return safeBackup[key] || safeBackup[altKey] || {};
+                };
+
+                response = {
+                  ...safeBackup,
+                  stage1: getSBackup(s1, "stage1", "stageOne"),
+                  stage2: getSBackup(s2, "stage2", "stageTwo"),
+                  stage3: getSBackup(s3, "stage3", "stageThree"),
+                  stage4: getSBackup(s4, "stage4", "stageFour"),
+                  stage5: getSBackup(s5, "stage5", "stageFive"),
+                  stage6: getSBackup(s6, "stage6", "stageSix"),
+                };
               }
-
-              // If still not found, create default structure
-              if (!response) {
-                response = createDefaultProjectData(matterNumber);
-                console.log(
-                  "Project not found, created default structure for:",
-                  matterNumber
-                );
-              }
+            } catch (e) {
+              console.warn("Parallel fetch failed, falling back", e);
+              response = await commercialApiRef.current.getProjectFullData(
+                matterNumber
+              );
             }
           } catch (error) {
-            console.log(
-              "Commercial API error, creating default project:",
-              error.message
-            );
+            console.error("Failed to load commercial details", error);
             response = createDefaultProjectData(matterNumber);
           }
-        } else if (localCompany === "vkl") {
-          response = await apiRef.current.getAllStages(matterNumber);
-        } else if (localCompany === "idg") {
+        } else if (currentModule === "print media") {
           response = await apiRef.current.getIDGStages(matterNumber);
+        } else {
+          response = await apiRef.current.getAllStages(matterNumber);
         }
 
         // Handle server role
         const serverRole =
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
-
-        console.log("Raw API response:", response);
-        console.log("Available fields in response:", Object.keys(response));
-
-        console.log("=== DEBUG STAGES ARRAY ===");
         if (response.stages && Array.isArray(response.stages)) {
-          response.stages.forEach((stage, index) => {
-            console.log(`Stage ${index}:`, stage);
-            console.log(`Stage ${index} keys:`, Object.keys(stage));
-          });
+          response.stages.forEach((stage, index) => {});
         } else {
-          console.log("No stages array found in response");
         }
-
-        // Normalize dates for the response AND ensure business fields are included
         const normalized = {
           ...response,
+          // FORCE business fields from ALL possible API response locations (ROBUST)
+          businessName:
+            response.businessName ||
+            response.businessname ||
+            response.client?.businessName ||
+            response.data?.businessName ||
+            "",
+          businessAddress:
+            response.businessAddress ||
+            response.businessaddress ||
+            response.propertyAddress ||
+            response.client?.businessAddress ||
+            "",
+          postcode:
+            response.postcode ||
+            response.postCode ||
+            response.client?.postcode ||
+            "",
+          clientName:
+            response.clientName ||
+            response.client_name ||
+            response.client?.clientName ||
+            "",
+          clientType:
+            response.clientType ||
+            response.client_type ||
+            response.client?.clientType ||
+            "",
+          dataEntryBy:
+            response.dataEntryBy ||
+            response.dataentryby ||
+            response.client?.dataEntryBy ||
+            "",
+          notes:
+            response.notes !== undefined
+              ? response.notes
+              : response.client?.notes ?? "",
+          state: response.state || clientData?.state || "",
           matterDate: response.matterDate
             ? typeof response.matterDate === "string"
               ? response.matterDate
               : new Date(response.matterDate).toISOString()
-            : "",
+            : clientData?.matterDate || "",
           settlementDate: response.settlementDate
             ? typeof response.settlementDate === "string"
               ? response.settlementDate
               : new Date(response.settlementDate).toISOString()
-            : "",
-          notes:
-            response.notes !== undefined
-              ? response.notes
-              : response.notes ?? "",
-          // Ensure business fields are included with proper fallbacks
-          businessName: response.businessName || response.business_name || "",
-          businessAddress:
-            response.businessAddress ||
-            response.business_address ||
-            response.propertyAddress ||
-            "",
-          // Map the data structure properly
-          clientName: response.clientName || response.client_name || "",
-          clientType: response.clientType || response.client_type || "",
-          dataEntryBy: response.dataEntryBy || response.dataentryby || "",
-          postcode: response.postcode || response.postCode || "",
+            : clientData?.settlementDate || "",
+          // Map stage data properly, preserving existing if not in response
+          stage1:
+            response.stage1 ||
+            response.stageOne ||
+            response.data?.stage1 ||
+            response.data?.stageOne ||
+            clientData?.stage1 ||
+            {},
+          stage2:
+            response.stage2 ||
+            response.stageTwo ||
+            response.data?.stage2 ||
+            response.data?.stageTwo ||
+            clientData?.stage2 ||
+            {},
+          stage3:
+            response.stage3 ||
+            response.stageThree ||
+            response.data?.stage3 ||
+            response.data?.stageThree ||
+            clientData?.stage3 ||
+            {},
+          stage4:
+            response.stage4 ||
+            response.stageFour ||
+            response.data?.stage4 ||
+            response.data?.stageFour ||
+            clientData?.stage4 ||
+            {},
+          stage5:
+            response.stage5 ||
+            response.stageFive ||
+            response.data?.stage5 ||
+            response.data?.stageFive ||
+            clientData?.stage5 ||
+            {},
+          stage6:
+            response.stage6 ||
+            response.stageSix ||
+            response.data?.stage6 ||
+            response.data?.stageSix ||
+            clientData?.stage6 ||
+            {},
         };
 
-        console.log("Normalized client data:", normalized);
+        // Sync allocatedUser to stage2 agent if missing or mismatch
+        if (response.allocatedUser) {
+          const users = response.users || [];
+          const matchedUser = users.find(
+            (u) =>
+              u.displayName === response.allocatedUser ||
+              u.name === response.allocatedUser
+          );
+
+          if (matchedUser) {
+            normalized.stage2.agent = `${matchedUser._id}-${matchedUser.displayName}`;
+          }
+        }
 
         setClientData(normalized);
         setOriginalClientData(JSON.parse(JSON.stringify(normalized)));
@@ -556,8 +838,6 @@ export default function StagesLayout() {
         const section = {};
 
         if (currentModule === "commercial") {
-          console.log("Setting commercial stage statuses");
-
           // Initialize all stages as "Not Completed"
           for (let i = 1; i <= 6; i++) {
             section[`status${i}`] = "Not Completed";
@@ -569,7 +849,6 @@ export default function StagesLayout() {
             Array.isArray(response.stages) &&
             response.stages.length > 0
           ) {
-            console.log("Found stages array:", response.stages);
             const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
 
             // Process each stage (S1, S2, S3, S4, S5, S6)
@@ -583,11 +862,6 @@ export default function StagesLayout() {
                 };
                 section[`status${i}`] =
                   statusMap[stageObject[stageKey]] || "Not Completed";
-                console.log(
-                  `Stage ${i} (${stageKey}) status: ${
-                    stageObject[stageKey]
-                  } -> ${section[`status${i}`]}`
-                );
               }
             }
           }
@@ -595,20 +869,15 @@ export default function StagesLayout() {
           // Check individual stage properties (stage1, stage2, etc.) as fallback
           for (let i = 1; i <= 6; i++) {
             const stageKey = `stage${i}`;
-            if (response[stageKey] && response[stageKey].colorStatus) {
+            const stageData = normalized[stageKey] || response[stageKey];
+            if (stageData && stageData.colorStatus) {
               const statusMap = {
                 green: "Completed",
                 red: "Not Completed",
                 amber: "In Progress",
               };
               section[`status${i}`] =
-                statusMap[response[stageKey].colorStatus] || "Not Completed";
-              console.log(
-                `Found ${stageKey} colorStatus:`,
-                response[stageKey].colorStatus,
-                "->",
-                section[`status${i}`]
-              );
+                statusMap[stageData.colorStatus] || "Not Completed";
             }
           }
 
@@ -622,37 +891,28 @@ export default function StagesLayout() {
             // If there's a global colorStatus, apply it to stage 1
             section.status1 =
               statusMap[response.colorStatus] || section.status1;
-            console.log(
-              `Found global colorStatus: ${response.colorStatus} -> Stage 1: ${section.status1}`
-            );
           }
-
-          // REMOVED: The field evaluation logic that was overriding the API colorStatus
-        } else if (localStorage.getItem("company") === "vkl") {
+        } else if (currentModule !== "print media") {
           // VKL stage status logic
-          section.status1 = response.stage1?.colorStatus || "Not Completed";
-          section.status2 = response.stage2?.colorStatus || "Not Completed";
-          section.status3 = response.stage3?.colorStatus || "Not Completed";
-          section.status4 = response.stage4?.colorStatus || "Not Completed";
-          section.status5 = response.stage5?.colorStatus || "Not Completed";
-          section.status6 = response.stage6?.colorStatus || "Not Completed";
-        } else if (localStorage.getItem("company") === "idg") {
+          section.status1 = normalized.stage1?.colorStatus || "Not Completed";
+          section.status2 = normalized.stage2?.colorStatus || "Not Completed";
+          section.status3 = normalized.stage3?.colorStatus || "Not Completed";
+          section.status4 = normalized.stage4?.colorStatus || "Not Completed";
+          section.status5 = normalized.stage5?.colorStatus || "Not Completed";
+          section.status6 = normalized.stage6?.colorStatus || "Not Completed";
+        } else if (currentModule === "print media") {
           // IDG stage status logic
           section.status1 =
-            response.data?.stage1?.colorStatus || "Not Completed";
+            normalized.data?.stage1?.colorStatus || "Not Completed";
           section.status2 =
-            response.data?.stage2?.colorStatus || "Not Completed";
+            normalized.data?.stage2?.colorStatus || "Not Completed";
           section.status3 =
-            response.data?.stage3?.colorStatus || "Not Completed";
+            normalized.data?.stage3?.colorStatus || "Not Completed";
           section.status4 =
-            response.data?.stage4?.colorStatus || "Not Completed";
+            normalized.data?.stage4?.colorStatus || "Not Completed";
         }
-
-        console.log("Final stage statuses:", section);
         setStageStatuses(section);
       } catch (e) {
-        console.error("Error fetching stage details:", e);
-
         // For commercial module, create default structure on any error
         if (currentModule === "commercial") {
           const defaultData = createDefaultProjectData(matterNumber);
@@ -682,73 +942,98 @@ export default function StagesLayout() {
 
   useEffect(() => {
     if (!clientData || !originalClientData) {
-      setHasChanges(false);
+      setMatterDirty(false);
       return;
     }
     try {
       const a = JSON.stringify(clientData);
       const b = JSON.stringify(originalClientData);
-      setHasChanges(a !== b);
+      setMatterDirty(a !== b);
     } catch {
-      setHasChanges(true);
+      setMatterDirty(true);
     }
   }, [clientData, originalClientData]);
 
   async function handleupdate(e) {
+    console.log(
+      "🟡 [UPDATE CLICKED]",
+      "matterDirty =",
+      matterDirty,
+      "module =",
+      localStorage.getItem("currentModule")
+    );
     e.preventDefault();
-    if (!hasChanges) return;
-    setShowConfirmModal(true);
+    if (!matterDirty) return;
+    setShowUpdateConfirm(true);
   }
 
   async function performUpdate() {
-    if (!hasChanges) {
-      setShowConfirmModal(false);
+    console.log("🟢 [CONFIRM CLICKED] performUpdate() started");
+    if (!matterDirty) {
+      setShowUpdateConfirm(false);
       return;
     }
     setIsUpdating(true);
     try {
-      let payload = {};
       const currentModule = localStorage.getItem("currentModule");
-      console.log("Client data before update:", clientData);
+      console.log("🚀 [MODULE]", currentModule);
+      let payload = {};
       if (currentModule === "commercial") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
           clientName: clientData?.clientName || "",
           businessName: clientData?.businessName || "",
-          businessAddress: clientData?.businessAddress || "",
+          businessAddress: clientData.businessAddress || "",
           state: clientData?.state || "",
           clientType: clientData?.clientType || "",
           matterDate: clientData?.matterDate || null,
           dataEntryBy: clientData?.dataEntryBy || "",
           postcode: clientData?.postcode || "",
         };
-
-        console.log("Commercial update payload:", payload);
-      } else if (localStorage.getItem("company") === "vkl") {
+      } else if (currentModule !== "print media") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
           postcode: clientData?.postcode,
         };
-      } else if (localStorage.getItem("company") === "idg") {
+      } else if (currentModule === "print media") {
         payload = {
-          deliveryDate: clientData?.data?.deliveryDate || null,
+          deliveryAddress: clientData?.data?.deliveryAddress || "",
           order_details: clientData?.data?.order_details || null,
           notes: clientData?.data?.notes || "",
           postCode: clientData?.data?.postcode || clientData?.data?.postCode,
+          orderDate:
+            clientData?.data?.orderDate || clientData?.matterDate || null,
+          orderId: clientData?.data?.orderId || clientData?.matterNumber || "",
+          clientName:
+            clientData?.data?.client?.name || clientData?.clientName || "",
+          state: clientData?.data?.state || clientData?.state || "",
+          orderType:
+            clientData?.data?.orderType || clientData?.clientType || "",
+          deliveryDate: clientData?.data?.deliveryDate || null,
+          dataEntryBy:
+            clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
         };
       }
+
+      console.log("📦 [FINAL PAYLOAD]", payload);
 
       // Include superadmin fields
       if (isSuperAdmin) {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
-        payload.businessName = clientData?.businessName || "";
-        payload.businessAddress = clientData?.businessAddress || "";
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
+
+        if (currentModule === "commercial") {
+          payload.businessName = clientData?.businessName || "";
+          payload.businessAddress = clientData?.businessAddress || "";
+        } else if (currentModule !== "print media") {
+          // FOR CONVEYANCING: Map the address to 'propertyAddress'
+          payload.propertyAddress = clientData?.propertyAddress || "";
+        }
 
         if (
           clientData?.matterNumber &&
@@ -763,94 +1048,119 @@ export default function StagesLayout() {
       //   clientData?.postcode || clientData?.data?.postcode || "";
 
       let resp = {};
-      // if (currentModule === "commercial") {
-      //   // Check if this is a new project (has default empty structure)
-      //   const isNewProject =
-      //     !originalClientData?.clientName &&
-      //     !originalClientData?.businessName &&
-      //     !originalClientData?.state;
+      if (currentModule === "commercial") {
+        console.log("🚀 [API] Commercial update/create");
+        // Check if this is a new project (has default empty structure)
+        const isNewProject =
+          !originalClientData?.clientName &&
+          !originalClientData?.businessName &&
+          !originalClientData?.state;
 
-      //   if (isNewProject) {
-      //     // Use create project for new projects
-      //     resp = await commercialApiRef.current.createProject(payload);
-      //     toast.success("Project created successfully!");
-      //   } else {
-      //     // Use update project for existing projects
-      //     resp = await commercialApiRef.current.updateProject(
-      //       originalMatterNumber,
-      //       payload
-      //     );
-      //     toast.success("Project details updated successfully");
-      //   }
-      // } else
-      if (localStorage.getItem("company") === "vkl") {
-        resp = await apiRef.current.updateClientData(
-          originalMatterNumber,
-          payload
-        );
-      } else {
+        if (isNewProject) {
+          // Use create project for new projects
+          resp = await commercialApiRef.current.createProject(payload);
+          toast.success("Project created successfully!");
+        } else {
+          // Use update project for existing projects
+          resp = await commercialApiRef.current.updateProject(
+            originalMatterNumber,
+            payload
+          );
+          toast.success("Project details updated successfully");
+        }
+      } else if (currentModule === "print media") {
+        console.log("🚀 [API] Print Media update");
+        if (!payload.orderId && clientData?.data?.orderId) {
+          payload.orderId = clientData.data.orderId;
+        }
+        if (!payload.orderId && clientData?.matterNumber) {
+          payload.orderId = clientData.matterNumber;
+        }
         resp = await apiRef.current.updateIDGClientData(
           originalMatterNumber,
           payload
         );
-        console.log(originalMatterNumber, payload);
+      } else {
+        console.log("🚀 [API] Conveyancing update");
+        resp = await apiRef.current.updateClientData(
+          originalMatterNumber,
+          payload
+        );
       }
-
+      console.log("✅ [API RESPONSE]", resp);
       const updatedClient = resp.client || resp || clientData;
-      const normalizedUpdated = {
-        ...updatedClient,
-        matterDate: updatedClient?.matterDate
-          ? typeof updatedClient.matterDate === "string"
-            ? updatedClient.matterDate
-            : new Date(updatedClient.matterDate).toISOString()
-          : "",
-        settlementDate: updatedClient?.settlementDate
-          ? typeof updatedClient.settlementDate === "string"
-            ? updatedClient.settlementDate
-            : new Date(updatedClient.settlementDate).toISOString()
-          : "",
-      };
+      if (currentModule === "commercial") {
+        const mergedData = {
+          ...clientData,
+          ...updatedClient,
+          stage1: clientData?.stage1 || updatedClient?.stage1,
+          stage2: clientData?.stage2 || updatedClient?.stage2,
+          stage3: clientData?.stage3 || updatedClient?.stage3,
+          stage4: clientData?.stage4 || updatedClient?.stage4,
+          stage5: clientData?.stage5 || updatedClient?.stage5,
+          stage6: clientData?.stage6 || updatedClient?.stage6,
+        };
 
-      setClientData(normalizedUpdated);
-      setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
+        setClientData(mergedData);
+        setTimeout(() => {
+          setReloadStage((prev) => !prev);
+        }, 500);
+        setOriginalClientData(JSON.parse(JSON.stringify(mergedData)));
+      } else {
+        // For other modules, use the existing logic
+        const normalizedUpdated = {
+          ...updatedClient,
+          matterDate: updatedClient?.matterDate
+            ? typeof updatedClient.matterDate === "string"
+              ? updatedClient.matterDate
+              : new Date(updatedClient.matterDate).toISOString()
+            : "",
+          settlementDate: updatedClient?.settlementDate
+            ? typeof updatedClient.settlementDate === "string"
+              ? updatedClient.settlementDate
+              : new Date(updatedClient.settlementDate).toISOString()
+            : "",
+        };
+
+        setClientData(normalizedUpdated);
+        setOriginalClientData(JSON.parse(JSON.stringify(normalizedUpdated)));
+      }
 
       // Update matter number if it changed
       if (
-        normalizedUpdated.matterNumber &&
-        normalizedUpdated.matterNumber !== originalMatterNumber
+        updatedClient.matterNumber &&
+        updatedClient.matterNumber !== originalMatterNumber
       ) {
-        setOriginalMatterNumber(normalizedUpdated.matterNumber);
+        setOriginalMatterNumber(updatedClient.matterNumber);
       }
 
       // Handle navigation
-      if (resp.directUrl) {
+      if (resp.directUrl && currentModule !== "commercial") {
         let direct = resp.directUrl;
         if (!direct.startsWith("/")) direct = `/${direct}`;
         if (!direct.match(/^\/admin/)) direct = `/admin${direct}`;
-        setTimeout(() => {
-          try {
-            navigate(direct);
-          } catch {
-            window.location.href = direct;
-          }
-        }, 450);
+
+        window.location.href = direct;
         return;
       }
 
       if (
-        normalizedUpdated?.matterNumber &&
-        String(normalizedUpdated.matterNumber) !== String(originalMatterNumber)
+        updatedClient?.matterNumber &&
+        String(updatedClient.matterNumber) !== String(originalMatterNumber)
       ) {
-        setTimeout(() => {
-          try {
-            navigate(`/admin/client/stages/${normalizedUpdated.matterNumber}`);
-          } catch {
-            window.location.href = `/admin/client/stages/${normalizedUpdated.matterNumber}`;
-          }
-        }, 450);
+        // setTimeout(() => {
+        //   try {
+        //     navigate(`/admin/client/stages/${updatedClient.matterNumber}`);
+        //   } catch {
+        //     window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
+        //   }
+        // }, 450);
+        window.location.href = `/admin/client/stages/${updatedClient.matterNumber}`;
+      } else {
+        // Force hard reload on the current page
+        window.location.reload();
       }
     } catch (err) {
-      console.error("Update error:", err);
       let msg = "Failed to update. Please try again.";
       if (err?.message) msg = err.message;
       else if (err?.response?.data?.message) msg = err.response.data.message;
@@ -858,7 +1168,7 @@ export default function StagesLayout() {
       toast.error(msg);
     } finally {
       setIsUpdating(false);
-      setShowConfirmModal(false);
+      setShowUpdateConfirm(false);
     }
   }
 
@@ -887,7 +1197,7 @@ export default function StagesLayout() {
       {/* Page Content */}
       <div className="relative z-10 flex flex-col w-full h-screen overflow-hidden">
         <UploadDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />
-        <main className="flex-grow flex flex-col p-4 w-full max-w-screen-xl mx-auto overflow-auto">
+        <main className="flex-grow flex flex-col p-2 md:p-4 w-full max-w-screen-xl mx-auto overflow-auto scrollbar-hide">
           {/* Desktop layout - buttons next to Hello */}
           <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
             <h2 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
@@ -906,39 +1216,35 @@ export default function StagesLayout() {
                   localStorage.removeItem("client-storage");
                 }}
               />
-              {(localStorage.getItem("company") === "vkl" ||
-                (localStorage.getItem("company") === "idg" &&
-                  ["admin", "superadmin"].includes(
-                    localStorage.getItem("role")
-                  )) ||
+              {(currentModule !== "print media" ||
                 currentModule === "commercial") && (
                 <Button
                   label="Cost"
                   bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
                   width="w-[60px] md:w-[70px]"
-                  onClick={() => setSelectedStage(7)}
+                  onClick={navigateToCost}
                 />
               )}
             </div>
           </div>
 
           {/* Mobile layout - buttons below Hello */}
-          <div className="flex flex-col md:hidden mb-2 flex-shrink-0">
-            <h2 className="text-lg font-semibold mb-2">
-              Hello {localStorage.getItem("user")}
+          <div className="flex flex-col md:hidden mb-4 flex-shrink-0">
+            <h2 className="text-xl font-bold mb-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              Hello, {localStorage.getItem("user")}
             </h2>
-            <div className="flex justify-between w-full gap-1">
+            <div className="flex justify-between w-full gap-3">
               <Button
                 label="Upload Image"
-                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-md hover:shadow-lg transition-all"
                 width="w-[48%]"
                 onClick={() => setIsOpen(true)}
               />
               <Button
                 label="Cost"
-                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"
+                bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-md hover:shadow-lg transition-all"
                 width="w-[48%]"
-                onClick={() => setSelectedStage(7)}
+                onClick={navigateToCost}
               />
             </div>
           </div>
@@ -956,38 +1262,53 @@ export default function StagesLayout() {
                       isStagesCollapsed ? "max-h-0" : "max-h-96"
                     }`}
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 flex-shrink-0 px-0.5">
                       {stages.map((stage, index) => {
                         const stageStatus = stageStatuses[`status${stage.id}`];
                         return (
                           <div
                             key={stage.id}
-                            onClick={() => setSelectedStage(stage.id)}
-                            className={`cursor-pointer p-2 rounded shadow transition-colors duration-200 h-[62px] border-2 ${
+                            onClick={() => RenderStage(stage.id)}
+                            className={`cursor-pointer p-2 rounded-xl shadow-sm transition-all duration-200 h-[70px] border flex flex-col justify-center relative overflow-hidden ${
                               selectedStage === stage.id
-                                ? "bg-[#FFFFFF] text-black border-gray-500"
-                                : `${bgcolor(stageStatus)} border-gray-300`
+                                ? "bg-white ring-2 ring-[#2E3D99] ring-offset-1 border-transparent z-10"
+                                : `${bgcolor(
+                                    stageStatus
+                                  )} border-transparent opacity-90 hover:opacity-100`
                             }`}
                           >
-                            <div className="flex justify-between">
-                              <p className="font-bold font-poppins text-xs">
+                            {selectedStage === stage.id && (
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2E3D99] to-[#1D97D7]" />
+                            )}
+
+                            <div className="flex justify-between items-start mb-1 pl-1">
+                              <p
+                                className={`font-bold font-poppins text-xs ${
+                                  selectedStage === stage.id
+                                    ? "text-[#2E3D99]"
+                                    : "text-gray-800"
+                                }`}
+                              >
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`h-[18px] ${
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                                   stageStatus === "In Progress" ||
                                   stageStatus === "amber"
-                                    ? "text-[#FF9500]"
-                                    : "text-black"
-                                } flex items-center justify-center rounded-4xl`}
+                                    ? "bg-amber-100 text-amber-700"
+                                    : stageStatus === "Completed" ||
+                                      stageStatus === "green"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
                               >
-                                <p className="text-[10px] whitespace-nowrap font-bold">
-                                  {getStatusDisplayText(stageStatus)}
-                                </p>
+                                {getStatusDisplayText(stageStatus)}
                               </div>
                             </div>
-                            <div>
-                              <p className="text-xs">{stage.title}</p>
+                            <div className="pl-1">
+                              <p className="text-[11px] font-medium leading-tight truncate text-gray-700">
+                                {stage.title}
+                              </p>
                             </div>
                           </div>
                         );
@@ -1013,7 +1334,7 @@ export default function StagesLayout() {
                         return (
                           <li
                             key={stage.id}
-                            onClick={() => setSelectedStage(stage.id)}
+                            onClick={() => RenderStage(stage.id)}
                             className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${
                               isActive
                                 ? "bg-blue-50 border-[#2E3D99]/60 scale-105 shadow-lg"
@@ -1073,10 +1394,10 @@ export default function StagesLayout() {
 
                 {/* Mobile-only collapse toggle button */}
                 {isSmallScreen && (
-                  <div className="flex justify-center mb-4">
+                  <div className="flex justify-center mb-3">
                     <button
                       onClick={() => setIsStagesCollapsed(!isStagesCollapsed)}
-                      className="p-1 rounded-full bg-gray-200 shadow-md hover:bg-gray-300 transition-colors duration-200"
+                      className="p-1.5 rounded-full bg-white/80 backdrop-blur border border-gray-200 shadow-sm text-gray-500 hover:text-[#2E3D99] hover:bg-white transition-all duration-200"
                       title={isStagesCollapsed ? "Show Stages" : "Hide Stages"}
                     >
                       {isStagesCollapsed ? (
@@ -1089,45 +1410,60 @@ export default function StagesLayout() {
                 )}
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
-                <div className="w-full lg:w-[calc(100%-300px)] p-4 rounded-md bg-white overflow-y-auto">
-                  {clientData && Showstage(selectedStage)}
+              {/* Mobile Tab Switcher - Added for better viewport management */}
+              {isSmallScreen && (
+                <div className="flex w-full bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-3 border border-gray-200/60 shadow-sm">
+                  <button
+                    onClick={() => setActiveMobileTab("stage")}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                      activeMobileTab === "stage"
+                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Stage Tasks
+                  </button>
+                  <button
+                    onClick={() => setActiveMobileTab("details")}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                      activeMobileTab === "details"
+                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Matter Details
+                  </button>
                 </div>
+              )}
+
+              <div className="flex flex-col lg:flex-row gap-1 flex-grow overflow-hidden">
+                {(!isSmallScreen || activeMobileTab === "stage") && (
+                  <div className="w-full lg:w-[calc(100%-300px)] p-2 md:p-4 rounded-xl bg-white shadow-sm border border-gray-100/50 overflow-y-auto">
+                    {clientData && Showstage(selectedStage)}
+                  </div>
+                )}
 
                 {/* Project/Matter/Order Details - Desktop */}
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
-                  <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-160px)] lg:overflow-hidden lg:pb-8 lg:flex lg:flex-col">
+                  <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-180px)] lg:overflow-y-auto">
                     <h2 className="text-lg font-bold mb-2">
-                      {currentModule === "commercial" ? (
-                        "Project Details"
-                      ) : company === "vkl" ? (
-                        "Matter Details"
-                      ) : company === "idg" ? (
-                        <>
-                          Order Details{" "}
-                          <span className="relative left-48 text-sm font-medium text-gray-600">
-                            Unit Number : (
-                            {clientData?.data?.unitNumber || "unset"})
-                          </span>
-                        </>
-                      ) : (
-                        ""
-                      )}
+                      {currentModule === "commercial"
+                        ? "Project Details"
+                        : currentModule === "print media"
+                        ? "Order Details"
+                        : "Matter Details"}
                     </h2>
                     <form
-                      className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:pb-2"
+                      className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 pb-4"
                       onSubmit={handleupdate}
                     >
-                      {/* Date Field */}
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
                             ? "Project Date"
-                            : company === "vkl"
-                            ? "Matter Date"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Date"
-                            : ""}
+                            : "Matter Date"}
                         </label>
                         <input
                           id="matterDate"
@@ -1163,16 +1499,13 @@ export default function StagesLayout() {
                         />
                       </div>
 
-                      {/* Number Field */}
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
                             ? "Project Number"
-                            : company === "vkl"
-                            ? "Matter Number"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order ID"
-                            : ""}
+                            : "Matter Number"}
                         </label>
                         {isSuperAdmin ? (
                           <input
@@ -1244,11 +1577,6 @@ export default function StagesLayout() {
                               type="text"
                               value={clientData?.businessName || ""}
                               onChange={(e) => {
-                                console.log(
-                                  "Setting businessName to:",
-                                  e.target.value
-                                );
-
                                 setClientData((prev) => ({
                                   ...(prev || {}),
                                   businessName: e.target.value,
@@ -1273,50 +1601,45 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Business Address"
-                            : company === "vkl"
-                            ? "Property Address"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Billing Address"
-                            : "Address"}
+                            : "Property Address"}
                         </label>
                         <input
-                          id={
-                            currentModule === "commercial"
-                              ? "businessAddress"
-                              : "propertyAddress"
-                          }
-                          name={
-                            currentModule === "commercial"
-                              ? "businessAddress"
-                              : "propertyAddress"
-                          }
+                          id="address"
+                          name="address"
                           type="text"
                           value={
                             currentModule === "commercial"
                               ? clientData?.businessAddress || ""
-                              : clientData?.propertyAddress ||
-                                clientData?.data?.deliveryAddress ||
-                                ""
+                              : currentModule === "print media"
+                              ? clientData?.data?.deliveryAddress || ""
+                              : clientData?.propertyAddress || ""
                           }
                           onChange={(e) => {
                             if (!isSuperAdmin) return;
-                            const fieldName =
-                              currentModule === "commercial"
-                                ? "businessAddress"
-                                : "propertyAddress";
-                            console.log(
-                              `Setting ${fieldName} to:`,
-                              e.target.value
-                            );
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              [fieldName]: e.target.value,
-                            }));
+                            const value = e.target.value;
+                            setClientData((prev) => {
+                              if (currentModule === "commercial") {
+                                return { ...prev, businessAddress: value };
+                              }
+                              if (currentModule === "print media") {
+                                return {
+                                  ...prev,
+                                  data: {
+                                    ...(prev?.data || {}),
+                                    deliveryAddress: value,
+                                  },
+                                };
+                              }
+                              return { ...prev, propertyAddress: value };
+                            });
                           }}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
                             !isSuperAdmin ? "bg-gray-100" : ""
                           }`}
                           disabled={!isSuperAdmin}
+                          ref={addressInputRef}
                         />
                       </div>
 
@@ -1326,29 +1649,28 @@ export default function StagesLayout() {
                           State
                         </label>
                         {isSuperAdmin ? (
-                          <select
+                        <input
                             id="state"
                             name="state"
+                            type="text"
                             value={
                               clientData?.state ||
-                              clientData?.data?.country ||
+                              clientData?.data?.state ||
                               ""
                             }
                             onChange={(e) =>
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                state: e.target.value,
-                              }))
+                              setClientData((prev) => {
+                                const val = e.target.value;
+                                const next = { ...(prev || {}), state: val };
+                                if (currentModule === "print media") {
+                                  if (!next.data) next.data = {};
+                                  next.data.state = val;
+                                }
+                                return next;
+                              })
                             }
                             className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          >
-                            <option value="">Select state</option>
-                            {STATE_OPTIONS.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         ) : (
                           <input
                             type="text"
@@ -1367,11 +1689,9 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Client Type"
-                            : company === "vkl"
-                            ? "Client Type"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Type"
-                            : ""}
+                            : "Client Type"}
                         </label>
                         {isSuperAdmin ? (
                           <select
@@ -1379,7 +1699,8 @@ export default function StagesLayout() {
                             name="clientType"
                             value={
                               clientData?.clientType ||
-                              clientData?.data?.orderType
+                              clientData?.data?.orderType ||
+                              ""
                             }
                             onChange={(e) =>
                               setClientData((prev) => ({
@@ -1419,7 +1740,7 @@ export default function StagesLayout() {
                           type="text"
                           id="postcode"
                           name="postcode"
-                          disabled={localStorage.getItem("company") === "idg"}
+                          disabled={currentModule === "print media"}
                           value={
                             clientData?.postcode ||
                             clientData?.data?.postCode ||
@@ -1435,10 +1756,7 @@ export default function StagesLayout() {
                           maxLength={4}
                           inputMode="numeric"
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
-                        ${
-                          localStorage.getItem("company") === "idg" &&
-                          "bg-gray-100"
-                        }`}
+                       ${currentModule === "print media" && "bg-gray-100"}`}
                         />
                       </div>
 
@@ -1447,26 +1765,24 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
                             ? "Completion Date"
-                            : company === "vkl"
-                            ? "Settlement Date"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Delivery Date"
-                            : ""}
+                            : "Settlement Date"}
                         </label>
                         <input
                           id={
                             currentModule === "commercial"
                               ? "completionDate"
-                              : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
+                              : currentModule === "print media"
+                              ? "deliveryDate"
+                              : "settlementDate"
                           }
                           name={
                             currentModule === "commercial"
                               ? "completionDate"
-                              : company === "vkl"
-                              ? "settlementDate"
-                              : "deliveryDate"
+                              : currentModule === "print media"
+                              ? "deliveryDate"
+                              : "settlementDate"
                           }
                           type="date"
                           value={
@@ -1476,18 +1792,16 @@ export default function StagesLayout() {
                                     .toISOString()
                                     .substring(0, 10)
                                 : ""
-                              : company === "vkl"
+                              : currentModule !== "print media"
                               ? clientData?.settlementDate
                                 ? new Date(clientData.settlementDate)
                                     .toISOString()
                                     .substring(0, 10)
                                 : ""
-                              : company === "idg"
-                              ? clientData?.data?.deliveryDate
-                                ? new Date(clientData.data.deliveryDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
+                              : clientData?.data?.deliveryDate
+                              ? new Date(clientData.data.deliveryDate)
+                                  .toISOString()
+                                  .substring(0, 10)
                               : ""
                           }
                           onChange={(e) => {
@@ -1497,12 +1811,12 @@ export default function StagesLayout() {
                                 ...(prev || {}),
                                 settlementDate: dateValue,
                               }));
-                            } else if (company === "vkl") {
+                            } else if (currentModule !== "print media") {
                               setClientData((prev) => ({
                                 ...(prev || {}),
                                 settlementDate: dateValue,
                               }));
-                            } else if (company === "idg") {
+                            } else if (currentModule === "print media") {
                               setClientData((prev) => ({
                                 ...(prev || {}),
                                 data: {
@@ -1526,7 +1840,8 @@ export default function StagesLayout() {
                             type="text"
                             value={
                               clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy
+                              clientData?.data?.dataEntryBy ||
+                              ""
                             }
                             onChange={(e) =>
                               setClientData((prev) => ({
@@ -1541,7 +1856,8 @@ export default function StagesLayout() {
                             type="text"
                             value={
                               clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy
+                              clientData?.data?.dataEntryBy ||
+                              ""
                             }
                             className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                             disabled
@@ -1552,7 +1868,7 @@ export default function StagesLayout() {
 
                       {/* Notes */}
                       <div className="md:col-span-3">
-                        {company === "idg" ? (
+                        {currentModule === "print media" ? (
                           <div className="flex gap-1 w-full">
                             <div className="flex-1">
                               <label className="block text-xs md:text-sm font-semibold mb-0.5">
@@ -1636,16 +1952,16 @@ export default function StagesLayout() {
                         )}
                       </div>
 
-                      <div className="md:col-span-3 mt-2">
+                      <div className="md:col-span-3 mt-6 mb-6">
                         <div className="mt-2">
                           <button
                             type="submit"
                             className={`w-full ${
-                              hasChanges
+                              matterDirty
                                 ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white cursor-pointer"
                                 : "bg-gray-300 text-gray-200 cursor-not-allowed"
                             } font-medium rounded py-2 text-base`}
-                            disabled={!hasChanges}
+                            disabled={!matterDirty}
                           >
                             Update
                           </button>
@@ -1657,31 +1973,27 @@ export default function StagesLayout() {
               </div>
 
               {/* Mobile Details */}
-              {isSmallScreen && (
-                <div className="w-full mt-4 bg-white rounded shadow border border-gray-200 p-4 overflow-y-auto max-h-96">
-                  <h2 className="text-lg font-bold mb-2">
+              {isSmallScreen && activeMobileTab === "details" && (
+                <div className="w-full mt-4 bg-white rounded-xl shadow-lg shadow-gray-200/50 border border-gray-100 p-5 overflow-y-auto">
+                  <h2 className="text-lg font-bold mb-4 text-gray-800 border-b pb-2">
                     {currentModule === "commercial"
                       ? "Project Details"
-                      : company === "vkl"
-                      ? "Matter Details"
-                      : company === "idg"
+                      : currentModule === "print media"
                       ? "Order Details"
-                      : ""}
+                      : "Matter Details"}
                   </h2>
                   <form
-                    className="grid grid-cols-1 gap-x-4 gap-y-2"
+                    className="grid grid-cols-1 gap-y-4"
                     onSubmit={handleupdate}
                   >
                     {/* Mobile form fields - similar structure but simplified */}
                     <div>
-                      <label className="block text-xs md:text-sm font-semibold mb-1">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                         {currentModule === "commercial"
                           ? "Project Date"
-                          : company === "vkl"
-                          ? "Matter Date"
-                          : company === "idg"
+                          : currentModule === "print media"
                           ? "Order Date"
-                          : ""}
+                          : "Matter Date"}
                       </label>
                       <input
                         id="matterDate"
@@ -1710,22 +2022,466 @@ export default function StagesLayout() {
                             matterDate: v,
                           }));
                         }}
-                        className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                          !isSuperAdmin ? "bg-gray-100" : ""
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
                         }`}
                         disabled={!isSuperAdmin}
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Project Number"
+                          : currentModule === "print media"
+                          ? "Order ID"
+                          : "Matter Number"}
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data?.orderId ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              matterNumber: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.matterNumber ||
+                            clientData?.data?.orderId ||
+                            ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Client Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Client Name
+                      </label>
+                      <input
+                        id="clientName"
+                        name="clientName"
+                        type="text"
+                        value={
+                          clientData?.clientName ||
+                          clientData?.data?.client?.name ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            clientName: e.target.value,
+                          }));
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                        }`}
+                        disabled={!isSuperAdmin}
+                      />
+                    </div>
+
+                    {/* Business Name */}
+                    {currentModule === "commercial" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Business Name
+                        </label>
+                        {isSuperAdmin ? (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            onChange={(e) => {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                businessName: e.target.value,
+                              }));
+                            }}
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={clientData?.businessName || ""}
+                            className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Address Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Business Address"
+                          : currentModule === "print media"
+                          ? "Billing Address"
+                          : "Property Address"}
+                      </label>
+                      <input
+                        id="address"
+                        name="address"
+                        type="text"
+                        value={
+                          currentModule === "commercial"
+                            ? clientData?.businessAddress || ""
+                            : currentModule === "print media"
+                            ? clientData?.data?.deliveryAddress || ""
+                            : clientData?.propertyAddress || ""
+                        }
+                        onChange={(e) => {
+                          if (!isSuperAdmin) return;
+                          const value = e.target.value;
+                          setClientData((prev) => {
+                            if (currentModule === "commercial") {
+                              return { ...prev, businessAddress: value };
+                            }
+                            if (currentModule === "print media") {
+                              return {
+                                ...prev,
+                                data: {
+                                  ...(prev?.data || {}),
+                                  deliveryAddress: value,
+                                },
+                              };
+                            }
+                            return { ...prev, propertyAddress: value };
+                          });
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !isSuperAdmin
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                        }`}
+                        disabled={!isSuperAdmin}
+                        ref={mobileAddressInputRef}
+                      />
+                    </div>
+
+                    {/* State Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        State
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.state || clientData?.data?.state || ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => {
+                              const val = e.target.value;
+                              const next = { ...(prev || {}), state: val };
+                              if (currentModule === "print media") {
+                                if (!next.data) next.data = {};
+                                next.data.state = val;
+                              }
+                              return next;
+                            })
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.state || clientData?.data?.state || ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Client Type Field */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Client Type"
+                          : currentModule === "print media"
+                          ? "Order Type"
+                          : "Client Type"}
+                      </label>
+                      {isSuperAdmin ? (
+                        <select
+                          id="clientType"
+                          name="clientType"
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientType: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        >
+                          <option value="">Select client type</option>
+                          {CLIENT_TYPE_OPTIONS.map((ct) => (
+                            <option key={ct} value={ct}>
+                              {ct}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.clientType ||
+                            clientData?.data?.orderType
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Post Code */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Post Code
+                      </label>
+                      <input
+                        type="text"
+                        id="postcode"
+                        name="postcode"
+                        disabled={currentModule === "print media"}
+                        value={
+                          clientData?.postcode ||
+                          clientData?.data?.postCode ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          setClientData((prev) => ({
+                            ...prev,
+                            postcode: e.target.value,
+                          }));
+                        }}
+                        pattern="^[0-9]{4}$"
+                        maxLength={4}
+                        inputMode="numeric"
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none
+                     ${
+                       currentModule === "print media"
+                         ? "bg-gray-50 text-gray-500"
+                         : "bg-white"
+                     }`}
+                      />
+                    </div>
+
+                    {/* Completion/Settlement/Delivery Date */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        {currentModule === "commercial"
+                          ? "Completion Date"
+                          : currentModule === "print media"
+                          ? "Delivery Date"
+                          : "Settlement Date"}
+                      </label>
+                      <input
+                        id="settlementDate"
+                        type="date"
+                        value={
+                          currentModule === "commercial"
+                            ? clientData?.settlementDate
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : currentModule !== "print media"
+                            ? clientData?.settlementDate
+                              ? new Date(clientData.settlementDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                            : clientData?.data?.deliveryDate
+                            ? new Date(clientData.data.deliveryDate)
+                                .toISOString()
+                                .substring(0, 10)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const dateValue = e.target.value;
+                          if (currentModule === "commercial") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              settlementDate: dateValue,
+                            }));
+                          } else if (currentModule !== "print media") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              settlementDate: dateValue,
+                            }));
+                          } else if (currentModule === "print media") {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              data: {
+                                ...((prev && prev.data) || {}),
+                                deliveryDate: dateValue,
+                              },
+                            }));
+                          }
+                        }}
+                        className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                      />
+                    </div>
+
+                    {/* Data Entry By */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Data Entry By
+                      </label>
+                      {isSuperAdmin ? (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data?.dataEntryBy ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              dataEntryBy: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={
+                            clientData?.dataEntryBy ||
+                            clientData?.data?.dataEntryBy ||
+                            ""
+                          }
+                          className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                          disabled
+                          readOnly
+                        />
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    <div className="md:col-span-3">
+                      {currentModule === "print media" ? (
+                        <div className="flex flex-col gap-4 w-full">
+                          <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Order Details
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={clientData?.data?.order_details || ""}
+                              onChange={(e) => {
+                                const newOrderDetails = e.target.value;
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  data: {
+                                    ...((prev && prev.data) || {}),
+                                    order_details: newOrderDetails,
+                                  },
+                                }));
+                              }}
+                              placeholder="Enter order details here..."
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Notes / Comments
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={
+                                clientData?.notes ||
+                                clientData?.data?.notes ||
+                                ""
+                              }
+                              onChange={(e) => {
+                                const newNote = e.target.value;
+                                setClientData((prev) => {
+                                  const updated = { ...(prev || {}) };
+                                  updated.notes = newNote;
+                                  if (updated.data) {
+                                    updated.data.notes = newNote;
+                                  } else {
+                                    updated.data = { notes: newNote };
+                                  }
+                                  return updated;
+                                });
+                              }}
+                              placeholder="Enter comments here..."
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                            Notes / Comments
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={
+                              clientData?.notes || clientData?.data?.notes || ""
+                            }
+                            onChange={(e) => {
+                              const newNote = e.target.value;
+                              setClientData((prev) => {
+                                const updated = { ...(prev || {}) };
+                                updated.notes = newNote;
+                                if (updated.data) {
+                                  updated.data.notes = newNote;
+                                } else {
+                                  updated.data = { notes: newNote };
+                                }
+                                return updated;
+                              });
+                            }}
+                            placeholder="Enter comments here..."
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none resize-none"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-3">
                       <button
                         type="submit"
                         className={`w-full ${
-                          hasChanges
-                            ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white"
-                            : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                        } font-medium rounded py-2 text-base`}
-                        disabled={!hasChanges}
+                          matterDirty
+                            ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl active:scale-[0.98]"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        } font-bold rounded-lg py-3 text-sm tracking-wide text-white transition-all duration-200`}
+                        disabled={!matterDirty}
                       >
                         Update
                       </button>
@@ -1737,13 +2493,42 @@ export default function StagesLayout() {
           )}
         </main>
         <ConfirmationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
+          isOpen={showUpdateConfirm}
+          onClose={() => setShowUpdateConfirm(false)}
           title="Confirm update"
           onConfirm={performUpdate}
         >
           Are you sure you want to update client data?
         </ConfirmationModal>
+
+        <ConfirmationModal
+          isOpen={showUnsavedConfirm}
+          title="Unsaved Changes"
+          message="You have unsaved changes in this stage. Would you like to save before leaving?"
+          onClose={() => {
+            setShowUnsavedConfirm(false);
+            pendingStageRef.current = null;
+          }}
+          onDiscard={() => {
+            setShowUnsavedConfirm(false);
+            if (pendingStageRef.current !== null) {
+              setSelectedStage(pendingStageRef.current);
+              setReloadStage((p) => !p);
+              pendingStageRef.current = null;
+            }
+          }}
+          onConfirm={async () => {
+            window.dispatchEvent(new Event("saveCurrentStage"));
+            setStageDirty(false);
+            setShowUnsavedConfirm(false);
+
+            if (pendingStageRef.current !== null) {
+              setSelectedStage(pendingStageRef.current);
+              setReloadStage((prev) => !prev);
+              pendingStageRef.current = null;
+            }
+          }}
+        />
       </div>
     </div>
   );

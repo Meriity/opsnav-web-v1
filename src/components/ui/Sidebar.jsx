@@ -28,7 +28,7 @@ export default function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
   const userRole = localStorage.getItem("role");
   const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -53,25 +53,36 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-      label:
-        company === "vkl"
-          ? "View Clients"
-          : company === "idg"
-          ? "View Orders"
-          : "View",
-      icon: ViewClientsIcon,
-      to: isAdminRoute ? "/admin/view-clients" : "/user/view-clients",
-    },
-    {
-      label:
-        company === "vkl"
-          ? "Archived Clients"
-          : company === "idg"
-          ? "Completed Orders"
-          : "Completed/Archived",
-      icon: ArchivedChatsIcon,
-      to: isAdminRoute ? "/admin/archived-clients" : "/user/archived-clients",
-    },
+  label:
+    currentModule === "print media"
+      ? "View Orders"
+      : currentModule === "commercial"
+      ? "View Projects"
+      : "View Clients",
+  icon: ViewClientsIcon,
+  to:
+    currentModule === "commercial"
+      ? "/admin/view-clients"
+      : isAdminRoute
+      ? "/admin/view-clients"
+      : "/user/view-clients",
+},
+{
+  label:
+    currentModule === "print media"
+      ? "Completed Orders"
+      : currentModule === "commercial"
+      ? "Archived Projects"
+      : "Archived Clients",
+  icon: ArchivedChatsIcon,
+  to:
+    currentModule === "commercial"
+      ? "/admin/archived-clients"
+      : isAdminRoute
+      ? "/admin/archived-clients"
+      : "/user/archived-clients",
+},
+
   ];
 
   if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
@@ -83,7 +94,7 @@ export default function Sidebar({
   }
 
   if (
-    company === "idg" &&
+    currentModule === "print media" &&
     isAdminRoute &&
     (userRole === "admin" || userRole === "superadmin")
   ) {
@@ -103,10 +114,12 @@ export default function Sidebar({
         return Users;
       case "View Clients":
       case "View Orders":
+      case "View Projects":
       case "View":
         return FolderOpen;
       case "Archived Clients":
       case "Completed Orders":
+      case "Archived Projects":
       case "Completed/Archived":
         return FolderArchive;
       default:
@@ -169,17 +182,32 @@ export default function Sidebar({
 
         <div className="relative z-10 flex-1 flex flex-col min-h-0">
           {/* Logo Area */}
-          <div className="flex justify-center mb-8 h-[60px] items-center shrink-0">
-            <img
-              className={`h-auto object-contain transition-all duration-300 ease-in-out ${
-                isCollapsed ? "w-[40px]" : "w-[120px]"
-              }`}
-              src={
-                localStorage.getItem("logo") ||
-                "https://via.placeholder.com/70x58"
-              }
-              alt="Logo"
-            />
+          <div className="relative flex justify-center mb-8 h-[60px] items-center shrink-0">
+            <AnimatePresence mode="wait">
+              {isCollapsed ? (
+                <motion.img
+                  key="collapsed-logo"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="h-auto object-contain w-[40px] absolute mb-2"
+                  src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20only%20(1).png"
+                  alt="Logo"
+                />
+              ) : (
+                <motion.img
+                  key="expanded-logo"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="h-auto object-contain w-[120px] absolute"
+                  src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
+                  alt="Logo"
+                />
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Toggle Button */}

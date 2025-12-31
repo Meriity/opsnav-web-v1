@@ -7,6 +7,8 @@ import ViewClients from "./pages/admin/ViewClients";
 import ArchivedClients from "./pages/admin/ArchivedClients";
 import AdminLogin from "./components/auth/AdminLogin";
 import ClientLogin from "./components/auth/ClientLogin";
+import SignUp from "./components/auth/SignUp";
+import SignUpSuccess from "./components/auth/SignUpSuccess";
 import ClientDashboard from "./pages/dashboard/ClientDashboard";
 import StagesLayout from "./pages/admin/stages/StagesLayout";
 import ForgotPassword from "./components/auth/ForgotPasswordForm";
@@ -15,6 +17,10 @@ import SetClientPassword from "./pages/clients/SetPassword";
 import WorkSelection from "./pages/admin/WorkSelection";
 import ManageClients from "./pages/admin/ManageClients";
 import Home from "./pages/Home";
+import TermsOfService from "./pages/TermsPage";
+import ContactSupport from "./pages/ContactSupport";
+import GetStartedFree from "./pages/GetStartedFree";
+import BookDemo from "./pages/BookDemo";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
 import IDGClientDashboard from "./pages/dashboard/IDGClientDashboard";
@@ -53,6 +59,12 @@ function App() {
         {/* 🔓 Public Routes */}
         {/* <Route path="/" element={<ComingSoon/>}  /> */}
         <Route path="/" element={<Home />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signup-success" element={<SignUpSuccess />} />
+        <Route path="/get-started-free" element={<GetStartedFree />} />
+        <Route path="/contact-support" element={<ContactSupport />} />
+        <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />
@@ -97,11 +109,11 @@ function App() {
         <Route
           path="idg/client/dashboard/:orderId"
           element={
-          <RequireAuth>
-            <AutoLogoutWrapper>
-              <IDGClientDashboard />
-            </AutoLogoutWrapper>
-          </RequireAuth>
+            <RequireAuth>
+              <AutoLogoutWrapper>
+                <IDGClientDashboard />
+              </AutoLogoutWrapper>
+            </RequireAuth>
           }
         />
 
@@ -132,7 +144,7 @@ function App() {
           <Route path="view-clients" element={<ViewClients />} />
           <Route path="manage-clients" element={<ManageClients />} />
           <Route path="archived-clients" element={<ArchivedClients />} />
-          <Route path="client/:clientId/stages" element={<StagesLayout />} />
+          <Route path="client/:matterNumber/stages/:stageNo?" element={<StagesLayout />} />
         </Route>
 
         {/* Work Selection Route — Protected but no AppLayout */}

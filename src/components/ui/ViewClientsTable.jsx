@@ -141,9 +141,7 @@ const ViewClientsTable = ({
                           item[column.key] !== "N/A" ? (
                             formatDate(item[column.key])
                           ) : (
-                            <span className="text-sm font-bold text-gray-700">
-                              —
-                            </span>
+                            <span className="font-bold text-gray-500">—</span>
                           )
                         ) : (column.key === "billing_address" ||
                             column.key === "businessAddress" ||
@@ -200,7 +198,7 @@ const ViewClientsTable = ({
                             )}
                           </div>
                         ) : (
-                          item[column.key]
+                          item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
                       </div>
                     </td>
@@ -293,16 +291,30 @@ const ViewClientsTable = ({
             key={item.id}
             className="bg-white rounded-2xl shadow p-4 space-y-3"
           >
+            <div className="flex justify-between items-center border-b pb-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {currentModule === "commercial"
+                  ? "Project No"
+                  : currentModule === "print media"
+                  ? "Order ID"
+                  : "Matter No"}  
+              </p>
+              <p className="text-sm font-bold text-[#2E3D99] break-all">
+                {currentModule === "commercial"
+                  ? item.matterNumber
+                  : currentModule === "print media"
+                  ? item.orderId
+                  : item.matternumber}
+              </p>
+            </div>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs text-gray-500">
                   {currentModule === "commercial"
                     ? "Business Address"
-                    : localStorage.getItem("company") === "vkl"
-                    ? "Property Address"
-                    : localStorage.getItem("company") === "idg"
+                    : currentModule === "print media"
                     ? "Billing Address"
-                    : "Address"}
+                    : "Property Address"}
                 </p>
                 <p className="text-sm break-words">
                   {item.businessAddress ||
@@ -386,11 +398,9 @@ const ViewClientsTable = ({
               <p className="text-xs text-gray-500">
                 {currentModule === "commercial"
                   ? "Business Address"
-                  : localStorage.getItem("company") === "vkl"
-                  ? "Property Address"
-                  : localStorage.getItem("company") === "idg"
+                  : currentModule === "print media"
                   ? "Billing Address"
-                  : "Address"}
+                  : "Property Address"}
               </p>
               <p className="text-sm break-words">
                 {item.businessAddress ||
@@ -404,11 +414,9 @@ const ViewClientsTable = ({
                 <p className="text-gray-500">
                   {currentModule === "commercial"
                     ? "Completion Date"
-                    : localStorage.getItem("company") === "vkl"
-                    ? "Settlement Date"
-                    : localStorage.getItem("company") === "idg"
+                    : currentModule === "print media"
                     ? "Delivery Date"
-                    : "Date"}
+                    : "Settlement Date"}
                 </p>
                 <p>
                   {formatDate(

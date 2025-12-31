@@ -114,7 +114,7 @@ function LoginForm() {
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#2E3D99]/20">
               <Sparkles className="w-4 h-4 text-yellow-500" />
               <span className="text-sm font-medium text-gray-700">
-                Secure Legal Operations Platform
+                Secure Operations Platform
               </span>
             </div>
 
@@ -134,7 +134,7 @@ function LoginForm() {
             </h1>
 
             <p className="text-lg text-gray-600 mb-8 max-w-xl">
-              Access your centralized workspace for streamlined legal
+              Access your centralised workspace for streamlined
               operations, automated processes, and real-time insights that keep
               your team productive and moving forward.
             </p>

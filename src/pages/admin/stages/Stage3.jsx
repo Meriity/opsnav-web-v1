@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 
 const formConfig = {
-  vkl: {
+  conveyancing: {
     fields: [
       {
         key: "titleSearch",
@@ -25,7 +25,7 @@ const formConfig = {
       { key: "inviteBank", label: "Invite Bank", type: "radio" },
     ],
   },
-  idg: {
+  "print media": {
     fields: [
       { key: "boardsPrinted", label: "Boards Printed", type: "radio" },
       { key: "packaged", label: "Packaged", type: "radio" },
@@ -63,6 +63,7 @@ export default function Stage3({
   data,
   stageNumber = 3,
   setReloadTrigger,
+  setHasChanges,
 }) {
   const { matterNumber } = useParams();
 
@@ -78,13 +79,12 @@ export default function Stage3({
   const originalData = useRef({});
   const hasLoaded = useRef(false);
 
-  const company = localStorage.getItem("company") || "vkl";
   const currentModule = localStorage.getItem("currentModule");
 
   const fields =
     currentModule === "commercial"
       ? formConfig.commercial.fields
-      : formConfig[company].fields;
+      : formConfig[currentModule].fields;
 
   const normalizeValue = (v) =>
     v
@@ -101,7 +101,6 @@ export default function Stage3({
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
-    if (company === "idg" && val) return "Completed";
     return "Not Completed";
   };
 
@@ -110,21 +109,21 @@ export default function Stage3({
     hasLoaded.current = true;
 
     const load = async () => {
-      setIsLoading(true);
+      // setIsLoading(true);
 
       let stageData = data;
 
       try {
-        if (currentModule === "commercial") {
-          const res = await commercialApi.getStageData(3, matterNumber);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        } else if (company === "vkl") {
-          const res = await api.getStageThree(matterNumber);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        } else if (company === "idg") {
-          const res = await api.getIDGStages(matterNumber, 3);
-          stageData = res?.data ? { ...data, ...res.data } : data;
-        }
+        // if (currentModule === "commercial") {
+        //   const res = await commercialApi.getStageData(3, matterNumber);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // } else if (company === "vkl") {
+        //   const res = await api.getStageThree(matterNumber);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // } else if (company === "idg") {
+        //   const res = await api.getIDGStages(matterNumber, 3);
+        //   stageData = res?.data ? { ...data, ...res.data } : data;
+        // }
       } catch {}
 
       const newForm = {};
@@ -163,10 +162,11 @@ export default function Stage3({
       };
 
       setIsLoading(false);
+      setHasChanges(false);
     };
 
     load();
-  }, [data, company, currentModule, fields, api, commercialApi, matterNumber]);
+  }, [data, currentModule, fields, api, commercialApi, matterNumber]);
 
   const generateSystemNote = () => {
     const green = new Set(["yes", "nr", "na", "n/a", "n/r"]);
@@ -189,6 +189,7 @@ export default function Stage3({
 
     setFormState((prev) => ({ ...prev, [key]: processed }));
     setStatusState((prev) => ({ ...prev, [key]: getStatus(processed) }));
+    setHasChanges(true);
   };
 
   const isChanged = () =>
@@ -224,16 +225,19 @@ export default function Stage3({
         }
       });
 
-      if (company === "vkl") payload.matterNumber = matterNumber;
-      if (company === "idg") payload.orderId = matterNumber;
+      if (currentModule === "print media") {
+        payload.orderId = matterNumber;
+      } else {
+        payload.matterNumber = matterNumber;
+      }
     }
 
     try {
       if (currentModule === "commercial") {
         await commercialApi.upsertStage(3, matterNumber, payload);
-      } else if (company === "vkl") {
+      } else if (currentModule !== "print media") {
         await api.upsertStageThree(payload);
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 3, payload);
       }
 
@@ -246,12 +250,24 @@ export default function Stage3({
         noteForSystem: systemNote,
         noteForClient,
       };
+      setHasChanges(false);
     } catch {
       toast.error("Failed to save Stage 3.");
     }
 
     setIsSaving(false);
   };
+
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
 
   if (isLoading) {
     return (
@@ -312,12 +328,13 @@ export default function Stage3({
               <input
                 type="date"
                 value={formState[`${f.key}Date`] || ""}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormState((prev) => ({
                     ...prev,
                     [`${f.key}Date`]: e.target.value,
-                  }))
-                }
+                  }));
+                  setHasChanges(true);
+                }}
                 className="border p-1 rounded"
               />
             )}
@@ -338,7 +355,10 @@ export default function Stage3({
         <label className="font-bold">Comment for Client</label>
         <textarea
           value={noteForClient}
-          onChange={(e) => setNoteForClient(e.target.value)}
+          onChange={(e) => {
+            setNoteForClient(e.target.value);
+            setHasChanges(true);
+          }}
           className="w-full rounded p-2 bg-gray-100"
         />
       </div>
@@ -375,4 +395,5 @@ Stage3.propTypes = {
   data: PropTypes.object,
   stageNumber: PropTypes.number,
   setReloadTrigger: PropTypes.func.isRequired,
+  setHasChanges: PropTypes.func.isRequired,
 };

@@ -18,7 +18,6 @@ const MatterDetailsModal = ({
   onClose,
   matter,
   currentModule,
-  company,
   isLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -270,70 +269,6 @@ const MatterDetailsModal = ({
 
   const renderOverview = () => (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-xl border border-blue-200">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-blue-500 rounded-lg">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-blue-600 font-medium truncate">
-                Matter Date
-              </p>
-              <p className="text-sm sm:text-lg font-semibold text-blue-900 truncate">
-                {formatDate(
-                  display.matter_date || display.matterDate || display.orderDate
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-xl border border-green-200">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-green-500 rounded-lg">
-              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-green-600 font-medium truncate">
-                {currentModule === "commercial"
-                  ? "Completion Date"
-                  : company === "idg"
-                  ? "Delivery Date"
-                  : "Settlement Date"}
-              </p>
-              <p className="text-sm sm:text-lg font-semibold text-green-900 truncate">
-                {formatDate(
-                  display.settlement_date ||
-                    display.settlementDate ||
-                    display.deliveryDate
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-xl border border-purple-200">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-purple-500 rounded-lg">
-              <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-purple-600 font-medium truncate">
-                Status
-              </p>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-medium border ${getStatusColor(
-                  display.status || display.closeMatter || display.closeOrder
-                )}`}
-              >
-                {display.status || display.closeMatter || "Active"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Client Information */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
@@ -385,7 +320,7 @@ const MatterDetailsModal = ({
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
           {currentModule === "commercial"
             ? "Business Information"
-            : company === "idg"
+            : currentModule === "print media"
             ? "Billing Information"
             : "Property Information"}
         </h3>
@@ -590,91 +525,12 @@ const MatterDetailsModal = ({
     </div>
   );
 
-  const renderTimeline = () => (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6">
-          Matter Timeline
-        </h3>
-
-        <div className="space-y-3 sm:space-y-4">
-          <div className="flex items-start space-x-3 sm:space-x-4">
-            <div className="flex-shrink-0">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full mt-2 sm:mt-2.5"></div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                Matter Created
-              </p>
-              <p className="text-gray-600 text-sm sm:text-base">
-                {formatDate(
-                  display.matter_date || display.matterDate || display.orderDate
-                )}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Matter was created in the system
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3 sm:space-x-4">
-            <div className="flex-shrink-0">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full mt-2 sm:mt-2.5"></div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                {currentModule === "commercial"
-                  ? "Project Completed"
-                  : company === "idg"
-                  ? "Order Delivered"
-                  : "Settlement Completed"}
-              </p>
-              <p className="text-gray-600 text-sm sm:text-base">
-                {formatDate(
-                  display.settlement_date ||
-                    display.settlementDate ||
-                    display.deliveryDate
-                )}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500">
-                {currentModule === "commercial"
-                  ? "Project marked as completed"
-                  : company === "idg"
-                  ? "Order delivered to client"
-                  : "Settlement process completed"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3 sm:space-x-4">
-            <div className="flex-shrink-0">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-500 rounded-full mt-2 sm:mt-2.5"></div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                Matter Archived
-              </p>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Archived on {formatDate(display.updatedAt)}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Matter has been completed and archived
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
         return renderOverview();
       case "financial":
         return renderFinancial();
-      case "timeline":
-        return renderTimeline();
       default:
         return renderOverview();
     }
@@ -691,7 +547,7 @@ const MatterDetailsModal = ({
         <div className="flex min-h-full items-center justify-center p-2 sm:p-4 text-center">
           <DialogPanel className="w-full max-w-6xl transform overflow-hidden rounded-xl sm:rounded-2xl bg-white text-left align-middle shadow-xl transition-all max-h-[90vh] sm:max-h-[95vh] flex flex-col">
             {/* Header with logo */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-700 px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+            <div className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   <div className="flex-shrink-0">
@@ -721,9 +577,9 @@ const MatterDetailsModal = ({
                       <span className="truncate">
                         {currentModule === "commercial"
                           ? "Commercial Project"
-                          : company === "idg"
-                          ? "IDG Order"
-                          : "VKL Matter"}
+                          : currentModule === "print media"
+                          ? "Print Media Order"
+                          : "Conveyancing Matter"}
                       </span>
                     </p>
 
@@ -754,7 +610,6 @@ const MatterDetailsModal = ({
                 {[
                   { id: "overview", name: "Overview", icon: Calendar },
                   { id: "financial", name: "Financial", icon: DollarSign },
-                  { id: "timeline", name: "Timeline", icon: Clock },
                 ].map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -789,10 +644,10 @@ const MatterDetailsModal = ({
             {/* Footer */}
             <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
+                {/* <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Last updated: {formatDate(display.updatedAt)}</span>
-                </div>
+                </div> */}
                 <div className="flex space-x-2 sm:space-x-3 justify-end">
                   <button
                     onClick={onClose}

@@ -26,26 +26,21 @@ export const useArchivedClientStore = create((set, get) => ({
     const api = new ClientAPI();
 
     try {
-      const company = localStorage.getItem("company");
+      const currentModule = localStorage.getItem("currentModule");
+
       const res =
-        company === "vkl"
-          ? await api.getArchivedClients()
-          : company === "idg"
+        currentModule === "print media"
           ? await api.getIDGCompletedOrders()
-          : await api.getClients();
+          : currentModule === "commercial"
+          ? await api.getClients()
+          : await api.getArchivedClients();
 
       let sourceArray = [];
 
       // normalize source array for different responses
-      if (company === "vkl") {
+      if (currentModule !== "print media") {
         sourceArray = res && Array.isArray(res.clients) ? res.clients : [];
-      } else if (company === "idg") {
-        // idg might return an array or an object; try to support both
-        if (Array.isArray(res)) sourceArray = res;
-        else if (res && Array.isArray(res.clients)) sourceArray = res.clients;
-        else sourceArray = [];
       } else {
-        // default clients endpoint might return { clients: [...] } or an array
         if (Array.isArray(res)) sourceArray = res;
         else if (res && Array.isArray(res.clients)) sourceArray = res.clients;
         else sourceArray = [];
@@ -53,7 +48,7 @@ export const useArchivedClientStore = create((set, get) => ({
 
       let mapped = [];
 
-      if (company === "vkl") {
+      if (currentModule !== "print media") {
         mapped = sourceArray.map((client, index) => ({
           id: index + 1,
           matternumber: client.matterNumber || "N/A",
@@ -73,7 +68,7 @@ export const useArchivedClientStore = create((set, get) => ({
           // include original payload so callers can still access raw fields
           __raw: client,
         }));
-      } else if (company === "idg") {
+      } else {
         mapped = sourceArray.map((client, index) => ({
           orderId: client.orderId || client.id || `idg-${index}`,
           clientName: client.client_name || client.clientName || "N/A",
@@ -87,37 +82,6 @@ export const useArchivedClientStore = create((set, get) => ({
           orderDate: client.orderDate ? client.orderDate.slice(0, 10) : "N/A",
           deliveryDate: client.deliveryDate
             ? client.deliveryDate.slice(0, 10)
-            : "N/A",
-          __raw: client,
-        }));
-      } else {
-        // generic clients mapping for other companies
-        mapped = sourceArray.map((client, index) => ({
-          id: client._id || client.id || index + 1,
-          matternumber: client.matterNumber || client.matternumber || "N/A",
-          client_name: client.clientName || client.client_name || "N/A",
-          property_address:
-            client.propertyAddress ||
-            client.businessAddress ||
-            client.property_address ||
-            "N/A",
-          businessAddress:
-            client.businessAddress || client.propertyAddress || "N/A",
-          state: client.state || "N/A",
-          clientType: client.clientType || client.type || "N/A",
-          status: client.closeMatter || client.status || "N/A",
-          matter_date: formatDate(
-            client.matterDate || client.matter_date,
-            "DD-MM-YYYY"
-          ),
-          settlement_date: formatDate(
-            client.settlementDate || client.settlement_date,
-            "DD-MM-YYYY"
-          ),
-          settlement_date_iso: client.settlementDate
-            ? moment(client.settlementDate).format("YYYY-MM-DD")
-            : client.settlement_date
-            ? moment(client.settlement_date).format("YYYY-MM-DD")
             : "N/A",
           __raw: client,
         }));

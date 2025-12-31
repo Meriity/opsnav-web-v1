@@ -36,7 +36,7 @@ const loadGoogleMapsScript = (apiKey) => {
 };
 
 // Helper function to get the initial form structure based on company and module
-const getInitialFormData = (company, user, currentModule) => {
+const getInitialFormData = (user, currentModule) => {
   if (currentModule === "commercial") {
     return {
       matterNumber: "",
@@ -51,7 +51,7 @@ const getInitialFormData = (company, user, currentModule) => {
       settlementDate: "",
       dataEntryBy: user,
     };
-  } else if (company === "vkl") {
+  } else if (currentModule === "conveyancing") {
     return {
       matterNumber: "",
       clientName: "",
@@ -63,7 +63,7 @@ const getInitialFormData = (company, user, currentModule) => {
       settlementDate: "",
       dataEntryBy: user,
     };
-  } else if (company === "idg") {
+  } else if (currentModule === "print media") {
     return {
       clientId: "",
       clientName: "",
@@ -89,7 +89,6 @@ const getInitialFormData = (company, user, currentModule) => {
 export default function CreateClientModal({
   isOpen,
   setIsOpen,
-  companyName,
   createType,
   onClose,
 }) {
@@ -103,16 +102,17 @@ export default function CreateClientModal({
   const navigate = useNavigate();
 
   // Google Maps Autocomplete refs
-  const addressInputRef = useRef(null);
+const idgDeliveryAddressRef = useRef(null);
+const conveyancingPropertyAddressRef = useRef(null);
+const commercialBusinessAddressRef = useRef(null);
 
   const user = localStorage.getItem("user") || "";
   const currentModule = localStorage.getItem("currentModule");
 
   // --- DERIVED STATE & CONSTANTS ---
-  const isVkl = companyName === "vkl";
-  const isIdg = companyName === "idg";
   const isCommercial = currentModule === "commercial";
-  const todayISO = new Date().toISOString().split("T")[0];
+  const isConveyancing = currentModule === "conveyancing";
+  const isPrintMedia = currentModule === "print media";
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
@@ -121,7 +121,7 @@ export default function CreateClientModal({
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if (isIdg && createType === "order") {
+    if (isPrintMedia && createType === "order" || isConveyancing || isCommercial) {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -131,12 +131,34 @@ export default function CreateClientModal({
           toast.error("Failed to load Google Maps. Please check your API key.");
         });
     }
-  }, [isIdg, createType, GOOGLE_MAPS_API_KEY]);
+  }, [isPrintMedia, isConveyancing, isCommercial, createType, GOOGLE_MAPS_API_KEY]);
+
+  // --- INITIALIZE GOOGLE MAPS AUTOCOMPLETE FOR ADDRESS FIELDS ---
+  const initializeAutocomplete = (inputRef, onPlaceSelected) => {
+    if (!inputRef.current || !window.google) return null;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ["address"],
+        componentRestrictions: { country: ["au", "us", "gb", "ca"] },
+      }
+    );
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.address_components) {
+        onPlaceSelected(place);
+      }
+    });
+
+    return { autocomplete, listener };
+  };
 
   // --- GOOGLE MAPS AUTOCOMPLETE INITIALIZATION ---
   useEffect(() => {
     // Only run this effect for the IDG order form.
-    if (!isIdg || createType !== "order") {
+    if (!isPrintMedia || createType !== "order") {
       return;
     }
 
@@ -146,9 +168,9 @@ export default function CreateClientModal({
     loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
       .then(() => {
         // Ensure the input element is mounted before initializing.
-        if (addressInputRef.current && window.google) {
+        if (idgDeliveryAddressRef.current && window.google) {
           autocompleteInstance = new window.google.maps.places.Autocomplete(
-            addressInputRef.current,
+            idgDeliveryAddressRef.current,
             {
               types: ["address"],
               componentRestrictions: { country: ["au", "us", "gb", "ca"] },
@@ -212,8 +234,7 @@ export default function CreateClientModal({
       });
 
     // --- Cleanup function ---
-    // This runs when the component unmounts to prevent memory leaks.
-    return () => {
+      return () => {
       if (placeChangedListener) {
         window.google.maps.event.removeListener(placeChangedListener);
       }
@@ -221,15 +242,113 @@ export default function CreateClientModal({
         window.google.maps.event.clearInstanceListeners(autocompleteInstance);
       }
     };
-  }, [isOpen, isIdg, createType]);
+  }, [isOpen, isPrintMedia, createType]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR CONVEYANCING PROPERTY ADDRESS ---
+useEffect(() => {
+  if (!isConveyancing || !isOpen) return;
+
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
+
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      if (conveyancingPropertyAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          conveyancingPropertyAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
+
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
+
+            let postcode = "";
+            let state = "";
+
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              propertyAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
+      }
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isConveyancing]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR COMMERCIAL BUSINESS ADDRESS ---
+
+useEffect(() => {
+  if (!isCommercial || !isOpen) return;
+
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
+
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      if (commercialBusinessAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          commercialBusinessAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
+
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
+
+            let postcode = "";
+            let state = "";
+
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              businessAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
+      }
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isCommercial]);
+
 
   // --- EFFECTS ---
   useEffect(() => {
     if (isOpen) {
-      setFormData(getInitialFormData(companyName, user, currentModule));
+      setFormData(getInitialFormData(user, currentModule));
       setMatterNumberError("");
 
-      if (isIdg) {
+      if (isPrintMedia) {
         if (createType === "client") {
           setId({
             clientId: `IDG${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -253,7 +372,7 @@ export default function CreateClientModal({
         }
       }
     }
-  }, [isOpen, companyName, createType, isIdg, currentModule, user]);
+  }, [isOpen, createType, isPrintMedia, currentModule, user]);
 
   // --- HANDLERS ---
   const handleChange = (e) => {
@@ -417,7 +536,7 @@ export default function CreateClientModal({
             throw err;
           }
         }
-      } else if (isVkl) {
+      } else if (isConveyancing) {
         // VKL CLIENT CREATION
         const requiredFields = [
           "matterNumber",
@@ -428,7 +547,7 @@ export default function CreateClientModal({
           "postcode",
           "matterDate",
           "settlementDate",
-          "isTrustee"
+          "isTrustee",
         ];
         if (requiredFields.some((field) => !formData[field])) {
           toast.error("Please fill all required fields.");
@@ -465,7 +584,7 @@ export default function CreateClientModal({
             throw err;
           }
         }
-      } else if (isIdg) {
+      } else if (isPrintMedia) {
         // IDG CLIENT/ORDER CREATION
         if (createType === "client") {
           const requiredFields = [
@@ -499,7 +618,8 @@ export default function CreateClientModal({
           };
           await api.createIDGClient(payload);
           toast.success("Client created successfully!");
-          onClose();
+          navigate(`/admin/client/print-media/${id.clientId}`);
+          
         } else if (createType === "order") {
           const requiredFields = [
             "client",
@@ -532,7 +652,7 @@ export default function CreateClientModal({
           console.log(payload);
           await api.createIDGOrder(payload);
           toast.success("Order created successfully!");
-          onClose();
+          if (typeof onClose === "function") onClose();
         }
       }
       setIsOpen(false);
@@ -593,7 +713,7 @@ export default function CreateClientModal({
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               {/* COMMERCIAL & VKL FIELDS */}
-              {(isCommercial || isVkl) && (
+              {(isCommercial || isConveyancing) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -651,7 +771,7 @@ export default function CreateClientModal({
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
+                    {/* <div>
                       <label className="block mb-1 font-medium">State*</label>
                       <div className="flex gap-2 flex-wrap">
                         {["VIC", "NSW", "QLD", "SA"].map((stateOption) => (
@@ -672,7 +792,7 @@ export default function CreateClientModal({
                           </label>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     <div>
                       <label className="block mb-1 font-medium">
@@ -698,7 +818,7 @@ export default function CreateClientModal({
                         ))}
                       </div>
                     </div>
-                     <div>
+                    <div>
                       <label className="block mb-1 font-medium">
                         Is purchaser a trustee?
                       </label>
@@ -723,8 +843,6 @@ export default function CreateClientModal({
                       </div>
                     </div>
                   </div>
-                                     
-                  
 
                   <div>
                     <label className="block mb-1 font-medium">
@@ -741,10 +859,32 @@ export default function CreateClientModal({
                           : formData.propertyAddress || ""
                       }
                       onChange={handleChange}
+                      ref={
+                        isCommercial
+                          ? commercialBusinessAddressRef
+                          : conveyancingPropertyAddressRef
+                      }
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                       required
                     />
+                     <p className="text-xs text-gray-500 mt-1">
+                      (Start typing to see suggestions)
+                    </p>
                   </div>
+                  
+<div>
+  <label className="block mb-1 font-medium">
+    State*
+    <span className="text-xs text-gray-500 ml-1">(Auto-filled)</span>
+  </label>
+  <input
+    type="text"
+    name="state"
+    value={formData.state || ""}
+    onChange={handleChange}
+    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100"
+  />
+</div>
 
                   <div>
                     <label className="block mb-1 font-medium">Post code*</label>
@@ -793,7 +933,7 @@ export default function CreateClientModal({
               )}
 
               {/* IDG Client Fields */}
-              {isIdg && createType === "client" && (
+              {isPrintMedia && createType === "client" && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -934,7 +1074,7 @@ export default function CreateClientModal({
               )}
 
               {/* IDG ORDER FIELDS */}
-              {isIdg && createType === "order" && (
+              {isPrintMedia && createType === "order" && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -1011,7 +1151,7 @@ export default function CreateClientModal({
                         </span>
                       </label>
                       <input
-                        ref={addressInputRef}
+                        ref={idgDeliveryAddressRef}
                         type="text"
                         name="deliveryAddress"
                         value={formData.deliveryAddress || ""}
@@ -1129,7 +1269,7 @@ export default function CreateClientModal({
                 <button
                   type="submit"
                   disabled={isLoading || !!matterNumberError}
-                  className={`w-full bg-[#00AEEF] text-white font-semibold py-2 rounded-md transition-all ${
+                  className={`w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md transition-all ${
                     isLoading || matterNumberError
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-sky-600 hover:shadow-lg"

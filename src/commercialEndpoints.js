@@ -28,8 +28,8 @@ export const COMMERCIAL_ENDPOINTS = {
   STAGE_SIX_BY_ID: "/clients/stage-six", // Use with /:matterNumber
 
   // Cost Operations
-  COST: "/clients/cost",
-  COST_BY_ID: "/clients/cost", // Use with /:matterNumber
+  COST: "/clients/costs",
+  COST_BY_ID: "/clients/costs", // Use with /:matterNumber
 
   // Client View Access
   SEND_CLIENT_LINK: "/client-view/send-link",

@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   Facebook,
   Instagram,
-  Twitter,
   Linkedin,
   Zap,
   Users,
@@ -31,10 +30,16 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaLinkedin,
+  FaXTwitter,
+} from "react-icons/fa6";
 
 const ScrollIndicator = "/down-arrow.png";
 
@@ -52,11 +57,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%202025-10-18%20113423.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1131).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/dashboard-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-20-57-496.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/dashboards-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-36-32_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "sky",
@@ -73,11 +78,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "green",
@@ -94,11 +99,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "purple",
@@ -115,11 +120,11 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "amber",
@@ -136,32 +141,28 @@ const featureSections = [
     ],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "rose",
   },
   {
     id: 6,
-    title: "Fully Cloud Hosted on GCP",
+    title: "Scalable Cloud Hosted",
     description:
-      "Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee.",
-    points: [
-      "Google Cloud Platform hosting",
-      "Enterprise-grade security",
-      "99.9% uptime SLA",
-    ],
+      "Enterprise-grade security on Cloud with 99.9% uptime guarantee.",
+    points: ["Cloud hosting", "Enterprise-grade security", "99.9% uptime SLA"],
     image: {
       desktop:
-        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(946).png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot%20(1130).png",
       tablet:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-tablet.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_20251229-142543.png",
       mobile:
-        "https://storage.googleapis.com/opsnav_web_image/view-clients-mobile.png",
+        "https://storage.googleapis.com/opsnav_web_image/Screenshot_2025-12-29-14-48-55-40_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
     },
     gradient: "from-[#2E3D99]/20 to-[#1D97D7]/30",
     color: "slate",
@@ -416,8 +417,14 @@ export default function Home() {
             >
               Login
             </button>
-            <button className="w-full px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg">
-              Sign up
+            <button
+              onClick={() => {
+                navigate("/signup");
+                setShowMobileNav(false);
+              }}
+              className="w-full py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              Sign Up
             </button>
           </div>
         </motion.div>
@@ -471,6 +478,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/signup")}
                 className="px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg font-medium transition-all"
               >
                 Sign up
@@ -522,7 +530,7 @@ export default function Home() {
             className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl leading-relaxed px-4"
           >
             OpsNav brings clarity and control to your most complex workflows -
-            with centralized task tracking, automated processes, and real-time
+            with centralised task tracking, automated processes, and real-time
             insights that keep your team aligned, productive, and moving
             forward.
           </motion.p>
@@ -536,6 +544,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/get-started-free")}
               className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
             >
               <span>Get Started Free</span>
@@ -544,6 +553,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/book-demo")}
               className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 border-2 border-gray-200 font-semibold rounded-xl hover:border-[#2E3D99] hover:text-[#2E3D99] transition-all flex items-center justify-center gap-2"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -557,7 +567,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base px-4"
           >
-            No credit card required • Cancel anytime • 24/7 support
+            No credit card required • Cancel anytime
           </motion.div>
 
           <motion.div
@@ -789,11 +799,11 @@ export default function Home() {
                 {/* Tablet */}
                 <div className="hidden md:block lg:hidden relative h-[250px] sm:h-[300px] rounded-2xl overflow-visible">
                   <div className="relative rounded-2xl w-full h-full bg-white">
-                    <BrowserTopBar />
+                    {/* <BrowserTopBar /> */}
                     <img
                       src={currentFeatureData.image.tablet}
                       alt={`${currentFeatureData.title} Tablet Screenshot`}
-                      className="w-full h-full object-contain rounded-b-2xl"
+                      className="w-full h-full object-cover rounded-b-2xl"
                     />
                   </div>
 
@@ -823,7 +833,7 @@ export default function Home() {
                 {/* Mobile */}
                 <div className="md:hidden relative h-[200px] sm:h-[250px] rounded-2xl overflow-visible">
                   <div className="relative rounded-2xl w-full h-full bg-white">
-                    <BrowserTopBar />
+                    {/* <BrowserTopBar /> */}
                     <img
                       src={currentFeatureData.image.mobile}
                       alt={`${currentFeatureData.title} Mobile Screenshot`}
@@ -910,8 +920,8 @@ export default function Home() {
             />
             <FeatureCard
               icon={Cloud}
-              title="Cloud Hosted on GCP"
-              description="Enterprise-grade security on Google Cloud Platform with 99.9% uptime guarantee."
+              title="Cloud Hosted"
+              description="Enterprise-grade security on Cloud with 99.9% uptime guarantee."
               index={5}
             />
           </div>
@@ -963,7 +973,7 @@ export default function Home() {
                     icon: Globe,
                     title: "Global Infrastructure",
                     description:
-                      "Hosted on Google Cloud Platform with multi-region redundancy.",
+                      "Hosted on Cloud with multi-region redundancy.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
@@ -1075,8 +1085,7 @@ export default function Home() {
               {
                 icon: Globe,
                 title: "Global Infrastructure",
-                description:
-                  "Hosted on Google Cloud Platform with multi-region redundancy.",
+                description: "Hosted on Cloud with multi-region redundancy.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
@@ -1146,14 +1155,14 @@ export default function Home() {
               Ready to transform your operations?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-10 max-w-2xl mx-auto">
-              Join thousands of professionals who trust OpsNav to
-              streamline their workflow.
+              Join thousands of professionals who trust OpsNav to streamline
+              their workflow.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogin}
+                onClick={() => navigate("/get-started-free")}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 Start Free Trial - 14 Days
@@ -1161,13 +1170,14 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/book-demo")}
                 className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-transparent text-white border-2 border-gray-700 font-semibold rounded-xl hover:border-white transition-all"
               >
                 Schedule a Demo
               </motion.button>
             </div>
             <p className="mt-4 sm:mt-6 text-gray-400 text-sm sm:text-base">
-              No credit card required • Cancel anytime • 24/7 support
+              No credit card required • Cancel anytime
             </p>
           </motion.div>
         </div>
@@ -1193,25 +1203,62 @@ export default function Home() {
               <h4 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">
                 Connect with us
               </h4>
+
+              {/* Social Icons */}
               <div className="flex justify-center md:justify-end gap-3 sm:gap-4">
-                {[
-                  { Icon: Facebook, label: "Facebook" },
-                  { Icon: Instagram, label: "Instagram" },
-                  { Icon: Twitter, label: "Twitter" },
-                  { Icon: Linkedin, label: "LinkedIn" },
-                ].map(({ Icon, label }, i) => (
-                  <motion.a
-                    key={i}
-                    href="#"
-                    whileHover={{ y: -5, scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#2E3D99]
-                    transition-colors duration-300 flex items-center justify-center cursor-pointer"
-                    aria-label={label}
-                  >
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </motion.a>
-                ))}
+                {/* Facebook */}
+                <motion.a
+                  href="https://www.facebook.com/opsnav"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Facebook"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaFacebook className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* Instagram */}
+                <motion.a
+                  href="#"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Instagram"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaInstagram className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* X */}
+                <motion.a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="X"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaXTwitter className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
+
+                {/* LinkedIn */}
+                <motion.a
+                  href="https://www.linkedin.com/company/opsnav/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -5, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="LinkedIn"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 hover:bg-[#FB4A50]
+        transition-colors duration-300 flex items-center justify-center"
+                >
+                  <FaLinkedin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </motion.a>
               </div>
             </div>
           </div>
@@ -1224,9 +1271,9 @@ export default function Home() {
               <a href="#" className="hover:text-white transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-white transition-colors">
+              <Link to="/terms" className="hover:text-white transition-colors">
                 Terms of Service
-              </a>
+              </Link>
               <a href="#" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>

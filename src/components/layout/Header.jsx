@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import useDebounce from "../../hooks/useDebounce";
+import { useLocation } from "react-router-dom";
 import {
   Search,
   Maximize2,
@@ -14,8 +15,10 @@ import {
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
 import { useSearchStore } from "../../pages/SearchStore/searchStore.js";
+import { useArchivedClientStore } from "../../pages/ArchivedClientStore/UseArchivedClientStore.js";
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
 import { motion, AnimatePresence } from "framer-motion";
+import CommercialAPI from "../../api/commercialAPI";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -28,11 +31,18 @@ export default function Header() {
   const [isMac, setIsMac] = useState(true);
 
   const api = new ClientAPI();
+  const commercialApi = new CommercialAPI();
+  const { archivedClients } = useArchivedClientStore();
+
   const navigate = useNavigate();
-  const company = localStorage.getItem("company");
+  const currentModule = localStorage.getItem("currentModule");
+  const isPrintMedia = currentModule === "print media";
 
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
+
+  const location = useLocation();
+  const isArchivedPage = location.pathname.includes("archived");
 
   const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 0 });
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -99,91 +109,100 @@ export default function Header() {
     try {
       const lowercasedValue = value.toLowerCase();
 
-      let response =
-        company === "vkl"
-          ? await api.getSearchResult(value)
-          : company === "idg"
-          ? await api.getIDGSearchResult(value)
-          : [];
-      if (!Array.isArray(response) || response.length === 0) {
+      let response = [];
+
+      // 🔹 COMMERCIAL (FIX)
+      if (currentModule === "commercial") {
+        response = isArchivedPage
+          ? await commercialApi.getArchivedProjects()
+          : await commercialApi.getActiveProjects();
+      }
+
+      // 🔹 PRINT MEDIA
+      else if (currentModule === "print media") {
+         try {
+           response = await api.getIDGSearchResult(value);
+         } catch (e) {
+           console.warn("Error fetching IDG search results, falling back to empty:", e);
+           response = [];
+         }
+      }
+
+      // 🔹 ARCHIVED
+      else if (archivedClients && archivedClients.length > 0) {
+        response = archivedClients.map((c) => c.__raw || c);
+      }
+      // 🔹 DEFAULT (Conveyancing)
+      else {
+        // Fetch all active clients to allow frontend filtering on all fields (including Referral)
         try {
-          const allClients = await api.getClients();
-          response = Array.isArray(allClients)
-            ? allClients
-            : allClients?.data || allClients?.clients || [];
+          response = await api.getClients();
         } catch (e) {
-          console.warn("Fallback getClients failed:", e);
-          response = Array.isArray(response) ? response : [];
-        }
-      } else {
-        try {
-          const allClients = await api.getClients();
-          const list = Array.isArray(allClients)
-            ? allClients
-            : allClients?.data || [];
-          const map = new Map();
-          (response || []).forEach((r) =>
-            map.set(String(r.matterNumber || r.orderId || r._id), r)
-          );
-          (list || []).forEach((r) =>
-            map.set(String(r.matterNumber || r.orderId || r._id), r)
-          );
-          response = Array.from(map.values());
-        } catch {
-          /* ignore merge failures; we already have server response */
+          console.warn("Error fetching clients for search, falling back to empty:", e);
+          response = [];
         }
       }
 
+      // Normalize
+      response = Array.isArray(response)
+        ? response
+        : response?.data || response?.clients || [];
+
       const searchWords = lowercasedValue.split(/\s+/).filter(Boolean);
 
+      const getNumericIdentifiers = (item) => {
+        const raw = item.__raw || item;
+
+        return [raw.matterNumber, raw.orderId, raw.clientId, raw.id, raw._id]
+          .filter(Boolean)
+          .map((v) => String(v));
+      };
+
       const filteredResults = (response || []).filter((item) => {
-        const topFields = [
-          String(item.matterNumber || item.orderId || ""),
-          String(item.clientName || item.client_name || ""),
-          String(
-            item.propertyAddress ||
-              item.property_address ||
-              item.businessAddress ||
-              ""
-          ),
-          String(item.state || ""),
-          String(item.referral || item.referralName || ""),
-          String(item.businessName || ""),
-          String(item.businessAddress || ""),
-          String(item.clientType || item.type || ""),
-        ];
+        const raw = item.__raw || item;
 
-        const stageRefValues = Object.keys(item)
-          .filter((k) => /^stage\d/i.test(k))
-          .map((k) => String(item[k]?.referral || item[k]?.referralName || ""))
-          .filter(Boolean);
+        const printMediaIds = [raw.orderId, raw.clientId]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
 
-        let commercialStageRefs = [];
-        if (item.stages && Array.isArray(item.stages)) {
-          item.stages.forEach((stageObj) => {
-            if (stageObj && typeof stageObj === "object") {
-              Object.values(stageObj).forEach((stageData) => {
-                if (
-                  stageData &&
-                  typeof stageData === "object" &&
-                  stageData.referral
-                ) {
-                  commercialStageRefs.push(String(stageData.referral));
-                }
-              });
-            }
-          });
-        }
+        const numericFields = [raw.matterNumber]
+          .filter(Boolean)
+          .map((v) => String(v));
 
-        const fields = [
-          ...topFields,
-          ...stageRefValues,
-          ...commercialStageRefs,
-        ].map((x) => String(x).toLowerCase());
+        const textFields = [
+          raw.clientName || raw.client_name,
+          raw.businessName,
+          raw.businessAddress || raw.propertyAddress || raw.property_address,
+          raw.state,
+          raw.clientType || raw.type,
+          raw.referral || raw.referralName,
+        ]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
 
-        return searchWords.some((word) =>
-          fields.some((field) => field.includes(word))
-        );
+        return searchWords.every((word) => {
+          const lowerWord = word.toLowerCase();
+          const numericWord = word.replace(/\D/g, "");
+          const isPureNumeric = /^\d+$/.test(word);
+
+          // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
+          if (isPrintMedia) {
+            return (
+              printMediaIds.some((id) => id.includes(lowerWord)) ||
+              textFields.some((field) => field.includes(lowerWord))
+            );
+          }
+
+          // 🔵 COMMERCIAL / CONVEYANCING — STRICT NUMERIC
+          if (isPureNumeric) {
+            return numericFields.some(
+              (field) => field === numericWord || field.startsWith(numericWord)
+            );
+          }
+
+          // 🔵 TEXT SEARCH
+          return textFields.some((field) => field.includes(lowerWord));
+        });
       });
 
       setSearchResult(filteredResults);
@@ -308,28 +327,35 @@ export default function Header() {
         <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
-        <div className="relative px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col items-start min-w-[200px]">
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 mb-1"
-            >
-              <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                Hello, {localStorage.getItem("user") || "Admin"}
-              </h1>
-              <span className="animate-pulse hidden md:block">👋</span>
-            </motion.div>
+        <div className="relative px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3 lg:gap-4">
+          <div className="flex flex-row items-center gap-4 w-full md:hidden lg:flex lg:w-auto lg:min-w-[200px]">
+            <img
+              className={`h-auto object-contain w-12 transition-all duration-300 ease-in-out`}
+              src={localStorage.getItem("logo") || "/Logo.png"}
+              alt="Logo"
+            />
+            <div className="flex flex-col items-start gap-1">
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2"
+              >
+                <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                  Hello, {localStorage.getItem("user") || "Admin"}
+                </h1>
+                <span className="animate-pulse hidden md:block">👋</span>
+              </motion.div>
 
-            <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-[#2E3D99]" />
-                <span>{formattedDate}</span>
-              </div>
-              <div className="w-px h-3 bg-gray-300" />
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-[#1D97D7]" />
-                <span className="tabular-nums">{formattedTime}</span>
+              <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3 text-[#2E3D99]" />
+                  <span>{formattedDate}</span>
+                </div>
+                <div className="w-px h-3 bg-gray-300" />
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-[#1D97D7]" />
+                  <span className="tabular-nums">{formattedTime}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -342,7 +368,7 @@ export default function Header() {
             <div className="flex items-center gap-3 w-full md:w-auto relative z-20">
               <button
                 onClick={toggleFullScreen}
-                className="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
+                className="hidden lg:flex p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
               >
                 {isFullScreen ? (
                   <Minimize2 className="w-5 h-5" />
@@ -355,7 +381,11 @@ export default function Header() {
                 ref={searchBoxRef}
                 className={`
                   relative transition-all duration-500 ease-out
-                  ${isFocused ? "w-full md:w-[380px]" : "w-full md:w-[280px]"}
+                  ${
+                    isFocused
+                      ? "w-full md:w-[300px] lg:w-[380px]"
+                      : "w-full md:w-[220px] lg:w-[280px]"
+                  }
                 `}
               >
                 <div
@@ -385,9 +415,9 @@ export default function Header() {
                     ref={inputRef}
                     type="text"
                     placeholder={
-                      company === "vkl"
-                        ? "Search Matter # or Client..."
-                        : "Search Order ID..."
+                      currentModule === "print media"
+                        ? "Search..."
+                        : "Search Matter # or Client..."
                     }
                     className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
                     value={searchQuery}
@@ -528,6 +558,8 @@ export default function Header() {
                             </p>
                             <p className="text-xs text-gray-400 truncate max-w-[200px]">
                               {item?.propertyAddress ||
+                                item?.deliveryAddress ||
+                                item?.businessAddress ||
                                 item?.clientEmail ||
                                 "No detailed info"}
                             </p>

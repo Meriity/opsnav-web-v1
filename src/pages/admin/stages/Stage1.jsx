@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Button from "../../../components/ui/Button";
-import ClientAPI from "../../../api/clientAPI";
-import CommercialAPI from "../../../api/commercialAPI";
+import Button from "@/components/ui/Button";
+import ClientAPI from "@/api/clientAPI";
+import CommercialAPI from "@/api/commercialAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import PropTypes from "prop-types";
 
 // Configuration object for different clients
 const formConfig = {
-  vkl: [
+  conveyancing: [
     { name: "referral", label: "Referral", type: "text" },
     {
       name: "retainer",
@@ -33,7 +34,7 @@ const formConfig = {
       type: "radio",
       options: ["Variable", "Fixed"],
     },
-    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
     {
       name: "tenants",
       label: "Tenants",
@@ -41,7 +42,7 @@ const formConfig = {
       options: ["Yes", "No", "Processing", "N/R"],
     },
   ],
-  idg: [
+  "print media": [
     {
       name: "customerDetailsVerified",
       label: "Verify Customer Details",
@@ -91,7 +92,7 @@ const formConfig = {
       type: "radio",
       options: ["Fixed", "Variable"],
     },
-    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "text" },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
   ],
 };
 
@@ -106,6 +107,8 @@ export default function Stage1({
   data,
   reloadTrigger,
   setReloadTrigger,
+  setHasChanges,
+  stageNumber = 1,
 }) {
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
@@ -113,25 +116,22 @@ export default function Stage1({
   const [isLoading, setIsLoading] = useState(false);
   const originalData = useRef({});
 
-  console.log("Initial data prop:", data);
-  const stage = 1;
+  const hasLoaded = useRef(false);
+
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
-  const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
     []
   );
 
-  const currentFields = useMemo(() => {
-    if (currentModule === "commercial") {
-      return formConfig.commercial || formConfig.vkl;
-    }
-    return formConfig[company] || formConfig.vkl;
-  }, [company, currentModule]);
+  const currentFields = useMemo(
+    () => formConfig[currentModule] || formConfig.conveyancing,
+    [currentModule]
+  );
 
   // Helper to normalize/standardize values for comparison and storage
   const normalizeValue = useCallback((v) => {
@@ -215,110 +215,19 @@ export default function Stage1({
     return `${notReceived.join(", ")} not received`;
   };
 
-  // UPDATED: Data initialization effect
-  useEffect(() => {
-    const initializeData = async () => {
-      if (!matterNumber) return;
-
-      setIsLoading(true);
-      try {
-        let stageData = data;
-
-        // For commercial stage 1, fetch the actual stage data from API
-        if (currentModule === "commercial") {
-          console.log("Commercial stage 1 - fetching actual stage data");
-          try {
-            const stageResponse = await commercialApi.getStageData(
-              1,
-              matterNumber
-            );
-            console.log("Commercial stage 1 API response:", stageResponse);
-
-            if (stageResponse && stageResponse.data) {
-              stageData = { ...data, ...stageResponse.data };
-            } else if (stageResponse) {
-              stageData = { ...data, ...stageResponse };
-            }
-            console.log("Combined stage data for commercial:", stageData);
-          } catch (error) {
-            console.log("No existing stage 1 data found, using default data");
-            stageData = data;
-          }
-        }
-
-        // Process the data for stage 1
-        console.log("Processing stage data:", stageData);
-
-        const { systemNote, clientComment } = extractNotes(
-          stageData?.noteForClient
-        );
-        const initialFormData = {};
-        const initialStatuses = {};
-
-        currentFields?.forEach((field) => {
-          if (field.name === "quoteAmount") {
-            initialFormData[field.name] =
-              stageData[field.name]?.$numberDecimal ||
-              stageData[field.name] ||
-              "";
-          } else {
-            if (field.type === "radio") {
-              initialFormData[field?.name] = normalizeValue(
-                stageData[field?.name] || ""
-              );
-            } else {
-              initialFormData[field?.name] = stageData[field?.name] || "";
-            }
-          }
-
-          if (field.type === "radio") {
-            initialStatuses[field.name] = getStatus(
-              initialFormData[field.name]
-            );
-          }
-        });
-
-        initialFormData.systemNote = systemNote;
-        initialFormData.clientComment = clientComment;
-
-        setFormData(initialFormData);
-        setStatuses(initialStatuses);
-        originalData.current = initialFormData;
-
-        console.log("Initialized form data:", initialFormData);
-      } catch (error) {
-        console.error("Error initializing form data:", error);
-        // toast.error("Failed to load stage data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeData();
-  }, [
-    data,
-    matterNumber,
-    currentModule,
-    company,
-    reloadTrigger,
-    currentFields,
-    getStatus,
-    normalizeValue,
-  ]);
-
-  // Add costing fields for IDG admins
+  // Add costing fields for IDG admins - Effect to inject fields
   useEffect(() => {
     if (
-      localStorage.getItem("company") === "idg" &&
+      currentModule === "print media" &&
       (localStorage.getItem("role") === "admin" ||
         localStorage.getItem("role") === "superadmin")
     ) {
-      const hasCostingFields = formConfig.idg.some(
+      const hasCostingFields = formConfig["print media"].some(
         (field) => field.name === "costing_amount"
       );
 
       if (!hasCostingFields) {
-        formConfig.idg.push(
+        formConfig["print media"].push(
           {
             name: "costingType",
             label: "Confirm Costing Type",
@@ -333,20 +242,97 @@ export default function Stage1({
         );
       }
     }
-  }, []);
+  }, [currentModule]);
+
+  // Initialize from props
+  useEffect(() => {
+    if (!data) return;
+    if (hasLoaded.current) return;
+
+    const initializeData = () => {
+      // Use data prop directly
+      const stageData = data;
+
+      const { systemNote, clientComment } = extractNotes(
+        stageData?.noteForClient
+      );
+
+      const initialFormData = {};
+      const initialStatuses = {};
+
+      currentFields.forEach((field) => {
+        let value = "";
+
+        if (field.name === "quoteAmount") {
+          value =
+            stageData[field.name]?.$numberDecimal ??
+            stageData[field.name] ??
+            "";
+        } else if (field.type === "radio") {
+          value = normalizeValue(stageData[field.name] ?? "");
+        } else {
+          value = stageData[field.name] ?? "";
+        }
+
+        initialFormData[field.name] = value;
+
+        if (field.type === "radio") {
+          initialStatuses[field.name] = getStatus(value);
+        }
+      });
+
+      // Also handle costing fields if they exist in data but maybe not in config yet (race condition safety) or just standard mapping
+      if (currentModule === "print media") {
+        if (stageData.costingType)
+          initialFormData.costingType = normalizeValue(stageData.costingType);
+        if (stageData.costing_amount)
+          initialFormData.costing_amount = stageData.costing_amount;
+
+        if (initialFormData.costingType)
+          initialStatuses.costingType = getStatus(initialFormData.costingType);
+      }
+
+      initialFormData.systemNote = systemNote;
+      initialFormData.clientComment = clientComment;
+
+      setFormData(initialFormData);
+      setStatuses(initialStatuses);
+
+      originalData.current = {
+        ...initialFormData,
+      };
+
+      hasLoaded.current = true;
+      setIsLoading(false);
+      setHasChanges(false);
+    };
+
+    initializeData();
+  }, [data, currentModule, currentFields, getStatus]);
+
+  useEffect(() => {
+    hasLoaded.current = false;
+  }, [matterNumber]);
 
   const handleChange = (field, value) => {
     const fieldConfig = currentFields.find((f) => f.name === field);
-    let processedValue = value;
+    // fallback for dynamic fields like costing
+    const dynamicFieldType =
+      field === "costingType"
+        ? "radio"
+        : field === "costing_amount"
+        ? "text"
+        : "text";
+    const isRadio =
+      fieldConfig?.type === "radio" || dynamicFieldType === "radio";
 
-    if (fieldConfig && fieldConfig.type === "radio") {
-      processedValue = normalizeValue(value);
-    }
+    const processed = isRadio ? normalizeValue(value) : value;
 
-    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+    setFormData((prev) => ({ ...prev, [field]: processed }));
+    setHasChanges(true);
 
-    if (fieldConfig && fieldConfig.type === "radio") {
-      setStatuses((prev) => ({ ...prev, [field]: getStatus(processedValue) }));
+    if (isRadio) {
+      setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
     }
   };
 
@@ -410,31 +396,32 @@ export default function Stage1({
       delete payload.systemNote;
       delete payload.clientComment;
 
-      console.log("=== SAVE DEBUG ===");
-      console.log("Current module:", currentModule);
-      console.log("Company:", company);
-      console.log("Matter number:", matterNumber);
-      console.log("Payload:", payload);
-
       // API CALL SECTION
-      if (currentModule === "commercial") {
-        console.log("Using Commercial API for stage 1");
-        payload.matterNumber = matterNumber;
-        await commercialApi.upsertStage(1, matterNumber, payload);
-      } else if (company === "vkl") {
-        console.log("Using VKL API for stage 1");
-        payload.matterNumber = matterNumber;
-        await api.upsertStageOne(payload);
-      } else if (company === "idg") {
-        console.log("Using IDG API for stage 1");
+      if (currentModule === "print media") {
         payload.orderId = matterNumber;
-        await api.upsertIDGStages(payload.orderId, 1, payload);
+      } else {
+        payload.matterNumber = matterNumber;
       }
 
-      console.log("API call successful");
+      if (currentModule === "commercial") {
+        await commercialApi.upsertStage(1, matterNumber, payload);
+      } else if (currentModule === "print media") {
+        await api.upsertIDGStages(matterNumber, 1, payload);
+      } else {
+        const res = await api.upsertStageOne(payload);
+
+        // Store authoritative Stage 1 color from POST response
+        if (res?.data?.colorStatus) {
+          sessionStorage.setItem("stage1ColorOverride", res.data.colorStatus);
+        }
+      }
 
       originalData.current = { ...formData };
+      setHasChanges(false);
+
+      // Notify parent
       setReloadTrigger((prev) => !prev);
+
       toast.success("Stage 1 Saved Successfully!", {
         position: "top-right",
         autoClose: 2000,
@@ -445,11 +432,6 @@ export default function Stage1({
         progress: undefined,
       });
     } catch (error) {
-      console.error("=== SAVE ERROR ===");
-      console.error("Failed to update stage 1:", error);
-      console.error("Error response:", error.response);
-      console.error("Error message:", error.message);
-
       let errorMessage = "Failed to save Stage 1. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -465,6 +447,28 @@ export default function Stage1({
 
   const renderField = (field) => {
     switch (field.type) {
+      case "number":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm md:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              placeholder="0.00"
+              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
+        );
+
       case "text":
         return (
           <div key={field.name} className="mt-5">
@@ -555,6 +559,17 @@ export default function Stage1({
     }
   };
 
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -576,8 +591,8 @@ export default function Stage1({
           label="Back"
           width="w-[70px] md:w-[100px]"
           bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-          onClick={() => changeStage(stage - 1)}
-          disabled={stage === 1}
+          onClick={() => changeStage(stageNumber - 1)}
+          disabled={stageNumber === 1}
         />
         <div className="flex gap-2">
           <Button
@@ -591,7 +606,7 @@ export default function Stage1({
             label="Next"
             width="w-[70px] md:w-[100px]"
             bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={() => changeStage(stage + 1)}
+            onClick={() => changeStage(stageNumber + 1)}
           />
         </div>
       </div>
@@ -611,3 +626,11 @@ export default function Stage1({
     </div>
   );
 }
+
+Stage1.propTypes = {
+  changeStage: PropTypes.func.isRequired,
+  data: PropTypes.object,
+  reloadTrigger: PropTypes.bool,
+  setReloadTrigger: PropTypes.func.isRequired,
+  stageNumber: PropTypes.number,
+};

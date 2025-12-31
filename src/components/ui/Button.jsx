@@ -3,13 +3,13 @@ import clsx from "clsx";
 const Button = ({
   label,
   onClick,
-  bg = "bg-[#00AEEF]", // Default background
+  bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]",
   bghover = "hover:bg-sky-600",
   bgactive = "active:bg-sky-700",
   Icon1,
   Icon2,
   height = "h-[40px]",
-  width = "w-auto", // Defaults to flexible width
+  width = "w-auto", 
   disabled = false,
   className = "",
 }) => {

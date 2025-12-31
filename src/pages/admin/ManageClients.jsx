@@ -26,7 +26,6 @@ const useUserStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
   fetchUsers: async () => {
     const currentModule = localStorage.getItem("currentModule");
-    const company = localStorage.getItem("company");
 
     let api;
     if (currentModule === "commercial") {
@@ -72,7 +71,7 @@ const useUserStore = create((set) => ({
           settlementDate: user.settlementDate,
         }));
         set({ users: formatted, isFetched: true });
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         // IDG clients
         response = await api.getIDGClients();
         console.log("IDG Response:", response);
@@ -90,7 +89,6 @@ const useUserStore = create((set) => ({
         }));
         set({ users: formatted, isFetched: true });
       } else {
-        // VKL clients - you might want to add VKL client fetching here
         set({ users: [], isFetched: true });
       }
     } catch (err) {
@@ -105,14 +103,8 @@ const useUserStore = create((set) => ({
 // UsersPerPage dropdown component
 function UsersPerPage({ value, onChange }) {
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
-  const label =
-    currentModule === "commercial"
-      ? "Projects"
-      : company === "idg"
-        ? "Clients"
-        : "Clients";
+  const label = currentModule === "commercial" ? "Projects" : "Clients";
 
   return (
     <div className="flex items-center space-x-2 text-sm text-gray-700">
@@ -139,7 +131,6 @@ export default function ManageUsers() {
   const { searchQuery } = useSearchStore();
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
   const api = new AdminApi();
   const [selectedUser, setSelectedUser] = useState({});
@@ -200,7 +191,7 @@ export default function ManageUsers() {
         { key: "postcode", title: "PostCode" },
         { key: "abn", title: "ABN" },
       ];
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       return [
         { key: "clientId", title: "Client ID" },
         { key: "name", title: "Name" },
@@ -220,7 +211,7 @@ export default function ManageUsers() {
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "Manage Projects";
-    if (company === "idg") return "Manage Clients";
+    if (currentModule === "print media") return "Manage Clients";
     return "Manage Users";
   };
 
@@ -244,8 +235,9 @@ export default function ManageUsers() {
       const notificationAPI = new NotificationAPI();
       await notificationAPI.createNotification({
         type: "client",
-        message: `New ${currentModule === "commercial" ? "project" : "client"
-          } created: ${display_name}`,
+        message: `New ${
+          currentModule === "commercial" ? "project" : "client"
+        } created: ${display_name}`,
         metadata: {
           clientName: display_name,
           email: email,
@@ -258,7 +250,8 @@ export default function ManageUsers() {
       });
 
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } created successfully!`
       );
       setOpenUser(false);
@@ -271,7 +264,7 @@ export default function ManageUsers() {
       } else {
         toast.error(
           err.response?.data?.message ||
-          "Something went wrong. Please try again!"
+            "Something went wrong. Please try again!"
         );
       }
     } finally {
@@ -283,8 +276,8 @@ export default function ManageUsers() {
     try {
       console.log(selectedUser);
       if (currentModule === "commercial") {
-        // For commercial, use commercial update method
-        await api.editIDGClient(selectedUser);
+        const commercialApi = new CommercialAPI();
+        await commercialApi.updateProject(selectedUser);
       } else {
         await api.editIDGClient(selectedUser);
       }
@@ -307,14 +300,16 @@ export default function ManageUsers() {
       // });
 
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } updated successfully!`
       );
       setOpenEdit(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to update ${currentModule === "commercial" ? "project" : "client"
+        `Failed to update ${
+          currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Update Error:", err);
@@ -326,20 +321,22 @@ export default function ManageUsers() {
       setDeleteLoading(true);
       console.log(id.clientId);
       if (currentModule === "commercial") {
-        // For commercial, use commercial delete method
-        await api.deleteIDGClient(id.clientId);
+        const commercialApi = new CommercialAPI();
+        await commercialApi.deleteProject(id.clientId);
       } else {
         await api.deleteIDGClient(id.clientId);
       }
       toast.success(
-        `${currentModule === "commercial" ? "Project" : "Client"
+        `${
+          currentModule === "commercial" ? "Project" : "Client"
         } deleted successfully!`
       );
       setOpenDelete(false);
       setIsFetched(false);
     } catch (err) {
       toast.error(
-        `Failed to delete ${currentModule === "commercial" ? "project" : "client"
+        `Failed to delete ${
+          currentModule === "commercial" ? "project" : "client"
         }.`
       );
       console.error("Delete Error:", err);
@@ -370,18 +367,32 @@ export default function ManageUsers() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 overflow-hidden p-2">
+    <div className="min-h-screen w-full bg-gray-100 flex flex-col p-2">
       <Header />
-      <main className="w-full max-w-8xl mx-auto p-5">
+      <main className="w-full max-w-8xl mx-auto p-5 flex-1 flex flex-col">
         {/* Manage Users Header */}
         <div className="flex justify-between items-center mb-[15px]">
           <CreateClientModal
             createType={currentModule === "commercial" ? "project" : "client"}
-            companyName={company}
+            module={currentModule}
             isOpen={createuser}
             setIsOpen={() => setcreateuser(false)}
+            onClose={() => {
+              setcreateuser(false);
+              window.location.reload();
+            }}
           />
-          <h2 className="text-2xl font-semibold">{getPageTitle()}</h2>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                {getPageTitle()}
+              </span>
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+              Manage {currentModule === "commercial" ? "project" : "client"}{" "}
+              accounts, permissions, and access modules
+            </p>
+          </div>
           {/* <Button
             label={getCreateButtonLabel()}
             Icon1={userplus}
@@ -394,7 +405,7 @@ export default function ManageUsers() {
             onClick={() => setcreateuser(true)}
             className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
           >
-            <span className="xs:hidden">Add Client</span>
+            <span className="xs:hidden">Create Client</span>
           </motion.button>
         </div>
 
@@ -585,155 +596,293 @@ export default function ManageUsers() {
               >
                 {isLoading
                   ? "Creating..."
-                  : `Create ${currentModule === "commercial" ? "Project" : "Client"
-                  }`}
+                  : `Create ${
+                      currentModule === "commercial" ? "Project" : "Client"
+                    }`}
               </button>
             </form>
           </div>
         </div>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-10">
+      {/* Edit Dialog - UPDATED UI */}
+      <Dialog
+        open={openEdit}
+        onClose={setOpenEdit}
+        className="relative z-[100]"
+      >
         {console.log(selectedUser)}
-        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel className="bg-[#F3F4FB] rounded-lg p-6 shadow-xl sm:w-full sm:max-w-lg relative">
-              <button
-                onClick={() => setOpenEdit(false)}
-                className="absolute top-4 right-5 text-red-500 text-3xl font-bold"
-              >
-                &times;
-              </button>
+        <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+          <DialogPanel className="relative bg-white/90 backdrop-blur-md rounded-xl w-full max-w-3xl shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setOpenEdit(false)}
+              className="absolute top-4 right-4 text-red-500 text-xl font-bold hover:scale-110 transition-transform z-10"
+            >
+              &times;
+            </button>
 
-              <h2 className="text-lg font-bold mb-4">
-                Edit {currentModule === "commercial" ? "Project" : "Client"} ID
-                : {selectedUser.clientId}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-6 text-center">
+                Edit {currentModule === "commercial" ? "Project" : "Client"}
               </h2>
 
-              {/* Name */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Name
-              </label>
-              <input
-                value={selectedUser.name}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    name: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+              <div className="space-y-5">
+                {/* Display Client/Project ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">
+                      {currentModule === "commercial"
+                        ? "Project ID"
+                        : "Client ID"}
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedUser.clientId || ""}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-gray-100/80 backdrop-blur-sm"
+                      disabled
+                    />
+                  </div>
 
-              {/* Email */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                value={selectedUser.email || ""}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                  {/* Name field */}
+                  <div>
+                    <label className="block mb-1 font-medium">Name*</label>
+                    <input
+                      type="text"
+                      value={selectedUser.name || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Password
-              </label>
-              <input
-                placeholder="Update new password here and click edit"
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    password: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Email field */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Email*</label>
+                    <input
+                      type="email"
+                      value={selectedUser.email || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          email: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
 
-              {/* Address */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Address
-              </label>
-              <input
-                value={selectedUser.address || ""}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    address: e.target.value,  // fixed to update address
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
-              {/* Country */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Country
-              </label>
-              <input
-                value={selectedUser.country}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    country: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                  {/* Contact field */}
+                  <div>
+                    <label className="block mb-1 font-medium">Contact*</label>
+                    <input
+                      type="text"
+                      value={selectedUser.contact || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          contact: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-              {/* State */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                State
-              </label>
-              <input
-                value={selectedUser.state}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    state: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
-              {/* Postcode */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                Postcode
-              </label>
-              <input
-                value={selectedUser.postcode}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    postcode: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Password field (optional) */}
+                <div>
+                  <label className="block mb-1 font-medium">Password </label>
+                  <input
+                    type="password"
+                    placeholder="Update new password here and click edit"
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        password: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
 
-              {/* ABN */}
-              <label className="block mb-1 font-medium text-sm text-gray-700">
-                ABN
-              </label>
-              <input
-                value={selectedUser.abn}
-                onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
-                    abn: e.target.value,   // changed to update name, not displayName
-                  })
-                }
-                className="w-full mb-2 px-4 py-3 border rounded"
-              />
+                {/* Address field */}
+                <div>
+                  <label className="block mb-1 font-medium">Address*</label>
+                  <input
+                    type="text"
+                    value={selectedUser.address || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        address: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    required
+                  />
+                </div>
 
-              <Button
-                label={`Edit ${currentModule === "commercial" ? "Project" : "Client"
-                  }`}
-                onClick={handleUserUpdate}
-              />
-            </DialogPanel>
-          </div>
+                {/* Location fields - Country, State, Postcode */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Country</label>
+                    <input
+                      type="text"
+                      value={selectedUser.country || "Australia"}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          country: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">State</label>
+                    <select
+                      value={selectedUser.state || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          state: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    >
+                      <option value="">Select State</option>
+                      <option value="ACT">ACT</option>
+                      <option value="NSW">NSW</option>
+                      <option value="NT">NT</option>
+                      <option value="QLD">QLD</option>
+                      <option value="SA">SA</option>
+                      <option value="TAS">TAS</option>
+                      <option value="VIC">VIC</option>
+                      <option value="WA">WA</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Postcode</label>
+                    <input
+                      type="text"
+                      value={selectedUser.postcode || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          postcode: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* ABN field */}
+                <div>
+                  <label className="block mb-1 font-medium">ABN</label>
+                  <input
+                    type="text"
+                    value={selectedUser.abn || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        abn: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
+
+                {/* Additional fields for Commercial module */}
+                {currentModule === "commercial" && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-1 font-medium">
+                          Client Type
+                        </label>
+                        <select
+                          value={selectedUser.clientType || ""}
+                          onChange={(e) =>
+                            setSelectedUser({
+                              ...selectedUser,
+                              clientType: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Buyer">Buyer</option>
+                          <option value="Seller">Seller</option>
+                          <option value="Transfer">Transfer</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block mb-1 font-medium">
+                          Matter Date
+                        </label>
+                        <input
+                          type="date"
+                          value={selectedUser.matterDate || ""}
+                          onChange={(e) =>
+                            setSelectedUser({
+                              ...selectedUser,
+                              matterDate: e.target.value,
+                            })
+                          }
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Settlement Date
+                      </label>
+                      <input
+                        type="date"
+                        value={selectedUser.settlementDate || ""}
+                        onChange={(e) =>
+                          setSelectedUser({
+                            ...selectedUser,
+                            settlementDate: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Submit Button */}
+                <div className="pt-4">
+                  <button
+                    onClick={handleUserUpdate}
+                    disabled={deleteLoading}
+                    className={`w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md transition-all ${
+                      deleteLoading
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-sky-600 hover:shadow-lg"
+                    }`}
+                  >
+                    {deleteLoading ? "Updating..." : "Update"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </DialogPanel>
         </div>
       </Dialog>
 

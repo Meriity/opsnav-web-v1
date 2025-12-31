@@ -36,6 +36,7 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
+  Legend,
 } from "recharts";
 import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
@@ -67,6 +68,7 @@ const useDashboardStore = create((set) => ({
   totalactive: 0,
   totalCompleted: 0,
   lastrecord: 0,
+  totalPending: 0,
   loading: true,
 
   setDashboardData: (data, currentModule = "") =>
@@ -101,6 +103,20 @@ const useDashboardStore = create((set) => ({
           0
         : 0;
 
+      const lastPending = mostRecentWithData
+        ? mostRecentWithData.pendingMatters || 0
+        : 0;
+
+      const totalPending = sixMonthsData.reduce(
+        (sum, item) =>
+          sum +
+          (item.pendingMatters ??
+            item.pendingOrders ??
+            item.pendingProjects ??
+            0),
+        0
+      );
+
       const totalCompleted =
         data.lifetimeTotals?.totalClosedOrders ||
         data.lifetimeTotals?.totalClosedProjects ||
@@ -117,6 +133,7 @@ const useDashboardStore = create((set) => ({
           0,
         totalCompleted: totalCompleted,
         lastrecord: lastRec,
+        totalPending: totalPending,
         loading: false,
       };
     }),
@@ -128,6 +145,7 @@ const useDashboardStore = create((set) => ({
       totalusers: 0,
       totalactive: 0,
       totalCompleted: 0,
+      totalPending: 0,
       lastrecord: 0,
       loading: true,
     }),
@@ -312,7 +330,7 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
 );
 
 // --- API Functions ---
-const fetchDashboardData = async (currentModule, company) => {
+const fetchDashboardData = async (currentModule) => {
   const clientApi = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
@@ -354,110 +372,113 @@ const fetchDashboardData = async (currentModule, company) => {
         allTimeStats: [],
       };
     }
-  } else if (company === "idg") {
+  } else if (currentModule === "print media") {
     return await clientApi.getIDGDashboardData();
   } else {
     return await clientApi.getDashboardData();
   }
 };
 
-const fetchCalendarData = async (currentModule, company) => {
+const fetchCalendarData = async (currentModule) => {
   const clientApi = new ClientAPI();
   const commercialApi = new CommercialAPI();
 
   let data;
+
   if (currentModule === "commercial") {
     data = await commercialApi.getCalendarDates();
-  } else if (company === "vkl") {
-    data = await clientApi.getCalendarDates();
-  } else {
+  } else if (currentModule === "print media") {
     data = await clientApi.getIDGCalendarDates();
+  } else {
+    data = await clientApi.getCalendarDates();
   }
 
-  return processCalendarData(data, currentModule, company);
+  return processCalendarData(data, currentModule);
 };
 
-const processCalendarData = (data, currentModule, company) => {
+const processCalendarData = (data, currentModule) => {
   const events = [];
 
   if (currentModule === "commercial") {
-    let calendarItems = [];
-
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
-      calendarItems = data.data;
-    } else if (data && Array.isArray(data.clients)) {
-      calendarItems = data.clients;
-    } else if (data && Array.isArray(data.events)) {
-      calendarItems = data.events;
-    }
+    const calendarItems = Array.isArray(data) ? data : [];
 
     calendarItems.forEach((item) => {
-      const eventDate =
-        item.eventDate || item.date || item.settlementDate || item.projectDate;
-      if (eventDate) {
-        const clientType =
-          item.clientType || item.projectType || item.type || "Commercial";
-        const eventType = item.eventType || "Event";
-        const identifier =
-          item.projectCode || item.matterNumber || item.id || "N/A";
-
+      if (item.settlementDate) {
         events.push({
-          title: `[${identifier}] - ${eventType} - [${clientType}]`,
-          start: moment(eventDate).toDate(),
-          end: moment(eventDate).toDate(),
+          title: `[${item.matterNumber}] - Settlement`,
+          start: moment(item.settlementDate).toDate(),
+          end: moment(item.settlementDate).toDate(),
           allDay: true,
-          type: eventType,
-          clientType: clientType,
-          projectType: item.projectType,
-          projectCode: item.projectCode,
+          type: "settlement",
+          clientType: item.clientType,
           matterNumber: item.matterNumber,
-          id: identifier,
+          id: `${item.matterNumber}-settlement`,
         });
       }
     });
-  } else if (company === "vkl") {
+  } else if (currentModule === "conveyancing" || currentModule === "wills") {
     let calendarItems = [];
 
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
+    if (Array.isArray(data?.data?.data)) {
+      calendarItems = data.data.data;
+    } else if (Array.isArray(data?.data)) {
       calendarItems = data.data;
-    } else if (data && Array.isArray(data.clients)) {
-      calendarItems = data.clients;
+    } else if (Array.isArray(data)) {
+      calendarItems = data;
     }
 
     calendarItems.forEach((item) => {
-      if (item.buildingAndPestDate) {
+      if (item.settlementDate) {
         events.push({
-          title: `[${item.matterNumber}] - B&P - [${item.clientType}]`,
-          start: moment(item.buildingAndPestDate).toDate(),
-          end: moment(item.buildingAndPestDate).toDate(),
+          title: `[${item.matterNumber}] - Settlement`,
+          start: moment(item.settlementDate).toDate(),
+          end: moment(item.settlementDate).toDate(),
           allDay: true,
-          type: "buildingAndPest",
+          type: "settlement",
           clientType: item.clientType,
           matterNumber: item.matterNumber,
-          isApproved: item.buildingAndPest?.toLowerCase() === "yes",
-          id: item.matterNumber,
+          id: `${item.matterNumber}-settlement`,
         });
       }
       if (item.financeApprovalDate) {
         events.push({
-          title: `[${item.matterNumber}] - Finance - [${item.clientType}]`,
-          start: moment(item.financeApprovalDate).toDate(),
-          end: moment(item.financeApprovalDate).toDate(),
+          title: `[${item.matterNumber}] - Finance`,
+          start: moment(item.financeApprovalDate).startOf("day").toDate(),
+          end: moment(item.financeApprovalDate)
+            .add(1, "day")
+            .startOf("day")
+            .toDate(),
           allDay: true,
           type: "financeApproval",
           clientType: item.clientType,
           matterNumber: item.matterNumber,
           isApproved: item.financeApproval?.toLowerCase() === "yes",
-          id: item.matterNumber,
+          id: `${item.matterNumber}-finance`,
         });
       }
+
+      // Building & Pest
+      if (item.buildingAndPestDate) {
+        events.push({
+          title: `[${item.matterNumber}] - B&P`,
+          start: moment(item.buildingAndPestDate).startOf("day").toDate(),
+          end: moment(item.buildingAndPestDate)
+            .add(1, "day")
+            .startOf("day")
+            .toDate(),
+          allDay: true,
+          type: "buildingAndPest",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          isApproved: item.buildingAndPest?.toLowerCase() === "yes",
+          id: `${item.matterNumber}-bp`,
+        });
+      }
+
+      // Title Search
       if (item.titleSearchDate) {
         events.push({
-          title: `[${item.matterNumber}] - Title Search - [${item.clientType}]`,
+          title: `[${item.matterNumber}] - Title Search`,
           start: moment(item.titleSearchDate).toDate(),
           end: moment(item.titleSearchDate).toDate(),
           allDay: true,
@@ -465,42 +486,21 @@ const processCalendarData = (data, currentModule, company) => {
           clientType: item.clientType,
           matterNumber: item.matterNumber,
           isApproved: item.titleSearch?.toLowerCase() === "yes",
-          id: item.matterNumber,
-        });
-      }
-      if (item.settlementDate) {
-        events.push({
-          title: `[${item.matterNumber}] - Settlement - [${item.clientType}]`,
-          start: moment(item.settlementDate).toDate(),
-          end: moment(item.settlementDate).toDate(),
-          allDay: true,
-          type: "settlement",
-          clientType: item.clientType,
-          matterNumber: item.matterNumber,
-          id: item.matterNumber,
+          id: `${item.matterNumber}-title`,
         });
       }
     });
-  } else {
-    let calendarItems = [];
-
-    if (Array.isArray(data)) {
-      calendarItems = data;
-    } else if (data && Array.isArray(data.data)) {
-      calendarItems = data.data;
-    } else if (data && Array.isArray(data.orders)) {
-      calendarItems = data.orders;
-    }
+  } else if (currentModule === "print media") {
+    let calendarItems = Array.isArray(data?.orders) ? data.orders : data;
 
     calendarItems.forEach((item) => {
       if (item.deliveryDate) {
         events.push({
-          title: `[${item.orderId}] - ${item.orderType || "Order"}`,
+          title: `[${item.orderId}] - Order`,
           start: moment(item.deliveryDate).toDate(),
           end: moment(item.deliveryDate).toDate(),
           allDay: true,
           type: "deliveryDate",
-          clientType: item.orderType,
           orderId: item.orderId,
           id: item.orderId,
         });
@@ -508,14 +508,7 @@ const processCalendarData = (data, currentModule, company) => {
     });
   }
 
-  return events
-    .filter((e) => e && e.start && e.end)
-    .map((e) => ({
-      title:
-        e.title ||
-        `[${e.orderId || e.projectCode || e.matterNumber || "NoID"}]`,
-      ...e,
-    }));
+  return events;
 };
 
 // Responsive Stat Card Component - Enhanced with Home.jsx style
@@ -710,6 +703,7 @@ function Dashboard() {
     totalactive,
     totalCompleted,
     lastrecord,
+    totalPending,
     loading,
     setDashboardData,
     setLoading,
@@ -733,7 +727,6 @@ function Dashboard() {
   const isSmallLaptop = width >= 1024 && width < 1280;
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
   const userRole = localStorage.getItem("userRole") || "admin";
 
   // Set calendar view based on screen size
@@ -753,20 +746,16 @@ function Dashboard() {
     isLoading: isDashboardLoading,
     error: dashboardError,
   } = useQuery({
-    queryKey: [QUERY_KEYS.DASHBOARD_DATA, currentModule, company],
-    queryFn: () => fetchDashboardData(currentModule, company),
-    enabled: !!currentModule && !!company,
+    queryKey: [QUERY_KEYS.DASHBOARD_DATA, currentModule],
+    queryFn: () => fetchDashboardData(currentModule),
+    enabled: !!currentModule,
   });
 
   // Use React Query for calendar events
-  const {
-    data: calendarEvents = [],
-    isLoading: isCalendarLoading,
-    error: calendarError,
-  } = useQuery({
-    queryKey: [QUERY_KEYS.CALENDAR_EVENTS, currentModule, company],
-    queryFn: () => fetchCalendarData(currentModule, company),
-    enabled: !!currentModule && !!company,
+  const { data: calendarEvents = [], error: calendarError } = useQuery({
+    queryKey: [QUERY_KEYS.CALENDAR_EVENTS, currentModule],
+    queryFn: () => fetchCalendarData(currentModule),
+    enabled: !!currentModule,
   });
 
   // Process dashboard data when it loads
@@ -805,14 +794,13 @@ function Dashboard() {
   const handleEventSelect = useCallback(
     (event) => {
       const currentModule = localStorage.getItem("currentModule");
-      const company = localStorage.getItem("company");
       const userRole = localStorage.getItem("userRole") || "admin";
 
       let matterNumber = "";
 
       if (currentModule === "commercial") {
         matterNumber = event.projectCode || event.matterNumber || event.id;
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         matterNumber = event.orderId || event.clientId || event.id;
       } else {
         matterNumber = event.matterNumber || event.clientId || event.id;
@@ -873,7 +861,7 @@ function Dashboard() {
       let closedLabel;
       if (currentModule === "commercial") {
         closedLabel = "Completed Projects";
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         closedLabel = "Closed Orders";
       } else {
         closedLabel = "Closed Matters";
@@ -882,7 +870,15 @@ function Dashboard() {
       return (
         <div className="bg-white border border-gray-200 p-2 sm:p-3 rounded-lg shadow-lg text-xs sm:text-sm">
           <p className="font-semibold text-gray-800">{label}</p>
-          <p className="text-gray-600">{`${closedLabel}: ${payload[0].value}`}</p>
+          {payload.map((entry, index) => (
+            <p
+              key={index}
+              className="text-gray-600"
+              style={{ color: entry.color }}
+            >
+              {entry.name}: <span className="font-semibold">{entry.value}</span>
+            </p>
+          ))}
         </div>
       );
     }
@@ -910,43 +906,34 @@ function Dashboard() {
     return { views: [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA] };
   }, [isMobile, isTablet]);
 
-  // Calculate current period total based on chart view
-  const chartPeriodTotal = useMemo(() => {
-    if (!currentChartData || currentChartData.length === 0) return 0;
-    return currentChartData.reduce((sum, item) => {
-      const closedCount =
-        item.closedMatters ??
-        item.closedProjects ??
-        item.completedProjects ??
-        item.closedOrders ??
-        item.count ??
-        item.total ??
-        0;
-      return sum + closedCount;
-    }, 0);
-    return currentChartData.reduce((sum, item) => {
-      const closedCount =
-        item.closedMatters ??
-        item.closedProjects ??
-        item.completedProjects ??
-        item.closedOrders ??
-        item.count ??
-        item.total ??
-        0;
-      return sum + closedCount;
-    }, 0);
-  }, [currentChartData]);
+  const CustomBarLabel = (props) => {
+    const { x, y, width, value } = props;
+    const { width: screenWidth } = useWindowSize();
+    const isMobile = screenWidth < 768;
 
+    if (value === 0 || !value) return null;
+
+    return (
+      <text
+        x={x + width / 2}
+        y={y - (isMobile ? 5 : 8)}
+        fill="#374151"
+        textAnchor="middle"
+        fontSize={isMobile ? 9 : 11}
+        fontWeight="600"
+      >
+        {value}
+      </text>
+    );
+  };
 
   useEffect(() => {
     if (!allChartData.monthlyStats.length && !allChartData.allTimeStats.length)
       return;
 
     let sourceData;
-    let isAllTimeView = chartView === "allTime";
-
-    if (isAllTimeView) {
-      // For "All Time" view on mobile/tablet, show aggregated yearly data instead of all months
+    if (chartView === "allTime") {
+      // For "All Time" view
       const allTimeData = allChartData.allTimeStats || [];
       if (isMobile || isTablet) {
         // Group by year for mobile/tablet
@@ -956,18 +943,16 @@ function Dashboard() {
           if (!yearlyData[year]) {
             yearlyData[year] = {
               name: year.toString(),
-              closedMatters: 0,
               year: year,
+              closedMatters: 0,
             };
           }
-          yearlyData[year].closedMatters +=
-            item.closedMatters ??
-            item.closedProjects ??
-            item.completedProjects ??
-            item.closedOrders ??
-            item.count ??
-            item.total ??
-            0;
+          yearlyData[year].closedMatters += item.closedMatters || 0;
+          if (item.pendingMatters !== undefined) {
+            yearlyData[year].pendingMatters =
+              (yearlyData[year].pendingMatters || 0) +
+              (item.pendingMatters || 0);
+          }
         });
         sourceData = Object.values(yearlyData).slice(-5); // Show last 5 years
       } else {
@@ -979,144 +964,31 @@ function Dashboard() {
       sourceData = (allChartData.monthlyStats || []).slice(-6);
     }
 
-    let formattedData;
-
-    if (currentModule === "commercial") {
-      formattedData = sourceData.map((item, index) => {
-        const closedCount =
-          item.closedProjects ??
-          item.completedProjects ??
-          item.count ??
-          item.total ??
-          item.closedMatters ??
-          item.value ??
-          item.closedMatters ?? // For yearly aggregated data
-          0;
-
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          // For mobile/tablet all time view, show years
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          // For 6 months view
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name =
-            monthIndex !== -1
-              ? item.month
-              : item.name || item.label || `M${index + 1}`;
-        } else {
-          // For desktop all time view
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : item.name || item.label || `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: closedCount,
-        };
-      });
-    } else if (company === "vkl") {
-      formattedData = sourceData.map((item, index) => {
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name = monthIndex !== -1 ? item.month : item.name || `M${index + 1}`;
-        } else {
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: item.closedMatters ?? item.count ?? item.total ?? 0,
-        };
-      });
-    } else if (company === "idg") {
-      formattedData = sourceData.map((item, index) => {
-        let name;
-        if (isAllTimeView && (isMobile || isTablet)) {
-          name = item.name || item.year || `Year ${index + 1}`;
-        } else if (chartView === "last6Months") {
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const monthIndex = item.month ? monthNames.indexOf(item.month) : -1;
-          name = monthIndex !== -1 ? item.month : item.name || `M${index + 1}`;
-        } else {
-          name =
-            item.month && item.year
-              ? `${item.month} ${item.year}`.trim()
-              : `P${index + 1}`;
-        }
-
-        return {
-          ...item,
-          name: name,
-          closedMatters: item.closedOrders ?? item.count ?? item.total ?? 0,
-        };
-      });
-    }
+    const formattedData = sourceData.map((item) => ({
+      ...item,
+      closedValue:
+        item.closedMatters ??
+        item.closedProjects ??
+        item.completedProjects ??
+        item.closedOrders ??
+        0,
+      pendingValue:
+        item.pendingMatters ?? item.pendingProjects ?? item.pendingOrders ?? 0,
+    }));
 
     setCurrentChartData(formattedData || []);
-  }, [chartView, allChartData, currentModule, company, isMobile, isTablet]);
+  }, [chartView, allChartData, currentModule, isMobile, isTablet]);
 
   const getAddButtonLabel = () => {
     if (currentModule === "commercial") return "New Project";
-    if (company === "idg") return "New Order";
+    if (currentModule === "print media") return "New Order";
     return "New Client";
   };
 
   const handleAddButtonClick = () => {
     if (currentModule === "commercial") {
       setCreateProject(true);
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       setcreateOrder(true);
     } else {
       setcreateuser(true);
@@ -1226,7 +1098,11 @@ function Dashboard() {
                   <span className="hidden xs:inline">
                     {getAddButtonLabel()}
                   </span>
-                  <span className="xs:hidden">{localStorage.getItem("company")==="idg" ? "New Order" : "New Client"}</span>
+                  <span className="xs:hidden">
+                    {currentModule === "print media"
+                      ? "New Order"
+                      : "New Client"}
+                  </span>
                 </motion.button>
               </div>
             </div>
@@ -1246,7 +1122,7 @@ function Dashboard() {
               title={
                 currentModule === "commercial"
                   ? "Projects"
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? "Orders"
                   : "Clients"
               }
@@ -1255,7 +1131,7 @@ function Dashboard() {
               icon={
                 currentModule === "commercial"
                   ? Building
-                  : company === "idg"
+                  : currentModule === "print media"
                   ? FolderOpen
                   : Users
               }
@@ -1264,9 +1140,8 @@ function Dashboard() {
             />
             <StatCard
               title={
-                currentModule === "commercial"
-                  ? "Completed"
-                  : company === "idg"
+                currentModule === "commercial" ||
+                currentModule === "print media"
                   ? "Completed"
                   : "Archived"
               }
@@ -1276,14 +1151,25 @@ function Dashboard() {
               color="purple"
               loading={loading}
             />
-            <StatCard
-              title="Last Month"
-              value={lastrecord}
-              // change={24}
-              icon={TrendingUp}
-              color="orange"
-              loading={loading}
-            />
+
+            {currentModule === "conveyancing" && (
+              <StatCard
+                title="Pending Matters"
+                value={totalPending || 0}
+                icon={Clock}
+                color="#FB4A50"
+                loading={loading}
+              />
+            )}
+            {currentModule !== "conveyancing" && (
+              <StatCard
+                title="Last Month"
+                value={lastrecord}
+                icon={TrendingUp}
+                color="orange"
+                loading={loading}
+              />
+            )}
           </div>
 
           {/* Main Content Grid - Enhanced with Home.jsx card styling */}
@@ -1384,11 +1270,9 @@ function Dashboard() {
                         <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                           {currentModule === "commercial"
                             ? "Project Completion"
-                            : company === "vkl"
-                            ? "Matter Completion"
-                            : company === "idg"
+                            : currentModule === "print media"
                             ? "Order Completion"
-                            : "Completion Statistics"}
+                            : "Matter Completion"}
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-gray-600">
@@ -1396,7 +1280,7 @@ function Dashboard() {
                       </p>
                     </div>
                     {/* Time Toggle - Enhanced */}
-                    <div className="flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm">
+                    <div className="inline-flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm w-fit self-start">
                       <button
                         onClick={() => setChartView("last6Months")}
                         className={`time-toggler-button px-2 sm:px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
@@ -1491,8 +1375,16 @@ function Dashboard() {
                             width={isMobile ? 30 : 40}
                           />
                           <Tooltip content={<CustomTooltip />} />
+                          <Legend />
                           <Bar
-                            dataKey="closedMatters"
+                            dataKey="closedValue"
+                            name={
+                              currentModule === "commercial"
+                                ? "Completed Projects"
+                                : currentModule === "print media"
+                                ? "Completed Orders"
+                                : "Closed Matters"
+                            }
                             fill="url(#barGradient)"
                             barSize={
                               isMobile
@@ -1501,8 +1393,43 @@ function Dashboard() {
                                   : 20
                                 : 30
                             }
+                            label={<CustomBarLabel />}
                             radius={[4, 4, 0, 0]}
                           />
+                          {currentModule === "commercial" &&
+                            chartView === "last6Months" && (
+                              <Bar
+                                dataKey="pendingValue"
+                                name="Pending Projects"
+                                fill="#FB4A50"
+                                barSize={
+                                  isMobile
+                                    ? chartView === "allTime"
+                                      ? 15
+                                      : 20
+                                    : 30
+                                }
+                                label={<CustomBarLabel />}
+                                radius={[4, 4, 0, 0]}
+                              />
+                            )}
+                          {currentModule === "conveyancing" &&
+                            chartView === "last6Months" && (
+                              <Bar
+                                dataKey="pendingMatters"
+                                name="Pending Matters"
+                                fill="#FB4A50"
+                                barSize={
+                                  isMobile
+                                    ? chartView === "allTime"
+                                      ? 15
+                                      : 20
+                                    : 30
+                                }
+                                label={<CustomBarLabel />}
+                                radius={[4, 4, 0, 0]}
+                              />
+                            )}
                           <defs>
                             <linearGradient
                               id="barGradient"
@@ -1525,7 +1452,6 @@ function Dashboard() {
                         </div>
                         <div className="text-xs sm:text-sm text-center text-gray-400">
                           <div>Module: {currentModule}</div>
-                          <div>Company: {company}</div>
                           <div>View: {chartView}</div>
                         </div>
                       </div>
@@ -1535,29 +1461,39 @@ function Dashboard() {
                   {/* Summary Stats - Enhanced */}
                   {chartView === "last6Months" && (
                     <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-xl border border-[#2E3D99]/10">
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+                      <div className="flex flex-row sm:flex-row items-center justify-between gap-4">
                         <div>
                           <p className="text-xs sm:text-sm font-medium text-gray-600">
                             Total in last 6 months
                           </p>
-                          <p className="text-lg sm:text-xl font-bold text-gray-900">
+                          {/* <p className="text-lg sm:text-xl font-bold text-gray-900">
                             {chartPeriodTotal.toLocaleString()}
-                          </p>
+                            {currentModule === "conveyancing" && (
+                              <span className="block text-sm text-gray-600 mt-1">
+                                {currentChartData
+                                  .reduce(
+                                    (sum, item) =>
+                                      sum + (item.pendingMatters || 0),
+                                    0
+                                  )
+                                  .toLocaleString()}{" "}
+                                Pending
+                              </span>
+                            )}
+                          </p> */}
                         </div>
                         <div className="text-right">
                           <p className="text-xs sm:text-sm font-medium text-gray-600">
-                            Last month achievement
+                            Total Pending (6 months)
                           </p>
                           <p className="text-lg sm:text-xl font-bold text-gray-900">
-                            {lastrecord || totalCompleted}
+                            {totalPending || 0}
                             <span className="text-xs sm:text-sm font-normal text-gray-600 ml-1">
                               {currentModule === "commercial"
                                 ? "projects"
-                                : company === "vkl"
-                                ? "matters"
-                                : company === "idg"
+                                : currentModule === "print media"
                                 ? "orders"
-                                : "completed"}
+                                : "matters"}
                             </span>
                           </p>
                         </div>
@@ -1576,7 +1512,7 @@ function Dashboard() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>  
             </motion.div>
           </div>
 
@@ -1667,26 +1603,25 @@ function Dashboard() {
       {/* Modals */}
       <CreateClientModal
         createType="client"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createuser}
         setIsOpen={() => setcreateuser(false)}
-        onClose={()=>setcreateuser(false)}
+        onClose={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="order"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createOrder}
         setIsOpen={() => setcreateOrder(false)}
-        onClose={()=>setcreateuser(false)}
+        onClose={() => setcreateuser(false)}
       />
       <CreateClientModal
         createType="project"
-        companyName={company}
+        companyName={currentModule}
         isOpen={createProject}
         setIsOpen={() => setCreateProject(false)}
       />
     </div>
   );
 }
-
 export default Dashboard;

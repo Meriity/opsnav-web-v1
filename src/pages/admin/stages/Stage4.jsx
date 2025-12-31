@@ -7,10 +7,12 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
 
 const formConfig = {
-  vkl: {
+  conveyancing: {
     fields: [
       { name: "dts", label: "DTS", type: "radio" },
       { name: "dutyOnline", label: "Duty Online", type: "radio" },
@@ -30,7 +32,7 @@ const formConfig = {
       },
     ],
   },
-  idg: {
+  "print media": {
     fields: [
       {
         name: "uploadImageConfirmation",
@@ -42,7 +44,13 @@ const formConfig = {
         label: "Capture Proof of Completion Photos",
         type: "image",
       },
-      { name: "closeOrder", label: "Close Order", type: "radio" },
+      { 
+        name: "closeOrder", 
+        label: "Close Order", 
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+        triggersModal: true 
+      },
     ],
     noteGroups: [
       {
@@ -125,8 +133,9 @@ export default function Stage4({
   data,
   onStageUpdate,
   setReloadTrigger,
+  stageNumber = 4,
+  setHasChanges,
 }) {
-  const stage = 4;
   const { matterNumber } = useParams();
 
   const originalData = useRef({});
@@ -136,6 +145,8 @@ export default function Stage4({
   const [statuses, setStatuses] = useState({});
   const [preview, setPreview] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [closeOrderModalOpen, setCloseOrderModalOpen] = useState(false);
+  const [pendingCloseOrder, setPendingCloseOrder] = useState(null);
   const [fileName, setfileName] = useState("");
   const [noteForClient, setNoteForClient] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +154,6 @@ export default function Stage4({
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const company = useMemo(() => localStorage.getItem("company") || "vkl", []);
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
     []
@@ -154,10 +164,8 @@ export default function Stage4({
 
   const currentConfig = useMemo(() => {
     if (currentModule === "commercial") return formConfig.commercial;
-    if (company === "vkl") return formConfig.vkl;
-    if (company === "idg") return formConfig.idg;
-    return formConfig.vkl;
-  }, [currentModule, company]);
+    return formConfig[currentModule] || formConfig.conveyancing;
+  }, [currentModule]);
 
   const reloadArchivedClients = useArchivedClientStore(
     (s) => s.reloadArchivedClients
@@ -199,124 +207,89 @@ export default function Stage4({
     [currentConfig, formData]
   );
 
-  const fetchStageData = useCallback(async () => {
-    if (!data) return null;
-    setIsLoading(true);
-
-    let stageData = data;
-    try {
-      if (currentModule === "commercial") {
-        const stageResponse = await commercialApi.getStageData(4, matterNumber);
-        stageData = stageResponse?.data
-          ? { ...data, ...stageResponse.data }
-          : stageData;
-      } else if (company === "vkl") {
-        const resp = await api.getStageFour(matterNumber);
-        stageData = resp?.data ? { ...data, ...resp.data } : stageData;
-      } else if (company === "idg") {
-        const resp = await api.getIDGStages(matterNumber, 4);
-        stageData = resp?.data ? { ...data, ...resp.data } : stageData;
-      }
-    } catch (e) {
-      console.warn("Stage4: fetchStageData fallback to base data", e);
-    }
-
-    setIsLoading(false);
-    return stageData;
-  }, [data, currentModule, company, matterNumber, commercialApi, api]);
-
-  // initialize form from fetched stage data (only once per matter unless manually reset)
+  // Initialize from props (no internal fetch)
   useEffect(() => {
     if (!data) return;
     if (hasLoadedData.current) return;
 
-    (async () => {
-      const stageData = await fetchStageData();
-      if (!stageData) return;
+    // Use data prop directly
+    const stageData = data;
 
-      try {
-        const initialFormData = {};
-        const initialStatuses = {};
-        let loadedClientComment = "";
-        let loadedSystemNote = "";
+    try {
+      const initialFormData = {};
+      const initialStatuses = {};
+      let loadedClientComment = "";
+      let loadedSystemNote = "";
 
-        currentConfig.fields.forEach((field) => {
-          const rawValue = stageData[field.name];
+      currentConfig.fields.forEach((field) => {
+        const rawValue = stageData[field.name];
 
-          if (field.type === "number") {
-            const rawPrice = rawValue;
-            initialFormData[field.name] =
-              typeof rawPrice === "object" && rawPrice?.$numberDecimal
-                ? rawPrice.$numberDecimal
-                : rawPrice?.toString() ?? "";
-          } else if (field.type === "radio") {
-            initialFormData[field.name] = normalizeValue(rawValue ?? "");
-            initialStatuses[field.name] = getStatus(
-              initialFormData[field.name]
-            );
-          } else if (field.type === "text") {
-            initialFormData[field.name] = rawValue ?? "";
-          }
+        if (field.type === "number") {
+          const rawPrice = rawValue;
+          initialFormData[field.name] =
+            typeof rawPrice === "object" && rawPrice?.$numberDecimal
+              ? rawPrice.$numberDecimal
+              : rawPrice?.toString() ?? "";
+        } else if (field.type === "radio") {
+          initialFormData[field.name] = normalizeValue(rawValue ?? "");
+          initialStatuses[field.name] = getStatus(initialFormData[field.name]);
+        } else if (field.type === "text") {
+          initialFormData[field.name] = rawValue ?? "";
+        }
 
-          if (
-            initialFormData[field.name] === undefined ||
-            initialFormData[field.name] === null
-          ) {
-            initialFormData[field.name] = "";
-          }
+        if (
+          initialFormData[field.name] === undefined ||
+          initialFormData[field.name] === null
+        ) {
+          initialFormData[field.name] = "";
+        }
+      });
+
+      // notes
+      if (currentModule === "commercial") {
+        const { systemNote, clientComment } = extractNotes(
+          stageData.noteForSystem,
+          stageData.noteForClient
+        );
+        loadedSystemNote = systemNote || "";
+        loadedClientComment = clientComment || "";
+        setNoteForClient(loadedClientComment);
+      } else {
+        currentConfig.noteGroups.forEach((group) => {
+          const noteString = stageData[group.noteForClientKey] || "";
+          const noteParts = noteString.split(" - ");
+          loadedSystemNote = noteParts[0]?.trim() || "";
+          loadedClientComment =
+            noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+          initialFormData[group.clientCommentKey] = loadedClientComment;
         });
-
-        // notes
-        if (currentModule === "commercial") {
-          const { systemNote, clientComment } = extractNotes(
-            stageData.noteForSystem,
-            stageData.noteForClient
-          );
-          loadedSystemNote = systemNote || "";
-          loadedClientComment = clientComment || "";
-          setNoteForClient(loadedClientComment);
-        } else {
-          currentConfig.noteGroups.forEach((group) => {
-            const noteString = stageData[group.noteForClientKey] || "";
-            const noteParts = noteString.split(" - ");
-            loadedSystemNote = noteParts[0]?.trim() || "";
-            loadedClientComment =
-              noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
-            initialFormData[group.clientCommentKey] = loadedClientComment;
-          });
-        }
-
-        // idg images
-        if (company === "idg") {
-          const lastImage = stageData?.images?.[stageData?.images?.length - 1];
-          setPreview(lastImage?.url || null);
-          setfileName(lastImage?.filename || "");
-        }
-
-        setFormData(initialFormData);
-        setStatuses(initialStatuses);
-
-        originalData.current = {
-          formData: JSON.parse(JSON.stringify(initialFormData)),
-          noteForClient: loadedClientComment,
-          noteForSystem: loadedSystemNote,
-        };
-
-        hasLoadedData.current = true;
-      } catch (e) {
-        toast.error("Failed to load stage data");
       }
-    })();
-  }, [
-    data,
-    fetchStageData,
-    currentConfig,
-    company,
-    currentModule,
-    matterNumber,
-  ]);
 
-  // reset loaded flag when matter changes
+      // idg images
+      if (currentModule === "print media") {
+        const lastImage = stageData?.images?.[stageData?.images?.length - 1];
+        setPreview(lastImage?.url || null);
+        setfileName(lastImage?.filename || "");
+      }
+
+      setFormData(initialFormData);
+      setStatuses(initialStatuses);
+
+      originalData.current = {
+        formData: JSON.parse(JSON.stringify(initialFormData)),
+        noteForClient: loadedClientComment,
+        noteForSystem: loadedSystemNote,
+      };
+
+      hasLoadedData.current = true;
+      setIsLoading(false);
+      setHasChanges(false);
+    } catch (e) {
+      toast.error("Failed to load stage data");
+    }
+  }, [data, currentConfig, currentModule]);
+
+  // Reset loaded flag when matter changes
   useEffect(() => {
     hasLoadedData.current = false;
   }, [matterNumber]);
@@ -325,6 +298,17 @@ export default function Stage4({
     (field, value) => {
       const fieldConfig = currentConfig.fields.find((f) => f.name === field);
       let processedValue = value;
+
+      // Special handling for Close Order triggering modal on selection
+      // This MUST block the state update until confirmed
+      if (
+        field === "closeOrder" &&
+        ["Completed", "Cancelled"].includes(value)
+      ) {
+        setPendingCloseOrder(value);
+        setCloseOrderModalOpen(true);
+        return; // Stop here, do not update formData yet
+      }
 
       if (fieldConfig && fieldConfig.type === "radio") {
         if (typeof processedValue === "string")
@@ -341,6 +325,7 @@ export default function Stage4({
       }
 
       setFormData((prev) => ({ ...(prev || {}), [field]: processedValue }));
+      setHasChanges(true);
     },
     [currentConfig.fields]
   );
@@ -348,12 +333,11 @@ export default function Stage4({
   const isChanged = () => {
     const original = originalData.current || {};
     if (!original || !original.formData) {
+      // if no original data yet, check if any field is filled
       const anyFilled = Object.keys(formData || {}).some(
         (k) => formData[k] !== undefined && String(formData[k]).trim() !== ""
       );
-      return (
-        anyFilled || (noteForClient && String(noteForClient).trim() !== "")
-      );
+      return anyFilled;
     }
 
     try {
@@ -410,11 +394,6 @@ export default function Stage4({
     }
   };
 
-  useEffect(() => {
-    // debug
-    // console.log("Stage4 - form changed", isChanged());
-  }, [formData, noteForClient]);
-
   // ---------- IMAGE UPLOAD / DELETE (IDG) ----------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -423,22 +402,12 @@ export default function Stage4({
       setIsUploading(true);
       setPreview(URL.createObjectURL(file));
       try {
-        const resp = await api.uploadImageForOrder(matterNumber, file);
-        // server updated, now refresh local stageData
-        try {
-          // const stageData = await fetchStageData();
-          // if (stageData) {
-          //   const lastImage = stageData?.images?.[stageData?.images?.length - 1];
-          //   setPreview(lastImage?.url || null);
-          //   setfileName(lastImage?.filename || "");
-          // }
-        } catch (e) {}
-
+        await api.uploadImageForOrder(matterNumber, file);
         toast.success("Image uploaded successfully!");
-        // notify parent to reload list if needed
-        try {
-          // setReloadTrigger((prev) => (typeof prev === "number" ? prev + 1 : (prev || 0) + 1));
-        } catch (e) {}
+        setHasChanges(true);
+        setReloadTrigger((prev) =>
+          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        );
       } catch (err) {
         toast.error("Image upload failed.");
         setPreview(null);
@@ -461,17 +430,11 @@ export default function Stage4({
       setfileName("");
       setShowConfirmModal(false);
 
-      // refresh stage data
-      try {
-        await fetchStageData();
-      } catch (e) {}
-
       toast.success("Image deleted successfully!");
-      try {
-        setReloadTrigger((prev) =>
-          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
-        );
-      } catch (e) {}
+      setHasChanges(true);
+      setReloadTrigger((prev) =>
+        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+      );
     } catch (err) {
       toast.error("Failed to delete image.");
       setShowConfirmModal(false);
@@ -481,7 +444,8 @@ export default function Stage4({
   };
 
   // ---------- SAVE ----------
-  async function handleSave() {
+  // ---------- SAVE ----------
+  async function performSave() {
     if (!isChanged() || isSaving) return;
 
     setIsSaving(true);
@@ -546,8 +510,11 @@ export default function Stage4({
           `${systemNote} - ${clientComment}`.trim();
         delete payload[group.clientCommentKey];
       });
-      if (company === "vkl") payload.matterNumber = matterNumber;
-      if (company === "idg") payload.orderId = matterNumber;
+      if (currentModule === "print media") {
+        payload.orderId = matterNumber;
+      } else {
+        payload.matterNumber = matterNumber;
+      }
       payload.colorStatus = computedColorStatus;
     }
 
@@ -555,148 +522,71 @@ export default function Stage4({
       let res;
       if (currentModule === "commercial") {
         res = await commercialApi.upsertStage(4, matterNumber, payload);
-      } else if (company === "vkl") {
-        res = await api.upsertStageFour(payload);
-      } else if (company === "idg") {
+      } else if (currentModule === "print media") {
         res = await api.upsertIDGStages(matterNumber, 4, payload);
+      } else {
+        res = await api.upsertStageFour(payload);
       }
-
-      const server = res?.data || res || {};
 
       toast.success("Stage 4 Saved Successfully!", {
         autoClose: 2500,
         hideProgressBar: false,
       });
 
-      // update original snapshot from server response (preferred) or payload
-      try {
-        const serverStage =
-          (server && (server.stage4 || server.data || server)) || payload;
+      // Update original ref with new state
+      const serverStage = (res && (res.data || res.stage4 || res)) || payload;
 
-        originalData.current = {
-          formData: (() => {
-            const snap = {};
-            currentConfig.fields.forEach((f) => {
-              snap[f.name] =
-                serverStage[f.name] !== undefined
-                  ? serverStage[f.name]
-                  : payload[f.name] ?? "";
-            });
-            currentConfig.noteGroups.forEach((group) => {
-              snap[group.clientCommentKey] =
-                serverStage[group.clientCommentKey] ??
-                payload[group.clientCommentKey] ??
-                "";
-            });
-            return snap;
-          })(),
-          noteForClient: serverStage.noteForClient || "",
-          noteForSystem:
-            serverStage.noteForSystem ||
-            (typeof serverStage.noteForClient === "string"
-              ? serverStage.noteForClient.split(" - ")[0] || ""
-              : ""),
-        };
-      } catch (e) {
-        originalData.current = {
-          formData: JSON.parse(JSON.stringify(formData || {})),
-          noteForClient:
-            currentModule === "commercial"
-              ? noteForClient || ""
-              : formData.clientComment || "",
-          noteForSystem: systemNote,
-        };
-      }
-
-      // update local visual statuses from server colorStatus if present
-      try {
-        const serverColor =
-          server.colorStatus ||
-          (server.stage4 && server.stage4.colorStatus) ||
-          server.data?.colorStatus;
-        setStatuses((prev) => ({
-          ...(prev || {}),
-          colorStatus: serverColor || payload.colorStatus,
-        }));
-
-        if (typeof onStageUpdate === "function") {
-          try {
-            onStageUpdate(
-              {
-                ...(server || {}),
-                colorStatus: serverColor || payload.colorStatus,
-              },
-              4
-            );
-          } catch (e) {}
-        }
-      } catch (e) {}
-
-      // refresh local stage data so UI reflects backend canonical values
-      try {
-        const refreshed = await fetchStageData();
-        if (refreshed) {
-          // reinitialize fields that may have changed (images, generated values, etc.)
-          currentConfig.fields.forEach((field) => {
-            const val = refreshed[field.name];
-            setFormData((prev) => ({
-              ...(prev || {}),
-              [field.name]:
-                field.type === "radio" ? normalizeValue(val ?? "") : val ?? "",
-            }));
-          });
-
-          if (company === "idg") {
-            const lastImage =
-              refreshed?.images?.[refreshed?.images?.length - 1];
-            setPreview(lastImage?.url || null);
-            setfileName(lastImage?.filename || "");
-          }
-
-          // update noteForClient state
-          if (currentModule === "commercial") {
-            setNoteForClient(refreshed.noteForClient || "");
-          } else {
-            currentConfig.noteGroups.forEach((group) => {
-              setFormData((prev) => ({
-                ...(prev || {}),
-                [group.clientCommentKey]: (
-                  refreshed[group.noteForClientKey] || ""
-                )
-                  .split(" - ")
-                  .slice(1)
-                  .join(" - "),
-              }));
-            });
-          }
-        }
-      } catch (e) {}
+      originalData.current = {
+        formData: JSON.parse(JSON.stringify(formData)),
+        noteForClient:
+          currentModule === "commercial" ? noteForClient : undefined,
+        noteForSystem: systemNote,
+      };
+      setHasChanges(false);
 
       // notify parent / listings to refresh
-      try {
-        setReloadTrigger((prev) =>
-          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
-        );
-      } catch (e) {}
+      setReloadTrigger((prev) =>
+        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+      );
+
+      if (onStageUpdate) {
+        onStageUpdate({ ...payload, colorStatus: computedColorStatus }, 4);
+      }
     } catch (err) {
+      console.error(err);
       let errorMessage = "Failed to save Stage 4. Please try again.";
-      if (err.response?.data?.message) errorMessage = err.response.data.message;
-      else if (err.message) errorMessage = err.message;
       toast.error(errorMessage);
     } finally {
       setIsSaving(false);
+      setCloseOrderModalOpen(false);
     }
   }
+  
+  const handleSave = async () => {
+    if (!isChanged() || isSaving) return;
+    await performSave();
+  };
 
   const renderField = (field) => {
     switch (field.type) {
-      case "radio":
+      case "radio": {
+        const isDangerField = field.name === "closeOrder";
         return (
-          <div key={field.name} className="mt-5">
+          <div 
+            key={field.name} 
+            className={`mt-5 ${isDangerField ? "bg-red-50 border-2 border-red-200 p-4 rounded-xl" : ""}`}
+          >
             <div className="flex gap-4 items-center justify-between mb-2">
-              <label className="block mb-1 text-sm md:text-base font-bold">
+              <div className="flex items-center gap-2">
+                 {isDangerField && (
+                    <div className="bg-red-100 p-1.5 rounded-full text-red-600">
+                      <ExclamationTriangleIcon className="w-5 h-5" />
+                    </div>
+                  )}
+              <label className={`block mb-1 text-sm md:text-base font-bold ${isDangerField ? "text-red-900 text-lg" : ""}`}>
                 {field.label}
               </label>
+              </div>
               <div
                 className={`w-[90px] h-[18px] ${bgcolor(
                   statuses[field.name]
@@ -709,13 +599,13 @@ export default function Stage4({
             </div>
 
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-              {(field.name !== "closeOrder"
+              {(field.options || (field.name !== "closeOrder"
                 ? ["Yes", "No", "Processing", "N/R"]
-                : ["Completed", "Cancelled"]
+                : ["Completed", "Cancelled"])
               ).map((val) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 text-sm md:text-base"
+                  className={`flex items-center gap-2 text-sm md:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}
                 >
                   <input
                     type="radio"
@@ -726,13 +616,15 @@ export default function Stage4({
                       normalizeValue(val)
                     }
                     onChange={() => handleChange(field.name, val)}
+                    className={isDangerField ? "accent-red-600 w-4 h-4" : ""}
                   />
-                  {val}
+                  <span className={isDangerField ? "font-medium text-red-900" : ""}>{val}</span>
                 </label>
               ))}
             </div>
           </div>
         );
+      }
 
       case "number":
         return (
@@ -745,7 +637,13 @@ export default function Stage4({
               step="0.01"
               value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              className="w-full rounded p-2 bg-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              placeholder="0.00"
             />
           </div>
         );
@@ -807,96 +705,39 @@ export default function Stage4({
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
+                    className="absolute top-2 right-2 text-black p-1.5 rounded-full hover:bg-gray-200 transition-colors"
                     disabled={isDeleting}
-                    className="absolute top-2 right-2 bg-white text-red-600 rounded-full p-1 shadow hover:bg-red-50 disabled:opacity-50"
+                    title="Delete image"
                   >
-                    {isDeleting ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="size-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                        />
-                      </svg>
-                    )}
+                    <TrashIcon className="w-4 h-4" />
+                    {isDeleting && <span className="sr-only">Deleting...</span>}
                   </button>
                 </div>
               )}
             </div>
           </div>
         );
-
       default:
         return null;
     }
   };
 
-  const renderNoteGroup = (group) => (
-    <div key={group.id}>
-      <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          {group.systemNoteLabel}
-        </label>
-        <input
-          type="text"
-          value={generateSystemNote(group.id)}
-          disabled
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-      <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          {group.clientCommentLabel}
-        </label>
-        <textarea
-          value={formData[group.clientCommentKey] ?? ""}
-          onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
 
-  const renderCommercialNotes = () => (
-    <div>
-      <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          System Note for Client
-        </label>
-        <input
-          type="text"
-          value={generateSystemNote("main")}
-          disabled
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-      <div className="mt-5">
-        <label className="block mb-1 text-sm md:text-base font-bold">
-          Comment for Client
-        </label>
-        <textarea
-          value={noteForClient}
-          onChange={(e) => setNoteForClient(e.target.value)}
-          className="w-full rounded p-2 bg-gray-100"
-        />
-      </div>
-    </div>
-  );
+    window.addEventListener("saveCurrentStage", handleExternalSave);
+    return () => {
+      window.removeEventListener("saveCurrentStage", handleExternalSave);
+    };
+  }, [handleSave]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin h-12 w-12 rounded-full border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading stage data...</p>
         </div>
       </div>
@@ -905,32 +746,76 @@ export default function Stage4({
 
   return (
     <div className="overflow-y-auto">
-      {currentConfig.fields.map((f) => renderField(f))}
+      {currentConfig.fields.map(renderField)}
 
-      {currentModule === "commercial"
-        ? renderCommercialNotes()
-        : currentConfig.noteGroups.map((g) => renderNoteGroup(g))}
+      {currentModule === "commercial" ? (
+        <>
+          <div className="mt-5">
+            <label className="font-bold">System Note for Client</label>
+            <input
+              disabled
+              value={generateSystemNote("main")}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+          <div className="mt-5">
+            <label className="font-bold">Comment for Client</label>
+            <textarea
+              value={noteForClient}
+              onChange={(e) => {
+                setNoteForClient(e.target.value);
+                setHasChanges(true);
+              }}
+              className="w-full rounded p-2 bg-gray-100"
+            />
+          </div>
+        </>
+      ) : (
+        currentConfig.noteGroups.map((group) => (
+          <div key={group.id}>
+            <div className="mt-5">
+              <label className="font-bold">{group.systemNoteLabel}</label>
+              <input
+                disabled
+                value={generateSystemNote(group.id)}
+                className="w-full rounded p-2 bg-gray-100"
+              />
+            </div>
+            <div className="mt-5">
+              <label className="font-bold">{group.clientCommentLabel}</label>
+              <textarea
+                value={formData[group.clientCommentKey] || ""}
+                onChange={(e) => {
+                  handleChange(group.clientCommentKey, e.target.value);
+                  setHasChanges(true);
+                }}
+                className="w-full rounded p-2 bg-gray-100"
+              />
+            </div>
+          </div>
+        ))
+      )}
 
-      <div className="flex mt-10 justify-between">
+      <div className="flex justify-between mt-10">
         <Button
           label="Back"
           width="w-[70px] md:w-[100px]"
           bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-          onClick={() => changeStage(stage - 1)}
+          onClick={() => changeStage(stageNumber - 1)}
         />
         <div className="flex gap-2">
           <Button
             label={isSaving ? "Saving..." : "Save"}
-            width="w-[70px] md:w-[100px]"
+            width="w-[100px] md:w-[100px]"
             bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={handleSave}
-            disabled={isSaving || !isChanged()}
+            disabled={isSaving}
           />
           <Button
             label="Next"
-            width="w-[70px] md:w-[100px]"
+            width="w-[70px]  md:w-[100px]"
             bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={() => changeStage(stage + 1)}
+            onClick={() => changeStage(stageNumber + 1)}
           />
         </div>
       </div>
@@ -938,11 +823,32 @@ export default function Stage4({
       <ConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
-        title="Delete Image"
+        onDiscard={() => setShowConfirmModal(false)}
         onConfirm={handleDeleteConfirm}
-      >
-        Do you really want to delete this Image?
-      </ConfirmationModal>
+        title="Remove Picture"
+        message="Are you sure you want to delete this image? This action cannot be undone."
+      />
+      
+      <ConfirmationModal
+        isOpen={closeOrderModalOpen}
+        onClose={() => {
+            setCloseOrderModalOpen(false);
+            setPendingCloseOrder(null);
+        }}
+        onConfirm={() => {
+            if (pendingCloseOrder) {
+                setFormData((prev) => ({ ...prev, closeOrder: pendingCloseOrder }));
+                setStatuses((prev) => ({ ...prev, closeOrder: getStatus(pendingCloseOrder) }));
+                setHasChanges(true);
+                setCloseOrderModalOpen(false);
+                setPendingCloseOrder(null);
+            }
+        }}
+        title="Confirm Status Change"
+        message={`Are you sure you want to mark this order as ${
+             pendingCloseOrder || "Completed"
+        }? This action will archive the order.`}
+      />
     </div>
   );
 }
@@ -952,4 +858,6 @@ Stage4.propTypes = {
   data: PropTypes.object,
   onStageUpdate: PropTypes.func,
   setReloadTrigger: PropTypes.func.isRequired,
+  stageNumber: PropTypes.number,
+  setHasChanges: PropTypes.func.isRequired,
 };

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import moment from "moment";
+
 import {
   Edit,
   Trash2,
@@ -38,7 +40,7 @@ const ACCESS_MODULES = [
   },
   {
     value: "PRINT MEDIA",
-    label: "Print Media",
+    label: "Signage & Print",
     icon: Newspaper,
     color: "bg-amber-500",
   },
@@ -83,6 +85,7 @@ function AccessModulesDisplay({ access = [] }) {
 
   const handleModuleClick = (module) => {
     // Save the module to localStorage
+    const currentModule = localStorage.getItem("currentModule");
     localStorage.setItem("currentModule", module.value.toLowerCase());
     localStorage.setItem("workType", module.value.toUpperCase());
 
@@ -146,9 +149,11 @@ const Table = ({
   resetSuccessEmail,
   isClients = false,
   compact = false,
+  hideDeleteForSuperadmin,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const navigate = useNavigate();
+  const currentModule = localStorage.getItem("currentModule");
 
   useEffect(() => {
     setCurrentData(data.slice(0, itemsPerPage));
@@ -284,16 +289,40 @@ const Table = ({
                           isLeftAligned ? "text-left pl-3" : "text-center"
                         }`}
                         title={
-                          column.render ? column.render(item) : item[column.key]
+                          column.render
+                            ? column.render(item)
+                            : column.key === "matter_date" ||
+                              column.key === "settlement_date" ||
+                              column.key === "orderDate" ||
+                              column.key === "deliveryDate"
+                            ? item[column.key]
+                              ? moment(item[column.key]).isValid()
+                                ? moment(item[column.key]).format("DD-MM-YYYY")
+                                : <span className="font-bold text-gray-500">—</span>
+                              : <span className="font-bold text-gray-500">—</span>
+                            : item[column.key]
                         }
                       >
                         {column.key === "access" &&
-                        !localStorage.getItem("company") === "idg" ? (
+                        currentModule !== "print media" ? (
                           <AccessModulesDisplay access={item[column.key]} />
                         ) : column.render ? (
                           column.render(item)
+                        ) : column.key === "matter_date" ||
+                          column.key === "settlement_date" ||
+                          column.key === "orderDate" ||
+                          column.key === "deliveryDate" ? (
+                          item[column.key] ? (
+                            moment(item[column.key]).isValid() ? (
+                              moment(item[column.key]).format("DD-MM-YYYY")
+                            ) : (
+                              <span className="font-bold text-gray-500">—</span>
+                            )
+                          ) : (
+                            <span className="font-bold text-gray-500">—</span>
+                          )
                         ) : (
-                          item[column.key]
+                          item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
                       </div>
                     </td>
@@ -314,20 +343,22 @@ const Table = ({
                           <span className="text-xs">Edit</span>
                         </button>
                       )}
-                      {onDelete && (
-                        <button
-                          onClick={() => onDelete(item)}
-                          className="flex flex-col items-center p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                          <span className="text-xs">Delete</span>
-                        </button>
-                      )}
+                      {onDelete &&
+                        (!hideDeleteForSuperadmin ||
+                          !hideDeleteForSuperadmin(item)) && (
+                          <button
+                            onClick={() => onDelete(item)}
+                            className="flex flex-col items-center p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                            <span className="text-xs">Delete</span>
+                          </button>
+                        )}
                       {!isClients &&
                         showReset &&
                         onReset &&
-                        localStorage.getItem("company") === "vkl" && (
+                        currentModule !== "print media" && (
                           <button
                             onClick={() => onReset(item.email)}
                             type="button"
@@ -368,7 +399,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && localStorage.getItem("company") != "idg" && (
+                      {OnEye && currentModule !== "print media" && (
                         <button
                           onClick={() => {
                             console.log("Table: Eye clicked for item:", item);
@@ -378,25 +409,22 @@ const Table = ({
                           title="View Details"
                         >
                           <img src={Eye} alt="View" className="h-4 " />
-                          <span className="text-xs text-[#2E3D99]">
-                            View
-                          </span>
+                          <span className="text-xs text-[#2E3D99]">View</span>
                         </button>
                       )}
-                      {EditOrder &&
-                        localStorage.getItem("company") === "idg" && (
-                          <button
-                            onClick={() => {
-                              console.log("clicked!");
-                              navigate(`/admin/client/stages/${item.orderId}`);
-                            }}
-                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                            title="Edit"
-                          >
-                            <Edit size={12} />
-                            <span className="text-xs">Edit</span>
-                          </button>
-                        )}
+                      {EditOrder && currentModule === "print media" && (
+                        <button
+                          onClick={() => {
+                            console.log("clicked!");
+                            navigate(`/admin/client/stages/${item.orderId}`);
+                          }}
+                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                          title="Edit"
+                        >
+                          <Edit size={12} />
+                          <span className="text-xs">Edit</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 )}

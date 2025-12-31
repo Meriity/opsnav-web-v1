@@ -103,7 +103,6 @@ export default function ArchivedClients() {
   const [clientsPerPage, setClientsPerPage] = useState(100);
 
   const currentModule = localStorage.getItem("currentModule");
-  const company = localStorage.getItem("company");
 
   const api = useMemo(() => {
     if (currentModule === "commercial") {
@@ -112,7 +111,6 @@ export default function ArchivedClients() {
       return new ClientAPI();
     }
   }, [currentModule]);
-
   const [sortedColumn, setSortedColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -150,16 +148,9 @@ export default function ArchivedClients() {
           ? client.businessAddress
           : client.propertyAddress || client.property_address,
       business_address: client.businessAddress,
-      matter_date:
-        currentModule === "commercial"
-          ? moment(client.matterDate || client.matter_date).format("DD-MM-YYYY")
-          : client.matterDate || client.matter_date,
-      settlement_date:
-        currentModule === "commercial"
-          ? moment(client.settlementDate || client.settlement_date).format(
-              "DD-MM-YYYY"
-            )
-          : client.settlementDate || client.settlement_date,
+      matter_date: client.matterDate || client.matter_date || null,
+      settlement_date: client.settlementDate || client.settlement_date || null,
+
       state: client.state || "",
       clientType: client.clientType || client.type,
       status: client.status || "archived",
@@ -212,10 +203,34 @@ export default function ArchivedClients() {
           detailedClientData.businessAddress,
         business_address:
           selectedClient.business_address || detailedClientData.businessAddress,
+
         matter_date:
-          selectedClient.matter_date || detailedClientData.matterDate,
+          currentModule === "commercial"
+            ? detailedClientData.matter_date ||
+              detailedClientData.matterDate ||
+              selectedClient.matter_date
+            : undefined,
         settlement_date:
-          selectedClient.settlement_date || detailedClientData.settlementDate,
+          currentModule === "commercial"
+            ? detailedClientData.settlement_date ||
+              detailedClientData.settlementDate ||
+              selectedClient.settlement_date
+            : undefined,
+
+        // CONVEYANCING: Strict camelCase mapping
+        matterDate:
+          currentModule !== "commercial"
+            ? detailedClientData.matterDate ||
+              detailedClientData.matter_date ||
+              selectedClient.matterDate
+            : undefined,
+        settlementDate:
+          currentModule !== "commercial"
+            ? detailedClientData.settlementDate ||
+              detailedClientData.settlement_date ||
+              selectedClient.settlementDate
+            : undefined,
+
         logo: selectedClient.logo || detailedClientData.logo,
         __fullyLoaded: true,
       };
@@ -230,14 +245,28 @@ export default function ArchivedClients() {
       ? commercialLoading
       : vklLoading || zustandLoading;
   const error = currentModule === "commercial" ? commercialError : vklError;
+
   const activeData =
     currentModule === "commercial"
       ? commercialData || []
       : archivedClients || [];
 
+  const normalizedActiveData = useMemo(() => {
+    if (currentModule === "commercial") return activeData;
+
+    return (activeData || []).map((client) => ({
+      ...client,
+      matternumber: client.matterNumber || client.matternumber,
+      client_name: client.clientName || client.client_name,
+      property_address: client.propertyAddress || client.property_address,
+      matterDate: client.matterDate || client.matter_date || null,
+      settlementDate: client.settlementDate || client.settlement_date || null,
+    }));
+  }, [activeData, currentModule]);
+
   // Apply date & search filters using useMemo
   const filteredClientList = useMemo(() => {
-    let filteredData = activeData;
+    let filteredData = normalizedActiveData;
 
     if (fromDate && toDate) {
       filteredData = filteredData.filter((client) => {
@@ -247,7 +276,8 @@ export default function ArchivedClients() {
             new Date(client?.settlement_date || client?.settlementDate)
           );
         } else {
-          clientDate = moment(new Date(client?.settlement_date));
+          if (!client?.settlement_date) return false;
+          clientDate = moment(client.settlement_date);
         }
         return clientDate.isBetween(fromDate, toDate, "day", "[]");
       });
@@ -292,18 +322,18 @@ export default function ArchivedClients() {
         { key: "settlement_date", title: "Completion Date" },
         { key: "status", title: "Status" },
       ];
-    } else if (company === "vkl") {
+    } else if (currentModule === "conveyancing" || currentModule === "wills") {
       return [
         { key: "matternumber", title: "Matter Number" },
         { key: "client_name", title: "Client Name" },
         { key: "property_address", title: "Property Address" },
         { key: "state", title: "State" },
         { key: "type", title: "Client Type" },
-        { key: "matter_date", title: "Matter Date" },
-        { key: "settlement_date", title: "Settlement Date" },
+        { key: "matterDate", title: "Matter Date" },
+        { key: "settlementDate", title: "Settlement Date" },
         { key: "status", title: "Status" },
       ];
-    } else if (company === "idg") {
+    } else if (currentModule === "print media") {
       return [
         { key: "orderId", title: "Order ID" },
         { key: "clientName", title: "Client Name" },
@@ -328,6 +358,7 @@ export default function ArchivedClients() {
 
   const sortedClientList = useMemo(() => {
     let sortableItems = [...filteredClientList];
+
     if (sortedColumn !== null) {
       sortableItems.sort((a, b) => {
         const aVal = a[sortedColumn];
@@ -343,19 +374,8 @@ export default function ArchivedClients() {
           sortedColumn === "orderDate" ||
           sortedColumn === "deliveryDate"
         ) {
-          let dateA, dateB;
-
-          if (
-            currentModule === "commercial" &&
-            (sortedColumn === "matter_date" ||
-              sortedColumn === "settlement_date")
-          ) {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          } else {
-            dateA = moment(aVal, "DD-MM-YYYY");
-            dateB = moment(bVal, "DD-MM-YYYY");
-          }
+          const dateA = moment(aVal);
+          const dateB = moment(bVal);
 
           if (dateA.isBefore(dateB)) return sortDirection === "asc" ? -1 : 1;
           if (dateA.isAfter(dateB)) return sortDirection === "asc" ? 1 : -1;
@@ -367,8 +387,9 @@ export default function ArchivedClients() {
         return 0;
       });
     }
+
     return sortableItems;
-  }, [filteredClientList, sortedColumn, sortDirection, currentModule]);
+  }, [filteredClientList, sortedColumn, sortDirection]);
 
   // ----- Export helpers -----
   async function handleExcelExport(withFrom, withTo) {
@@ -477,19 +498,19 @@ export default function ArchivedClients() {
 
   const getPageTitle = () => {
     if (currentModule === "commercial") return "Archived Projects";
-    if (company === "idg") return "Completed Orders";
+    if (currentModule === "print media") return "Completed Orders";
     return "Archived Clients";
   };
 
   const getDateFieldLabel = () => {
     if (currentModule === "commercial") return "Completion Date";
-    if (company === "idg") return "Delivery Date";
+    if (currentModule === "print media") return "Delivery Date";
     return "Settlement Date";
   };
 
   const getAddressFieldLabel = () => {
     if (currentModule === "commercial") return "Business Address";
-    if (company === "idg") return "Billing Address";
+    if (currentModule === "print media") return "Billing Address";
     return "Property Address";
   };
 
@@ -573,7 +594,7 @@ export default function ArchivedClients() {
                   View and manage{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
-                    : company === "idg"
+                    : currentModule === "print media"
                     ? "completed orders"
                     : "archived clients"}
                 </p>
@@ -586,7 +607,7 @@ export default function ArchivedClients() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6"
+            className="rounded-2xl sm:rounded-3xl overflow-visible bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 relative z-20"
           >
             <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -596,13 +617,13 @@ export default function ArchivedClients() {
                     All{" "}
                     {currentModule === "commercial"
                       ? "Archived Projects"
-                      : company === "idg"
+                      : currentModule === "print media"
                       ? "Completed Orders"
                       : "Archived Clients"}
                   </h3>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                <div className="flex flex-row items-center justify-between w-full sm:w-auto sm:justify-start gap-3 sm:gap-4">
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="clients-per-page"
@@ -661,7 +682,7 @@ export default function ArchivedClients() {
 
                   {/* Mobile Actions Menu */}
                   <div className="flex lg:hidden items-center">
-                    <Menu as="div" className="relative">
+                    <Menu as="div" className="relative z-30">
                       <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
                       </Menu.Button>
@@ -672,9 +693,9 @@ export default function ArchivedClients() {
                         enterTo="transform opacity-100 scale-100"
                         leave="transition ease-in duration-75"
                         leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
+                        leaveTo="transform opacity-0 scale-95"  
                       >
-                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Items className="absolute right-0 z-[999] mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <div className="py-1">
                             <Menu.Item>
                               {({ active }) => (
@@ -776,7 +797,7 @@ export default function ArchivedClients() {
                   No{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
-                    : company === "idg"
+                    : currentModule === "print media"
                     ? "completed orders"
                     : "archived clients"}{" "}
                   found
@@ -787,7 +808,7 @@ export default function ArchivedClients() {
                     : `No ${
                         currentModule === "commercial"
                           ? "projects have been archived yet"
-                          : company === "idg"
+                          : currentModule === "print media"
                           ? "orders have been completed yet"
                           : "clients have been archived yet"
                       }`}
@@ -839,7 +860,7 @@ export default function ArchivedClients() {
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] flex items-center justify-center">
                               {currentModule === "commercial" ? (
                                 <Building className="w-4 h-4 text-white" />
-                              ) : company === "idg" ? (
+                              ) : currentModule === "print media" ? (
                                 <FolderOpen className="w-4 h-4 text-white" />
                               ) : (
                                 <Users className="w-4 h-4 text-white" />
@@ -893,7 +914,7 @@ export default function ArchivedClients() {
                             <span className="font-semibold text-gray-500">
                               {currentModule === "commercial"
                                 ? "Project Date:"
-                                : company === "idg"
+                                : currentModule === "print media"
                                 ? "Order Date:"
                                 : "Matter Date:"}
                             </span>
@@ -984,7 +1005,6 @@ export default function ArchivedClients() {
         }}
         matter={selectedClient}
         currentModule={currentModule}
-        company={company}
         isLoading={clientDetailsLoading}
       />
     </div>

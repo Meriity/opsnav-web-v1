@@ -84,9 +84,8 @@ function WorkSelection() {
     const moduleMap = {
       conveyancing: "Conveyancing",
       wills: "Wills & Estates",
-      "print media": "Print Media",
+      "print media": "Signage & Print",
       commercial: "Commercial Law",
-      idg: "IDG",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };
     return moduleMap[module.toLowerCase()] || moduleMap.default;
@@ -101,7 +100,6 @@ function WorkSelection() {
     if (key.includes("wills")) return <FileText {...iconProps} />;
     if (key.includes("print")) return <Printer {...iconProps} />;
     if (key.includes("commercial")) return <Briefcase {...iconProps} />;
-    if (key.includes("idg")) return <Cpu {...iconProps} />;
 
     return <LayoutGrid {...iconProps} />;
   };
@@ -304,7 +302,7 @@ function WorkSelection() {
       <footer className="w-full text-center py-4 relative z-10 [@media(max-width:1024px)_and_(max-height:800px)]:py-2">
         <p className="text-sm text-gray-600 [@media(max-width:1024px)_and_(max-height:800px)]:text-xs">
           Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span> |
-          Secure Legal Operations Platform
+          Secure Operations Platform
         </p>
       </footer>
     </div>
