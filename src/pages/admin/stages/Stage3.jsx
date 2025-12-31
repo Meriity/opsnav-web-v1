@@ -311,7 +311,7 @@ export default function Stage3({
               />
             ) : (
               ["Yes", "No", "Processing", "N/R"].map((v) => (
-                <label key={v} className="flex gap-2">
+                <label key={v} className="flex items-center gap-2">
                   <input
                     type="radio"
                     checked={

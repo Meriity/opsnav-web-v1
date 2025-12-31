@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import PropTypes from "prop-types";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formConfig = {
   conveyancing: {
@@ -207,6 +208,7 @@ export default function Stage6({
   setHasChanges,
 }) {
   const { matterNumber } = useParams();
+  const queryClient = useQueryClient();
 
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -486,11 +488,18 @@ export default function Stage6({
       }
 
       toast.success("Stage 6 Saved Successfully!");
-
+     
       // Trigger updates
       setReloadTrigger((p) => p + 1);
       if (typeof reloadArchivedClients === "function") reloadArchivedClients();
       if (onStageUpdate) onStageUpdate({ ...safePayload }, 6);
+
+      // Invalidate queries if commercial
+      if (currentModule === "commercial") {
+        queryClient.invalidateQueries({
+          queryKey: ["archivedClients", "commercial"],
+        });
+      }
 
       // Update original ref
       originalData.current = {

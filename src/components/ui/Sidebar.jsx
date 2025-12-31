@@ -109,8 +109,9 @@ export default function Sidebar({
     switch (label) {
       case "Dashboard":
         return LayoutDashboard;
-      case "Manage Users":
       case "Manage Clients":
+        return UserCog;
+      case "Manage Users":
         return Users;
       case "View Clients":
       case "View Orders":

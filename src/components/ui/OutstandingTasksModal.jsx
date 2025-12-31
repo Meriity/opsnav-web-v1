@@ -143,6 +143,15 @@ export default function OutstandingTasksModal({
       body: rows,
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [0, 123, 255] },
+      columnStyles:
+        currentModule === "conveyancing"
+          ? {
+              0: { cellWidth: 60 }, // Width for Matter No.
+              1: { cellWidth: 30 }, // Date
+              2: { cellWidth: 25 }, // Stage
+              3: { cellWidth: "auto" }, // Tasks takes remaining space
+            }
+          : {},
       didDrawCell: (data) => {
         if (
           data.section === "body" &&
@@ -176,7 +185,7 @@ export default function OutstandingTasksModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} className="relative z-[100]">
+    <Dialog open={open} onClose={onClose} className="relative z-[1000]">
       <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden rounded-lg bg-white/90 backdrop-blur-md border border-white/20 text-left align-middle shadow-2xl transition-all">

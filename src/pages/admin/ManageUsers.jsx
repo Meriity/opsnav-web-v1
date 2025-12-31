@@ -946,7 +946,7 @@ export default function ManageUsers() {
         </main>
       </div>
 
-      <Dialog open={openUser} onClose={setOpenUser} className="relative z-50">
+      <Dialog open={openUser} onClose={setOpenUser} className="relative z-[1000]">
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
@@ -1084,7 +1084,7 @@ export default function ManageUsers() {
       <Dialog
         open={openUserIDG}
         onClose={setOpenUserIDG}
-        className="relative z-50"
+        className="relative z-[1000]"
       >
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -1233,7 +1233,7 @@ export default function ManageUsers() {
       </Dialog>
 
       {/* Edit Dialog from second file */}
-      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-50">
+      <Dialog open={openEdit} onClose={setOpenEdit} className="relative z-[1000]">
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
@@ -1348,7 +1348,7 @@ export default function ManageUsers() {
                 <div className="mt-6">
                   <button
                     onClick={handleUserUpdate}
-                    className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg transition-all"
+                    className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg transition-all cursor-pointer"
                   >
                     Update User
                   </button>
@@ -1363,7 +1363,7 @@ export default function ManageUsers() {
       <Dialog
         open={openDelete}
         onClose={setOpenDelete}
-        className="relative z-50"
+        className="relative z-[1000]"
       >
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
