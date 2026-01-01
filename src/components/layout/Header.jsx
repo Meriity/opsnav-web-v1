@@ -40,6 +40,7 @@ export default function Header() {
 
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const location = useLocation();
   const isArchivedPage = location.pathname.includes("archived");
@@ -74,6 +75,7 @@ export default function Header() {
     weekday: "long",
     month: "long",
     day: "numeric",
+    year: "numeric"
   }).format(currentTime);
 
   const formattedTime = new Intl.DateTimeFormat("en-US", {
@@ -97,10 +99,60 @@ export default function Header() {
   );
 
   function handelListClick(val) {
+    if (!val) return;
     setShowDropdown(false);
-    return navigate(`/admin/client/stages/${val.matterNumber || val.orderId}`, {
-      state: { val },
-    });
+    
+    // 1. Robust ID Extraction (Handle inconsistent API response casing)
+    const id = 
+        val.matterNumber || 
+        val.matternumber || 
+        val.orderId || 
+        val.orderid || 
+        val.id || 
+        val._id || 
+        val.clientId;
+
+    if (!id) {
+       console.error("Missing Matter ID for navigation. Object:", val);
+       return;
+    }
+
+    const role = localStorage.getItem("role") || "admin";
+    const basePath = role === "user" ? "/user" : "/admin";
+    
+    // 2. Robust Archived Check
+    const status = (val.status || "").toLowerCase();
+    const closeMatter = (val.closeMatter || "").toLowerCase();
+    const isArchived = 
+      status === "closed" || 
+      status === "archived" ||
+      closeMatter === "closed" ||
+      closeMatter === "cancelled";
+
+    if (isArchived) {
+       return navigate(`${basePath}/archived-clients`, {
+          state: { val },
+       });
+    }
+
+    // Active Matters Logic
+    
+    // 3. Auto-detect Print Media
+    if (String(id).toUpperCase().startsWith("IDG")) {
+        localStorage.setItem("currentModule", "print media");
+    }
+
+    // 4. Construct URL based on Role
+    let targetUrl;
+    if (role === "user") {
+        targetUrl = `/user/client/${id}/stages`;
+    } else {
+        targetUrl = `/admin/client/stages/${id}`;
+    }
+    
+    // 5. Force full navigation
+    // Using href guarantees a fresh page load
+    window.location.href = targetUrl;
   }
 
   const fetchSearchResults = async (value) => {
@@ -289,9 +341,12 @@ export default function Header() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Check if click is outside BOTH the search box AND the dropdown
       if (
         searchBoxRef.current &&
-        !searchBoxRef.current.contains(event.target)
+        !searchBoxRef.current.contains(event.target) &&
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target)
       ) {
         setShowDropdown(false);
         setIsFocused(false);
@@ -478,6 +533,7 @@ export default function Header() {
         <AnimatePresence>
           {showDropdown && searchQuery.trim() && (
             <motion.div
+              ref={dropdownRef}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -535,7 +591,8 @@ export default function Header() {
                             <span className="font-bold text-gray-800 text-sm group-hover:text-[#2E3D99] transition-colors">
                               {item?.matterNumber || item?.orderId}
                             </span>
-                            {item?.status && (
+                            {/* Hide status for Print Media as requested */}
+                            {item?.status && !isPrintMedia && (
                               <span
                                 className={`
                                  text-[10px] font-bold px-1.5 py-0.5 rounded border
