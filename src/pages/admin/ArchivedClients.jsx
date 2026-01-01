@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import Table from "@/components/ui/Table";
 import Header from "@/components/layout/Header";
@@ -101,6 +101,16 @@ export default function ArchivedClients() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(100);
+
+  // Handle navigation from search dropdown
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.val) {
+      handleViewClient(location.state.val);
+      // Clear state to prevent reopening on refresh (optional but recommended mechanism)
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const currentModule = localStorage.getItem("currentModule");
 
@@ -275,6 +285,14 @@ export default function ArchivedClients() {
           clientDate = moment(
             new Date(client?.settlement_date || client?.settlementDate)
           );
+        } else if (currentModule === "print media") {
+          if (client.deliveryDate && client.deliveryDate !== "N/A") {
+            clientDate = moment(client.deliveryDate);
+          } else if (client.orderDate && client.orderDate !== "N/A") {
+             clientDate = moment(client.orderDate);
+          } else {
+            return false;
+          }
         } else {
           if (!client?.settlement_date) return false;
           clientDate = moment(client.settlement_date);

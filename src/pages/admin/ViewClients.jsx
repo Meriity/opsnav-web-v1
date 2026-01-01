@@ -61,7 +61,6 @@ const ViewClients = () => {
   });
   const [email, setemail] = useState("");
   const [isClicked, setIsClicked] = useState(false);
-  const [clientList, setClientList] = useState(null);
   const [otActiveMatterNumber, setOTActiveMatterNumber] = useState(null);
   const [dateFilter, setDateFilter] = useState(() => {
     const saved = localStorage.getItem("viewClientsDateFilter");
@@ -142,7 +141,6 @@ const ViewClients = () => {
           setCommercialClients(transformedData);
         } catch (error) {
           console.error("Error fetching commercial clients:", error);
-          // Don't show error toast for empty responses, just set empty array
           if (error.response?.status !== 404) {
             toast.error("Failed to load commercial projects");
           }
@@ -158,21 +156,23 @@ const ViewClients = () => {
     fetchData();
   }, [currentModule, api, fetchClients]);
 
-  useEffect(() => {
+  const filteredClients = useMemo(() => {
     let data = currentModule === "commercial" ? commercialClients : Clients;
 
-    if (!Array.isArray(data) || data.length === 0) {
-      setClientList([]);
-      return;
+    if (!Array.isArray(data)) return [];
+
+    // Filter 1: Client Name (Print Media only)
+    if (selectedClientName) {
+      data = data.filter((client) => client.client_name === selectedClientName);
     }
 
+    // Filter 2: Date
     const [rawStart, rawEnd] = Array.isArray(dateFilter?.range)
       ? dateFilter.range
       : ["", ""];
 
     if (!rawStart || !rawEnd) {
-      setClientList(data);
-      return;
+      return data;
     }
 
     const start = moment(rawStart).startOf("day");
@@ -193,7 +193,7 @@ const ViewClients = () => {
       `Filtering ${filterType}: ${start.format()} to ${end.format()}`
     );
 
-    data = data.filter((client) => {
+    return data.filter((client) => {
       // Get the date strings from your data
       const orderDate = client.order_date || client.orderDate;
       const deliveryDate = client.delivery_date || client.deliveryDate;
@@ -223,8 +223,34 @@ const ViewClients = () => {
       return isIncluded(settlementDate);
     });
 
-    setClientList(data);
-  }, [dateFilter, Clients, commercialClients, searchQuery, currentModule]);
+    // Filter 3: Search Query
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      data = data.filter(
+        (client) =>
+          String(
+            client.matternumber || client.matterNumber || client.orderId || ""
+          )
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.client_name || client.clientName || "")
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(
+            client.property_address ||
+              client.propertyAddress ||
+              client.businessAddress ||
+              client.billing_address ||
+              ""
+          )
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.state || "").toLowerCase().includes(lowercasedQuery)
+      );
+    }
+
+    return data;
+  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery]);
 
   let columns = [];
   if (currentModule === "commercial") {
@@ -319,18 +345,6 @@ const ViewClients = () => {
 
   const handleClientFilterChange = (selectedName) => {
     setSelectedClientName(selectedName);
-
-    if (!selectedName) {
-      setClientList(
-        currentModule === "commercial" ? commercialClients : Clients
-      );
-    } else {
-      const filtered = (
-        currentModule === "commercial" ? commercialClients : Clients
-      ).filter((client) => client.client_name === selectedName);
-
-      setClientList(filtered);
-    }
   };
 
   const handelShareEmailModalClose = () => {
@@ -840,9 +854,9 @@ const ViewClients = () => {
           </ConfirmationModal>
         )} */}
 
-            {isLoading || !clientList ? (
+            {isLoading ? (
               <Loader />
-            ) : clientList.length === 0 ? (
+            ) : filteredClients.length === 0 ? (
               <div className="py-10 text-center text-gray-500">
                 {currentModule === "commercial"
                   ? "No projects found"
@@ -851,7 +865,7 @@ const ViewClients = () => {
             ) : (
               <div className="px-5">
                 <ViewClientsTable
-                  data={clientList}
+                  data={filteredClients}
                   columns={columns}
                   users={user}
                   handleChangeUser={changeUser}
