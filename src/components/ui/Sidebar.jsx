@@ -183,30 +183,41 @@ export default function Sidebar({
 
         <div className="relative z-10 flex-1 flex flex-col min-h-0">
           {/* Logo Area */}
-          <div className="relative flex justify-center mb-8 h-[60px] items-center shrink-0">
+          <div className="relative flex flex-col justify-center mb-8 h-[75px] items-center shrink-0">
             <AnimatePresence mode="wait">
               {isCollapsed ? (
-                <motion.img
-                  key="collapsed-logo"
+                <motion.div
+                  key="collapsed-logo-container"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="h-auto object-contain w-[40px] absolute mb-2"
-                  src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20only%20(1).png"
-                  alt="Logo"
-                />
+                >
+                  <div className="flex flex-col items-end justify-center relative">
+                    <img
+                      className="h-auto object-contain w-[40px]"
+                      src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20only%20(1).png"
+                      alt="Logo"
+                    />
+                    <span className="text-[10px] text-gray-400 font-medium leading-none">v5.0.0</span>
+                  </div>
+                </motion.div>
               ) : (
-                <motion.img
-                  key="expanded-logo"
+                <motion.div
+                  key="expanded-logo-container"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="h-auto object-contain w-[120px] absolute"
-                  src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
-                  alt="Logo"
-                />
+                  className="flex flex-col items-end absolute"
+                >
+                  <img
+                    className="h-auto object-contain w-[120px]"
+                    src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
+                    alt="Logo"
+                  />
+                  <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>

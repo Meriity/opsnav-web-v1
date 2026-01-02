@@ -384,11 +384,14 @@ export default function Header() {
 
         <div className="relative px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3 lg:gap-4">
           <div className="flex flex-row items-center gap-4 w-full md:hidden lg:flex lg:w-auto lg:min-w-[200px]">
-            <img
-              className={`h-auto object-contain w-14 transition-all duration-300 ease-in-out`}
-              src={localStorage.getItem("logo") || "/Logo.png"}
-              alt="Logo"
-            />
+            <div className="flex flex-col items-end">
+              <img
+                className={`h-auto object-contain w-14 transition-all duration-300 ease-in-out`}
+                src={localStorage.getItem("logo") || "/Logo.png"}
+                alt="Logo"
+              />
+              
+            </div>
             {/* <img src="../public/Logo_vk.png" alt="Logo" className="h-auto object-contain w-14 transition-all duration-300 ease-in-out"/> */}
             <div className="flex flex-col items-start gap-1">
               <motion.div
