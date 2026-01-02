@@ -118,12 +118,13 @@ function LoginForm() {
               </span>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-end w-fit mx-auto lg:mx-0">
               <img
                 src="/Logo.png"
                 alt="OpsNav Logo"
-                className="h-16 mx-auto lg:mx-0"
+                className="h-16"
               />
+              <span className="text-xs text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4">
