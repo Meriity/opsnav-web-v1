@@ -520,13 +520,14 @@ function GetStartedFree() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 sm:gap-3"
+            className="flex flex-col items-end"
           >
             <img
               src="/Logo.png"
               alt="OpsNav"
               className="h-8 sm:h-9 md:h-10 w-auto"
             />
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
           </motion.div>
 
           <motion.button

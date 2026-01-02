@@ -390,12 +390,13 @@ export default function Home() {
           className="fixed top-0 right-0 h-full w-64 bg-white shadow-2xl z-50 p-6 md:hidden"
         >
           <div className="flex justify-between items-center mb-8">
-            <div className="relative">
+            <div className="relative flex flex-col items-end">
               <img
                 src="/Logo.png"
                 alt="OpsNav"
                 className="h-10 sm:h-12 w-auto"
               />
+              <span className="text-[10px] text-gray-400 font-medium mt-2 leading-none">v5.0.0</span>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -444,12 +445,13 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               className="flex items-center gap-3"
             >
-              <div className="relative">
+              <div className="relative flex flex-col items-end">
                 <img
                   src="/Logo.png"
                   alt="OpsNav"
                   className="h-10 sm:h-12 w-auto"
                 />
+                <span className="text-[10px] text-gray-400 font-medium leading-none">v5.0.0</span>
               </div>
             </motion.div>
 
