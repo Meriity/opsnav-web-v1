@@ -278,7 +278,7 @@ function GetStartedFree() {
           value={formData.state}
           onChange={handleInputChange}
           className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50"
-          placeholder="Tamil Nadu"
+          placeholder="Victoria"
         />
       </div>
 
