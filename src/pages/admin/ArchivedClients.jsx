@@ -7,6 +7,7 @@ import * as XLSX from "xlsx-js-style";
 import moment from "moment";
 import DateRangeModal from "@/components/ui/DateRangeModal";
 import { toast } from "react-toastify";
+import ArchivedFilterModal from "@/components/ui/ArchivedFilterModal";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import Loader from "@/components/ui/Loader";
 import ClientAPI from "@/api/userAPI";
@@ -94,6 +95,14 @@ export default function ArchivedClients() {
   const [showSettlementDateModal, setShowSettlementDateModal] = useState(false);
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
+  
+  // New Filter State
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    state: "",
+    clientType: "",
+    closeMatter: "",
+  });
 
   // Client details modal state
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -163,7 +172,7 @@ export default function ArchivedClients() {
 
       state: client.state || "",
       clientType: client.clientType || client.type,
-      status: client.status || "archived",
+      status: client.status || client.closeMatter || client.projectStatus || "archived",
       // Ensure logo is included
       logo:
         client.logo ||
@@ -301,6 +310,55 @@ export default function ArchivedClients() {
       });
     }
 
+    // Apply strict filters (State, Client Type, Close Matter)
+    if (activeFilters.state || activeFilters.clientType || activeFilters.closeMatter) {
+      filteredData = filteredData.filter((client) => {
+        // State Filter
+        if (activeFilters.state) {
+          if (!client.state || !client.state.toLowerCase().includes(activeFilters.state.toLowerCase())) {
+            return false;
+          }
+        }
+
+        // Client Type / Order Type Filter
+        if (activeFilters.clientType) {
+          const type =
+            client.clientType ||
+            client.type ||
+            client.ordertype ||
+            client.orderType;
+          if (
+            !type ||
+            type.toLowerCase() !== activeFilters.clientType.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        // Close Matter / Order Status Filter
+        if (activeFilters.closeMatter) {
+          const status =
+            client.closeMatter ||
+            client.projectStatus ||
+            client.status ||
+            "open";
+          
+          const filterValue = activeFilters.closeMatter; // 'closed' or 'open' (cancelled)
+
+          // If filter is 'closed', we want 'closed' or 'completed'
+          if (filterValue === "closed") {
+             if (status !== "closed" && status !== "completed") return false;
+          } 
+          // If filter is 'open' (which we treat as 'cancelled'), check for 'cancelled'
+          else if (filterValue === "open") {
+             if (status !== "cancelled" && status !== "open") return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
       filteredData = filteredData.filter(
@@ -326,7 +384,7 @@ export default function ArchivedClients() {
     }
 
     return filteredData;
-  }, [activeData, fromDate, toDate, searchQuery, currentModule]);
+  }, [activeData, fromDate, toDate, searchQuery, currentModule, activeFilters]);
 
   const getColumns = () => {
     if (currentModule === "commercial") {
@@ -681,7 +739,7 @@ export default function ArchivedClients() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowSettlementDateModal(true)}
+                      onClick={() => setShowFilterModal(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                     >
                       <Filter className="w-4 h-4" />
@@ -740,9 +798,7 @@ export default function ArchivedClients() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() =>
-                                    setShowSettlementDateModal(true)
-                                  }
+                                  onClick={() => setShowFilterModal(true)}
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     active
                                       ? "bg-blue-50 text-blue-700"
@@ -986,6 +1042,17 @@ export default function ArchivedClients() {
       </div>
 
       {/* Modals */}
+      <ArchivedFilterModal
+        isOpen={showFilterModal}
+        setIsOpen={setShowFilterModal}
+        initialFilters={activeFilters}
+        onApply={setActiveFilters}
+        currentModule={currentModule}
+        onReset={() =>
+          setActiveFilters({ state: "", clientType: "", closeMatter: "" })
+        }
+      />
+
       <DateRangeModal
         isOpen={showSettlementDateModal}
         setIsOpen={setShowSettlementDateModal}
