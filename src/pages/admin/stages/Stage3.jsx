@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
+import WillsAPI from "@/api/willsAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
@@ -56,6 +57,24 @@ const formConfig = {
       { key: "title", label: "Title", type: "radio" },
     ],
   },
+  wills: {
+    fields: [
+      {
+        key: "titleSearch",
+        label: "Title Search",
+        type: "radio",
+        hasDate: true,
+      },
+      { key: "planImage", label: "Plan Image", type: "radio" },
+      { key: "landTax", label: "Land Tax", type: "radio" },
+      { key: "instrument", label: "Instrument", type: "radio" },
+      { key: "rates", label: "Rates", type: "radio" },
+      { key: "water", label: "Water", type: "radio" },
+      { key: "ownersCorp", label: "Owners Corp", type: "radio" },
+      { key: "pexa", label: "PEXA", type: "radio" },
+      { key: "inviteBank", label: "Invite Bank", type: "radio" },
+    ],
+  },
 };
 
 export default function Stage3({
@@ -69,6 +88,7 @@ export default function Stage3({
 
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
+  const willsApi = new WillsAPI();
 
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
@@ -239,6 +259,8 @@ export default function Stage3({
         await api.upsertStageThree(payload);
       } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 3, payload);
+      } else if (currentModule === "wills") {
+        await willsApi.upsertStage(3, matterNumber, payload);
       }
 
       toast.success("Stage 3 Saved Successfully!");

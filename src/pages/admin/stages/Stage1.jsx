@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
+import WillsAPI from "@/api/willsAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
@@ -94,6 +95,28 @@ const formConfig = {
     },
     { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
   ],
+  wills: [
+    { name: "referral", label: "Referral", type: "text" },
+    {
+      name: "retainer",
+      label: "Retainer",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "declarationForm",
+      label: "Declaration form",
+      type: "radio",
+      options: ["Yes", "No", "Processing", "N/R"],
+    },
+    {
+      name: "quoteType",
+      label: "Quote Type",
+      type: "radio",
+      options: ["Variable", "Fixed"],
+    },
+    { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
+  ],
 };
 
 // Common fields for all clients
@@ -120,6 +143,7 @@ export default function Stage1({
 
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
+  const willsApi = new WillsAPI();
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
@@ -407,6 +431,8 @@ export default function Stage1({
         await commercialApi.upsertStage(1, matterNumber, payload);
       } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 1, payload);
+      } else if (currentModule === "wills") {
+        await willsApi.upsertStage(1, matterNumber, payload);
       } else {
         const res = await api.upsertStageOne(payload);
 

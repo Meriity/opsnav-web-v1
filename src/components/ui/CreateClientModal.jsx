@@ -1,5 +1,6 @@
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
+import WillsAPI from "../../api/willsAPI";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
@@ -82,6 +83,17 @@ const getInitialFormData = (user, currentModule) => {
       settlementDate: "",
       dataEntryBy: user,
     };
+  } else if (currentModule === "wills") {
+     return {
+         matterNumber: "",
+         clientName: "",
+         clientType: "",
+         state: "",
+         postcode: "",
+         email: "",
+         phone: "",
+         dataEntryBy: user
+     }
   }
   return {};
 };
@@ -114,8 +126,10 @@ const commercialBusinessAddressRef = useRef(null);
   const isCommercial = currentModule === "commercial";
   const isConveyancing = currentModule === "conveyancing";
   const isPrintMedia = currentModule === "print media";
+  const isWills = currentModule === "wills";
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
+  const willsApi = new WillsAPI();
 
   // Replace with your actual Google Maps API key
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
@@ -470,6 +484,13 @@ useEffect(() => {
         // For other errors, assume it exists to be safe
         return true;
       }
+    } else if (currentModule === "wills") {
+        try {
+            const response = await willsApi.checkClientExists(number);
+            return response.exists || false;
+        } catch (error) {
+            return false;
+        }
     } else {
       try {
         const response = await api.checkClientExists(number);
@@ -725,6 +746,30 @@ useEffect(() => {
           toast.success("Order created successfully!");
           if (typeof onClose === "function") onClose();
         }
+      } else if (isWills) {
+           const requiredFields = ["matterNumber", "clientName", "state", "postcode"];
+           if (requiredFields.some((field) => !formData[field])) {
+              toast.error("Please fill all required fields.");
+              setIsLoading(false);
+              return;
+           }
+           
+           const exists = await checkMatterNumberExists(formData.matterNumber);
+           if (exists) {
+               setMatterNumberError("This matter number already exists");
+               toast.error("A client with this matter number already exists.");
+               setIsLoading(false);
+               return;
+           }
+
+           try {
+               await willsApi.createProject(formData);
+               toast.success("Client created successfully!");
+               navigate(`/admin/client/stages/${formData.matterNumber}`);
+               if (typeof onClose === "function") onClose();
+           } catch {
+               toast.error("Failed to create Wills client");
+           }
       }
       setIsOpen(false);
     } catch (error) {
@@ -752,6 +797,8 @@ useEffect(() => {
   const getModalTitle = () => {
     if (isCommercial) return "Create Project";
     if (createType === "order") return "Create Order";
+    if (createType === "order") return "Create Order";
+    if (isWills) return "Create Wills Client";
     return "Create Client";
   };
 
@@ -783,8 +830,8 @@ useEffect(() => {
             </h2>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
-              {/* COMMERCIAL & VKL FIELDS */}
-              {(isCommercial || isConveyancing) && (
+              {/* COMMERCIAL & VKL & WILLS FIELDS */}
+              {(isCommercial || isConveyancing || isWills) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -865,31 +912,27 @@ useEffect(() => {
                       </div>
                     </div> */}
 
+                    {/* Show Client Type for Commercial and Conveyancing/VKL but maybe not Wills if not needed, else include */}
+                    {(isCommercial || isConveyancing || isWills) && (
                     <div>
-                      <label className="block mb-1 font-medium">
-                        Client Type*
-                      </label>
-                      <div className="flex gap-2 flex-wrap">
-                        {["Buyer", "Seller", "Transfer"].map((type) => (
-                          <label
-                            key={type}
-                            className="inline-flex items-center gap-1"
-                          >
+                      <label className="block mb-1 font-medium">Client Type*</label>
+                      <div className="flex gap-4 mt-2">
+                        {["Seller", "Buyer"].map((type) => (
+                          <label key={type} className="flex items-center gap-2">
                             <input
                               type="radio"
                               name="clientType"
                               value={type}
                               checked={formData.clientType === type}
                               onChange={handleChange}
-                              className="w-4 h-4"
-                              required
                             />
-                            <span>{type}</span>
+                            {type}
                           </label>
                         ))}
                       </div>
                     </div>
-                    <div>
+                    )}
+                    {/* <div>
                       <label className="block mb-1 font-medium">
                         Is purchaser a trustee?
                       </label>
@@ -912,7 +955,7 @@ useEffect(() => {
                           </label>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   <div>
@@ -1045,6 +1088,49 @@ useEffect(() => {
                       />
                     </div>
                   </div>
+                  {/* Add extra fields for Wills if needed, like Email/Phone */}
+                  {isWills && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                              <label className="block mb-1 font-medium">Email</label>
+                              <input
+                                  type="email"
+                                  name="email"
+                                  value={formData.email || ""}
+                                  onChange={handleChange}
+                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                          </div>
+                          <div>
+                              <label className="block mb-1 font-medium">Phone</label>
+                              <input
+                                  type="tel"
+                                  name="phone"
+                                  value={formData.phone || ""}
+                                  onChange={handleChange}
+                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                          </div>
+                      </div>
+                  )}
+
+                  {(isConveyancing) && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="isTrustee"
+                      checked={formData.isTrustee || false}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isTrustee: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label className="font-medium">Acting as Trustee?</label>
+                  </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block mb-1 font-medium">Contact*</label>
@@ -1275,6 +1361,38 @@ useEffect(() => {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Only show dates for non-Wills or if Wills needs dates */}
+                    {!isWills && (
+                    <>
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Matter Date*
+                      </label>
+                      <input
+                        type="date"
+                        name="matterDate"
+                        value={formData.matterDate || ""}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Settlement Date*
+                      </label>
+                      <input
+                        type="date"
+                        name="settlementDate"
+                        value={formData.settlementDate || ""}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                    </div>
+                    </>
+                    )}
+                  </div>
+                  <div>
                     <div>
                       <label className="block mb-1 font-medium">
                         Order Date*

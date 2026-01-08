@@ -11,6 +11,7 @@ import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment, useMemo } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
+import WillsAPI from "../../api/willsAPI";
 import Header from "../../components/layout/Header";
 import { toast } from "react-toastify";
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
@@ -89,6 +90,8 @@ const ViewClients = () => {
   const api = useMemo(() => {
     if (currentModule === "commercial") {
       return new CommercialAPI();
+    } else if (currentModule === "wills") {
+      return new WillsAPI();
     } else {
       return new ClientAPI();
     }
@@ -148,6 +151,40 @@ const ViewClients = () => {
         } finally {
           setCommercialLoading(false);
         }
+      } else if (currentModule === "wills") {
+        setCommercialLoading(true);
+        try {
+           const response = await api.getActiveProjects();
+           
+           let data = [];
+           if (Array.isArray(response)) {
+             data = response;
+           } else if (response && Array.isArray(response.data)) {
+             data = response.data;
+           }
+
+           const transformedData = data.map((client) => ({
+             ...client,
+             id: client.matterNumber || client.id || client._id,
+             matternumber: client.matterNumber,
+             client_name: client.clientName,
+             property_address: client.address || client.propertyAddress,
+             state: client.state,
+             client_type: client.clientType,
+             matterDate: client.matterDate,
+             status: client.status || "active",
+             // Ensure stages exists for the table renderer. 
+             // Backend should provide this, but if not, default to 3 empty/default stages
+             stages: client.stages && client.stages.length > 0 ? client.stages : [{ s1: "default", s2: "default", s3: "default" }]
+           }));
+           
+           setCommercialClients(transformedData);
+        } catch (error) {
+           console.error("Error fetching Wills clients:", error);
+           setCommercialClients([]);
+        } finally {
+           setCommercialLoading(false);
+        }
       } else {
         fetchClients();
       }
@@ -157,7 +194,7 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   const filteredClients = useMemo(() => {
-    let data = currentModule === "commercial" ? commercialClients : Clients;
+    let data = (currentModule === "commercial" || currentModule === "wills") ? commercialClients : Clients;
 
     if (!Array.isArray(data)) return [];
 
@@ -266,7 +303,16 @@ const ViewClients = () => {
       { key: "matterDate", title: "Project Date", width: "10%" },
       // { key: "postcode", title: "Postcode", width: "7%" },
     ];
-  } else if (currentModule === "conveyancing" || currentModule === "wills") {
+  } else if (currentModule === "wills") {
+     columns = [
+      { key: "matternumber", title: "Matter Number", width: "10%" },
+      { key: "matterDate", title: "Matter Date", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "15%" },
+      { key: "property_address", title: "Address", width: "20%" },
+      { key: "state", title: "State", width: "10%" },
+      { key: "client_type", title: "Client Type", width: "15%" },
+     ];
+  } else if (currentModule === "conveyancing") {
     columns = [
       { key: "matternumber", title: "Matter Number", width: "8%" },
       { key: "dataentryby", title: "Data Entry By", width: "10%" },
@@ -393,7 +439,7 @@ const ViewClients = () => {
   };
 
   const isLoading =
-    currentModule === "commercial" ? commercialLoading : loading;
+    (currentModule === "commercial" || currentModule === "wills") ? commercialLoading : loading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">

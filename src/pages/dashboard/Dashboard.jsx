@@ -42,6 +42,7 @@ import Header from "../../components/layout/Header";
 import CreateClientModal from "../../components/ui/CreateClientModal";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
+import WillsAPI from "../../api/willsAPI";
 import { create } from "zustand";
 
 // --- Calendar Imports ---
@@ -374,6 +375,23 @@ const fetchDashboardData = async (currentModule) => {
     }
   } else if (currentModule === "print media") {
     return await clientApi.getIDGDashboardData();
+  } else if (currentModule === "wills") {
+    const willsApi = new WillsAPI();
+    try {
+      const [sixMonthsData, allTimeData] = await Promise.all([
+        willsApi.getDashboardData("sixMonths"),
+        willsApi.getDashboardData("all")
+      ]);
+
+      return {
+        lifetimeTotals: sixMonthsData?.lifetimeTotals || allTimeData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(sixMonthsData?.monthlyStats) ? sixMonthsData.monthlyStats : [],
+        allTimeStats: Array.isArray(allTimeData?.monthlyStats) ? allTimeData.monthlyStats : [],
+      };
+    } catch (error) {
+      console.error("Error fetching Wills dashboard data:", error);
+      return { lifetimeTotals: {}, monthlyStats: [], allTimeStats: [] };
+    }
   } else {
     return await clientApi.getDashboardData();
   }
@@ -389,6 +407,9 @@ const fetchCalendarData = async (currentModule) => {
     data = await commercialApi.getCalendarDates();
   } else if (currentModule === "print media") {
     data = await clientApi.getIDGCalendarDates();
+  } else if (currentModule === "wills") {
+    const willsApi = new WillsAPI();
+    data = await willsApi.getCalendarDates();
   } else {
     data = await clientApi.getCalendarDates();
   }
