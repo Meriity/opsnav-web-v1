@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -20,6 +20,7 @@ function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
@@ -44,12 +45,21 @@ function AdminLogin() {
           position: "bottom-center",
         });
 
+        // Determine target path
+        let targetPath = location.state?.from?.pathname || location.state?.from;
+
+        if (!targetPath) {
+          targetPath =
+            response.role === "admin"
+              ? "/admin/work-selection"
+              : "/user/work-selection";
+        }
+
         setTimeout(() => {
-          if (response.role === "admin") {
-            navigate("/admin/work-selection");
-          } else {
-            navigate("/user/work-selection");
-          }
+          // Hard reload and navigate with cache busting
+          const timestamp = new Date().getTime();
+          const separator = targetPath.includes("?") ? "&" : "?";
+          window.location.href = `${targetPath}${separator}refresh=${timestamp}`;
         }, 1500);
       }
     } catch (err) {

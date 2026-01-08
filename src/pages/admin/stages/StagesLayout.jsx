@@ -11,6 +11,7 @@ import Stage6 from "./Stage6";
 import Cost from "./cost";
 import ClientAPI from "../../../api/clientAPI";
 import CommercialAPI from "../../../api/commercialAPI";
+import WillsAPI from "../../../api/willsAPI";
 import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
@@ -77,6 +78,7 @@ export default function StagesLayout() {
   const { matterNumber, stageNo } = useParams();
   const apiRef = useRef(new ClientAPI());
   const commercialApiRef = useRef(new CommercialAPI());
+  const willsApiRef = useRef(new WillsAPI());
   const navigate = useNavigate();
 
   const [role, setRole] = useState(() => {
@@ -710,6 +712,36 @@ export default function StagesLayout() {
           }
         } else if (currentModule === "print media") {
           response = await apiRef.current.getIDGStages(matterNumber);
+        } else if (currentModule === "wills") {
+          // Fetch full data using WillsAPI
+          // We can use getProjectFullData or getClientDetails depending on what returns full stage info
+          // Similar to Commercial, we might need parallel fetching if backend doesn't return everything in one go.
+          // For now, assuming getProjectFullData is robust or we parallel fetch if needed.
+          // Let's try parallel similar to Commercial for safety if APIs are granular.
+          try {
+             const [clientData, s1, s2, s3] = await Promise.all([
+                 willsApiRef.current.getProjectFullData(matterNumber).catch(e => null),
+                 willsApiRef.current.getStageData(1, matterNumber).catch(() => ({})),
+                 willsApiRef.current.getStageData(2, matterNumber).catch(() => ({})),
+                 willsApiRef.current.getStageData(3, matterNumber).catch(() => ({}))
+             ]);
+             
+             if (clientData) {
+                 const getS = (s, key) => s?.data || s || clientData[key] || {};
+                 response = {
+                     ...clientData,
+                     stage1: getS(s1, "stage1"),
+                     stage2: getS(s2, "stage2"),
+                     stage3: getS(s3, "stage3"),
+                     // Wills typically has 3 stages? Postman showed 3.
+                 };
+             } else {
+                 response = createDefaultProjectData(matterNumber);
+             }
+          } catch (e) {
+             console.error("Wills data fetch failed", e);
+             response = createDefaultProjectData(matterNumber);
+          }
         } else {
           response = await apiRef.current.getAllStages(matterNumber);
         }
@@ -1216,8 +1248,7 @@ export default function StagesLayout() {
                   localStorage.removeItem("client-storage");
                 }}
               />
-              {(currentModule !== "print media" ||
-                currentModule === "commercial") && (
+              {true && (
                 <Button
                   label="Cost"
                   bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-sky-600 active:bg-sky-700"

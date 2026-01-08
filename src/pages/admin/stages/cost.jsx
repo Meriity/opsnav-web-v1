@@ -193,11 +193,20 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           );
         }
 
+        const extractData = (dataKeys, response) => {
+          let data = response?.[dataKeys] || response?.data?.[dataKeys];
+          if (Array.isArray(data)) {
+            // If empty array, return empty object
+            if (data.length === 0) return {};
+            return data[0] || {};
+          }
+          return data || {};
+        };
+
         if (currentModule === "print media") {
-          costData =
-            stageResponse?.cost?.[0] || stageResponse?.data?.cost || {};
-          stage1Data =
-            stageResponse?.stage1?.[0] || stageResponse?.data?.stage1 || {};
+           // Use the helper to robustly get cost and stage1 (handling both array and object)
+           costData = extractData('cost', stageResponse);
+           stage1Data = extractData('stage1', stageResponse);
         } else {
           costData = stageResponse?.cost || {};
           // For conveyancing, stage1 is typically at the root of the response object
