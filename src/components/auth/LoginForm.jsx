@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -20,6 +20,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,12 +40,18 @@ function LoginForm() {
       localStorage.setItem("role", response.role);
 
       // Navigate to work-selection and pass success state
-      const targetPath =
-        response.role === "admin"
-          ? "/admin/work-selection"
-          : "/user/work-selection";
+      let targetPath = location.state?.from?.pathname || location.state?.from;
 
-      navigate(targetPath, { state: { loginSuccess: true } });
+      if (!targetPath) {
+        targetPath =
+          response.role === "admin"
+            ? "/admin/work-selection"
+            : "/user/work-selection";
+      }
+
+      const timestamp = new Date().getTime();
+      const separator = targetPath.includes("?") ? "&" : "?";
+      window.location.href = `${targetPath}${separator}refresh=${timestamp}`;
     } catch (err) {
       toast.error(
         err.message ||
@@ -124,7 +131,7 @@ function LoginForm() {
                 alt="OpsNav Logo"
                 className="h-16"
               />
-              <span className="text-xs text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
+              <span className="text-xs text-gray-400 font-medium mt-1 leading-none">v5.0.1</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4">

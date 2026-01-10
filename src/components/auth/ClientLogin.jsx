@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -23,6 +23,7 @@ function LoginForm() {
   // // const [showPassword, setShowPassword] = useState(false);
   // const [showPostcode, setShowPostcode] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,11 +42,17 @@ function LoginForm() {
         localStorage.setItem("company", response.company);
         localStorage.setItem("authToken", response.token);
         console.log("Navigating with orderId:", response.orderId);
-        navigate(
+
+        const target =
+          location.state?.from?.pathname ||
+          location.state?.from ||
           `/idg/client/dashboard/${encodeURIComponent(
             btoa(String(response.clientId))
-          )}`
-        );
+          )}`;
+
+        const timestamp = new Date().getTime();
+        const separator = target.includes("?") ? "&" : "?";
+        window.location.href = `${target}${separator}refresh=${timestamp}`;
       }
       // Fallback to matterNumber if orderId is not present
       else if (response.matterNumber) {
@@ -54,7 +61,15 @@ function LoginForm() {
         localStorage.setItem("matterNumber", response.matterNumber);
         localStorage.setItem("logo", response.logo);
         localStorage.setItem("company", response.company);
-        navigate(`/client/dashboard/${btoa(String(response.matterNumber))}`);
+
+        const target =
+          location.state?.from?.pathname ||
+          location.state?.from ||
+          `/client/dashboard/${btoa(String(response.matterNumber))}`;
+
+        const timestamp = new Date().getTime();
+        const separator = target.includes("?") ? "&" : "?";
+        window.location.href = `${target}${separator}refresh=${timestamp}`;
       } else {
         throw new Error(
           "Login failed: No valid identifier found in the response."
@@ -139,7 +154,7 @@ function LoginForm() {
               alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.1</span>
           </motion.div>
 
           <motion.button

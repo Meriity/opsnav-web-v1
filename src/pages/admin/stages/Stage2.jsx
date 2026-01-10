@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
+import WillsAPI from "@/api/willsAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
@@ -176,6 +177,74 @@ const formConfig = {
       },
     ],
   },
+  wills: {
+    fields: [
+      { name: "signedContract", label: "Signed Contract", type: "radio" },
+      { name: "sendKeyDates", label: "Send Key Dates", type: "radio" },
+      { name: "voi", label: "VOI", type: "radio" },
+      { name: "caf", label: "CAF", type: "radio" },
+      {
+        name: "depositReceipt",
+        label: "Deposit Receipt",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "depositReceiptDate",
+      },
+      {
+        name: "buildingAndPest",
+        label: "Building and Pest",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "buildingAndPestDate",
+      },
+      {
+        name: "financeApproval",
+        label: "Finance Approval",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "financeApprovalDate",
+      },
+      {
+        name: "checkCtController",
+        label: "Check CT Controller",
+        type: "radio",
+      },
+      { name: "obtainDaSeller", label: "Obtain DA(Seller)", type: "radio" },
+      {
+        name: "vendorDisclosure",
+        label: "Vendor Disclosure",
+        type: "radio",
+        hasDate: true,
+        dateFieldName: "vendorDisclosureDate",
+      },
+    ],
+    noteGroups: [
+      {
+        id: "A",
+        systemNoteLabel: "System Note (VOI / CAF / Deposit)",
+        clientCommentLabel: "Client Comment (VOI / CAF / Deposit)",
+        systemNoteKey: "systemNoteA",
+        clientCommentKey: "clientCommentA",
+        noteForClientKey: "noteForClientA",
+        fieldsForNote: [
+          "voi",
+          "caf",
+          "depositReceipt",
+          "obtainDaSeller",
+          "vendorDisclosure",
+        ],
+      },
+      {
+        id: "B",
+        systemNoteLabel: "System Note (B&P / Finance)",
+        clientCommentLabel: "Client Comment (B&P / Finance)",
+        systemNoteKey: "systemNoteB",
+        clientCommentKey: "clientCommentB",
+        noteForClientKey: "noteForClientB",
+        fieldsForNote: ["buildingAndPest", "financeApproval"],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {
@@ -237,6 +306,7 @@ export default function Stage2({
   const { matterNumber } = useParams();
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
+  const willsApi = new WillsAPI();
 
   const originalData = useRef({});
   const hasLoaded = useRef(false);
@@ -465,6 +535,10 @@ export default function Stage2({
           ...payload,
           colorStatus,
         });
+      } else if (currentModule === "wills") {
+        payload.matterNumber = matterNumber;
+        payload.colorStatus = colorStatus;
+        apiResponse = await willsApi.upsertStage(2, matterNumber, payload);
       } else {
         // standard conveyancing
         payload.matterNumber = matterNumber;

@@ -279,7 +279,7 @@ function BookDemo() {
           value={formData.state}
           onChange={handleInputChange}
           className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50"
-          placeholder="Tamil Nadu"
+          placeholder="Victoria"
         />
       </div>
 
@@ -528,7 +528,7 @@ function BookDemo() {
               alt="OpsNav"
               className="h-8 sm:h-9 md:h-10 w-auto"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.1</span>
           </motion.div>
 
           <motion.button

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import AuthAPI from "../../api/authAPI";
 import { toast } from "react-toastify";
 import {
@@ -20,6 +20,7 @@ function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
@@ -44,12 +45,21 @@ function AdminLogin() {
           position: "bottom-center",
         });
 
+        // Determine target path
+        let targetPath = location.state?.from?.pathname || location.state?.from;
+
+        if (!targetPath) {
+          targetPath =
+            response.role === "admin"
+              ? "/admin/work-selection"
+              : "/user/work-selection";
+        }
+
         setTimeout(() => {
-          if (response.role === "admin") {
-            navigate("/admin/work-selection");
-          } else {
-            navigate("/user/work-selection");
-          }
+          // Hard reload and navigate with cache busting
+          const timestamp = new Date().getTime();
+          const separator = targetPath.includes("?") ? "&" : "?";
+          window.location.href = `${targetPath}${separator}refresh=${timestamp}`;
         }, 1500);
       }
     } catch (err) {
@@ -132,7 +142,7 @@ function AdminLogin() {
               alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.0</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.1</span>
           </motion.div>
 
           <motion.button

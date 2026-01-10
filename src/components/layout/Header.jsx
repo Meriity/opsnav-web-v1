@@ -19,6 +19,7 @@ import { useArchivedClientStore } from "../../pages/ArchivedClientStore/UseArchi
 import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import CommercialAPI from "../../api/commercialAPI";
+import WillsAPI from "../../api/willsAPI";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -32,6 +33,7 @@ export default function Header() {
 
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
+  const willsApi = new WillsAPI();
   const { archivedClients } = useArchivedClientStore();
 
   const navigate = useNavigate();
@@ -168,6 +170,18 @@ export default function Header() {
         response = isArchivedPage
           ? await commercialApi.getArchivedProjects()
           : await commercialApi.getActiveProjects();
+      }
+
+      // 🔹 WILLS
+      else if (currentModule === "wills") {
+          try {
+             // Assuming getActiveProjects (aliased to getActiveClients) returns the list
+             // TODO: Add archived logic if Wills supports it later
+             response = await willsApi.getActiveProjects();
+          } catch (e) {
+             console.warn("Error fetching Wills search results:", e);
+             response = [];
+          }
       }
 
       // 🔹 PRINT MEDIA
