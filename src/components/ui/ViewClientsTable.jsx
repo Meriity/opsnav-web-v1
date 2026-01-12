@@ -163,7 +163,9 @@ const ViewClientsTable = ({
                               <select
                                 name="allocatedUser"
                                 className={
-                                  localStorage.getItem("role") !== "admin"
+                                  !["admin", "superadmin"].includes(
+                                    localStorage.getItem("role")
+                                  )
                                     ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
                                     : "bg-white p-2 border rounded w-full"
                                 }
@@ -177,7 +179,9 @@ const ViewClientsTable = ({
                                   setRefresh((prev) => !prev);
                                 }}
                                 disabled={
-                                  localStorage.getItem("role") !== "admin"
+                                  !["admin", "superadmin"].includes(
+                                    localStorage.getItem("role")
+                                  )
                                 }
                               >
                                 <option value="">
