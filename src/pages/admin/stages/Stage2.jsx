@@ -593,13 +593,15 @@ export default function Stage2({
           <select
             name={field.name}
             className={
-              localStorage.getItem("role") !== "admin"
+              !["admin", "superadmin"].includes(localStorage.getItem("role"))
                 ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
                 : "bg-white p-2 border rounded w-full"
             }
             value={formData[field.name] || ""}
             onChange={(e) => handleChange(field.name, e.target.value)}
-            disabled={localStorage.getItem("role") !== "admin"}
+            disabled={
+              !["admin", "superadmin"].includes(localStorage.getItem("role"))
+            }
           >
             <option value="">Select Agent</option>
             {user &&

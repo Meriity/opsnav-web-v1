@@ -682,7 +682,11 @@ const ViewClients = () => {
                       className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
                       value={selectedClientName}
                       onChange={(e) => handleClientFilterChange(e.target.value)}
-                      disabled={localStorage.getItem("role") !== "admin"}
+                      disabled={
+                        !["admin", "superadmin"].includes(
+                          localStorage.getItem("role")
+                        )
+                      }
                     >
                       <option value="">All Clients</option>
                       {list.map((client, index) => (
