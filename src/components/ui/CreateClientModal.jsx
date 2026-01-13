@@ -638,7 +638,6 @@ useEffect(() => {
           "postcode",
           "matterDate",
           "settlementDate",
-          "isTrustee",
         ];
         if (requiredFields.some((field) => !formData[field])) {
           toast.error("Please fill all required fields.");
@@ -932,7 +931,7 @@ useEffect(() => {
                       </div>
                     </div>
                     )}
-                    {/* <div>
+                    <div>
                       <label className="block mb-1 font-medium">
                         Is purchaser a trustee?
                       </label>
@@ -955,7 +954,7 @@ useEffect(() => {
                           </label>
                         ))}
                       </div>
-                    </div> */}
+                    </div>
                   </div>
 
                   <div>
