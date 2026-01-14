@@ -396,7 +396,7 @@ export default function Home() {
                 alt="OpsNav"
                 className="h-10 sm:h-12 w-auto"
               />
-              <span className="text-[10px] text-gray-400 font-medium mt-2 leading-none">v5.0.3</span>
+              <span className="text-[10px] text-gray-400 font-medium mt-2 leading-none">v5.0.4</span>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -451,7 +451,7 @@ export default function Home() {
                   alt="OpsNav"
                   className="h-10 sm:h-12 w-auto"
                 />
-                <span className="text-[10px] text-gray-400 font-medium leading-none">v5.0.3</span>
+                <span className="text-[10px] text-gray-400 font-medium leading-none">v5.0.4</span>
               </div>
             </motion.div>
 
