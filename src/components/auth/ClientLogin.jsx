@@ -154,7 +154,7 @@ function LoginForm() {
               alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.2</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.0.4</span>
           </motion.div>
 
           <motion.button
