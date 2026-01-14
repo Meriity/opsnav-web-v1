@@ -6,6 +6,7 @@ import {
   ArrowUp,
   ArrowDown,
   ClipboardList,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -21,6 +22,7 @@ const ViewClientsTable = ({
   currentModule,
   users,
   handleChangeUser,
+  onDelete,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -279,6 +281,16 @@ const ViewClientsTable = ({
                         <Share2 size={12} />
                         <span className="text-xs">Share</span>
                       </button> */}
+                      {currentModule === "print media" && (
+                        <button
+                          onClick={() => onDelete(item)}
+                          className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 size={12} />
+                          <span className="text-xs">Delete</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -388,6 +400,15 @@ const ViewClientsTable = ({
                 >
                   <Share2 size={16} />
                 </button>
+                {currentModule === "print media" && (
+                  <button
+                    onClick={() => onDelete(item)}
+                    className="p-1 text-red-500 hover:text-red-700"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
 

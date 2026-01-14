@@ -11,6 +11,8 @@ export default function ConfirmationModal({
   children,
   message,
   isLogout,
+  confirmLabel = "Save & Continue",
+  cancelLabel = "Leave",
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -91,7 +93,7 @@ export default function ConfirmationModal({
                 ) : (
                   <>
                     <Button
-                      label="Leave"
+                      label={cancelLabel}
                       onClick={onDiscard || onClose}
                       disabled={isConfirming}
                       bg="bg-red-500"
@@ -99,7 +101,7 @@ export default function ConfirmationModal({
                       width="w-24"
                     />
                     <Button
-                      label={isConfirming ? "Saving..." : "Save & Continue"}
+                      label={isConfirming ? "Processing..." : confirmLabel}
                       onClick={handleConfirm}
                       disabled={isConfirming}
                       textColor="text-white"

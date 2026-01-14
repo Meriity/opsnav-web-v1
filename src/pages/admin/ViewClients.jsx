@@ -11,6 +11,7 @@ import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment, useMemo } from "react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
+import AdminAPI from "../../api/adminAPI";
 import WillsAPI from "../../api/willsAPI";
 import Header from "../../components/layout/Header";
 import { toast } from "react-toastify";
@@ -84,6 +85,8 @@ const ViewClients = () => {
   const [commercialClients, setCommercialClients] = useState([]);
   const [selectedClientName, setSelectedClientName] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   const currentModule = localStorage.getItem("currentModule");
 
@@ -96,6 +99,8 @@ const ViewClients = () => {
       return new ClientAPI();
     }
   }, [currentModule]);
+
+  const adminApi = useMemo(() => new AdminAPI(), []);
 
   // Fetch clients based on module
   useEffect(() => {
@@ -389,8 +394,30 @@ const ViewClients = () => {
     }
   }
 
+
   const handleClientFilterChange = (selectedName) => {
     setSelectedClientName(selectedName);
+  };
+  
+  const handleDeleteClick = (order) => {
+    setOrderToDelete(order);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    try {
+      await adminApi.deleteIDGOrder(orderToDelete.orderId);
+      toast.success("Order deleted successfully");
+      setShowDeleteModal(false);
+      setOrderToDelete(null);
+      // Refresh logic: for simplicity reload page or refetch
+      window.location.reload(); 
+    } catch (error) {
+      console.error("Failed to delete order", error);
+      toast.error(error.message || "Failed to delete order");
+      setShowDeleteModal(false);
+    }
   };
 
   const handelShareEmailModalClose = () => {
@@ -506,6 +533,19 @@ const ViewClients = () => {
               setDateFilter({ type: "", range: ["", ""] });
               setShowDateRange(false);
             }}
+          />
+
+          <ConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setOrderToDelete(null);
+            }}
+            onConfirm={confirmDeleteOrder}
+            title="Delete Order"
+            message="Are you sure you want to delete this order? This action cannot be undone and will remove all related stage and cost data."
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
           />
 
           <Dialog
@@ -930,6 +970,7 @@ const ViewClients = () => {
                   handelOTOpen={() => setShowOutstandingTask(true)}
                   handelOT={setOTActiveMatterNumber}
                   currentModule={currentModule}
+                  onDelete={handleDeleteClick}
                 />
               </div>
             )}
