@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
@@ -18,6 +18,18 @@ function SidebarModuleSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const updateModuleState = () => {
@@ -118,7 +130,7 @@ function SidebarModuleSwitcher() {
   if (availableModules.length <= 1) return null;
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 group mr-4 cursor-pointer"
@@ -138,11 +150,6 @@ function SidebarModuleSwitcher() {
       </button>
 
       {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 cursor-default"
-            onClick={() => setIsOpen(false)}
-          />
           <div className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full z-50 sm:mt-2">
             <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden mx-0 sm:mx-0">
               <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900">
@@ -232,7 +239,7 @@ function SidebarModuleSwitcher() {
               </div>
             </div>
           </div>
-        </>
+
       )}
     </div>
   );
