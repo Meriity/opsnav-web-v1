@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import NotificationBell from "../ui/NotificationBell";
 import useDebounce from "../../hooks/useDebounce";
 import { useLocation } from "react-router-dom";
 import {
@@ -77,7 +78,7 @@ export default function Header() {
     weekday: "long",
     month: "long",
     day: "numeric",
-    year: "numeric"
+    year: "numeric",
   }).format(currentTime);
 
   const formattedTime = new Intl.DateTimeFormat("en-US", {
@@ -103,55 +104,55 @@ export default function Header() {
   function handelListClick(val) {
     if (!val) return;
     setShowDropdown(false);
-    
+
     // 1. Robust ID Extraction (Handle inconsistent API response casing)
-    const id = 
-        val.matterNumber || 
-        val.matternumber || 
-        val.orderId || 
-        val.orderid || 
-        val.id || 
-        val._id || 
-        val.clientId;
+    const id =
+      val.matterNumber ||
+      val.matternumber ||
+      val.orderId ||
+      val.orderid ||
+      val.id ||
+      val._id ||
+      val.clientId;
 
     if (!id) {
-       console.error("Missing Matter ID for navigation. Object:", val);
-       return;
+      console.error("Missing Matter ID for navigation. Object:", val);
+      return;
     }
 
     const role = localStorage.getItem("role") || "admin";
     const basePath = role === "user" ? "/user" : "/admin";
-    
+
     // 2. Robust Archived Check
     const status = (val.status || "").toLowerCase();
     const closeMatter = (val.closeMatter || "").toLowerCase();
-    const isArchived = 
-      status === "closed" || 
+    const isArchived =
+      status === "closed" ||
       status === "archived" ||
       closeMatter === "closed" ||
       closeMatter === "cancelled";
 
     if (isArchived) {
-       return navigate(`${basePath}/archived-clients`, {
-          state: { val },
-       });
+      return navigate(`${basePath}/archived-clients`, {
+        state: { val },
+      });
     }
 
     // Active Matters Logic
-    
+
     // 3. Auto-detect Print Media
     if (String(id).toUpperCase().startsWith("IDG")) {
-        localStorage.setItem("currentModule", "print media");
+      localStorage.setItem("currentModule", "print media");
     }
 
     // 4. Construct URL based on Role
     let targetUrl;
     if (role === "user") {
-        targetUrl = `/user/client/${id}/stages`;
+      targetUrl = `/user/client/${id}/stages`;
     } else {
-        targetUrl = `/admin/client/stages/${id}`;
+      targetUrl = `/admin/client/stages/${id}`;
     }
-    
+
     // 5. Force full navigation
     // Using href guarantees a fresh page load
     window.location.href = targetUrl;
@@ -164,8 +165,6 @@ export default function Header() {
       const lowercasedValue = value.toLowerCase();
 
       let response = [];
-
-      // 🔹 COMMERCIAL (FIX)
       if (currentModule === "commercial") {
         response = isArchivedPage
           ? await commercialApi.getArchivedProjects()
@@ -174,24 +173,25 @@ export default function Header() {
 
       // 🔹 WILLS
       else if (currentModule === "wills") {
-          try {
-             // Assuming getActiveProjects (aliased to getActiveClients) returns the list
-             // TODO: Add archived logic if Wills supports it later
-             response = await willsApi.getActiveProjects();
-          } catch (e) {
-             console.warn("Error fetching Wills search results:", e);
-             response = [];
-          }
+        try {
+          response = await willsApi.getActiveProjects();
+        } catch (e) {
+          console.warn("Error fetching Wills search results:", e);
+          response = [];
+        }
       }
 
       // 🔹 PRINT MEDIA
       else if (currentModule === "print media") {
-         try {
-           response = await api.getIDGSearchResult(value);
-         } catch (e) {
-           console.warn("Error fetching IDG search results, falling back to empty:", e);
-           response = [];
-         }
+        try {
+          response = await api.getIDGSearchResult(value);
+        } catch (e) {
+          console.warn(
+            "Error fetching IDG search results, falling back to empty:",
+            e
+          );
+          response = [];
+        }
       }
 
       // 🔹 ARCHIVED
@@ -204,7 +204,10 @@ export default function Header() {
         try {
           response = await api.getClients();
         } catch (e) {
-          console.warn("Error fetching clients for search, falling back to empty:", e);
+          console.warn(
+            "Error fetching clients for search, falling back to empty:",
+            e
+          );
           response = [];
         }
       }
@@ -359,7 +362,7 @@ export default function Header() {
       if (
         searchBoxRef.current &&
         !searchBoxRef.current.contains(event.target) &&
-        dropdownRef.current && 
+        dropdownRef.current &&
         !dropdownRef.current.contains(event.target)
       ) {
         setShowDropdown(false);
@@ -397,7 +400,7 @@ export default function Header() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
         <div className="relative px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3 lg:gap-4">
-          <div className="flex flex-row items-center gap-4 w-full md:hidden lg:flex lg:w-auto lg:min-w-[200px]">
+          <div className="flex flex-row md:flex-col lg:flex-row items-center md:items-start lg:items-center gap-4 md:gap-1 lg:gap-4 w-full md:flex md:w-auto lg:flex lg:w-auto lg:min-w-[200px]">
             <div className="flex flex-col items-end">
               <img
                 className={`h-auto object-contain w-14 transition-all duration-300 ease-in-out`}
@@ -419,7 +422,7 @@ export default function Header() {
                 <span className="animate-pulse hidden md:block">👋</span>
               </motion.div>
 
-              <div className="flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
+              <div className="hidden lg:flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-3 h-3 text-[#2E3D99]" />
                   <span>{formattedDate}</span>
@@ -438,7 +441,8 @@ export default function Header() {
               <SidebarModuleSwitcher />
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto relative z-20">
+            <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto relative z-20">
+              
               <button
                 onClick={toggleFullScreen}
                 className="hidden lg:flex p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
@@ -483,7 +487,6 @@ export default function Header() {
                       isFocused ? "text-[#2E3D99]" : "text-gray-400"
                     }`}
                   />
-
                   <input
                     ref={inputRef}
                     type="text"
@@ -541,6 +544,7 @@ export default function Header() {
                   </AnimatePresence>
                 </div>
               </div>
+              {!isPrintMedia && <NotificationBell />}
             </div>
           </div>
         </div>
