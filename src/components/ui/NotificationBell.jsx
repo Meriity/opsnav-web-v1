@@ -1,94 +1,18 @@
-// components/ui/NotificationBell.jsx
 import { useState, useEffect, useRef } from "react";
-import {
-  Bell,
-  Trash2,
-  CheckCircle,
-  Settings,
-  RefreshCw,
-  Eye,
-  X,
-  Filter,
-  Users,
-  UserCheck,
-  ShoppingCart,
-  Shield,
-} from "lucide-react";
-import { toast } from "react-toastify";
+import { Bell, RefreshCw, CheckCheck } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import NotificationAPI from "../../api/notificationAPI";
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  const [settings, setSettings] = useState({
-    autoRefresh: true,
-    refreshInterval: 30000,
-    enabledTypes: {
-      user: true,
-      client: true,
-      order: true,
-    },
-  });
 
   const popoverRef = useRef(null);
   const notificationAPI = new NotificationAPI();
-
-  // Temporary mock data for testing - remove when APIs are ready
-  const mockNotifications = [
-    {
-      _id: "1",
-      type: "user",
-      message: "New user created: John Doe (john@company.com)",
-      read: false,
-      metadata: {
-        userEmail: "john@company.com",
-        userName: "John Doe",
-        role: "admin",
-        route: "/admin/manage-users",
-      },
-      createdAt: new Date().toISOString(),
-    },
-    {
-      _id: "2",
-      type: "client",
-      message: "New commercial project created: ABC Corporation",
-      read: false,
-      metadata: {
-        clientName: "ABC Corporation",
-        clientId: "CL-001",
-        route: "/admin/view-clients",
-      },
-      createdAt: new Date(Date.now() - 300000).toISOString(),
-    },
-    {
-      _id: "3",
-      type: "order",
-      message: "New order created: ORD-2024-001",
-      read: true,
-      metadata: {
-        orderId: "ORD-2024-001",
-        clientName: "XYZ Ltd",
-        route: "/admin/view-clients",
-      },
-      createdAt: new Date(Date.now() - 600000).toISOString(),
-    },
-    {
-      _id: "4",
-      type: "system",
-      message: "System backup completed successfully",
-      read: false,
-      metadata: {
-        system: "backup",
-        route: "/admin/dashboard",
-      },
-      createdAt: new Date(Date.now() - 1200000).toISOString(),
-    },
-  ];
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -102,210 +26,118 @@ const NotificationBell = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch notifications using NotificationAPI with fallback to mock data
   const fetchNotifications = async () => {
     try {
       setLoading(true);
+      const results = await Promise.allSettled([
+        notificationAPI.getNotifications(),
+        notificationAPI.getCommercialNotifications(),
+      ]);
 
-      // Try real API first, fallback to mock data if it fails
-      try {
-        const data = await notificationAPI.getNotifications();
-        setNotifications(data.notifications || data || []);
-      } catch (apiError) {
-        console.log("API not ready, using mock notifications data");
-        // Use mock data for development
-        setNotifications(mockNotifications);
+      const convResult = results[0];
+      const commResult = results[1];
+
+      let convData = [];
+      if (convResult.status === 'fulfilled') {
+        convData = convResult.value;
+      } else {
+        console.error("Error fetching conveyancing notifications:", convResult.reason);
       }
+
+      let commData = [];
+      if (commResult.status === 'fulfilled') {
+        commData = commResult.value;
+      } else {
+        console.error("Error fetching commercial notifications:", commResult.reason);
+      }
+      
+      const convNotifs = (Array.isArray(convData) ? convData : convData.notifications || []).map(n => ({ ...n, type: 'conveyancing' }));
+      const commNotifs = (Array.isArray(commData) ? commData : commData.notifications || []).map(n => ({ ...n, type: 'commercial' }));
+
+      const allNotifs = [...convNotifs, ...commNotifs].sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setNotifications(allNotifs);
+      setUnreadCount(allNotifs.filter((n) => !n.isRead).length);
     } catch (error) {
       console.error("Error fetching notifications:", error);
-      // Fallback to mock data
-      setNotifications(mockNotifications);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Fetch unread count using NotificationAPI with fallback to mock data
-  const fetchUnreadCount = async () => {
-    try {
-      // Try real API first, fallback to mock data if it fails
-      try {
-        const data = await notificationAPI.getUnreadCount();
-        setUnreadCount(data.count || 0);
-      } catch (apiError) {
-        console.log("API not ready, using mock unread count");
-        // Calculate from mock data
-        const unread = mockNotifications.filter((n) => !n.read).length;
-        setUnreadCount(unread);
-      }
-    } catch (error) {
-      console.error("Error fetching unread count:", error);
-      // Fallback to mock calculation
-      const unread = mockNotifications.filter((n) => !n.read).length;
-      setUnreadCount(unread);
     }
   };
 
   // Initial load
   useEffect(() => {
     fetchNotifications();
-    fetchUnreadCount();
   }, []);
-
-  // Auto-refresh
-  useEffect(() => {
-    if (!settings.autoRefresh) return;
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-      fetchUnreadCount();
-    }, settings.refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [settings.autoRefresh, settings.refreshInterval]);
 
   const handleBellClick = () => {
     setIsOpen(!isOpen);
-    fetchNotifications();
-    fetchUnreadCount();
+    if (!isOpen) {
+        fetchNotifications();
+    }
   };
 
-  // Mark as read using NotificationAPI with mock fallback
-  const markAsRead = async (notificationId) => {
+  const markAsRead = async (notification) => {
     try {
-      // Try real API first
-      try {
-        await notificationAPI.markAsRead(notificationId);
-      } catch (apiError) {
-        console.log("Mark as read API not ready, updating locally");
-      }
-
-      // Update local state regardless of API success
+      // Optimistically update local state
       setNotifications((prev) =>
         prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, read: true } : notif
+          notif._id === notification._id ? { ...notif, isRead: true } : notif
         )
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+      
+      switch (notification.type) {
+        case 'commercial':
+          await notificationAPI.markCommercialAsRead(notification._id);
+          break;
+        case 'conveyancing':
+        default:
+          await notificationAPI.markAsRead(notification._id);
+          break;
+      }
     } catch (error) {
       console.error("Error marking as read:", error);
     }
   };
 
-  // Mark all as read using NotificationAPI with mock fallback
-  const markAllAsRead = async () => {
-    try {
-      // Try real API first
-      try {
-        await notificationAPI.markAllAsRead();
-      } catch (apiError) {
-        console.log("Mark all as read API not ready, updating locally");
-      }
-
-      // Update local state regardless of API success
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, read: true }))
-      );
-      setUnreadCount(0);
-      toast.success("All notifications marked as read");
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-      toast.error("Failed to mark all as read");
+  const getStageNumber = (stageName) => {
+    switch (stageName) {
+      case "StageOne": return 1;
+      case "StageTwo": return 2;
+      case "StageThree": return 3;
+      case "StageFour": return 4;
+      default: return 1;
     }
   };
 
-  // Delete notification using NotificationAPI with mock fallback
-  const deleteNotification = async (notificationId) => {
-    try {
-      const deletedNotification = notifications.find(
-        (n) => n._id === notificationId
-      );
-
-      // Try real API first
-      try {
-        await notificationAPI.deleteNotification(notificationId);
-      } catch (apiError) {
-        console.log("Delete notification API not ready, updating locally");
-      }
-
-      // Update local state regardless of API success
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-      setNotifications((prev) =>
-        prev.filter((notif) => notif._id !== notificationId)
-      );
-      toast.success("Notification deleted");
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-      toast.error("Failed to delete notification");
-    }
-  };
-
-  // Clear all notifications using NotificationAPI with mock fallback
-  const clearAllNotifications = async () => {
-    try {
-      // Try real API first
-      try {
-        await notificationAPI.clearAllNotifications();
-      } catch (apiError) {
-        console.log("Clear all notifications API not ready, updating locally");
-      }
-
-      // Update local state regardless of API success
-      setNotifications([]);
-      setUnreadCount(0);
-      setShowClearConfirm(false);
-      setIsOpen(false);
-      toast.success("All notifications cleared");
-    } catch (error) {
-      console.error("Error clearing notifications:", error);
-      toast.error("Failed to clear notifications");
-    }
-  };
-
-  // Get notification type styling and icons
-  const getNotificationConfig = (type) => {
-    const configs = {
-      user: {
-        color: "bg-blue-100 text-blue-800 border-blue-300",
-        label: "User",
-        icon: Users,
-        description: "User management activities",
-      },
-      client: {
-        color: "bg-green-100 text-green-800 border-green-300",
-        label: "Client",
-        icon: UserCheck,
-        description: "Client creation and updates",
-      },
-      order: {
-        color: "bg-orange-100 text-orange-800 border-orange-300",
-        label: "Order",
-        icon: ShoppingCart,
-        description: "Order processing updates",
-      },
-    };
-    return configs[type] || configs.system;
-  };
-
-  const handleNotificationClick = (notification) => {
-    // Mark as read when clicked
-    if (!notification.read) {
-      markAsRead(notification._id);
-    }
-
-    // Handle actions based on notification type and metadata
-    if (notification.metadata?.route) {
-      window.location.href = notification.metadata.route;
+  const handleNotificationClick = async (notification) => {
+    // Mark as read if not already
+    if (!notification.isRead) {
+      markAsRead(notification);
     }
 
     setIsOpen(false);
-  };
 
-  const filteredNotifications = notifications.filter(
-    (notification) => settings.enabledTypes[notification.type]
-  );
+    // Redirect to matter page
+    // Determine user role based on current path prefix
+    let prefix = "/admin";
+    if (location.pathname.startsWith("/user")) {
+        prefix = "/user";
+    }
+
+    // Determine target stage (default to first pending stage or 1)
+    let stageNo = 1;
+    if (notification.pendingStages && notification.pendingStages.length > 0) {
+        stageNo = getStageNumber(notification.pendingStages[0]);
+    }
+
+    // Route: /admin/client/stages/:matterNumber/:stageNo
+    const route = `${prefix}/client/stages/${notification.matterNumber}/${stageNo}`;
+    navigate(route);
+  };
 
   return (
     <div className="relative" ref={popoverRef}>
@@ -323,373 +155,115 @@ const NotificationBell = () => {
         )}
       </button>
 
-      {/* Notification Popover - Made more compact */}
+      {/* Notification Popover */}
       {isOpen && (
-        <div className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-          {/* Header - Made more compact */}
-          <div className="flex items-center justify-between p-3 border-b border-gray-200">
-            <h3 className="text-base font-semibold text-gray-900">
-              Notifications
-            </h3>
-            <div className="flex items-center gap-1">
-              {/* Refresh */}
+        <>
+            {/* Mobile Backdrop */}
+            <div 
+                className="fixed inset-0 bg-black/20 z-40 md:hidden" 
+                onClick={() => setIsOpen(false)}
+            />
+            <div className="fixed inset-x-4 top-20 md:absolute md:top-12 md:right-0 md:left-auto md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+          <div className="p-3 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-white text-sm">
+                  Notifications
+                </h3>
+                <p className="text-slate-300 text-xs">Recent notifications</p>
+              </div>
               <button
                 onClick={fetchNotifications}
                 disabled={loading}
-                className="p-1 text-gray-500 hover:text-gray-700 rounded transition-colors"
+                className="text-slate-300 hover:text-white p-1 rounded transition-colors"
                 title="Refresh"
               >
-                <RefreshCw
-                  size={14}
-                  className={loading ? "animate-spin" : ""}
-                />
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
               </button>
-
-              {/* Settings */}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-1 text-gray-500 hover:text-gray-700 rounded transition-colors"
-                title="Settings"
-              >
-                <Settings size={14} />
-              </button>
-
-              {/* Mark All as Read */}
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="p-1 text-gray-500 hover:text-gray-700 rounded transition-colors"
-                  title="Mark all as read"
-                >
-                  <CheckCircle size={14} />
-                </button>
-              )}
-
-              {/* Clear All */}
-              {notifications.length > 0 && (
-                <button
-                  onClick={() => setShowClearConfirm(true)}
-                  className="p-1 text-gray-500 hover:text-red-600 rounded transition-colors"
-                  title="Clear all"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Notifications List - Made more compact */}
-          <div className="max-h-64 overflow-y-auto">
-            {loading ? (
+          <div className="max-h-96 overflow-y-auto">
+            {loading && notifications.length === 0 ? (
               <div className="flex justify-center items-center p-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
               </div>
-            ) : filteredNotifications.length > 0 ? (
+            ) : notifications.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {filteredNotifications.map((notification) => {
-                  const config = getNotificationConfig(notification.type);
-                  const IconComponent = config.icon;
-
-                  return (
-                    <div
-                      key={notification._id}
-                      className={`p-3 cursor-pointer transition-colors ${
-                        notification.read ? "bg-white" : "bg-blue-50"
-                      } hover:bg-gray-50 border-l-3 ${
-                        config.color.split(" ")[2]
-                      }`}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="flex items-center gap-2">
-                          <IconComponent size={12} />
-                          <span
-                            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
-                          >
-                            {config.label}
-                          </span>
+                {notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`p-4 cursor-pointer transition-colors hover:bg-gray-50 border-l-4 ${
+                      notification.isRead 
+                        ? "bg-white border-transparent" 
+                        : "bg-blue-50 border-blue-500"
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#FB4A50]/90 text-white rounded-full">
+                                {notification.matterNumber}
+                            </span>
                         </div>
-                        <div className="flex gap-0.5">
-                          {!notification.read && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markAsRead(notification._id);
-                              }}
-                              className="p-0.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
-                              title="Mark as read"
-                            >
-                              <Eye size={12} />
-                            </button>
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNotification(notification._id);
-                            }}
-                            className="p-0.5 text-gray-400 hover:text-red-600 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span>{new Date(notification.createdAt).toLocaleDateString("en-GB")}</span>
+                            <div className="flex relative w-4 h-3">
+                                <svg
+                                    width="12"
+                                    height="8"
+                                    viewBox="0 0 12 8"
+                                    fill="none"
+                                    className={`absolute left-0 top-1 transition-colors duration-300 ${notification.isRead ? "text-[#53bdeb]" : "text-gray-300"}`}
+                                >
+                                    <path
+                                        d="M1 3.5L4.5 7L11 0.5"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                                <svg
+                                    width="12"
+                                    height="8"
+                                    viewBox="0 0 12 8"
+                                    fill="none"
+                                    className={`absolute left-[5px] top-1 transition-colors duration-300 ${notification.isRead ? "text-[#53bdeb]" : "text-gray-300"}`}
+                                >
+                                    <path
+                                        d="M1 3.5L4.5 7L11 0.5"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </div>
                         </div>
-                      </div>
-
-                      <p className="text-xs text-gray-800 mb-1 leading-relaxed line-clamp-2">
-                        {notification.message}
-                      </p>
-
-                      {notification.metadata && (
-                        <div className="mt-1 space-y-0.5">
-                          {notification.metadata.userEmail && (
-                            <p className="text-xs text-gray-500 truncate">
-                              User: {notification.metadata.userEmail}
-                            </p>
-                          )}
-                          {notification.metadata.clientName && (
-                            <p className="text-xs text-gray-500 truncate">
-                              Client: {notification.metadata.clientName}
-                            </p>
-                          )}
-                          {notification.metadata.orderId && (
-                            <p className="text-xs text-gray-500 truncate">
-                              Order: {notification.metadata.orderId}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(notification.createdAt).toLocaleDateString()}{" "}
-                        at{" "}
-                        {new Date(notification.createdAt).toLocaleTimeString(
-                          [],
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </p>
                     </div>
-                  );
-                })}
+                    
+                    <p className="text-sm text-gray-600 mb-2">
+                      {notification.message}
+                    </p>
+
+                    {notification.settlementDate && (
+                        <p className="text-xs text-gray-700 font-bold">
+                            Settlement: {new Date(notification.settlementDate).toLocaleDateString("en-GB")}
+                        </p>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center p-6 text-gray-500">
-                <Bell size={24} className="mb-1 text-gray-300" />
+              <div className="flex flex-col items-center justify-center p-8 text-gray-500">
+                <Bell size={24} className="mb-2 text-gray-300" />
                 <p className="text-sm">No notifications</p>
               </div>
             )}
           </div>
         </div>
-      )}
-
-      {/* Clear Confirmation Modal */}
-      {showClearConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-          {/* Glass morphism backdrop */}
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-
-          {/* Modal content */}
-          <div className="relative bg-white/90 backdrop-blur-md rounded-xl p-6 w-full max-w-sm shadow-2xl border border-white/20">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Clear All Notifications
-              </h3>
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to clear all notifications? This action
-              cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors rounded-lg hover:bg-white/50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={clearAllNotifications}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Clear All
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal - Made more compact */}
-      {showSettings && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-          {/* Glass morphism backdrop */}
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-
-          {/* Modal content - Made more compact */}
-          <div className="relative bg-white/90 backdrop-blur-md rounded-xl p-5 w-full max-w-sm shadow-2xl border border-white/20">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Notification Settings
-              </h3>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-white/50"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Auto Refresh */}
-              <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-colors">
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-700 block">
-                    Auto-refresh
-                  </label>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Check for new notifications
-                  </p>
-                </div>
-                <div className="relative inline-block w-10 h-5 ml-2">
-                  <input
-                    type="checkbox"
-                    checked={settings.autoRefresh}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        autoRefresh: e.target.checked,
-                      })
-                    }
-                    className="sr-only"
-                    id="auto-refresh"
-                  />
-                  <label
-                    htmlFor="auto-refresh"
-                    className={`block w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                      settings.autoRefresh ? "bg-blue-600" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${
-                        settings.autoRefresh ? "transform translate-x-5" : ""
-                      }`}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Refresh Interval */}
-              <div className="p-2 rounded-lg hover:bg-white/50 transition-colors">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Refresh Interval
-                </label>
-                <select
-                  value={settings.refreshInterval}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      refreshInterval: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full p-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white/50"
-                >
-                  <option value={15000}>15 seconds</option>
-                  <option value={30000}>30 seconds</option>
-                  <option value={60000}>1 minute</option>
-                  <option value={300000}>5 minutes</option>
-                </select>
-              </div>
-
-              {/* Notification Types */}
-              <div className="p-2 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <Filter size={14} />
-                  Notification Types
-                </h4>
-                <div className="space-y-3">
-                  {Object.entries(settings.enabledTypes).map(
-                    ([type, enabled]) => {
-                      const config = getNotificationConfig(type);
-                      const IconComponent = config.icon;
-
-                      return (
-                        <div
-                          key={type}
-                          className="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`p-1.5 rounded-md ${
-                                config.color.split(" ")[0]
-                              }`}
-                            >
-                              <IconComponent
-                                size={14}
-                                className={config.color.split(" ")[1]}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <label className="text-sm font-medium text-gray-700 capitalize block truncate">
-                                {type}
-                              </label>
-                              <p className="text-xs text-gray-500 truncate">
-                                {config.description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="relative inline-block w-10 h-5 ml-2">
-                            <input
-                              type="checkbox"
-                              checked={enabled}
-                              onChange={(e) =>
-                                setSettings({
-                                  ...settings,
-                                  enabledTypes: {
-                                    ...settings.enabledTypes,
-                                    [type]: e.target.checked,
-                                  },
-                                })
-                              }
-                              className="sr-only"
-                              id={`type-${type}`}
-                            />
-                            <label
-                              htmlFor={`type-${type}`}
-                              className={`block w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                                enabled ? "bg-blue-600" : "bg-gray-300"
-                              }`}
-                            >
-                              <span
-                                className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${
-                                  enabled ? "transform translate-x-5" : ""
-                                }`}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6 pt-3 border-t border-gray-200/50">
-              <button
-                onClick={() => setShowSettings(false)}
-                className="px-5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-              >
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
