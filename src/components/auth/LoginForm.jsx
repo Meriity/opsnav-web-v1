@@ -131,7 +131,7 @@ function LoginForm() {
                 alt="OpsNav Logo"
                 className="h-16"
               />
-              <span className="text-xs text-gray-400 font-medium mt-1 leading-none">v5.0.3</span>
+              <span className="text-xs text-gray-400 font-medium mt-1 leading-none">v5.1.0</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4">

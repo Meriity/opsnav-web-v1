@@ -206,6 +206,26 @@ class AdminAPI {
     }
   }
 
+  // Delete IDG Order
+  async deleteIDGOrder(orderId) {
+    console.log("Deleting Order ID:", orderId);
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/${orderId}`, {
+        method: "DELETE",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      throw error;
+    }
+  }
+
   // Edit/Update a user
   async editUser(user) {
     console.log(user);
