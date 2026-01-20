@@ -527,7 +527,7 @@ function GetStartedFree() {
               alt="OpsNav"
               className="h-8 sm:h-9 md:h-10 w-auto"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.0</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.1</span>
           </motion.div>
 
           <motion.button
