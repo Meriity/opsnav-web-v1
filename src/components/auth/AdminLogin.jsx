@@ -142,7 +142,9 @@ function AdminLogin() {
               alt="OpsNav"
               className="h-7 sm:h-8 md:h-9 w-auto [@media(max-width:1024px)_and_(max-height:800px)]:h-8 [@media(max-width:430px)]:h-6"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.0</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">
+              v5.1.1
+            </span>
           </motion.div>
 
           <motion.button
@@ -190,8 +192,7 @@ function AdminLogin() {
 
             <p className="text-lg text-gray-600 mb-8 max-w-xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(max-width:430px)]:text-sm [@media(max-width:430px)]:mb-6">
               Access your secure workspace with advanced security features and
-              role-based permissions for streamlined operations
-              management.
+              role-based permissions for streamlined operations management.
             </p>
 
             {/* Feature List - VISIBLE on 1024px (lg:block), HIDDEN on <1024px (hidden) */}
