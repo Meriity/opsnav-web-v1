@@ -199,7 +199,7 @@ export default function Sidebar({
                       src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20only%20(1).png"
                       alt="Logo"
                     />
-                    <span className="text-[10px] text-gray-400 font-medium leading-none">v5.1.1</span>
+                    <span className="text-[10px] text-gray-400 font-medium leading-none">v5.1.2</span>
                   </div>
                 </motion.div>
               ) : (
@@ -216,7 +216,7 @@ export default function Sidebar({
                     src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
                     alt="Logo"
                   />
-                  <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.1</span>
+                  <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.2</span>
                 </motion.div>
               )}
             </AnimatePresence>
