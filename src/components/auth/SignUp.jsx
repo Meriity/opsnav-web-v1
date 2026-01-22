@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { APP_VERSION } from "../../config/version";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -524,7 +525,7 @@ function SignUp() {
               alt="OpsNav"
               className="h-8 sm:h-9 md:h-10 w-auto"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.2</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">{APP_VERSION}</span>
           </motion.div>
 
           <motion.button

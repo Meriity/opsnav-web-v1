@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +25,7 @@ import {
   Shield,
   Globe,
   Target,
+  Info,
 } from "lucide-react";
 import {
   BarChart,
@@ -190,6 +191,7 @@ const CustomEvent = ({ event }) => {
       ? event.clientType.charAt(0)
       : "";
 
+  // Desktop/Tablet View: Full Text
   return (
     <div className="custom-event-content">
       <span className="event-title text-xs truncate">
@@ -201,6 +203,110 @@ const CustomEvent = ({ event }) => {
     </div>
   );
 };
+
+const TabletMonthEvent = ({ event }) => {
+  const currentModule = localStorage.getItem("currentModule");
+  const color = getEventColor(event, currentModule);
+  
+  // Display the Identifier (Number) as requested
+  const identifier = event.matterNumber || event.orderId || event.projectCode || event.id || "Event";
+
+  return (
+    <div className="w-full px-0.5 mb-1">
+      <div 
+        className="w-full rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight text-white truncate shadow-sm opacity-90 hover:opacity-100 transition-opacity" 
+        style={{ backgroundColor: color }}
+        title={identifier} // Tooltip just in case
+      >
+        [{identifier}]
+      </div>
+    </div>
+  );
+};
+
+// --- Mobile Month Event (The Dot) ---
+const MobileMonthEvent = ({ event }) => {
+  const currentModule = localStorage.getItem("currentModule");
+  const color = getEventColor(event, currentModule);
+  
+  return (
+    <div className="flex justify-center items-center h-full w-full py-0.5">
+      <div 
+        className="w-1.5 h-1.5 rounded-full" 
+        style={{ backgroundColor: color }}
+      />
+    </div>
+  );
+};
+
+// --- Helper: Get Event Color (Extracted for reuse) ---
+const getEventColor = (event, currentModule) => {
+  let backgroundColor = "#00aeef";
+
+  if (currentModule === "commercial") {
+    backgroundColor = "#10B981";
+  } else if (event.type === "buildingAndPest") {
+    backgroundColor = "#B24592";
+  } else if (event.type === "financeApproval") {
+    backgroundColor = "#f83600";
+  } else if (event.type === "titleSearch") {
+    backgroundColor = "#34495E";
+  } else if (event.type === "settlement") {
+    backgroundColor = "#8E44AD";
+  } else if (event.type === "deliveryDate") {
+    backgroundColor = "#F39C12";
+  }
+  return backgroundColor;
+};
+
+// 1. Agenda Event (The Card)
+const CustomAgendaEvent = ({ event, onClick }) => {
+  const currentModule = localStorage.getItem("currentModule");
+  const color = getEventColor(event, currentModule);
+  
+  // Format based on module
+  let eventTypeLabel;
+  if (currentModule === "commercial") {
+    eventTypeLabel = event.type || "Event";
+  } else {
+    switch (event.type) {
+      case "buildingAndPest": eventTypeLabel = "B&P"; break;
+      case "financeApproval": eventTypeLabel = "Finance"; break;
+      case "titleSearch": eventTypeLabel = "Title Search"; break;
+      case "settlement": eventTypeLabel = "Settlement"; break;
+      case "deliveryDate": eventTypeLabel = "Delivery"; break;
+      default: eventTypeLabel = event.title;
+    }
+  }
+
+  const identifier = event.matterNumber || event.orderId || event.projectCode || "";
+  
+  return (
+    <div 
+      className="flex flex-col p-2.5 rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 mb-2 bg-white cursor-pointer"
+      style={{ borderLeftColor: color }}
+      onClick={() => onClick && onClick(event)}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span 
+          className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+          style={{ backgroundColor: `${color}20`, color: color }} // 20 = 12% opacity hex
+        >
+          {eventTypeLabel}
+        </span>
+        {event.isApproved && (
+          <div className="flex items-center text-emerald-600 text-[10px] font-medium bg-emerald-50 px-1.5 py-0.5 rounded-full">
+            <CheckCircle className="w-3 h-3 mr-1" /> Approved
+          </div>
+        )}
+      </div>
+      <div className="text-sm font-semibold text-gray-800 line-clamp-1">
+        {event.title}
+      </div>
+    </div>
+  );
+};
+
 
 class CalendarErrorBoundary extends React.Component {
   constructor(props) {
@@ -252,41 +358,55 @@ const ResponsiveCalendarToolbar = ({
   view: currentView,
 }) => {
   const { width } = useWindowSize();
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
+  const isCompactView = width < 1024; // Treat Tablet as Mobile for toolbar layout
+  const isMobile = width < 768; // Still needed for some specific spacing if distinct from tablet
 
   return (
     <div className="rbc-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-3 sm:p-4 mb-3 bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl">
-      <div className="flex items-center gap-1 sm:gap-2">
-        <button
-          type="button"
-          onClick={() => onNavigate("PREV")}
-          className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate("TODAY")}
-          className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate("NEXT")}
-          className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-        </button>
+      
+      {/* Mobile/Tablet Layout: Title First, Then Buttons Centered */}
+      {isCompactView && (
+        <h2 className="text-sm font-semibold text-gray-800 text-center my-1">
+          {label}
+        </h2>
+      )}
+
+      <div className={`flex items-center ${isCompactView ? 'justify-center' : 'justify-start'} gap-1 sm:gap-2 w-full sm:w-auto`}>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onNavigate("PREV")}
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("TODAY")}
+            className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("NEXT")}
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
-      <h2 className="text-sm sm:text-base font-semibold text-gray-800 text-center my-1 sm:my-0 truncate px-2">
-        {label}
-      </h2>
+      {!isCompactView && (
+        <h2 className="text-sm sm:text-base font-semibold text-gray-800 text-center my-1 sm:my-0 truncate px-2 hidden sm:block">
+            {label}
+        </h2>
+      )}
 
-      <div className="flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white">
-        {(isMobile ? [Views.MONTH, Views.AGENDA] : views).map((viewName) => (
+      {!isCompactView && (
+        <div className="flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white">
+          {views.map((viewName) => (
+
           <button
             key={viewName}
             onClick={() => onView(viewName)}
@@ -304,6 +424,7 @@ const ResponsiveCalendarToolbar = ({
           </button>
         ))}
       </div>
+      )}
     </div>
   );
 };
@@ -734,6 +855,8 @@ function Dashboard() {
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(new Date()); // For mobile event list
+  const [showMobileHint, setShowMobileHint] = useState(false); // Hint for mobile dots
   const [chartView, setChartView] = useState("last6Months");
   const [allChartData, setAllChartData] = useState({
     monthlyStats: [],
@@ -744,6 +867,7 @@ function Dashboard() {
   const { width } = useWindowSize();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
+  const isCompactView = width < 1024; // Covers Mobile + Tablet for the "Hybrid" Calendar layout
   const isLaptop = width >= 1024;
   const isSmallLaptop = width >= 1024 && width < 1280;
 
@@ -753,7 +877,7 @@ function Dashboard() {
   // Set calendar view based on screen size
   useEffect(() => {
     if (isMobile) {
-      setCalendarView(Views.AGENDA);
+      setCalendarView(Views.MONTH); // Start with Month view on mobile per user request
     } else if (isTablet) {
       setCalendarView(Views.MONTH);
     } else {
@@ -778,6 +902,19 @@ function Dashboard() {
     queryFn: () => fetchCalendarData(currentModule),
     enabled: !!currentModule,
   });
+
+  // Handle slot selection (clicking a day cell)
+  const handleSelectSlot = useCallback(({ start }) => {
+    setSelectedCalendarDate(start);
+  }, []);
+
+  // Filter events for the selected day (Mobile List)
+  const selectedDayEvents = useMemo(() => {
+    if (!calendarEvents) return [];
+    return calendarEvents.filter(event => 
+      moment(event.start).isSame(selectedCalendarDate, 'day')
+    );
+  }, [calendarEvents, selectedCalendarDate]);
 
   // Process dashboard data when it loads
   useEffect(() => {
@@ -826,6 +963,12 @@ function Dashboard() {
       } else {
         matterNumber = event.matterNumber || event.clientId || event.id;
       }
+      
+      // If Compact View (Mobile/Tablet), clicking an event (dot) should just select that day
+      if (isCompactView) {
+         setSelectedCalendarDate(event.start);
+         return; 
+      }
 
       if (
         matterNumber &&
@@ -838,26 +981,26 @@ function Dashboard() {
         toast.warning("Cannot navigate: Invalid matter identifier");
       }
     },
-    [navigate]
+    [navigate, isCompactView]
   );
 
   // Event styling with clickable cursor
   const eventStyleGetter = useCallback(
     (event) => {
-      let backgroundColor = "#00aeef";
-
-      if (currentModule === "commercial") {
-        backgroundColor = "#10B981";
-      } else if (event.type === "buildingAndPest") {
-        backgroundColor = "#B24592";
-      } else if (event.type === "financeApproval") {
-        backgroundColor = "#f83600";
-      } else if (event.type === "titleSearch") {
-        backgroundColor = "#34495E";
-      } else if (event.type === "settlement") {
-        backgroundColor = "#8E44AD";
-      } else if (event.type === "deliveryDate") {
-        backgroundColor = "#F39C12";
+      // Use the helper, but specifically for Month/Week views
+      const backgroundColor = getEventColor(event, currentModule);
+      
+      // On Mobile Month View, we want transparent background for the event container
+      // because we are rendering a custom specific "Dot" component
+      if (isCompactView) {
+        return {
+           style: {
+             backgroundColor: 'transparent',
+             padding: '0px',
+             border: 'none',
+             textAlign: 'center'
+           }
+        }
       }
 
       return {
@@ -870,11 +1013,12 @@ function Dashboard() {
           padding: "1px 3px",
           cursor: "pointer",
           transition: "all 0.2s ease",
-          fontSize: isMobile ? "10px" : "12px",
+          fontSize: "12px",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.1)", // Slight shadow for depth
         },
       };
     },
-    [currentModule, isMobile]
+    [currentModule, isCompactView]
   );
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -920,7 +1064,7 @@ function Dashboard() {
 
   const { views } = useMemo(() => {
     if (isMobile) {
-      return { views: [Views.AGENDA, Views.MONTH] };
+      return { views: [Views.MONTH] }; // Restrict to Month view only
     } else if (isTablet) {
       return { views: [Views.MONTH, Views.WEEK] };
     }
@@ -1130,7 +1274,8 @@ function Dashboard() {
           </motion.div>
 
           {/* Stats Grid - Enhanced styling */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          {/* Stats Grid - Enhanced styling, responsive for 320px */ }
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Total Users"
               value={totalusers}
@@ -1209,24 +1354,53 @@ function Dashboard() {
               className="rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl dashboard-card"
             >
               <div className="p-3 sm:p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                        Calendar
-                      </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                          Calendar
+                        </h3>
+                      {/* Info Button for Mobile/Tablet Hint */}
+                        {isCompactView && (
+                          <button
+                            onClick={() => setShowMobileHint(!showMobileHint)}
+                            className="ml-1 text-gray-400 hover:text-[#2E3D99] transition-colors focus:outline-none"
+                            aria-label="Calendar info"
+                          >
+                             <Info className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Mobile/Tablet Hint Text */}
+                      <AnimatePresence>
+                        {isCompactView && showMobileHint && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginBottom: 8 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            style={{ overflow: "hidden" }}
+                            className="bg-orange-50 text-orange-800 text-xs px-3 rounded-lg border border-orange-200 shadow-sm"
+                          >
+                            <div className="py-2">
+                              <p><strong>Tip:</strong> The colored dot represents the first event of the day. Tap a date to see all events below.</p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        Important dates & deadlines
+                      </p>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600">
-                      Important dates & deadlines
-                    </p>
                   </div>
-                </div>
-                <div
+                  <div
                   className={`${
-                    isLaptop
+                    !isCompactView
                       ? "h-[500px] overflow-visible"
-                      : "h-[350px] sm:h-[400px] overflow-visible"
+                      : "h-[320px] sm:h-[400px] overflow-visible" // Reduce height on mobile for Month view to fit list below
                   }`}
                 >
                   <style>{`
@@ -1236,6 +1410,15 @@ function Dashboard() {
                     .rbc-calendar, .rbc-btn-group {
                       overflow: visible !important;
                     }
+                    /* Mobile Dot Styling Overrides - Apply to Tablet too */
+                    ${isCompactView ? `
+                    .rbc-month-view .rbc-event {
+                       padding: 0 !important;
+                    }
+                    .rbc-row-content {
+                       z-index: 4;
+                    }
+                    ` : ''}
                   `}</style>
                   <CalendarErrorBoundary>
                     <BigCalendar
@@ -1264,13 +1447,64 @@ function Dashboard() {
                       date={calendarDate}
                       eventPropGetter={eventStyleGetter}
                       onSelectEvent={handleEventSelect}
+                      selectable={true}
+                      longPressThreshold={10} // Reduced threshold for mobile responsiveness
+                      onSelectSlot={handleSelectSlot}
                       components={{
-                        event: CustomEvent,
+                        event: isMobile 
+                          ? MobileMonthEvent 
+                          : isTablet 
+                            ? TabletMonthEvent 
+                            : CustomEvent,
                         toolbar: ResponsiveCalendarToolbar,
+                        agenda: {
+                          event: CustomAgendaEvent,
+                        }
                       }}
                     />
                   </CalendarErrorBoundary>
                 </div>
+                
+                {/* Mobile/Tablet: Selected Day Events List */}
+                {isCompactView && (
+                  <div className="mt-4 border-t border-gray-100 pt-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2 px-1">
+                      {moment(selectedCalendarDate).format("dddd, MMMM Do")}
+                    </h4>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {selectedDayEvents.length > 0 ? (
+                        selectedDayEvents.map((event, idx) => (
+                           <CustomAgendaEvent 
+                             key={event.id || idx} 
+                             event={event} 
+                             onClick={(e) => {
+                                // Direct navigation logic for the list items
+                                let matterNumber = "";
+                                if (currentModule === "commercial") {
+                                  matterNumber = e.projectCode || e.matterNumber || e.id;
+                                } else if (currentModule === "print media") {
+                                  matterNumber = e.orderId || e.clientId || e.id;
+                                } else {
+                                  matterNumber = e.matterNumber || e.clientId || e.id;
+                                }
+
+                                if (matterNumber && matterNumber !== "Untitled" && matterNumber !== "NoID") {
+                                  sessionStorage.setItem("lastSelectedEvent", JSON.stringify(e));
+                                  navigate(`/${userRole}/client/stages/${matterNumber}`);
+                                } else {
+                                  toast.warning("Cannot navigate: Invalid matter identifier");
+                                }
+                             }}
+                           /> 
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-400 py-4 text-xs italic">
+                          No events for this day
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
 
@@ -1300,8 +1534,8 @@ function Dashboard() {
                         Track completion rates over time
                       </p>
                     </div>
-                    {/* Time Toggle - Enhanced */}
-                    <div className="inline-flex items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm w-fit self-start">
+                    {/* Time Toggle - Enhanced with wrap for small screens */}
+                    <div className="flex flex-wrap items-center border border-gray-200 rounded-lg p-0.5 text-xs sm:text-sm bg-white shadow-sm w-fit self-start sm:self-auto">
                       <button
                         onClick={() => setChartView("last6Months")}
                         className={`time-toggler-button px-2 sm:px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
@@ -1342,7 +1576,7 @@ function Dashboard() {
                           margin={{
                             top: 10,
                             right: isMobile ? 0 : 10,
-                            left: isMobile ? -20 : -10,
+                            left: 0,
                             bottom: isMobile
                               ? chartView === "allTime"
                                 ? 30
@@ -1366,25 +1600,11 @@ function Dashboard() {
                               fill: "#6B7280",
                             }}
                             interval={
-                              isMobile && chartView === "allTime"
-                                ? 0
-                                : "preserveStartEnd"
+                              isMobile ? 0 : "preserveStartEnd"
                             }
-                            angle={
-                              isMobile && chartView === "allTime" ? -45 : 0
-                            }
-                            textAnchor={
-                              isMobile && chartView === "allTime"
-                                ? "end"
-                                : "middle"
-                            }
-                            height={
-                              isMobile
-                                ? chartView === "allTime"
-                                  ? 60
-                                  : 50
-                                : 30
-                            }
+                            angle={isMobile ? -45 : 0}
+                            textAnchor={isMobile ? "end" : "middle"}
+                            height={isMobile ? 60 : 30}
                             tickMargin={isMobile ? 5 : 10}
                           />
                           <YAxis
