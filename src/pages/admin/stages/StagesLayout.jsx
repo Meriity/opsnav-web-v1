@@ -303,7 +303,10 @@ export default function StagesLayout() {
   }, []);
 
   const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
-  const CLIENT_TYPE_OPTIONS = ["Buyer", "Seller", "Transfer"];
+  const isPrintMedia = currentModule === "print media";
+  const CLIENT_TYPE_OPTIONS = isPrintMedia 
+    ? ["Real Estate", "Vehicle", "Commercial", "Others"] 
+    : ["Buyer", "Seller", "Transfer"];
 
   let stages = [
     { id: 1, title: "Retainer/Declaration" },
@@ -798,6 +801,10 @@ export default function StagesLayout() {
             ? typeof response.matterDate === "string"
               ? response.matterDate
               : new Date(response.matterDate).toISOString()
+            : response.data?.orderDate
+            ? typeof response.data.orderDate === "string"
+              ? response.data.orderDate
+              : new Date(response.data.orderDate).toISOString()
             : clientData?.matterDate || "",
           settlementDate: response.settlementDate
             ? typeof response.settlementDate === "string"
@@ -1036,13 +1043,19 @@ export default function StagesLayout() {
           notes: clientData?.data?.notes || "",
           postCode: clientData?.data?.postcode || clientData?.data?.postCode,
           orderDate:
-            clientData?.data?.orderDate || clientData?.matterDate || null,
+            clientData?.matterDate ||
+            clientData?.data?.orderDate ||
+            null,
           orderId: clientData?.data?.orderId || clientData?.matterNumber || "",
           clientName:
-            clientData?.data?.client?.name || clientData?.clientName || "",
+            clientData?.clientName ||
+            clientData?.data?.client?.name ||
+            "",
           state: clientData?.data?.state || clientData?.state || "",
           orderType:
-            clientData?.data?.orderType || clientData?.clientType || "",
+            clientData?.clientType ||
+            clientData?.data?.orderType ||
+            "",
           deliveryDate: clientData?.data?.deliveryDate || null,
           dataEntryBy:
             clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
@@ -1509,8 +1522,10 @@ export default function StagesLayout() {
                                 : ""
                               : clientData?.matterNumber
                               ? formatDateForDisplay(clientData.matterDate)
-                              : clientData?.data?.orderDate
-                              ? formatDateForDisplay(clientData.data.orderDate)
+                              : clientData?.data?.orderDate || clientData?.orderDate
+                              ? formatDateForDisplay(
+                                  clientData?.data?.orderDate || clientData?.orderDate
+                                )
                               : ""
                           }
                           onChange={(e) => {
