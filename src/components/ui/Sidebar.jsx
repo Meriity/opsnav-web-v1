@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { APP_VERSION } from "../../config/version";
 
 export default function Sidebar({
   setSidebarOpen,
@@ -199,7 +200,7 @@ export default function Sidebar({
                       src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20only%20(1).png"
                       alt="Logo"
                     />
-                    <span className="text-[10px] text-gray-400 font-medium leading-none">v5.1.2</span>
+                    <span className="text-[10px] text-gray-400 font-medium leading-none">{APP_VERSION}</span>
                   </div>
                 </motion.div>
               ) : (
@@ -216,7 +217,7 @@ export default function Sidebar({
                     src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
                     alt="Logo"
                   />
-                  <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.2</span>
+                  <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">{APP_VERSION}</span>
                 </motion.div>
               )}
             </AnimatePresence>
