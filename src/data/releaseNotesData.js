@@ -12,11 +12,39 @@ import {
   BookOpen,
   Calendar,
   Smartphone,
+  BarChart3,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       January: [
+        {
+          date: "2026-01-27",
+          version: "v5.2.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Print Media & Dashboard Fixes",
+          description: "Fixed unnecessary date fields in Print Media Create Order and corrected dashboard order count.",
+          updates: [
+            {
+              type: "fix",
+              title: "Print Media Create Order",
+              description: "Removed incorrect Matter Date and Settlement Date fields.",
+              details: "Fixed an issue where Conveyancing/Commercial specific date fields were appearing in the Print Media Create Order modal.",
+              icon: Bug,
+            },
+            {
+              type: "fix",
+              title: "Dashboard Order Count",
+              description: "Corrected the order count displayed on the dashboard.",
+              details: "Resolved a backend calculation issue that caused the top box order count on the dashboard to display incorrect values.",
+              icon: BarChart3,
+            }
+          ],
+          module: "Multiple Modules",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-01-22",
           version: "v5.2.0",

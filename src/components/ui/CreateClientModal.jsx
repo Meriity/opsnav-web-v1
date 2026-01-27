@@ -80,7 +80,6 @@ const getInitialFormData = (user, currentModule) => {
       priority: "",
       orderDate: new Date().toISOString().split("T")[0],
       deliveryAddress: "",
-      settlementDate: "",
       dataEntryBy: user,
     };
   } else if (currentModule === "wills") {
@@ -1359,38 +1358,7 @@ useEffect(() => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Only show dates for non-Wills or if Wills needs dates */}
-                    {!isWills && (
-                    <>
-                    <div>
-                      <label className="block mb-1 font-medium">
-                        Matter Date*
-                      </label>
-                      <input
-                        type="date"
-                        name="matterDate"
-                        value={formData.matterDate || ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
-                      />
-                    </div>
 
-                    <div>
-                      <label className="block mb-1 font-medium">
-                        Settlement Date*
-                      </label>
-                      <input
-                        type="date"
-                        name="settlementDate"
-                        value={formData.settlementDate || ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
-                      />
-                    </div>
-                    </>
-                    )}
-                  </div>
                   <div>
                     <div>
                       <label className="block mb-1 font-medium">
