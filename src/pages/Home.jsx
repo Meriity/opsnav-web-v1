@@ -40,6 +40,7 @@ import {
   FaLinkedin,
   FaXTwitter,
 } from "react-icons/fa6";
+import { APP_VERSION } from "../config/version";
 
 const ScrollIndicator = "/down-arrow.png";
 
@@ -396,7 +397,7 @@ export default function Home() {
                 alt="OpsNav"
                 className="h-10 sm:h-12 w-auto"
               />
-              <span className="text-[10px] text-gray-400 font-medium mt-2 leading-none">v5.1.2</span>
+              <span className="text-[10px] text-gray-400 font-medium mt-2 leading-none">{APP_VERSION}</span>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -451,7 +452,7 @@ export default function Home() {
                   alt="OpsNav"
                   className="h-10 sm:h-12 w-auto"
                 />
-                <span className="text-[10px] text-gray-400 font-medium leading-none">v5.1.2</span>
+                <span className="text-[10px] text-gray-400 font-medium leading-none">{APP_VERSION}</span>
               </div>
             </motion.div>
 
@@ -1270,18 +1271,18 @@ export default function Home() {
               © {new Date().getFullYear()} OpsNav. All rights reserved.
             </p>
             <div className="mt-3 sm:mt-4 flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
-              <a href="#" className="hover:text-white transition-colors">
-                Privacy Policy
-              </a>
+              <Link to="/release-notes" className="hover:text-white transition-colors">
+                Release Notes
+              </Link>
               <Link to="/terms" className="hover:text-white transition-colors">
                 Terms of Service
               </Link>
               <a href="#" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Security
-              </a>
+              <Link to="/contact-support" className="hover:text-white transition-colors">
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>

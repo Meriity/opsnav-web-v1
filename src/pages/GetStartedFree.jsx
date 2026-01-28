@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import { APP_VERSION } from "../config/version";
 
 function GetStartedFree() {
   const navigate = useNavigate();
@@ -527,7 +528,7 @@ function GetStartedFree() {
               alt="OpsNav"
               className="h-8 sm:h-9 md:h-10 w-auto"
             />
-            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">v5.1.2</span>
+            <span className="text-[10px] text-gray-400 font-medium mt-1 leading-none">{APP_VERSION}</span>
           </motion.div>
 
           <motion.button

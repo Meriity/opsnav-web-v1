@@ -1,8 +1,8 @@
 .rbc-event {
-  padding: 2px 5px !important;
+  padding: 1px 4px !important;
   border: none !important;
   border-radius: 4px !important;
-  background-color: #00aeef;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .custom-event-content {
@@ -133,5 +133,65 @@
 }
 
 .rbc-month-view .rbc-event:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  z-index: 10;
 }
+.rbc-agenda-view table.rbc-agenda-table {
+  border: none !important;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border: none !important;
+  padding: 8px 4px !important;
+  vertical-align: top;
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead {
+  display: none;
+}
+
+.rbc-agenda-date-cell {
+  font-weight: 700;
+  font-size: 14px;
+  color: #374151;
+  text-align: center;
+  width: 60px !important; /* Fixed width for better alignment */
+  border-right: 1px solid #f3f4f6 !important;
+}
+
+/* Time Cell */
+.rbc-agenda-time-cell {
+  display: none !important; 
+}
+
+/* Event Cell (Right Column) */
+.rbc-agenda-event-cell {
+  padding-left: 12px !important;
+}
+
+/* Hover effect on the row */
+.rbc-agenda-view table.rbc-agenda-table tbody > tr:hover {
+  background-color: transparent !important; 
+}
+
+/* Mobile & Tablet Tweak for Agenda/Month */
+@media (max-width: 1024px) {
+  .rbc-agenda-date-cell {
+    font-size: 12px;
+    width: 50px !important;
+  }
+
+  .rbc-month-view .rbc-row-content {
+     pointer-events: none !important;
+  }
+     
+  .rbc-event {
+    pointer-events: none !important;
+  }
+  
+  .rbc-date-cell {
+    pointer-events: none !important; 
+  }
+}
+
