@@ -11,6 +11,7 @@ const useAutoLogout = (timeout = 60000) => {
     console.log("Auto logging out...");
     localStorage.removeItem('authToken');
     localStorage.removeItem('matterNumber');
+    localStorage.removeItem('viewClientsDateFilter');
     hasStarted.current = false;
 
     if (location.pathname.startsWith('/client')) {

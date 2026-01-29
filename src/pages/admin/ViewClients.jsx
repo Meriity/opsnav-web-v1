@@ -948,37 +948,83 @@ const ViewClients = () => {
                     >
                       <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                         <div className="py-1">
-                          {/* Create Client/Project option */}
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setcreateuser(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                {getCreateButtonLabel()}
-                              </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setShowOutstandingTask(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                Outstanding Tasks
-                              </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setShowDateRange(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                Select Date Range
-                              </button>
-                            )}
-                          </Menu.Item>
+                          {currentModule === "print media" ? (
+                            <>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateuser(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Create Client
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateOrder(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Create Order
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowDateRange(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Date Range
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowTar(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Task Report
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </>
+                          ) : (
+                            <>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateuser(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    {getCreateButtonLabel()}
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowOutstandingTask(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Outstanding Tasks
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowDateRange(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Select Date Range
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </>
+                          )}
                         </div>
                       </Menu.Items>
                     </Transition>
