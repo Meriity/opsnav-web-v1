@@ -10,6 +10,7 @@ import {
   ChevronDown,
   X,
   Check,
+  Scale,
 } from "lucide-react";
 
 function SidebarModuleSwitcher() {
@@ -34,11 +35,26 @@ function SidebarModuleSwitcher() {
   useEffect(() => {
     const updateModuleState = () => {
       const storedModule = localStorage.getItem("currentModule") || "";
-      const accessList = (localStorage.getItem("access") || "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0)
-        .map((module) => module.toLowerCase());
+      const role = localStorage.getItem("role");
+
+      let accessList = [];
+
+      if (role === "superadmin") {
+        // Superadmin gets access to all modules
+        accessList = [
+          "conveyancing",
+          "wills",
+          "print media",
+          "commercial",
+          "vocat",
+        ];
+      } else {
+        accessList = (localStorage.getItem("access") || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0)
+          .map((module) => module.toLowerCase());
+      }
 
       setCurrentModule(storedModule);
       setAvailableModules(accessList);
@@ -90,6 +106,7 @@ function SidebarModuleSwitcher() {
       wills: "Wills & Estates",
       "print media": "Signage & Print",
       commercial: "Commercial",
+      vocat: "VOCAT - FAS",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };
     return moduleMap[module.toLowerCase()] || moduleMap.default;
@@ -102,6 +119,7 @@ function SidebarModuleSwitcher() {
       "print media": Newspaper,
       commercial: Briefcase,
       idg: Printer,
+      vocat: Scale,
       default: Folder,
     };
     return iconMap[module.toLowerCase()] || iconMap.default;
@@ -117,6 +135,8 @@ function SidebarModuleSwitcher() {
         return "bg-amber-500 text-white";
       case "commercial":
         return "bg-indigo-500 text-white";
+      case "vocat":
+        return "bg-rose-500 text-white";
       case "idg":
         return "bg-slate-500 text-white";
       default:

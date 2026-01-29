@@ -44,6 +44,7 @@ import CreateClientModal from "../../components/ui/CreateClientModal";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import WillsAPI from "../../api/willsAPI";
+import VocatFasAPI from "../../api/vocatFasAPI";
 import { create } from "zustand";
 
 // --- Calendar Imports ---
@@ -159,6 +160,17 @@ const CustomEvent = ({ event }) => {
 
   if (currentModule === "commercial") {
     eventTypeLabel = event.type || "Event";
+  } else if (currentModule === "vocat") {
+    switch(event.type) {
+      case "incident":
+        eventTypeLabel = "Criminal Incident";
+        break;
+      case "matter":
+        eventTypeLabel = "Matter Date";
+        break;
+      default:
+        eventTypeLabel = event.type || "Event";
+    }
   } else {
     switch (event.type) {
       case "buildingAndPest":
@@ -187,6 +199,7 @@ const CustomEvent = ({ event }) => {
       ? event.clientType
         ? event.clientType.charAt(0)
         : ""
+      : currentModule === "vocat" ? "" 
       : event.clientType
       ? event.clientType.charAt(0)
       : "";
@@ -195,7 +208,10 @@ const CustomEvent = ({ event }) => {
   return (
     <div className="custom-event-content">
       <span className="event-title text-xs truncate">
-        [{identifier}] - {eventTypeLabel} - [{typeInitial}]
+        {currentModule === "vocat" 
+          ? `[${identifier}] - ${eventTypeLabel}` 
+          : `[${identifier}] - ${eventTypeLabel} - [${typeInitial}]`
+        }
       </span>
       {event.isApproved && (
         <CheckCircle className="w-3 h-3 text-green-500 ml-1 flex-shrink-0" />
@@ -255,6 +271,10 @@ const getEventColor = (event, currentModule) => {
     backgroundColor = "#8E44AD";
   } else if (event.type === "deliveryDate") {
     backgroundColor = "#F39C12";
+  } else if (event.type === "incident") {
+    backgroundColor = "#EF4444"; // Red for Incident
+  } else if (event.type === "matter") {
+    backgroundColor = "#2563EB"; // Blue for Matter
   }
   return backgroundColor;
 };
@@ -268,6 +288,12 @@ const CustomAgendaEvent = ({ event, onClick }) => {
   let eventTypeLabel;
   if (currentModule === "commercial") {
     eventTypeLabel = event.type || "Event";
+  } else if (currentModule === "vocat") {
+      switch (event.type) {
+          case "incident": eventTypeLabel = "Criminal Incident"; break;
+          case "matter": eventTypeLabel = "Matter Date"; break;
+          default: eventTypeLabel = event.title;
+      }
   } else {
     switch (event.type) {
       case "buildingAndPest": eventTypeLabel = "B&P"; break;
@@ -513,6 +539,25 @@ const fetchDashboardData = async (currentModule) => {
       console.error("Error fetching Wills dashboard data:", error);
       return { lifetimeTotals: {}, monthlyStats: [], allTimeStats: [] };
     }
+  } else if (currentModule === "vocat") {
+    const vocatApi = new VocatFasAPI();
+    try {
+      // Use getDashboard from Vocat API with ranges
+      const [sixMonthsData, allTimeData] = await Promise.all([
+        vocatApi.getDashboard("sixMonths"),
+        vocatApi.getDashboard("all")
+      ]);
+
+      // Normalize data to expected structure
+      return {
+        lifetimeTotals: sixMonthsData?.lifetimeTotals || allTimeData?.lifetimeTotals || {},
+        monthlyStats: Array.isArray(sixMonthsData?.monthlyStats) ? sixMonthsData.monthlyStats : [],
+        allTimeStats: Array.isArray(allTimeData?.monthlyStats) ? allTimeData.monthlyStats : [],
+      };
+    } catch (error) {
+      console.error("Error fetching VOCAT dashboard data:", error);
+      return { lifetimeTotals: {}, monthlyStats: [], allTimeStats: [] };
+    }
   } else {
     return await clientApi.getDashboardData();
   }
@@ -531,6 +576,9 @@ const fetchCalendarData = async (currentModule) => {
   } else if (currentModule === "wills") {
     const willsApi = new WillsAPI();
     data = await willsApi.getCalendarDates();
+  } else if (currentModule === "vocat") {
+    const vocatApi = new VocatFasAPI();
+    data = await vocatApi.getClientDates();
   } else {
     data = await clientApi.getCalendarDates();
   }
@@ -648,12 +696,42 @@ const processCalendarData = (data, currentModule) => {
         });
       }
     });
-  }
+  } else if (currentModule === "vocat") {
+    const calendarItems = Array.isArray(data) ? data : [];
+    
+    calendarItems.forEach((item) => {
+      // Criminal Incident Date
+      if (item.criminalIncidentDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Incident`,
+          start: moment(item.criminalIncidentDate).toDate(),
+          end: moment(item.criminalIncidentDate).toDate(),
+          allDay: true,
+          type: "incident",
+          matterNumber: item.matterNumber,
+          id: `${item.matterNumber}-incident`,
+        });
+      }
+      
+      // Matter Date
+      if (item.matterDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Matter`,
+          start: moment(item.matterDate).toDate(),
+          end: moment(item.matterDate).toDate(),
+          allDay: true,
+          type: "matter",
+          matterNumber: item.matterNumber,
+          id: `${item.matterNumber}-matter`,
+        });
+      }
+    });
 
+  }
+  
   return events;
 };
 
-// Responsive Stat Card Component - Enhanced with Home.jsx style
 const StatCard = ({
   icon: Icon,
   title,
@@ -1253,22 +1331,24 @@ function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleAddButtonClick}
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden xs:inline">
-                    {getAddButtonLabel()}
-                  </span>
-                  <span className="xs:hidden">
-                    {currentModule === "print media"
-                      ? "New Order"
-                      : "New Client"}
-                  </span>
-                </motion.button>
+                {localStorage.getItem("role") !== "read-only" && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAddButtonClick}
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden xs:inline">
+                      {getAddButtonLabel()}
+                    </span>
+                    <span className="xs:hidden">
+                      {currentModule === "print media"
+                        ? "New Order"
+                        : "New Client"}
+                    </span>
+                  </motion.button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1574,7 +1654,7 @@ function Dashboard() {
                         <BarChart
                           data={currentChartData}
                           margin={{
-                            top: 10,
+                            top: 20,
                             right: isMobile ? 0 : 10,
                             left: 0,
                             bottom: isMobile
@@ -1614,6 +1694,7 @@ function Dashboard() {
                             }}
                             allowDecimals={false}
                             width={isMobile ? 30 : 40}
+                            domain={[0, 'auto']} 
                           />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend />
@@ -1654,7 +1735,7 @@ function Dashboard() {
                                 radius={[4, 4, 0, 0]}
                               />
                             )}
-                          {currentModule === "conveyancing" &&
+                          {(currentModule === "conveyancing" || currentModule === "vocat") &&
                             chartView === "last6Months" && (
                               <Bar
                                 dataKey="pendingMatters"

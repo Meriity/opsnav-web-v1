@@ -1,6 +1,7 @@
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import WillsAPI from "../../api/willsAPI";
+import VocatFasAPI from "../../api/vocatFasAPI";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
@@ -92,7 +93,19 @@ const getInitialFormData = (user, currentModule) => {
          email: "",
          phone: "",
          dataEntryBy: user
-     }
+      };
+  } else if (currentModule === "vocat") {
+    return {
+      matterNumber: "",
+      clientName: "",
+      clientType: "",
+      clientAddress: "",
+      state: "",
+      postcode: "",
+      matterDate: "",
+      criminalIncidentDate: "",
+      dataEntryBy: user,
+    };
   }
   return {};
 };
@@ -126,16 +139,18 @@ const commercialBusinessAddressRef = useRef(null);
   const isConveyancing = currentModule === "conveyancing";
   const isPrintMedia = currentModule === "print media";
   const isWills = currentModule === "wills";
+  const isVocat = currentModule === "vocat";
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
   const willsApi = new WillsAPI();
+  const vocatApi = new VocatFasAPI();
 
   // Replace with your actual Google Maps API key
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if ((isPrintMedia && (createType === "order" || createType === "client")) || isConveyancing || isCommercial) {
+    if ((isPrintMedia && (createType === "order" || createType === "client")) || isConveyancing || isCommercial || isVocat) {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -374,6 +389,55 @@ useEffect(() => {
       window.google.maps.event.removeListener(placeChangedListener);
   };
 }, [isOpen, isConveyancing]);
+
+  // --- GOOGLE MAPS AUTOCOMPLETE FOR VOCAT CLIENT ADDRESS ---
+useEffect(() => {
+  if (!isVocat || !isOpen) return;
+
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
+
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      // Reusing conveyancing ref as defined in JSX
+      if (conveyancingPropertyAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          conveyancingPropertyAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
+
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
+
+            let postcode = "";
+            let state = "";
+
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              clientAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
+      }
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isVocat]);
 
   // --- GOOGLE MAPS AUTOCOMPLETE FOR COMMERCIAL BUSINESS ADDRESS ---
 
@@ -768,6 +832,42 @@ useEffect(() => {
            } catch {
                toast.error("Failed to create Wills client");
            }
+
+       } else if (isVocat) {
+            const requiredFields = [
+              "matterNumber",
+              "clientName",
+              "clientAddress",
+              "state",
+              "clientType",
+              "matterDate",
+              "criminalIncidentDate"
+            ];
+            
+            if (requiredFields.some((field) => !formData[field])) {
+               toast.error("Please fill all required fields.");
+               setIsLoading(false);
+               return;
+            }
+
+            // Construct payload strictly matching Postman
+            const payload = {
+              matterNumber: formData.matterNumber,
+              matterDate: formData.matterDate,
+              clientName: formData.clientName,
+              clientAddress: formData.clientAddress,
+              state: formData.state,
+              clientType: formData.clientType,
+              criminalIncidentDate: formData.criminalIncidentDate,
+            };
+            try {
+              await vocatApi.createClient(payload);
+             toast.success("Client created successfully!");
+             navigate(`/admin/client/stages/${formData.matterNumber}`);
+             if (typeof onClose === "function") onClose();
+           } catch (err) {
+             toast.error(err?.response?.data?.message || "Failed to create VOCAT client");
+           }
       }
       setIsOpen(false);
     } catch (error) {
@@ -797,6 +897,7 @@ useEffect(() => {
     if (createType === "order") return "Create Order";
     if (createType === "order") return "Create Order";
     if (isWills) return "Create Wills Client";
+    if (isVocat) return "Create VOCAT Client";
     return "Create Client";
   };
 
@@ -828,8 +929,8 @@ useEffect(() => {
             </h2>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
-              {/* COMMERCIAL & VKL & WILLS FIELDS */}
-              {(isCommercial || isConveyancing || isWills) && (
+              {/* COMMERCIAL & VKL & WILLS & VOCAT FIELDS */}
+              {(isCommercial || isConveyancing || isWills || isVocat) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -930,6 +1031,27 @@ useEffect(() => {
                       </div>
                     </div>
                     )}
+
+                    {/* VOCAT Client Type */}
+                    {isVocat && (
+                      <div>
+                        <label className="block mb-1 font-medium">Client Type*</label>
+                        <select
+                          name="clientType"
+                          value={formData.clientType || ""}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Primary Victim">Primary Victim</option>
+                          <option value="Related Victim">Related Victim</option>
+                          <option value="Funeral Expenses">Funeral Expenses</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Hide Trustee for VOCAT */}
+                    {!isVocat && (
                     <div>
                       <label className="block mb-1 font-medium">
                         Is purchaser a trustee?
@@ -954,27 +1076,30 @@ useEffect(() => {
                         ))}
                       </div>
                     </div>
+                    )}
                   </div>
 
                   <div>
                     <label className="block mb-1 font-medium">
-                      {isCommercial ? "Business Address*" : "Property Address*"}
+                      {isCommercial ? "Business Address*" : isVocat ? "Client Address*" : "Property Address*"}
                     </label>
                     <input
                       type="text"
                       name={
-                        isCommercial ? "businessAddress" : "propertyAddress"
+                        isCommercial ? "businessAddress" : isVocat ? "clientAddress" : "propertyAddress"
                       }
                       value={
                         isCommercial
                           ? formData.businessAddress || ""
+                          : isVocat 
+                          ? formData.clientAddress || ""
                           : formData.propertyAddress || ""
                       }
                       onChange={handleChange}
                       ref={
                         isCommercial
                           ? commercialBusinessAddressRef
-                          : conveyancingPropertyAddressRef
+                          : conveyancingPropertyAddressRef 
                       }
                       className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                       required
@@ -998,6 +1123,7 @@ useEffect(() => {
   />
 </div>
 
+                  {!isVocat && (
                   <div>
                     <label className="block mb-1 font-medium">Post code*</label>
                     <input
@@ -1012,6 +1138,7 @@ useEffect(() => {
                       required
                     />
                   </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -1027,6 +1154,8 @@ useEffect(() => {
                         required
                       />
                     </div>
+
+                    {!isVocat && (
                     <div>
                       <label className="block mb-1 font-medium">
                         {isCommercial ? "Completion Date*" : "Settlement Date*"}
@@ -1040,6 +1169,22 @@ useEffect(() => {
                         required
                       />
                     </div>
+                    )}
+                    {isVocat && (
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Criminal Incident Date*
+                      </label>
+                      <input
+                        type="date"
+                        name="criminalIncidentDate"
+                        value={formData.criminalIncidentDate || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
+                        required
+                      />
+                    </div>
+                    )}
                   </div>
                 </>
               )}
