@@ -134,6 +134,7 @@ export default function Sidebar({
     localStorage.removeItem("authToken");
     localStorage.removeItem("client-storage");
     localStorage.removeItem("matterNumber");
+    localStorage.removeItem("viewClientsDateFilter");
     window.location.href = "/admin/login";
   };
 

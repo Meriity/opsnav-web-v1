@@ -20,6 +20,30 @@ export const monthlyReleaseNotes = {
       January: [
         {
           date: "2026-01-29",
+          version: "v6.0.1",
+          type: "patch",
+          category: "bug_fix",
+          title: "Critical Fixes",
+          description: "Addressed logout filter persistence and mobile menu issues.",
+          updates: [
+            {
+              type: "fix",
+              title: "Logout Filter Persistence",
+              description: "Fixed date filters persisting after logout.",
+              details: "Ensured that all date range filters are properly cleared from local storage upon user logout to prevent data persistence across sessions.",
+              icon: Bug,
+            },
+            {
+              type: "fix",
+              title: "Print Media Mobile Menu",
+              description: "Corrected mobile action menu options for Print Media.",
+              details: "Fixed the 3-dot menu on mobile/tablet to show correct 'Print Media' actions instead of default options.",
+              icon: Smartphone,
+            },
+          ],
+        },
+        {
+          date: "2026-01-29",
           version: "v6.0.0",
           type: "major",
           category: "feature",
@@ -28,16 +52,16 @@ export const monthlyReleaseNotes = {
           updates: [
             {
               type: "feature",
-              title: "Complete VOCAT Implementation",
-              description: "Launched dedicated VOCAT module with 4-stage workflow.",
-              details: "Implemented end-to-end management for VOCAT clients including Stages 1-4, tailored specifically for criminal incident victims.",
+              title: "Complete VOCAT/FAS Implementation",
+              description: "Launched dedicated VOCAT/FAS module with 4-stage workflow.",
+              details: "Implemented end-to-end management for VOCAT/FAS clients including Stages 1-4, tailored specifically for criminal incident victims.",
               icon: Sparkles,
             },
             {
               type: "feature",
               title: "Specialized Costing",
               description: "Custom costing interface including VOI and specialized fee structures.",
-              details: "Added specific financial fields like VOI (Verification of Identity) and custom fee categories unique to the VOCAT process.",
+              details: "Added specific financial fields like VOI (Verification of Identity) and custom fee categories unique to the VOCAT/FAS process.",
               icon: Database,
             },
             {
