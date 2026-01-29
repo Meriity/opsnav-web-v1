@@ -12,6 +12,7 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import Loader from "@/components/ui/Loader";
 import ClientAPI from "@/api/userAPI";
 import CommercialAPI from "@/api/commercialAPI";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
@@ -126,6 +127,8 @@ export default function ArchivedClients() {
   const api = useMemo(() => {
     if (currentModule === "commercial") {
       return new CommercialAPI();
+    } else if (currentModule === "vocat") {
+      return new VocatFasAPI();
     } else {
       return new ClientAPI();
     }
@@ -136,7 +139,7 @@ export default function ArchivedClients() {
   const { isLoading: vklLoading, error: vklError } = useQuery({
     queryKey: ["archivedClients", currentModule],
     queryFn: fetchArchivedClients,
-    enabled: currentModule !== "commercial" && !isFetched,
+    enabled: currentModule !== "commercial" && currentModule !== "vocat" && !isFetched,
   });
 
   const fetchCommercialArchivedClients = async () => {
@@ -192,6 +195,48 @@ export default function ArchivedClients() {
     enabled: currentModule === "commercial",
     onError: (error) => {
       toast.error("Failed to load archived projects");
+    },
+  });
+  
+  const fetchVocatArchivedClients = async () => {
+    // Use the getArchivedClients method which hits /vocat/user/clients/archived
+    const response = await api.getArchivedClients();
+    console.log("VOCAT archived clients response:", response);
+
+    let data = [];
+    if (Array.isArray(response)) {
+      data = response;
+    } else if (response && Array.isArray(response.data)) {
+      data = response.data;
+    } else if (response && Array.isArray(response.clients)) {
+      data = response.clients;
+    }
+     
+    return data.map((client) => ({
+      ...client,
+      id: client._id || client.id || client.matterNumber,
+      matternumber: client.matterNumber,
+      client_name: client.clientName,
+      client_type: client.clientType,
+      matterDate: client.matterDate,
+      state: client.state,
+      property_address: client.clientAddress,
+      status: client.status || "archived",
+      stages: Array.isArray(client.stages) ? client.stages : [client.stages || {}],
+    }));
+  };
+
+  const {
+    data: vocatData,
+    isLoading: vocatLoading,
+    error: vocatError,
+  } = useQuery({
+    queryKey: ["archivedClientsVocat", currentModule],
+    queryFn: fetchVocatArchivedClients,
+    enabled: currentModule === "vocat",
+     onError: (error) => {
+      console.error("Failed to load VOCAT archived clients", error);
+      toast.error("Failed to load archived clients");
     },
   });
 
@@ -262,12 +307,22 @@ export default function ArchivedClients() {
   const isLoading =
     currentModule === "commercial"
       ? commercialLoading
+      : currentModule === "vocat"
+      ? vocatLoading
       : vklLoading || zustandLoading;
-  const error = currentModule === "commercial" ? commercialError : vklError;
+
+  const error = 
+    currentModule === "commercial" 
+      ? commercialError 
+      : currentModule === "vocat"
+      ? vocatError
+      : vklError;
 
   const activeData =
     currentModule === "commercial"
       ? commercialData || []
+      : currentModule === "vocat"
+      ? vocatData || []
       : archivedClients || [];
 
   const normalizedActiveData = useMemo(() => {
@@ -418,6 +473,25 @@ export default function ArchivedClients() {
         { key: "ordertype", title: "Client Type" },
         { key: "orderDate", title: "Order Date" },
         { key: "deliveryDate", title: "Delivery Date" },
+        { key: "status", title: "Status" },
+      ];
+    } else if (currentModule === "vocat") {
+      return [
+        { key: "matternumber", title: "Matter Number" },
+        { key: "client_name", title: "Client Name" },
+        { key: "property_address", title: "Client Address" },
+        { key: "state", title: "State" },
+        { key: "client_type", title: "Client Type" }, 
+        {
+          key: "matterDate",
+          title: "Matter Date",
+          render: (client) =>
+            client.matterDate
+              ? moment(client.matterDate).isValid()
+                ? moment(client.matterDate).format("DD-MM-YYYY")
+                : "-"
+              : "-",
+        },
         { key: "status", title: "Status" },
       ];
     }

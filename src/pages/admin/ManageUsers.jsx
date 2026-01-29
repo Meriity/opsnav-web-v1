@@ -18,6 +18,7 @@ import {
   Mail,
   Calendar,
   Info,
+  Scale,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
@@ -56,6 +57,12 @@ const ACCESS_MODULES = [
     label: "Commercial",
     icon: Briefcase,
     color: "bg-gradient-to-r from-indigo-500 to-purple-500",
+  },
+  {
+    value: "VOCAT",
+    label: "VOCAT",
+    icon: Scale,
+    color: "bg-gradient-to-r from-rose-500 to-pink-500",
   },
 ];
 
@@ -488,7 +495,23 @@ export default function ManageUsers() {
           { key: "displayName", title: "Display Name" },
           { key: "email", title: "Email" },
           { key: "status", title: "Status" },
-          { key: "role", title: "Role" },
+          {
+            key: "role",
+            title: "Role",
+            render: (item) => (
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  item.role === "admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : item.role === "read-only"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {item.role}
+              </span>
+            ),
+          },
           {
             key: "access",
             title: "Access Modules",
@@ -527,7 +550,23 @@ export default function ManageUsers() {
           { key: "displayName", title: "Display Name" },
           { key: "email", title: "Email" },
           { key: "status", title: "Status" },
-          { key: "role", title: "Role" },
+          {
+            key: "role",
+            title: "Role",
+            render: (item) => (
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  item.role === "admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : item.role === "read-only"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {item.role}
+              </span>
+            ),
+          },
           { key: "createdAt", title: "Created At" },
         ];
 
@@ -908,6 +947,8 @@ export default function ManageUsers() {
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               user.role === "admin"
                                 ? "bg-purple-100 text-purple-700"
+                                : user.role === "read-only"
+                                ? "bg-emerald-100 text-emerald-700"
                                 : "bg-blue-100 text-blue-700"
                             }`}
                           >
@@ -1056,7 +1097,23 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                        <input
+                          type="radio"
+                          name="role"
+                          value="read-only"
+                          checked={role === "read-only"}
+                          onChange={handleChange}
+                          className="form-radio text-emerald-500"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-700">Read Only</div>
+                          <div className="text-xs text-gray-500">
+                            View access only
+                          </div>
+                        </div>
+                      </label>
+                    </div>  
                   </div>
                 </div>
 
@@ -1208,7 +1265,23 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                        <input
+                          type="radio"
+                          name="role"
+                          value="read-only"
+                          checked={role === "read-only"}
+                          onChange={handleChange}
+                          className="form-radio text-emerald-500"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-700">Read Only</div>
+                          <div className="text-xs text-gray-500">
+                            View access only
+                          </div>
+                        </div>
+                      </label>
+                    </div>  
                   </div>
                 </div>
 
@@ -1341,7 +1414,24 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                        <input
+                          type="radio"
+                          name="role"
+                          checked={selectedUser.role === "read-only"}
+                          onChange={() =>
+                            setSelectedUser({ ...selectedUser, role: "read-only" })
+                          }
+                          className="form-radio text-emerald-500"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-700">Read Only</div>
+                          <div className="text-xs text-gray-500">
+                            View access only
+                          </div>
+                        </div>
+                      </label>
+                    </div>  
                   </div>
                 </div>
 

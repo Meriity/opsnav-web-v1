@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import StageAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import CostInputRow from "@/components/ui/CostInputRow";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -48,6 +49,12 @@ const getInitialState = (currentModule) => {
       "Rates Note": "",
       ...commonState,
     };
+  } else if (currentModule === "vocat" || currentModule === "vocat-fas") {
+    return {
+      VOI: "",
+      "VOI Note": "",
+      ...commonState,
+    };
   } else if (currentModule === "conveyancing" || currentModule === "wills") {
     return {
       "VOI/CAF": "",
@@ -84,6 +91,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
   const api = useMemo(() => new ClientAPI(), []);
   const StagesAPI = useMemo(() => new StageAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
+  const vocatApi = useMemo(() => new VocatFasAPI(), []);
 
   // --- State ---
   const [formValues, setFormValues] = useState(getInitialState(currentModule));
@@ -116,6 +124,11 @@ export default function CostComponent({ changeStage, setHasChanges }) {
             (parseFloat(values["Water"]) || 0) +
             (parseFloat(values["Rates"]) || 0) +
             (parseFloat(otherTotal) || 0)
+        );
+      } else if (currentModule === "vocat") {
+        totalCosts = formatNum(
+          (parseFloat(values["VOI"]) || 0) +
+          (parseFloat(otherTotal) || 0)
         );
       } else if (
         currentModule === "conveyancing" ||
@@ -181,6 +194,21 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           console.log("No commercial stage 1 data found");
           stage1Data = {};
         }
+      } else if (currentModule === "vocat") {
+          try {
+             // Parallel fetch cost and stage 1
+             const [cData, s1Data] = await Promise.all([
+                 vocatApi.getCost(matterNumber),
+                 vocatApi.getStageOne(matterNumber)
+             ]);
+             console.log("VOCAT Raw Cost Data:", cData);
+             costData = cData || {};
+             stage1Data = s1Data?.data || {};
+          } catch(e) {
+              console.error("Error fetching VOCAT cost data", e);
+              costData = {};
+              stage1Data = {};
+          }
       } else {
         stageResponse =
           currentModule === "print media"
@@ -262,6 +290,20 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           "Water Note": costData.waterNote || "",
           Rates: getDecimalValue(costData.rates) || "",
           "Rates Note": costData.ratesNote || "",
+          "Other fee (1)": getDecimalValue(costData.otherFee1) || "",
+          "Note 1": costData.otherFee1Note || "",
+          "Other fee (2)": getDecimalValue(costData.otherFee2) || "",
+          "Note 2": costData.otherFee2Note || "",
+          "Other fee (3)": getDecimalValue(costData.otherFee3) || "",
+          "Note 3": costData.otherFee3Note || "",
+          "Other fee (4)": getDecimalValue(costData.otherFee4) || "",
+          "Note 4": costData.otherFee4Note || "",
+          ...commonMapped,
+        };
+      } else if (currentModule === "vocat") {
+        mappedData = {
+          VOI: getDecimalValue(costData.voi) || "",
+          "VOI Note": costData.voiNote || "",
           "Other fee (1)": getDecimalValue(costData.otherFee1) || "",
           "Note 1": costData.otherFee1Note || "",
           "Other fee (2)": getDecimalValue(costData.otherFee2) || "",
@@ -448,6 +490,27 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           invoiceAmount: formatNumber(formValues["Invoice Amount"]),
           invoiceAmountNote: formValues["Invoice Amount Note"],
         };
+      } else if (currentModule === "vocat") {
+        commonPayload = {
+          matterNumber: matterNumber,
+          otherFee1: formatNumber(formValues["Other fee (1)"]),
+          otherFee1Note: formValues["Note 1"],
+          otherFee2: formatNumber(formValues["Other fee (2)"]),
+          otherFee2Note: formValues["Note 2"],
+          otherFee3: formatNumber(formValues["Other fee (3)"]),
+          otherFee3Note: formValues["Note 3"],
+          otherFee4: formatNumber(formValues["Other fee (4)"]),
+          otherFee4Note: formValues["Note 4"],
+          otherTotal: formatNumber(formValues["Other (total)"]),
+          otherTotalNote: formValues["Other (total) Note"],
+          totalCosts: formatNumber(formValues["Total Costs"]),
+          totalCostsNote: formValues["Total Costs Note"],
+          quoteType: formValues["Quote Type"]?.toLowerCase() || "variable",
+          quoteAmount: formatNumber(formValues["Quote Amount"]),
+          quoteAmountNote: formValues["Quote Amount Note"],
+          invoiceAmount: formatNumber(formValues["Invoice Amount"]),
+          invoiceAmountNote: formValues["Invoice Amount Note"],
+        };
       } else {
         commonPayload = {
           orderId: matterNumber,
@@ -472,6 +535,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
       }
 
       let finalPayload;
+
       if (currentModule === "commercial") {
         finalPayload = {
           ...commonPayload,
@@ -511,8 +575,23 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           waterCertificate: formatNumber(formValues["Water Certificate"]),
           waterCertificateNote: formValues["Water Certificate Note"],
         };
+      } else if (currentModule === "vocat") {
+         finalPayload = {
+            ...commonPayload,
+            voi: formatNumber(formValues["VOI"]),
+            voiNote: formValues["VOI Note"],
+         };
       } else {
         finalPayload = commonPayload;
+      }
+
+      if (currentModule === "vocat-fas") {
+         finalPayload = {
+            ...commonPayload,
+            // Only VOI and common fields for VOCAT based on request
+            voi: formatNumber(formValues["VOI"]),
+            voiNote: formValues["VOI Note"],
+         };
       }
 
       if (currentModule === "commercial") {
@@ -522,6 +601,8 @@ export default function CostComponent({ changeStage, setHasChanges }) {
         currentModule === "wills"
       ) {
         return api.upsertCost(finalPayload);
+      } else if (currentModule === "vocat") {
+        return vocatApi.saveCost(finalPayload);
       } else {
         return api.upsertIDGCost(matterNumber, finalPayload);
       }
@@ -641,6 +722,17 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           </>
         )}
 
+        {/* VOCAT specific fields */}
+        {(currentModule === "vocat" || currentModule === "vocat-fas") && (
+          <CostInputRow
+            label="VOI"
+            amountValue={formValues["VOI"] ?? ""}
+            noteValue={formValues["VOI Note"]}
+            onAmountChange={(e) => handleNumberChange("VOI", e.target.value)}
+            onNoteChange={(e) => handleChange("VOI Note", e.target.value)}
+          />
+        )}
+
         {/* VKL specific fields */}
         {(currentModule === "conveyancing" || currentModule === "wills") && (
           <>
@@ -713,7 +805,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           label={
             currentModule === "commercial"
               ? "Fee 1"
-              : currentModule === "conveyancing" || currentModule === "wills"
+              : currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat"
               ? "Other fee (1)"
               : "Fee 1"
           }
@@ -728,7 +820,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           label={
             currentModule === "commercial"
               ? "Fee 2"
-              : currentModule === "conveyancing" || currentModule === "wills"
+              : currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat"
               ? "Other fee (2)"
               : "Fee 2"
           }
@@ -743,7 +835,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           label={
             currentModule === "commercial"
               ? "Fee 3"
-              : currentModule === "conveyancing" || currentModule === "wills"
+              : currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat"
               ? "Other fee (3)"
               : "Fee 3"
           }
@@ -758,7 +850,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           label={
             currentModule === "commercial"
               ? "Fee 4"
-              : currentModule === "conveyancing" || currentModule === "wills"
+              : currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat"
               ? "Other fee (4)"
               : "Fee 4"
           }
@@ -777,7 +869,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           label={
             currentModule === "commercial"
               ? "Total Fees"
-              : currentModule === "conveyancing" || currentModule === "wills"
+              : currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat"
               ? "Other (total)"
               : "Total Fees"
           }
@@ -790,7 +882,8 @@ export default function CostComponent({ changeStage, setHasChanges }) {
         />
         {(currentModule === "commercial" ||
           currentModule === "conveyancing" ||
-          currentModule === "wills") && (
+          currentModule === "wills" ||
+          currentModule === "vocat") && (
           <CostInputRow
             label="Total Costs"
             amountValue={formValues["Total Costs"]}

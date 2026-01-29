@@ -12,6 +12,7 @@ import Cost from "./cost";
 import ClientAPI from "../../../api/clientAPI";
 import CommercialAPI from "../../../api/commercialAPI";
 import WillsAPI from "../../../api/willsAPI";
+import VocatFasAPI from "../../../api/vocatFasAPI";
 import Loader from "../../../components/ui/Loader";
 import UploadDialog from "../../../components/ui/uploadDialog";
 import ConfirmationModal from "../../../components/ui/ConfirmationModal";
@@ -52,7 +53,6 @@ const formatDateForDisplay = (isoString) => {
   return `${day}-${month}-${year}`;
 };
 
-// Default project structure for new commercial projects
 const createDefaultProjectData = (matterNumber) => ({
   matterNumber,
   stage1: {},
@@ -79,6 +79,7 @@ export default function StagesLayout() {
   const apiRef = useRef(new ClientAPI());
   const commercialApiRef = useRef(new CommercialAPI());
   const willsApiRef = useRef(new WillsAPI());
+  const vocatApiRef = useRef(new VocatFasAPI());
   const navigate = useNavigate();
 
   const [role, setRole] = useState(() => {
@@ -342,6 +343,13 @@ export default function StagesLayout() {
       { id: 5, title: "Review & Compliance" },
       { id: 6, title: "Completion & Archiving" },
     ];
+  } else if (currentModule === "vocat") {
+    stages = [
+      { id: 1, title: "Client & Incident" },
+      { id: 2, title: "VOI" },
+      { id: 3, title: "Searches & Analysis" },
+      { id: 4, title: "FAS Approval" },
+    ];
   }
 
   // Floating Background Elements (same as ViewClients)
@@ -505,6 +513,7 @@ export default function StagesLayout() {
         return (
           <Stage2
             data={stageData}
+            stage1Data={clientData?.stage1 ?? {}}
             user={clientData?.users || []}
             clientType={clientData?.clientType}
             changeStage={RenderStage}
@@ -745,6 +754,31 @@ export default function StagesLayout() {
              console.error("Wills data fetch failed", e);
              response = createDefaultProjectData(matterNumber);
           }
+        } else if (currentModule === "vocat") {
+          try {
+             const [clientData, s1, s2, s3, s4] = await Promise.all([
+                 vocatApiRef.current.getClient(matterNumber),
+                 vocatApiRef.current.getStageOne(matterNumber).catch(() => ({})),
+                 vocatApiRef.current.getStageTwo(matterNumber).catch(() => ({})),
+                 vocatApiRef.current.getStageThree(matterNumber).catch(() => ({})),
+                 vocatApiRef.current.getStageFour(matterNumber).catch(() => ({}))
+             ]);
+            
+            if (clientData) {
+               response = {
+                 ...clientData,
+                 stage1: s1?.data || s1 || {},
+                 stage2: s2?.data || s2 || {},
+                 stage3: s3?.data || s3 || {},
+                 stage4: s4?.data || s4 || {},
+               };
+            } else {
+               response = createDefaultProjectData(matterNumber);
+            }
+          } catch (e) {
+            console.error("Vocat fetch failed", e);
+             response = createDefaultProjectData(matterNumber);
+          }
         } else {
           response = await apiRef.current.getAllStages(matterNumber);
         }
@@ -759,7 +793,6 @@ export default function StagesLayout() {
         }
         const normalized = {
           ...response,
-          // FORCE business fields from ALL possible API response locations (ROBUST)
           businessName:
             response.businessName ||
             response.businessname ||
@@ -854,6 +887,10 @@ export default function StagesLayout() {
             response.data?.stageSix ||
             clientData?.stage6 ||
             {},
+          status:
+            response.status ||
+            (currentModule === "vocat" ? response.closeMatter : undefined) ||
+            "active",
         };
 
         // Sync allocatedUser to stage2 agent if missing or mismatch
@@ -1649,6 +1686,8 @@ export default function StagesLayout() {
                             ? "Business Address"
                             : currentModule === "print media"
                             ? "Billing Address"
+                            : currentModule === "vocat"
+                            ? "Client Address"
                             : "Property Address"}
                         </label>
                         <input
@@ -1660,6 +1699,8 @@ export default function StagesLayout() {
                               ? clientData?.businessAddress || ""
                               : currentModule === "print media"
                               ? clientData?.data?.deliveryAddress || ""
+                              : currentModule === "vocat"
+                              ? clientData?.clientAddress || ""
                               : clientData?.propertyAddress || ""
                           }
                           onChange={(e) => {
@@ -1677,6 +1718,9 @@ export default function StagesLayout() {
                                     deliveryAddress: value,
                                   },
                                 };
+                              }
+                              if (currentModule === "vocat") {
+                                return { ...prev, clientAddress: value };
                               }
                               return { ...prev, propertyAddress: value };
                             });
@@ -1731,6 +1775,7 @@ export default function StagesLayout() {
                       </div>
 
                       {/* Client Type Field */}
+                      {currentModule !== "vocat" && (
                       <div className="md:col-span-1">
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           {currentModule === "commercial"
@@ -1756,8 +1801,11 @@ export default function StagesLayout() {
                             }
                             className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
                           >
-                            <option value="">Select client type</option>
-                            {CLIENT_TYPE_OPTIONS.map((ct) => (
+                            <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                            {(currentModule === "vocat"
+                              ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
+                              : CLIENT_TYPE_OPTIONS
+                            ).map((ct) => (
                               <option key={ct} value={ct}>
                                 {ct}
                               </option>
@@ -1776,105 +1824,193 @@ export default function StagesLayout() {
                           />
                         )}
                       </div>
+                      )}
+                      {currentModule === "vocat" && (
+                        <div className="md:col-span-3 flex flex-col md:flex-row gap-4">
+                           <div className="flex-[1.5]">
+                              <label className="block text-xs md:text-sm font-semibold mb-1">
+                                Client Type
+                              </label>
+                              {isSuperAdmin ? (
+                                <select
+                                  id="clientType"
+                                  name="clientType"
+                                  value={clientData?.clientType || ""}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      clientType: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                                >
+                                  <option value="">Select Client Type</option>
+                                  {["Primary Victim", "Related Victim", "Funeral Expenses"].map((ct) => (
+                                    <option key={ct} value={ct}>
+                                      {ct}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={clientData?.clientType || ""}
+                                  className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                           </div>
+                           <div className="flex-1">
+                              <label className="block text-xs md:text-sm font-semibold mb-1">
+                                Criminal Incident Date
+                              </label>
+                              {isSuperAdmin ? (
+                                <input
+                                  id="criminalIncidentDate"
+                                  name="criminalIncidentDate"
+                                  type="date"
+                                  value={
+                                    clientData?.criminalIncidentDate
+                                      ? new Date(clientData.criminalIncidentDate)
+                                          .toISOString()
+                                          .substring(0, 10)
+                                      : ""
+                                  }
+                                  onChange={(e) => {
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      criminalIncidentDate: e.target.value,
+                                    }));
+                                  }}
+                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={
+                                    clientData?.criminalIncidentDate
+                                      ? formatDateForDisplay(clientData.criminalIncidentDate)
+                                      : ""
+                                  }
+                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                           </div>
+                        </div>
+                      )}
 
                       {/* Post Code */}
-                      <div>
-                        <label className="block text-xs md:text-sm font-semibold mb-1 ">
-                          Post Code
-                        </label>
-                        <input
-                          type="text"
-                          id="postcode"
-                          name="postcode"
-                          disabled={currentModule === "print media"}
-                          value={
-                            clientData?.postcode ||
-                            clientData?.data?.postCode ||
-                            ""
-                          }
-                          onChange={(e) => {
-                            setClientData((prev) => ({
-                              ...prev,
-                              postcode: e.target.value,
-                            }));
-                          }}
-                          pattern="^[0-9]{4}$"
-                          maxLength={4}
-                          inputMode="numeric"
-                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
-                       ${currentModule === "print media" && "bg-gray-100"}`}
-                        />
-                      </div>
+                      {currentModule !== "vocat" && (
+                        <div>
+                          <label className="block text-xs md:text-sm font-semibold mb-1 ">
+                            Post Code
+                          </label>
+                          <input
+                            type="text"
+                            id="postcode"
+                            name="postcode"
+                            disabled={currentModule === "print media"}
+                            value={
+                              clientData?.postcode ||
+                              clientData?.data?.postCode ||
+                              ""
+                            }
+                            onChange={(e) => {
+                              setClientData((prev) => ({
+                                ...prev,
+                                postcode: e.target.value,
+                              }));
+                            }}
+                            pattern="^[0-9]{4}$"
+                            maxLength={4}
+                            inputMode="numeric"
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
+                         ${
+                           currentModule === "print media" && "bg-gray-100"
+                         }`}
+                          />
+                        </div>
+                      )}
 
                       {/* Completion/Settlement/Delivery Date */}
+                      {/* Completion/Settlement/Delivery Date (Standard) */}
+                      {currentModule !== "vocat" && (
                       <div className="md:col-span-1">
-                        <label className="block text-xs md:text-sm font-semibold mb-1">
-                          {currentModule === "commercial"
-                            ? "Completion Date"
-                            : currentModule === "print media"
-                            ? "Delivery Date"
-                            : "Settlement Date"}
-                        </label>
-                        <input
-                          id={
-                            currentModule === "commercial"
-                              ? "completionDate"
+                         <label className="block text-xs md:text-sm font-semibold mb-1">
+                            {currentModule === "commercial"
+                              ? "Completion Date"
                               : currentModule === "print media"
-                              ? "deliveryDate"
-                              : "settlementDate"
-                          }
-                          name={
-                            currentModule === "commercial"
-                              ? "completionDate"
-                              : currentModule === "print media"
-                              ? "deliveryDate"
-                              : "settlementDate"
-                          }
-                          type="date"
-                          value={
-                            currentModule === "commercial"
-                              ? clientData?.settlementDate
-                                ? new Date(clientData.settlementDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
-                              : currentModule !== "print media"
-                              ? clientData?.settlementDate
-                                ? new Date(clientData.settlementDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
-                              : clientData?.data?.deliveryDate
-                              ? new Date(clientData.data.deliveryDate)
-                                  .toISOString()
-                                  .substring(0, 10)
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const dateValue = e.target.value;
-                            if (currentModule === "commercial") {
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                settlementDate: dateValue,
-                              }));
-                            } else if (currentModule !== "print media") {
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                settlementDate: dateValue,
-                              }));
-                            } else if (currentModule === "print media") {
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                data: {
-                                  ...((prev && prev.data) || {}),
-                                  deliveryDate: dateValue,
-                                },
-                              }));
+                              ? "Delivery Date"
+                              : "Settlement Date"}
+                          </label>
+                          <input
+                            id={
+                              currentModule === "commercial"
+                                ? "completionDate"
+                                : currentModule === "print media"
+                                ? "deliveryDate"
+                                : "settlementDate"
                             }
-                          }}
-                          className="w-full rounded p-2 border border-gray-200 text-xs md:text-sm"
-                        />
+                            name={
+                              currentModule === "commercial"
+                                ? "completionDate"
+                                : currentModule === "print media"
+                                ? "deliveryDate"
+                                : "settlementDate"
+                            }
+                            type="date"
+                            value={
+                                currentModule === "commercial"
+                                  ? clientData?.settlementDate
+                                    ? new Date(clientData.settlementDate)
+                                        .toISOString()
+                                        .substring(0, 10)
+                                    : ""
+                                  : currentModule !== "print media"
+                                  ? clientData?.settlementDate
+                                    ? new Date(clientData.settlementDate)
+                                        .toISOString()
+                                        .substring(0, 10)
+                                    : ""
+                                  : clientData?.data?.deliveryDate
+                                  ? new Date(clientData.data.deliveryDate)
+                                      .toISOString()
+                                      .substring(0, 10)
+                                  : ""
+                              }
+                            onChange={(e) => {
+                              if (!isSuperAdmin) return;
+                              const dateValue = e.target.value;
+                              if (currentModule === "commercial") {
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  settlementDate: dateValue,
+                                }));
+                              } else if (currentModule !== "print media") {
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  settlementDate: dateValue,
+                                }));
+                              } else if (currentModule === "print media") {
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  data: {
+                                    ...((prev && prev.data) || {}),
+                                    deliveryDate: dateValue,
+                                  },
+                                }));
+                              }
+                            }}
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                              !isSuperAdmin ? "bg-gray-100" : ""
+                            }`}
+                            disabled={!isSuperAdmin}
+                          />
                       </div>
+                      )}
 
                       {/* Data Entry By */}
                       <div className="md:col-span-3">
@@ -2288,8 +2424,11 @@ export default function StagesLayout() {
                           }
                           className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
                         >
-                          <option value="">Select client type</option>
-                          {CLIENT_TYPE_OPTIONS.map((ct) => (
+                          <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                          {(currentModule === "vocat"
+                            ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
+                            : CLIENT_TYPE_OPTIONS
+                          ).map((ct) => (
                             <option key={ct} value={ct}>
                               {ct}
                             </option>
@@ -2310,94 +2449,125 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Post Code */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                        Post Code
-                      </label>
-                      <input
-                        type="text"
-                        id="postcode"
-                        name="postcode"
-                        disabled={currentModule === "print media"}
-                        value={
-                          clientData?.postcode ||
-                          clientData?.data?.postCode ||
-                          ""
-                        }
-                        onChange={(e) => {
-                          setClientData((prev) => ({
-                            ...prev,
-                            postcode: e.target.value,
-                          }));
-                        }}
-                        pattern="^[0-9]{4}$"
-                        maxLength={4}
-                        inputMode="numeric"
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none
+                    {currentModule !== "vocat" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Post Code
+                        </label>
+                        <input
+                          type="text"
+                          id="postcode"
+                          name="postcode"
+                          disabled={currentModule === "print media"}
+                          value={
+                            clientData?.postcode ||
+                            clientData?.data?.postCode ||
+                            ""
+                          }
+                          onChange={(e) => {
+                            setClientData((prev) => ({
+                              ...prev,
+                              postcode: e.target.value,
+                            }));
+                          }}
+                          pattern="^[0-9]{4}$"
+                          maxLength={4}
+                          inputMode="numeric"
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none
                      ${
                        currentModule === "print media"
                          ? "bg-gray-50 text-gray-500"
                          : "bg-white"
                      }`}
-                      />
-                    </div>
+                        />
+                      </div>
+                    )}
 
-                    {/* Completion/Settlement/Delivery Date */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                        {currentModule === "commercial"
-                          ? "Completion Date"
-                          : currentModule === "print media"
-                          ? "Delivery Date"
-                          : "Settlement Date"}
-                      </label>
-                      <input
-                        id="settlementDate"
-                        type="date"
-                        value={
-                          currentModule === "commercial"
-                            ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate)
+                    {/* Completion/Settlement/DeliveryDate */}
+                    {currentModule !== "vocat" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          {currentModule === "commercial"
+                            ? "Completion Date"
+                            : currentModule === "print media"
+                            ? "Delivery Date"
+                            : "Settlement Date"}
+                        </label>
+                        <input
+                          id="settlementDate"
+                          type="date"
+                          value={
+                            currentModule === "commercial"
+                              ? clientData?.settlementDate
+                                ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : currentModule !== "print media"
+                              ? clientData?.settlementDate
+                                ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                : ""
+                              : clientData?.data?.deliveryDate
+                              ? new Date(clientData.data.deliveryDate)
                                   .toISOString()
                                   .substring(0, 10)
                               : ""
-                            : currentModule !== "print media"
-                            ? clientData?.settlementDate
-                              ? new Date(clientData.settlementDate)
-                                  .toISOString()
-                                  .substring(0, 10)
-                              : ""
-                            : clientData?.data?.deliveryDate
-                            ? new Date(clientData.data.deliveryDate)
-                                .toISOString()
-                                .substring(0, 10)
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const dateValue = e.target.value;
-                          if (currentModule === "commercial") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              settlementDate: dateValue,
-                            }));
-                          } else if (currentModule !== "print media") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              settlementDate: dateValue,
-                            }));
-                          } else if (currentModule === "print media") {
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              data: {
-                                ...((prev && prev.data) || {}),
-                                deliveryDate: dateValue,
-                              },
-                            }));
                           }
-                        }}
-                        className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
-                      />
-                    </div>
+                          onChange={(e) => {
+                            const dateValue = e.target.value;
+                            if (currentModule === "commercial") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                settlementDate: dateValue,
+                              }));
+                            } else if (currentModule !== "print media") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                settlementDate: dateValue,
+                              }));
+                            } else if (currentModule === "print media") {
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                data: {
+                                  ...((prev && prev.data) || {}),
+                                  deliveryDate: dateValue,
+                                },
+                              }));
+                            }
+                          }}
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        />
+                      </div>
+                    )}
+
+                    {/* Criminal Incident Date (VOCAT only) - Mobile */}
+                    {currentModule === "vocat" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Criminal Incident Date
+                        </label>
+                        <input
+                          id="criminalIncidentDate"
+                          type="date"
+                          value={
+                            clientData?.criminalIncidentDate
+                              ? new Date(clientData.criminalIncidentDate)
+                                  .toISOString()
+                                  .substring(0, 10)
+                              : ""
+                          }
+                          onChange={(e) => {
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              criminalIncidentDate: e.target.value,
+                            }));
+                          }}
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                        />
+                      </div>
+                    )}
 
                     {/* Data Entry By */}
                     <div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
+import VocatFasAPI from "../../api/vocatFasAPI";
 import { formatDate } from "../../utils/formatters";
 import Loader from "./Loader";
 import jsPDF from "jspdf";
@@ -14,8 +15,15 @@ export default function OutstandingTasksModal({
   onOpen = false,
 }) {
   const currentModule = localStorage.getItem("currentModule");
-  const api =
-    currentModule === "commercial" ? new CommercialAPI() : new ClientAPI();
+  
+  let api;
+  if (currentModule === "commercial") {
+    api = new CommercialAPI();
+  } else if (currentModule === "vocat") {
+    api = new VocatFasAPI();
+  } else {
+    api = new ClientAPI();
+  }
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +79,9 @@ export default function OutstandingTasksModal({
           matterFilter,
           activeMatter
         );
+
+      } else if (currentModule === "vocat") {
+        response = await api.getOutstandingTasks();
       } else {
         response = await api.getAllOutstandingTasks(
           page,
@@ -111,7 +122,7 @@ export default function OutstandingTasksModal({
       if (nonEmptyStages.length === 0) {
         rows.push([
           `${item.matterNumber} - ${item.clientName}`,
-          formatDate(item.settlementDate),
+          formatDate(item.settlementDate || item.matterDate),
           "-",
           "No outstanding tasks",
         ]);
@@ -122,7 +133,7 @@ export default function OutstandingTasksModal({
               ? `${item.matterNumber || item.orderId} - ${item.clientName}`
               : "",
             index === 0
-              ? formatDate(item.settlementDate || item.deliveryDate)
+              ? formatDate(item.settlementDate || item.deliveryDate || item.matterDate)
               : "",
             stage,
             tasks.join("\n"),
@@ -135,6 +146,8 @@ export default function OutstandingTasksModal({
     const head =
       currentModule === "print media"
         ? [["Order No. and Client", "Delivery Date", "Stage", "Tasks"]]
+        : currentModule === "vocat"
+        ? [["Matter No. and Client", "Matter Date", "Stage", "Tasks"]]
         : [["Matter No. and Client", "Settlement Date", "Stage", "Tasks"]];
 
     autoTable(doc, {
@@ -198,6 +211,8 @@ export default function OutstandingTasksModal({
                   <label className="text-sm font-semibold block mb-1 text-gray-600">
                     {currentModule === "print media"
                       ? "Orders Delivery in"
+                      : currentModule === "vocat"
+                      ? "Matters Created in"
                       : "Matters Settling in"}
                   </label>
                   <select
@@ -233,6 +248,8 @@ export default function OutstandingTasksModal({
                       <th className="px-6 py-3 border">
                         {currentModule === "print media"
                           ? "Delivery Date"
+                          : currentModule === "vocat"
+                          ? "Matter Date"
                           : "Settlement Date"}
                       </th>
                       <th className="px-6 py-3 border">Stage</th>
@@ -256,7 +273,7 @@ export default function OutstandingTasksModal({
                                 {item.clientName || item.name || item.clientId}
                               </td>
                               <td className="px-6 py-4 border align-top">
-                                {formatDate(item.settlementDate)}
+                                {formatDate(item.settlementDate || item.matterDate)}
                               </td>
                               <td
                                 className="px-6 py-4 border text-gray-400"
@@ -289,7 +306,7 @@ export default function OutstandingTasksModal({
                                     className="px-6 py-4 border align-top bg-gray-50/50"
                                   >
                                     {formatDate(
-                                      item.settlementDate || item.deliveryDate
+                                      item.settlementDate || item.deliveryDate || item.matterDate
                                     )}
                                   </td>
                                 </>
