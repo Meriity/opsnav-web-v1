@@ -554,17 +554,45 @@ export default function ArchivedClients() {
       const to = moment(withTo).format("YYYY-MM-DD");
 
       let data;
-      if (currentModule === "commercial") {
-        // For commercial, filter the already-fetched list
+      if (currentModule === "commercial" || currentModule === "vocat") {
+        // For commercial and vocat, filter the already-fetched list
         data = filteredClientList.filter((client) => {
-          const clientDate = moment(
-            new Date(client.settlement_date || client.settlementDate)
-          );
+          const dateToUse =
+            currentModule === "commercial"
+              ? client.settlement_date || client.settlementDate
+              : client.matterDate;
+
+          if (!dateToUse) return false;
+          const clientDate = moment(new Date(dateToUse));
           return clientDate.isBetween(withFrom, withTo, "day", "[]");
         });
+
+        if (currentModule === "vocat") {
+          data = data.map((item, index) => ({
+            id: index + 1,
+            matterNumber: item.matterNumber,
+            matterDate: item.matterDate
+              ? moment(item.matterDate).format("DD/MM/YYYY")
+              : "",
+            clientName: item.clientName,
+            clientAddress: item.clientAddress,
+            state: item.state,
+            clientType: item.clientType,
+            criminalIncidentDate: item.criminalIncidentDate
+              ? moment(item.criminalIncidentDate).format("DD/MM/YYYY")
+              : "",
+            notes: item.notes,
+            dataEntryBy: item.dataEntryBy,
+            closeMatter: item.closeMatter,
+          }));
+        }
       } else {
         const res = await api.getArchivedClientsDate(from, to);
-        data = res.data || [];
+        if (Array.isArray(res)) {
+          data = res;
+        } else {
+          data = res.data || [];
+        }
       }
 
       if (!data || data.length === 0) {
@@ -576,6 +604,8 @@ export default function ArchivedClients() {
       toast.error(e.message || "Export failed");
     } finally {
       setIsExporting(false);
+      setFromDate(null);
+      setToDate(null);
     }
   }
 
