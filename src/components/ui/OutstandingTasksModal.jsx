@@ -89,7 +89,18 @@ export default function OutstandingTasksModal({
           matterFilter
         );
       }
-      if (activeMatter) {
+      if (Array.isArray(response)) {
+        let filteredData = response;
+        if (activeMatter) {
+          filteredData = response.filter(
+            (item) =>
+              String(item.matterNumber) === String(activeMatter) ||
+              String(item.orderId) === String(activeMatter)
+          );
+        }
+        setData(filteredData);
+        setTotalPages(1);
+      } else if (activeMatter) {
         setData([response]);
         setTotalPages(1);
       } else {

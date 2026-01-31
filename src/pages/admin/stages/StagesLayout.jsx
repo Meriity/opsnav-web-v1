@@ -203,6 +203,8 @@ export default function StagesLayout() {
       } else if (currentModule === "print media") {
          if(!newData.data) newData.data = {};
          newData.data.deliveryAddress = address;
+      } else if (currentModule === "vocat") {
+        newData.clientAddress = address;
       } else {
         newData.propertyAddress = address;
       }
@@ -1067,6 +1069,13 @@ export default function StagesLayout() {
           dataEntryBy: clientData?.dataEntryBy || "",
           postcode: clientData?.postcode || "",
         };
+      } else if (currentModule === "vocat") {
+        payload = {
+          settlementDate: clientData?.settlementDate || null,
+          notes: clientData?.notes || "",
+          postcode: clientData?.postcode,
+          clientAddress: clientData?.clientAddress || "",
+        };
       } else if (currentModule !== "print media") {
         payload = {
           settlementDate: clientData?.settlementDate || null,
@@ -1112,6 +1121,8 @@ export default function StagesLayout() {
         if (currentModule === "commercial") {
           payload.businessName = clientData?.businessName || "";
           payload.businessAddress = clientData?.businessAddress || "";
+        } else if (currentModule === "vocat") {
+          payload.clientAddress = clientData?.clientAddress || "";
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
           payload.propertyAddress = clientData?.propertyAddress || "";
@@ -1162,8 +1173,14 @@ export default function StagesLayout() {
           originalMatterNumber,
           payload
         );
+      } else if (currentModule === "vocat") {
+        console.log("[API] Vocat update");
+        resp = await vocatApiRef.current.updateClient(
+          originalMatterNumber,
+          payload
+        );
       } else {
-        console.log("🚀 [API] Conveyancing update");
+        console.log("[API] Conveyancing update");
         resp = await apiRef.current.updateClientData(
           originalMatterNumber,
           payload
