@@ -1097,22 +1097,24 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
-                        <input
-                          type="radio"
-                          name="role"
-                          value="read-only"
-                          checked={role === "read-only"}
-                          onChange={handleChange}
-                          className="form-radio text-emerald-500"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-700">Read Only</div>
-                          <div className="text-xs text-gray-500">
-                            View access only
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="read-only"
+                            checked={role === "read-only"}
+                            onChange={handleChange}
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
                           </div>
-                        </div>
-                      </label>
+                        </label>
+                      )}
                     </div>  
                   </div>
                 </div>
@@ -1265,22 +1267,24 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
-                        <input
-                          type="radio"
-                          name="role"
-                          value="read-only"
-                          checked={role === "read-only"}
-                          onChange={handleChange}
-                          className="form-radio text-emerald-500"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-700">Read Only</div>
-                          <div className="text-xs text-gray-500">
-                            View access only
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="read-only"
+                            checked={role === "read-only"}
+                            onChange={handleChange}
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
                           </div>
-                        </div>
-                      </label>
+                        </label>
+                      )}
                     </div>  
                   </div>
                 </div>
@@ -1356,15 +1360,11 @@ export default function ManageUsers() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email
                     </label>
+                    {/* Blocked for now but in future it may removed */}
                     <input
                       value={selectedUser.email || ""}
-                      onChange={(e) =>
-                        setSelectedUser({
-                          ...selectedUser,
-                          email: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed backdrop-blur-sm focus:outline-none transition-all"
                     />
                   </div>
 
@@ -1414,23 +1414,25 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                      <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
-                        <input
-                          type="radio"
-                          name="role"
-                          checked={selectedUser.role === "read-only"}
-                          onChange={() =>
-                            setSelectedUser({ ...selectedUser, role: "read-only" })
-                          }
-                          className="form-radio text-emerald-500"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-700">Read Only</div>
-                          <div className="text-xs text-gray-500">
-                            View access only
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            checked={selectedUser.role === "read-only"}
+                            onChange={() =>
+                              setSelectedUser({ ...selectedUser, role: "read-only" })
+                            }
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
                           </div>
-                        </div>
-                      </label>
+                        </label>
+                      )}
                     </div>  
                   </div>
                 </div>
