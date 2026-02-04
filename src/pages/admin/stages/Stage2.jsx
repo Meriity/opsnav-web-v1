@@ -256,14 +256,14 @@ const formConfig = {
       { name: "proofOfIncome", label: "Proof of income (Loss of earning)", type: "radio", options: ["Yes", "No"] },
       { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No"] },
       
-      { name: "statDec", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No"] },
-      { name: "receiptsClothing", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No"] },
+      { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No"] },
+      { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No"] },
       
       { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No"] },
       
       { name: "medicalInvoices", label: "Invoices / receipts (Medical)", type: "radio", options: ["Yes", "No"] },
       
-      { name: "recoveryExpenses", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No"] },
+      { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No"] },
     ],
     noteGroups: [
       {
@@ -278,11 +278,11 @@ const formConfig = {
             "fasStandardForm", 
             "proofOfIncome", 
             "psychLetter", 
-            "statDec",
-            "receiptsClothing",
+            "statDecClothing",
+            "clothingReceipts",
             "securityInvoices",
             "medicalInvoices",
-            "recoveryExpenses"
+            "recoveryInvoices"
         ],
       },
     ],
@@ -628,14 +628,14 @@ export default function Stage2({
       if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) return null;
       if (field.name === "psychLetter" && !hasAid("lossOfEarning")) return null;
       
-      if (field.name === "statDec" && !hasAid("clothing")) return null;
-      if (field.name === "receiptsClothing" && !hasAid("clothing")) return null;
+      if (field.name === "statDecClothing" && !hasAid("clothing")) return null;
+      if (field.name === "clothingReceipts" && !hasAid("clothing")) return null;
       
       if (field.name === "securityInvoices" && !hasAid("securityExpenses")) return null;
       
       if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) return null;
       
-      if (field.name === "recoveryExpenses" && !hasAid("recoveryExpenses")) return null;
+      if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) return null;
     }
 
     return (
