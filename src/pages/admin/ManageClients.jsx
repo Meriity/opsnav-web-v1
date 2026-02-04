@@ -423,7 +423,7 @@ export default function ManageUsers() {
             onClick={() => setcreateuser(true)}
             width="w-[150px]"
           /> */}
-          {localStorage.getItem("role") !== "read-only" && (
+          {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -500,7 +500,7 @@ export default function ManageUsers() {
                           ID: {user.clientId}
                         </p>
                       </div>
-                      {localStorage.getItem("role") !== "read-only" && (
+                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                         <div className="flex items-center space-x-1 flex-shrink-0">
                           <button
                             onClick={() => {

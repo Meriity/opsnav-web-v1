@@ -180,7 +180,7 @@ export default function Stage4({
     []
   );
 
-  const isReadOnly = useMemo(() => localStorage.getItem("role") === "read-only", []);
+  const isReadOnly = useMemo(() => ["readonly", "read-only"].includes(localStorage.getItem("role")), []);
 
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);

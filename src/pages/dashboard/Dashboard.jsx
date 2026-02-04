@@ -1331,7 +1331,7 @@ function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {localStorage.getItem("role") !== "read-only" && (
+                {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

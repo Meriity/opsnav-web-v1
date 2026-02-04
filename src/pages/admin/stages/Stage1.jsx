@@ -215,7 +215,7 @@ export default function Stage1({
     []
   );
 
-  const isReadOnly = useMemo(() => localStorage.getItem("role") === "read-only", []);
+  const isReadOnly = useMemo(() => ["readonly", "read-only"].includes(localStorage.getItem("role")), []);
 
   const currentFields = useMemo(
     () => formConfig[currentModule] || formConfig.conveyancing,
