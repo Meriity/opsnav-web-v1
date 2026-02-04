@@ -340,7 +340,7 @@ const Table = ({
                     className={`px-2 ${cellPadding} rounded-r-2xl align-middle`}
                   >
                     <div className="flex flex-row items-center justify-center space-x-2">
-                      {onEdit && localStorage.getItem("role") !== "read-only" && (
+                      {onEdit && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                         <button
                           onClick={() => onEdit(item)}
                           className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
@@ -351,7 +351,7 @@ const Table = ({
                         </button>
                       )}
                       {onDelete &&
-                        localStorage.getItem("role") !== "read-only" &&
+                        !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
                         (!hideDeleteForSuperadmin ||
                           !hideDeleteForSuperadmin(item)) && (
                           <button
@@ -422,7 +422,7 @@ const Table = ({
                       )}
                       {EditOrder &&
                         currentModule === "print media" &&
-                        localStorage.getItem("role") !== "read-only" && (
+                        !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                           <button
                             onClick={() => {
                               console.log("clicked!");

@@ -108,7 +108,7 @@ export default function Stage3({
   const hasLoaded = useRef(false);
 
   const currentModule = localStorage.getItem("currentModule");
-  const isReadOnly = localStorage.getItem("role") === "read-only";
+  const isReadOnly = ["readonly", "read-only"].includes(localStorage.getItem("role"));
 
   const fields =
     currentModule === "commercial"

@@ -503,7 +503,7 @@ export default function ManageUsers() {
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   item.role === "admin"
                     ? "bg-purple-100 text-purple-700"
-                    : item.role === "read-only"
+                    : ["readonly", "read-only"].includes(item.role)
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-blue-100 text-blue-700"
                 }`}
@@ -558,7 +558,7 @@ export default function ManageUsers() {
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   item.role === "admin"
                     ? "bg-purple-100 text-purple-700"
-                    : item.role === "read-only"
+                    : ["readonly", "read-only"].includes(item.role)
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-blue-100 text-blue-700"
                 }`}
@@ -947,7 +947,7 @@ export default function ManageUsers() {
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               user.role === "admin"
                                 ? "bg-purple-100 text-purple-700"
-                                : user.role === "read-only"
+                                : ["readonly", "read-only"].includes(user.role)
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-blue-100 text-blue-700"
                             }`}
@@ -1102,8 +1102,8 @@ export default function ManageUsers() {
                           <input
                             type="radio"
                             name="role"
-                            value="read-only"
-                            checked={role === "read-only"}
+                            value="readonly"
+                            checked={role === "readonly"}
                             onChange={handleChange}
                             className="form-radio text-emerald-500"
                           />
@@ -1272,8 +1272,8 @@ export default function ManageUsers() {
                           <input
                             type="radio"
                             name="role"
-                            value="read-only"
-                            checked={role === "read-only"}
+                            value="readonly"
+                            checked={role === "readonly"}
                             onChange={handleChange}
                             className="form-radio text-emerald-500"
                           />
@@ -1419,9 +1419,9 @@ export default function ManageUsers() {
                           <input
                             type="radio"
                             name="role"
-                            checked={selectedUser.role === "read-only"}
+                            checked={selectedUser.role === "readonly"}
                             onChange={() =>
-                              setSelectedUser({ ...selectedUser, role: "read-only" })
+                              setSelectedUser({ ...selectedUser, role: "readonly" })
                             }
                             className="form-radio text-emerald-500"
                           />

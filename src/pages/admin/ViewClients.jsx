@@ -805,7 +805,7 @@ const ViewClients = () => {
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   /> */}
 
-                      {localStorage.getItem("role") !== "read-only" && (
+                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
@@ -880,7 +880,7 @@ const ViewClients = () => {
                     width="w-[150px]"
                   /> */}
 
-                      {localStorage.getItem("role") !== "read-only" && (
+                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                         <>
                           <motion.button
                             whileHover={{ scale: 1.05 }}

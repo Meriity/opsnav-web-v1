@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LogOut,
@@ -19,10 +19,12 @@ function WorkSelection() {
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
 
   // Parse access list
-  const accessList = (localStorage.getItem("access") || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+  const accessList = useMemo(() => {
+    return (localStorage.getItem("access") || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }, []);
 
   // Handle Module Selection
   const handleSubmit = (moduleType) => {
@@ -40,7 +42,7 @@ function WorkSelection() {
         navigate("/admin/login");
       } else if (role === "admin" || role === "superadmin") {
         navigate("/admin/dashboard");
-      } else if (role === "user" || role === "read-only") {
+      } else if (role === "user" || role === "readonly" || role === "read-only") {
         navigate("/user/dashboard");
       }
     } catch (e) {
@@ -69,7 +71,7 @@ function WorkSelection() {
         if (token) {
           if (role === "admin" || role === "superadmin") {
             navigate("/admin/dashboard");
-          } else if (role === "user" || role === "read-only") {
+          } else if (role === "user" || role === "readonly" || role === "read-only") {
             navigate("/user/dashboard");
           }
         }

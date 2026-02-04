@@ -361,7 +361,7 @@ export default function Stage2({
   const [isLoading, setIsLoading] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
-  const isReadOnly = localStorage.getItem("role") === "read-only";
+  const isReadOnly = ["readonly", "read-only"].includes(localStorage.getItem("role"));
   const currentConfig =
     currentModule === "commercial"
       ? formConfig.commercial
