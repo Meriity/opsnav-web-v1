@@ -18,6 +18,7 @@ import {
   Mail,
   Calendar,
   Info,
+  Scale,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Table from "../../components/ui/Table";
@@ -56,6 +57,12 @@ const ACCESS_MODULES = [
     label: "Commercial",
     icon: Briefcase,
     color: "bg-gradient-to-r from-indigo-500 to-purple-500",
+  },
+  {
+    value: "VOCAT",
+    label: "VOCAT",
+    icon: Scale,
+    color: "bg-gradient-to-r from-rose-500 to-pink-500",
   },
 ];
 
@@ -488,7 +495,23 @@ export default function ManageUsers() {
           { key: "displayName", title: "Display Name" },
           { key: "email", title: "Email" },
           { key: "status", title: "Status" },
-          { key: "role", title: "Role" },
+          {
+            key: "role",
+            title: "Role",
+            render: (item) => (
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  item.role === "admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : ["readonly", "read-only"].includes(item.role)
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {item.role}
+              </span>
+            ),
+          },
           {
             key: "access",
             title: "Access Modules",
@@ -527,7 +550,23 @@ export default function ManageUsers() {
           { key: "displayName", title: "Display Name" },
           { key: "email", title: "Email" },
           { key: "status", title: "Status" },
-          { key: "role", title: "Role" },
+          {
+            key: "role",
+            title: "Role",
+            render: (item) => (
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  item.role === "admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : ["readonly", "read-only"].includes(item.role)
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {item.role}
+              </span>
+            ),
+          },
           { key: "createdAt", title: "Created At" },
         ];
 
@@ -908,6 +947,8 @@ export default function ManageUsers() {
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               user.role === "admin"
                                 ? "bg-purple-100 text-purple-700"
+                                : ["readonly", "read-only"].includes(user.role)
+                                ? "bg-emerald-100 text-emerald-700"
                                 : "bg-blue-100 text-blue-700"
                             }`}
                           >
@@ -1056,7 +1097,25 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="readonly"
+                            checked={role === "readonly"}
+                            onChange={handleChange}
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
+                          </div>
+                        </label>
+                      )}
+                    </div>  
                   </div>
                 </div>
 
@@ -1208,7 +1267,25 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            value="readonly"
+                            checked={role === "readonly"}
+                            onChange={handleChange}
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
+                          </div>
+                        </label>
+                      )}
+                    </div>  
                   </div>
                 </div>
 
@@ -1283,15 +1360,11 @@ export default function ManageUsers() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email
                     </label>
+                    {/* Blocked for now but in future it may removed */}
                     <input
                       value={selectedUser.email || ""}
-                      onChange={(e) =>
-                        setSelectedUser({
-                          ...selectedUser,
-                          email: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-transparent transition-all"
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed backdrop-blur-sm focus:outline-none transition-all"
                     />
                   </div>
 
@@ -1341,7 +1414,26 @@ export default function ManageUsers() {
                           </div>
                         </div>
                       </label>
-                    </div>
+                      {currentModule === "vocat" && (
+                        <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-emerald-500 transition-colors cursor-pointer flex-1">
+                          <input
+                            type="radio"
+                            name="role"
+                            checked={selectedUser.role === "readonly"}
+                            onChange={() =>
+                              setSelectedUser({ ...selectedUser, role: "readonly" })
+                            }
+                            className="form-radio text-emerald-500"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-700">Read Only</div>
+                            <div className="text-xs text-gray-500">
+                              View access only
+                            </div>
+                          </div>
+                        </label>
+                      )}
+                    </div>  
                   </div>
                 </div>
 

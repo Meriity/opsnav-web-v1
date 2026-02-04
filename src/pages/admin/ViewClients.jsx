@@ -13,6 +13,7 @@ import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import AdminAPI from "../../api/adminAPI";
 import WillsAPI from "../../api/willsAPI";
+import VocatFasAPI from "../../api/vocatFasAPI";
 import Header from "../../components/layout/Header";
 import { toast } from "react-toastify";
 import OutstandingTasksModal from "../../components/ui/OutstandingTasksModal";
@@ -95,6 +96,8 @@ const ViewClients = () => {
       return new CommercialAPI();
     } else if (currentModule === "wills") {
       return new WillsAPI();
+    } else if (currentModule === "vocat") {
+      return new VocatFasAPI();
     } else {
       return new ClientAPI();
     }
@@ -190,6 +193,41 @@ const ViewClients = () => {
         } finally {
            setCommercialLoading(false);
         }
+      } else if (currentModule === "vocat") {
+        setCommercialLoading(true);
+        try {
+          const response = await api.getActiveClients();
+          console.log("VOCAT active clients response:", response);
+
+          let data = [];
+          if (Array.isArray(response)) {
+             data = response;
+          } else if (Array.isArray(response?.clients)) {
+             data = response.clients;
+          } else if (Array.isArray(response?.data)) {
+             data = response.data;
+          }
+
+          const transformedData = data.map((client) => ({
+            ...client,
+            id: client._id || client.id || client.matterNumber,
+            matternumber: client.matterNumber,
+            client_name: client.clientName,
+            client_type: client.clientType,
+            matterDate: client.matterDate,
+            state: client.state,
+            property_address: client.clientAddress,
+            stages: Array.isArray(client.stages) ? client.stages : [client.stages || {}],
+            status: "active",
+          }));
+
+          setCommercialClients(transformedData);
+        } catch (error) {
+          console.error("Error fetching VOCAT clients:", error);
+          setCommercialClients([]);
+        } finally {
+          setCommercialLoading(false);
+        }
       } else {
         fetchClients();
       }
@@ -199,7 +237,7 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   const filteredClients = useMemo(() => {
-    let data = (currentModule === "commercial" || currentModule === "wills") ? commercialClients : Clients;
+    let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialClients : Clients;
 
     if (!Array.isArray(data)) return [];
 
@@ -314,6 +352,15 @@ const ViewClients = () => {
       { key: "matterDate", title: "Matter Date", width: "10%" },
       { key: "client_name", title: "Client Name", width: "15%" },
       { key: "property_address", title: "Address", width: "20%" },
+      { key: "state", title: "State", width: "10%" },
+      { key: "client_type", title: "Client Type", width: "15%" },
+     ];
+  } else if (currentModule === "vocat") {
+     columns = [
+      { key: "matternumber", title: "Matter Number", width: "10%" },
+      { key: "matterDate", title: "Matter Date", width: "10%" },
+      { key: "client_name", title: "Client Name", width: "15%" },
+      { key: "property_address", title: "Client Address", width: "20%" },
       { key: "state", title: "State", width: "10%" },
       { key: "client_type", title: "Client Type", width: "15%" },
      ];
@@ -458,7 +505,7 @@ const ViewClients = () => {
   }, [dateFilter]);
 
   const shouldShowOutstandingTasks = () => {
-    return currentModule === "commercial" || currentModule === "conveyancing";
+    return currentModule === "commercial" || currentModule === "conveyancing" || currentModule === "vocat";
   };
 
   const shouldShowCreateOrder = () => {
@@ -466,7 +513,7 @@ const ViewClients = () => {
   };
 
   const isLoading =
-    (currentModule === "commercial" || currentModule === "wills") ? commercialLoading : loading;
+    (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialLoading : loading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
@@ -747,7 +794,8 @@ const ViewClients = () => {
                 <div className="hidden lg:flex items-center gap-1.5">
                   {(currentModule === "conveyancing" ||
                     currentModule === "wills" ||
-                    currentModule === "commercial") && (
+                    currentModule === "commercial" ||
+                    currentModule === "vocat") && (
                     <>
                       {/* <Button
                     label="Create Client"
@@ -757,21 +805,23 @@ const ViewClients = () => {
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                   /> */}
 
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() =>
-                          currentModule === "commercial"
-                            ? setCreateProject(true)
-                            : setcreateuser(true)
-                        }
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                        {currentModule === "commercial"
-                          ? "Create Project"
-                          : "Create Client"}
-                      </motion.button>
+                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() =>
+                            currentModule === "commercial"
+                              ? setCreateProject(true)
+                              : setcreateuser(true)
+                          }
+                          className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                        >
+                          <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                          {currentModule === "commercial"
+                            ? "Create Project"
+                            : "Create Client"}
+                        </motion.button>
+                      )}
 
                       {/* <Button
                     label="Outstanding Tasks"
@@ -830,25 +880,29 @@ const ViewClients = () => {
                     width="w-[150px]"
                   /> */}
 
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setcreateuser(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Create Client
-                      </motion.button>
+                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setcreateuser(true)}
+                            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                          >
+                            <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Create Client
+                          </motion.button>
 
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setcreateOrder(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Create Order
-                      </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setcreateOrder(true)}
+                            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                          >
+                            <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Create Order
+                          </motion.button>
+                        </>
+                      )}
 
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -894,37 +948,83 @@ const ViewClients = () => {
                     >
                       <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                         <div className="py-1">
-                          {/* Create Client/Project option */}
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setcreateuser(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                {getCreateButtonLabel()}
-                              </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setShowOutstandingTask(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                Outstanding Tasks
-                              </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button
-                                onClick={() => setShowDateRange(true)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full"
-                              >
-                                Select Date Range
-                              </button>
-                            )}
-                          </Menu.Item>
+                          {currentModule === "print media" ? (
+                            <>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateuser(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Create Client
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateOrder(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Create Order
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowDateRange(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Date Range
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowTar(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Task Report
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </>
+                          ) : (
+                            <>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setcreateuser(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    {getCreateButtonLabel()}
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowOutstandingTask(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Outstanding Tasks
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => setShowDateRange(true)}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                  >
+                                    Select Date Range
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </>
+                          )}
                         </div>
                       </Menu.Items>
                     </Transition>

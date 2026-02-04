@@ -3,6 +3,7 @@ import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import WillsAPI from "@/api/willsAPI";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
@@ -117,6 +118,67 @@ const formConfig = {
     },
     { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
   ],
+  vocat: [
+    {
+      name: "referral",
+      label: "Referral",
+      type: "text",
+    },
+    {
+      name: "clientAuthority",
+      label: "Client Authority",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      name: "evidenceOfIncident",
+      label: "Evidence of Incident",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      name: "reportedToPolice",
+      label: "Reported to Police",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      name: "policeDetailsProvided",
+      label: "If Yes, details provided",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      name: "typeOfAidHeader",
+      label: "Type of aid: (pick multiple)",
+      type: "header", // Just a visual label
+    },
+    {
+      name: "lossOfEarning",
+      label: "Loss of earning",
+      type: "checkbox",
+    },
+    {
+      name: "clothing",
+      label: "Clothing",
+      type: "checkbox",
+    },
+    {
+      name: "securityExpenses",
+      label: "Security related expenses",
+      type: "checkbox",
+    },
+    {
+      name: "medicalExpenses",
+      label: "Medical expenses",
+      type: "checkbox",
+    },
+    {
+      name: "recoveryExpenses",
+      label: "Recovery related expenses",
+      type: "checkbox",
+    },
+  ],
 };
 
 // Common fields for all clients
@@ -141,9 +203,10 @@ export default function Stage1({
 
   const hasLoaded = useRef(false);
 
-  const api = new ClientAPI();
-  const commercialApi = new CommercialAPI();
-  const willsApi = new WillsAPI();
+  const api = useMemo(() => new ClientAPI(), []);
+  const commercialApi = useMemo(() => new CommercialAPI(), []);
+  const willsApi = useMemo(() => new WillsAPI(), []);
+  const vocatApi = useMemo(() => new VocatFasAPI(), []);
   const { matterNumber } = useParams();
 
   // Stabilize company + fields so they can be safely used in hooks' deps
@@ -151,6 +214,8 @@ export default function Stage1({
     () => localStorage.getItem("currentModule"),
     []
   );
+
+  const isReadOnly = useMemo(() => ["readonly", "read-only"].includes(localStorage.getItem("role")), []);
 
   const currentFields = useMemo(
     () => formConfig[currentModule] || formConfig.conveyancing,
@@ -283,11 +348,14 @@ export default function Stage1({
 
       const initialFormData = {};
       const initialStatuses = {};
+      const aidTypes = stageData.aidTypes || {};
 
       currentFields.forEach((field) => {
         let value = "";
 
-        if (field.name === "quoteAmount") {
+        if (currentModule === "vocat" && field.type === "checkbox") {
+             value = aidTypes[field.name] ?? stageData[field.name] ?? false;
+        } else if (field.name === "quoteAmount") {
           value =
             stageData[field.name]?.$numberDecimal ??
             stageData[field.name] ??
@@ -304,8 +372,6 @@ export default function Stage1({
           initialStatuses[field.name] = getStatus(value);
         }
       });
-
-      // Also handle costing fields if they exist in data but maybe not in config yet (race condition safety) or just standard mapping
       if (currentModule === "print media") {
         if (stageData.costingType)
           initialFormData.costingType = normalizeValue(stageData.costingType);
@@ -411,6 +477,24 @@ export default function Stage1({
           (field) => getStatus(formData[field.name]) === "Completed"
         );
         payload.colorStatus = allCompleted ? "green" : "amber";
+      } else if (currentModule === "vocat") {
+        payload.noteForClient = noteForClient;
+        
+        // Nest aid types
+        const aidTypes = {
+             lossOfEarning: payload.lossOfEarning || false,
+             clothing: payload.clothing || false,
+             securityExpenses: payload.securityExpenses || false,
+             medicalExpenses: payload.medicalExpenses || false,
+             recoveryExpenses: payload.recoveryExpenses || false
+        };
+        payload.aidTypes = aidTypes;
+
+        delete payload.lossOfEarning;
+        delete payload.clothing;
+        delete payload.securityExpenses;
+        delete payload.medicalExpenses;
+        delete payload.recoveryExpenses;
       } else {
         // For other modules, use combined note structure
         payload.noteForClient = noteForClient;
@@ -433,6 +517,9 @@ export default function Stage1({
         await api.upsertIDGStages(matterNumber, 1, payload);
       } else if (currentModule === "wills") {
         await willsApi.upsertStage(1, matterNumber, payload);
+      } else if (currentModule === "vocat") {
+        payload.notes = payload.noteForClient; 
+        await vocatApi.saveStageOne(payload);
       } else {
         const res = await api.upsertStageOne(payload);
 
@@ -472,6 +559,12 @@ export default function Stage1({
   }
 
   const renderField = (field) => {
+    // Conditional rendering for VOCAT
+    if (currentModule === "vocat" && field.name === "policeDetailsProvided") {
+       const reported = normalizeValue(formData.reportedToPolice);
+       if (reported !== "yes") return null;
+    }
+
     switch (field.type) {
       case "number":
         return (
@@ -483,6 +576,7 @@ export default function Stage1({
               type="number"
               step="0.01"
               value={formData[field.name] || ""}
+              disabled={isReadOnly}
               onChange={(e) => handleChange(field.name, e.target.value)}
               onKeyDown={(e) => {
                 if (["e", "E", "+", "-"].includes(e.key)) {
@@ -490,7 +584,7 @@ export default function Stage1({
                 }
               }}
               placeholder="0.00"
-              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
             />
           </div>
         );
@@ -504,8 +598,9 @@ export default function Stage1({
             <input
               type="text"
               value={formData[field.name] || ""}
+              disabled={isReadOnly}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base"
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
             />
           </div>
         );
@@ -542,7 +637,9 @@ export default function Stage1({
                       normalizeValue(formData[field.name]) ===
                       normalizeValue(val)
                     }
-                    onChange={() => handleChange(field.name, val)}
+                    onChange={() => !isReadOnly && handleChange(field.name, val)}
+                    disabled={false}
+                    className={isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}
                   />
                   <span className="truncate">{val}</span>
                 </label>
@@ -575,10 +672,35 @@ export default function Stage1({
             <textarea
               value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none"
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
+              disabled={isReadOnly}
             />
           </div>
         );
+
+      case "checkbox":
+        return (
+          <div key={field.name} className="mt-4 flex items-center">
+            <input
+              type="checkbox"
+              id={field.name}
+              checked={!!formData[field.name]}
+              disabled={isReadOnly}
+              onChange={(e) => handleChange(field.name, e.target.checked)}
+              className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 mr-3"
+            />
+             <label htmlFor={field.name} className="text-sm md:text-base font-bold text-gray-700">
+              {field.label}
+            </label>
+          </div>
+        );
+
+      case "header":
+          return (
+             <div key={field.name} className="mt-6 mb-2">
+                <h3 className="text-lg font-bold text-gray-800">{field.label}</h3>
+             </div>
+          );
 
       default:
         return null;
@@ -621,13 +743,15 @@ export default function Stage1({
           disabled={stageNumber === 1}
         />
         <div className="flex gap-2">
-          <Button
-            label={isSaving ? "Saving..." : "Save"}
-            width="w-[70px] md:w-[100px]"
-            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={handleSave}
-            disabled={isSaving || !isChanged()}
-          />
+          {!isReadOnly && (
+            <Button
+              label={isSaving ? "Saving..." : "Save"}
+              width="w-[70px] md:w-[100px]"
+              bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+              onClick={handleSave}
+              disabled={isSaving || !isChanged()}
+            />
+          )}
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
@@ -658,5 +782,6 @@ Stage1.propTypes = {
   data: PropTypes.object,
   reloadTrigger: PropTypes.bool,
   setReloadTrigger: PropTypes.func.isRequired,
+  setHasChanges: PropTypes.func.isRequired,
   stageNumber: PropTypes.number,
 };

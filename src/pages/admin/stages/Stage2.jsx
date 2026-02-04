@@ -3,6 +3,7 @@ import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import WillsAPI from "@/api/willsAPI";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
@@ -245,6 +246,47 @@ const formConfig = {
       },
     ],
   },
+  vocat: {
+    fields: [
+      { name: "voi", label: "VOI", type: "radio", options: ["Yes", "No"] },
+      { name: "fasStandardForm", label: "FAS Standard Form", type: "radio", options: ["Yes", "No"] },
+      
+      { name: "evidenceHeader", label: "Evidence:", type: "header" },
+      
+      { name: "proofOfIncome", label: "Proof of income (Loss of earning)", type: "radio", options: ["Yes", "No"] },
+      { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No"] },
+      
+      { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No"] },
+      { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No"] },
+      
+      { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No"] },
+      
+      { name: "medicalInvoices", label: "Invoices / receipts (Medical)", type: "radio", options: ["Yes", "No"] },
+      
+      { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No"] },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note",
+        clientCommentLabel: "Comment for Client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: [
+            "voi", 
+            "fasStandardForm", 
+            "proofOfIncome", 
+            "psychLetter", 
+            "statDecClothing",
+            "clothingReceipts",
+            "securityInvoices",
+            "medicalInvoices",
+            "recoveryInvoices"
+        ],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {
@@ -302,11 +344,13 @@ export default function Stage2({
   clientType,
   user,
   stageNumber = 2,
+  stage1Data = {},
 }) {
   const { matterNumber } = useParams();
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
   const willsApi = new WillsAPI();
+  const vocatApi = new VocatFasAPI();
 
   const originalData = useRef({});
   const hasLoaded = useRef(false);
@@ -317,6 +361,7 @@ export default function Stage2({
   const [isLoading, setIsLoading] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
+  const isReadOnly = ["readonly", "read-only"].includes(localStorage.getItem("role"));
   const currentConfig =
     currentModule === "commercial"
       ? formConfig.commercial
@@ -539,6 +584,11 @@ export default function Stage2({
         payload.matterNumber = matterNumber;
         payload.colorStatus = colorStatus;
         apiResponse = await willsApi.upsertStage(2, matterNumber, payload);
+      } else if (currentModule === "vocat") {
+        payload.matterNumber = matterNumber;
+        payload.colorStatus = colorStatus;
+        payload.notes = payload.noteForClient;
+        apiResponse = await vocatApi.saveStageTwo(payload);
       } else {
         // standard conveyancing
         payload.matterNumber = matterNumber;
@@ -568,8 +618,32 @@ export default function Stage2({
     }
   }
 
-  const renderField = (field) => (
-    <div key={field.name} className="mt-5">
+  const renderField = (field) => {
+    // VOCAT Conditional Logic
+    if (currentModule === "vocat") {
+      const s1 = stage1Data || {};
+      const aidTypes = s1.aidTypes || {};
+      const hasAid = (key) => aidTypes[key] === true || s1[key] === true;
+
+      if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) return null;
+      if (field.name === "psychLetter" && !hasAid("lossOfEarning")) return null;
+      
+      if (field.name === "statDecClothing" && !hasAid("clothing")) return null;
+      if (field.name === "clothingReceipts" && !hasAid("clothing")) return null;
+      
+      if (field.name === "securityInvoices" && !hasAid("securityExpenses")) return null;
+      
+      if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) return null;
+      
+      if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) return null;
+    }
+
+    return (
+    <div key={field.name} className={field.type === "header" ? "mt-6 mb-2" : "mt-5"}>
+      {field.type === "header" ? (
+         <h3 className="text-lg font-bold text-gray-800 border-b pb-1">{field.label}</h3>
+      ) : (
+      <>
       <div className="flex gap-4 justify-between items-center mb-2">
         <label className="block mb-1 text-sm md:text-base font-bold">
           {field.label}
@@ -593,14 +667,16 @@ export default function Stage2({
           <select
             name={field.name}
             className={
-              !["admin", "superadmin"].includes(localStorage.getItem("role"))
+              isReadOnly
+                ? "bg-gray-200 p-2 text-gray-800 font-medium rounded w-full cursor-not-allowed"
+                : !["admin", "superadmin"].includes(localStorage.getItem("role"))
                 ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
                 : "bg-white p-2 border rounded w-full"
             }
             value={formData[field.name] || ""}
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={
-              !["admin", "superadmin"].includes(localStorage.getItem("role"))
+              !["admin", "superadmin"].includes(localStorage.getItem("role")) || isReadOnly
             }
           >
             <option value="">Select Agent</option>
@@ -615,7 +691,7 @@ export default function Stage2({
               ))}
           </select>
         ) : (
-          ["Yes", "No", "Processing", "N/R"].map((val) => (
+          (field.options || ["Yes", "No", "Processing", "N/R"]).map((val) => (
             <label
               key={val}
               className="flex items-center gap-2 text-sm md:text-base"
@@ -628,7 +704,9 @@ export default function Stage2({
                   normalizeValue(formData[field.name] || "") ===
                   normalizeValue(val)
                 }
-                onChange={() => handleChange(field.name, val)}
+                onChange={() => !isReadOnly && handleChange(field.name, val)}
+                disabled={false}
+                className={isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}
               />
               {val}
             </label>
@@ -640,12 +718,16 @@ export default function Stage2({
             type="date"
             value={formData[field.dateFieldName] || ""}
             onChange={(e) => handleChange(field.dateFieldName, e.target.value)}
-            className="ml-2 p-1 border rounded"
+            className={`ml-2 p-1 border rounded ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+            disabled={isReadOnly}
           />
         )}
       </div>
+      </>
+      )}
     </div>
   );
+  };
 
   const renderNoteGroup = (group) => (
     <div key={group.id}>
@@ -664,9 +746,10 @@ export default function Stage2({
           {group.clientCommentLabel}
         </label>
         <textarea
-          className="w-full rounded p-2 bg-gray-100"
+          className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
           value={formData[group.clientCommentKey] || ""}
           onChange={(e) => handleChange(group.clientCommentKey, e.target.value)}
+          disabled={isReadOnly}
         />
       </div>
     </div>
@@ -689,9 +772,10 @@ export default function Stage2({
           Comment for Client
         </label>
         <textarea
-          className="w-full rounded p-2 bg-gray-100"
+          className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
           value={formData.noteForClient || ""}
           onChange={(e) => handleChange("noteForClient", e.target.value)}
+          disabled={isReadOnly}
         />
       </div>
     </div>
@@ -751,13 +835,15 @@ export default function Stage2({
           disabled={stageNumber === 1}
         />
         <div className="flex gap-2">
-          <Button
-            label={isSaving ? "Saving..." : "Save"}
-            width="w-[70px] md:w-[100px]"
-            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={handleSave}
-            disabled={isSaving}
-          />
+          {!isReadOnly && (
+            <Button
+              label={isSaving ? "Saving..." : "Save"}
+              width="w-[70px] md:w-[100px]"
+              bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+              onClick={handleSave}
+              disabled={isSaving}
+            />
+          )}
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"

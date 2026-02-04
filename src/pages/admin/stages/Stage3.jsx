@@ -3,6 +3,7 @@ import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import WillsAPI from "@/api/willsAPI";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
@@ -75,6 +76,12 @@ const formConfig = {
       { key: "inviteBank", label: "Invite Bank", type: "radio" },
     ],
   },
+  vocat: {
+    fields: [
+      { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No"] },
+      { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No"] },
+    ],
+  },
 };
 
 export default function Stage3({
@@ -89,6 +96,7 @@ export default function Stage3({
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
   const willsApi = new WillsAPI();
+  const vocatApi = new VocatFasAPI();
 
   const [formState, setFormState] = useState({});
   const [statusState, setStatusState] = useState({});
@@ -100,6 +108,7 @@ export default function Stage3({
   const hasLoaded = useRef(false);
 
   const currentModule = localStorage.getItem("currentModule");
+  const isReadOnly = ["readonly", "read-only"].includes(localStorage.getItem("role"));
 
   const fields =
     currentModule === "commercial"
@@ -255,12 +264,15 @@ export default function Stage3({
     try {
       if (currentModule === "commercial") {
         await commercialApi.upsertStage(3, matterNumber, payload);
-      } else if (currentModule !== "print media") {
-        await api.upsertStageThree(payload);
+      } else if (currentModule === "vocat") {
+        payload.notes = payload.noteForClient;
+        await vocatApi.saveStageThree(payload);
       } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 3, payload);
       } else if (currentModule === "wills") {
         await willsApi.upsertStage(3, matterNumber, payload);
+      } else {
+        await api.upsertStageThree(payload);
       }
 
       toast.success("Stage 3 Saved Successfully!");
@@ -329,17 +341,20 @@ export default function Stage3({
                 type="text"
                 value={formState[f.key] || ""}
                 onChange={(e) => handleChange(f.key, e.target.value)}
-                className="border rounded p-2 w-full"
+                className={`border rounded p-2 w-full ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+                disabled={isReadOnly}
               />
             ) : (
-              ["Yes", "No", "Processing", "N/R"].map((v) => (
+              (f.options || ["Yes", "No", "Processing", "N/R"]).map((v) => (
                 <label key={v} className="flex items-center gap-2">
                   <input
                     type="radio"
                     checked={
                       normalizeValue(formState[f.key]) === normalizeValue(v)
                     }
-                    onChange={() => handleChange(f.key, v)}
+                    onChange={() => !isReadOnly && handleChange(f.key, v)}
+                    disabled={false}
+                    className={isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}
                   />
                   {v}
                 </label>
@@ -357,7 +372,8 @@ export default function Stage3({
                   }));
                   setHasChanges(true);
                 }}
-                className="border p-1 rounded"
+                className={`border p-1 rounded ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+                disabled={isReadOnly}
               />
             )}
           </div>
@@ -381,7 +397,8 @@ export default function Stage3({
             setNoteForClient(e.target.value);
             setHasChanges(true);
           }}
-          className="w-full rounded p-2 bg-gray-100"
+          className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+          disabled={isReadOnly}
         />
       </div>
 
@@ -393,13 +410,15 @@ export default function Stage3({
           onClick={() => changeStage(stageNumber - 1)}
         />
         <div className="flex gap-2">
-          <Button
-            label={isSaving ? "Saving..." : "Save"}
-            width="w-[100px] md:w-[100px]"
-            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={handleSave}
-            disabled={isSaving}
-          />
+          {!isReadOnly && (
+            <Button
+              label={isSaving ? "Saving..." : "Save"}
+              width="w-[100px] md:w-[100px]"
+              bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+              onClick={handleSave}
+              disabled={isSaving}
+            />
+          )}
           <Button
             label="Next"
             width="w-[70px]  md:w-[100px]"

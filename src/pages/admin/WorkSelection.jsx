@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LogOut,
   ArrowRight,
-  Sparkles,
   Briefcase,
   FileText,
   Printer,
   Building2,
   Cpu,
   LayoutGrid,
+  Scale,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { APP_VERSION } from "../../config/version";
@@ -19,10 +19,12 @@ function WorkSelection() {
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
 
   // Parse access list
-  const accessList = (localStorage.getItem("access") || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+  const accessList = useMemo(() => {
+    return (localStorage.getItem("access") || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }, []);
 
   // Handle Module Selection
   const handleSubmit = (moduleType) => {
@@ -40,7 +42,7 @@ function WorkSelection() {
         navigate("/admin/login");
       } else if (role === "admin" || role === "superadmin") {
         navigate("/admin/dashboard");
-      } else if (role === "user") {
+      } else if (role === "user" || role === "readonly" || role === "read-only") {
         navigate("/user/dashboard");
       }
     } catch (e) {
@@ -69,7 +71,7 @@ function WorkSelection() {
         if (token) {
           if (role === "admin" || role === "superadmin") {
             navigate("/admin/dashboard");
-          } else if (role === "user") {
+          } else if (role === "user" || role === "readonly" || role === "read-only") {
             navigate("/user/dashboard");
           }
         }
@@ -87,6 +89,7 @@ function WorkSelection() {
       wills: "Wills & Estates",
       "print media": "Signage & Print",
       commercial: "Commercial Law",
+      vocat: "VOCAT - FAS",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };
     return moduleMap[module.toLowerCase()] || moduleMap.default;
@@ -101,6 +104,7 @@ function WorkSelection() {
     if (key.includes("wills")) return <FileText {...iconProps} />;
     if (key.includes("print")) return <Printer {...iconProps} />;
     if (key.includes("commercial")) return <Briefcase {...iconProps} />;
+    if (key.includes("vocat")) return <Scale {...iconProps} />;
 
     return <LayoutGrid {...iconProps} />;
   };
@@ -232,7 +236,7 @@ function WorkSelection() {
         >
           {/* Badge (Blue Theme) */}
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20 shadow-sm">
-            <Sparkles className="w-4 h-4 text-yellow-500" />
+            <Scale className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium text-gray-700">
               Workspace Selection
             </span>

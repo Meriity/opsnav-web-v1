@@ -22,6 +22,7 @@ import {
   Briefcase,
   Printer,
   Folder,
+  Scale,
 } from "lucide-react";
 
 // Access Modules Configuration (same as in ManageUsers.jsx)
@@ -49,6 +50,12 @@ const ACCESS_MODULES = [
     label: "Commercial",
     icon: Briefcase,
     color: "bg-indigo-500",
+  },
+  {
+    value: "VOCAT",
+    label: "VOCAT",
+    icon: Scale,
+    color: "bg-rose-500",
   },
 ];
 
@@ -333,7 +340,7 @@ const Table = ({
                     className={`px-2 ${cellPadding} rounded-r-2xl align-middle`}
                   >
                     <div className="flex flex-row items-center justify-center space-x-2">
-                      {onEdit && (
+                      {onEdit && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                         <button
                           onClick={() => onEdit(item)}
                           className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
@@ -344,6 +351,7 @@ const Table = ({
                         </button>
                       )}
                       {onDelete &&
+                        !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
                         (!hideDeleteForSuperadmin ||
                           !hideDeleteForSuperadmin(item)) && (
                           <button
@@ -412,19 +420,21 @@ const Table = ({
                           <span className="text-xs text-[#2E3D99]">View</span>
                         </button>
                       )}
-                      {EditOrder && currentModule === "print media" && (
-                        <button
-                          onClick={() => {
-                            console.log("clicked!");
-                            navigate(`/admin/client/stages/${item.orderId}`);
-                          }}
-                          className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                          title="Edit"
-                        >
-                          <Edit size={12} />
-                          <span className="text-xs">Edit</span>
-                        </button>
-                      )}
+                      {EditOrder &&
+                        currentModule === "print media" &&
+                        !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                          <button
+                            onClick={() => {
+                              console.log("clicked!");
+                              navigate(`/admin/client/stages/${item.orderId}`);
+                            }}
+                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
+                            title="Edit"
+                          >
+                            <Edit size={12} />
+                            <span className="text-xs">Edit</span>
+                          </button>
+                        )}
                     </div>
                   </td>
                 )}

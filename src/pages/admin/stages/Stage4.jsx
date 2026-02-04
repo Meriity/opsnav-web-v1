@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
+import VocatFasAPI from "@/api/vocatFasAPI";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
@@ -92,6 +93,26 @@ const formConfig = {
       },
     ],
   },
+  vocat: {
+    fields: [
+      { name: "variationRequired", label: "Variation required", type: "radio", options: ["Yes", "No"] },
+      { name: "finalLetterToClient", label: "Final Letter to Client", type: "radio", options: ["Yes", "No"] },
+      { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No"] },
+      { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No"] },
+      { name: "closeMatter", label: "Close Matter", type: "radio" },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note",
+        clientCommentLabel: "Client Comment",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: ["variationRequired", "finalLetterToClient", "fasApproval", "invoiced", "closeMatter"],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {
@@ -159,8 +180,11 @@ export default function Stage4({
     []
   );
 
+  const isReadOnly = useMemo(() => ["readonly", "read-only"].includes(localStorage.getItem("role")), []);
+
   const api = useMemo(() => new ClientAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
+  const vocatApi = useMemo(() => new VocatFasAPI(), []);
 
   const currentConfig = useMemo(() => {
     if (currentModule === "commercial") return formConfig.commercial;
@@ -524,6 +548,9 @@ export default function Stage4({
         res = await commercialApi.upsertStage(4, matterNumber, payload);
       } else if (currentModule === "print media") {
         res = await api.upsertIDGStages(matterNumber, 4, payload);
+      } else if (currentModule === "vocat") {
+        payload.notes = payload.noteForClient;
+        res = await vocatApi.saveStageFour(payload);
       } else {
         res = await api.upsertStageFour(payload);
       }
@@ -570,7 +597,7 @@ export default function Stage4({
   const renderField = (field) => {
     switch (field.type) {
       case "radio": {
-        const isDangerField = field.name === "closeOrder";
+        const isDangerField = field.name === "closeOrder" || field.name === "closeMatter";
         return (
           <div 
             key={field.name} 
@@ -599,9 +626,9 @@ export default function Stage4({
             </div>
 
             <div className="flex flex-wrap items-center justify-start gap-x-8 gap-y-2">
-              {(field.options || (field.name !== "closeOrder"
-                ? ["Yes", "No", "Processing", "N/R"]
-                : ["Completed", "Cancelled"])
+              {(field.options || (["closeOrder", "closeMatter"].includes(field.name)
+                ? ["Completed", "Cancelled"]
+                : ["Yes", "No", "Processing", "N/R"])
               ).map((val) => (
                 <label
                   key={val}
@@ -615,8 +642,9 @@ export default function Stage4({
                       normalizeValue(formData[field.name] ?? "") ===
                       normalizeValue(val)
                     }
-                    onChange={() => handleChange(field.name, val)}
-                    className={isDangerField ? "accent-red-600 w-4 h-4" : ""}
+                    onChange={() => !isReadOnly && handleChange(field.name, val)}
+                    className={`${isDangerField ? "accent-red-600 w-4 h-4" : ""} ${isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}`}
+                    disabled={false}
                   />
                   <span className={isDangerField ? "font-medium text-red-900" : ""}>{val}</span>
                 </label>
@@ -642,8 +670,9 @@ export default function Stage4({
                   e.preventDefault();
                 }
               }}
-              className="w-full rounded p-2 bg-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className={`w-full rounded p-2 bg-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
               placeholder="0.00"
+              disabled={isReadOnly}
             />
           </div>
         );
@@ -658,7 +687,8 @@ export default function Stage4({
               type="text"
               value={formData[field.name] ?? ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full rounded p-2 bg-gray-100"
+              className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+              disabled={isReadOnly}
             />
           </div>
         );
@@ -692,7 +722,7 @@ export default function Stage4({
                     accept="image/*"
                     onChange={handleFileChange}
                     className="hidden"
-                    disabled={isUploading}
+                    disabled={isUploading || isReadOnly}
                   />
                 </label>
               ) : (
@@ -706,8 +736,9 @@ export default function Stage4({
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
                     className="absolute top-2 right-2 text-black p-1.5 rounded-full hover:bg-gray-200 transition-colors"
-                    disabled={isDeleting}
+                    disabled={isDeleting || isReadOnly}
                     title="Delete image"
+                    style={{ display: isReadOnly ? "none" : "block" }}
                   >
                     <TrashIcon className="w-4 h-4" />
                     {isDeleting && <span className="sr-only">Deleting...</span>}
@@ -766,7 +797,8 @@ export default function Stage4({
                 setNoteForClient(e.target.value);
                 setHasChanges(true);
               }}
-              className="w-full rounded p-2 bg-gray-100"
+              className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+              disabled={isReadOnly}
             />
           </div>
         </>
@@ -790,6 +822,7 @@ export default function Stage4({
                   setHasChanges(true);
                 }}
                 className="w-full rounded p-2 bg-gray-100"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -804,13 +837,15 @@ export default function Stage4({
           onClick={() => changeStage(stageNumber - 1)}
         />
         <div className="flex gap-2">
-          <Button
-            label={isSaving ? "Saving..." : "Save"}
-            width="w-[100px] md:w-[100px]"
-            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={handleSave}
-            disabled={isSaving}
-          />
+          {!isReadOnly && (
+            <Button
+              label={isSaving ? "Saving..." : "Save"}
+              width="w-[100px] md:w-[100px]"
+              bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+              onClick={handleSave}
+              disabled={isSaving}
+            />
+          )}
           <Button
             label="Next"
             width="w-[70px]  md:w-[100px]"
