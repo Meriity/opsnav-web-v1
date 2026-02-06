@@ -167,7 +167,7 @@ export default function IDGClientDashboard() {
               </div>
 
               <div className="relative">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-start justify-between mb-8">
                   {["ordered", "booked", "completed"].map((stage, index) => {
                     const status = getStageStatus(selectedJob, stage);
                     const isComplete = status === "complete";
@@ -177,36 +177,33 @@ export default function IDGClientDashboard() {
                       <div key={stage} className="flex items-center flex-1">
                         <div className="flex flex-col items-center flex-1">
                           <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${isComplete || isCurrent
+                            className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-500 ${isComplete || isCurrent
                                 ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30"
                                 : "bg-gray-200"
                               }`}
                           >
                             {stage === "ordered" && (
                               <Package
-                                className={`${isComplete || isCurrent
+                                className={`w-5 h-5 md:w-7 md:h-7 ${isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
                                   }`}
-                                size={28}
                               />
                             )}
                             {stage === "booked" && (
                               <Calendar
-                                className={`${isComplete || isCurrent
+                                className={`w-5 h-5 md:w-7 md:h-7 ${isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
                                   }`}
-                                size={28}
                               />
                             )}
                             {stage === "completed" && (
                               <CheckCircle2
-                                className={`${isComplete || isCurrent
+                                className={`w-5 h-5 md:w-7 md:h-7 ${isComplete || isCurrent
                                     ? "text-white"
                                     : "text-gray-400"
                                   }`}
-                                size={28}
                               />
                             )}
                           </div>
@@ -233,7 +230,7 @@ export default function IDGClientDashboard() {
                           </p>
                         </div>
                         {index < 2 && (
-                          <div className="flex-1 h-1 -mt-12 mx-4">
+                          <div className="flex-1 h-1 md:h-2 mt-6 md:mt-8 mx-2 md:mx-4">
                             <div
                               className={`h-full ${getStageStatus(
                                 selectedJob,
@@ -287,21 +284,21 @@ export default function IDGClientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#ffe2df] to-blue-200">
       <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 bg-gradient-to-r from-[#00AEEF] to-[#0088CC] rounded-2xl shadow-lg border border-[#00AEEF]/30 p-8 fixed z-10 top-5 left-20 right-20 overflow-hidden">
-          {/* Subtle Pattern Background */}
-          <div className="absolute inset-0 opacity-60">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-                backgroundSize: "40px 40px",
-              }}
-            ></div>
-          </div>
+          <div className="mb-8 bg-gradient-to-r from-[#00AEEF] to-[#0088CC] rounded-2xl shadow-lg border border-[#00AEEF]/30 p-6 md:p-8 relative mt-4 mx-4 md:mx-0 overflow-hidden">
+            {/* Subtle Pattern Background */}
+            <div className="absolute inset-0 opacity-60">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+                  backgroundSize: "40px 40px",
+                }}
+              ></div>
+            </div>
 
           {/* Content */}
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-8">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left">
               <div className="w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-white/20 transform hover:scale-105 transition-transform duration-300">
                 <img
                   src={LogoUrl}
@@ -318,7 +315,7 @@ export default function IDGClientDashboard() {
                 </h2>
                 <p className="text-white/80 text-base font-medium flex items-center gap-2">
                   <svg
-                    className="w-5 h-5 text-white/90"
+                    className="w-7 h-7 md:w-5 md:h-5 text-white/90"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -341,7 +338,7 @@ export default function IDGClientDashboard() {
                 localStorage.clear();
                 window.location.href = "/client/login";
               }}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl group"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl group w-full md:w-auto justify-center"
             >
               <svg
                 className="w-5 h-5 transition-transform group-hover:translate-x-1"
@@ -362,7 +359,7 @@ export default function IDGClientDashboard() {
         </div>
 
         {selectedJob ? (
-          <div className="mt-55 space-y-6 animate-[fadeIn_0.5s_ease-in-out]">
+          <div className="mt-6 space-y-6 animate-[fadeIn_0.5s_ease-in-out]">
             <button
               onClick={() => setSelectedJob(null)}
               className="text-[#00AEEF] hover:text-[#0088CC] font-medium flex items-center gap-2 transition-colors"
@@ -372,18 +369,18 @@ export default function IDGClientDashboard() {
             </button>
 
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-[#00AEEF] to-[#0088CC] p-8 text-white">
-                <div className="flex items-center justify-between">
+              <div className="bg-gradient-to-r from-[#00AEEF] to-[#0088CC] p-6 md:p-8 text-white">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
                   <div>
-                    <h2 className="text-3xl font-bold">
+                    <h2 className="text-2xl md:text-3xl font-bold">
                       {selectedJob.orderId}
                     </h2>
-                    <p className="text-blue-100 mt-2 text-lg">
+                    <p className="text-blue-100 mt-1 md:mt-2 text-base md:text-lg">
                       {localStorage.getItem("name")}
                     </p>
                   </div>
                   <div
-                    className={`px-6 py-3 rounded-full font-semibold ${selectedJob.status === "completed"
+                    className={`px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold text-sm md:text-base ${selectedJob.status === "completed"
                         ? "bg-green-500"
                         : selectedJob.status === "booked"
                           ? "bg-yellow-500"
@@ -434,18 +431,18 @@ export default function IDGClientDashboard() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Unit Number</p>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col md:flex-row gap-3">
                         <input
                           type="text"
                           name="unitNumber"
                           value={unitNumber ?? ""}
                           onChange={(e) => setunitNumber(e.target.value)}
-                          className="bg-white border border-gray-200 rounded-2xl p-1 text-xl"
+                          className="bg-white border border-gray-200 rounded-2xl p-2 md:p-1 text-base md:text-xl w-full"
                         />
                         <div className="flex gap-2">
                           <button
                             type="submit"
-                            className="border border-gray-200 rounded-2xl p-2 bg-[#00AEEF] text-white transition-colors flex gap-2"
+                            className="border border-gray-200 rounded-2xl p-2 bg-[#00AEEF] text-white transition-colors flex gap-2 justify-center w-full md:w-auto"
                             onClick={() =>
                               handleuploadUnitNumber(
                                 unitNumber,
@@ -465,7 +462,7 @@ export default function IDGClientDashboard() {
                   Job Progress
                 </h3>
                 <div className="relative">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between">
                     {["ordered", "booked", "completed"].map((stage, index) => {
                       const status = getStageStatus(selectedJob, stage);
                       const isComplete = status === "complete";
@@ -475,41 +472,48 @@ export default function IDGClientDashboard() {
                         <div key={stage} className="flex items-center flex-1">
                           <div className="flex flex-col items-center flex-1">
                             <div
-                              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${isComplete || isCurrent
-                                  ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
-                                  : "bg-gray-200 scale-90"
+                              className={`w-12 h-12 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${isComplete || isCurrent
+                                  ? `${stage === "ordered"
+                                    ? "bg-orange-500 shadow-orange-500/30"
+                                    : stage === "booked"
+                                      ? "bg-yellow-500 shadow-yellow-500/30"
+                                      : "bg-green-500 shadow-green-500/30"
+                                    } shadow-lg scale-100`
+                                  : `${stage === "ordered"
+                                    ? "bg-orange-100"
+                                    : stage === "booked"
+                                      ? "bg-yellow-100"
+                                      : "bg-green-100"
+                                    } scale-90`
                                 }`}
                             >
                               {stage === "ordered" && (
                                 <Package
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${isComplete || isCurrent
                                       ? "text-white"
-                                      : "text-gray-400"
+                                      : "text-orange-400"
                                     }`}
-                                  size={32}
                                 />
                               )}
                               {stage === "booked" && (
                                 <Calendar
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${isComplete || isCurrent
                                       ? "text-white"
-                                      : "text-gray-400"
+                                      : "text-yellow-600"
                                     }`}
-                                  size={32}
                                 />
                               )}
                               {stage === "completed" && (
                                 <CheckCircle2
-                                  className={`transition-all duration-300 ${isComplete || isCurrent
+                                  className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${isComplete || isCurrent
                                       ? "text-white"
-                                      : "text-gray-400"
+                                      : "text-green-500"
                                     }`}
-                                  size={32}
                                 />
                               )}
                             </div>
                             <p
-                              className={`mt-4 font-bold capitalize transition-colors text-center ${isComplete || isCurrent
+                              className={`mt-4 font-bold capitalize transition-colors text-center text-[10px] sm:text-xs md:text-base ${isComplete || isCurrent
                                   ? "text-gray-900"
                                   : "text-gray-400"
                                 }`}
@@ -538,21 +542,24 @@ export default function IDGClientDashboard() {
                                   </span>
                                 </div>
                               )}
-                          </div>
-                          {index < 2 && (
-                            <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
-                              <div
-                                className={`h-full transition-all duration-700 ease-in-out ${getStageStatus(
-                                  selectedJob,
-                                  ["booked", "completed"][index]
-                                ) !== "pending"
-                                    ? "bg-[#00AEEF] w-full"
-                                    : "bg-gray-200 w-0"
-                                  }`}
-                              ></div>
                             </div>
-                          )}
-                        </div>
+                            {/* Connector Line - Tablet/Desktop Only */}
+                            {index < 2 && (
+                              <div className="hidden md:flex flex-1 h-1 md:h-2 mt-6 md:mt-9 mx-2 md:mx-6 rounded-full overflow-hidden bg-gray-200">
+                                <div
+                                  className={`h-full transition-all duration-700 ease-in-out ${getStageStatus(
+                                    selectedJob,
+                                    ["booked", "completed"][index]
+                                  ) !== "pending"
+                                      ? index === 0
+                                        ? "bg-orange-500 w-full"
+                                        : "bg-yellow-500 w-full"
+                                      : "bg-gray-200 w-0"
+                                    }`}
+                                ></div>
+                              </div>
+                            )}
+                          </div>
                       );
                     })}
                   </div>
@@ -604,7 +611,7 @@ export default function IDGClientDashboard() {
           </div>
         ) : (
           <>
-            <div className="mt-55 space-y-6">
+            <div className="mt-6 space-y-6">
               <h2 className="ml-5 text-2xl font-bold text-gray-800 mb-2 underline decoration-[#00AEEF]">
                 Active Orders
               </h2>
@@ -643,9 +650,8 @@ export default function IDGClientDashboard() {
                           }}
                         >
                           <div className="p-6">
-                            {/* Header Section */}
-                            <div className="flex items-start justify-between mb-6">
-                              <div className="flex items-center gap-4">
+                            <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-6 gap-4 md:gap-0">
+                              <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
                                 <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
                                   <Package className="text-white" size={28} />
                                 </div>
@@ -686,7 +692,7 @@ export default function IDGClientDashboard() {
                             </div>
 
                             {/* Progress Tracker */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-start justify-between">
                               {stages.map((stage, i) => {
                                 const stageActive = i <= currentStageIndex;
 
@@ -698,41 +704,50 @@ export default function IDGClientDashboard() {
                                     {/* Stage Circle */}
                                     <div className="flex flex-col items-center flex-1">
                                       <div
-                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
-                                            ? "bg-green-500 shadow-lg shadow-[#00AEEF]/30 scale-100"
-                                            : "bg-yellow-500 scale-90"
+                                        className={`w-12 h-12 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                            ? `${stage === "ordered"
+                                              ? "bg-orange-500 shadow-orange-500/30"
+                                              : stage === "booked"
+                                                ? "bg-yellow-500 shadow-yellow-500/30"
+                                                : "bg-green-500 shadow-green-500/30"
+                                              } shadow-lg scale-100`
+                                            : `${stage === "ordered"
+                                              ? "bg-orange-100"
+                                              : stage === "booked"
+                                                ? "bg-yellow-100"
+                                                : "bg-green-100"
+                                              } scale-90`
                                           }`}
                                       >
                                         {stage === "ordered" && (
                                           <Package
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
                                                 ? "text-white"
-                                                : "text-gray-400"
+                                                : "text-orange-400"
                                               }`}
-                                            size={32}
                                           />
                                         )}
                                         {stage === "booked" && (
                                           <Calendar
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
                                                 ? "text-white"
-                                                : "text-gray-400"
+                                                : "text-yellow-600"
                                               }`}
-                                            size={32}
                                           />
                                         )}
                                         {stage === "completed" && (
                                           <CheckCircle2
-                                            className={`transition-all duration-300 text-white
-                                                                                            }`}
-                                            size={32}
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
+                                                ? "text-white"
+                                                : "text-green-500"
+                                              }`}
                                           />
                                         )}
                                       </div>
 
                                       {/* Stage Label */}
                                       <p
-                                        className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive
+                                        className={`mt-4 font-bold capitalize transition-colors text-center text-[10px] sm:text-xs md:text-base ${stageActive
                                             ? "text-gray-900"
                                             : "text-gray-400"
                                           }`}
@@ -756,20 +771,21 @@ export default function IDGClientDashboard() {
                                             formatDate(job.deliveryDate)}
                                         </span>
                                       </div>
-                                    </div>
-
-                                    {/* Connector Line */}
-                                    {i < stages.length - 1 && (
-                                      <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
-                                        <div
-                                          className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
-                                              ? "bg-green-500 w-full"
-                                              : "bg-yellow-500 w-full"
-                                            }`}
-                                        ></div>
                                       </div>
-                                    )}
-                                  </div>
+                                      {/* Connector Line - Tablet/Desktop Only */}
+                                      {i < stages.length - 1 && (
+                                        <div className="hidden md:flex flex-1 h-1 md:h-2 mt-6 md:mt-9 mx-2 md:mx-6 rounded-full overflow-hidden bg-gray-200">
+                                          <div
+                                            className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
+                                                ? i === 0
+                                                  ? "bg-orange-500 w-full"
+                                                  : "bg-yellow-500 w-full"
+                                                : "bg-gray-200 w-0"
+                                              }`}
+                                          ></div>
+                                        </div>
+                                      )}
+                                    </div>
                                 );
                               })}
                             </div>
@@ -817,9 +833,8 @@ export default function IDGClientDashboard() {
                           }}
                         >
                           <div className="p-6">
-                            {/* Header Section */}
-                            <div className="flex items-start justify-between mb-6">
-                              <div className="flex items-center gap-4">
+                            <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-6 gap-4 md:gap-0">
+                              <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
                                 <div className="w-14 h-14 bg-gradient-to-br from-[#00AEEF] to-[#0088CC] rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
                                   <Package className="text-white" size={28} />
                                 </div>
@@ -871,7 +886,7 @@ export default function IDGClientDashboard() {
                             </div>
 
                             {/* Progress Tracker */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-start justify-between">
                               {stages.map((stage, i) => {
                                 const stageActive = i <= currentStageIndex;
 
@@ -883,43 +898,50 @@ export default function IDGClientDashboard() {
                                     {/* Stage Circle */}
                                     <div className="flex flex-col items-center flex-1">
                                       <div
-                                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
-                                            ? "bg-[#00AEEF] shadow-lg shadow-[#00AEEF]/30 scale-100"
-                                            : "bg-gray-200 scale-90"
+                                        className={`w-12 h-12 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500 transform ${stageActive
+                                            ? `${stage === "ordered"
+                                              ? "bg-orange-500 shadow-orange-500/30"
+                                              : stage === "booked"
+                                                ? "bg-yellow-500 shadow-yellow-500/30"
+                                                : "bg-green-500 shadow-green-500/30"
+                                              } shadow-lg scale-100`
+                                            : `${stage === "ordered"
+                                              ? "bg-orange-100"
+                                              : stage === "booked"
+                                                ? "bg-yellow-100"
+                                                : "bg-green-100"
+                                              } scale-90`
                                           }`}
                                       >
                                         {stage === "ordered" && (
                                           <Package
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
                                                 ? "text-white"
-                                                : "text-gray-400"
+                                                : "text-orange-400"
                                               }`}
-                                            size={32}
                                           />
                                         )}
                                         {stage === "booked" && (
                                           <Calendar
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
                                                 ? "text-white"
-                                                : "text-gray-400"
+                                                : "text-yellow-600"
                                               }`}
-                                            size={32}
                                           />
                                         )}
                                         {stage === "completed" && (
                                           <CheckCircle2
-                                            className={`transition-all duration-300 ${stageActive
+                                            className={`transition-all duration-300 w-5 h-5 md:w-8 md:h-8 ${stageActive
                                                 ? "text-white"
-                                                : "text-gray-400"
+                                                : "text-green-500"
                                               }`}
-                                            size={32}
                                           />
                                         )}
                                       </div>
 
                                       {/* Stage Label */}
                                       <p
-                                        className={`mt-4 font-bold capitalize transition-colors text-center ${stageActive
+                                        className={`mt-4 font-bold capitalize transition-colors text-center text-[10px] sm:text-xs md:text-base ${stageActive
                                             ? "text-gray-900"
                                             : "text-gray-400"
                                           }`}
@@ -944,13 +966,14 @@ export default function IDGClientDashboard() {
                                         </span>
                                       </div>
                                     </div>
-
-                                    {/* Connector Line */}
+                                    {/* Connector Line - Tablet/Desktop Only */}
                                     {i < stages.length - 1 && (
-                                      <div className="flex-1 h-2 -mt-16 mx-6 rounded-full overflow-hidden bg-gray-200">
+                                      <div className="hidden md:flex flex-1 h-1 md:h-2 mt-6 md:mt-9 mx-2 md:mx-6 rounded-full overflow-hidden bg-gray-200">
                                         <div
                                           className={`h-full transition-all duration-700 ease-in-out ${i < currentStageIndex
-                                              ? "bg-[#00AEEF] w-full"
+                                              ? i === 0
+                                                ? "bg-orange-500 w-full"
+                                                : "bg-yellow-500 w-full"
                                               : "bg-gray-200 w-0"
                                             }`}
                                         ></div>

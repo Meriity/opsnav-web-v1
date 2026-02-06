@@ -1919,41 +1919,9 @@ export default function StagesLayout() {
                         </div>
                       )}
 
-                      {/* Post Code */}
-                      {currentModule !== "vocat" && (
-                        <div>
-                          <label className="block text-xs md:text-sm font-semibold mb-1 ">
-                            Post Code
-                          </label>
-                          <input
-                            type="text"
-                            id="postcode"
-                            name="postcode"
-                            disabled={currentModule === "print media"}
-                            value={
-                              clientData?.postcode ||
-                              clientData?.data?.postCode ||
-                              ""
-                            }
-                            onChange={(e) => {
-                              setClientData((prev) => ({
-                                ...prev,
-                                postcode: e.target.value,
-                              }));
-                            }}
-                            pattern="^[0-9]{4}$"
-                            maxLength={4}
-                            inputMode="numeric"
-                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
-                         ${
-                           currentModule === "print media" && "bg-gray-100"
-                         }`}
-                          />
-                        </div>
-                      )}
+
 
                       {/* Completion/Settlement/Delivery Date */}
-                      {/* Completion/Settlement/Delivery Date (Standard) */}
                       {currentModule !== "vocat" && (
                       <div className="md:col-span-1">
                          <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -2030,7 +1998,7 @@ export default function StagesLayout() {
                       )}
 
                       {/* Data Entry By */}
-                      <div className="md:col-span-3">
+                      <div className="md:col-span-2">
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           Data Entry By
                         </label>
@@ -2063,6 +2031,37 @@ export default function StagesLayout() {
                             readOnly
                           />
                         )}
+                      </div>
+
+                      {/* Post Code */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-1 ">
+                          Post Code
+                        </label>
+                        <input
+                          type="text"
+                          id="postcode"
+                          name="postcode"
+                          disabled={currentModule === "print media"}
+                          value={
+                            clientData?.postcode ||
+                            clientData?.data?.postCode ||
+                            ""
+                          }
+                          onChange={(e) => {
+                            setClientData((prev) => ({
+                              ...prev,
+                              postcode: e.target.value,
+                            }));
+                          }}
+                          pattern="^[0-9]{4}$"
+                          maxLength={4}
+                          inputMode="numeric"
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
+                        ${
+                          currentModule === "print media" && "bg-gray-100"
+                        }`}
+                        />
                       </div>
 
                       {/* Notes */}
