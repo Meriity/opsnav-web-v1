@@ -37,24 +37,11 @@ function SidebarModuleSwitcher() {
       const storedModule = localStorage.getItem("currentModule") || "";
       const role = localStorage.getItem("role");
 
-      let accessList = [];
-
-      if (role === "superadmin") {
-        // Superadmin gets access to all modules
-        accessList = [
-          "conveyancing",
-          "wills",
-          "print media",
-          "commercial",
-          "vocat",
-        ];
-      } else {
-        accessList = (localStorage.getItem("access") || "")
-          .split(",")
-          .map((item) => item.trim())
-          .filter((item) => item.length > 0)
-          .map((module) => module.toLowerCase());
-      }
+      const accessList = (localStorage.getItem("access") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+        .map((module) => module.toLowerCase());
 
       setCurrentModule(storedModule);
       setAvailableModules(accessList);

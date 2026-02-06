@@ -17,6 +17,42 @@ import {
 
 export const monthlyReleaseNotes = {
     2026: {
+      February: [
+        {
+          date: "2026-02-06",
+          version: "v6.0.2",
+          type: "feature",
+          category: "feature",
+          title: "VOCAT Post Code & Signage and Print Client Dashboard Enhancements",
+          description: "Added Post Code field to VOCAT client creation and improved Matter Details layout.",
+          updates: [
+            {
+              type: "feature",
+              title: "Create Client Post Code",
+              description: "Added Post Code field with auto-fill capabilities.",
+              details: "VOCAT Create Client modal now includes a Post Code field that auto-fills from the Google Maps address selection.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Matter Details Layout",
+              description: "Optimized Matter Details layout for better readability.",
+              details: "Post Code is now visible in Matter Details and positioned side-by-side with Data Entry By (1:2 ratio).",
+              icon: TrendingUp,
+            },
+            {
+              type: "improvement",
+              title: "Print Media Dashboard",
+              description: "Enhanced UI responsiveness and visual distinctiveness.",
+              details: "Improved tablet responsiveness and added distinct status colors to timeline steps for better clarity.",
+              icon: BarChart3,
+            }
+          ],
+          module: "VOCAT, Print Media",
+          severity: "Medium",
+          status: "Released"
+        }
+      ],
       January: [
         {
           date: "2026-01-29",
