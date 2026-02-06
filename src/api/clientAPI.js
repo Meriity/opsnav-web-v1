@@ -226,6 +226,21 @@ class ClientAPI {
     }
   }
 
+  async deletePdfForOrder(orderId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients/deletePdf/${orderId}`, {
+        method: "DELETE",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.log("Error Occured", error);
+    }
+  }
+
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
       console.log(additionalData, clientId);
@@ -280,6 +295,32 @@ class ClientAPI {
 
     } catch (error) {
       console.error('Error during image upload: ❌', error);
+      throw error;
+    }
+  }
+
+  async uploadPdfForOrder(orderId, file) {
+    const stageNumber = 4;
+    const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/pdf`;
+    const formData = new FormData();
+    formData.append('pdf', file);
+    const headers = this.getHeaders();
+    delete headers['Content-Type'];
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        headers: headers,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const result = await response.json();
+      console.log('PDF Upload successful! ✅', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error during PDF upload: ❌', error);
       throw error;
     }
   }
