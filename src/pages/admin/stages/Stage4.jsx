@@ -45,6 +45,11 @@ const formConfig = {
         label: "Capture Proof of Completion Photos",
         type: "image",
       },
+      {
+        name: "completionPdf",
+        label: "Capture Proof of Completion PDF",
+        type: "pdf",
+      },
       { 
         name: "closeOrder", 
         label: "Close Order", 
@@ -174,6 +179,13 @@ export default function Stage4({
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // PDF States
+  const [pdfPreview, setPdfPreview] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [isDeletingPdf, setIsDeletingPdf] = useState(false);
+  const [showConfirmPdfModal, setShowConfirmPdfModal] = useState(false);
 
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
@@ -294,6 +306,12 @@ export default function Stage4({
         const lastImage = stageData?.images?.[stageData?.images?.length - 1];
         setPreview(lastImage?.url || null);
         setfileName(lastImage?.filename || "");
+
+        const lastPdf = stageData?.pdfs?.[stageData?.pdfs?.length - 1];
+        if (lastPdf) {
+            setPdfPreview(lastPdf.url || null);
+            setPdfFileName(lastPdf.filename || "");
+        }
       }
 
       setFormData(initialFormData);
@@ -467,7 +485,52 @@ export default function Stage4({
     }
   };
 
-  // ---------- SAVE ----------
+  const handlePdfChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    (async () => {
+      setIsUploadingPdf(true);
+      // setPdfFileName("Uploading..."); // Removed to keep UI in spinner state
+      try {
+        await api.uploadPdfForOrder(matterNumber, file);
+        toast.success("PDF uploaded successfully!");
+        setHasChanges(true);
+        setReloadTrigger((prev) =>
+          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+        );
+        setPdfFileName(file.name);
+        // setPdfPreview("uploaded"); // OLD
+        setPdfPreview(URL.createObjectURL(file)); // NEW: Immediate preview
+      } catch (err) {
+        toast.error("PDF upload failed.");
+        setPdfFileName("");
+      } finally {
+        setIsUploadingPdf(false);
+      }
+    })();
+  };
+
+  const handleDeletePdfConfirm = async () => {
+    setIsDeletingPdf(true);
+    try {
+      await api.deletePdfForOrder(matterNumber);
+      setPdfPreview(null);
+      setPdfFileName("");
+      setShowConfirmPdfModal(false);
+
+      toast.success("PDF deleted successfully!");
+      setHasChanges(true);
+      setReloadTrigger((prev) =>
+        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
+      );
+    } catch (err) {
+      toast.error("Failed to delete PDF.");
+      setShowConfirmPdfModal(false);
+    } finally {
+      setIsDeletingPdf(false);
+    }
+  };
+
   // ---------- SAVE ----------
   async function performSave() {
     if (!isChanged() || isSaving) return;
@@ -748,6 +811,87 @@ export default function Stage4({
             </div>
           </div>
         );
+      case "pdf":
+        return (
+            <div className="w-full mt-5" key={field.name}>
+              <label className="block mb-1 text-sm md:text-base font-bold">
+                {field.label}
+              </label>
+  
+              <div className="relative w-full">
+                {!pdfPreview && !pdfFileName ? (
+                  <label
+                    className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition ${
+                      isUploadingPdf ? "opacity-50" : ""
+                    } border-gray-300 bg-gray-50 hover:bg-gray-100 `}
+                  >
+                    {isUploadingPdf ? (
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    ) : (
+                      <CloudArrowUpIcon className="w-10 h-10 text-gray-400 hover:text-[#00AEEF]" />
+                    )}
+                    <p className="mt-2 text-sm text-gray-500">
+                      <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
+                        {isUploadingPdf ? "Uploading..." : "Click here to upload PDF"}
+                      </span>
+                    </p>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handlePdfChange}
+                      className="hidden"
+                      disabled={isUploadingPdf || isReadOnly}
+                    />
+                  </label>
+                ) : (
+                  <div className="relative w-full h-40 border rounded-lg bg-gray-50 overflow-hidden group">
+                    {/* Preview (Embed/Iframe) */}
+                    <embed
+                        src={pdfPreview}
+                        type="application/pdf"
+                        className="w-full h-full object-cover" 
+                        // Note: object-cover doesn't work well on embeds/iframes, but h-full fills container
+                    />
+                    
+                    {/* Click Overlay for Full Screen */}
+                    <div 
+                        className="absolute inset-0 bg-transparent cursor-pointer hover:bg-black/10 transition-colors flex items-center justify-center p-2"
+                        onClick={() => window.open(pdfPreview, '_blank')}
+                        title="Click to view full screen"
+                    >
+                         {/* Optional: Add an icon or text on hover if desired, but user just said 'click on pdf' */}
+                    </div>
+
+                    {/* Info Bar at Bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 flex justify-between items-center text-xs">
+                        <span className="font-medium text-gray-900 truncate max-w-[70%]">
+                            {pdfFileName || "PDF Uploaded"}
+                        </span>
+                        <span className="text-green-600 font-semibold">
+                            Uploaded
+                        </span>
+                    </div>
+
+                    {/* Delete Button (Top Right) */}
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent opening full screen
+                            setShowConfirmPdfModal(true);
+                        }}
+                        className="absolute top-2 right-2 bg-white text-black p-1.5 rounded-full hover:bg-red-50 hover:text-red-600 shadow-sm transition-colors z-10"
+                        disabled={isDeletingPdf || isReadOnly}
+                        title="Delete PDF"
+                        style={{ display: isReadOnly ? "none" : "block" }}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        {isDeletingPdf && <span className="sr-only">Deleting...</span>}
+                      </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
       default:
         return null;
     }
@@ -862,6 +1006,15 @@ export default function Stage4({
         onConfirm={handleDeleteConfirm}
         title="Remove Picture"
         message="Are you sure you want to delete this image? This action cannot be undone."
+      />
+
+      <ConfirmationModal
+        isOpen={showConfirmPdfModal}
+        onClose={() => setShowConfirmPdfModal(false)}
+        onDiscard={() => setShowConfirmPdfModal(false)}
+        onConfirm={handleDeletePdfConfirm}
+        title="Remove PDF"
+        message="Are you sure you want to delete this PDF? This action cannot be undone."
       />
       
       <ConfirmationModal
