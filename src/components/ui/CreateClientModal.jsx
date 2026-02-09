@@ -636,7 +636,6 @@ useEffect(() => {
         try {
           exists = await checkMatterNumberExists(formData.matterNumber);
         } catch (error) {
-          // For commercial, 404 means project doesn't exist (which is good)
           if (error.response?.status === 404) {
             exists = false;
           } else {
@@ -840,8 +839,10 @@ useEffect(() => {
               "clientAddress",
               "state",
               "clientType",
+              "clientType",
               "matterDate",
-              "criminalIncidentDate"
+              "criminalIncidentDate",
+              "postcode"
             ];
             
             if (requiredFields.some((field) => !formData[field])) {
@@ -859,6 +860,7 @@ useEffect(() => {
               state: formData.state,
               clientType: formData.clientType,
               criminalIncidentDate: formData.criminalIncidentDate,
+              postcode: formData.postcode,
             };
             try {
               await vocatApi.createClient(payload);
@@ -1123,9 +1125,13 @@ useEffect(() => {
   />
 </div>
 
-                  {!isVocat && (
                   <div>
-                    <label className="block mb-1 font-medium">Post code*</label>
+                    <label className="block mb-1 font-medium">
+                      Post code*
+                      <span className="text-xs text-gray-500 ml-1">
+                        (Auto-filled)
+                      </span>
+                    </label>
                     <input
                       type="text"
                       name="postcode"
@@ -1138,7 +1144,6 @@ useEffect(() => {
                       required
                     />
                   </div>
-                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
