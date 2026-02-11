@@ -7,10 +7,68 @@ import {
   ArrowDown,
   ClipboardList,
   Trash2,
+  GripVertical
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
 import { formatDate } from "../../utils/formatters";
+
+// DnD Kit Imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Sortable Row Component
+const SortableRow = ({ children, id, isDraggingMode, ...props }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDraggingMode ? "grab" : "default",
+    zIndex: isDragging ? 999 : "auto",
+    position: "relative",
+  };
+
+  if (!isDraggingMode) {
+    return <tr {...props}>{children}</tr>;
+  }
+
+  return (
+    <tr ref={setNodeRef} style={style} {...props}>
+        {/* We will attach listeners to a specific handle inside the row, OR the whole row if preferred. 
+            Here we attach to the specific drag handle cell if we want, or the whole row. 
+            Let's pass attributes/listeners to the children or a context if we want a handle.
+            For simplicity, let's make the whole row draggable or add a handle cell. 
+            
+            Actually, let's pass the listeners/attributes to the first cell if we want a handle, 
+            or wrap the whole row. Let's assume we want a handle.
+        */}
+      {children(attributes, listeners)} 
+    </tr>
+  );
+};
 
 const ViewClientsTable = ({
   data,
@@ -23,6 +81,9 @@ const ViewClientsTable = ({
   users,
   handleChangeUser,
   onDelete,
+  // Drag Props
+  isDraggingMode = false,
+  setDraggedData,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -38,6 +99,9 @@ const ViewClientsTable = ({
   const [, setRefresh] = useState(false);
 
   const sortedData = useMemo(() => {
+    // If dragging mode is on, we bypass sorting to avoid jumping rows
+    if (isDraggingMode) return data; 
+    
     if (!sortConfig.key) return data;
     return [...data].sort((a, b) => {
       const aVal = a[sortConfig.key] || "";
@@ -46,9 +110,10 @@ const ViewClientsTable = ({
       if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
-  }, [data, sortConfig]);
+  }, [data, sortConfig, isDraggingMode]);
 
   const handleSort = (key) => {
+    if (isDraggingMode) return; // Disable sorting during drag
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
@@ -56,28 +121,68 @@ const ViewClientsTable = ({
   };
 
   useEffect(() => {
+    // In dragging mode, we typically show ALL items (pagination disabled in parent)
+    // But verify if slicing is needed. Parent forces itemsPerPage to 1000.
     setCurrentData(sortedData.slice(0, itemsPerPage));
   }, [sortedData, itemsPerPage]);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+       // We need to find the indexes in the original 'data' array (or sortedData if we are sorting locally)
+       // But wait, 'data' passed from parent IS 'draggedData' state in parent when in mode.
+       // So we can compute the new order and call setDraggedData.
+       
+       const oldIndex = currentData.findIndex((item) => (item.id || item._id || item.orderId) === active.id);
+       const newIndex = currentData.findIndex((item) => (item.id || item._id || item.orderId) === over.id);
+       
+       const newData = arrayMove(currentData, oldIndex, newIndex);
+       
+       // Update local state for immediate feedback
+       setCurrentData(newData);
+       // Update parent state
+       if (setDraggedData) {
+           setDraggedData(newData);
+       }
+    }
+  };
 
   return (
     <div className="w-full">
       {/* Desktop Table View */}
       <div className="hidden lg:block">
+        <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEnd}
+        >
         <table className="w-full border-separate border-spacing-y-1 table-fixed">
           <thead className="bg-gradient-to-r from-[#2E3D99]/90 to-[#1D97D7] text-white">
             <tr>
+              {/* Add Drag Handle Column Header if in drag mode */}
+              {isDraggingMode && <th className="w-10 rounded-l-2xl"></th>}
+              
               {columns.map((column, colIndex) => (
                 <th
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
                   className={`px-2 py-3 text-center text-sm ${
-                    colIndex === 0 ? "rounded-l-2xl" : ""
-                  } cursor-pointer select-none`}
+                    colIndex === 0 && !isDraggingMode ? "rounded-l-2xl" : ""
+                  } ${!isDraggingMode ? "cursor-pointer" : "cursor-default"} select-none`}
                 >
                   <div className="flex flex-col items-center">
                     <span>{column.title}</span>
-                    <span>
+                    {!isDraggingMode && <span>
                       {sortConfig.key === column.key ? (
                         sortConfig.direction === "asc" ? (
                           <ArrowUp size={14} />
@@ -87,7 +192,7 @@ const ViewClientsTable = ({
                       ) : (
                         <ArrowUpDown size={14} />
                       )}
-                    </span>
+                    </span>}
                   </div>
                 </th>
               ))}
@@ -111,7 +216,113 @@ const ViewClientsTable = ({
               </th>
             </tr>
           </thead>
-          <tbody>
+          
+          {/* Table Body wrapped in SortableContext if dragging */}
+          {isDraggingMode ? (
+             <tbody className="relative">
+               <SortableContext 
+                  items={currentData.map(item => item.id || item._id || item.orderId)}
+                  strategy={verticalListSortingStrategy}
+               >
+                 {currentData.map((item) => {
+                   const uniqueId = item.id || item._id || item.orderId;
+                   return (
+                     <SortableRow 
+                       key={uniqueId} 
+                       id={uniqueId} 
+                       isDraggingMode={true}
+                       className="bg-white rounded-2xl transition-all hover:shadow-xl"
+                     >
+                       {(attributes, listeners) => (
+                         <>
+                           {/* Drag Handle Cell */}
+                           <td className="w-10 text-center rounded-l-2xl cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+                             <GripVertical size={20} className="text-gray-400 mx-auto" />
+                           </td>
+                           
+                           {columns.map((column, colIndex) => (
+                             <td
+                               key={column.key}
+                               className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words`}
+                             >
+                               {/* Content Logic (Same as before) */}
+                               <div
+                                className="lg:font-normal 2xl:text-center"
+                                title={item[column.key]}
+                              >
+                                {[
+                                  "settlement_date",
+                                  "finance_approval_date",
+                                  "building_and_pest_date",
+                                  "order_date",
+                                  "delivery_date",
+                                  "settlementDate",
+                                  "matterDate",
+                                ].includes(column.key) ? (
+                                  item[column.key] &&
+                                  item[column.key] !== "-" &&
+                                  item[column.key] !== "N/A" ? (
+                                    formatDate(item[column.key])
+                                  ) : (
+                                    <span className="font-bold text-gray-500">—</span>
+                                  )
+                                ) : (column.key === "billing_address" ||
+                                    column.key === "businessAddress" ||
+                                    column.key === "property_address") &&
+                                  item[column.key] ? (
+                                  <a
+                                    href={`https://www.google.com/maps?q=${encodeURIComponent(
+                                      item[column.key]
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {item[column.key]}
+                                  </a>
+                                ) : ["allocatedUser"].includes(column.key) ? (
+                                  <div>
+                                    {["allocatedUser"].includes(column.key) ? (
+                                      <select
+                                        disabled={true} // Disable dropdown when dragging
+                                        name="allocatedUser"
+                                        className="bg-gray-100 p-2 text-gray-500 rounded w-full cursor-not-allowed"
+                                        value={item.allocatedUser || ""}
+                                      >
+                                        <option value="">
+                                          {item?.allocatedUser || "Select User"}
+                                        </option>
+                                      </select>
+                                    ) : (
+                                      ""
+                                    )}
+                                  </div>
+                                ) : (
+                                  item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
+                                )}
+                              </div>
+                             </td>
+                           ))}
+                           {/* Stages, OT, Action Columns (Simplified for drag mode - usually static) */}
+                            <td className="pl-3 align-middle text-gray-400 scale-90 opacity-50 pointer-events-none">
+                                {/* Disabled Stages View */}
+                                <div className="text-xs text-center">Stages (Locked)</div>
+                            </td>
+                            <td className="pl-8 align-middle text-gray-400 pointer-events-none">
+                                <ClipboardList size={20} className="mx-auto opacity-50" />
+                            </td>
+                            <td className="pl-3 pr-2 rounded-r-2xl align-middle pointer-events-none">
+                                <Edit size={12} className="mx-auto opacity-50" />
+                            </td>
+                         </>
+                       )}
+                     </SortableRow>
+                   );
+                 })}
+               </SortableContext>
+             </tbody>
+          ) : (
+            <tbody>
             {currentData.map((item) => {
               return (
                 <tr
@@ -297,7 +508,9 @@ const ViewClientsTable = ({
               );
             })}
           </tbody>
+          )}
         </table>
+        </DndContext>
       </div>
 
       {/* Mobile & Tablet Card View */}

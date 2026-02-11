@@ -598,20 +598,29 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     async function fetchMatter() {
+      if (!matterNumber) return;
       try {
-        if (currentModule === "conveyancing" || currentModule === "wills") {
+        try {
           const response = await api.getClientDetails(matterNumber);
-          const formatted = formatMatterDetails(response);
-          setMatterDetails(formatted);
-          const stagedetails = await api.getAllStages(matterNumber);
-          const stageformatted = mapStagesFromDB(stagedetails, formatted.type);
-          setStageDetails(stageformatted);
-        } else if (currentModule === "print media") {
-          const response = await api.getIDGClientDetails(matterNumber);
-          const formatted = formatOrderDetails(response);
-          setOrderDetails(formatted);
-          const stageformatted = mapIDGStagesFromDB(response);
-          setStageDetails(stageformatted);
+          if (response && response.matterNumber) {
+            const formatted = formatMatterDetails(response);
+            setMatterDetails(formatted);
+            const stagedetails = await api.getAllStages(matterNumber);
+            const stageformatted = mapStagesFromDB(stagedetails, formatted.type);
+            setStageDetails(stageformatted);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.log("Not a standard client, trying IDG...");
+        }
+
+        const response = await api.getIDGClientDetails(matterNumber);
+        if (response) {
+            const formatted = formatOrderDetails(response);
+            setOrderDetails(formatted);
+            const stageformatted = mapIDGStagesFromDB(response);
+            setStageDetails(stageformatted);
         }
       } catch (error) {
         console.error("Failed to fetch matter details:", error);
@@ -670,7 +679,7 @@ export default function ClientDashboard() {
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative">
-            <img className="h-auto w-[120px]" alt="Logo" src={logo} />
+            <img className="h-auto w-[120px]" alt="OpsNav Logo" src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png" />
             {/* Close button in mobile */}
             <button
               onClick={() => setIsOpen(false)}
@@ -704,81 +713,6 @@ export default function ClientDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-x font-medium text-slate-600">
-                        {currentModule === "print media"
-                          ? "Order ID"
-                          : "Matter Number"}
-                      </p>
-
-                      <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.matter_number || orderDetails.orderId}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Key Dates */}
-              <div>
-                <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#FB4A50]">
-                    Key Dates
-                  </span>
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-x font-medium text-slate-600">
-                        {currentModule === "print media"
-                          ? "Order Date"
-                          : "Unconditional Date"}
-                      </p>
-                      <p className="text-sm text-slate-800 font-semibold">
-                        {stageDetails[1]?.financeApproval ||
-                          orderDetails.order_date}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-x font-medium text-slate-600">
-                        {currentModule === "print media"
-                          ? "Delivery Date"
-                          : "Settlement Date"}
-                      </p>
-
-                      <p className="text-sm text-slate-800 font-semibold">
-                        {matterDetails.settlement_date ||
-                          orderDetails.delivery_date}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Property */}
-              <div>
-                <h4 className="text-x font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  <span className="border-b-2 border-b-[#FB4A50]">
-                    Property
-                  </span>
-                </h4>
-                <div className="flex items-start gap-3">
-                  <Home className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-x font-medium text-slate-600">Address</p>
-                    <p className="text-sm text-slate-800 font-semibold">
-                      {matterDetails.address || orderDetails.delivery_address}
-                    </p>
-                    <p className="text-sm text-slate-800 font-semibold mt-1">
-                      {matterDetails.state || orderDetails.state}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -790,10 +724,10 @@ export default function ClientDashboard() {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="w-full justify-center bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#FB4A50] text-white active:bg-red-600 active:text-white transition-colors duration-200 font-medium flex items-center px-4 py-2 rounded cursor-pointer"
+                className="flex items-center gap-2 text-slate-500 hover:text-[#FB4A50] transition-colors"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <LogOut className="w-5 h-5" />
+                <span className="font-semibold">Log Out</span>
               </button>
             </div>
           </div>
@@ -802,6 +736,14 @@ export default function ClientDashboard() {
 
       <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
         <div className="p-6 sm:p-6">
+          <div className="mb-6 pl-2">
+            <img
+              src={logo}
+              className="h-[80px] md:h-[100px] w-auto object-contain"
+              alt="Company Logo"
+            />
+          </div>
+
           <div className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
             {/* LEFT SECTION: Glassmorphism card */}
             <motion.div
@@ -826,11 +768,12 @@ export default function ClientDashboard() {
                     className="fixed inset-0 bg-black/40 z-40 lg:hidden"
                   />
                 )}
-                <h1 className="text-3xl font-bold text-gray-100 md:mt-20">
+                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg md:mt-20">
                   Hello, {matterDetails.Clientname || orderDetails.Clientname}{" "}
-                  👋
+                  <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
                 </h1>
-                <p className="text-gray-100">
+                <p className="text-lg md:text-xl font-medium text-blue-50/90 tracking-wide mt-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
                   Welcome. Here is the latest status of your matter.
                 </p>
 
@@ -979,7 +922,7 @@ export default function ClientDashboard() {
             <p>Powered By </p>{" "}
             <img className="w-15 h-auto" src="/Logo.png" alt="Logo" />
           </footer>
-        </div>
+      </div>
       </main>
     </div>
   );

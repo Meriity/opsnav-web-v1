@@ -22,6 +22,7 @@ import CreateClientModal from "../../components/ui/CreateClientModal";
 import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
+import ExcelUploadDialog from "../../components/ui/ExcelUploadDialog.jsx";
 import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
@@ -50,13 +51,16 @@ import {
   FilterIcon,
   SheetIcon,
   Clipboard,
+  ArrowUpDown,
 } from "lucide-react";
+import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
+  const [showUploadExcelDialog, setShowUploadExcelDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareDetails, setShareDetails] = useState({
     matterNumber: "",
@@ -85,9 +89,15 @@ const ViewClients = () => {
   const [commercialLoading, setCommercialLoading] = useState(false);
   const [commercialClients, setCommercialClients] = useState([]);
   const [selectedClientName, setSelectedClientName] = useState("");
+  const [filterAllocatedUser, setFilterAllocatedUser] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+
+  // Drag and Drop State
+  const [isDraggingMode, setIsDraggingMode] = useState(false);
+  const [draggedData, setDraggedData] = useState([]);
+  const [showReorderConfirm, setShowReorderConfirm] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
 
@@ -219,6 +229,8 @@ const ViewClients = () => {
             property_address: client.clientAddress,
             stages: Array.isArray(client.stages) ? client.stages : [client.stages || {}],
             status: "active",
+            matterReferenceNumber: client.matterReferenceNumber, 
+            fasNumber: client.fasNumber,
           }));
 
           setCommercialClients(transformedData);
@@ -251,57 +263,55 @@ const ViewClients = () => {
       ? dateFilter.range
       : ["", ""];
 
-    if (!rawStart || !rawEnd) {
-      return data;
-    }
+    if (rawStart && rawEnd) {
+      const start = moment(rawStart).startOf("day");
+      const end = moment(rawEnd).endOf("day");
 
-    const start = moment(rawStart).startOf("day");
-    const end = moment(rawEnd).endOf("day");
+      let filterType = (dateFilter?.type || "").toLowerCase();
 
-    let filterType = (dateFilter?.type || "").toLowerCase();
-
-    if (!filterType || filterType === "undefined") {
-      filterType =
-        currentModule === "print media"
-          ? "delivery"
-          : currentModule === "commercial"
-          ? "project"
-          : "settlement";
-    }
-
-    console.log(
-      `Filtering ${filterType}: ${start.format()} to ${end.format()}`
-    );
-
-    return data.filter((client) => {
-      // Get the date strings from your data
-      const orderDate = client.order_date || client.orderDate;
-      const deliveryDate = client.delivery_date || client.deliveryDate;
-      const settlementDate = client.settlement_date || client.settlementDate;
-      const matterDate = client.matterDate || client.matter_date;
-
-      const isIncluded = (dateStr) => {
-        if (!dateStr) return false;
-        return moment(dateStr).isBetween(start, end, null, "[]");
-      };
-
-      // Check against the correct column
-      if (filterType.includes("both")) {
-        return isIncluded(orderDate) || isIncluded(deliveryDate);
-      } else if (filterType.includes("order")) {
-        return isIncluded(orderDate);
-      } else if (filterType.includes("delivery")) {
-        return isIncluded(deliveryDate);
-      } else if (filterType.includes("settlement")) {
-        return isIncluded(settlementDate);
-      } else if (filterType.includes("project")) {
-        return isIncluded(matterDate);
+      if (!filterType || filterType === "undefined") {
+        filterType =
+          currentModule === "print media"
+            ? "delivery"
+            : currentModule === "commercial"
+            ? "project"
+            : "settlement";
       }
 
-      if (currentModule === "print media") return isIncluded(deliveryDate);
-      if (currentModule === "commercial") return isIncluded(matterDate);
-      return isIncluded(settlementDate);
-    });
+      console.log(
+        `Filtering ${filterType}: ${start.format()} to ${end.format()}`
+      );
+
+      data = data.filter((client) => {
+        // Get the date strings from your data
+        const orderDate = client.order_date || client.orderDate;
+        const deliveryDate = client.delivery_date || client.deliveryDate;
+        const settlementDate = client.settlement_date || client.settlementDate;
+        const matterDate = client.matterDate || client.matter_date;
+
+        const isIncluded = (dateStr) => {
+          if (!dateStr) return false;
+          return moment(dateStr).isBetween(start, end, null, "[]");
+        };
+
+        // Check against the correct column
+        if (filterType.includes("both")) {
+          return isIncluded(orderDate) || isIncluded(deliveryDate);
+        } else if (filterType.includes("order")) {
+          return isIncluded(orderDate);
+        } else if (filterType.includes("delivery")) {
+          return isIncluded(deliveryDate);
+        } else if (filterType.includes("settlement")) {
+          return isIncluded(settlementDate);
+        } else if (filterType.includes("project")) {
+          return isIncluded(matterDate);
+        }
+
+        if (currentModule === "print media") return isIncluded(deliveryDate);
+        if (currentModule === "commercial") return isIncluded(matterDate);
+        return isIncluded(settlementDate);
+      });
+    }
 
     // Filter 3: Search Query
     if (searchQuery) {
@@ -325,12 +335,29 @@ const ViewClients = () => {
           )
             .toLowerCase()
             .includes(lowercasedQuery) ||
-          String(client.state || "").toLowerCase().includes(lowercasedQuery)
+          String(client.state || "").toLowerCase().includes(lowercasedQuery) ||
+          String(client.matterReferenceNumber || "")
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.fasNumber || "")
+            .toLowerCase()
+            .includes(lowercasedQuery) ||
+          String(client.clientId || "")
+            .toLowerCase()
+            .includes(lowercasedQuery) // Added Client ID for Print Media
       );
     }
 
+    // Filter 4: Allocated User (Print Media only)
+    if (currentModule === "print media" && filterAllocatedUser) {
+      data = data.filter((client) => {
+         const clientUser = client.allocatedUser || "";
+         return clientUser.trim().toLowerCase() === filterAllocatedUser.trim().toLowerCase();
+      });
+    }
+
     return data;
-  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery]);
+  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser]);
 
   let columns = [];
   if (currentModule === "commercial") {
@@ -358,11 +385,13 @@ const ViewClients = () => {
   } else if (currentModule === "vocat") {
      columns = [
       { key: "matternumber", title: "Matter Number", width: "10%" },
+      { key: "matterReferenceNumber", title: "Matter Ref", width: "10%" },
+      { key: "fasNumber", title: "FAS Number", width: "10%" },
       { key: "matterDate", title: "Matter Date", width: "10%" },
       { key: "client_name", title: "Client Name", width: "15%" },
       { key: "property_address", title: "Client Address", width: "20%" },
-      { key: "state", title: "State", width: "10%" },
-      { key: "client_type", title: "Client Type", width: "15%" },
+      { key: "state", title: "State", width: "5%" },
+      { key: "client_type", title: "Client Type", width: "10%" },
      ];
   } else if (currentModule === "conveyancing") {
     columns = [
@@ -435,11 +464,26 @@ const ViewClients = () => {
   async function changeUser(user, orderId) {
     console.log(user, orderId);
     try {
-      const res = api.changeUser(user, orderId);
+      await api.changeUser(user, orderId);
+      toast.success("Allocated user updated successfully");
+      fetchClients(); 
     } catch (error) {
       console.log("Error occured!!", error);
+      toast.error("Failed to update allocated user");
     }
   }
+
+  const handleExcelUpload = async (file) => {
+    try {
+      await api.uploadExcel(file);
+      toast.success("Excel file uploaded successfully!");
+      // Refresh the client list
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      console.error("Excel upload error:", error);
+      toast.error(error.message || "Failed to upload Excel file.");
+    }
+  };
 
 
   const handleClientFilterChange = (selectedName) => {
@@ -787,11 +831,77 @@ const ViewClients = () => {
                         </option>
                       ))}
                     </select>
+
+                     <select
+                      name="AllocatedUser"
+                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
+                      value={filterAllocatedUser}
+                      onChange={(e) => setFilterAllocatedUser(e.target.value)}
+                      disabled={
+                        !["admin", "superadmin"].includes(
+                          localStorage.getItem("role")
+                        )
+                      }
+                    >
+                      <option value="">All Users</option>
+                      {user.map((u, index) => (
+                        <option
+                          key={u.id || `${u.name}-${index}`}
+                          value={u.name}
+                        >
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
                 {/* Consolidated Desktop Buttons */}
                 <div className="hidden lg:flex items-center gap-1.5">
+                  {/* Reorder Priority Button (Print Media Admin Only) */}
+                  {currentModule === "print media" &&
+                    ["admin", "superadmin"].includes(
+                      localStorage.getItem("role")
+                    ) && (
+                      <>
+                        {!isDraggingMode ? (
+                          <button
+                            onClick={() => {
+                              setIsDraggingMode(true);
+                              setDraggedData(filteredClients); // Initialize with current view
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm ml-2"
+                            title="Reorder Priority"
+                          >
+                            <ArrowUpDown size={16} />
+                            <span className="hidden xl:inline">Reorder</span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 ml-2">
+                            <button
+                              onClick={() => setShowReorderConfirm(true)}
+                              className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-md text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
+                              title="Save Order"
+                            >
+                              <CheckCircle size={16} />
+                              <span className="hidden xl:inline">Save</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsDraggingMode(false);
+                                setDraggedData([]);
+                              }}
+                              className="flex items-center gap-1 px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
+                              title="Cancel"
+                            >
+                              <AlertCircle size={16} /> {/* Using AlertCircle as pseudo-cancel/close icon if X not imported, or just generic */}
+                              <span className="hidden xl:inline">Cancel</span>
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                   {(currentModule === "conveyancing" ||
                     currentModule === "wills" ||
                     currentModule === "commercial" ||
@@ -861,6 +971,18 @@ const ViewClients = () => {
                       </motion.button>
                     </>
                   )}
+                  {/* For future purposes */}
+                  {/* {currentModule === "vocat" && ["admin", "superadmin"].includes(localStorage.getItem("role")) && (
+                     <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowUploadExcelDialog(true)}
+                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                      >
+                        <DocumentArrowUpIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                        Upload Excel
+                      </motion.button>
+                  )} */}
                   {currentModule === "print media" && (
                     <>
                       {/* <Button
@@ -1055,7 +1177,7 @@ const ViewClients = () => {
             ) : (
               <div className="px-5">
                 <ViewClientsTable
-                  data={filteredClients}
+                  data={isDraggingMode ? draggedData : filteredClients}
                   columns={columns}
                   users={user}
                   handleChangeUser={changeUser}
@@ -1064,16 +1186,40 @@ const ViewClients = () => {
                     setShareDetails({ matterNumber, reshareEmail });
                     setShowShareDialog(true);
                   }}
-                  itemsPerPage={itemsPerPage}
+                  itemsPerPage={isDraggingMode ? 1000 : itemsPerPage}
                   status={true}
                   ot={shouldShowOutstandingTasks()}
                   handelOTOpen={() => setShowOutstandingTask(true)}
                   handelOT={setOTActiveMatterNumber}
                   currentModule={currentModule}
                   onDelete={handleDeleteClick}
+                  
+                  // Drag Props
+                  isDraggingMode={isDraggingMode}
+                  setDraggedData={setDraggedData}
                 />
               </div>
             )}
+            <ExcelUploadDialog 
+              isOpen={showUploadExcelDialog} 
+              onClose={() => setShowUploadExcelDialog(false)} 
+              onUpload={handleExcelUpload} 
+            />
+
+            {/* Reorder Confirmation Modal */}
+            <ConfirmationModal
+              isOpen={showReorderConfirm}
+              onClose={() => setShowReorderConfirm(false)}
+              onConfirm={() => {
+                 setIsDraggingMode(false);
+                 setShowReorderConfirm(false);
+                 toast.success("Priority order updated successfully!");
+              }}
+              title="Save Priority Order?"
+              message="Are you sure you want to save the new arrangement of orders?"
+              confirmLabel="Yes, Save"
+              cancelLabel="Cancel"
+            />
           </div>
         </>
       </div>

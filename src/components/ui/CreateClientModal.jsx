@@ -104,6 +104,9 @@ const getInitialFormData = (user, currentModule) => {
       postcode: "",
       matterDate: "",
       criminalIncidentDate: "",
+      matterReferenceNumber: "",
+      fasNumber: "",
+      matterUrl: "",
       dataEntryBy: user,
     };
   }
@@ -861,6 +864,9 @@ useEffect(() => {
               clientType: formData.clientType,
               criminalIncidentDate: formData.criminalIncidentDate,
               postcode: formData.postcode,
+              matterReferenceNumber: formData.matterReferenceNumber,
+              fasNumber: formData.fasNumber,
+              matterUrl: formData.matterUrl,
             };
             try {
               await vocatApi.createClient(payload);
@@ -1190,7 +1196,50 @@ useEffect(() => {
                       />
                     </div>
                     )}
-                  </div>
+                    </div>
+                    {isVocat && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block mb-1 font-medium">
+                            Matter Reference Number <span className="text-gray-400 text-sm">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="matterReferenceNumber"
+                            value={formData.matterReferenceNumber || ""}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block mb-1 font-medium">
+                            FAS Number <span className="text-gray-400 text-sm">(Optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="fasNumber"
+                            value={formData.fasNumber || ""}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {isVocat && (
+                      <div className="mt-4">
+                        <label className="block mb-1 font-medium">
+                          Matter URL <span className="text-gray-400 text-sm">(Optional)</span>
+                        </label>
+                        <input
+                          type="url"
+                          name="matterUrl"
+                          value={formData.matterUrl || ""}
+                          onChange={handleChange}
+                          placeholder="https://example.com"
+                          className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        />
+                      </div>
+                    )}
                 </>
               )}
 
