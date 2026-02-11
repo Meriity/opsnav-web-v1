@@ -254,52 +254,72 @@ export default function Header() {
             .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
 
           const numericFields = [
-            { val: String(raw.matterNumber), key: "Matter #" },
+            { 
+              val: String(raw.matterNumber), 
+              key: currentModule === "commercial" ? "Project number" : "Matter number" 
+            },
           ];
 
-          const textFields = [
-            { val: raw.clientName || raw.client_name, key: "Client Name" },
-            { val: raw.businessName, key: "Business Name" },
-            {
-              val:
-                raw.businessAddress ||
-                raw.propertyAddress ||
-                raw.property_address,
-              key: "Address",
-            },
-            { val: raw.state, key: "State" },
-            { val: raw.clientType || raw.type, key: "Client Type" },
-            { val: raw.referral || raw.referralName, key: "Referral" },
-            // VOCAT Fields
-            { val: raw.matterReferenceNumber, key: "Matter Ref" },
-            { val: raw.fasNumber, key: "FAS Number" },
-          ]
-            .filter((f) => f.val)
-            .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
+            // 🔹 COMMON FIELDS (Conveyancing / Commercial / VOCAT / Print Media)
+            const textFields = [
+              { val: raw.clientName || raw.client_name, key: "Client Name" },
+              { val: raw.businessName, key: "Business Name" },
+              {
+                val:
+                  raw.businessAddress ||
+                  raw.propertyAddress ||
+                  raw.property_address,
+                key: "Address",
+              },
+              { val: raw.state, key: "State" },
+              { val: raw.clientType || raw.type, key: "Client Type" },
+              { val: raw.referral || raw.referralName, key: "Referral" },
+              
+              // Added Notes as per user data
+              { val: raw.notes, key: "Notes" }, 
 
-          const isMatch = searchWords.every((word) => {
-            const lowerWord = word.toLowerCase();
-            const numericWord = word.replace(/\D/g, "");
-            const isPureNumeric = /^\d+$/.test(word);
+              // VOCAT Specific
+              { val: raw.matterReferenceNumber, key: "Matter Ref" },
+              { val: raw.fasNumber, key: "FAS Number" },
+            ]
+              .filter((f) => f.val)
+              .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
 
-            // Helper to check match and set matchedField
-            const check = (list) => {
-              const match = list.find((f) => {
-                if(f.key === "Matter #" && isPureNumeric) {
-                   return f.val === numericWord || f.val.startsWith(numericWord);
-                }
-                return f.val.includes(lowerWord);
-              });
+            const isMatch = searchWords.every((word) => {
+              const lowerWord = word.toLowerCase();
+              const numericWord = word.replace(/\D/g, "");
+              const isPureNumeric = /^\d+$/.test(word);
 
-              if (match) {
-                // Prioritize specific ID matches over generic text
-                if (!matchedField || match.key.includes("#") || match.key.includes("Ref") || match.key.includes("FAS") || match.key.includes("Order") || match.key.includes("Client ID")) {
+              // Helper to check match and set matchedField
+              const check = (list) => {
+                const match = list.find((f) => {
+                  if (f.key.toLowerCase().includes("number") && isPureNumeric) {
+                    return f.val === numericWord || f.val.startsWith(numericWord);
+                  }
+                  return f.val.includes(lowerWord);
+                });
+
+                if (match) {
+                  // If matchedField is not set, set it.
+                  // If it IS set, only overwrite if the new match is "more specific" (e.g. ID or Name vs general text)
+                  if (!matchedField) {
                     matchedField = match.key;
+                  } else {
+                    const isSpecific = 
+                      match.key.toLowerCase().includes("number") || 
+                      match.key.includes("ID") || 
+                      match.key.includes("Ref") ||
+                      match.key === "Client Name" || 
+                      match.key === "Business Name";
+                    
+                    if (isSpecific) {
+                       matchedField = match.key;
+                    }
+                  }
+                  return true;
                 }
-                return true;
-              }
-              return false;
-            };
+                return false;
+              };
 
             // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
             if (isPrintMedia) {
@@ -677,8 +697,8 @@ export default function Header() {
                             )}
                             
                             {/* NEW: DISPLAY MATCH REASON */}
-                            {item.matchedField && item.matchedField !== "Matter #" && (
-                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded ml-1">
+                            {item.matchedField && (
+                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded ml-1 border border-gray-200">
                                 Match: {item.matchedField}
                               </span>
                             )}
