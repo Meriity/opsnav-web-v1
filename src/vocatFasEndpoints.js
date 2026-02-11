@@ -32,5 +32,8 @@ export const VOCAT_FAS_ENDPOINTS = {
   
   // Client View
   SEND_LINK: "/vocat/client-view/send-link",
-  SIGNIN: "/vocat/client-view/signin"
+  SIGNIN: "/vocat/client-view/signin",
+  
+  // Upload
+  UPLOAD_EXCEL: "/vocat/clients/upload-excel"
 };

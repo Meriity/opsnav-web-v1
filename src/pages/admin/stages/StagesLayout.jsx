@@ -173,7 +173,21 @@ export default function StagesLayout() {
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState("stage");
 
-  // Google Maps Refs
+  // IDG Client Search State
+  const [idgClients, setIdgClients] = useState([]);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [filteredClients, setFilteredClients] = useState([]);
+
+  useEffect(() => {
+    if (localStorage.getItem("currentModule") === "print media") {
+      apiRef.current
+        .getAllIDGClients()
+        .then((data) => {
+          setIdgClients(data);
+        })
+        .catch((e) => console.error("Failed to load IDG clients", e));
+    }
+  }, []);
   const addressInputRef = useRef(null);
   const mobileAddressInputRef = useRef(null);
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
@@ -831,6 +845,9 @@ export default function StagesLayout() {
             response.notes !== undefined
               ? response.notes
               : response.client?.notes ?? "",
+          matterReferenceNumber: response.matterReferenceNumber || response.client?.matterReferenceNumber || "",
+          fasNumber: response.fasNumber || response.client?.fasNumber || "",
+          matterUrl: response.matterUrl || response.client?.matterUrl || "",
           state: response.state || clientData?.state || "",
           matterDate: response.matterDate
             ? typeof response.matterDate === "string"
@@ -1075,6 +1092,9 @@ export default function StagesLayout() {
           notes: clientData?.notes || "",
           postcode: clientData?.postcode,
           clientAddress: clientData?.clientAddress || "",
+          matterReferenceNumber: clientData?.matterReferenceNumber || "",
+          fasNumber: clientData?.fasNumber || "",
+          matterUrl: clientData?.matterUrl || "",
         };
       } else if (currentModule !== "print media") {
         payload = {
@@ -1097,6 +1117,8 @@ export default function StagesLayout() {
             clientData?.clientName ||
             clientData?.data?.client?.name ||
             "",
+          clientId: clientData?.data?.clientId || "",
+          client: clientData?.data?.client?._id || clientData?.data?.client || "",
           state: clientData?.data?.state || clientData?.state || "",
           orderType:
             clientData?.clientType ||
@@ -1123,6 +1145,9 @@ export default function StagesLayout() {
           payload.businessAddress = clientData?.businessAddress || "";
         } else if (currentModule === "vocat") {
           payload.clientAddress = clientData?.clientAddress || "";
+          payload.matterReferenceNumber = clientData?.matterReferenceNumber || "";
+          payload.fasNumber = clientData?.fasNumber || "";
+          payload.matterUrl = clientData?.matterUrl || "";
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
           payload.propertyAddress = clientData?.propertyAddress || "";
@@ -1639,7 +1664,7 @@ export default function StagesLayout() {
                       </div>
 
                       {/* Client Name */}
-                      <div className="md:col-span-1">
+                      <div className="md:col-span-1 relative">
                         <label className="block text-xs md:text-sm font-semibold mb-0.5">
                           Client Name
                         </label>
@@ -1654,16 +1679,58 @@ export default function StagesLayout() {
                           }
                           onChange={(e) => {
                             if (!isSuperAdmin) return;
+                            const val = e.target.value;
                             setClientData((prev) => ({
                               ...(prev || {}),
-                              clientName: e.target.value,
+                              clientName: val,
                             }));
+                            
+                            if (currentModule === "print media") {
+                                const matches = idgClients.filter(c => 
+                                    c.name.toLowerCase().includes(val.toLowerCase())
+                                );
+                                setFilteredClients(matches);
+                                setShowClientSuggestions(true);
+                            }
                           }}
+                          onFocus={() => {
+                              if (currentModule === "print media" && isSuperAdmin) {
+                                  setFilteredClients(idgClients);
+                                  setShowClientSuggestions(true);
+                              }
+                          }}
+                          onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
                             !isSuperAdmin ? "bg-gray-100" : ""
                           }`}
                           disabled={!isSuperAdmin}
+                          autoComplete="off"
                         />
+                        {showClientSuggestions && currentModule === "print media" && isSuperAdmin && (
+                            <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-40 overflow-y-auto shadow-lg rounded mt-1">
+                                {filteredClients.map(client => (
+                                    <li 
+                                        key={client._id}
+                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-slate-700"
+                                        onClick={() => {
+                                            setClientData(prev => ({
+                                                ...prev,
+                                                clientName: client.name,
+                                                data: {
+                                                    ...(prev.data || {}),
+                                                    client: { name: client.name, _id: client._id },
+                                                    clientId: client.clientId
+                                                }
+                                            }));
+                                            setShowClientSuggestions(false);
+                                            setMatterDirty(true);
+                                        }}
+                                    >
+                                        {client.name} <span className="text-xs text-gray-400">({client.clientId})</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                       </div>
 
                       {/* Business Name */}
@@ -1915,11 +1982,95 @@ export default function StagesLayout() {
                                   readOnly
                                 />
                               )}
-                           </div>
+                          </div>
                         </div>
                       )}
 
-
+                      {currentModule === "vocat" && (
+                        <div className="md:col-span-3">
+                          <div className="flex flex-col md:flex-row gap-4 mb-4">
+                            <div className="flex-1">
+                              <label className="block text-xs md:text-sm font-semibold mb-1">
+                                Matter Reference Number
+                              </label>
+                              {isSuperAdmin ? (
+                                <input
+                                  type="text"
+                                  value={clientData?.matterReferenceNumber || ""}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      matterReferenceNumber: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={clientData?.matterReferenceNumber || ""}
+                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-xs md:text-sm font-semibold mb-1">
+                                FAS Number
+                              </label>
+                              {isSuperAdmin ? (
+                                <input
+                                  type="text"
+                                  value={clientData?.fasNumber || ""}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      fasNumber: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={clientData?.fasNumber || ""}
+                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-1">
+                              Matter URL
+                            </label>
+                            {isSuperAdmin ? (
+                              <input
+                                type="url"
+                                value={clientData?.matterUrl || ""}
+                                onChange={(e) =>
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    matterUrl: e.target.value,
+                                  }))
+                                }
+                                placeholder="https://example.com"
+                                className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              />
+                            ) : (
+                              <input
+                                type="url"
+                                value={clientData?.matterUrl || ""}
+                                className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                disabled
+                                readOnly
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Completion/Settlement/Delivery Date */}
                       {currentModule !== "vocat" && (
@@ -2583,6 +2734,92 @@ export default function StagesLayout() {
                           className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
                         />
                       </div>
+                    )}
+                    
+                    {currentModule === "vocat" && (
+                      <>
+                        <div className="flex flex-row gap-4">
+                          <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Matter Reference Number
+                            </label>
+                            {isSuperAdmin ? (
+                              <input
+                                type="text"
+                                value={clientData?.matterReferenceNumber || ""}
+                                onChange={(e) =>
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    matterReferenceNumber: e.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={clientData?.matterReferenceNumber || ""}
+                                className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                                disabled
+                                readOnly
+                              />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              FAS Number
+                            </label>
+                            {isSuperAdmin ? (
+                              <input
+                                type="text"
+                                value={clientData?.fasNumber || ""}
+                                onChange={(e) =>
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    fasNumber: e.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={clientData?.fasNumber || ""}
+                                className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                                disabled
+                                readOnly
+                              />
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                            Matter URL
+                          </label>
+                          {isSuperAdmin ? (
+                            <input
+                              type="url"
+                              value={clientData?.matterUrl || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  matterUrl: e.target.value,
+                                }))
+                              }
+                              placeholder="https://example.com"
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                            />
+                          ) : (
+                            <input
+                              type="url"
+                              value={clientData?.matterUrl || ""}
+                              className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                      </>
                     )}
 
                     {/* Data Entry By */}

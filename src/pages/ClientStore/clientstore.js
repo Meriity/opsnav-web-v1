@@ -101,7 +101,7 @@ export const useClientStore = create(
               postcode: client.postCode || "N/A",
               orderDetails: client.order_details || "N/A",
               allocatedUser: client?.allocatedUserID
-                ? client.allocatedUserID.split("-")[1] || "N/A"
+                ? client.allocatedUserID.substring(client.allocatedUserID.indexOf("-") + 1).trim() || "N/A"
                 : "N/A",
             }));
 

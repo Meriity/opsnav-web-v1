@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Info,
   FileText,
+  Power,
 } from "lucide-react";
 
 import ClientAPI from "../../api/clientAPI";
@@ -284,6 +285,15 @@ export default function IDGClientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#ffe2df] to-blue-200">
       <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* OpsNav Logo - Outside Header */}
+        <div className="mb-6 pl-2">
+          <img
+            src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
+            className="h-[80px] md:h-[60px] w-auto object-contain"
+            alt="OpsNav Logo"
+          />
+        </div>
+
           <div className="mb-8 bg-gradient-to-r from-[#00AEEF] to-[#0088CC] rounded-2xl shadow-lg border border-[#00AEEF]/30 p-6 md:p-8 relative mt-4 mx-4 md:mx-0 overflow-hidden">
             {/* Subtle Pattern Background */}
             <div className="absolute inset-0 opacity-60">
@@ -298,62 +308,41 @@ export default function IDGClientDashboard() {
 
           {/* Content */}
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
-            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left">
-              <div className="w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-white/20 transform hover:scale-105 transition-transform duration-300">
-                <img
-                  src={LogoUrl}
-                  className="h-[85px] object-contain"
-                  alt="Company Logo"
-                />
+            <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+              <div className="flex items-center gap-6">
+                
+                <div className="transform hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={LogoUrl}
+                    className="h-[85px] w-auto object-contain drop-shadow-md"
+                    alt="Company Logo"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <h1 className="text-4xl font-extrabold text-white/95 drop-shadow-lg">
-                  Hello {localStorage.getItem("name") || "Client"} 👋
+
+              <div className="space-y-1">
+                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg">
+                  Hello, {localStorage.getItem("name") || "Client"} <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
                 </h1>
-                <h2 className="text-2xl font-bold text-white/90 tracking-tight">
-                  Welcome to Your Dashboard
-                </h2>
-                <p className="text-white/80 text-base font-medium flex items-center gap-2">
-                  <svg
-                    className="w-7 h-7 md:w-5 md:h-5 text-white/90"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                    />
-                  </svg>
-                  Track your orders and view completed work
+                <p className="text-lg md:text-xl font-medium text-blue-50/90 tracking-wide flex items-center gap-2 justify-center md:justify-start">
+                  <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
+                  Welcome back to your dashboard
                 </p>
               </div>
             </div>
 
-            {/* Logout Button */}
+            {/* Logout Button - Minimal & Clean */}
             <button
               onClick={() => {
                 localStorage.clear();
                 window.location.href = "/client/login";
               }}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl group w-full md:w-auto justify-center"
+              className="group flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg w-full md:w-auto justify-center mt-6 md:mt-0"
             >
-              <svg
-                className="w-5 h-5 transition-transform group-hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              Logout
+              <span className="text-white font-semibold tracking-wide">Sign Out</span>
+              <div className="bg-white/20 p-1 rounded-full group-hover:bg-white/30 transition-colors">
+                <Power className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
             </button>
           </div>
         </div>

@@ -877,6 +877,22 @@ class ClientAPI {
       throw error;
     }
   }
+  async getAllIDGClients() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/clients`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error("Error getting all IDG clients:", error);
+      throw error;
+    }
+  }
 }
 
 export default ClientAPI;
