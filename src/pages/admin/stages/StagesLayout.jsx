@@ -1707,17 +1707,18 @@ export default function StagesLayout() {
                           autoComplete="off"
                         />
                         {showClientSuggestions && currentModule === "print media" && isSuperAdmin && (
-                            <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-40 overflow-y-auto shadow-lg rounded mt-1">
+                            <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
                                 {filteredClients.map(client => (
                                     <li 
                                         key={client._id}
-                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-slate-700"
-                                        onClick={() => {
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
+                                        onMouseDown={(e) => {
+                                            e.preventDefault(); // Prevent blur before selection
                                             setClientData(prev => ({
                                                 ...prev,
                                                 clientName: client.name,
                                                 data: {
-                                                    ...(prev.data || {}),
+                                                    ...(prev?.data || {}),
                                                     client: { name: client.name, _id: client._id },
                                                     clientId: client.clientId
                                                 }
@@ -1726,9 +1727,19 @@ export default function StagesLayout() {
                                             setMatterDirty(true);
                                         }}
                                     >
-                                        {client.name} <span className="text-xs text-gray-400">({client.clientId})</span>
+                                        <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
+                                            {client.name}
+                                        </div>
+                                        <div className="text-[10px] text-gray-400 font-medium">
+                                            ID: {client.clientId}
+                                        </div>
                                     </li>
                                 ))}
+                                {filteredClients.length === 0 && (
+                                    <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
+                                        No clients found
+                                    </li>
+                                )}
                             </ul>
                         )}
                       </div>
@@ -2420,12 +2431,12 @@ export default function StagesLayout() {
                     </div>
 
                     {/* Client Name */}
-                    <div>
+                    <div className="relative">
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                         Client Name
                       </label>
                       <input
-                        id="clientName"
+                        id="clientName-mobile"
                         name="clientName"
                         type="text"
                         value={
@@ -2434,19 +2445,70 @@ export default function StagesLayout() {
                           ""
                         }
                         onChange={(e) => {
-                          if (!isSuperAdmin) return;
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            clientName: e.target.value,
-                          }));
+                            if (!isSuperAdmin) return;
+                            const val = e.target.value;
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientName: val,
+                            }));
+                            
+                            if (currentModule === "print media") {
+                                const matches = idgClients.filter(c => 
+                                    c.name.toLowerCase().includes(val.toLowerCase())
+                                );
+                                setFilteredClients(matches);
+                                setShowClientSuggestions(true);
+                            }
                         }}
+                        onFocus={() => {
+                            if (currentModule === "print media" && isSuperAdmin) {
+                                setFilteredClients(idgClients);
+                                setShowClientSuggestions(true);
+                            }
+                        }}
+                        onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                         className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !isSuperAdmin
-                            ? "bg-gray-50 text-gray-500"
-                            : "bg-white"
+                          !isSuperAdmin ? "bg-gray-50 text-gray-500" : "bg-white"
                         }`}
                         disabled={!isSuperAdmin}
+                        autoComplete="off"
                       />
+                      {showClientSuggestions && currentModule === "print media" && isSuperAdmin && (
+                        <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
+                           {filteredClients.map(client => (
+                                <li 
+                                    key={client._id}
+                                    className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        setClientData(prev => ({
+                                            ...prev,
+                                            clientName: client.name,
+                                            data: {
+                                                ...(prev?.data || {}),
+                                                client: { name: client.name, _id: client._id },
+                                                clientId: client.clientId
+                                            }
+                                        }));
+                                        setShowClientSuggestions(false);
+                                        setMatterDirty(true);
+                                    }}
+                                >
+                                    <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
+                                        {client.name}
+                                    </div>
+                                    <div className="text-[10px] text-gray-400 font-medium">
+                                        ID: {client.clientId}
+                                    </div>
+                                </li>
+                            ))}
+                            {filteredClients.length === 0 && (
+                                <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
+                                    No clients found
+                                </li>
+                            )}
+                        </ul>
+                      )}
                     </div>
 
                     {/* Business Name */}
