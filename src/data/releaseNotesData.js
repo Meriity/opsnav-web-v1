@@ -19,10 +19,98 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-12",
+          version: "v6.1.2",
+          type: "patch",
+          category: "bug_fix",
+          title: "VOCAT Client Dashboard Fixes",
+          description: "Resolved issues with VOCAT Dashboard displaying incorrect stages and missing matter details.",
+          updates: [
+            {
+              type: "fix",
+              title: "VOCAT Stage Display",
+              description: "Fixed VOCAT clients showing Conveyancing stages.",
+              details: "Implemented correct mapping for VOCAT-specific stages (Initialisation, Assessment, etc.) instead of standard Conveyancing workflow.",
+              icon: Bug,
+            },
+             {
+              type: "fix",
+              title: "VOCAT Matter Overview",
+              description: "Added missing details to Matter Overview sidebar.",
+              details: "Sidebar now correctly displays Postcode, FAS Number, and Incident Date for VOCAT clients.",
+              icon: Info,
+            }
+          ],
+          module: "VOCAT, Dashboard",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-02-12",
+          version: "v6.1.1",
+          type: "patch",
+          category: "bug_fix",
+          title: "Admin & Super Admin Edit Matter Fix",
+          description: "Resolved critical permission issues preventing Admins and Super Admins from editing matters.",
+          updates: [
+            {
+              type: "fix",
+              title: "Edit Matter Permissions",
+              description: "Fixed bug where Admin/Super Admin couldn't key in changes.",
+              details: "Addressed an issue where the edit matter functionality was restricted or malfunctioning for Admin and Super Admin roles, ensuring full control over matter details.",
+              icon: Shield,
+            }
+          ],
+          module: "Admin, User Management",
+          severity: "High",
+          status: "Released"
+        },
+        {
+          date: "2026-02-12",
+          version: "v6.1.0",
+          type: "minor",
+          category: "feature",
+          title: "Dashboard Modernization & Module Enhancements",
+          description: "Major visual updates to dashboards, plus significant enhancements to VOCAT, Print Media, and Admin features.",
+          updates: [
+            {
+              type: "feature",
+              title: "Dashboard Modernization",
+              description: "Redesigned headers and logo integration for a seamless look.",
+              details: "Modernized typography, integrated OpsNav logo, and optimized layout in both IDG and Standard dashboards.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "VOCAT Layout & Search",
+              description: "Optimized Client Details layout and improved search capabilities.",
+              details: "Grouped reference numbers, added dedicated table columns, enabled search by Ref/FAS numbers with match reason badges.",
+              icon: TrendingUp,
+            },
+            {
+              type: "improvement",
+              title: "Print Media Order Management",
+              description: "Enhanced order editing and search functionality.",
+              details: "Added autocomplete dropdown for client selection and 'Match Reason' logic for smarter searching.",
+              icon: BarChart3,
+            },
+            {
+              type: "improvement",
+              title: "Admin Tools",
+              description: "Backend prep for Excel upload and safer filtering.",
+              details: "Implemented 'Safe Extraction' for allocated user filtering and prepared backend for Excel uploads.",
+              icon: Shield,
+            }
+          ],
+          module: "Dashboard, VOCAT, Print Media, Admin",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-06",
           version: "v6.0.2",
-          type: "feature",
-          category: "feature",
+          type: "patch",
+          category: "bug_fix",
           title: "VOCAT Post Code & Signage and Print Client Dashboard Enhancements",
           description: "Added Post Code field to VOCAT client creation and improved Matter Details layout.",
           updates: [
@@ -82,7 +170,7 @@ export const monthlyReleaseNotes = {
           date: "2026-01-29",
           version: "v6.0.0",
           type: "major",
-          category: "feature",
+          category: "infrastructure",
           title: "VOCAT/FAS Module Launch",
           description: "Released the complete VOCAT/FAS module with specialized staging, costing, and client management.",
           updates: [
