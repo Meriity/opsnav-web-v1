@@ -107,8 +107,10 @@ export default function StagesLayout() {
     return null;
   });
 
+  const currentModule = localStorage.getItem("currentModule");
   const isAnyAdmin = role === "superadmin" || role === "admin";
   const isSuperAdmin = role === "superadmin";
+  const canEditMatterDetails = isAnyAdmin;
 
   useEffect(() => {
     const onStorage = (e) => {
@@ -166,7 +168,6 @@ export default function StagesLayout() {
   const [loading, setLoading] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
   const [isOpen, setIsOpen] = useState(false);
-  const currentModule = localStorage.getItem("currentModule");
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [_isUpdating, setIsUpdating] = useState(false);
@@ -1132,8 +1133,8 @@ export default function StagesLayout() {
 
       console.log("📦 [FINAL PAYLOAD]", payload);
 
-      // Include superadmin fields
-      if (isSuperAdmin) {
+      // Include administrative fields
+      if (canEditMatterDetails) {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
         payload.state = clientData?.state || "";
@@ -1145,9 +1146,11 @@ export default function StagesLayout() {
           payload.businessAddress = clientData?.businessAddress || "";
         } else if (currentModule === "vocat") {
           payload.clientAddress = clientData?.clientAddress || "";
-          payload.matterReferenceNumber = clientData?.matterReferenceNumber || "";
+          payload.matterReferenceNumber =
+            clientData?.matterReferenceNumber || "";
           payload.fasNumber = clientData?.fasNumber || "";
           payload.matterUrl = clientData?.matterUrl || "";
+          payload.criminalIncidentDate = clientData?.criminalIncidentDate || null;
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
           payload.propertyAddress = clientData?.propertyAddress || "";
@@ -1591,9 +1594,9 @@ export default function StagesLayout() {
                         <input
                           id="matterDate"
                           name="matterDate"
-                          type={isSuperAdmin ? "date" : "text"}
+                          type={canEditMatterDetails ? "date" : "text"}
                           value={
-                            isSuperAdmin
+                            canEditMatterDetails
                               ? clientData?.matterDate
                                 ? new Date(clientData.matterDate)
                                     .toISOString()
@@ -1608,7 +1611,7 @@ export default function StagesLayout() {
                               : ""
                           }
                           onChange={(e) => {
-                            if (!isSuperAdmin) return;
+                            if (!canEditMatterDetails) return;
                             const v = e.target.value
                               ? new Date(e.target.value).toISOString()
                               : "";
@@ -1618,9 +1621,9 @@ export default function StagesLayout() {
                             }));
                           }}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                            !isSuperAdmin ? "bg-gray-100" : ""
+                            !canEditMatterDetails ? "bg-gray-100" : ""
                           }`}
-                          disabled={!isSuperAdmin}
+                          disabled={!canEditMatterDetails}
                         />
                       </div>
 
@@ -1632,7 +1635,7 @@ export default function StagesLayout() {
                             ? "Order ID"
                             : "Matter Number"}
                         </label>
-                        {isSuperAdmin ? (
+                        {canEditMatterDetails ? (
                           <input
                             type="text"
                             value={
@@ -1678,7 +1681,7 @@ export default function StagesLayout() {
                             ""
                           }
                           onChange={(e) => {
-                            if (!isSuperAdmin) return;
+                            if (!canEditMatterDetails) return;
                             const val = e.target.value;
                             setClientData((prev) => ({
                               ...(prev || {}),
@@ -1694,19 +1697,19 @@ export default function StagesLayout() {
                             }
                           }}
                           onFocus={() => {
-                              if (currentModule === "print media" && isSuperAdmin) {
+                              if (currentModule === "print media" && canEditMatterDetails) {
                                   setFilteredClients(idgClients);
                                   setShowClientSuggestions(true);
                               }
                           }}
                           onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                            !isSuperAdmin ? "bg-gray-100" : ""
+                            !canEditMatterDetails ? "bg-gray-100" : ""
                           }`}
-                          disabled={!isSuperAdmin}
+                          disabled={!canEditMatterDetails}
                           autoComplete="off"
                         />
-                        {showClientSuggestions && currentModule === "print media" && isSuperAdmin && (
+                        {showClientSuggestions && currentModule === "print media" && canEditMatterDetails && (
                             <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
                                 {filteredClients.map(client => (
                                     <li 
@@ -1750,7 +1753,7 @@ export default function StagesLayout() {
                           <label className="block text-xs md:text-sm font-semibold mb-0.5">
                             Business Name
                           </label>
-                          {isSuperAdmin ? (
+                          {canEditMatterDetails ? (
                             <input
                               type="text"
                               value={clientData?.businessName || ""}
@@ -1799,7 +1802,7 @@ export default function StagesLayout() {
                               : clientData?.propertyAddress || ""
                           }
                           onChange={(e) => {
-                            if (!isSuperAdmin) return;
+                            if (!canEditMatterDetails) return;
                             const value = e.target.value;
                             setClientData((prev) => {
                               if (currentModule === "commercial") {
@@ -1821,9 +1824,9 @@ export default function StagesLayout() {
                             });
                           }}
                           className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                            !isSuperAdmin ? "bg-gray-100" : ""
+                            !canEditMatterDetails ? "bg-gray-100" : ""
                           }`}
-                          disabled={!isSuperAdmin}
+                          disabled={!canEditMatterDetails}
                           ref={addressInputRef}
                         />
                       </div>
@@ -1833,7 +1836,7 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           State
                         </label>
-                        {isSuperAdmin ? (
+                        {canEditMatterDetails ? (
                         <input
                             id="state"
                             name="state"
@@ -1879,7 +1882,7 @@ export default function StagesLayout() {
                             ? "Order Type"
                             : "Client Type"}
                         </label>
-                        {isSuperAdmin ? (
+                        {canEditMatterDetails ? (
                           <select
                             id="clientType"
                             name="clientType"
@@ -1926,7 +1929,7 @@ export default function StagesLayout() {
                               <label className="block text-xs md:text-sm font-semibold mb-1">
                                 Client Type
                               </label>
-                              {isSuperAdmin ? (
+                              {canEditMatterDetails ? (
                                 <select
                                   id="clientType"
                                   name="clientType"
@@ -1960,7 +1963,7 @@ export default function StagesLayout() {
                               <label className="block text-xs md:text-sm font-semibold mb-1">
                                 Criminal Incident Date
                               </label>
-                              {isSuperAdmin ? (
+                              {canEditMatterDetails ? (
                                 <input
                                   id="criminalIncidentDate"
                                   name="criminalIncidentDate"
@@ -2004,7 +2007,7 @@ export default function StagesLayout() {
                               <label className="block text-xs md:text-sm font-semibold mb-1">
                                 Matter Reference Number
                               </label>
-                              {isSuperAdmin ? (
+                              {canEditMatterDetails ? (
                                 <input
                                   type="text"
                                   value={clientData?.matterReferenceNumber || ""}
@@ -2030,7 +2033,7 @@ export default function StagesLayout() {
                               <label className="block text-xs md:text-sm font-semibold mb-1">
                                 FAS Number
                               </label>
-                              {isSuperAdmin ? (
+                              {canEditMatterDetails ? (
                                 <input
                                   type="text"
                                   value={clientData?.fasNumber || ""}
@@ -2057,7 +2060,7 @@ export default function StagesLayout() {
                             <label className="block text-xs md:text-sm font-semibold mb-1">
                               Matter URL
                             </label>
-                            {isSuperAdmin ? (
+                            {canEditMatterDetails ? (
                               <input
                                 type="url"
                                 value={clientData?.matterUrl || ""}
@@ -2093,7 +2096,7 @@ export default function StagesLayout() {
                               ? "Delivery Date"
                               : "Settlement Date"}
                           </label>
-                          <input
+                           <input
                             id={
                               currentModule === "commercial"
                                 ? "completionDate"
@@ -2129,7 +2132,7 @@ export default function StagesLayout() {
                                   : ""
                               }
                             onChange={(e) => {
-                              if (!isSuperAdmin) return;
+                              if (!canEditMatterDetails) return;
                               const dateValue = e.target.value;
                               if (currentModule === "commercial") {
                                 setClientData((prev) => ({
@@ -2152,9 +2155,9 @@ export default function StagesLayout() {
                               }
                             }}
                             className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                              !isSuperAdmin ? "bg-gray-100" : ""
+                              !canEditMatterDetails ? "bg-gray-100" : ""
                             }`}
-                            disabled={!isSuperAdmin}
+                            disabled={!canEditMatterDetails}
                           />
                       </div>
                       )}
@@ -2164,7 +2167,7 @@ export default function StagesLayout() {
                         <label className="block text-xs md:text-sm font-semibold mb-1">
                           Data Entry By
                         </label>
-                        {isSuperAdmin ? (
+                        {canEditMatterDetails ? (
                           <input
                             type="text"
                             value={
@@ -2358,9 +2361,9 @@ export default function StagesLayout() {
                       <input
                         id="matterDate"
                         name="matterDate"
-                        type={isSuperAdmin ? "date" : "text"}
+                        type={canEditMatterDetails ? "date" : "text"}
                         value={
-                          isSuperAdmin
+                          canEditMatterDetails
                             ? clientData?.matterDate
                               ? new Date(clientData.matterDate)
                                   .toISOString()
@@ -2373,7 +2376,7 @@ export default function StagesLayout() {
                             : ""
                         }
                         onChange={(e) => {
-                          if (!isSuperAdmin) return;
+                          if (!canEditMatterDetails) return;
                           const v = e.target.value
                             ? new Date(e.target.value).toISOString()
                             : "";
@@ -2383,11 +2386,11 @@ export default function StagesLayout() {
                           }));
                         }}
                         className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !isSuperAdmin
+                          !canEditMatterDetails
                             ? "bg-gray-50 text-gray-500"
                             : "bg-white"
                         }`}
-                        disabled={!isSuperAdmin}
+                        disabled={!canEditMatterDetails}
                       />
                     </div>
 
@@ -2399,7 +2402,7 @@ export default function StagesLayout() {
                           ? "Order ID"
                           : "Matter Number"}
                       </label>
-                      {isSuperAdmin ? (
+                      {canEditMatterDetails ? (
                         <input
                           type="text"
                           value={
@@ -2445,7 +2448,7 @@ export default function StagesLayout() {
                           ""
                         }
                         onChange={(e) => {
-                            if (!isSuperAdmin) return;
+                            if (!canEditMatterDetails) return;
                             const val = e.target.value;
                             setClientData((prev) => ({
                               ...(prev || {}),
@@ -2461,19 +2464,19 @@ export default function StagesLayout() {
                             }
                         }}
                         onFocus={() => {
-                            if (currentModule === "print media" && isSuperAdmin) {
+                            if (currentModule === "print media" && canEditMatterDetails) {
                                 setFilteredClients(idgClients);
                                 setShowClientSuggestions(true);
                             }
                         }}
                         onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
                         className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !isSuperAdmin ? "bg-gray-50 text-gray-500" : "bg-white"
+                          !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
                         }`}
-                        disabled={!isSuperAdmin}
+                        disabled={!canEditMatterDetails}
                         autoComplete="off"
                       />
-                      {showClientSuggestions && currentModule === "print media" && isSuperAdmin && (
+                      {showClientSuggestions && currentModule === "print media" && canEditMatterDetails && (
                         <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
                            {filteredClients.map(client => (
                                 <li 
@@ -2517,7 +2520,7 @@ export default function StagesLayout() {
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                           Business Name
                         </label>
-                        {isSuperAdmin ? (
+                        {canEditMatterDetails ? (
                           <input
                             type="text"
                             value={clientData?.businessName || ""}
@@ -2551,7 +2554,7 @@ export default function StagesLayout() {
                           : "Property Address"}
                       </label>
                       <input
-                        id="address"
+                        id="address-mobile"
                         name="address"
                         type="text"
                         value={
@@ -2559,10 +2562,12 @@ export default function StagesLayout() {
                             ? clientData?.businessAddress || ""
                             : currentModule === "print media"
                             ? clientData?.data?.deliveryAddress || ""
+                            : currentModule === "vocat"
+                            ? clientData?.clientAddress || ""
                             : clientData?.propertyAddress || ""
                         }
                         onChange={(e) => {
-                          if (!isSuperAdmin) return;
+                          if (!canEditMatterDetails) return;
                           const value = e.target.value;
                           setClientData((prev) => {
                             if (currentModule === "commercial") {
@@ -2577,15 +2582,18 @@ export default function StagesLayout() {
                                 },
                               };
                             }
+                            if (currentModule === "vocat") {
+                              return { ...prev, clientAddress: value };
+                            }
                             return { ...prev, propertyAddress: value };
                           });
                         }}
                         className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !isSuperAdmin
+                          !canEditMatterDetails
                             ? "bg-gray-50 text-gray-500"
                             : "bg-white"
                         }`}
-                        disabled={!isSuperAdmin}
+                        disabled={!canEditMatterDetails}
                         ref={mobileAddressInputRef}
                       />
                     </div>
@@ -2595,8 +2603,9 @@ export default function StagesLayout() {
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                         State
                       </label>
-                      {isSuperAdmin ? (
+                      {canEditMatterDetails ? (
                         <input
+                          id="state-mobile"
                           type="text"
                           value={
                             clientData?.state || clientData?.data?.state || ""
@@ -2636,9 +2645,9 @@ export default function StagesLayout() {
                           ? "Order Type"
                           : "Client Type"}
                       </label>
-                      {isSuperAdmin ? (
+                      {canEditMatterDetails ? (
                         <select
-                          id="clientType"
+                          id="clientType-mobile"
                           name="clientType"
                           value={
                             clientData?.clientType ||
@@ -2723,7 +2732,7 @@ export default function StagesLayout() {
                             : "Settlement Date"}
                         </label>
                         <input
-                          id="settlementDate"
+                          id="settlementDate-mobile"
                           type="date"
                           value={
                             currentModule === "commercial"
@@ -2745,6 +2754,7 @@ export default function StagesLayout() {
                               : ""
                           }
                           onChange={(e) => {
+                            if (!canEditMatterDetails) return;
                             const dateValue = e.target.value;
                             if (currentModule === "commercial") {
                               setClientData((prev) => ({
@@ -2766,7 +2776,10 @@ export default function StagesLayout() {
                               }));
                             }
                           }}
-                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                            !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                          }`}
+                          disabled={!canEditMatterDetails}
                         />
                       </div>
                     )}
@@ -2778,7 +2791,7 @@ export default function StagesLayout() {
                           Criminal Incident Date
                         </label>
                         <input
-                          id="criminalIncidentDate"
+                          id="criminalIncidentDate-mobile"
                           type="date"
                           value={
                             clientData?.criminalIncidentDate
@@ -2788,12 +2801,16 @@ export default function StagesLayout() {
                               : ""
                           }
                           onChange={(e) => {
+                            if (!canEditMatterDetails) return;
                             setClientData((prev) => ({
                               ...(prev || {}),
                               criminalIncidentDate: e.target.value,
                             }));
                           }}
-                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                            !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                          }`}
+                          disabled={!canEditMatterDetails}
                         />
                       </div>
                     )}
@@ -2805,7 +2822,7 @@ export default function StagesLayout() {
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                               Matter Reference Number
                             </label>
-                            {isSuperAdmin ? (
+                            {canEditMatterDetails ? (
                               <input
                                 type="text"
                                 value={clientData?.matterReferenceNumber || ""}
@@ -2831,7 +2848,7 @@ export default function StagesLayout() {
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                               FAS Number
                             </label>
-                            {isSuperAdmin ? (
+                            {canEditMatterDetails ? (
                               <input
                                 type="text"
                                 value={clientData?.fasNumber || ""}
@@ -2858,7 +2875,7 @@ export default function StagesLayout() {
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                             Matter URL
                           </label>
-                          {isSuperAdmin ? (
+                          {canEditMatterDetails ? (
                             <input
                               type="url"
                               value={clientData?.matterUrl || ""}
@@ -2889,7 +2906,7 @@ export default function StagesLayout() {
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                         Data Entry By
                       </label>
-                      {isSuperAdmin ? (
+                      {canEditMatterDetails ? (
                         <input
                           type="text"
                           value={
