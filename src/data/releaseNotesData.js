@@ -20,6 +20,33 @@ export const monthlyReleaseNotes = {
       February: [
         {
           date: "2026-02-12",
+          version: "v6.1.2",
+          type: "patch",
+          category: "bug_fix",
+          title: "VOCAT Client Dashboard Fixes",
+          description: "Resolved issues with VOCAT Dashboard displaying incorrect stages and missing matter details.",
+          updates: [
+            {
+              type: "fix",
+              title: "VOCAT Stage Display",
+              description: "Fixed VOCAT clients showing Conveyancing stages.",
+              details: "Implemented correct mapping for VOCAT-specific stages (Initialisation, Assessment, etc.) instead of standard Conveyancing workflow.",
+              icon: Bug,
+            },
+             {
+              type: "fix",
+              title: "VOCAT Matter Overview",
+              description: "Added missing details to Matter Overview sidebar.",
+              details: "Sidebar now correctly displays Postcode, FAS Number, and Incident Date for VOCAT clients.",
+              icon: Info,
+            }
+          ],
+          module: "VOCAT, Dashboard",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-02-12",
           version: "v6.1.1",
           type: "patch",
           category: "bug_fix",

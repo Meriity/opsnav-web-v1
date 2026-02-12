@@ -57,6 +57,48 @@ class ClientAPI {
     }
   }
 
+  async getVocatClientDetails(matterNumber) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/vocat/clients?matterNumber=${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting VOCAT client details:", error);
+      throw error;
+    }
+  }
+
+  async getVocatAllStages(matterNumber) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/vocat/clients/stages/${matterNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting VOCAT stages:", error);
+      throw error;
+    }
+  }
+
   async getIDGClients(clientId) {
     try {
       const response = await fetch(
