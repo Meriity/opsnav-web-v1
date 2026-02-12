@@ -212,13 +212,17 @@ export default function ClientDashboard() {
     return {
       matter_date: formatDate(apiResponse.matterDate),
       matter_number: apiResponse.matterNumber.toString(),
+      reference_number: apiResponse.matterReferenceNumber || "",
+      fas_number: apiResponse.fasNumber || "",
       Clientname: apiResponse.clientName,
-      address: apiResponse.propertyAddress,
+      address: apiResponse.propertyAddress || apiResponse.clientAddress || "",
       state: apiResponse.state,
+      postcode: apiResponse.postcode || "",
       type:
         apiResponse.clientType.charAt(0).toUpperCase() +
         apiResponse.clientType.slice(1),
       settlement_date: formatDate(apiResponse.settlementDate),
+      incident_date: formatDate(apiResponse.criminalIncidentDate),
     };
   }
 
@@ -229,6 +233,7 @@ export default function ClientDashboard() {
       Clientname: apiResponse.data[0].clientDetails.name,
       delivery_address: apiResponse.data[0].orderDetails.deliveryAddress,
       state: apiResponse.data[0].orderDetails.state,
+      postcode: apiResponse.data[0].orderDetails.postcode || "",
       type: apiResponse.data[0].orderDetails.orderType,
       delivery_date: formatDate(apiResponse.data[0].orderDetails.orderDate),
     };
@@ -575,7 +580,12 @@ export default function ClientDashboard() {
         svg: "/stage 5.svg",
         stagecolor: order.s4.colorStatus,
         data: {
-          sections: [],
+          sections: [
+            {
+              title: "Images Uploaded",
+              status: (order.s4.images?.length ?? 0) > 0 ? "Yes" : "No",
+            },
+          ],
           noteTitle: "System Note for Client",
           noteText: note.beforeHyphen,
           rows: [
@@ -591,6 +601,147 @@ export default function ClientDashboard() {
           ],
         },
       });
+    }
+
+    return stages;
+  }
+
+  function mapVocatStagesFromDB(response) {
+    const stages = [];
+    
+    // Helper to get status
+    const getStatus = (val) => {
+        if (!val) return "No";
+        const v = String(val).toLowerCase();
+        if (["yes", "nr", "na", "approved", "completed"].includes(v)) return "Yes";
+        if (["processing", "inprogress"].includes(v)) return "Processing";
+        if (v === "true") return "Yes";
+        if (v === "false") return "No";
+        return "No";
+    };
+
+    // Helper to split notes
+    const splitNoteParts = (note) => {
+        if (!note) return { beforeHyphen: "", afterHyphen: "" };
+        const [before, ...after] = note.split(" - ");
+        return {
+          beforeHyphen: before?.trim() || "",
+          afterHyphen: after.join(" - ").trim() || "",
+        }; // Fixed join separator to preserve original structure if multiple hyphens
+    };
+
+    if (response.stage1) {
+        const s1 = response.stage1;
+        const note = splitNoteParts(s1.notes || s1.noteForClient); // API response might vary
+        
+        stages.push({
+            stageName: "Initialisation",
+            svg: "/stage 1.svg",
+            stagecolor: s1.colorStatus,
+            data: {
+                sections: [
+                    { title: "Client Authority", status: getStatus(s1.clientAuthority) },
+                    { title: "Evidence of Incident", status: getStatus(s1.evidenceOfIncident) },
+                    { title: "Reported to Police", status: getStatus(s1.reportedToPolice) },
+                ],
+                noteTitle: "System Note for Client",
+                noteText: note.beforeHyphen,
+                rows: [
+                    {
+                        sections: [
+                            { title: "Police Details Provided", status: getStatus(s1.policeDetailsProvided) },
+                        ],
+                        noteText: note.afterHyphen,
+                    }
+                ]
+            }
+        });
+    }
+
+    if (response.stage2) {
+        const s2 = response.stage2;
+        const note = splitNoteParts(s2.notes || s2.noteForClient);
+        
+        stages.push({
+            stageName: "Assessment & Evidence",
+            svg: "/stage 2A.svg",
+            stagecolor: s2.colorStatus,
+            data: {
+                sections: [
+                    { title: "VOI", status: getStatus(s2.voi) },
+                    { title: "FAS Standard Form", status: getStatus(s2.fasStandardForm) },
+                ],
+                noteTitle: "System Note for Client",
+                noteText: note.beforeHyphen,
+                rows: [
+                    {
+                        sections: [
+                             { title: "Proof of Income", status: getStatus(s2.proofOfIncome) },
+                             { title: "Psych/Doc Letter", status: getStatus(s2.psychLetter) },
+                             { title: "Stat Dec (Clothing)", status: getStatus(s2.statDecClothing) },
+                             { title: "Clothing Receipts", status: getStatus(s2.clothingReceipts) },
+                             { title: "Security Invoices", status: getStatus(s2.securityInvoices) },
+                             { title: "Medical Invoices", status: getStatus(s2.medicalInvoices) },
+                             { title: "Recovery Invoices", status: getStatus(s2.recoveryInvoices) },
+                        ],
+                        noteText: note.afterHyphen,
+                    }
+                ]
+            }
+        });
+    }
+
+    if (response.stage3) {
+        const s3 = response.stage3;
+        const note = splitNoteParts(s3.notes || s3.noteForClient);
+        
+        stages.push({
+            stageName: "Searches & Analysis",
+            svg: "/stage 3.svg",
+            stagecolor: s3.colorStatus,
+            data: {
+                sections: [
+                    { title: "Searches Analysis", status: getStatus(s3.searchesAnalysis) },
+                    { title: "Letters from Parties", status: getStatus(s3.lettersFromParties) },
+                ],
+                noteTitle: "System Note for Client",
+                noteText: note.beforeHyphen,
+                rows: [
+                    {
+                        sections: [],
+                        noteText: note.afterHyphen,
+                    }
+                ]
+            }
+        });
+    }
+
+    if (response.stage4) {
+        const s4 = response.stage4;
+        const note = splitNoteParts(s4.notes || s4.noteForClient);
+        
+        stages.push({
+            stageName: "Finalisation",
+            svg: "/stage 5.svg", // Reusing stage 5 svg for final stage
+            stagecolor: s4.colorStatus,
+            data: {
+                sections: [
+                    { title: "Variation Required", status: getStatus(s4.variationRequired) },
+                    { title: "Final Letter to Client", status: getStatus(s4.finalLetterToClient) },
+                ],
+                noteTitle: "System Note for Client",
+                noteText: note.beforeHyphen,
+                rows: [
+                    {
+                        sections: [
+                            { title: "FAS Approval", status: getStatus(s4.fasApproval) },
+                            { title: "Invoiced", status: getStatus(s4.invoiced) },
+                        ],
+                        noteText: note.afterHyphen,
+                    }
+                ]
+            }
+        });
     }
 
     return stages;
@@ -612,7 +763,24 @@ export default function ClientDashboard() {
             return;
           }
         } catch (e) {
-          console.log("Not a standard client, trying IDG...");
+          console.log("Not a standard client, trying VOCAT...");
+        }
+
+        // Try VOCAT
+        try {
+          const response = await api.getVocatClientDetails(matterNumber);
+          if (response && response.matterNumber) {
+            const formatted = formatMatterDetails(response);
+            setMatterDetails(formatted);
+            const stagedetails = await api.getVocatAllStages(matterNumber);
+            // Use VOCAT specific mapper
+            const stageformatted = mapVocatStagesFromDB(stagedetails);
+            setStageDetails(stageformatted);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.log("Not a VOCAT client, trying IDG...");
         }
 
         const response = await api.getIDGClientDetails(matterNumber);
@@ -679,7 +847,11 @@ export default function ClientDashboard() {
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
           <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative">
-            <img className="h-auto w-[120px]" alt="OpsNav Logo" src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png" />
+            <img
+              className="h-auto w-[120px]"
+              alt="OpsNav Logo"
+              src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png"
+            />
             {/* Close button in mobile */}
             <button
               onClick={() => setIsOpen(false)}
@@ -713,6 +885,106 @@ export default function ClientDashboard() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Address */}
+                  {(matterDetails.address || orderDetails.delivery_address) && (
+                    <div className="flex items-start gap-3">
+                      <Home className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          Address
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.address || orderDetails.delivery_address}
+                        </p>
+                        {(matterDetails.state || orderDetails.state) && (
+                          <p className="text-sm text-slate-800 font-semibold">
+                            {matterDetails.state || orderDetails.state}
+                            {(matterDetails.postcode || orderDetails.postcode) ? `, ${matterDetails.postcode || orderDetails.postcode}` : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matter Number / Order ID */}
+                  {(matterDetails.matter_number || orderDetails.orderId) && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          {currentModule === "print media"
+                            ? "Order ID"
+                            : "Matter Number"}
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.matter_number || orderDetails.orderId}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reference Number */}
+                  {matterDetails.reference_number && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          Reference Number
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.reference_number}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* FAS Number (VOCAT) */}
+                  {matterDetails.fas_number && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          FAS Number
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.fas_number}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matter Date / Order Date */}
+                  {(matterDetails.matter_date || orderDetails.order_date) && (
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          {currentModule === "print media"
+                            ? "Order Date"
+                            : "Matter Date"}
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.matter_date || orderDetails.order_date}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Incident Date (VOCAT) */}
+                  {matterDetails.incident_date && matterDetails.incident_date !== "Not Set" && (
+                     <div className="flex items-start gap-3">
+                      <Calendar className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          Incident Date
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.incident_date}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
