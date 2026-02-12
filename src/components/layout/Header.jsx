@@ -21,6 +21,7 @@ import SidebarModuleSwitcher from "../ui/SidebarModuleSwitcher.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import CommercialAPI from "../../api/commercialAPI";
 import WillsAPI from "../../api/willsAPI";
+import VocatFasAPI from "../../api/vocatFasAPI";
 
 export default function Header() {
   const { searchQuery, setSearchQuery } = useSearchStore();
@@ -184,12 +185,26 @@ export default function Header() {
       // 🔹 PRINT MEDIA
       else if (currentModule === "print media") {
         try {
-          response = await api.getIDGSearchResult(value);
+          // Fetch all active orders to support client-side filtering and badging
+          // response = await api.getIDGSearchResult(value);
+           const result = await api.getIDGOrders();
+           response = result.activeOrders || []; 
         } catch (e) {
           console.warn(
             "Error fetching IDG search results, falling back to empty:",
             e
           );
+          response = [];
+        }
+      }
+
+      // 🔹 VOCAT
+      else if (currentModule === "vocat") {
+        try {
+          const vocatApi = new VocatFasAPI(); 
+          response = await vocatApi.getActiveClients();
+        } catch (e) {
+          console.warn("Error fetching VOCAT search results:", e);
           response = [];
         }
       }
@@ -200,7 +215,6 @@ export default function Header() {
       }
       // 🔹 DEFAULT (Conveyancing)
       else {
-        // Fetch all active clients to allow frontend filtering on all fields (including Referral)
         try {
           response = await api.getClients();
         } catch (e) {
@@ -227,52 +241,104 @@ export default function Header() {
           .map((v) => String(v));
       };
 
-      const filteredResults = (response || []).filter((item) => {
-        const raw = item.__raw || item;
+      const filteredResults = (response || [])
+        .map((item) => {
+          const raw = item.__raw || item;
+          let matchedField = null; // Store which field matched
 
-        const printMediaIds = [raw.orderId, raw.clientId]
-          .filter(Boolean)
-          .map((v) => String(v).toLowerCase());
+          const printMediaIds = [
+            { val: String(raw.orderId), key: "Order ID" },
+            { val: String(raw.clientId), key: "Client ID" }
+          ]
+            .filter((f) => f.val && f.val !== "undefined" && f.val !== "null")
+            .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
 
-        const numericFields = [raw.matterNumber]
-          .filter(Boolean)
-          .map((v) => String(v));
+          const numericFields = [
+            { 
+              val: String(raw.matterNumber), 
+              key: currentModule === "commercial" ? "Project number" : "Matter number" 
+            },
+          ];
 
-        const textFields = [
-          raw.clientName || raw.client_name,
-          raw.businessName,
-          raw.businessAddress || raw.propertyAddress || raw.property_address,
-          raw.state,
-          raw.clientType || raw.type,
-          raw.referral || raw.referralName,
-        ]
-          .filter(Boolean)
-          .map((v) => String(v).toLowerCase());
+            // 🔹 COMMON FIELDS (Conveyancing / Commercial / VOCAT / Print Media)
+            const textFields = [
+              { val: raw.clientName || raw.client_name, key: "Client Name" },
+              { val: raw.businessName, key: "Business Name" },
+              {
+                val:
+                  raw.businessAddress ||
+                  raw.propertyAddress ||
+                  raw.property_address,
+                key: "Address",
+              },
+              { val: raw.state, key: "State" },
+              { val: raw.clientType || raw.type, key: "Client Type" },
+              { val: raw.referral || raw.referralName, key: "Referral" },
+              
+              // Added Notes as per user data
+              { val: raw.notes, key: "Notes" }, 
 
-        return searchWords.every((word) => {
-          const lowerWord = word.toLowerCase();
-          const numericWord = word.replace(/\D/g, "");
-          const isPureNumeric = /^\d+$/.test(word);
+              // VOCAT Specific
+              { val: raw.matterReferenceNumber, key: "Matter Ref" },
+              { val: raw.fasNumber, key: "FAS Number" },
+            ]
+              .filter((f) => f.val)
+              .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
 
-          // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
-          if (isPrintMedia) {
-            return (
-              printMediaIds.some((id) => id.includes(lowerWord)) ||
-              textFields.some((field) => field.includes(lowerWord))
-            );
-          }
+            const isMatch = searchWords.every((word) => {
+              const lowerWord = word.toLowerCase();
+              const numericWord = word.replace(/\D/g, "");
+              const isPureNumeric = /^\d+$/.test(word);
 
-          // 🔵 COMMERCIAL / CONVEYANCING — STRICT NUMERIC
-          if (isPureNumeric) {
-            return numericFields.some(
-              (field) => field === numericWord || field.startsWith(numericWord)
-            );
-          }
+              // Helper to check match and set matchedField
+              const check = (list) => {
+                const match = list.find((f) => {
+                  if (f.key.toLowerCase().includes("number") && isPureNumeric) {
+                    return f.val === numericWord || f.val.startsWith(numericWord);
+                  }
+                  return f.val.includes(lowerWord);
+                });
 
-          // 🔵 TEXT SEARCH
-          return textFields.some((field) => field.includes(lowerWord));
-        });
-      });
+                if (match) {
+                  // If matchedField is not set, set it.
+                  // If it IS set, only overwrite if the new match is "more specific" (e.g. ID or Name vs general text)
+                  if (!matchedField) {
+                    matchedField = match.key;
+                  } else {
+                    const isSpecific = 
+                      match.key.toLowerCase().includes("number") || 
+                      match.key.includes("ID") || 
+                      match.key.includes("Ref") ||
+                      match.key === "Client Name" || 
+                      match.key === "Business Name";
+                    
+                    if (isSpecific) {
+                       matchedField = match.key;
+                    }
+                  }
+                  return true;
+                }
+                return false;
+              };
+
+            // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
+            if (isPrintMedia) {
+              return check(printMediaIds) || check(textFields);
+            }
+
+            // 🔵 COMMERCIAL / CONVEYANCING / VOCAT — STRICT NUMERIC
+            if (isPureNumeric) {
+               // Check numeric AND text fields (for things like FAS number which might be numeric)
+              return check(numericFields) || check(textFields);
+            }
+
+            // 🔵 TEXT SEARCH
+            return check(textFields);
+          });
+
+          return isMatch ? { ...item, matchedField } : null;
+        })
+        .filter(Boolean);
 
       setSearchResult(filteredResults);
     } catch (err) {
@@ -629,6 +695,14 @@ export default function Header() {
                                 {item.status.toUpperCase()}
                               </span>
                             )}
+                            
+                            {/* NEW: DISPLAY MATCH REASON */}
+                            {item.matchedField && (
+                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded ml-1 border border-gray-200">
+                                Match: {item.matchedField}
+                              </span>
+                            )}
+
                           </div>
 
                           <div className="pl-4">
