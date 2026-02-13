@@ -757,6 +757,28 @@ class ClientAPI {
       throw error;
     }
   }
+  // Rearrange orders
+  async rearrangeOrders(payload) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/orders/rearrange-orders`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error rearranging orders:", error);
+      throw error;
+    }
+  }
 }
 
 export default ClientAPI;

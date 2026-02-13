@@ -659,7 +659,8 @@ useEffect(() => {
             clientName: formData.clientName,
             businessName: formData.businessName,
             state: formData.state,
-            clientType: formData.clientType,
+            clientType: formData.clientType === "General" ? "general" : formData.clientType,
+            isTrustee: formData.isTrustee,
             businessAddress: formData.businessAddress,
             postcode: formData.postcode,
             matterDate: formData.matterDate,
@@ -995,7 +996,7 @@ useEffect(() => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
                     {/* <div>
                       <label className="block mb-1 font-medium">State*</label>
                       <div className="flex gap-2 flex-wrap">
@@ -1024,7 +1025,7 @@ useEffect(() => {
                     <div>
                       <label className="block mb-1 font-medium">Client Type*</label>
                       <div className="flex gap-4 mt-2">
-                        {["Seller", "Buyer"].map((type) => (
+                        {["Seller", "Buyer", "General"].map((type) => (
                           <label key={type} className="flex items-center gap-2">
                             <input
                               type="radio"
@@ -1065,7 +1066,7 @@ useEffect(() => {
                         Is purchaser a trustee?
                       </label>
                       <div className="flex gap-3 flex-wrap">
-                        {["Yes", "No"].map((type) => (
+                        {["Yes", "No", "N/A"].map((type) => (
                           <label
                             key={type}
                             className="inline-flex items-center gap-1"
