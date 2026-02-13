@@ -19,6 +19,54 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-13",
+          version: "v6.2.0",
+          type: "minor",
+          category: "improvement",
+          title: "Module Enhancements & Admin Privileges",
+          description: "Expanded administrative control across modules and refined VOCAT/Commercial workflows.",
+          updates: [
+            {
+              type: "feature",
+              title: "VOCAT Staging Options",
+              description: "Added 'N/R' (Not Received) status to stages 1, 2, 3, and 4.",
+              details: "Users can now mark stages as Not Received when documentation or responses are pending, with corresponding backend payload support.",
+              icon: Sparkles,
+            },
+            {
+              type: "fix",
+              title: "Commercial Project Creation",
+              description: "Fixed field mapping in the Create Project form.",
+              details: "Resolved issue where Property Address and other critical fields were incorrectly mapped or omitted during project initialization.",
+              icon: Bug,
+            },
+            {
+              type: "improvement",
+              title: "Administrative Privileges",
+              description: "Unified admin and superadmin permissions across staged layouts.",
+              details: "Ensured both Admin and Super Admin roles have consistent access to editing, reordering, and stage management across all project modules.",
+              icon: Shield,
+            },
+             {
+              type: "fix",
+              title: "UI Polish",
+              description: "Fixed visibility of the Matter Number Badge.",
+              details: "Ensured the Matter Number remains clearly visible and properly styled within the Staged Layout header.",
+              icon: Bug,
+            },
+            {
+              type: "feature",
+              title: "Print Media Reordering",
+              description: "Implemented drag-and-drop reordering for View Orders.",
+              details: "Admins can now reorder print media orders prioritizing production queues, with full persistence between sessions.",
+              icon: Zap,
+            }
+          ],
+          module: "VOCAT, Commercial, Admin",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-12",
           version: "v6.1.2",
           type: "patch",

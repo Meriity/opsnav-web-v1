@@ -27,7 +27,7 @@ import { generateTaskAllocationPDF } from "../../components/utils/generateReport
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import { delay } from "framer-motion";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   FolderOpen,
@@ -52,6 +52,7 @@ import {
   SheetIcon,
   Clipboard,
   ArrowUpDown,
+  Info,
 } from "lucide-react";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 
@@ -98,6 +99,7 @@ const ViewClients = () => {
   const [isDraggingMode, setIsDraggingMode] = useState(false);
   const [draggedData, setDraggedData] = useState([]);
   const [showReorderConfirm, setShowReorderConfirm] = useState(false);
+  const [showReorderHint, setShowReorderHint] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
 
@@ -775,382 +777,367 @@ const ViewClients = () => {
                 </p>
               </div>
 
-              <div className="flex w-full flex-wrap items-center justify-between gap-4">
-                {/* Search input is now only in Header.jsx */}
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="items-per-page"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    {currentModule === "commercial" ? "Projects" : "Clients"}{" "}
-                    per page:
-                  </label>
-                  <select
-                    id="items-per-page"
-                    value={itemsPerPage}
-                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                    <option value={200}>200</option>
-                    <option value={500}>500</option>
-                  </select>
-                </div>
-                {currentModule === "print media" && (
+              <div className="flex w-full flex-col gap-4">
+                {/* ROW 1: Filters (Items Per Page + Client/User Dropdowns) */}
+                <div className="flex w-full flex-wrap items-center gap-4">
+                  {/* Items Per Page */}
                   <div className="flex items-center gap-2">
-                    {/* <label
-                htmlFor="items-per-page"
-                className="text-sm font-medium text-gray-700"
-              >
-                Select by clients
-              </label> */}
+                    <label
+                      htmlFor="items-per-page"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      {currentModule === "commercial" ? "Projects" : "Clients"}{" "}
+                      per page:
+                    </label>
                     <select
-                      name="Client"
-                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
-                      value={selectedClientName}
-                      onChange={(e) => handleClientFilterChange(e.target.value)}
-                      disabled={
-                        !["admin", "superadmin"].includes(
-                          localStorage.getItem("role")
-                        )
-                      }
+                      id="items-per-page"
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
-                      <option value="">All Clients</option>
-                      {list.map((client, index) => (
-                        <option
-                          key={
-                            client._id || client.id || `${client.name}-${index}`
-                          }
-                          value={client.name}
-                        >
-                          {client.name}
-                        </option>
-                      ))}
-                    </select>
-
-                     <select
-                      name="AllocatedUser"
-                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
-                      value={filterAllocatedUser}
-                      onChange={(e) => setFilterAllocatedUser(e.target.value)}
-                      disabled={
-                        !["admin", "superadmin"].includes(
-                          localStorage.getItem("role")
-                        )
-                      }
-                    >
-                      <option value="">All Users</option>
-                      {user.map((u, index) => (
-                        <option
-                          key={u.id || `${u.name}-${index}`}
-                          value={u.name}
-                        >
-                          {u.name}
-                        </option>
-                      ))}
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={200}>200</option>
+                      <option value={500}>500</option>
                     </select>
                   </div>
-                )}
 
-                {/* Consolidated Desktop Buttons */}
-                <div className="hidden lg:flex items-center gap-1.5">
-                  {/* Reorder Priority Button (Print Media Admin Only) */}
-                  {currentModule === "print media" &&
-                    ["admin", "superadmin"].includes(
-                      localStorage.getItem("role")
-                    ) && (
-                      <>
-                        {!isDraggingMode ? (
-                          <button
-                            onClick={() => {
-                              setIsDraggingMode(true);
-                              setDraggedData(filteredClients); // Initialize with current view
-                            }}
-                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm ml-2"
-                            title="Reorder Priority"
-                          >
-                            <ArrowUpDown size={16} />
-                            <span className="hidden xl:inline">Reorder</span>
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-2 ml-2">
-                            <button
-                              onClick={() => setShowReorderConfirm(true)}
-                              className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-md text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
-                              title="Save Order"
-                            >
-                              <CheckCircle size={16} />
-                              <span className="hidden xl:inline">Save</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setIsDraggingMode(false);
-                                setDraggedData([]);
-                              }}
-                              className="flex items-center gap-1 px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
-                              title="Cancel"
-                            >
-                              <AlertCircle size={16} /> {/* Using AlertCircle as pseudo-cancel/close icon if X not imported, or just generic */}
-                              <span className="hidden xl:inline">Cancel</span>
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                  {(currentModule === "conveyancing" ||
-                    currentModule === "wills" ||
-                    currentModule === "commercial" ||
-                    currentModule === "vocat") && (
-                    <>
-                      {/* <Button
-                    label="Create Client"
-                    Icon1={user}
-                    onClick={() => setcreateuser(true)}
-                    width="w-[150px]"
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  /> */}
-
-                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() =>
-                            currentModule === "commercial"
-                              ? setCreateProject(true)
-                              : setcreateuser(true)
-                          }
-                          className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                        >
-                          <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                          {currentModule === "commercial"
-                            ? "Create Project"
-                            : "Create Client"}
-                        </motion.button>
-                      )}
-
-                      {/* <Button
-                    label="Outstanding Tasks"
-                    onClick={() => setShowOutstandingTask(true)}
-                    width="w-[150px]"
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  /> */}
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        label="Outstanding Tasks"
-                        onClick={() => setShowOutstandingTask(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Outstanding Tasks
-                      </motion.button>
-
-                      {/* <Button
-                  
-                    label="Select Date Range"
-                    onClick={() => setShowDateRange(true)}
-                    width="w-[150px]"
-                    className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                  /> */}
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        label="Select Date Range"
-                        onClick={() => setShowDateRange(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Date Range
-                      </motion.button>
-                    </>
-                  )}
-                  {/* For future purposes */}
-                  {/* {currentModule === "vocat" && ["admin", "superadmin"].includes(localStorage.getItem("role")) && (
-                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowUploadExcelDialog(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <DocumentArrowUpIcon className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Upload Excel
-                      </motion.button>
-                  )} */}
+                  {/* Print Media Dropdowns */}
                   {currentModule === "print media" && (
-                    <>
-                      {/* <Button
-                    label="Create Client"
-                    Icon1={userplus}
-                    onClick={() => setcreateuser(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Create Order"
-                    onClick={() => setcreateOrder(true)}
-                    width="w-[150px]"
-                  />
-                  <Button
-                    label="Select Date Range"
-                    onClick={() => setShowDateRange(true)}
-                    width="w-[150px]"
-                  /> */}
+                    <div className="flex items-center gap-2">
+                      <select
+                        name="Client"
+                        className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
+                        value={selectedClientName}
+                        onChange={(e) => handleClientFilterChange(e.target.value)}
+                        disabled={
+                          !["admin", "superadmin"].includes(
+                            localStorage.getItem("role")
+                          )
+                        }
+                      >
+                        <option value="">All Clients</option>
+                        {list.map((client, index) => (
+                          <option
+                            key={
+                              client._id || client.id || `${client.name}-${index}`
+                            }
+                            value={client.name}
+                          >
+                            {client.name}
+                          </option>
+                        ))}
+                      </select>
 
-                      {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                       <select
+                        name="AllocatedUser"
+                        className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
+                        value={filterAllocatedUser}
+                        onChange={(e) => setFilterAllocatedUser(e.target.value)}
+                        disabled={
+                          !["admin", "superadmin"].includes(
+                            localStorage.getItem("role")
+                          )
+                        }
+                      >
+                        <option value="">All Users</option>
+                        {user.map((u, index) => (
+                          <option
+                            key={u.id || `${u.name}-${index}`}
+                            value={u.name}
+                          >
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* ROW 2: Actions (Reorder [Left] - Other Actions [Right]) */}
+                <div className="flex w-full items-center justify-between gap-4">
+                   {/* Left Group: Reorder Button (Print Media Admin Only) */}
+                   <div className="flex items-center gap-4">
+                      {currentModule === "print media" &&
+                        ["admin", "superadmin"].includes(
+                          localStorage.getItem("role")
+                        ) && (
+                          <>
+                            {!isDraggingMode ? (
+                              <div className="relative flex items-center gap-2">
+                                <button
+                                onClick={() => {
+                                  if (!filterAllocatedUser) return;
+                                  setIsDraggingMode(true);
+                                  setDraggedData(filteredClients); // Initialize with current view
+                                }}
+                                disabled={!filterAllocatedUser}
+                                className={`flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 transition-colors shadow-sm ${!filterAllocatedUser ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                                title={!filterAllocatedUser ? "Please select an allocated user to enable reordering" : "Reorder Priority"}
+                              >
+                                <ArrowUpDown size={16} />
+                                <span className="hidden xl:inline">Reorder</span>
+                              </button>
+                              {!filterAllocatedUser && (
+                                  <div className="relative flex items-center">
+                                    <button
+                                        onClick={() => setShowReorderHint(!showReorderHint)}
+                                        className="focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
+                                        title="Click for help"
+                                    >
+                                        <Info size={16} className="text-gray-400 cursor-help hover:text-blue-500 transition-colors" />
+                                    </button>
+                                    
+                                    <AnimatePresence>
+                                        {showReorderHint && (
+                                          <motion.div 
+                                              initial={{ opacity: 0, y: 10 }}
+                                              animate={{ opacity: 1, y: 0 }}
+                                              exit={{ opacity: 0, y: 10 }}
+                                              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-orange-50 text-orange-800 border border-orange-200 text-xs rounded shadow-lg z-50 text-center"
+                                          >
+                                              Select an allocated user (next to "All Clients") to enable reordering functionality.
+                                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-orange-50"></div>
+                                          </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                  </div>
+                              )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setShowReorderConfirm(true)}
+                                  className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-md text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
+                                  title="Save Order"
+                                >
+                                  <CheckCircle size={16} />
+                                  <span className="hidden xl:inline">Save</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsDraggingMode(false);
+                                    setDraggedData([]);
+                                  }}
+                                  className="flex items-center gap-1 px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
+                                  title="Cancel"
+                                >
+                                  <AlertCircle size={16} />
+                                  <span className="hidden xl:inline">Cancel</span>
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                   </div>
+
+                   {/* Right Group: Action Buttons + Mobile Menu */}
+                   <div className="flex items-center gap-2 ml-auto">
+                      {/* Desktop Action Buttons */}
+                      <div className="hidden lg:flex items-center gap-1.5">
+                      {(currentModule === "conveyancing" ||
+                        currentModule === "wills" ||
+                        currentModule === "commercial" ||
+                        currentModule === "vocat") && (
                         <>
+                          {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() =>
+                                currentModule === "commercial"
+                                  ? setCreateProject(true)
+                                  : setcreateuser(true)
+                              }
+                              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                            >
+                              <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                              {currentModule === "commercial"
+                                ? "Create Project"
+                                : "Create Client"}
+                            </motion.button>
+                          )}
+
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setcreateuser(true)}
+                            label="Outstanding Tasks"
+                            onClick={() => setShowOutstandingTask(true)}
                             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                           >
-                            <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                            Create Client
+                            <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Outstanding Tasks
                           </motion.button>
 
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setcreateOrder(true)}
+                            label="Select Date Range"
+                            onClick={() => setShowDateRange(true)}
                             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
                           >
-                            <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                            Create Order
+                            <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Date Range
                           </motion.button>
                         </>
                       )}
 
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        label="Select Date Range"
-                        onClick={() => setShowDateRange(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Date Range
-                      </motion.button>
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowTar(true)}
-                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
-                      >
-                        <SheetIcon className="w-3 h-3 sm:w-5 sm:h-5" />
-                        Task Report
-                      </motion.button>
-                    </>
-                  )}
-                </div>
-
-                {/* Mobile Menu */}
-                <div className="flex lg:hidden items-center gap-2">
-                  <Menu as="div" className="relative">
-                    <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                      <EllipsisVerticalIcon
-                        className="h-5 w-5 text-gray-600"
-                        aria-hidden="true"
-                      />
-                    </Menu.Button>
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-100"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
-                      leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
-                    >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        <div className="py-1">
-                          {currentModule === "print media" ? (
+                      {currentModule === "print media" && (
+                        <div className="flex items-center gap-2">
+                          {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                             <>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setcreateuser(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Create Client
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setcreateOrder(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Create Order
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setShowDateRange(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Date Range
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setShowTar(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Task Report
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            </>
-                          ) : (
-                            <>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setcreateuser(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    {getCreateButtonLabel()}
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setShowOutstandingTask(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Outstanding Tasks
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    onClick={() => setShowDateRange(true)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                  >
-                                    Select Date Range
-                                  </button>
-                                )}
-                              </Menu.Item>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setcreateuser(true)}
+                                className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                              >
+                                <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                                Create Client
+                              </motion.button>
+
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setcreateOrder(true)}
+                                className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                              >
+                                <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                                Create Order
+                              </motion.button>
                             </>
                           )}
+
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            label="Select Date Range"
+                            onClick={() => setShowDateRange(true)}
+                            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                          >
+                            <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Date Range
+                          </motion.button>
+
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowTar(true)}
+                            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                          >
+                            <SheetIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                            Task Report
+                          </motion.button>
                         </div>
-                      </Menu.Items>
-                    </Transition>
-                  </Menu>
+                      )}
+                      </div>
+
+                      {/* Mobile Menu */}
+                      <div className="flex lg:hidden items-center gap-2">
+                        <Menu as="div" className="relative">
+                          <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            <EllipsisVerticalIcon
+                              className="h-5 w-5 text-gray-600"
+                              aria-hidden="true"
+                            />
+                          </Menu.Button>
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                              <div className="py-1">
+                                {currentModule === "print media" ? (
+                                  <>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setcreateuser(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Create Client
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setcreateOrder(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Create Order
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowDateRange(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Date Range
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowTar(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Task Report
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setcreateuser(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          {getCreateButtonLabel()}
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowOutstandingTask(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Outstanding Tasks
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowDateRange(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Select Date Range
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </>
+                                )}
+                              </div>
+                            </Menu.Items>
+                          </Transition>
+                        </Menu>
+                      </div>
+                   </div>
                 </div>
               </div>
             </div>
@@ -1210,10 +1197,38 @@ const ViewClients = () => {
             <ConfirmationModal
               isOpen={showReorderConfirm}
               onClose={() => setShowReorderConfirm(false)}
-              onConfirm={() => {
-                 setIsDraggingMode(false);
-                 setShowReorderConfirm(false);
-                 toast.success("Priority order updated successfully!");
+              onConfirm={async () => {
+                 if (!filterAllocatedUser) {
+                    toast.error("Please select an allocated user to reorder tasks.");
+                    return;
+                 }
+
+                 const selectedUserObj = user.find(u => u.name === filterAllocatedUser);
+                 if (!selectedUserObj) {
+                    toast.error("Invalid user selection.");
+                    return;
+                 }
+                 const allocatedUserID = `${selectedUserObj.id}-${selectedUserObj.name}`;
+                 
+                 const payload = {
+                    allocatedUserID: allocatedUserID,
+                    orders: draggedData.map((item, index) => ({
+                       orderId: item.orderId,
+                       rankOrder: index + 1
+                    }))
+                 };
+
+                 try {
+                    await api.rearrangeOrders(payload);
+                    toast.success("Priority order updated successfully!");
+                    setIsDraggingMode(false);
+                    setShowReorderConfirm(false);
+                    // Refresh data
+                    window.location.reload(); 
+                 } catch (error) {
+                    console.error("Failed to reorder", error);
+                    toast.error(error.message || "Failed to save new order.");
+                 }
               }}
               title="Save Priority Order?"
               message="Are you sure you want to save the new arrangement of orders?"

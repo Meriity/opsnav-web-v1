@@ -78,8 +78,8 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No"] },
-      { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No"] },
+      { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No", "N/R"] },
     ],
   },
 };

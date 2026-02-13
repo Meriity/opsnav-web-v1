@@ -100,11 +100,11 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { name: "variationRequired", label: "Variation required", type: "radio", options: ["Yes", "No"] },
-      { name: "finalLetterToClient", label: "Final Letter to Client", type: "radio", options: ["Yes", "No"] },
-      { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No"] },
-      { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No"] },
-      { name: "closeMatter", label: "Close Matter", type: "radio" },
+      { name: "variationRequired", label: "Variation required", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "finalLetterToClient", label: "Final Letter to Client", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "closeMatter", label: "Close Matter", type: "radio", options: ["Completed", "Cancelled", "N/R"] },
     ],
     noteGroups: [
       {
