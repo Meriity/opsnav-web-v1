@@ -57,14 +57,6 @@ const SortableRow = ({ children, id, isDraggingMode, ...props }) => {
 
   return (
     <tr ref={setNodeRef} style={style} {...props}>
-        {/* We will attach listeners to a specific handle inside the row, OR the whole row if preferred. 
-            Here we attach to the specific drag handle cell if we want, or the whole row. 
-            Let's pass attributes/listeners to the children or a context if we want a handle.
-            For simplicity, let's make the whole row draggable or add a handle cell. 
-            
-            Actually, let's pass the listeners/attributes to the first cell if we want a handle, 
-            or wrap the whole row. Let's assume we want a handle.
-        */}
       {children(attributes, listeners)} 
     </tr>
   );
@@ -236,8 +228,12 @@ const ViewClientsTable = ({
                        {(attributes, listeners) => (
                          <>
                            {/* Drag Handle Cell */}
-                           <td className="w-10 text-center rounded-l-2xl cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
-                             <GripVertical size={20} className="text-gray-400 mx-auto" />
+                           <td 
+                             className="w-10 text-center rounded-l-2xl cursor-grab active:cursor-grabbing" 
+                             {...attributes} 
+                             {...listeners}
+                           >
+                             <GripVertical size={20} className="text-gray-400 mx-auto" strokeWidth={2} />
                            </td>
                            
                            {columns.map((column, colIndex) => (

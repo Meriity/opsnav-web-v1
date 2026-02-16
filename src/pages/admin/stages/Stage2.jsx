@@ -248,22 +248,22 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { name: "voi", label: "VOI", type: "radio", options: ["Yes", "No"] },
-      { name: "fasStandardForm", label: "FAS Standard Form", type: "radio", options: ["Yes", "No"] },
+      { name: "voi", label: "VOI", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "fasStandardForm", label: "FAS Standard Form", type: "radio", options: ["Yes", "No", "N/R"] },
       
       { name: "evidenceHeader", label: "Evidence:", type: "header" },
       
-      { name: "proofOfIncome", label: "Proof of income (Loss of earning)", type: "radio", options: ["Yes", "No"] },
-      { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No"] },
+      { name: "proofOfIncome", label: "Proof of income (Loss of earning)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No", "N/R"] },
       
-      { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No"] },
-      { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No"] },
+      { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No", "N/R"] },
       
-      { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No"] },
+      { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No", "N/R"] },
       
-      { name: "medicalInvoices", label: "Invoices / receipts (Medical)", type: "radio", options: ["Yes", "No"] },
+      { name: "medicalInvoices", label: "Invoices / receipts (Medical)", type: "radio", options: ["Yes", "No", "N/R"] },
       
-      { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No"] },
+      { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No", "N/R"] },
     ],
     noteGroups: [
       {
