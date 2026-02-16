@@ -13,16 +13,52 @@ import {
   Calendar,
   Smartphone,
   BarChart3,
+  ArrowUpDown,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-16",
+          version: "v6.3.0",
+          type: "minor",
+          category: "feature",
+          title: "Reporting Enhancements & Role-Based Access",
+          description: "Introduced PDF previewing for reports and enhanced security via role-based UI restrictions.",
+          updates: [
+            {
+              type: "feature",
+              title: "Task Allocation PDF Preview",
+              description: "Added a 'Preview' option for Task Allocation Reports.",
+              details: "Users can now view a high-fidelity PDF preview in-browser before downloading, with automatic priority sorting based on task rank.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Role-Based UI Restrictions",
+              description: "Restricted administrative filters and report selections for non-admin users.",
+              details: "Normal users are now automatically locked to their own data in dashboards and reports, ensuring better data privacy and a cleaner interface.",
+              icon: Shield,
+            },
+            {
+              type: "improvement",
+              title: "Priority Sorting",
+              description: "Unified rank-based sorting across UI and Reports.",
+              details: "Ensured that the 'rankOrder' defined by admins consistently determines the priority of tasks in both the dashboard views and generated PDF reports.",
+              icon: ArrowUpDown,
+            }
+          ],
+          module: "Print Media, Admin",
+          severity: "Medium",
+          status: "Released"
+        },
+
+        {
           date: "2026-02-13",
           version: "v6.2.0",
           type: "minor",
-          category: "improvement",
+          category: "feature",
           title: "Module Enhancements & Admin Privileges",
           description: "Expanded administrative control across modules and refined VOCAT/Commercial workflows.",
           updates: [
