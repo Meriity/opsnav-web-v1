@@ -23,7 +23,7 @@ import DateRangeModal from "../../components/ui/DateRangeModal";
 import moment from "moment";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.jsx";
 import ExcelUploadDialog from "../../components/ui/ExcelUploadDialog.jsx";
-import { generateTaskAllocationPDF } from "../../components/utils/generateReport.js";
+import { generateTaskAllocationPDF, getTaskAllocationBlobUrl } from "../../components/utils/generateReport.js";
 import { useClientStore } from "../ClientStore/clientstore.js";
 import { useSearchStore } from "../SearchStore/searchStore.js";
 import { delay } from "framer-motion";
@@ -100,8 +100,21 @@ const ViewClients = () => {
   const [draggedData, setDraggedData] = useState([]);
   const [showReorderConfirm, setShowReorderConfirm] = useState(false);
   const [showReorderHint, setShowReorderHint] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [showTarPreview, setShowTarPreview] = useState(false);
 
   const currentModule = localStorage.getItem("currentModule");
+  const userRole = localStorage.getItem("role");
+  const userID = localStorage.getItem("userID");
+
+  useEffect(() => {
+    if (userRole === "user" && userID && user.length > 0) {
+      const currentUser = user.find(u => u.id === userID);
+      if (currentUser) {
+        setallocatedUser(currentUser.name);
+      }
+    }
+  }, [userRole, userID, user]);
 
   const api = useMemo(() => {
     if (currentModule === "commercial") {
@@ -346,7 +359,7 @@ const ViewClients = () => {
             .includes(lowercasedQuery) ||
           String(client.clientId || "")
             .toLowerCase()
-            .includes(lowercasedQuery) // Added Client ID for Print Media
+            .includes(lowercasedQuery) 
       );
     }
 
@@ -355,6 +368,13 @@ const ViewClients = () => {
       data = data.filter((client) => {
          const clientUser = client.allocatedUser || "";
          return clientUser.trim().toLowerCase() === filterAllocatedUser.trim().toLowerCase();
+      });
+
+      // 🔹 Sort by rankOrder when a particular user is selected
+      data = [...data].sort((a, b) => {
+        const rankA = (a.rankOrder !== undefined && a.rankOrder !== null) ? Number(a.rankOrder) : Infinity;
+        const rankB = (b.rankOrder !== undefined && b.rankOrder !== null) ? Number(b.rankOrder) : Infinity;
+        return rankA - rankB;
       });
     }
 
@@ -714,35 +734,113 @@ const ViewClients = () => {
                 <DialogTitle className={"text-xl mb-5 font-bold"}>
                   Task Allocation Report
                 </DialogTitle>
-                <div className="flex items-center gap-2 mb-5">
-                  <label
-                    htmlFor="items-per-page"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Select by Users
-                  </label>
-                  <select
-                    name="alloactedUser"
-                    className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={allocatedUser}
-                    onChange={(e) => setallocatedUser(e.target.value)}
-                  >
-                    <option value="">All Users</option>
-                    {user.map((user) => (
-                      <option value={user.name}>{user.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {["admin", "superadmin"].includes(userRole) && (
+                  <div className="flex items-center gap-2 mb-5">
+                    <label
+                      htmlFor="items-per-page"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Select by Users
+                    </label>
+                    <select
+                      name="alloactedUser"
+                      className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={allocatedUser}
+                      onChange={(e) => setallocatedUser(e.target.value)}
+                    >
+                      <option value="">All Users</option>
+                      {user.map((user) => (
+                        <option value={user.name}>{user.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-                <button
-                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition mb-3"
-                  onClick={() => {
-                    generateTaskAllocationPDF(allocatedUser);
-                    setShowTar(false);
-                  }}
-                >
-                  Download
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    className="flex-1 bg-white border border-blue-500 text-blue-500 font-semibold py-2 rounded-md hover:bg-blue-50 transition"
+                    onClick={() => {
+                      const url = getTaskAllocationBlobUrl(allocatedUser);
+                      if (url) {
+                        setPdfPreviewUrl(url);
+                        setShowTarPreview(true);
+                  
+                        setShowTar(false);
+                      }
+                    }}
+                  >
+                    Preview
+                  </button>
+                  <button
+                    className="flex-1 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition"
+                    onClick={() => {
+                      generateTaskAllocationPDF(allocatedUser);
+                      setShowTar(false);
+                    }}
+                  >
+                    Download
+                  </button>
+                </div>
+              </DialogPanel>
+            </div>
+          </Dialog>
+
+          {/* PDF Preview Modal */}
+          <Dialog
+            open={showTarPreview}
+            onClose={() => {
+              setShowTarPreview(false);
+              // Clean up blob URL
+              if (pdfPreviewUrl) {
+                URL.revokeObjectURL(pdfPreviewUrl);
+                setPdfPreviewUrl(null);
+              }
+            }}
+            className="relative z-[1100]"
+          >
+            <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
+            <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+              <DialogPanel className="w-full max-w-5xl h-[90vh] bg-white rounded-lg shadow-xl flex flex-col relative">
+                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                  <DialogTitle className="text-xl font-bold text-gray-800">
+                    Report Preview
+                  </DialogTitle>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => generateTaskAllocationPDF(allocatedUser)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      <Download size={16} />
+                      Download
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowTarPreview(false);
+                        if (pdfPreviewUrl) {
+                          URL.revokeObjectURL(pdfPreviewUrl);
+                          setPdfPreviewUrl(null);
+                        }
+                      }}
+                      className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      <Plus size={24} className="rotate-45" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex-1 w-full bg-gray-100 p-4 overflow-hidden">
+                  {pdfPreviewUrl ? (
+                    <iframe
+                      src={pdfPreviewUrl}
+                      className="w-full h-full border-0 rounded shadow-sm bg-white"
+                      title="PDF Preview"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      Loading preview...
+                    </div>
+                  )}
+                </div>
               </DialogPanel>
             </div>
           </Dialog>
@@ -805,19 +903,14 @@ const ViewClients = () => {
                     </select>
                   </div>
 
-                  {/* Print Media Dropdowns */}
-                  {currentModule === "print media" && (
+                  {/* Print Media Dropdowns - Admin Only */}
+                  {currentModule === "print media" && ["admin", "superadmin"].includes(userRole) && (
                     <div className="flex items-center gap-2">
                       <select
                         name="Client"
                         className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
                         value={selectedClientName}
                         onChange={(e) => handleClientFilterChange(e.target.value)}
-                        disabled={
-                          !["admin", "superadmin"].includes(
-                            localStorage.getItem("role")
-                          )
-                        }
                       >
                         <option value="">All Clients</option>
                         {list.map((client, index) => (
@@ -837,11 +930,6 @@ const ViewClients = () => {
                         className="block w-full py-2 px-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm xl:text-base text-black"
                         value={filterAllocatedUser}
                         onChange={(e) => setFilterAllocatedUser(e.target.value)}
-                        disabled={
-                          !["admin", "superadmin"].includes(
-                            localStorage.getItem("role")
-                          )
-                        }
                       >
                         <option value="">All Users</option>
                         {user.map((u, index) => (
@@ -857,9 +945,7 @@ const ViewClients = () => {
                   )}
                 </div>
 
-                {/* ROW 2: Actions (Reorder [Left] - Other Actions [Right]) */}
                 <div className="flex w-full items-center justify-between gap-4">
-                   {/* Left Group: Reorder Button (Print Media Admin Only) */}
                    <div className="flex items-center gap-4">
                       {currentModule === "print media" &&
                         ["admin", "superadmin"].includes(
@@ -872,7 +958,7 @@ const ViewClients = () => {
                                 onClick={() => {
                                   if (!filterAllocatedUser) return;
                                   setIsDraggingMode(true);
-                                  setDraggedData(filteredClients); // Initialize with current view
+                                  setDraggedData(filteredClients); 
                                 }}
                                 disabled={!filterAllocatedUser}
                                 className={`flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 transition-colors shadow-sm ${!filterAllocatedUser ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
@@ -934,7 +1020,7 @@ const ViewClients = () => {
                         )}
                    </div>
 
-                   {/* Right Group: Action Buttons + Mobile Menu */}
+                   
                    <div className="flex items-center gap-2 ml-auto">
                       {/* Desktop Action Buttons */}
                       <div className="hidden lg:flex items-center gap-1.5">

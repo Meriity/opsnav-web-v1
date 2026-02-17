@@ -103,6 +103,7 @@ export const useClientStore = create(
               allocatedUser: client?.allocatedUserID
                 ? client.allocatedUserID.substring(client.allocatedUserID.indexOf("-") + 1).trim() || "N/A"
                 : "N/A",
+              rankOrder: client.rankOrder,
             }));
 
             clients = filteredResponse.clients.map((client) => ({
