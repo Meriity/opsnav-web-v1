@@ -1330,7 +1330,7 @@ export default function StagesLayout() {
         <main className="flex-grow flex flex-col p-2 md:p-4 w-full max-w-screen-xl mx-auto overflow-auto scrollbar-hide">
           {/* Desktop layout - buttons next to Hello */}
           <div className="hidden md:flex justify-between items-center mb-2 flex-shrink-0">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+            <h2 className="text-lg lg:text-lg xl:text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
               Hello, {localStorage.getItem("user")}
             </h2>
 
@@ -1472,7 +1472,7 @@ export default function StagesLayout() {
                           >
                             <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
                               <span
-                                className={`size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${
+                                className={`size-8 xl:size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${
                                   isActive
                                     ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white border-[#2E3D99]] shadow-[0_0_12px_3px_rgba(59,130,246,0.4)]"
                                     : isCompleted
@@ -1488,7 +1488,7 @@ export default function StagesLayout() {
 
                             <div className="grow md:grow-0 md:mt-3">
                               <div className="flex gap-1 items-center">
-                                <p className="font-bold font-poppins text-xl xl:text-sm">
+                                <p className="font-bold font-poppins text-sm">
                                   Stage {index + 1}
                                 </p>
                                 <div
@@ -1509,7 +1509,7 @@ export default function StagesLayout() {
                               </div>
 
                               <div className="mt-0.5">
-                                <p className="text-xl font-bold xl:text-sm">
+                                <p className="text-sm font-bold">
                                   {stage.title}
                                 </p>
                               </div>
@@ -1575,7 +1575,7 @@ export default function StagesLayout() {
                 {/* Project/Matter/Order Details - Desktop */}
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
                   <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-180px)] lg:overflow-y-auto">
-                    <h2 className="text-lg font-bold mb-2">
+                    <h2 className="text-base lg:text-base xl:text-lg font-bold mb-2">
                       {currentModule === "commercial"
                         ? "Project Details"
                         : currentModule === "print media"
@@ -1587,7 +1587,7 @@ export default function StagesLayout() {
                       onSubmit={handleupdate}
                     >
                       <div className="md:col-span-1">
-                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                        <label className="block text-xs xl:text-sm font-semibold mb-0.5">
                           {currentModule === "commercial"
                             ? "Project Date"
                             : currentModule === "print media"
@@ -1623,7 +1623,7 @@ export default function StagesLayout() {
                               matterDate: v,
                             }));
                           }}
-                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
                             !canEditMatterDetails ? "bg-gray-100" : ""
                           }`}
                           disabled={!canEditMatterDetails}
@@ -1652,7 +1652,7 @@ export default function StagesLayout() {
                                 matterNumber: e.target.value,
                               }))
                             }
-                            className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            className="w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200"
                           />
                         ) : (
                           <input
@@ -1662,7 +1662,7 @@ export default function StagesLayout() {
                               clientData?.data?.orderId ||
                               ""
                             }
-                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs xl:text-sm border border-gray-200"
                             disabled
                             readOnly
                           />
@@ -1706,7 +1706,7 @@ export default function StagesLayout() {
                               }
                           }}
                           onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
-                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
                             !canEditMatterDetails ? "bg-gray-100" : ""
                           }`}
                           disabled={!canEditMatterDetails}

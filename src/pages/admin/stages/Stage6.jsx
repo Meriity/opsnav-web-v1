@@ -571,7 +571,7 @@ export default function Stage6({
                       </svg>
                     </div>
                   )}
-                  <label className={`font-bold ${isDangerField ? "text-red-900 text-lg" : ""}`}>{field.label}</label>
+                  <label className={`font-bold ${isDangerField ? "text-red-900 text-base lg:text-base xl:text-lg" : "text-sm xl:text-base"}`}>{field.label}</label>
                 </div>
                 <div
                   className={`w-[90px] h-[18px] flex items-center justify-center rounded-4xl ${bgcolor(
@@ -584,7 +584,7 @@ export default function Stage6({
               <div className="flex flex-wrap gap-x-8 gap-y-2">
                 {(field.options || ["Yes", "No", "Processing", "N/R"]).map(
                   (opt) => (
-                    <label key={opt} className={`flex items-center gap-2 cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
+                    <label key={opt} className={`flex items-center gap-2 cursor-pointer text-sm xl:text-base ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
                       <input
                         type="radio"
                         checked={
@@ -602,12 +602,12 @@ export default function Stage6({
             </>
           ) : (
             <div className="w-full">
-              <label className="font-bold block mb-2">{field.label}</label>
+              <label className="font-bold block mb-2 text-sm xl:text-base">{field.label}</label>
               <input
                 type="text"
                 value={formState[field.name] || ""}
                 onChange={(e) => handleChange(field.name, e.target.value)}
-                className="border rounded p-2 w-full bg-gray-100"
+                className="border rounded p-2 w-full bg-gray-100 text-sm xl:text-base"
               />
             </div>
           )}
@@ -617,22 +617,22 @@ export default function Stage6({
       {currentModule === "commercial" ? (
         <>
           <div className="mt-5">
-            <label className="font-bold">System Note for Client</label>
+            <label className="font-bold text-sm xl:text-base">System Note for Client</label>
             <input
               disabled
               value={generateSystemNote("main")}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
             />
           </div>
           <div className="mt-5">
-            <label className="font-bold">Comment for Client</label>
+            <label className="font-bold text-sm xl:text-base">Comment for Client</label>
             <textarea
               value={noteForClient}
               onChange={(e) => {
                 setNoteForClient(e.target.value);
                 setHasChanges(true);
               }}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
             />
           </div>
         </>
@@ -640,21 +640,21 @@ export default function Stage6({
         currentConfig.noteGroups.map((group) => (
           <div key={group.id}>
             <div className="mt-5">
-              <label className="font-bold">{group.systemNoteLabel}</label>
+              <label className="font-bold text-sm xl:text-base">{group.systemNoteLabel}</label>
               <input
                 disabled
                 value={generateSystemNote(group.id)}
-                className="w-full rounded p-2 bg-gray-100"
+                className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
               />
             </div>
             <div className="mt-5">
-              <label className="font-bold">{group.clientCommentLabel}</label>
+              <label className="font-bold text-sm xl:text-base">{group.clientCommentLabel}</label>
               <textarea
                 value={formState[group.clientCommentKey] || ""}
                 onChange={(e) =>
                   handleChange(group.clientCommentKey, e.target.value)
                 }
-                className="w-full rounded p-2 bg-gray-100"
+                className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
               />
             </div>
           </div>

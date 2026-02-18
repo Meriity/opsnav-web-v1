@@ -434,7 +434,7 @@ export default function Stage5({
           {f.type === "radio" ? (
             <>
               <div className="flex justify-between items-center mb-3">
-                <label className="font-bold">{f.label}</label>
+                <label className="font-bold text-sm xl:text-base">{f.label}</label>
                 <div
                   className={`w-[90px] h-[18px] flex items-center justify-center rounded-4xl ${
                     statusState[f.name] === "Completed"
@@ -449,7 +449,7 @@ export default function Stage5({
               </div>
               <div className="flex flex-wrap gap-x-8 gap-y-2">
                 {["Yes", "No", "Processing", "N/R"].map((v) => (
-                  <label key={v} className="flex gap-2">
+                  <label key={v} className="flex gap-2 text-sm xl:text-base">
                     <input
                       type="radio"
                       checked={
@@ -464,7 +464,7 @@ export default function Stage5({
             </>
           ) : (
             <div className="w-full">
-              <label className="font-bold block mb-2">{f.label}</label>
+              <label className="font-bold block mb-2 text-sm xl:text-base">{f.label}</label>
               <input
                 type={f.type === "number" ? "number" : "text"}
                 value={formState[f.name] || ""}
@@ -477,7 +477,7 @@ export default function Stage5({
                     e.preventDefault();
                   }
                 }}
-                className={`border rounded p-2 w-full bg-gray-100 ${
+                className={`border rounded p-2 w-full bg-gray-100 text-sm xl:text-base ${
                   f.type === "number"
                     ? "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     : ""
@@ -493,22 +493,22 @@ export default function Stage5({
       {currentModule === "commercial" ? (
         <>
           <div className="mt-5">
-            <label className="font-bold">System Note for Client</label>
+            <label className="font-bold text-sm xl:text-base">System Note for Client</label>
             <input
               disabled
               value={generateSystemNote("main")}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
             />
           </div>
           <div className="mt-5">
-            <label className="font-bold">Comment for Client</label>
+            <label className="font-bold text-sm xl:text-base">Comment for Client</label>
             <textarea
               value={noteForClient}
               onChange={(e) => {
                 setNoteForClient(e.target.value);
                 setHasChanges(true);
               }}
-              className="w-full rounded p-2 bg-gray-100"
+              className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
             />
           </div>
         </>
@@ -516,21 +516,21 @@ export default function Stage5({
         noteGroups.map((group) => (
           <div key={group.id}>
             <div className="mt-5">
-              <label className="font-bold">{group.systemNoteLabel}</label>
+              <label className="font-bold text-sm xl:text-base">{group.systemNoteLabel}</label>
               <input
                 disabled
                 value={generateSystemNote(group.id)}
-                className="w-full rounded p-2 bg-gray-100"
+                className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
               />
             </div>
             <div className="mt-5">
-              <label className="font-bold">{group.clientCommentLabel}</label>
+              <label className="font-bold text-sm xl:text-base">{group.clientCommentLabel}</label>
               <textarea
                 value={formState[group.clientCommentKey] || ""}
                 onChange={(e) =>
                   handleChange(group.clientCommentKey, e.target.value)
                 }
-                className="w-full rounded p-2 bg-gray-100"
+                className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
               />
             </div>
           </div>

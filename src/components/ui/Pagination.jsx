@@ -48,18 +48,18 @@ const pageNumbers = useMemo(() => {
 
   return (
   <div className="mt-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-2">
-      <span className="text-sm text-gray-600 text-center sm:text-left">
+      <span className="text-[11px] lg:text-[9px] xl:text-sm text-gray-600 text-center sm:text-left">
         Page <span className="font-semibold">{currentPage}</span> of{" "}
         <span className="font-semibold">{totalPages}</span>
       </span>
 
       <nav aria-label="Pagination" className="flex justify-center">
-        <ul className="inline-flex items-center gap-1 text-sm">
+        <ul className="inline-flex items-center gap-0.5 lg:gap-0.5 xl:gap-0.5 text-sm">
           <li className="mx-1">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-               className="px-3 h-9 rounded-lg border text-sm font-medium transition
+               className="px-2 lg:px-1.5 xl:px-3 h-7.5 lg:h-6.5 xl:h-9 rounded-lg border text-[11px] lg:text-[9px] xl:text-sm font-medium transition
               disabled:opacity-50 disabled:cursor-not-allowed
               bg-white hover:bg-gray-100"
             >
@@ -75,7 +75,7 @@ const pageNumbers = useMemo(() => {
                 <button
                   onClick={() => handlePageChange(page)}
                   aria-current={page === currentPage ? "page" : undefined}
-                  className={`min-w-[36px] h-9 rounded-lg border text-sm font-medium transition
+                    className={`min-w-[30px] lg:min-w-[24px] xl:min-w-[36px] h-7.5 lg:h-6.5 xl:h-9 rounded-lg border text-[11px] lg:text-[9px] xl:text-sm font-medium transition
                   ${
                     page === currentPage
                       ? "bg-[#FB4A50] text-white border-[#FB4A50]"
@@ -92,7 +92,7 @@ const pageNumbers = useMemo(() => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-             className="px-3 h-9 rounded-lg border text-sm font-medium transition
+             className="px-2 lg:px-1.5 xl:px-3 h-7.5 lg:h-6.5 xl:h-9 rounded-lg border text-[11px] lg:text-[9px] xl:text-sm font-medium transition
               disabled:opacity-50 disabled:cursor-not-allowed
               bg-white hover:bg-gray-100"
             >

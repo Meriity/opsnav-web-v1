@@ -87,7 +87,7 @@ const StatCard = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className="relative overflow-hidden rounded-2xl p-5 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300"
+      className="relative overflow-hidden rounded-2xl p-3 lg:p-3 xl:p-5 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300"
     >
       <div
         className={`absolute inset-0 bg-gradient-to-br ${
@@ -116,7 +116,7 @@ const StatCard = ({
         <div className="flex items-center justify-between mb-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className={`p-3 rounded-xl bg-gradient-to-br ${
+            className={`p-2 lg:p-2 xl:p-3 rounded-xl bg-gradient-to-br ${
               color === "blue"
                 ? "from-[#2E3D99]/20 to-[#1D97D7]/30"
                 : color === "green"
@@ -127,7 +127,7 @@ const StatCard = ({
             }`}
           >
             <Icon
-              className={`w-5 h-6 ${
+              className={`w-4 h-4 lg:w-4 lg:h-4 xl:w-5 xl:h-6 ${
                 color === "blue"
                   ? "text-[#2E3D99]"
                   : color === "green"
@@ -140,14 +140,14 @@ const StatCard = ({
           </motion.div>
         </div>
 
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+        <div className="space-y-0.5 lg:space-y-0.5 xl:space-y-1">
+          <h3 className="text-[10px] lg:text-[10px] xl:text-sm font-medium text-gray-500 uppercase tracking-wide">
             {title}
           </h3>
           {loading ? (
-            <div className="h-8 w-20 bg-gray-200 animate-pulse rounded-lg" />
+            <div className="h-6 lg:h-6 xl:h-8 w-16 lg:w-16 xl:w-20 bg-gray-200 animate-pulse rounded-lg" />
           ) : (
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-lg lg:text-lg xl:text-2xl font-bold text-gray-900">{value}</p>
           )}
         </div>
       </div>
@@ -157,13 +157,13 @@ const StatCard = ({
 
 function UsersPerPage({ value, onChange }) {
   return (
-    <div className="flex items-center space-x-2 text-sm text-gray-700">
+    <div className="flex items-center space-x-2 text-xs lg:text-xs xl:text-sm text-gray-700">
       <span>Show</span>
       <select
         id="users-per-page"
         value={value}
         onChange={onChange}
-        className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
+        className="block px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
       >
         <option>5</option>
         <option>10</option>
@@ -492,15 +492,16 @@ export default function ManageUsers() {
   const columns =
     currentModule !== "print media"
       ? [
-          { key: "displayName", title: "Display Name" },
-          { key: "email", title: "Email" },
-          { key: "status", title: "Status" },
+          { key: "displayName", title: "Display Name", width: "15%" },
+          { key: "email", title: "Email", width: "20%" },
+          { key: "status", title: "Status", width: "8%" },
           {
             key: "role",
             title: "Role",
+            width: "12%",
             render: (item) => (
               <span
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                className={`inline-flex items-center px-1.5 lg:px-1.5 xl:px-2 py-0.5 lg:py-0.5 xl:py-1 rounded-full text-[10px] lg:text-[9px] xl:text-xs font-medium ${
                   item.role === "admin"
                     ? "bg-purple-100 text-purple-700"
                     : ["readonly", "read-only"].includes(item.role)
@@ -515,6 +516,7 @@ export default function ManageUsers() {
           {
             key: "access",
             title: "Access Modules",
+            width: "20%",
             render: (item) => {
               if (!item.access || item.access.length === 0) {
                 return <span className="text-gray-400">None</span>;
@@ -528,7 +530,7 @@ export default function ManageUsers() {
                       return (
                         <div
                           key={module.value}
-                          className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center ${module.color} text-white shadow-sm`}
+                          className={`w-7 h-7 lg:w-7 lg:h-7 xl:w-9 xl:h-9 shrink-0 rounded-lg flex items-center justify-center ${module.color} text-white shadow-sm`}
                           title={module.label}
                         >
                           <ModuleIcon
@@ -544,15 +546,16 @@ export default function ManageUsers() {
               );
             },
           },
-          { key: "createdAt", title: "Created At" },
+          { key: "createdAt", title: "Created At", width: "10%" },
         ]
       : [
-          { key: "displayName", title: "Display Name" },
-          { key: "email", title: "Email" },
-          { key: "status", title: "Status" },
+          { key: "displayName", title: "Display Name", width: "20%" },
+          { key: "email", title: "Email", width: "25%" },
+          { key: "status", title: "Status", width: "12%" },
           {
             key: "role",
             title: "Role",
+            width: "13%",
             render: (item) => (
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -567,7 +570,7 @@ export default function ManageUsers() {
               </span>
             ),
           },
-          { key: "createdAt", title: "Created At" },
+          { key: "createdAt", title: "Created At", width: "15%" },
         ];
 
   const handleUserCreation = async (display_name, email, role) => {
@@ -752,28 +755,28 @@ export default function ManageUsers() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 sm:mb-8"
+            className="mb-4 lg:mb-4 xl:mb-8"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
                   <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     User Management
                   </span>
                 </h1>
-                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+                <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
                   Manage user accounts, permissions, and access modules
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {shouldShowCreateButton() && (
-                  <motion.button
+                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleCreateUserClick}
-                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                    className="flex items-center gap-1 lg:gap-1 sm:gap-2 px-3 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-[10px] lg:text-[9px] xl:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
                   >
-                    <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <UserPlus className="w-3 h-3 lg:w-4 lg:h-4 sm:w-5 sm:h-5" />
                     <span className="hidden xs:inline">Create User</span>
                     <span className="xs:hidden">Create User</span>
                   </motion.button>
@@ -783,7 +786,7 @@ export default function ManageUsers() {
           </motion.div>
 
           {/* Stats Grid from second file */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 lg:mb-4 xl:mb-8 w-full">
             <StatCard
               title="Total Users"
               value={totalUsers}
@@ -823,7 +826,7 @@ export default function ManageUsers() {
               transition={{ delay: 0.1 }}
               className="hidden lg:block rounded-2xl sm:rounded-3xl overflow-hidden bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl hover:shadow-2xl transition-all duration-300 w-full max-w-full"
             >
-              <div className="p-4 sm:p-6">
+              <div className="p-4 lg:p-5 xl:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center gap-2">
                     <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
