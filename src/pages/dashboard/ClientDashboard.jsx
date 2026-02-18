@@ -18,6 +18,7 @@ import {
   Clock,
   NotepadText,
   ChevronsRight,
+  Menu,
 } from "lucide-react";
 
 // Original API and Components
@@ -26,6 +27,20 @@ import Loader from "../../components/ui/Loader";
 
 // Register Chart.js elements
 ChartJS.register(ArcElement, Tooltip);
+
+// Floating Background Element
+const FloatingElement = ({ top, left, delay, size = 60 }) => (
+  <div
+    className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block animate-float"
+    style={{
+      width: size,
+      height: size,
+      top: `${top}%`,
+      left: `${left}%`,
+      animationDelay: `${delay}s`,
+    }}
+  />
+);
 
 // Card for each individual stage
 const StageCard = ({ stage, stageIndex }) => {
@@ -71,17 +86,28 @@ const StageCard = ({ stage, stageIndex }) => {
 
   if (stage.stagecolor === "amber") {
     statusLabel = "In Progress";
-    statusColor = "bg-yellow-100 text-yellow-800";
+    statusColor = "bg-amber-100 text-amber-700 border border-amber-200";
   } else if (stage.stagecolor === "green") {
     statusLabel = "Stage Completed";
-    statusColor = "bg-green-100 text-green-800";
+    statusColor = "bg-emerald-100 text-emerald-700 border border-emerald-200";
+  } else {
+    statusColor = "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+
+  let bgGradient = "bg-white/60 backdrop-blur-sm border-white/60";
+  if (stage.stagecolor === "amber") {
+    bgGradient = "bg-gradient-to-br from-amber-50/90 via-white/80 to-white/60 border-amber-100/50";
+  } else if (stage.stagecolor === "green") {
+    bgGradient = "bg-gradient-to-br from-emerald-50/90 via-white/80 to-white/60 border-emerald-100/50";
+  } else {
+    bgGradient = "bg-gradient-to-br from-gray-50/90 via-white/80 to-white/60 border-gray-100/50";
   }
 
   return (
     <motion.div
-      className="relative group overflow-hidden p-6 rounded-xl border border-white/40 
-             bg-white/30 shadow-sm mb-5 
-             hover:scale-[1.05] transition-transform transform duration-300 hover:shadow-lg"
+      className={`relative group overflow-hidden p-6 rounded-2xl border 
+             shadow-sm mb-5 ${bgGradient}
+             hover:scale-[1.02] transition-all duration-300 hover:shadow-xl hover:border-white/80`}
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
@@ -141,15 +167,15 @@ const StageCard = ({ stage, stageIndex }) => {
               return (
                 <div
                   key={task.title}
-                  className="flex items-center text-sm text-slate-700 mt-2 w-40 sm:w-auto"
+                  className="flex items-start text-sm text-slate-700 mt-2 w-full"
                 >
                   {icon}
-                  <span>{task.title}</span>
+                  <span className="flex-1">{task.title}</span>
                 </div>
               );
             })}
           </div>
-          <div className="absolute right-5 sm:right-2">
+          <div className="absolute right-5 sm:right-2 hidden sm:block">
             <img src={stage.svg} alt="" className="h-15 sm:w-auto" />
           </div>
         </div>
@@ -834,7 +860,33 @@ export default function ClientDashboard() {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden font-sans">
+      {/* Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+        <div className="absolute inset-0 opacity-[0.06]">
+           <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                              linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 xl:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 sm:block
@@ -842,11 +894,11 @@ export default function ClientDashboard() {
         shadow-sm mb-3 overflow-y-auto flex-col z-50 
         transform transition-transform duration-300 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-        lg:translate-x-0 lg:flex`}
+        xl:translate-x-0 xl:flex`}
       >
         <div className="flex-grow flex flex-col">
           {/* Logo Section */}
-          <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative">
+          <div className="flex items-center justify-center flex-shrink-0 border-b border-slate-200 relative py-6">
             <img
               className="h-auto w-[120px]"
               alt="OpsNav Logo"
@@ -855,7 +907,7 @@ export default function ClientDashboard() {
             {/* Close button in mobile */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute right-3 top-3 lg:hidden"
+              className="absolute right-3 top-3 xl:hidden"
             >
               <X className="w-5 h-5 text-[#FB4A50]" />
             </button>
@@ -990,15 +1042,15 @@ export default function ClientDashboard() {
             </div>
 
             {/* Logout button */}
-            <div className="pt-4">
+            <div className="pt-4 mt-auto">
               <button
                 onClick={() => {
                   localStorage.removeItem("matterNumber");
                   navigate("/client/login");
                 }}
-                className="flex items-center gap-2 text-slate-500 hover:text-[#FB4A50] transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 p-3 rounded-xl transition-all shadow-sm group"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <span className="font-semibold">Log Out</span>
               </button>
             </div>
@@ -1006,17 +1058,25 @@ export default function ClientDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1  overflow-y-auto min-w-0 lg:ml-[19.5rem]">
+      <main className="flex-1  overflow-y-auto min-w-0 xl:ml-[19.5rem]">
         <div className="p-6 sm:p-6">
-          <div className="mb-6 pl-2">
+          <div className="mb-6 pl-2 flex justify-between items-center">
             <img
               src={logo}
               className="h-[80px] md:h-[100px] w-auto object-contain"
               alt="Company Logo"
             />
+            {!isOpen && (
+              <button
+                onClick={() => setIsOpen(true)}
+                className="xl:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <Menu className="w-8 h-8" />
+              </button>
+            )}
           </div>
 
-          <div className="relative flex flex-col md:flex-row items-start justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
+          <div className="relative flex flex-col md:flex-row items-center justify-between border-white/40 rounded-2xl shadow-sm mb-3 overflow-hidden w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
             {/* LEFT SECTION: Glassmorphism card */}
             <motion.div
               className="flex-1 min-w-0 gap-2"
@@ -1024,28 +1084,14 @@ export default function ClientDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="text-lg relative p-10 shadow-lg border border-white/30 md:h-[310px]">
-                <button
-                  onClick={() => setIsOpen(true)}
-                  className="flex gap-1 bg-[#98dffa] z-50 lg:hidden p-2 rounded-lg text-[#049bd4] mb-2 items-center"
-                >
-                  <ChevronsRight className="w-8 h-8  text-[#FB4A50]" />
-                  <span>Matter Details</span>
-                </button>
+              <div className="text-lg relative p-6 sm:p-10 shadow-lg border border-white/30 md:shadow-none md:border-none xl:shadow-lg xl:border xl:border-white/30 md:h-auto xl:h-[310px] flex flex-col justify-center">
 
-                {/* Overlay for mobile */}
-                {isOpen && (
-                  <div
-                    onClick={() => setIsOpen(false)}
-                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-                  />
-                )}
-                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg md:mt-20">
+                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg xl:mt-20">
                   Hello, {matterDetails.Clientname || orderDetails.Clientname}{" "}
                   <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
                 </h1>
                 <p className="text-lg md:text-xl font-medium text-blue-50/90 tracking-wide mt-2 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
+              
                   Welcome. Here is the latest status of your matter.
                 </p>
 
@@ -1064,7 +1110,7 @@ export default function ClientDashboard() {
 
             {/* RIGHT SECTION: Full image box */}
             <motion.div
-              className="w-full md:w-[580px] h-[310px] overflow-hidden shadow-lg bg-white" // bg-[#B9F3FC]
+              className="hidden md:block w-full md:w-auto xl:w-[580px] md:h-auto xl:h-[310px] overflow-hidden xl:shadow-lg md:bg-transparent xl:bg-white" // bg-[#B9F3FC]
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -1073,17 +1119,33 @@ export default function ClientDashboard() {
                 style={{
                   padding: "20px 20px",
                 }}
-                className="h-full sm:block md:flex"
+                className="h-full flex items-center justify-center xl:justify-between"
               >
-                <div>
+                <div className="mr-0 xl:mr-4">
                   {overallProgress && (
-                    <ProgressChart
-                      completed={overallProgress.completed}
-                      total={overallProgress.total}
-                      processing={overallProgress.processingTask}
-                    />
+                    <>
+                      {/* Tablet Logic: White Text/Clors */}
+                      <div className="md:block xl:hidden">
+                        <ProgressChart
+                          completed={overallProgress.completed}
+                          total={overallProgress.total}
+                          processing={overallProgress.processingTask}
+                          variant="white"
+                        />
+                      </div>
+                      {/* Desktop Logic: Default Dark Text/Colors */}
+                      <div className="hidden xl:block">
+                        <ProgressChart
+                          completed={overallProgress.completed}
+                          total={overallProgress.total}
+                          processing={overallProgress.processingTask}
+                          variant="default"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
+                <div className="hidden xl:block">
                 {currentModule !== "print media" ? (
                   <img
                     src="/Home.svg"
@@ -1125,6 +1187,7 @@ export default function ClientDashboard() {
                     style={{ objectFit: "fill" }}
                   />
                 )}
+                </div>
               </div>
             </motion.div>
           </div>
@@ -1190,12 +1253,39 @@ export default function ClientDashboard() {
           </div>
 
           {/* Footer */}
-          <footer className="text-sm text-slate-500 font-medium mt-8 py-2 flex justify-center gap-2 mx-auto w-fit">
+          <footer className="text-sm text-slate-500 font-medium mt-8 py-2 flex justify-center items-center gap-2 mx-auto w-fit">
             <p>Powered By </p>{" "}
-            <img className="w-15 h-auto" src="/Logo.png" alt="Logo" />
+             <img 
+               className="h-5 w-auto" 
+               src="https://storage.googleapis.com/opsnav_web_image/opsnav%20logo%20(3).png" 
+               alt="OpsNav Logo" 
+             />
           </footer>
       </div>
       </main>
+      <style>{`
+        @keyframes wave {
+          0% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-8deg); }
+          30% { transform: rotate(14deg); }
+          40% { transform: rotate(-4deg); }
+          50% { transform: rotate(10deg); }
+          60% { transform: rotate(0deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .animate-wave {
+          animation: wave 2.5s infinite;
+          transform-origin: 70% 70%; 
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }

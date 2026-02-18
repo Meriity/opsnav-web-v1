@@ -123,13 +123,13 @@ function UsersPerPage({ value, onChange }) {
   const label = currentModule === "commercial" ? "Projects" : "Clients";
 
   return (
-    <div className="flex items-center space-x-2 text-sm text-gray-700">
+    <div className="flex items-center space-x-2 text-xs lg:text-xs xl:text-sm text-gray-700">
       <span>Show</span>
       <select
         id="users-per-page"
         value={value}
         onChange={onChange}
-        className="block px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        className="block px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
       >
         <option>5</option>
         <option>10</option>
@@ -197,35 +197,35 @@ export default function ManageUsers() {
   const getColumns = () => {
     if (currentModule === "commercial") {
       return [
-        { key: "clientId", title: "Project Number" },
-        { key: "name", title: "Client Name" },
-        { key: "email", title: "Email" },
-        { key: "contact", title: "Contact" },
-        { key: "address", title: "Property Address" },
-        { key: "country", title: "Country" },
-        { key: "state", title: "State" },
-        { key: "postcode", title: "PostCode" },
-        { key: "abn", title: "ABN" },
+        { key: "clientId", title: "Project Number", width: "10%" },
+        { key: "name", title: "Client Name", width: "12%" },
+        { key: "email", title: "Email", width: "12%" },
+        { key: "contact", title: "Contact", width: "10%" },
+        { key: "address", title: "Property Address", width: "12%" },
+        { key: "country", title: "Country", width: "8%" },
+        { key: "state", title: "State", width: "7%" },
+        { key: "postcode", title: "Post Code", width: "7%" },
+        { key: "abn", title: "ABN", width: "7%" },
       ];
     } else if (currentModule === "print media") {
       return [
-        { key: "clientId", title: "Client ID" },
-        { key: "name", title: "Name" },
-        { key: "email", title: "Email" },
-        { key: "contact", title: "Contact" },
-        { key: "address", title: "Address" },
-        { key: "country", title: "Country" },
-        { key: "state", title: "State" },
-        { key: "postcode", title: "PostCode" },
-        { key: "abn", title: "ABN" },
+        { key: "clientId", title: "Client ID", width: "8%" },
+        { key: "name", title: "Name", width: "12%" },
+        { key: "email", title: "Email", width: "12%" },
+        { key: "contact", title: "Contact", width: "10%" },
+        { key: "address", title: "Address", width: "12%" },
+        { key: "country", title: "Country", width: "8%" },
+        { key: "state", title: "State", width: "8%" },
+        { key: "postcode", title: "Post Code", width: "8%" },
+        { key: "abn", title: "ABN", width: "7%" },
       ];
     } else if (currentModule === "vocat") {
       return [
-        { key: "clientId", title: "Matter Number" },
-        { key: "name", title: "Client Name" },
-        { key: "clientType", title: "Client Type" },
-        { key: "state", title: "State" },
-        { key: "matterDate", title: "Matter Date" },
+        { key: "clientId", title: "Matter Number", width: "15%" },
+        { key: "name", title: "Client Name", width: "20%" },
+        { key: "clientType", title: "Client Type", width: "15%" },
+        { key: "state", title: "State", width: "15%" },
+        { key: "matterDate", title: "Matter Date", width: "20%" },
       ];
     }
     return [];
@@ -242,6 +242,10 @@ export default function ManageUsers() {
   const getCreateButtonLabel = () => {
     if (currentModule === "commercial") return "Create Project";
     return "Create Client";
+  };
+
+  const handleCreateUserClick = () => {
+    setcreateuser(true);
   };
 
   const handleUserCreation = async (display_name, email, role) => {
@@ -407,12 +411,12 @@ export default function ManageUsers() {
             }}
           />
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+            <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                 {getPageTitle()}
               </span>
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+            <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
               Manage {currentModule === "commercial" ? "project" : "client"}{" "}
               accounts, permissions, and access modules
             </p>
@@ -427,11 +431,10 @@ export default function ManageUsers() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              
-              onClick={() => setcreateuser(true)}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+              onClick={handleCreateUserClick}
+              className="flex items-center gap-1 lg:gap-1 sm:gap-2 px-4 lg:px-4 xl:px-6 py-2.5 lg:py-2 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-[10px] lg:text-[9px] xl:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
             >
-              <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+              <UserPlus className="w-3 h-3 lg:w-4 lg:h-4 sm:w-5 sm:h-5" />
               <span className="xs:hidden">Create Client</span>
             </motion.button>
           )}

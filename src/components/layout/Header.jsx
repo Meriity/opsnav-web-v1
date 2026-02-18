@@ -465,11 +465,11 @@ export default function Header() {
         <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
-        <div className="relative px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3 lg:gap-4">
+        <div className="relative px-4 py-2 md:px-6 md:py-2 flex flex-col md:flex-row justify-between items-center gap-2 lg:gap-3">
           <div className="flex flex-row md:flex-col lg:flex-row items-center md:items-start lg:items-center gap-4 md:gap-1 lg:gap-4 w-full md:flex md:w-auto lg:flex lg:w-auto lg:min-w-[200px]">
             <div className="flex flex-col items-end">
               <img
-                className={`h-auto object-contain w-14 transition-all duration-300 ease-in-out`}
+                className={`h-auto object-contain w-12 transition-all duration-300 ease-in-out`}
                 src={localStorage.getItem("logo") || "/Logo.png"}
                 alt="Logo"
               />
@@ -482,7 +482,7 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-2"
               >
-                <h1 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                   Hello, {localStorage.getItem("user") || "Admin"}
                 </h1>
                 <span className="animate-pulse hidden md:block">👋</span>
@@ -511,7 +511,7 @@ export default function Header() {
               
               <button
                 onClick={toggleFullScreen}
-                className="hidden lg:flex p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
+                className="hidden lg:flex p-2 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
               >
                 {isFullScreen ? (
                   <Minimize2 className="w-5 h-5" />
@@ -538,9 +538,9 @@ export default function Header() {
                 `}
                 />
 
-                <div
+                  <div
                   className={`
-                  relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 bg-white
+                  relative flex items-center gap-3 px-4 py-1.5 rounded-xl border transition-all duration-300 bg-white
                   ${
                     isFocused
                       ? "border-transparent shadow-lg ring-1 ring-[#2E3D99]/10"

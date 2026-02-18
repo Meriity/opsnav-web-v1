@@ -319,7 +319,7 @@ export default function Stage3({
       {fields.map((f) => (
         <div key={f.key} className="mt-5">
           <div className="flex justify-between items-center mb-3">
-            <label className="font-bold">{f.label}</label>
+            <label className="font-bold text-sm xl:text-base">{f.label}</label>
             {f.type !== "text" && (
               <div
                 className={`w-[90px] h-[18px] flex items-center justify-center rounded-4xl ${
@@ -341,12 +341,12 @@ export default function Stage3({
                 type="text"
                 value={formState[f.key] || ""}
                 onChange={(e) => handleChange(f.key, e.target.value)}
-                className={`border rounded p-2 w-full ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+                className={`border rounded p-2 w-full text-sm xl:text-base ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
                 disabled={isReadOnly}
               />
             ) : (
               (f.options || ["Yes", "No", "Processing", "N/R"]).map((v) => (
-                <label key={v} className="flex items-center gap-2">
+                <label key={v} className="flex items-center gap-2 text-sm xl:text-base">
                   <input
                     type="radio"
                     checked={
@@ -372,7 +372,7 @@ export default function Stage3({
                   }));
                   setHasChanges(true);
                 }}
-                className={`border p-1 rounded ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+                className={`border p-1 rounded text-sm xl:text-base ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
                 disabled={isReadOnly}
               />
             )}
@@ -381,23 +381,23 @@ export default function Stage3({
       ))}
 
       <div className="mt-5">
-        <label className="font-bold">System Note for Client</label>
+        <label className="font-bold text-sm xl:text-base">System Note for Client</label>
         <input
           disabled
           value={generateSystemNote()}
-          className="w-full rounded p-2 bg-gray-100"
+          className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
         />
       </div>
 
       <div className="mt-5">
-        <label className="font-bold">Comment for Client</label>
+        <label className="font-bold text-sm xl:text-base">Comment for Client</label>
         <textarea
           value={noteForClient}
           onChange={(e) => {
             setNoteForClient(e.target.value);
             setHasChanges(true);
           }}
-          className={`w-full rounded p-2 bg-gray-100 ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
+          className={`w-full rounded p-2 bg-gray-100 text-sm xl:text-base ${isReadOnly ? "bg-gray-200 text-gray-800 font-medium cursor-not-allowed" : ""}`}
           disabled={isReadOnly}
         />
       </div>

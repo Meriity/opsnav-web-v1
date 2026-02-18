@@ -208,8 +208,8 @@ const Table = ({
     }
   };
 
-  const headerPadding = compact ? "py-4" : "py-3";
-  const cellPadding = compact ? "py-2" : "py-3";
+  const headerPadding = compact ? "py-2 lg:py-1.5" : "py-3 lg:py-2";
+  const cellPadding = compact ? "py-1.5 lg:py-1" : "py-2.5 lg:py-2";
 
   const isLeftAlignedColumn = (columnKey) => {
     return columnKey === "displayName" || columnKey === "email";
@@ -228,9 +228,9 @@ const Table = ({
                 return (
                   <th
                     key={column.key}
-                    style={{ width: getColumnWidth(column.key) }}
+                    style={{ width: column.width || getColumnWidth(column.key) }}
                     onClick={() => handleSort(column.key)}
-                    className={`px-2 ${headerPadding} text-sm cursor-pointer select-none ${
+                    className={`px-1 lg:px-1 xl:px-2 ${headerPadding} text-[11px] lg:text-[10px] xl:text-xs 2xl:text-sm cursor-pointer select-none whitespace-normal break-words ${
                       colIndex === 0 ? "rounded-l-2xl" : ""
                     } ${
                       colIndex === columns.length - 1 && !showActions
@@ -261,7 +261,7 @@ const Table = ({
               })}
               {showActions && (
                 <th
-                  className={`px-2 ${headerPadding} text-center text-sm rounded-r-2xl`}
+                  className={`px-1 lg:px-1 xl:px-2 ${headerPadding} text-center text-[11px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl`}
                   style={{ width: "15%" }}
                 >
                   Actions
@@ -283,7 +283,8 @@ const Table = ({
                   return (
                     <td
                       key={column.key}
-                      className={`px-2 ${cellPadding} text-xs lg:text-sm xl:text-base text-black align-middle wrap-break-word ${
+                      style={{ width: column.width || getColumnWidth(column.key) }}
+                      className={`px-1 lg:px-1 xl:px-2 ${cellPadding} text-[11px] lg:text-[10px] xl:text-xs 2xl:text-sm text-black align-middle wrap-break-word ${
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       } ${
                         colIndex === columns.length - 1 && !showActions
@@ -296,18 +297,11 @@ const Table = ({
                           isLeftAligned ? "text-left pl-3" : "text-center"
                         }`}
                         title={
-                          column.render
-                            ? column.render(item)
-                            : column.key === "matter_date" ||
-                              column.key === "settlement_date" ||
-                              column.key === "orderDate" ||
-                              column.key === "deliveryDate"
+                          column.key === "access"
+                            ? ""
+                            : ["string", "number"].includes(typeof item[column.key])
                             ? item[column.key]
-                              ? moment(item[column.key]).isValid()
-                                ? moment(item[column.key]).format("DD-MM-YYYY")
-                                : <span className="font-bold text-gray-500">—</span>
-                              : <span className="font-bold text-gray-500">—</span>
-                            : item[column.key]
+                            : ""
                         }
                       >
                         {column.key === "access" &&
@@ -337,18 +331,18 @@ const Table = ({
                 })}
                 {showActions && (
                   <td
-                    className={`px-2 ${cellPadding} rounded-r-2xl align-middle`}
+                    className={`px-1 lg:px-1 xl:px-2 ${cellPadding} rounded-r-2xl align-middle`}
                   >
                     <div className="flex flex-row items-center justify-center space-x-2">
                       {onEdit && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
-                        <button
-                          onClick={() => onEdit(item)}
-                          className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={14} />
-                          <span className="text-xs">Edit</span>
-                        </button>
+                          <button
+                           onClick={() => onEdit(item)}
+                           className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                           title="Edit"
+                         >
+                           <Edit className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
+                           <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                         </button>
                       )}
                       {onDelete &&
                         !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
@@ -359,8 +353,8 @@ const Table = ({
                             className="flex flex-col items-center p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                             title="Delete"
                           >
-                            <Trash2 size={14} />
-                            <span className="text-xs">Delete</span>
+                            <Trash2 className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
+                            <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Delete</span>
                           </button>
                         )}
                       {!isClients &&
@@ -392,13 +386,13 @@ const Table = ({
                             aria-busy={resetLoadingEmail === item.email}
                           >
                             {resetLoadingEmail === item.email ? (
-                              <Loader2 size={14} className="animate-spin" />
+                              <Loader2 className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4 animate-spin" />
                             ) : resetSuccessEmail === item.email ? (
-                              <Check size={14} />
+                              <Check className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
                             ) : (
-                              <RefreshCw size={14} />
+                              <RefreshCw className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
                             )}
-                            <span className="text-xs">
+                            <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">
                               {resetLoadingEmail === item.email
                                 ? "Sending…"
                                 : resetSuccessEmail === item.email
@@ -408,32 +402,32 @@ const Table = ({
                           </button>
                         )}
                       {OnEye && currentModule !== "print media" && (
-                        <button
-                          onClick={() => {
-                            console.log("Table: Eye clicked for item:", item);
-                            OnEye(item);
-                          }}
-                          className="flex flex-col items-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                          title="View Details"
-                        >
-                          <img src={Eye} alt="View" className="h-4 " />
-                          <span className="text-xs text-[#2E3D99]">View</span>
-                        </button>
+                          <button
+                           onClick={() => {
+                             console.log("Table: Eye clicked for item:", item);
+                             OnEye(item);
+                           }}
+                           className="flex flex-col items-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                           title="View Details"
+                         >
+                           <img src={Eye} alt="View" className="h-3 lg:h-3 xl:h-4 2xl:h-5 " />
+                           <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs text-[#2E3D99]">View</span>
+                         </button>
                       )}
                       {EditOrder &&
                         currentModule === "print media" &&
                         !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
-                          <button
-                            onClick={() => {
-                              console.log("clicked!");
-                              navigate(`/admin/client/stages/${item.orderId}`);
-                            }}
-                            className="flex flex-col items-center space-y-1 p-1 text-blue-600"
-                            title="Edit"
-                          >
-                            <Edit size={12} />
-                            <span className="text-xs">Edit</span>
-                          </button>
+                           <button
+                             onClick={() => {
+                               console.log("clicked!");
+                               navigate(`/admin/client/stages/${item.orderId}`);
+                             }}
+                             className="flex flex-col items-center space-y-0.5 p-1 text-blue-600"
+                             title="Edit"
+                           >
+                             <Edit className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
+                             <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                           </button>
                         )}
                     </div>
                   </td>

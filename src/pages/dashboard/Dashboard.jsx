@@ -741,17 +741,15 @@ const StatCard = ({
   loading,
 }) => {
   const isPositive = change >= 0;
-  const { width } = useWindowSize();
-  const isMobile = width < 640;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -8, transition: { duration: 0.2 } }}
-      className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl dashboard-card group"
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      className="relative overflow-hidden rounded-2xl p-3 lg:p-3 xl:p-5 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 dashboard-card group"
     >
-      {/* Gradient background inspired by Home.jsx */}
+      {/* Gradient background */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${
           color === "blue"
@@ -764,7 +762,7 @@ const StatCard = ({
         }`}
       />
       <div
-        className={`absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 rounded-full -translate-y-10 translate-x-10 sm:-translate-y-16 sm:translate-x-16 opacity-10 bg-gradient-to-r ${
+        className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8 opacity-10 bg-gradient-to-r ${
           color === "blue"
             ? "from-[#2E3D99] to-[#1D97D7]"
             : color === "green"
@@ -776,21 +774,21 @@ const StatCard = ({
       />
 
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center justify-between mb-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className={`p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br ${
+            className={`p-2 lg:p-2 xl:p-3 rounded-xl bg-gradient-to-br ${
               color === "blue"
-                ? "from-[#2E3D99]/20 to-[#1D97D7]/30 group-hover:from-[#2E3D99]/30 group-hover:to-[#1D97D7]/40"
+                ? "from-[#2E3D99]/20 to-[#1D97D7]/30"
                 : color === "green"
-                ? "from-emerald-500/20 to-teal-500/30 group-hover:from-emerald-500/30 group-hover:to-teal-500/40"
+                ? "from-emerald-500/20 to-teal-500/30"
                 : color === "purple"
-                ? "from-violet-500/20 to-purple-500/30 group-hover:from-violet-500/30 group-hover:to-purple-500/40"
-                : "from-amber-500/20 to-orange-500/30 group-hover:from-amber-500/30 group-hover:to-orange-500/40"
+                ? "from-violet-500/20 to-purple-500/30"
+                : "from-amber-500/20 to-orange-500/30"
             }`}
           >
             <Icon
-              className={`w-4 h-4 sm:w-5 sm:h-6 ${
+              className={`w-4 h-4 lg:w-4 lg:h-4 xl:w-5 xl:h-6 ${
                 color === "blue"
                   ? "text-[#2E3D99]"
                   : color === "green"
@@ -803,38 +801,38 @@ const StatCard = ({
           </motion.div>
           {change !== undefined && (
             <div
-              className={`flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] lg:text-[10px] xl:text-xs ${
                 isPositive
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-rose-100 text-rose-700"
               }`}
             >
               {isPositive ? (
-                <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <TrendingUp className="w-2.5 h-2.5" />
               ) : (
-                <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <ChevronDown className="w-2.5 h-2.5" />
               )}
               <span className="font-semibold">{Math.abs(change)}%</span>
             </div>
           )}
         </div>
 
-        <div className="space-y-1 sm:space-y-2">
-          <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide truncate">
+        <div className="space-y-0.5 lg:space-y-0.5 xl:space-y-1">
+          <h3 className="text-[10px] lg:text-[10px] xl:text-sm font-medium text-gray-500 uppercase tracking-wide truncate">
             {title}
           </h3>
           {loading ? (
-            <div className="h-6 sm:h-8 w-16 sm:w-24 bg-gray-200 animate-pulse rounded-lg" />
+            <div className="h-6 lg:h-6 xl:h-8 w-16 lg:w-16 xl:w-20 bg-gray-200 animate-pulse rounded-lg" />
           ) : (
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+            <p className="text-lg lg:text-lg xl:text-2xl font-bold text-gray-900 truncate">
               {value.toLocaleString()}
             </p>
           )}
         </div>
 
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100/50">
-          <div className="flex items-center text-xs sm:text-sm text-gray-500">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+        <div className="mt-2 pt-2 border-t border-gray-100/50">
+          <div className="flex items-center text-[10px] lg:text-[10px] xl:text-xs text-gray-500">
+            <Clock className="w-2.5 h-2.5 mr-1" />
             <span className="truncate">Updated just now</span>
           </div>
         </div>
@@ -1320,7 +1318,7 @@ function Dashboard() {
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
                   Welcome to{" "}
                   <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     OpsNav
@@ -1336,7 +1334,7 @@ function Dashboard() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAddButtonClick}
-                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="hidden xs:inline">

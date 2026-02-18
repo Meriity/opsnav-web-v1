@@ -569,7 +569,7 @@ export default function Stage1({
       case "number":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <input
@@ -584,7 +584,7 @@ export default function Stage1({
                 }
               }}
               placeholder="0.00"
-              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm xl:text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
             />
           </div>
         );
@@ -592,7 +592,7 @@ export default function Stage1({
       case "text":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <input
@@ -600,7 +600,7 @@ export default function Stage1({
               value={formData[field.name] || ""}
               disabled={isReadOnly}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm xl:text-base ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
             />
           </div>
         );
@@ -609,7 +609,7 @@ export default function Stage1({
         return (
           <div key={field.name} className="mt-5">
             <div className="flex gap-4 justify-between items-center mb-3">
-              <label className="block mb-1 text-sm md:text-base font-bold">
+              <label className="block mb-1 text-sm xl:text-base font-bold">
                 {field.label}
               </label>
               <div
@@ -627,7 +627,7 @@ export default function Stage1({
               {field.options.map((val) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 text-sm md:text-base min-w-0"
+                  className="flex items-center gap-2 text-sm xl:text-base min-w-0"
                 >
                   <input
                     type="radio"
@@ -651,14 +651,14 @@ export default function Stage1({
       case "system-note":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <input
               type="text"
               value={generateSystemNote()}
               disabled
-              className="w-full rounded p-2 bg-gray-100 text-sm md:text-base"
+              className="w-full rounded p-2 bg-gray-100 text-sm xl:text-base"
             />
           </div>
         );
@@ -666,13 +666,13 @@ export default function Stage1({
       case "textarea":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <textarea
               value={formData[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm md:text-base resize-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm xl:text-base resize-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
               disabled={isReadOnly}
             />
           </div>
@@ -689,7 +689,7 @@ export default function Stage1({
               onChange={(e) => handleChange(field.name, e.target.checked)}
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 mr-3"
             />
-             <label htmlFor={field.name} className="text-sm md:text-base font-bold text-gray-700">
+             <label htmlFor={field.name} className="text-sm xl:text-base font-bold text-gray-700">
               {field.label}
             </label>
           </div>
@@ -698,7 +698,7 @@ export default function Stage1({
       case "header":
           return (
              <div key={field.name} className="mt-6 mb-2">
-                <h3 className="text-lg font-bold text-gray-800">{field.label}</h3>
+                <h3 className="text-base lg:text-base xl:text-lg font-bold text-gray-800">{field.label}</h3>
              </div>
           );
 

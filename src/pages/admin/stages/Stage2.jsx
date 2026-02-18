@@ -641,11 +641,11 @@ export default function Stage2({
     return (
     <div key={field.name} className={field.type === "header" ? "mt-6 mb-2" : "mt-5"}>
       {field.type === "header" ? (
-         <h3 className="text-lg font-bold text-gray-800 border-b pb-1">{field.label}</h3>
+         <h3 className="text-base lg:text-base xl:text-lg font-bold text-gray-800 border-b pb-1">{field.label}</h3>
       ) : (
       <>
       <div className="flex gap-4 justify-between items-center mb-2">
-        <label className="block mb-1 text-sm md:text-base font-bold">
+        <label className="block mb-1 text-sm xl:text-base font-bold">
           {field.label}
         </label>
 
@@ -694,7 +694,7 @@ export default function Stage2({
           (field.options || ["Yes", "No", "Processing", "N/R"]).map((val) => (
             <label
               key={val}
-              className="flex items-center gap-2 text-sm md:text-base"
+              className="flex items-center gap-2 text-sm xl:text-base"
             >
               <input
                 type="radio"
@@ -732,7 +732,7 @@ export default function Stage2({
   const renderNoteGroup = (group) => (
     <div key={group.id}>
       <div className="mt-5">
-        <label className="font-bold text-sm md:text-base mb-1 block">
+        <label className="font-bold text-sm xl:text-base mb-1 block">
           {group.systemNoteLabel}
         </label>
         <input
@@ -742,7 +742,7 @@ export default function Stage2({
         />
       </div>
       <div className="mt-5">
-        <label className="font-bold text-sm md:text-base mb-1 block">
+        <label className="font-bold text-sm xl:text-base mb-1 block">
           {group.clientCommentLabel}
         </label>
         <textarea
@@ -758,7 +758,7 @@ export default function Stage2({
   const renderCommercialNotes = () => (
     <div>
       <div className="mt-5">
-        <label className="font-bold text-sm md:text-base mb-1 block">
+        <label className="font-bold text-sm xl:text-base mb-1 block">
           System Note for Client
         </label>
         <input
@@ -768,7 +768,7 @@ export default function Stage2({
         />
       </div>
       <div className="mt-5">
-        <label className="font-bold text-sm md:text-base mb-1 block">
+        <label className="font-bold text-sm xl:text-base mb-1 block">
           Comment for Client
         </label>
         <textarea

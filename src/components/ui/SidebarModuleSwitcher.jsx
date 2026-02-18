@@ -140,7 +140,7 @@ function SidebarModuleSwitcher() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 group mr-4 cursor-pointer"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 group mr-4 cursor-pointer"
       >
         <div
           className={`w-5 h-5 rounded-md flex items-center justify-center ${triggerColors} transition-all duration-200`}
