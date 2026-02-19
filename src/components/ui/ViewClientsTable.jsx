@@ -511,11 +511,51 @@ const ViewClientsTable = ({
 
       {/* Mobile & Tablet Card View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {currentData.map((item) => (
+        {currentData.map((item, index) => (
           <div
             key={item.id}
-            className="bg-white rounded-2xl shadow p-4 space-y-3"
+            className={`bg-white rounded-2xl shadow p-4 space-y-3 ${isDraggingMode ? 'border-2 border-dashed border-[#2E3D99]/50' : ''}`}
           >
+            {isDraggingMode ? (
+              // Reordering View for Mobile
+              <div className="flex flex-col gap-3">
+                 <div className="flex justify-between items-center border-b pb-2">
+                    <span className="font-bold text-gray-700">Order: <span className="text-[#2E3D99]">{item.orderId}</span></span>
+                    <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg">
+                        <label className="text-sm font-bold text-[#2E3D99]">Rank:</label>
+                        <select
+                            value={index + 1}
+                            onChange={(e) => {
+                               const newIndex = Number(e.target.value) - 1;
+                               const newData = arrayMove(currentData, index, newIndex);
+                               setCurrentData(newData);
+                               if (setDraggedData) {
+                                   setDraggedData(newData);
+                               }
+                            }}
+                            className="bg-transparent font-bold text-[#2E3D99] focus:outline-none cursor-pointer"
+                        >
+                            {currentData.map((_, i) => (
+                                <option key={i} value={i + 1}>{i + 1}</option>
+                            ))}
+                        </select>
+                    </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                        <span className="block text-gray-400">Client</span>
+                        <span className="font-semibold">{item.clientName || item.client_name}</span>
+                    </div>
+                     <div>
+                        <span className="block text-gray-400">Address</span>
+                        <span className="break-words">{item.billing_address || item.businessAddress || "-"}</span>
+                    </div>
+                 </div>
+              </div>
+            ) : (
+             // Standard View
+             <>
             <div className="flex justify-between items-center border-b pb-2">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 {currentModule === "commercial"
@@ -595,7 +635,7 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
-                <button
+                {/* <button
                   onClick={() =>
                     onShare(
                       currentModule === "commercial"
@@ -608,7 +648,7 @@ const ViewClientsTable = ({
                   title="Share"
                 >
                   <Share2 size={16} />
-                </button>
+                </button> */}
                 {currentModule === "print media" && (
                   <button
                     onClick={() => onDelete(item)}
@@ -621,20 +661,6 @@ const ViewClientsTable = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 text-xs lg:text-xs xl:text-sm text-gray-700 whitespace-nowrap">
-              <span>Show</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                className="block px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
-              >
-                <option>5</option>
-                <option>10</option>
-                <option>20</option>
-                <option>50</option>
-              </select>
-              <span>entries</span>
-            </div>
 
             <div>
               <p className="text-xs text-gray-500">Client Name</p>
@@ -709,6 +735,8 @@ const ViewClientsTable = ({
                 ))}
               </div>
             </div>
+            </>
+            )}
           </div>
         ))}
       </div>

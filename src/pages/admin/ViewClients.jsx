@@ -868,7 +868,7 @@ const ViewClients = () => {
 
               <div className="flex w-full flex-col gap-4">
                 {/* ROW 1: Filters (Items Per Page + Client/User Dropdowns) */}
-                <div className="flex w-full flex-wrap items-center gap-4">
+                <div className="flex w-full flex-wrap items-center justify-between gap-4">
                   {/* Items Per Page */}
                   <div className="flex items-center gap-2 text-xs lg:text-xs xl:text-sm text-gray-700">
                     <label
@@ -892,6 +892,108 @@ const ViewClients = () => {
                       <option value={200}>200</option>
                       <option value={500}>500</option>
                     </select>
+                  </div>
+                  {/* Mobile Menu */}
+                  <div className="flex lg:hidden items-center gap-2">
+                    <Menu as="div" className="relative">
+                      <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <EllipsisVerticalIcon
+                          className="h-5 w-5 text-gray-600"
+                          aria-hidden="true"
+                        />
+                      </Menu.Button>
+                      <Transition
+                        as={Fragment}
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                      >
+                       <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div className="py-1">
+                            {currentModule === "print media" ? (
+                              <>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setcreateuser(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Create Client
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setcreateOrder(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Create Order
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowUploadExcelDialog(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Upload Excel
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setShowTar(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Task Report
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              </>
+                            ) : (
+                                  <>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setcreateuser(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          {getCreateButtonLabel()}
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowOutstandingTask(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Outstanding Tasks
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => setShowDateRange(true)}
+                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                        >
+                                          Select Date Range
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </>
+                            )}
+                          </div>
+                        </Menu.Items>
+                      </Transition>
+                    </Menu>
                   </div>
 
                   {/* Print Media Dropdowns - Admin Only */}
@@ -1112,108 +1214,6 @@ const ViewClients = () => {
                       )}
                       </div>
 
-                      {/* Mobile Menu */}
-                      <div className="flex lg:hidden items-center gap-2">
-                        <Menu as="div" className="relative">
-                          <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                            <EllipsisVerticalIcon
-                              className="h-5 w-5 text-gray-600"
-                              aria-hidden="true"
-                            />
-                          </Menu.Button>
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
-                          >
-                            <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                              <div className="py-1">
-                                {currentModule === "print media" ? (
-                                  <>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setcreateuser(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Create Client
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setcreateOrder(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Create Order
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowDateRange(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Date Range
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowTar(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Task Report
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setcreateuser(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          {getCreateButtonLabel()}
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowOutstandingTask(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Outstanding Tasks
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowDateRange(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Select Date Range
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </>
-                                )}
-                              </div>
-                            </Menu.Items>
-                          </Transition>
-                        </Menu>
-                      </div>
                    </div>
                 </div>
               </div>
