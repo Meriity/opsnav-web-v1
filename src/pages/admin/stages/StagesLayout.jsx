@@ -1560,7 +1560,11 @@ export default function StagesLayout() {
                         : "text-gray-500 hover:bg-gray-50"
                     }`}
                   >
-                    Matter Details
+                    {currentModule === "commercial"
+                      ? "Project Details"
+                      : currentModule === "print media"
+                      ? "Order Details"
+                      : "Matter Details"}
                   </button>
                 </div>
               )}

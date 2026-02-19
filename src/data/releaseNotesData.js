@@ -20,6 +20,47 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-19",
+          version: "v6.3.2",
+          type: "patch",
+          category: "ui_ux",
+          title: "Mobile Layout & Responsiveness",
+          description: "Refined mobile header alignment, dynamic labels, and address display.",
+          updates: [
+            {
+              type: "feature",
+              title: "Mobile Reordering",
+              description: "Swappable order ranking for mobile & tablet.",
+              details: "Introduced a specialized card view for mobile/tablet that allows users to swap order priorities using a simple dropdown selection.",
+              icon: ArrowUpDown,
+            },
+            {
+              type: "improvement",
+              title: "Mobile Header Alignment",
+              description: "Optimized header layout on mobile devices.",
+              details: "Aligned the 'Show entries' dropdown and 'Three dots' menu on the same row, removing duplicate controls for a cleaner interface.",
+              icon: Smartphone,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic Mobile Labels",
+              description: "Context-aware toggle labels for mobile view.",
+              details: "The mobile view toggle now dynamically displays 'Order Details', 'Project Details', or 'Matter Details' based on the active module.",
+              icon: Sparkles,
+            },
+            {
+              type: "fix",
+              title: "Address Text Wrapping",
+              description: "Improved address readability on small screens.",
+              details: "Fixed address truncation in mobile card view by enabling text wrapping, ensuring full addresses are visible.",
+              icon: Info,
+            }
+          ],
+          module: "Print Media, Commercial, Admin",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-02-18",
           version: "v6.3.1",
           type: "minor",
