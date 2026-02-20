@@ -20,6 +20,88 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-19",
+          version: "v6.3.2",
+          type: "patch",
+          category: "ui_ux",
+          title: "Mobile Layout & Responsiveness",
+          description: "Refined mobile header alignment, dynamic labels, and address display.",
+          updates: [
+            {
+              type: "feature",
+              title: "Mobile Reordering",
+              description: "Swappable order ranking for mobile & tablet.",
+              details: "Introduced a specialized card view for mobile/tablet that allows users to swap order priorities using a simple dropdown selection.",
+              icon: ArrowUpDown,
+            },
+            {
+              type: "improvement",
+              title: "Mobile Header Alignment",
+              description: "Optimized header layout on mobile devices.",
+              details: "Aligned the 'Show entries' dropdown and 'Three dots' menu on the same row, removing duplicate controls for a cleaner interface.",
+              icon: Smartphone,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic Mobile Labels",
+              description: "Context-aware toggle labels for mobile view.",
+              details: "The mobile view toggle now dynamically displays 'Order Details', 'Project Details', or 'Matter Details' based on the active module.",
+              icon: Sparkles,
+            },
+            {
+              type: "fix",
+              title: "Address Text Wrapping",
+              description: "Improved address readability on small screens.",
+              details: "Fixed address truncation in mobile card view by enabling text wrapping, ensuring full addresses are visible.",
+              icon: Info,
+            }
+          ],
+          module: "Print Media, Commercial, Admin",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-02-18",
+          version: "v6.3.1",
+          type: "minor",
+          category: "ui_ux",
+          title: "Client Portal Redesign & Responsiveness",
+          description: "Complete visual overhaul of the Client Portal with enhanced responsiveness for all screen sizes.",
+          updates: [
+            {
+              type: "feature",
+              title: "Client Portal Redesign",
+              description: "Modern, glassmorphic UI for all client dashboards.",
+              details: "Introduced a vibrant new look with glassmorphism effects, refined typography, and consistent branding across the IDG and Standard Client Dashboards.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Main Pages Responsiveness",
+              description: "Optimized layouts for small laptops and tablets.",
+              details: "Fixed layout breaking points between 1024px and 1280px. The sidebar and main grid now adapt seamlessly to small laptop screens, eliminating visual clutter.",
+              icon: Smartphone,
+            },
+            {
+              type: "fix",
+              title: "Sidebar Interaction",
+              description: "Resolved sidebar closing and icon issues.",
+              details: "Fixed the sidebar behavior to ensure it closes correctly on outside clicks and prevents the 'double icon' glitch on specific resolutions.",
+              icon: Bug,
+            },
+            {
+              type: "improvement",
+              title: "Role & Notification Polish",
+              description: "Cleaned up UI tooltips and notifications.",
+              details: "Fixed '[object Object]' tooltips on User Management role pills and removed redundant success toasts in Print Media for a cleaner experience.",
+              icon: Zap,
+            }
+          ],
+          module: "Client Portal, Dashboard, Admin",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-16",
           version: "v6.3.0",
           type: "minor",

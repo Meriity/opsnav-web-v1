@@ -673,7 +673,7 @@ export default function Stage4({
                       <ExclamationTriangleIcon className="w-5 h-5" />
                     </div>
                   )}
-              <label className={`block mb-1 text-sm md:text-base font-bold ${isDangerField ? "text-red-900 text-lg" : ""}`}>
+              <label className={`block mb-1 text-sm xl:text-base font-bold ${isDangerField ? "text-red-900 text-base lg:text-base xl:text-lg" : ""}`}>
                 {field.label}
               </label>
               </div>
@@ -695,7 +695,7 @@ export default function Stage4({
               ).map((val) => (
                 <label
                   key={val}
-                  className={`flex items-center gap-2 text-sm md:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}
+                  className={`flex items-center gap-2 text-sm xl:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}
                 >
                   <input
                     type="radio"
@@ -720,7 +720,7 @@ export default function Stage4({
       case "number":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <input
@@ -743,7 +743,7 @@ export default function Stage4({
       case "text":
         return (
           <div key={field.name} className="mt-5">
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
             <input
@@ -759,7 +759,7 @@ export default function Stage4({
       case "image":
         return (
           <div className="w-full mt-5" key={field.name}>
-            <label className="block mb-1 text-sm md:text-base font-bold">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
               {field.label}
             </label>
 
@@ -814,7 +814,7 @@ export default function Stage4({
       case "pdf":
         return (
             <div className="w-full mt-5" key={field.name}>
-              <label className="block mb-1 text-sm md:text-base font-bold">
+              <label className="block mb-1 text-sm xl:text-base font-bold">
                 {field.label}
               </label>
   

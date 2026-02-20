@@ -168,41 +168,41 @@ const ViewClientsTable = ({
                   key={column.key}
                   style={{ width: column.width }}
                   onClick={() => handleSort(column.key)}
-                  className={`px-2 py-3 text-center text-sm ${
+                  className={`px-1 lg:px-1 xl:px-2 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm ${
                     colIndex === 0 && !isDraggingMode ? "rounded-l-2xl" : ""
                   } ${!isDraggingMode ? "cursor-pointer" : "cursor-default"} select-none`}
                 >
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center whitespace-normal break-words">
                     <span>{column.title}</span>
                     {!isDraggingMode && <span>
                       {sortConfig.key === column.key ? (
                         sortConfig.direction === "asc" ? (
-                          <ArrowUp size={14} />
+                          <ArrowUp size={12} className="lg:size-3 xl:size-[14px]" />
                         ) : (
-                          <ArrowDown size={14} />
+                          <ArrowDown size={12} className="lg:size-3 xl:size-[14px]" />
                         )
                       ) : (
-                        <ArrowUpDown size={14} />
+                        <ArrowUpDown size={12} className="lg:size-3 xl:size-[14px]" />
                       )}
                     </span>}
                   </div>
                 </th>
               ))}
               <th
-                className="pl-6 pr-5 py-3 text-center text-sm"
-                style={{ width: "11%" }}
+                className="pl-2 lg:pl-1 pr-2 lg:pr-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm"
+                style={{ width: "12%" }}
               >
                 Stages
               </th>
               <th
-                className="py-3 pl-6 text-center text-sm"
-                style={{ width: "6.5%" }}
+                className="py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm"
+                style={{ width: "3.5%" }}
               >
                 OT
               </th>
               <th
-                className="pl-2 pr-2 py-3 text-center text-sm rounded-r-2xl"
-                style={{ width: "6.5%" }}
+                className="px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl"
+                style={{ width: "5%" }}
               >
                 Action
               </th>
@@ -239,7 +239,7 @@ const ViewClientsTable = ({
                            {columns.map((column, colIndex) => (
                              <td
                                key={column.key}
-                               className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words`}
+                               className={`px-1 lg:px-1 xl:px-2 py-3 text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm text-black align-middle break-words`}
                              >
                                {/* Content Logic (Same as before) */}
                                <div
@@ -282,7 +282,7 @@ const ViewClientsTable = ({
                                       <select
                                         disabled={true} // Disable dropdown when dragging
                                         name="allocatedUser"
-                                        className="bg-gray-100 p-2 text-gray-500 rounded w-full cursor-not-allowed"
+                                        className="bg-gray-100 p-1 lg:p-1 xl:p-2 text-gray-500 rounded w-full cursor-not-allowed text-[10px] lg:text-[10px] xl:text-xs"
                                         value={item.allocatedUser || ""}
                                       >
                                         <option value="">
@@ -304,11 +304,11 @@ const ViewClientsTable = ({
                                 {/* Disabled Stages View */}
                                 <div className="text-xs text-center">Stages (Locked)</div>
                             </td>
-                            <td className="pl-8 align-middle text-gray-400 pointer-events-none">
-                                <ClipboardList size={20} className="mx-auto opacity-50" />
+                             <td className="text-center align-middle text-gray-400 pointer-events-none">
+                                <ClipboardList size={16} className="mx-auto lg:size-4 xl:size-5 opacity-50" />
                             </td>
-                            <td className="pl-3 pr-2 rounded-r-2xl align-middle pointer-events-none">
-                                <Edit size={12} className="mx-auto opacity-50" />
+                            <td className="text-center rounded-r-2xl align-middle pointer-events-none">
+                                <Edit size={10} className="mx-auto lg:size-[10px] xl:size-3 opacity-50" />
                             </td>
                          </>
                        )}
@@ -326,14 +326,14 @@ const ViewClientsTable = ({
                   className="bg-white rounded-2xl transition-all hover:shadow-xl"
                 >
                   {columns.map((column, colIndex) => (
-                    <td
+                     <td
                       key={column.key}
-                      className={`px-2 py-3 text-xs lg:text-sm xl:text-base 2xl:text-md 4xl:text-lg text-black align-middle break-words ${
+                      className={`px-1 lg:px-1 xl:px-2 py-3 text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm text-black align-middle break-words ${
                         colIndex === 0 ? "rounded-l-2xl" : ""
                       }`}
                     >
                       <div
-                        className="lg:font-normal 2xl:text-center"
+                        className="lg:font-normal text-center"
                         title={item[column.key]}
                       >
                         {[
@@ -375,8 +375,8 @@ const ViewClientsTable = ({
                                   !["admin", "superadmin"].includes(
                                     localStorage.getItem("role")
                                   )
-                                    ? "bg-gray-100 p-2 text-gray-500 rounded w-full"
-                                    : "bg-white p-2 border rounded w-full"
+                                    ? "bg-gray-100 p-1 lg:p-1 xl:p-2 text-gray-500 rounded w-full text-[10px] lg:text-[10px] xl:text-xs"
+                                    : "bg-white p-1 lg:p-1 xl:p-2 border rounded w-full text-[10px] lg:text-[10px] xl:text-xs"
                                 }
                                 value={item.allocatedUser || ""}
                                 onChange={(e) => {
@@ -427,7 +427,7 @@ const ViewClientsTable = ({
                                 : item.matternumber || item.orderId
                             }/${index + 1}`}
                             key={keyName}
-                            className="px-1 py-1 text-white rounded text-xs cursor-pointer"
+                            className="px-0.5 lg:px-0.5 xl:px-1 py-1 text-white rounded text-[9px] lg:text-[9px] xl:text-xs cursor-pointer"
                             style={{
                               backgroundColor:
                                 stageColorMap[item?.stages?.[0]?.[keyName]] ||
@@ -443,7 +443,7 @@ const ViewClientsTable = ({
                       )}
                     </div>
                   </td>
-                  <td className="pl-8 align-middle">
+                  <td className="align-middle text-center">
                     <div className="flex justify-center">
                       <button
                         type="button"
@@ -458,7 +458,7 @@ const ViewClientsTable = ({
                           );
                         }}
                       >
-                        <ClipboardList size={20} />
+                        <ClipboardList size={16} className="lg:size-4 xl:size-5" />
                       </button>
                     </div>
                   </td>
@@ -475,8 +475,8 @@ const ViewClientsTable = ({
                         className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                         title="Edit"
                       >
-                        <Edit size={12} />
-                        <span className="text-xs">Edit</span>
+                        <Edit size={10} className="lg:size-[10px] xl:size-3" />
+                        <span className="text-[9px] lg:text-[9px] xl:text-xs">Edit</span>
                       </button>
                       {/* <button
                         onClick={() =>
@@ -494,8 +494,8 @@ const ViewClientsTable = ({
                           className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
                           title="Delete"
                         >
-                          <Trash2 size={12} />
-                          <span className="text-xs">Delete</span>
+                          <Trash2 size={10} className="lg:size-[10px] xl:size-3" />
+                          <span className="text-[9px] lg:text-[9px] xl:text-xs">Delete</span>
                         </button>
                       )}
                     </div>
@@ -511,11 +511,51 @@ const ViewClientsTable = ({
 
       {/* Mobile & Tablet Card View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {currentData.map((item) => (
+        {currentData.map((item, index) => (
           <div
             key={item.id}
-            className="bg-white rounded-2xl shadow p-4 space-y-3"
+            className={`bg-white rounded-2xl shadow p-4 space-y-3 ${isDraggingMode ? 'border-2 border-dashed border-[#2E3D99]/50' : ''}`}
           >
+            {isDraggingMode ? (
+              // Reordering View for Mobile
+              <div className="flex flex-col gap-3">
+                 <div className="flex justify-between items-center border-b pb-2">
+                    <span className="font-bold text-gray-700">Order: <span className="text-[#2E3D99]">{item.orderId}</span></span>
+                    <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg">
+                        <label className="text-sm font-bold text-[#2E3D99]">Rank:</label>
+                        <select
+                            value={index + 1}
+                            onChange={(e) => {
+                               const newIndex = Number(e.target.value) - 1;
+                               const newData = arrayMove(currentData, index, newIndex);
+                               setCurrentData(newData);
+                               if (setDraggedData) {
+                                   setDraggedData(newData);
+                               }
+                            }}
+                            className="bg-transparent font-bold text-[#2E3D99] focus:outline-none cursor-pointer"
+                        >
+                            {currentData.map((_, i) => (
+                                <option key={i} value={i + 1}>{i + 1}</option>
+                            ))}
+                        </select>
+                    </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                        <span className="block text-gray-400">Client</span>
+                        <span className="font-semibold">{item.clientName || item.client_name}</span>
+                    </div>
+                     <div>
+                        <span className="block text-gray-400">Address</span>
+                        <span className="break-words">{item.billing_address || item.businessAddress || "-"}</span>
+                    </div>
+                 </div>
+              </div>
+            ) : (
+             // Standard View
+             <>
             <div className="flex justify-between items-center border-b pb-2">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 {currentModule === "commercial"
@@ -595,7 +635,7 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
-                <button
+                {/* <button
                   onClick={() =>
                     onShare(
                       currentModule === "commercial"
@@ -608,7 +648,7 @@ const ViewClientsTable = ({
                   title="Share"
                 >
                   <Share2 size={16} />
-                </button>
+                </button> */}
                 {currentModule === "print media" && (
                   <button
                     onClick={() => onDelete(item)}
@@ -620,6 +660,7 @@ const ViewClientsTable = ({
                 )}
               </div>
             </div>
+
 
             <div>
               <p className="text-xs text-gray-500">Client Name</p>
@@ -694,6 +735,8 @@ const ViewClientsTable = ({
                 ))}
               </div>
             </div>
+            </>
+            )}
           </div>
         ))}
       </div>

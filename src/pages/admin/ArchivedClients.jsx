@@ -37,13 +37,13 @@ import {
 
 function ClientsPerPage({ value, onChange }) {
   return (
-    <div className="flex items-center space-x-2 text-sm text-gray-700">
+    <div className="flex items-center space-x-2 text-xs lg:text-xs xl:text-sm text-gray-700">
       <span>Show</span>
       <select
         id="clients-per-page"
         value={value}
         onChange={onChange}
-        className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
+        className="block px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
       >
         <option>5</option>
         <option>10</option>
@@ -761,16 +761,16 @@ export default function ArchivedClients() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 sm:mb-8"
+            className="mb-4 lg:mb-4 xl:mb-8"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
                   <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     {getPageTitle()}
                   </span>
                 </h1>
-                <p className="text-gray-600 text-sm sm:text-base mt-2 truncate">
+                <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
                   View and manage{" "}
                   {currentModule === "commercial"
                     ? "archived projects"
@@ -789,8 +789,8 @@ export default function ArchivedClients() {
             transition={{ delay: 0.1 }}
             className="rounded-2xl sm:rounded-3xl overflow-visible bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 relative z-20"
           >
-            <div className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 lg:p-5 xl:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-800">
@@ -807,7 +807,7 @@ export default function ArchivedClients() {
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="clients-per-page"
-                      className="text-sm font-medium text-gray-700"
+                      className="text-xs lg:text-xs xl:text-sm font-medium text-gray-700"
                     >
                       Show:
                     </label>
@@ -817,7 +817,7 @@ export default function ArchivedClients() {
                       onChange={(e) =>
                         setClientsPerPage(Number(e.target.value))
                       }
-                      className="block px-3 py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-sm"
+                      className="block px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm"
                     >
                       <option>5</option>
                       <option>10</option>
@@ -835,27 +835,27 @@ export default function ArchivedClients() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setOpenExcel(true)}
                       disabled={isExporting}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                      className="flex items-center gap-2 px-3 lg:px-3 xl:px-4 py-2 lg:py-1.5 xl:py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[10px] xl:text-sm font-medium"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-3 h-3 lg:w-3 lg:h-3 xl:w-4 xl:h-4" />
                       {isExporting ? "Exporting..." : "Export"}
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowFilterModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                      className="flex items-center gap-2 px-3 lg:px-3 xl:px-4 py-2 lg:py-1.5 xl:py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[10px] xl:text-sm font-medium"
                     >
-                      <Filter className="w-4 h-4" />
+                      <Filter className="w-3 h-3 lg:w-3 lg:h-3 xl:w-4 xl:h-4" />
                       Filter
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowSettlementDateModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+                      className="flex items-center gap-2 px-3 lg:px-3 xl:px-4 py-2 lg:py-1.5 xl:py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[10px] xl:text-sm font-medium"
                     >
-                      <Calendar className="w-4 h-4" />
+                      <Calendar className="w-3 h-3 lg:w-3 lg:h-3 xl:w-4 xl:h-4" />
                       Date Range
                     </motion.button>
                   </div>
