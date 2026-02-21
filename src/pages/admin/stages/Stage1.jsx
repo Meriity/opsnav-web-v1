@@ -137,14 +137,69 @@ const formConfig = {
       options: ["Yes", "No", "N/R"],
     },
     {
+      name: "evidenceOfInjury",
+      label: "Evidence of the injury",
+      type: "radio",
+      options: ["Yes", "No", "N/R"],
+    },
+    {
       name: "reportedToPolice",
       label: "Reported to Police",
       type: "radio",
       options: ["Yes", "No", "N/R"],
     },
     {
-      name: "policeDetailsProvided",
-      label: "If Yes, details provided",
+      name: "dateOfReport",
+      label: "Date of report",
+      type: "date",
+    },
+    {
+      name: "detailsOfReportText",
+      label: "Details of the report:",
+      type: "header",
+    },
+    {
+      name: "detailsOfReportPoliceStation",
+      label: "Police station",
+      type: "text",
+    },
+    {
+      name: "detailsOfReportOfficer",
+      label: "Officer",
+      type: "text",
+    },
+    {
+      name: "detailsOfReportEvidence",
+      label: "Evidence of report",
+      type: "textarea",
+    },
+    {
+      name: "statutoryDeclaration",
+      label: "Statutory Declaration for Nil Report",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      name: "intakeForm",
+      label: "Intake Form/instructions given",
+      type: "radio",
+      options: ["Yes", "No", "N/R"],
+    },
+    {
+      name: "voi",
+      label: "VOI",
+      type: "radio",
+      options: ["Yes", "No", "N/R"],
+    },
+    {
+      name: "otherAssistance",
+      label: "Any other assistance from another scheme",
+      type: "radio",
+      options: ["Yes", "No", "N/R"],
+    },
+    {
+      name: "otherAssistanceDetailsProvided",
+      label: "If yes, details provided",
       type: "radio",
       options: ["Yes", "No", "N/R"],
     },
@@ -155,7 +210,7 @@ const formConfig = {
     },
     {
       name: "lossOfEarning",
-      label: "Loss of earning",
+      label: "Loss of earnings",
       type: "checkbox",
     },
     {
@@ -171,6 +226,21 @@ const formConfig = {
     {
       name: "medicalExpenses",
       label: "Medical expenses",
+      type: "checkbox",
+    },
+    {
+      name: "counselling",
+      label: "Counselling",
+      type: "checkbox",
+    },
+    {
+      name: "safetyExpenses",
+      label: "Safety-related expenses",
+      type: "checkbox",
+    },
+    {
+      name: "lossOrDamageClothing",
+      label: "Loss or damage to clothing",
       type: "checkbox",
     },
     {
@@ -260,10 +330,15 @@ export default function Stage1({
   }
 
   function extractNotes(note) {
-    const [systemNote = "", clientComment = ""] = (note || "")
-      .split(" - ")
-      .map((str) => str.trim());
-    return { systemNote, clientComment };
+    if (!note) return { systemNote: "", clientComment: "" };
+    if (note.includes(" - ")) {
+      const parts = note.split(" - ");
+      return { 
+        systemNote: parts[0]?.trim() || "", 
+        clientComment: parts.slice(1).join(" - ")?.trim() || "" 
+      };
+    }
+    return { systemNote: "", clientComment: note.trim() };
   }
 
   const generateSystemNote = () => {
@@ -278,15 +353,36 @@ export default function Stage1({
       "approved",
     ]);
 
+    const isFieldVisible = (field) => {
+      if (currentModule === "vocat") {
+        const rawVal = formData.reportedToPolice;
+        const reported = String(rawVal || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+
+        if (field.name === "dateOfReport" || field.name === "detailsOfReportText" || field.name === "detailsOfReportPoliceStation" || field.name === "detailsOfReportOfficer" || field.name === "detailsOfReportEvidence") {
+          if (reported !== "yes") return false;
+        }
+        
+        if (field.name === "statutoryDeclaration") {
+           if (reported !== "no") return false;
+        }
+        
+        const assistance = String(formData.otherAssistance || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+        if (field.name === "otherAssistanceDetailsProvided") {
+          if (assistance !== "yes") return false;
+        }
+      }
+      return true;
+    };
+
     // radio fields not received
     const notReceivedRadio = radioFields
+      .filter((field) => isFieldVisible(field))
       .filter(
         (field) => !greenValues.has(normalizeValue(formData[field.name] || ""))
       )
       .map((field) => field.label);
-
-    // text fields not received (empty or whitespace)
     const notReceivedText = textFields
+      .filter((field) => isFieldVisible(field))
       .filter(
         (field) =>
           !formData[field.name] || formData[field.name].toString().trim() === ""
@@ -304,7 +400,6 @@ export default function Stage1({
     return `${notReceived.join(", ")} not received`;
   };
 
-  // Add costing fields for IDG admins - Effect to inject fields
   useEffect(() => {
     if (
       currentModule === "print media" &&
@@ -339,11 +434,10 @@ export default function Stage1({
     if (hasLoaded.current) return;
 
     const initializeData = () => {
-      // Use data prop directly
       const stageData = data;
 
       const { systemNote, clientComment } = extractNotes(
-        stageData?.noteForClient
+        currentModule === "vocat" ? (stageData?.commentary || stageData?.noteForClient) : stageData?.noteForClient
       );
 
       const initialFormData = {};
@@ -362,6 +456,8 @@ export default function Stage1({
             "";
         } else if (field.type === "radio") {
           value = normalizeValue(stageData[field.name] ?? "");
+        } else if (field.type === "date" && stageData[field.name]) {
+          value = String(stageData[field.name]).split("T")[0];
         } else {
           value = stageData[field.name] ?? "";
         }
@@ -478,7 +574,6 @@ export default function Stage1({
         );
         payload.colorStatus = allCompleted ? "green" : "amber";
       } else if (currentModule === "vocat") {
-        payload.noteForClient = noteForClient;
         
         // Nest aid types
         const aidTypes = {
@@ -486,6 +581,9 @@ export default function Stage1({
              clothing: payload.clothing || false,
              securityExpenses: payload.securityExpenses || false,
              medicalExpenses: payload.medicalExpenses || false,
+             counselling: payload.counselling || false,
+             safetyExpenses: payload.safetyExpenses || false,
+             lossOrDamageClothing: payload.lossOrDamageClothing || false,
              recoveryExpenses: payload.recoveryExpenses || false
         };
         payload.aidTypes = aidTypes;
@@ -494,13 +592,16 @@ export default function Stage1({
         delete payload.clothing;
         delete payload.securityExpenses;
         delete payload.medicalExpenses;
+        delete payload.counselling;
+        delete payload.safetyExpenses;
+        delete payload.lossOrDamageClothing;
         delete payload.recoveryExpenses;
+
+        delete payload.typeOfAidHeader;
+        delete payload.detailsOfReportText;
       } else {
-        // For other modules, use combined note structure
         payload.noteForClient = noteForClient;
       }
-
-      // remove temporary fields
       delete payload.systemNote;
       delete payload.clientComment;
 
@@ -518,12 +619,15 @@ export default function Stage1({
       } else if (currentModule === "wills") {
         await willsApi.upsertStage(1, matterNumber, payload);
       } else if (currentModule === "vocat") {
-        payload.notes = payload.noteForClient; 
+        payload.commentary = noteForClient;
+        payload.systemNote = systemNote;
+        
+        delete payload.noteForClient;
+        delete payload.notes;
+        
         await vocatApi.saveStageOne(payload);
       } else {
         const res = await api.upsertStageOne(payload);
-
-        // Store authoritative Stage 1 color from POST response
         if (res?.data?.colorStatus) {
           sessionStorage.setItem("stage1ColorOverride", res.data.colorStatus);
         }
@@ -560,12 +664,47 @@ export default function Stage1({
 
   const renderField = (field) => {
     // Conditional rendering for VOCAT
-    if (currentModule === "vocat" && field.name === "policeDetailsProvided") {
-       const reported = normalizeValue(formData.reportedToPolice);
-       if (reported !== "yes") return null;
+    if (currentModule === "vocat") {
+      const rawVal = formData.reportedToPolice;
+      // manual normalization to be safe
+      const reported = String(rawVal || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+
+      if (field.name === "dateOfReport" || field.name === "detailsOfReportText" || field.name === "detailsOfReportPoliceStation" || field.name === "detailsOfReportOfficer" || field.name === "detailsOfReportEvidence") {
+        if (reported !== "yes") return null;
+      }
+      
+      if (field.name === "statutoryDeclaration") {
+         if (reported !== "no") return null;
+      }
+      
+      const assistance = String(formData.otherAssistance || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+      if (field.name === "otherAssistanceDetailsProvided") {
+        if (assistance !== "yes") return null;
+      }
     }
 
     switch (field.type) {
+      case "header":
+        return (
+           <h3 className="text-base lg:text-base xl:text-lg font-bold text-gray-800 border-b pb-1 mt-6 mb-2">{field.label}</h3>
+        );
+
+      case "date":
+        return (
+          <div key={field.name} className="mt-5">
+            <label className="block mb-1 text-sm xl:text-base font-bold">
+              {field.label}
+            </label>
+            <input
+              type="date"
+              value={formData[field.name] || ""}
+              disabled={isReadOnly}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm xl:text-base ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
+            />
+          </div>
+        );
+
       case "number":
         return (
           <div key={field.name} className="mt-5">
@@ -670,7 +809,7 @@ export default function Stage1({
               {field.label}
             </label>
             <textarea
-              value={formData[field.name] || ""}
+              value={field.name === "clientComment" ? (formData.clientComment || "") : (formData[field.name] || "")}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className={`w-full min-w-0 rounded p-2 bg-gray-100 text-sm xl:text-base resize-none ${isReadOnly ? "cursor-not-allowed bg-gray-200 text-gray-800 font-medium" : ""}`}
               disabled={isReadOnly}
@@ -694,13 +833,6 @@ export default function Stage1({
             </label>
           </div>
         );
-
-      case "header":
-          return (
-             <div key={field.name} className="mt-6 mb-2">
-                <h3 className="text-base lg:text-base xl:text-lg font-bold text-gray-800">{field.label}</h3>
-             </div>
-          );
 
       default:
         return null;

@@ -364,10 +364,10 @@ export default function StagesLayout() {
     ];
   } else if (currentModule === "vocat") {
     stages = [
-      { id: 1, title: "Client & Incident" },
-      { id: 2, title: "VOI" },
-      { id: 3, title: "Searches & Analysis" },
-      { id: 4, title: "FAS Approval" },
+      { id: 1, title: "Intake" },
+      { id: 2, title: "Types of financial assistance" },
+      { id: 3, title: "Interim approval" },
+      { id: 4, title: "Final Decision" },
     ];
   }
 
