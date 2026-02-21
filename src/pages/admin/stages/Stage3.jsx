@@ -80,6 +80,12 @@ const formConfig = {
     fields: [
       { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "applicatedSubmitted", label: "Application submitted", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "applicationTriaged", label: "Application triaged", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "additionalInformation", label: "Additional information requested", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "noticeOfDecisionInterim", label: "Notice of Decision (Interim)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "bankDetailsProvided", label: "Bank details provided", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "authorisedExpenses", label: "Authorised future expenses submitted", type: "radio", options: ["Yes", "No", "N/R"] },
     ],
   },
 };
@@ -170,15 +176,16 @@ export default function Stage3({
         }
       });
 
+      const rawNoteForClient = currentModule === "vocat" ? (stageData.commentary || stageData.noteForClient || "") : (stageData.noteForClient || "");
       const sysNote =
         currentModule === "commercial"
           ? stageData.noteForSystem || ""
-          : (stageData.noteForClient || "").split(" - ")[0] || "";
+          : rawNoteForClient.includes(" - ") ? rawNoteForClient.split(" - ")[0] : "";
 
       const clientNote =
         currentModule === "commercial"
           ? stageData.noteForClient || ""
-          : (stageData.noteForClient || "").split(" - ").slice(1).join(" - ");
+          : rawNoteForClient.includes(" - ") ? rawNoteForClient.split(" - ").slice(1).join(" - ") : rawNoteForClient;
 
       setFormState(newForm);
       setStatusState(newStatus);
@@ -265,7 +272,10 @@ export default function Stage3({
       if (currentModule === "commercial") {
         await commercialApi.upsertStage(3, matterNumber, payload);
       } else if (currentModule === "vocat") {
-        payload.notes = payload.noteForClient;
+        payload.commentary = payload.noteForClient;
+        payload.systemNote = systemNote;
+        delete payload.noteForClient;
+        delete payload.notes;
         await vocatApi.saveStageThree(payload);
       } else if (currentModule === "print media") {
         await api.upsertIDGStages(matterNumber, 3, payload);
@@ -316,8 +326,18 @@ export default function Stage3({
 
   return (
     <div className="overflow-y-auto">
-      {fields.map((f) => (
-        <div key={f.key} className="mt-5">
+      {fields.map((f) => {
+        if (currentModule === "vocat") {
+          if (
+            (f.key === "bankDetailsProvided" || f.key === "authorisedExpenses") &&
+            normalizeValue(formState.noticeOfDecisionInterim) !== "yes"
+          ) {
+            return null;
+          }
+        }
+
+        return (
+          <div key={f.key} className="mt-5">
           <div className="flex justify-between items-center mb-3">
             <label className="font-bold text-sm xl:text-base">{f.label}</label>
             {f.type !== "text" && (
@@ -378,7 +398,8 @@ export default function Stage3({
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       <div className="mt-5">
         <label className="font-bold text-sm xl:text-base">System Note for Client</label>

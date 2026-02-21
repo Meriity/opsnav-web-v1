@@ -20,6 +20,47 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-21",
+          version: "v6.4.0",
+          type: "minor",
+          category: "feature",
+          title: "Comprehensive VOCAT Stages Overhaul",
+          description: "Major expansion of data capture fields and conditional workflows across all VOCAT stages.",
+          updates: [
+            {
+              type: "feature",
+              title: "Stage 1 Intake Expansion",
+              description: "Added comprehensive client details and new financial assistance categories.",
+              details: "Client authority, Evidence of the incident, Evidence of the injury, Reported to Police. If yes → date of report + details of the report (police station, officer, evidence of report). If no → Statutory Declaration for Nil Report. Intake Form/instructions given, Voi, Any other assistance from another scheme. If yes → details provided.",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Stage 2 Types of financial assistance",
+              description: "Added new fields for specific financial evidence.",
+              details: "Counselling: Details of counsellor received, Counsellor Report requested. Loss of Earnings: Evidence of earnings, Letter from Doctor. Medical expenses: Evidence of expenses, Additional evidence. Safety-related expenses: Evidence of expenses, Additional evidence. Loss or damage to clothing: Statutory Declaration, Additional evidence. Recovery expenses: Letter of Support, Evidence of expenses, Additional evidence.",
+              icon: Zap,
+            },
+            {
+              type: "feature",
+              title: "Stage 3 Interim approval",
+              description: "Added new fields for interim application tracking.",
+              details: "Application submitted, Application triaged, Additional information requested, Notice of Decision (Interim). If yes → Bank details provided, Authorised future expenses submitted.",
+              icon: Database,
+            },
+            {
+              type: "feature",
+              title: "Stage 4 Final Decision",
+              description: "Added new fields to track end-of-process decisions and transfers.",
+              details: "Notice of Final Decision, Letter to Client, Bank details provided, Application transferred to client, Variation (if required). If yes → File transferred back to VK.",
+              icon: Database,
+            }
+          ],
+          module: "VOCAT",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-19",
           version: "v6.3.2",
           type: "patch",
