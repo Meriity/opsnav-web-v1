@@ -154,6 +154,12 @@ const formConfig = {
       type: "date",
     },
     {
+      name: "policeDetailsProvided",
+      label: "Police details provided",
+      type: "radio",
+      options: ["Yes", "No", "N/R"],
+    },
+    {
       name: "detailsOfReportText",
       label: "Details of the report:",
       type: "header",
@@ -599,6 +605,17 @@ export default function Stage1({
 
         delete payload.typeOfAidHeader;
         delete payload.detailsOfReportText;
+
+        const reported = String(formData.reportedToPolice || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+        if (reported !== "yes") {
+            delete payload.dateOfReport;
+            delete payload.policeDetailsProvided;
+            delete payload.detailsOfReportPoliceStation;
+            delete payload.detailsOfReportOfficer;
+            delete payload.detailsOfReportEvidence;
+        } else {
+            delete payload.statutoryDeclaration;
+        }
       } else {
         payload.noteForClient = noteForClient;
       }
@@ -669,7 +686,7 @@ export default function Stage1({
       // manual normalization to be safe
       const reported = String(rawVal || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
 
-      if (field.name === "dateOfReport" || field.name === "detailsOfReportText" || field.name === "detailsOfReportPoliceStation" || field.name === "detailsOfReportOfficer" || field.name === "detailsOfReportEvidence") {
+      if (field.name === "dateOfReport" || field.name === "policeDetailsProvided" || field.name === "detailsOfReportText" || field.name === "detailsOfReportPoliceStation" || field.name === "detailsOfReportOfficer" || field.name === "detailsOfReportEvidence") {
         if (reported !== "yes") return null;
       }
       
