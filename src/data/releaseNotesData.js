@@ -31,7 +31,7 @@ export const monthlyReleaseNotes = {
               type: "feature",
               title: "Stage 1 Intake Expansion",
               description: "Added comprehensive client details and new financial assistance categories.",
-              details: "Client authority, Evidence of the incident, Evidence of the injury, Reported to Police. If yes → date of report + details of the report (police station, officer, evidence of report). If no → Statutory Declaration for Nil Report. Intake Form/instructions given, Voi, Any other assistance from another scheme. If yes → details provided.",
+              details: "Client authority, Evidence of the incident, Evidence of the injury, Reported to Police. If yes → date of report + Police details provided + details of the report (police station, officer, evidence of report). If no → Statutory Declaration for Nil Report. Intake Form/instructions given, Voi, Any other assistance from another scheme. If yes → details provided.",
               icon: Sparkles,
             },
             {
