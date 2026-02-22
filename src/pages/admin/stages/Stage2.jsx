@@ -248,22 +248,41 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { name: "voi", label: "VOI", type: "radio", options: ["Yes", "No", "N/R"] },
+
       { name: "fasStandardForm", label: "FAS Standard Form", type: "radio", options: ["Yes", "No", "N/R"] },
       
       { name: "evidenceHeader", label: "Evidence:", type: "header" },
       
-      { name: "proofOfIncome", label: "Proof of income (Loss of earning)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "proofOfIncome", label: "Proof of income", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No", "N/R"] },
+      
+      { name: "detailsOfCounsellor", label: "Details of counsellor received", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "counsellorReport", label: "Counsellor Report requested", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "evidenceOfSafetyRelatedExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForSafety", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
       
       { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "statutoryDeclarationOfClothing", label: "Statutory Declaration", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForClothing", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
       
       { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No", "N/R"] },
       
-      { name: "medicalInvoices", label: "Invoices / receipts (Medical)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "medicalInvoices", label: "Invoices / receipts", type: "radio", options: ["Yes", "No", "N/R"] },
       
       { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "evidenceOfEarnings", label: "Evidence of earnings (e.g. payslips, income statements etc)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "letterFromDoctor", label: "Letter from Doctor", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "evidenceOfMedicalExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForMedical", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "letterOfSupportForRecovery", label: "Letter of Support", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "evidenceOfRecoveryExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForRecovery", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
     ],
     noteGroups: [
       {
@@ -274,15 +293,27 @@ const formConfig = {
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
-            "voi", 
             "fasStandardForm", 
             "proofOfIncome", 
             "psychLetter", 
+            "detailsOfCounsellor",
+            "counsellorReport",
+            "evidenceOfSafetyRelatedExpenses",
+            "additionalEvidenceForSafety",
             "statDecClothing",
             "clothingReceipts",
+            "statutoryDeclarationOfClothing",
+            "additionalEvidenceForClothing",
             "securityInvoices",
             "medicalInvoices",
-            "recoveryInvoices"
+            "recoveryInvoices",
+            "evidenceOfEarnings",
+            "letterFromDoctor",
+            "evidenceOfMedicalExpenses",
+            "additionalEvidenceForMedical",
+            "letterOfSupportForRecovery",
+            "evidenceOfRecoveryExpenses",
+            "additionalEvidenceForRecovery"
         ],
       },
     ],
@@ -292,7 +323,6 @@ const formConfig = {
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
   const strVal = String(v).toLowerCase().trim();
-  // Handle special case for "Vendor Disclosure (S32)"
   if (strVal.includes("vendor disclosure") || strVal.includes("s32")) {
     return "yes";
   }
@@ -452,13 +482,15 @@ export default function Stage2({
         initialFormData.noteForClient = clientComment;
       } else {
         currentConfig.noteGroups.forEach((group) => {
-          const rawNote = stageData[group.noteForClientKey] || "";
-          const parts = rawNote.split(" - ");
-          // If there's a separator, everything after the first " - " is the client comment
-          // usage: "System Note Text - Client Comment Text"
+          const rawNote = (currentModule === "vocat" ? (stageData.commentary || stageData[group.noteForClientKey]) : stageData[group.noteForClientKey]) || "";
           let clientComment = "";
-          if (parts.length > 1) {
-            clientComment = parts.slice(1).join(" - ");
+          if (rawNote.includes(" - ")) {
+            const parts = rawNote.split(" - ");
+            if (parts.length > 1) {
+               clientComment = parts.slice(1).join(" - ");
+            }
+          } else {
+            clientComment = rawNote;
           }
           initialFormData[group.clientCommentKey] = clientComment;
         });
@@ -587,7 +619,13 @@ export default function Stage2({
       } else if (currentModule === "vocat") {
         payload.matterNumber = matterNumber;
         payload.colorStatus = colorStatus;
-        payload.notes = payload.noteForClient;
+        payload.commentary = payload.noteForClient;
+        payload.systemNote = generateSystemNote("main");
+        
+        delete payload.evidenceHeader;
+        delete payload.noteForClient;
+        delete payload.notes;
+        
         apiResponse = await vocatApi.saveStageTwo(payload);
       } else {
         // standard conveyancing
@@ -636,6 +674,25 @@ export default function Stage2({
       if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) return null;
       
       if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) return null;
+
+      if (field.name === "detailsOfCounsellor" && !hasAid("counselling")) return null;
+      if (field.name === "counsellorReport" && !hasAid("counselling")) return null;
+
+      if (field.name === "evidenceOfSafetyRelatedExpenses" && !hasAid("safetyExpenses")) return null;
+      if (field.name === "additionalEvidenceForSafety" && !hasAid("safetyExpenses")) return null;
+
+      if (field.name === "statutoryDeclarationOfClothing" && !hasAid("lossOrDamageClothing")) return null;
+      if (field.name === "additionalEvidenceForClothing" && !hasAid("lossOrDamageClothing")) return null;
+
+      if (field.name === "evidenceOfEarnings" && !hasAid("lossOfEarning")) return null;
+      if (field.name === "letterFromDoctor" && !hasAid("lossOfEarning")) return null;
+
+      if (field.name === "evidenceOfMedicalExpenses" && !hasAid("medicalExpenses")) return null;
+      if (field.name === "additionalEvidenceForMedical" && !hasAid("medicalExpenses")) return null;
+
+      if (field.name === "letterOfSupportForRecovery" && !hasAid("recoveryExpenses")) return null;
+      if (field.name === "evidenceOfRecoveryExpenses" && !hasAid("recoveryExpenses")) return null;
+      if (field.name === "additionalEvidenceForRecovery" && !hasAid("recoveryExpenses")) return null;
     }
 
     return (

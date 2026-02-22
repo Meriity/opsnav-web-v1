@@ -100,8 +100,12 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { name: "variationRequired", label: "Variation required", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "finalLetterToClient", label: "Final Letter to Client", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "noticeOfDecisionFinal", label: "Notice of Final Decision", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "bankDetailsProvided", label: "Bank details provided", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "applicationTransfer", label: "Application transferred to client", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "variationRequired", label: "Variation (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "fileTransfer", label: "File transferred back to VK", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "finalLetterToClient", label: "Letter to Client", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "closeMatter", label: "Close Matter", type: "radio", options: ["Completed", "Cancelled", "N/R"] },
@@ -114,7 +118,17 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["variationRequired", "finalLetterToClient", "fasApproval", "invoiced", "closeMatter"],
+        fieldsForNote: [
+          "noticeOfDecisionFinal",
+          "bankDetailsProvided",
+          "applicationTransfer",
+          "variationRequired",
+          "fileTransfer",
+          "finalLetterToClient",
+          "fasApproval",
+          "invoiced",
+          "closeMatter"
+        ],
       },
     ],
   },
@@ -292,11 +306,15 @@ export default function Stage4({
         setNoteForClient(loadedClientComment);
       } else {
         currentConfig.noteGroups.forEach((group) => {
-          const noteString = stageData[group.noteForClientKey] || "";
-          const noteParts = noteString.split(" - ");
-          loadedSystemNote = noteParts[0]?.trim() || "";
-          loadedClientComment =
-            noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+          const noteString = currentModule === "vocat" ? (stageData.commentary || stageData[group.noteForClientKey] || "") : (stageData[group.noteForClientKey] || "");
+          if (noteString.includes(" - ")) {
+            const noteParts = noteString.split(" - ");
+            loadedSystemNote = noteParts[0]?.trim() || "";
+            loadedClientComment = noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+          } else {
+            loadedSystemNote = "";
+            loadedClientComment = noteString.trim();
+          }
           initialFormData[group.clientCommentKey] = loadedClientComment;
         });
       }
@@ -612,7 +630,10 @@ export default function Stage4({
       } else if (currentModule === "print media") {
         res = await api.upsertIDGStages(matterNumber, 4, payload);
       } else if (currentModule === "vocat") {
-        payload.notes = payload.noteForClient;
+        payload.commentary = payload.noteForClient;
+        payload.systemNote = systemNote;
+        delete payload.noteForClient;
+        delete payload.notes;
         res = await vocatApi.saveStageFour(payload);
       } else {
         res = await api.upsertStageFour(payload);
@@ -622,8 +643,6 @@ export default function Stage4({
         autoClose: 2500,
         hideProgressBar: false,
       });
-
-      // Update original ref with new state
       const serverStage = (res && (res.data || res.stage4 || res)) || payload;
 
       originalData.current = {
@@ -633,8 +652,6 @@ export default function Stage4({
         noteForSystem: systemNote,
       };
       setHasChanges(false);
-
-      // notify parent / listings to refresh
       setReloadTrigger((prev) =>
         typeof prev === "number" ? prev + 1 : (prev || 0) + 1
       );
@@ -658,6 +675,11 @@ export default function Stage4({
   };
 
   const renderField = (field) => {
+    if (currentModule === "vocat") {
+      if (field.name === "fileTransfer" && normalizeValue(formData.variationRequired) !== "yes") {
+        return null;
+      }
+    }
     switch (field.type) {
       case "radio": {
         const isDangerField = field.name === "closeOrder" || field.name === "closeMatter";
@@ -845,21 +867,16 @@ export default function Stage4({
                   </label>
                 ) : (
                   <div className="relative w-full h-40 border rounded-lg bg-gray-50 overflow-hidden group">
-                    {/* Preview (Embed/Iframe) */}
                     <embed
                         src={pdfPreview}
                         type="application/pdf"
                         className="w-full h-full object-cover" 
-                        // Note: object-cover doesn't work well on embeds/iframes, but h-full fills container
                     />
-                    
-                    {/* Click Overlay for Full Screen */}
                     <div 
                         className="absolute inset-0 bg-transparent cursor-pointer hover:bg-black/10 transition-colors flex items-center justify-center p-2"
                         onClick={() => window.open(pdfPreview, '_blank')}
                         title="Click to view full screen"
                     >
-                         {/* Optional: Add an icon or text on hover if desired, but user just said 'click on pdf' */}
                     </div>
 
                     {/* Info Bar at Bottom */}
