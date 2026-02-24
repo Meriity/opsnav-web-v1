@@ -286,6 +286,14 @@ const MatterDetailsModal = ({
           </div>
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+              Client Email
+            </label>
+            <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+              {display.clientEmail || display.email || "N/A"}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <label className="text-xs sm:text-sm font-medium text-gray-500 block">
               Client Type
             </label>
             <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">

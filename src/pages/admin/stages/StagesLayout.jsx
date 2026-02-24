@@ -178,6 +178,7 @@ export default function StagesLayout() {
   const [idgClients, setIdgClients] = useState([]);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
   const [filteredClients, setFilteredClients] = useState([]);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("currentModule") === "print media") {
@@ -618,9 +619,7 @@ export default function StagesLayout() {
         let response = null;
         if (currentModule === "commercial") {
           try {
-            // Try to get full client data directly which includes stage details
             try {
-              // Fetch main client data and ALL stages in parallel to ensure we have the latest data
               const [clientData, s1, s2, s3, s4, s5, s6] = await Promise.all([
                 commercialApiRef.current
                   .getClientAllData(matterNumber)
@@ -661,7 +660,6 @@ export default function StagesLayout() {
                 const getStage6Data = () => {
                   let base = getS(s6, "stage6", "stageSix");
                   
-                  // FIX: If the response is the full client object, unwrap the stage6 data
                   if (base && base.stage6) {
                     base = base.stage6;
                   }
@@ -707,7 +705,6 @@ export default function StagesLayout() {
                   stage6: getStage6Data(),
                 };
               } else {
-                // Fallback if main fetch fails but we have stage data?
                 const backupData =
                   await commercialApiRef.current.getProjectFullData(
                     matterNumber
@@ -744,11 +741,6 @@ export default function StagesLayout() {
         } else if (currentModule === "print media") {
           response = await apiRef.current.getIDGStages(matterNumber);
         } else if (currentModule === "wills") {
-          // Fetch full data using WillsAPI
-          // We can use getProjectFullData or getClientDetails depending on what returns full stage info
-          // Similar to Commercial, we might need parallel fetching if backend doesn't return everything in one go.
-          // For now, assuming getProjectFullData is robust or we parallel fetch if needed.
-          // Let's try parallel similar to Commercial for safety if APIs are granular.
           try {
              const [clientData, s1, s2, s3] = await Promise.all([
                  willsApiRef.current.getProjectFullData(matterNumber).catch(e => null),
@@ -844,6 +836,13 @@ export default function StagesLayout() {
             response.dataentryby ||
             response.client?.dataEntryBy ||
             "",
+          clientEmail:
+            response.clientEmail ||
+            response.client?.clientEmail ||
+            response.email ||
+            response.client?.email ||
+            response.data?.clientEmail ||
+            "",
           notes:
             response.notes !== undefined
               ? response.notes
@@ -914,8 +913,6 @@ export default function StagesLayout() {
             (currentModule === "vocat" ? response.closeMatter : undefined) ||
             "active",
         };
-
-        // Sync allocatedUser to stage2 agent if missing or mismatch
         if (response.allocatedUser) {
           const users = response.users || [];
           const matchedUser = users.find(
@@ -936,20 +933,16 @@ export default function StagesLayout() {
         const section = {};
 
         if (currentModule === "commercial") {
-          // Initialize all stages as "Not Completed"
           for (let i = 1; i <= 6; i++) {
             section[`status${i}`] = "Not Completed";
           }
 
-          // Use colorStatus from stages array with S1, S2, etc. structure
           if (
             response.stages &&
             Array.isArray(response.stages) &&
             response.stages.length > 0
           ) {
-            const stageObject = response.stages[0]; // Get the first object with S1, S2 properties
-
-            // Process each stage (S1, S2, S3, S4, S5, S6)
+            const stageObject = response.stages[0]; 
             for (let i = 1; i <= 6; i++) {
               const stageKey = `S${i}`;
               if (stageObject[stageKey]) {
@@ -964,7 +957,6 @@ export default function StagesLayout() {
             }
           }
 
-          // Check individual stage properties (stage1, stage2, etc.) as fallback
           for (let i = 1; i <= 6; i++) {
             const stageKey = `stage${i}`;
             const stageData = normalized[stageKey] || response[stageKey];
@@ -979,14 +971,13 @@ export default function StagesLayout() {
             }
           }
 
-          // Also check for global colorStatus on the main response object
           if (response.colorStatus) {
             const statusMap = {
               green: "Completed",
               red: "Not Completed",
               amber: "In Progress",
             };
-            // If there's a global colorStatus, apply it to stage 1
+
             section.status1 =
               statusMap[response.colorStatus] || section.status1;
           }
@@ -1011,7 +1002,6 @@ export default function StagesLayout() {
         }
         setStageStatuses(section);
       } catch (e) {
-        // For commercial module, create default structure on any error
         if (currentModule === "commercial") {
           const defaultData = createDefaultProjectData(matterNumber);
           setClientData(defaultData);
@@ -1085,6 +1075,7 @@ export default function StagesLayout() {
           businessAddress: clientData.businessAddress || "",
           state: clientData?.state || "",
           clientType: clientData?.clientType || "",
+          clientEmail: clientData?.clientEmail || "",
           matterDate: clientData?.matterDate || null,
           dataEntryBy: clientData?.dataEntryBy || "",
           postcode: clientData?.postcode || "",
@@ -1094,6 +1085,7 @@ export default function StagesLayout() {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
           postcode: clientData?.postcode,
+          clientEmail: clientData?.clientEmail || "",
           clientAddress: clientData?.clientAddress || "",
           matterReferenceNumber: clientData?.matterReferenceNumber || "",
           fasNumber: clientData?.fasNumber || "",
@@ -1103,6 +1095,7 @@ export default function StagesLayout() {
         payload = {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
+          clientEmail: clientData?.clientEmail || "",
           postcode: clientData?.postcode,
         };
       } else if (currentModule === "print media") {
@@ -1122,6 +1115,7 @@ export default function StagesLayout() {
             "",
           clientId: clientData?.data?.clientId || "",
           client: clientData?.data?.client?._id || clientData?.data?.client || "",
+          clientEmail: clientData?.clientEmail || "",
           state: clientData?.data?.state || clientData?.state || "",
           orderType:
             clientData?.clientType ||
@@ -1141,6 +1135,7 @@ export default function StagesLayout() {
         payload.clientName = clientData?.clientName || "";
         payload.state = clientData?.state || "";
         payload.clientType = clientData?.clientType || "";
+        payload.clientEmail = clientData?.clientEmail || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
 
         if (currentModule === "commercial") {
@@ -1301,6 +1296,210 @@ export default function StagesLayout() {
       setShowUpdateConfirm(false);
     }
   }
+
+  // --- Send Reminder Logic ---
+  const handleSendReminder = async () => {
+    if (!clientData) return;
+    
+    setIsSendingReminder(true);
+    try {
+      // 1. Define fields per stage based on module (same logic as in Stage components)
+      const formConfig = {
+        conveyancing: {
+          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"declarationForm", label:"Declaration form"}, {name:"contractReview", label:"Contract Review"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}, {name:"tenants", label:"Tenants"}],
+          s2: [{name:"signedContract", label:"Signed Contract"}, {name:"sendKeyDates", label:"Send Key Dates"}, {name:"voi", label:"VOI"}, {name:"caf", label:"CAF"}, {name:"depositReceipt", label:"Deposit Receipt"}, {name:"buildingAndPest", label:"Building and Pest"}, {name:"financeApproval", label:"Finance Approval"}, {name:"checkCtController", label:"Check CT Controller"}, {name:"obtainDaSeller", label:"Obtain DA(Seller)"}, {name:"vendorDisclosure", label:"Vendor Disclosure"}],
+          s3: [{name:"titleSearch", label:"Title Search"}, {name:"planImage", label:"Plan Image"}, {name:"landTax", label:"Land Tax"}, {name:"instrument", label:"Instrument"}, {name:"rates", label:"Rates"}, {name:"water", label:"Water"}, {name:"ownersCorp", label:"Owners Corp"}, {name:"pexa", label:"PEXA"}, {name:"inviteBank", label:"Invite Bank"}],
+          s4: [{name:"dts", label:"DTS"}, {name:"dutyOnline", label:"Duty Online"}, {name:"soa", label:"SOA"}, {name:"frcgw", label:"FRCGW"}, {name:"contractPrice", label:"Contract Price"}],
+          s5: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"transferDocsOnPexa", label:"Transfer Docs on PEXA"}, {name:"gstWithholding", label:"GST Withholding"}, {name:"disbursementsInPexa", label:"Disbursements in PEXA"}, {name:"addAgentFee", label:"Add Agent Fee"}, {name:"settlementNotification", label:"Settlement Notification"}, {name:"council", label:"Council"}],
+          s6: [{name:"noaToCouncilWater", label:"NOA to Council/Water"}, {name:"dutyPaid", label:"Duty Paid"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"finalLetterToAgent", label:"Final Letter to Agent"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+        },
+        wills: {
+          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"declarationForm", label:"Declaration form"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}],
+          s2: [{name:"signedContract", label:"Signed Contract"}, {name:"sendKeyDates", label:"Send Key Dates"}, {name:"voi", label:"VOI"}, {name:"caf", label:"CAF"}, {name:"depositReceipt", label:"Deposit Receipt"}, {name:"buildingAndPest", label:"Building and Pest"}, {name:"financeApproval", label:"Finance Approval"}, {name:"checkCtController", label:"Check CT Controller"}, {name:"obtainDaSeller", label:"Obtain DA(Seller)"}, {name:"vendorDisclosure", label:"Vendor Disclosure"}],
+          s3: [{name:"titleSearch", label:"Title Search"}, {name:"planImage", label:"Plan Image"}, {name:"landTax", label:"Land Tax"}, {name:"instrument", label:"Instrument"}, {name:"rates", label:"Rates"}, {name:"water", label:"Water"}, {name:"ownersCorp", label:"Owners Corp"}, {name:"pexa", label:"PEXA"}, {name:"inviteBank", label:"Invite Bank"}],
+          s4: [{name:"dts", label:"DTS"}, {name:"dutyOnline", label:"Duty Online"}, {name:"soa", label:"SOA"}, {name:"frcgw", label:"FRCGW"}, {name:"contractPrice", label:"Contract Price"}],
+          s5: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"transferDocsOnPexa", label:"Transfer Docs on PEXA"}, {name:"gstWithholding", label:"GST Withholding"}, {name:"disbursementsInPexa", label:"Disbursements in PEXA"}, {name:"addAgentFee", label:"Add Agent Fee"}, {name:"settlementNotification", label:"Settlement Notification"}, {name:"council", label:"Council"}],
+          s6: [{name:"noaToCouncilWater", label:"NOA to Council/Water"}, {name:"dutyPaid", label:"Duty Paid"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"finalLetterToAgent", label:"Final Letter to Agent"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+        },
+        commercial: {
+          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"contractReview", label:"Contract Review"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}],
+          s2: [{name:"voi", label:"VOI"}, {name:"leaseTransfer", label:"Lease Transfer"}, {name:"contractOfSale", label:"Contract of Sale"}],
+          s3: [{name:"ppsrSearch", label:"PPSR Search"}, {name:"asicSearch", label:"ASIC Search"}, {name:"ratesSearch", label:"Rates Search"}, {name:"waterSearch", label:"Water Search"}, {name:"title", label:"Title"}],
+          s4: [{name:"employeesEntitlements", label:"Employees Entitlements"}, {name:"purchaseContracts", label:"Purchase Contracts"}, {name:"customerContracts", label:"Customer Contracts"}, {name:"leaseAgreement", label:"Lease Agreement"}],
+          s5: [{name:"statementOfAdjustment", label:"Statement of Adjustment"}, {name:"contractPrice", label:"Contract Price"}, {name:"liquorLicence", label:"Liquor Licence"}, {name:"transferBusinessName", label:"Transfer Business Name"}, {name:"leaseTransfer", label:"Lease Transfer"}],
+          s6: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"council", label:"Council"}, {name:"settlementNotificationToClient", label:"Settlement Notification to Client"}, {name:"settlementNotificationToCouncil", label:"Settlement Notification to Council"}, {name:"settlementNotificationToWater", label:"Settlement Notification to Water"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+        },
+        vocat: {
+          s1: [{name:"referral", label:"Referral"}, {name:"clientAuthority", label:"Client Authority"}, {name:"evidenceOfIncident", label:"Evidence of Incident"}, {name:"evidenceOfInjury", label:"Evidence of the injury"}, {name:"reportedToPolice", label:"Reported to Police"}, {name:"dateOfReport", label:"Date of report"}, {name:"policeDetailsProvided", label:"Police details provided"}, {name:"detailsOfReportPoliceStation", label:"Police station"}, {name:"detailsOfReportOfficer", label:"Officer"}, {name:"detailsOfReportEvidence", label:"Evidence of report"}, {name:"statutoryDeclaration", label:"Statutory Declaration for Nil Report"}, {name:"intakeForm", label:"Intake Form/instructions given"}, {name:"voi", label:"VOI"}, {name:"otherAssistance", label:"Other Assistance/Compensation"}, {name:"otherAssistanceDetailsProvided", label:"Details of other assistance"}, {name:"lossOfEarning", label:"Loss of earnings"}, {name:"clothing", label:"Clothing"}, {name:"securityExpenses", label:"Security expenses"}, {name:"medicalExpenses", label:"Medical expenses"}, {name:"counselling", label:"Counselling"}, {name:"safetyExpenses", label:"Safety related expenses"}, {name:"lossOrDamageClothing", label:"Loss or damage to clothing"}, {name:"recoveryExpenses", label:"Recovery expenses"}],
+          s2: [{name:"fasStandardForm", label:"FAS Standard Application Form"}, {name:"proofOfIncome", label:"Proof of Income"}, {name:"psychLetter", label:"Letter from treating psychologist/psychiatrist"}, {name:"detailsOfCounsellor", label:"Details of counsellor provided"}, {name:"counsellorReport", label:"Counsellor's report"}, {name:"evidenceOfSafetyRelatedExpenses", label:"Evidence of Safety Related Expenses"}, {name:"additionalEvidenceForSafety", label:"Additional Evidence for Safety"}, {name:"statDecClothing", label:"Statutory Declaration for Clothing"}, {name:"clothingReceipts", label:"Clothing Receipts/Invoices"}, {name:"statutoryDeclarationOfClothing", label:"Statutory Declaration of Clothing"}, {name:"additionalEvidenceForClothing", label:"Additional Evidence for Clothing"}, {name:"securityInvoices", label:"Security Invoices"}, {name:"medicalInvoices", label:"Medical Invoices"}, {name:"recoveryInvoices", label:"Recovery Invoices"}, {name:"evidenceOfEarnings", label:"Evidence of Earnings"}, {name:"letterFromDoctor", label:"Letter from Doctor/Psychiatrist"}, {name:"evidenceOfMedicalExpenses", label:"Evidence of Medical Expenses"}, {name:"additionalEvidenceForMedical", label:"Additional Evidence for Medical"}, {name:"letterOfSupportForRecovery", label:"Letter of Support for Recovery"}, {name:"evidenceOfRecoveryExpenses", label:"Evidence of Recovery Expenses"}, {name:"additionalEvidenceForRecovery", label:"Additional Evidence for Recovery"}],
+          s3: [{name:"searchesAnalysis", label:"Searches Analysis"}, {name:"lettersFromParties", label:"Letters from relevant parties"}, {name:"applicatedSubmitted", label:"Application submitted"}, {name:"applicationTriaged", label:"Application triaged"}, {name:"additionalInformation", label:"Additional information requested"}, {name:"noticeOfDecisionInterim", label:"Notice of Decision (Interim)"}, {name:"bankDetailsProvided", label:"Bank details provided"}, {name:"authorisedExpenses", label:"Authorised future expenses submitted"}],
+          s4: [{name:"noticeOfDecisionFinal", label:"Notice of Final Decision"}, {name:"bankDetailsProvided", label:"Bank details provided"}, {name:"applicationTransfer", label:"Application transferred to client"}, {name:"variationRequired", label:"Variation (if required)"}, {name:"fileTransfer", label:"File transferred back to VK"}, {name:"finalLetterToClient", label:"Letter to Client"}, {name:"fasApproval", label:"FAS Approval"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+        }
+      };
+
+      const normalizeValue = (v) => {
+        if (v === undefined || v === null) return "";
+        return String(v).toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+      };
+
+      const getStatus = (value) => {
+        if (value === undefined || value === null || value === "") {
+          return "Not Completed";
+        }
+        const val = normalizeValue(value);
+        const completed = new Set([
+          "yes", "nr", "na", "variable", "fixed", "approved", "completed", "closed", "cancelled"
+        ]);
+        if (completed.has(val)) return "Completed";
+        if (val === "no") return "Not Completed";
+        if (["processing", "inprogress", "pending"].includes(val)) return "In Progress";
+        if (val !== "") return "Completed"; // If it's a text/date field and has a value, consider it completed for reminder purposes mostly.
+        return "Not Completed";
+      };
+
+      const moduleConfig = formConfig[currentModule] || formConfig.conveyancing;
+      const numStages = currentModule === "vocat" ? 4 : 6;
+      let allIncompleteTasks = [];
+
+      for (let i = 1; i <= numStages; i++) {
+        const stageFieldsConfig = moduleConfig[`s${i}`] || [];
+        const sData = getStageData(i) || {};
+        
+        let aidTypes = {};
+        if (currentModule === "vocat" && i === 2) {
+            const s1 = getStageData(1) || {};
+            aidTypes = s1.aidTypes || {};
+            const hasAid = (key) => aidTypes[key] === true || s1[key] === true;
+            
+            // Vocat Stage 2 dependency filtering
+            stageFieldsConfig.forEach(field => {
+                let isVisible = true;
+                if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) isVisible = false;
+                if (field.name === "psychLetter" && !hasAid("lossOfEarning")) isVisible = false;
+                if (field.name === "statDecClothing" && !hasAid("clothing")) isVisible = false;
+                if (field.name === "clothingReceipts" && !hasAid("clothing")) isVisible = false;
+                if (field.name === "securityInvoices" && !hasAid("securityExpenses")) isVisible = false;
+                if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) isVisible = false;
+                if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) isVisible = false;
+                if (field.name === "detailsOfCounsellor" && !hasAid("counselling")) isVisible = false;
+                if (field.name === "counsellorReport" && !hasAid("counselling")) isVisible = false;
+                if (field.name === "evidenceOfSafetyRelatedExpenses" && !hasAid("safetyExpenses")) isVisible = false;
+                if (field.name === "additionalEvidenceForSafety" && !hasAid("safetyExpenses")) isVisible = false;
+                if (field.name === "statutoryDeclarationOfClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
+                if (field.name === "additionalEvidenceForClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
+                if (field.name === "evidenceOfEarnings" && !hasAid("lossOfEarning")) isVisible = false;
+                if (field.name === "letterFromDoctor" && !hasAid("lossOfEarning")) isVisible = false;
+                if (field.name === "evidenceOfMedicalExpenses" && !hasAid("medicalExpenses")) isVisible = false;
+                if (field.name === "additionalEvidenceForMedical" && !hasAid("medicalExpenses")) isVisible = false;
+                if (field.name === "letterOfSupportForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
+                if (field.name === "evidenceOfRecoveryExpenses" && !hasAid("recoveryExpenses")) isVisible = false;
+                if (field.name === "additionalEvidenceForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
+
+                if (isVisible) {
+                    const status = getStatus(sData[field.name]);
+                    if (status !== "Completed") {
+                         allIncompleteTasks.push({ stage: i, field: field.label });
+                    }
+                }
+            });
+        } else if (currentModule === "vocat" && i === 1) {
+            stageFieldsConfig.forEach(field => {
+                let isVisible = true;
+                const reported = String(sData["reportedToPolice"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+                if (["dateOfReport", "policeDetailsProvided", "detailsOfReportPoliceStation", "detailsOfReportOfficer", "detailsOfReportEvidence"].includes(field.name)) {
+                    if (reported !== "yes") isVisible = false;
+                }
+                if (field.name === "statutoryDeclaration" && reported !== "no") isVisible = false;
+                const assistance = String(sData["otherAssistance"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+                if (field.name === "otherAssistanceDetailsProvided" && assistance !== "yes") isVisible = false;
+
+                if (isVisible) {
+                    // Quick check for aidTypes which are checkboxes
+                    const isCheckboxMap = ["lossOfEarning", "clothing", "securityExpenses", "medicalExpenses", "counselling", "safetyExpenses", "lossOrDamageClothing", "recoveryExpenses"];
+                    if (isCheckboxMap.includes(field.name)) {
+                        // Let's not include checkboxes in the missing fields reminder as they are optional "aids"
+                    } else {
+                        const status = getStatus(sData[field.name]);
+                        if (status !== "Completed") {
+                            allIncompleteTasks.push({ stage: i, field: field.label });
+                        }
+                    }
+                }
+            });
+        } else if (currentModule === "vocat" && i === 3) {
+            stageFieldsConfig.forEach(field => {
+                let isVisible = true;
+                const noticeInterim = String(sData["noticeOfDecisionInterim"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+                if (["bankDetailsProvided", "authorisedExpenses"].includes(field.name)) {
+                    if (noticeInterim !== "yes") isVisible = false;
+                }
+
+                if (isVisible) {
+                    const status = getStatus(sData[field.name]);
+                    if (status !== "Completed") {
+                         allIncompleteTasks.push({ stage: i, field: field.label });
+                    }
+                }
+            });
+        } else if (currentModule === "vocat" && i === 4) {
+            stageFieldsConfig.forEach(field => {
+                let isVisible = true;
+                const variationRequired = String(sData["variationRequired"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+                if (field.name === "fileTransfer") {
+                    if (variationRequired !== "yes") isVisible = false;
+                }
+
+                if (isVisible) {
+                    const status = getStatus(sData[field.name]);
+                    if (status !== "Completed") {
+                         allIncompleteTasks.push({ stage: i, field: field.label });
+                    }
+                }
+            });
+        } else {
+            // Standard conveyancing/commercial/wills logic
+            stageFieldsConfig.forEach(field => {
+                 const status = getStatus(sData[field.name]);
+                 if (status !== "Completed") {
+                     allIncompleteTasks.push({ stage: i, field: field.label });
+                 }
+            });
+        }
+      }
+
+      // Group by stage for cleaner payload/email if desired, or just send array of strings
+      const tasksParam = allIncompleteTasks.map(t => `Stage ${t.stage}: ${t.field}`);
+      
+      const payload = {
+        matterNumber: matterNumber,
+        module: currentModule,
+        taskList: tasksParam,
+        clientEmail: clientData?.clientEmail || clientData?.email || clientData?.client?.email || clientData?.data?.client?.email || ""
+      };
+
+      if (tasksParam.length === 0) {
+         toast.info("All tasks are already completed.");
+         return;
+      }
+
+      if (currentModule === "commercial") {
+        await commercialApiRef.current.sendReminderEmail(payload);
+      } else if (currentModule === "wills") {
+        await willsApiRef.current.sendReminderEmail(payload);
+      } else if (currentModule === "vocat") {
+        await vocatApiRef.current.sendReminderEmail(payload);
+      } else {
+        await apiRef.current.sendReminderEmail(payload);
+      }
+
+      toast.success("Reminder email sent to matter holder successfully!");
+    } catch (error) {
+       console.error("Failed to send reminder:", error);
+       toast.error("Failed to send reminder email. Please try again.");
+    } finally {
+       setIsSendingReminder(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
@@ -1539,33 +1738,51 @@ export default function StagesLayout() {
                 )}
               </div>
 
-              {/* Mobile Tab Switcher - Added for better viewport management */}
+                {/* Mobile Tab Switcher - Added for better viewport management */}
               {isSmallScreen && (
-                <div className="flex w-full bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-3 border border-gray-200/60 shadow-sm">
-                  <button
-                    onClick={() => setActiveMobileTab("stage")}
-                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                      activeMobileTab === "stage"
-                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
-                        : "text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    Stage Tasks
-                  </button>
-                  <button
-                    onClick={() => setActiveMobileTab("details")}
-                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                      activeMobileTab === "details"
-                        ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
-                        : "text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    {currentModule === "commercial"
-                      ? "Project Details"
-                      : currentModule === "print media"
-                      ? "Order Details"
-                      : "Matter Details"}
-                  </button>
+                <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex w-full bg-white/80 backdrop-blur-sm rounded-xl p-1 border border-gray-200/60 shadow-sm">
+                    <button
+                      onClick={() => setActiveMobileTab("stage")}
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                        activeMobileTab === "stage"
+                          ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                          : "text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      Stage Tasks
+                    </button>
+                    <button
+                      onClick={() => setActiveMobileTab("details")}
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                        activeMobileTab === "details"
+                          ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
+                          : "text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {currentModule === "commercial"
+                        ? "Project Details"
+                        : currentModule === "print media"
+                        ? "Order Details"
+                        : "Matter Details"}
+                    </button>
+                  </div>
+                  {isAnyAdmin && currentModule !== "print media" && (
+                    <button
+                      onClick={handleSendReminder}
+                      disabled={isSendingReminder}
+                      className="w-full py-2 px-4 rounded-xl font-bold flex items-center justify-center gap-2 border border-[#2E3D99] text-[#2E3D99] hover:bg-blue-50 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      {isSendingReminder ? (
+                        <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      )}
+                      Send Reminder
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1579,13 +1796,32 @@ export default function StagesLayout() {
                 {/* Project/Matter/Order Details - Desktop */}
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
                   <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-180px)] lg:overflow-y-auto">
-                    <h2 className="text-base lg:text-base xl:text-lg font-bold mb-2">
-                      {currentModule === "commercial"
-                        ? "Project Details"
-                        : currentModule === "print media"
-                        ? "Order Details"
-                        : "Matter Details"}
-                    </h2>
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                      <h2 className="text-base lg:text-base xl:text-lg font-bold">
+                        {currentModule === "commercial"
+                          ? "Project Details"
+                          : currentModule === "print media"
+                          ? "Order Details"
+                          : "Matter Details"}
+                      </h2>
+                      {isAnyAdmin && currentModule !== "print media" && (
+                        <button
+                          onClick={handleSendReminder}
+                          disabled={isSendingReminder}
+                          title="Send reminder email for incomplete tasks"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-[#2E3D99] border border-[#2E3D99] hover:bg-blue-50 rounded-lg transition-all duration-200 disabled:opacity-50"
+                        >
+                          {isSendingReminder ? (
+                            <div className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                          )}
+                          Send Reminder
+                        </button>
+                      )}
+                    </div>
                     <form
                       className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 pb-4"
                       onSubmit={handleupdate}
@@ -1753,6 +1989,38 @@ export default function StagesLayout() {
                             </ul>
                         )}
                       </div>
+
+                      {/* Client Email Field */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                          Client Email
+                        </label>
+                        <input
+                          id="clientEmail"
+                          name="clientEmail"
+                          type="email"
+                          value={
+                            clientData?.clientEmail ||
+                            clientData?.email ||
+                            clientData?.client?.email ||
+                            clientData?.data?.client?.email ||
+                            ""
+                          }
+                          onChange={(e) => {
+                            if (!canEditMatterDetails) return;
+                            const val = e.target.value;
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientEmail: val,
+                            }));
+                          }}
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
+                            !canEditMatterDetails ? "bg-gray-100" : ""
+                          }`}
+                          disabled={!canEditMatterDetails}
+                        />
+                      </div>
+
 
                       {/* Business Name */}
                       {currentModule === "commercial" && (
@@ -2476,6 +2744,39 @@ export default function StagesLayout() {
                           readOnly
                         />
                       )}
+                    </div>
+
+                    {/* Client Email Field (Mobile) */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Client Email
+                      </label>
+                      <input
+                        id="clientEmailMobile"
+                        name="clientEmailMobile"
+                        type="email"
+                        value={
+                          clientData?.clientEmail ||
+                          clientData?.email ||
+                          clientData?.client?.email ||
+                          clientData?.data?.client?.email ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          if (!canEditMatterDetails) return;
+                          const val = e.target.value;
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            clientEmail: val,
+                          }));
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
+                          !canEditMatterDetails
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                        }`}
+                        disabled={!canEditMatterDetails}
+                      />
                     </div>
 
                     {/* Client Name */}

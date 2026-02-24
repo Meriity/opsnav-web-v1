@@ -43,6 +43,7 @@ const getInitialFormData = (user, currentModule) => {
     return {
       matterNumber: "",
       clientName: "",
+      clientEmail: "",
       businessName: "",
       state: "",
       clientType: "",
@@ -57,6 +58,7 @@ const getInitialFormData = (user, currentModule) => {
     return {
       matterNumber: "",
       clientName: "",
+      clientEmail: "",
       state: "",
       clientType: "",
       propertyAddress: "",
@@ -90,7 +92,7 @@ const getInitialFormData = (user, currentModule) => {
          clientType: "",
          state: "",
          postcode: "",
-         email: "",
+         clientEmail: "",
          phone: "",
          dataEntryBy: user
       };
@@ -98,6 +100,7 @@ const getInitialFormData = (user, currentModule) => {
     return {
       matterNumber: "",
       clientName: "",
+      clientEmail: "",
       clientType: "",
       clientAddress: "",
       state: "",
@@ -657,6 +660,7 @@ useEffect(() => {
           const payload = {
             matterNumber: formData.matterNumber,
             clientName: formData.clientName,
+            clientEmail: formData.clientEmail,
             businessName: formData.businessName,
             state: formData.state,
             clientType: formData.clientType === "General" ? "general" : formData.clientType,
@@ -860,6 +864,7 @@ useEffect(() => {
               matterNumber: formData.matterNumber,
               matterDate: formData.matterDate,
               clientName: formData.clientName,
+              clientEmail: formData.clientEmail,
               clientAddress: formData.clientAddress,
               state: formData.state,
               clientType: formData.clientType,
@@ -977,6 +982,18 @@ useEffect(() => {
                         onChange={handleChange}
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                         required
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Client Email <span className="text-gray-400 text-sm">(Optional)</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="clientEmail"
+                        value={formData.clientEmail || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                       />
                     </div>
                   </div>
@@ -1286,19 +1303,9 @@ useEffect(() => {
                       />
                     </div>
                   </div>
-                  {/* Add extra fields for Wills if needed, like Email/Phone */}
+                  {/* Add extra fields for Wills if needed, like Phone */}
                   {isWills && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                              <label className="block mb-1 font-medium">Email</label>
-                              <input
-                                  type="email"
-                                  name="email"
-                                  value={formData.email || ""}
-                                  onChange={handleChange}
-                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-                              />
-                          </div>
                           <div>
                               <label className="block mb-1 font-medium">Phone</label>
                               <input
