@@ -14,11 +14,53 @@ import {
   Smartphone,
   BarChart3,
   ArrowUpDown,
+  RefreshCw,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       February: [
+        {
+          date: "2026-02-24",
+          version: "v6.6.0",
+          type: "minor",
+          category: "feature",
+          title: "Reopen Archived Matters & UI Polishing",
+          description: "Superadmins can now reopen archived matters for Conveyancing, Commercial, and VOCAT. Also includes UI layout optimizations.",
+          updates: [
+            {
+              type: "feature",
+              title: "Restore Archived Matters",
+              description: "Added 'Edit' capability to the Archived Clients table for Superadmins.",
+              details: "Authorized users can navigate to the closing stage of a matter and select 'Open' to restore it to an active status.",
+              icon: RefreshCw,
+            },
+            {
+              type: "ui_ux",
+              title: "Header Layout Optimization",
+              description: "Reduced excessive padding and margins in the Archived Clients action bar.",
+              details: "Tightened the spacing for better visibility on tablet and laptop screens by optimizing paddings and margins.",
+              icon: Sparkles,
+            },
+            {
+              type: "bugfix",
+              title: "VOCAT Stage 4 Navigation Fix",
+              description: "Fixed the 'Next' button in VOCAT Stage 4 navigating to incorrect stages.",
+              details: "The Next button now correctly routes to the Cost page instead of rendering Conveyancing Stage 5 and 6.",
+              icon: Bug,
+            },
+            {
+              type: "ui_ux",
+              title: "Post Code Field Repositioning",
+              description: "Moved the Post Code field to appear alongside the State field in Matter Details.",
+              details: "State and Post Code now share the same row for a cleaner, more logical layout across all modules.",
+              icon: ArrowUpDown,
+            }
+          ],
+          module: "Commercial, Conveyancing, Vocat",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-02-24",
           version: "v6.5.0",
