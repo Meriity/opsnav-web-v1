@@ -20,6 +20,33 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-24",
+          version: "v6.5.0",
+          type: "minor",
+          category: "feature",
+          title: "Send Reminder Feature for Matters",
+          description: "Admins and Superadmins can now send email reminders directly to matter holders for pending tasks.",
+          updates: [
+            {
+              type: "feature",
+              title: "Send Reminder Button",
+              description: "Added a new 'Send Reminder' button with an icon in the Matter Details header.",
+              details: "Allows authorized users to trigger an email that lists all incomplete tasks across all stages of a particular matter.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Payload Enhancements",
+              description: "Included client email in the reminder payload.",
+              details: "The backend now receives the matter holder's `clientEmail` along with an aggregated `taskList` array to properly address and format the notification.",
+              icon: Info,
+            }
+          ],
+          module: "Commercial, Conveyancing, Wills, Vocat",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-21",
           version: "v6.4.0",
           type: "minor",
