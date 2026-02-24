@@ -22,6 +22,33 @@ export const monthlyReleaseNotes = {
       February: [
         {
           date: "2026-02-24",
+          version: "v6.6.1",
+          type: "patch",
+          category: "bugfix",
+          title: "VOCAT Module Bug Fixes",
+          description: "Critical bug fixes for VOCAT stage organization and client portal data display.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Client Portal Commentary Fix",
+              description: "Resolved issue where VOCAT stage commentary was missing in the client portal.",
+              details: "Updated the client dashboard mapping to correctly read the API's commentary field, ensuring admin notes are visible to clients.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Stage 2 Layout Categorization",
+              description: "Reorganized VOCAT Stage 2 fields into logical categories with headers.",
+              details: "Fields are now grouped under subtitles like Counselling, Loss of Earnings, and Medical Expenses for better clarity.",
+              icon: Sparkles,
+            }
+          ],
+          module: "Vocat",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-02-24",
           version: "v6.6.0",
           type: "minor",
           category: "feature",

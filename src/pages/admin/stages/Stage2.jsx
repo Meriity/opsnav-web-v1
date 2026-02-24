@@ -248,38 +248,29 @@ const formConfig = {
   },
   vocat: {
     fields: [
-
       { name: "fasStandardForm", label: "FAS Standard Form", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "evidenceHeader", label: "Evidence:", type: "header" },
-      
-      { name: "proofOfIncome", label: "Proof of income", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "psychLetter", label: "Letter from Psych/ Doc", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "detailsOfCounsellor", label: "Details of counsellor received", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "counsellorReport", label: "Counsellor Report requested", type: "radio", options: ["Yes", "No", "N/R"] },
 
-      { name: "evidenceOfSafetyRelatedExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "additionalEvidenceForSafety", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "statDecClothing", label: "Prepare Stat Dec (Clothing)", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "clothingReceipts", label: "Receipts of Clothing", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "counsellingHeader", label: "Counselling", type: "header" },
+      { name: "detailsOfCounsellor", label: "Details of counsellor received", type: "radio", options: ["Yes", "No"] },
+      { name: "counsellorReport", label: "Counsellor Report requested", type: "radio", options: ["Yes", "No"] },
 
-      { name: "statutoryDeclarationOfClothing", label: "Statutory Declaration", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "additionalEvidenceForClothing", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "securityInvoices", label: "Invoices / Receipt (Security)", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "medicalInvoices", label: "Invoices / receipts", type: "radio", options: ["Yes", "No", "N/R"] },
-      
-      { name: "recoveryInvoices", label: "Recovery related Expenses", type: "radio", options: ["Yes", "No", "N/R"] },
-
+      { name: "lossOfEarningsHeader", label: "Loss of Earnings", type: "header" },
       { name: "evidenceOfEarnings", label: "Evidence of earnings (e.g. payslips, income statements etc)", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "letterFromDoctor", label: "Letter from Doctor", type: "radio", options: ["Yes", "No", "N/R"] },
 
+      { name: "medicalExpensesHeader", label: "Medical expenses", type: "header" },
       { name: "evidenceOfMedicalExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "additionalEvidenceForMedical", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
 
+      { name: "safetyExpensesHeader", label: "Safety-related expenses", type: "header" },
+      { name: "evidenceOfSafetyRelatedExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForSafety", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "clothingHeader", label: "Loss or damage to clothing", type: "header" },
+      { name: "statutoryDeclarationOfClothing", label: "Statutory Declaration", type: "radio", options: ["Yes", "No", "N/R"] },
+      { name: "additionalEvidenceForClothing", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
+
+      { name: "recoveryExpensesHeader", label: "Recovery expenses", type: "header" },
       { name: "letterOfSupportForRecovery", label: "Letter of Support", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "evidenceOfRecoveryExpenses", label: "Evidence of expenses", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "additionalEvidenceForRecovery", label: "Additional evidence (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
@@ -294,23 +285,16 @@ const formConfig = {
         noteForClientKey: "noteForClient",
         fieldsForNote: [
             "fasStandardForm", 
-            "proofOfIncome", 
-            "psychLetter", 
             "detailsOfCounsellor",
             "counsellorReport",
-            "evidenceOfSafetyRelatedExpenses",
-            "additionalEvidenceForSafety",
-            "statDecClothing",
-            "clothingReceipts",
-            "statutoryDeclarationOfClothing",
-            "additionalEvidenceForClothing",
-            "securityInvoices",
-            "medicalInvoices",
-            "recoveryInvoices",
             "evidenceOfEarnings",
             "letterFromDoctor",
             "evidenceOfMedicalExpenses",
             "additionalEvidenceForMedical",
+            "evidenceOfSafetyRelatedExpenses",
+            "additionalEvidenceForSafety",
+            "statutoryDeclarationOfClothing",
+            "additionalEvidenceForClothing",
             "letterOfSupportForRecovery",
             "evidenceOfRecoveryExpenses",
             "additionalEvidenceForRecovery"
@@ -663,27 +647,16 @@ export default function Stage2({
       const aidTypes = s1.aidTypes || {};
       const hasAid = (key) => aidTypes[key] === true || s1[key] === true;
 
-      if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) return null;
-      if (field.name === "psychLetter" && !hasAid("lossOfEarning")) return null;
-      
-      if (field.name === "statDecClothing" && !hasAid("clothing")) return null;
-      if (field.name === "clothingReceipts" && !hasAid("clothing")) return null;
-      
-      if (field.name === "securityInvoices" && !hasAid("securityExpenses")) return null;
-      
-      if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) return null;
-      
-      if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) return null;
+      if (field.name === "counsellingHeader" && !hasAid("counselling")) return null;
+      if (field.name === "lossOfEarningsHeader" && !hasAid("lossOfEarning")) return null;
+      if (field.name === "medicalExpensesHeader" && !hasAid("medicalExpenses")) return null;
+      if (field.name === "safetyExpensesHeader" && !hasAid("safetyExpenses")) return null;
+      if (field.name === "clothingHeader" && !hasAid("lossOrDamageClothing")) return null;
+      if (field.name === "recoveryExpensesHeader" && !hasAid("recoveryExpenses")) return null;
 
       if (field.name === "detailsOfCounsellor" && !hasAid("counselling")) return null;
       if (field.name === "counsellorReport" && !hasAid("counselling")) return null;
-
-      if (field.name === "evidenceOfSafetyRelatedExpenses" && !hasAid("safetyExpenses")) return null;
-      if (field.name === "additionalEvidenceForSafety" && !hasAid("safetyExpenses")) return null;
-
-      if (field.name === "statutoryDeclarationOfClothing" && !hasAid("lossOrDamageClothing")) return null;
-      if (field.name === "additionalEvidenceForClothing" && !hasAid("lossOrDamageClothing")) return null;
-
+      
       if (field.name === "evidenceOfEarnings" && !hasAid("lossOfEarning")) return null;
       if (field.name === "letterFromDoctor" && !hasAid("lossOfEarning")) return null;
 

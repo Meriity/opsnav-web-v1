@@ -658,7 +658,7 @@ export default function ClientDashboard() {
 
     if (response.stage1) {
         const s1 = response.stage1;
-        const note = splitNoteParts(s1.notes || s1.noteForClient); // API response might vary
+        const note = splitNoteParts(s1.commentary || s1.notes || s1.noteForClient); // Added commentary mapping
         
         stages.push({
             stageName: "Initialisation",
@@ -686,7 +686,7 @@ export default function ClientDashboard() {
 
     if (response.stage2) {
         const s2 = response.stage2;
-        const note = splitNoteParts(s2.notes || s2.noteForClient);
+        const note = splitNoteParts(s2.commentary || s2.notes || s2.noteForClient);
         
         stages.push({
             stageName: "Assessment & Evidence",
@@ -719,7 +719,7 @@ export default function ClientDashboard() {
 
     if (response.stage3) {
         const s3 = response.stage3;
-        const note = splitNoteParts(s3.notes || s3.noteForClient);
+        const note = splitNoteParts(s3.commentary || s3.notes || s3.noteForClient);
         
         stages.push({
             stageName: "Searches & Analysis",
@@ -744,7 +744,7 @@ export default function ClientDashboard() {
 
     if (response.stage4) {
         const s4 = response.stage4;
-        const note = splitNoteParts(s4.notes || s4.noteForClient);
+        const note = splitNoteParts(s4.commentary || s4.notes || s4.noteForClient);
         
         stages.push({
             stageName: "Finalisation",
