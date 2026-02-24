@@ -787,10 +787,10 @@ export default function ArchivedClients() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl sm:rounded-3xl overflow-visible bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-6 relative z-20"
+            className="rounded-2xl sm:rounded-3xl overflow-visible bg-white/90 backdrop-blur-lg border border-white/50 shadow-xl mb-4 relative z-20"
           >
-            <div className="p-4 lg:p-5 xl:p-8">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="p-4 lg:p-5 xl:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 lg:mb-2 xl:mb-1">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 bg-[#FB4A50] rounded-full"></div>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-800">

@@ -33,7 +33,7 @@ const formConfig = {
         name: "closeMatter",
         label: "Close Matter",
         type: "radio",
-        options: ["Completed", "Cancelled"],
+        options: ["Completed", "Cancelled", "Open"],
         triggersModal: true,
       },
     ],
@@ -142,7 +142,7 @@ const formConfig = {
         name: "closeMatter",
         label: "Close Matter",
         type: "radio",
-        options: ["Completed", "Cancelled"],
+        options: ["Completed", "Cancelled", "Open"],
         triggersModal: true,
       },
     ],
@@ -272,6 +272,8 @@ export default function Stage6({
               )
             ) {
               val = "Cancelled";
+            } else if (normVal === "open") {
+              val = "Open";
             } else {
               val = "";
             }
@@ -365,7 +367,7 @@ export default function Stage6({
     let processed = value;
 
     // Special handling for Close Matter triggering modal on selection
-    if (key === "closeMatter" && ["Completed", "Cancelled"].includes(value)) {
+    if (key === "closeMatter" && ["Completed", "Cancelled", "Open"].includes(value)) {
        setPendingCloseMatter(value);
        setIsModalOpen(true);
        // DO NOT update form state yet
@@ -433,6 +435,8 @@ export default function Stage6({
           filteredPayload.closeMatter = "completed";
         else if (["cancelled", "cancel"].includes(cm))
           filteredPayload.closeMatter = "cancelled";
+        else if (cm === "open")
+          filteredPayload.closeMatter = "open";
       }
 
       payload = filteredPayload;
@@ -582,8 +586,9 @@ export default function Stage6({
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-8 gap-y-2">
-                {(field.options || ["Yes", "No", "Processing", "N/R"]).map(
-                  (opt) => (
+                {(field.options || ["Yes", "No", "Processing", "N/R"])
+                  .filter((opt) => opt !== "Open" || localStorage.getItem("role") === "superadmin")
+                  .map((opt) => (
                     <label key={opt} className={`flex items-center gap-2 cursor-pointer text-sm xl:text-base ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
                       <input
                         type="radio"
@@ -705,11 +710,13 @@ export default function Stage6({
                 setPendingCloseMatter(null);
             }
         }}
-        title="Confirm Matter Closure"
+        title={pendingCloseMatter === "Open" ? "Confirm Matter Reopen" : "Confirm Matter Closure"}
         message={
           pendingCloseMatter === "Completed"
             ? "Are you sure you want to mark this matter as Completed?  This action will archive the matter."
-            : "Are you sure you want to mark this matter as Cancelled? This action cannot be undone."
+            : pendingCloseMatter === "Cancelled"
+            ? "Are you sure you want to mark this matter as Cancelled? This action cannot be undone."
+            : "Are you sure you want to reopen this matter? This will restore it to an active status."
         }
       />
     </div>

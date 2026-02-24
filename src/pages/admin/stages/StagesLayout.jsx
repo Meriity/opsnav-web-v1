@@ -2024,7 +2024,7 @@ export default function StagesLayout() {
 
                       {/* Business Name */}
                       {currentModule === "commercial" && (
-                        <div className="md:col-span-1">
+                        <div className="md:col-span-2">
                           <label className="block text-xs md:text-sm font-semibold mb-0.5">
                             Business Name
                           </label>
@@ -2106,45 +2106,75 @@ export default function StagesLayout() {
                         />
                       </div>
 
-                      {/* State Field */}
-                      <div className="md:col-span-1">
-                        <label className="block text-xs md:text-sm font-semibold mb-1">
-                          State
-                        </label>
-                        {canEditMatterDetails ? (
-                        <input
-                            id="state"
-                            name="state"
-                            type="text"
-                            value={
-                              clientData?.state ||
-                              clientData?.data?.state ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              setClientData((prev) => {
-                                const val = e.target.value;
-                                const next = { ...(prev || {}), state: val };
-                                if (currentModule === "print media") {
-                                  if (!next.data) next.data = {};
-                                  next.data.state = val;
-                                }
-                                return next;
-                              })
-                            }
-                            className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                          />
-                        ) : (
+                      {/* State + Post Code */}
+                      <div className="md:col-span-3 flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            State
+                          </label>
+                          {canEditMatterDetails ? (
+                          <input
+                              id="state"
+                              name="state"
+                              type="text"
+                              value={
+                                clientData?.state ||
+                                clientData?.data?.state ||
+                                ""
+                              }
+                              onChange={(e) =>
+                                setClientData((prev) => {
+                                  const val = e.target.value;
+                                  const next = { ...(prev || {}), state: val };
+                                  if (currentModule === "print media") {
+                                    if (!next.data) next.data = {};
+                                    next.data.state = val;
+                                  }
+                                  return next;
+                                })
+                              }
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={
+                                clientData?.state || clientData?.data?.state || ""
+                              }
+                              className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            Post Code
+                          </label>
                           <input
                             type="text"
+                            id="postcode"
+                            name="postcode"
+                            disabled={currentModule === "print media"}
                             value={
-                              clientData?.state || clientData?.data?.state || ""
+                              clientData?.postcode ||
+                              clientData?.data?.postCode ||
+                              ""
                             }
-                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                            disabled
-                            readOnly
+                            onChange={(e) => {
+                              setClientData((prev) => ({
+                                ...prev,
+                                postcode: e.target.value,
+                              }));
+                            }}
+                            pattern="^[0-9]{4}$"
+                            maxLength={4}
+                            inputMode="numeric"
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
+                              currentModule === "print media" ? "bg-gray-100" : ""
+                            }`}
                           />
-                        )}
+                        </div>
                       </div>
 
                       {/* Client Type Field */}
@@ -2473,40 +2503,10 @@ export default function StagesLayout() {
                         )}
                       </div>
 
-                      {/* Post Code */}
-                      <div className="md:col-span-1">
-                        <label className="block text-xs md:text-sm font-semibold mb-1 ">
-                          Post Code
-                        </label>
-                        <input
-                          type="text"
-                          id="postcode"
-                          name="postcode"
-                          disabled={currentModule === "print media"}
-                          value={
-                            clientData?.postcode ||
-                            clientData?.data?.postCode ||
-                            ""
-                          }
-                          onChange={(e) => {
-                            setClientData((prev) => ({
-                              ...prev,
-                              postcode: e.target.value,
-                            }));
-                          }}
-                          pattern="^[0-9]{4}$"
-                          maxLength={4}
-                          inputMode="numeric"
-                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 
-                        ${
-                          currentModule === "print media" && "bg-gray-100"
-                        }`}
-                        />
-                      </div>
 
                       {/* Is Purchaser a Trustee? (Commercial Only) */}
                       {currentModule === "commercial" && (
-                        <div className="md:col-span-1">
+                        <div className="md:col-span-2">
                           <label className="block text-xs md:text-sm font-semibold mb-1">
                             Is purchaser a trustee?
                           </label>

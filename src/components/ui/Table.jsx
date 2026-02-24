@@ -415,14 +415,21 @@ const Table = ({
                          </button>
                       )}
                       {EditOrder &&
-                        currentModule === "print media" &&
-                        !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                        !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
+                        (currentModule === "print media" ||
+                        (["conveyancing", "commercial", "vocat"].includes(currentModule) && localStorage.getItem("role") === "superadmin")) && (
                            <button
                              onClick={() => {
-                               console.log("clicked!");
-                               navigate(`/admin/client/stages/${item.orderId}`);
+                               const matterId = item.matternumber || item.matterNumber || item.orderId || item.id || item._id;
+                               if (currentModule === "print media") {
+                                 navigate(`/admin/client/stages/${matterId}`);
+                               } else if (currentModule === "vocat") {
+                                 navigate(`/admin/client/stages/${matterId}/4`);
+                               } else {
+                                 navigate(`/admin/client/stages/${matterId}/6`);
+                               }
                              }}
-                             className="flex flex-col items-center space-y-0.5 p-1 text-blue-600"
+                             className="flex flex-col items-center space-y-0.5 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition"
                              title="Edit"
                            >
                              <Edit className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
