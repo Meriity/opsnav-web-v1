@@ -24,6 +24,7 @@ import {
 // Original API and Components
 import ClientAPI from "../../api/clientAPI";
 import Loader from "../../components/ui/Loader";
+import { extractFirstName } from "../../utils/formatters";
 
 // Register Chart.js elements
 ChartJS.register(ArcElement, Tooltip);
@@ -1087,7 +1088,7 @@ export default function ClientDashboard() {
               <div className="text-lg relative p-6 sm:p-10 shadow-lg border border-white/30 md:shadow-none md:border-none xl:shadow-lg xl:border xl:border-white/30 md:h-auto xl:h-[310px] flex flex-col justify-center">
 
                 <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg xl:mt-20">
-                  Hello, {matterDetails.Clientname || orderDetails.Clientname}{" "}
+                  Hello, {extractFirstName(matterDetails.Clientname || orderDetails.Clientname)}{" "}
                   <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
                 </h1>
                 <p className="text-lg md:text-xl font-medium text-blue-50/90 tracking-wide mt-2 flex items-center gap-2">

@@ -21,6 +21,26 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-25",
+          version: "v6.6.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Client Portal Personalization",
+          description: "Enhanced client dashboard with personalized greetings.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "First Name Greeting",
+              description: "Resolved issue where the full client name format was displayed in the dashboard greeting.",
+              details: "Implemented robust first name extraction to handle various formats like 'LastName, FirstName' or names with titles, providing a more personalized 'Hello [FirstName]' experience.",
+              icon: Sparkles,
+            }
+          ],
+          module: "Client Portal",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-02-24",
           version: "v6.6.1",
           type: "patch",
