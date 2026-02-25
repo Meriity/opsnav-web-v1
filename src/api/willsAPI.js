@@ -251,6 +251,26 @@ class WillsAPI {
         throw error;
     }
   }
+
+  // Send Reminder Email to Client
+  async sendReminderEmail(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/send-reminder`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error sending reminder email:", error);
+      throw error;
+    }
+  }
 }
 
 export default WillsAPI;

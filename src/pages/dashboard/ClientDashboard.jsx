@@ -24,6 +24,7 @@ import {
 // Original API and Components
 import ClientAPI from "../../api/clientAPI";
 import Loader from "../../components/ui/Loader";
+import { extractFirstName } from "../../utils/formatters";
 
 // Register Chart.js elements
 ChartJS.register(ArcElement, Tooltip);
@@ -658,7 +659,7 @@ export default function ClientDashboard() {
 
     if (response.stage1) {
         const s1 = response.stage1;
-        const note = splitNoteParts(s1.notes || s1.noteForClient); // API response might vary
+        const note = splitNoteParts(s1.commentary || s1.notes || s1.noteForClient); // Added commentary mapping
         
         stages.push({
             stageName: "Initialisation",
@@ -686,7 +687,7 @@ export default function ClientDashboard() {
 
     if (response.stage2) {
         const s2 = response.stage2;
-        const note = splitNoteParts(s2.notes || s2.noteForClient);
+        const note = splitNoteParts(s2.commentary || s2.notes || s2.noteForClient);
         
         stages.push({
             stageName: "Assessment & Evidence",
@@ -719,7 +720,7 @@ export default function ClientDashboard() {
 
     if (response.stage3) {
         const s3 = response.stage3;
-        const note = splitNoteParts(s3.notes || s3.noteForClient);
+        const note = splitNoteParts(s3.commentary || s3.notes || s3.noteForClient);
         
         stages.push({
             stageName: "Searches & Analysis",
@@ -744,7 +745,7 @@ export default function ClientDashboard() {
 
     if (response.stage4) {
         const s4 = response.stage4;
-        const note = splitNoteParts(s4.notes || s4.noteForClient);
+        const note = splitNoteParts(s4.commentary || s4.notes || s4.noteForClient);
         
         stages.push({
             stageName: "Finalisation",
@@ -1087,7 +1088,7 @@ export default function ClientDashboard() {
               <div className="text-lg relative p-6 sm:p-10 shadow-lg border border-white/30 md:shadow-none md:border-none xl:shadow-lg xl:border xl:border-white/30 md:h-auto xl:h-[310px] flex flex-col justify-center">
 
                 <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg xl:mt-20">
-                  Hello, {matterDetails.Clientname || orderDetails.Clientname}{" "}
+                  Hello, {extractFirstName(matterDetails.Clientname || orderDetails.Clientname)}{" "}
                   <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
                 </h1>
                 <p className="text-lg md:text-xl font-medium text-blue-50/90 tracking-wide mt-2 flex items-center gap-2">

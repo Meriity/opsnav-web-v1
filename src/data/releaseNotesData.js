@@ -14,11 +14,127 @@ import {
   Smartphone,
   BarChart3,
   ArrowUpDown,
+  RefreshCw,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       February: [
+        {
+          date: "2026-02-25",
+          version: "v6.6.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Client Portal Personalization",
+          description: "Enhanced client dashboard with personalized greetings.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "First Name Greeting",
+              description: "Resolved issue where the full client name format was displayed in the dashboard greeting.",
+              details: "Implemented robust first name extraction to handle various formats like 'LastName, FirstName' or names with titles, providing a more personalized 'Hello [FirstName]' experience.",
+              icon: Sparkles,
+            }
+          ],
+          module: "Client Portal",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-02-24",
+          version: "v6.6.1",
+          type: "patch",
+          category: "bugfix",
+          title: "VOCAT Module Bug Fixes",
+          description: "Critical bug fixes for VOCAT stage organization and client portal data display.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Client Portal Commentary Fix",
+              description: "Resolved issue where VOCAT stage commentary was missing in the client portal.",
+              details: "Updated the client dashboard mapping to correctly read the API's commentary field, ensuring admin notes are visible to clients.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Stage 2 Layout Categorization",
+              description: "Reorganized VOCAT Stage 2 fields into logical categories with headers.",
+              details: "Fields are now grouped under subtitles like Counselling, Loss of Earnings, and Medical Expenses for better clarity.",
+              icon: Sparkles,
+            }
+          ],
+          module: "Vocat",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-02-24",
+          version: "v6.6.0",
+          type: "minor",
+          category: "feature",
+          title: "Reopen Archived Matters & UI Polishing",
+          description: "Superadmins can now reopen archived matters for Conveyancing, Commercial, and VOCAT. Also includes UI layout optimizations.",
+          updates: [
+            {
+              type: "feature",
+              title: "Restore Archived Matters",
+              description: "Added 'Edit' capability to the Archived Clients table for Superadmins.",
+              details: "Authorized users can navigate to the closing stage of a matter and select 'Open' to restore it to an active status.",
+              icon: RefreshCw,
+            },
+            {
+              type: "ui_ux",
+              title: "Header Layout Optimization",
+              description: "Reduced excessive padding and margins in the Archived Clients action bar.",
+              details: "Tightened the spacing for better visibility on tablet and laptop screens by optimizing paddings and margins.",
+              icon: Sparkles,
+            },
+            {
+              type: "bugfix",
+              title: "VOCAT Stage 4 Navigation Fix",
+              description: "Fixed the 'Next' button in VOCAT Stage 4 navigating to incorrect stages.",
+              details: "The Next button now correctly routes to the Cost page instead of rendering Conveyancing Stage 5 and 6.",
+              icon: Bug,
+            },
+            {
+              type: "ui_ux",
+              title: "Post Code Field Repositioning",
+              description: "Moved the Post Code field to appear alongside the State field in Matter Details.",
+              details: "State and Post Code now share the same row for a cleaner, more logical layout across all modules.",
+              icon: ArrowUpDown,
+            }
+          ],
+          module: "Commercial, Conveyancing, Vocat",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-02-24",
+          version: "v6.5.0",
+          type: "minor",
+          category: "feature",
+          title: "Send Reminder Feature for Matters",
+          description: "Admins and Superadmins can now send email reminders directly to matter holders for pending tasks.",
+          updates: [
+            {
+              type: "feature",
+              title: "Send Reminder Button",
+              description: "Added a new 'Send Reminder' button with an icon in the Matter Details header.",
+              details: "Allows authorized users to trigger an email that lists all incomplete tasks across all stages of a particular matter.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Payload Enhancements",
+              description: "Included client email in the reminder payload.",
+              details: "The backend now receives the matter holder's `clientEmail` along with an aggregated `taskList` array to properly address and format the notification.",
+              icon: Info,
+            }
+          ],
+          module: "Commercial, Conveyancing, Wills, Vocat",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-02-21",
           version: "v6.4.0",

@@ -108,7 +108,7 @@ const formConfig = {
       { name: "finalLetterToClient", label: "Letter to Client", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "closeMatter", label: "Close Matter", type: "radio", options: ["Completed", "Cancelled", "N/R"] },
+      { name: "closeMatter", label: "Close Matter", type: "radio", options: ["Completed", "Cancelled", "N/R", "Open"] },
     ],
     noteGroups: [
       {
@@ -148,7 +148,7 @@ const getStatus = (value) => {
   if (["yes", "na", "n/a", "nr", "cancelled", "completed"].includes(val))
     return "Completed";
   if (val === "no") return "Not Completed";
-  if (["processing", "inprogress"].includes(val)) return "In Progress";
+  if (["processing", "inprogress", "open"].includes(val)) return "In Progress";
   return "Not Completed";
 };
 
@@ -359,13 +359,12 @@ export default function Stage4({
       const fieldConfig = currentConfig.fields.find((f) => f.name === field);
       let processedValue = value;
 
-      // Special handling for Close Order triggering modal on selection
-      // This MUST block the state update until confirmed
+      // Special handling for Close Order/Matter triggering modal on selection
       if (
-        field === "closeOrder" &&
-        ["Completed", "Cancelled"].includes(value)
+        (field === "closeOrder" || field === "closeMatter") &&
+        ["Completed", "Cancelled", "Open"].includes(value)
       ) {
-        setPendingCloseOrder(value);
+        setPendingCloseOrder({ field, value });
         setCloseOrderModalOpen(true);
         return; // Stop here, do not update formData yet
       }
@@ -714,7 +713,9 @@ export default function Stage4({
               {(field.options || (["closeOrder", "closeMatter"].includes(field.name)
                 ? ["Completed", "Cancelled"]
                 : ["Yes", "No", "Processing", "N/R"])
-              ).map((val) => (
+              )
+              .filter((opt) => opt !== "Open" || localStorage.getItem("role") === "superadmin")
+              .map((val) => (
                 <label
                   key={val}
                   className={`flex items-center gap-2 text-sm xl:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}
@@ -1007,12 +1008,18 @@ export default function Stage4({
               disabled={isSaving}
             />
           )}
-          <Button
-            label="Next"
-            width="w-[70px]  md:w-[100px]"
-            bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
-            onClick={() => changeStage(stageNumber + 1)}
-          />
+            <Button
+              label="Next"
+              width="w-[70px]  md:w-[100px]"
+              bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+              onClick={() => {
+                if (currentModule === "vocat") {
+                  changeStage(7);
+                } else {
+                  changeStage(stageNumber + 1);
+                }
+              }}
+            />
         </div>
       </div>
 
@@ -1042,17 +1049,23 @@ export default function Stage4({
         }}
         onConfirm={() => {
             if (pendingCloseOrder) {
-                setFormData((prev) => ({ ...prev, closeOrder: pendingCloseOrder }));
-                setStatuses((prev) => ({ ...prev, closeOrder: getStatus(pendingCloseOrder) }));
+                const { field, value } = pendingCloseOrder;
+                const processed = normalizeValue(value);
+                setFormData((prev) => ({ ...prev, [field]: processed }));
+                setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
                 setHasChanges(true);
                 setCloseOrderModalOpen(false);
                 setPendingCloseOrder(null);
             }
         }}
-        title="Confirm Status Change"
-        message={`Are you sure you want to mark this order as ${
-             pendingCloseOrder || "Completed"
-        }? This action will archive the order.`}
+        title={pendingCloseOrder?.value === "Open" ? "Confirm Reopen" : "Confirm Closure"}
+        message={
+          pendingCloseOrder?.value === "Open"
+            ? `Are you sure you want to reopen this ${currentModule === "print media" ? "order" : "matter"}? This will restore it to an active status.`
+            : `Are you sure you want to mark this ${currentModule === "print media" ? "order" : "matter"} as ${
+                pendingCloseOrder?.value || "Completed"
+              }? This action will archive the ${currentModule === "print media" ? "order" : "matter"}.`
+        }
       />
     </div>
   );
