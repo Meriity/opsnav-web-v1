@@ -206,6 +206,7 @@ export default function Stage4({
     []
   );
 
+  const isSuperAdmin = useMemo(() => (localStorage.getItem("role") || "").toLowerCase().trim() === "superadmin", []);
   const isReadOnly = useMemo(() => ["readonly", "read-only"].includes(localStorage.getItem("role")), []);
 
   const api = useMemo(() => new ClientAPI(), []);
@@ -281,7 +282,12 @@ export default function Stage4({
               ? rawPrice.$numberDecimal
               : rawPrice?.toString() ?? "";
         } else if (field.type === "radio") {
-          initialFormData[field.name] = normalizeValue(rawValue ?? "");
+          const normVal = normalizeValue(rawValue ?? "");
+          if (normVal === "open") {
+            initialFormData[field.name] = isSuperAdmin ? "open" : "";
+          } else {
+            initialFormData[field.name] = normVal;
+          }
           initialStatuses[field.name] = getStatus(initialFormData[field.name]);
         } else if (field.type === "text") {
           initialFormData[field.name] = rawValue ?? "";
@@ -364,6 +370,7 @@ export default function Stage4({
         (field === "closeOrder" || field === "closeMatter") &&
         ["Completed", "Cancelled", "Open"].includes(value)
       ) {
+        if (value === "Open" && !isSuperAdmin) return;
         setPendingCloseOrder({ field, value });
         setCloseOrderModalOpen(true);
         return; // Stop here, do not update formData yet
@@ -622,6 +629,11 @@ export default function Stage4({
       payload.colorStatus = computedColorStatus;
     }
 
+    if (!isSuperAdmin) {
+      if (normalizeValue(payload.closeMatter) === "open") payload.closeMatter = "";
+      if (normalizeValue(payload.closeOrder) === "open") payload.closeOrder = "";
+    }
+
     try {
       let res;
       if (currentModule === "commercial") {
@@ -714,7 +726,7 @@ export default function Stage4({
                 ? ["Completed", "Cancelled"]
                 : ["Yes", "No", "Processing", "N/R"])
               )
-              .filter((opt) => opt !== "Open" || localStorage.getItem("role") === "superadmin")
+              .filter((opt) => opt !== "Open" || isSuperAdmin)
               .map((val) => (
                 <label
                   key={val}

@@ -22,6 +22,33 @@ export const monthlyReleaseNotes = {
       February: [
         {
           date: "2026-02-25",
+          version: "v6.6.3",
+          type: "patch",
+          category: "bugfix",
+          title: "Critical Payload Fix & API Hardening",
+          description: "Resolved 403 Forbidden errors for non-superadmin users by hardening the API layer and implementing triple-layer state sanitization.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Stage 6 403 Forbidden Error",
+              description: "Fixed persistent 403 error when saving Stage 6 as Admin/User.",
+              details: "Identified and removed a forced status injection in the API client layer and implemented multi-layer scrubbing to ensure sensitive matter states are never sent by unauthorized roles.",
+              icon: Shield,
+            },
+            {
+              type: "bugfix",
+              title: "API Layer Sanitization",
+              description: "Removed automated 'open' status injection in the client API.",
+              details: "Ensured the API communication layer respects UI-provided payloads without forcing unauthorized privilege escalations.",
+              icon: Server,
+            }
+          ],
+          module: "Commercial, Conveyancing, Vocat",
+          severity: "High",
+          status: "Released"
+        },
+        {
+          date: "2026-02-25",
           version: "v6.6.2",
           type: "patch",
           category: "bugfix",
