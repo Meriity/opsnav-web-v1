@@ -19,6 +19,7 @@ import {
   NotepadText,
   ChevronsRight,
   Menu,
+  MessageSquare,
 } from "lucide-react";
 
 // Original API and Components
@@ -182,17 +183,27 @@ const StageCard = ({ stage, stageIndex }) => {
         </div>
 
         {(stage.data.noteText || stage.data.rows[0]?.noteText) && (
-          <div className="mt-4 pt-4 border-t-2 border-[#FB4A50] flex">
-            <blockquote className="text-sm text-slate-600 border-l-4 border-[#FB4A50] pl-3">
-              <p className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1">
-                <NotepadText className="w-4 h-4" />
-                Notes
-              </p>
-              {stage.data.noteText && <p>{stage.data.noteText}</p>}
-              {stage.data.rows[0]?.noteText && (
-                <p>{stage.data.rows[0].noteText}</p>
-              )}
-            </blockquote>
+          <div className="mt-4 pt-4 border-t-2 border-[#FB4A50] space-y-3">
+            {/* System Note */}
+            {stage.data.noteText && (
+              <div className="bg-blue-50/70 rounded-xl p-3 border border-blue-100">
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1">
+                  <NotepadText className="w-3.5 h-3.5 text-[#2E3D99]" />
+                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">System Note</span>
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed">{stage.data.noteText}</p>
+              </div>
+            )}
+            {/* Client Comment */}
+            {stage.data.rows[0]?.noteText && (
+              <div className="bg-rose-50/70 rounded-xl p-3 border border-rose-100">
+                <p className="flex items-center gap-1.5 text-xs font-bold text-[#FB4A50] uppercase tracking-wider mb-1">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Client Comment
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed">{stage.data.rows[0].noteText}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
