@@ -539,23 +539,10 @@ class ClientAPI {
 
   async upsertStageSix(additionalData = {}) {
     try {
-      // console.log(additionalData);
-      // Function to update closeMatter status
-      function updateCloseMatter(client) {
-        if (!client.closeMatter || client.closeMatter.trim() === "") {
-          client.closeMatter = "open";
-        } else if (client.closeMatter === "Completed") {
-          client.closeMatter = "closed";
-        } else if (client.closeMatter === "Cancelled") {
-          client.closeMatter = "cancelled";
-        }
-        return client;
-      }
-
       const response = await fetch(`${this.baseUrl}/clients/stage-six`, {
         method: "POST",
         headers: this.getHeaders(),
-        body: JSON.stringify(updateCloseMatter(additionalData)),
+        body: JSON.stringify(additionalData),
       });
       // console.log();
 

@@ -231,6 +231,8 @@ export default function Stage6({
   const currentModule = localStorage.getItem("currentModule");
   const currentConfig = formConfig[currentModule] || formConfig.conveyancing;
 
+  const isSuperAdmin = (localStorage.getItem("role") || "").toLowerCase().trim() === "superadmin";
+
   const modalField = currentConfig.fields.find((f) => f.triggersModal);
 
   // Initial Load
@@ -239,7 +241,6 @@ export default function Stage6({
     hasLoaded.current = true;
 
     const load = async () => {
-      // As with Stage 5 refactor, we rely on 'data' prop from parent (StageLayout)
       let stageData = data;
 
       const newForm = {};
@@ -273,7 +274,7 @@ export default function Stage6({
             ) {
               val = "Cancelled";
             } else if (normVal === "open") {
-              val = "Open";
+              val = isSuperAdmin ? "Open" : "";
             } else {
               val = "";
             }
@@ -395,14 +396,9 @@ export default function Stage6({
       clientNoteChanged =
         (noteForClient || "") !== (original.noteForClient || "");
     } else {
-      // for others, client comment is inside formState so formChanged covers it usually,
-      // but strictly speaking clientCommentKey is in noteGroups.
-      // However we load it into formState, so JSON stringify formState handles it.
     }
 
     return formChanged || clientNoteChanged;
-    // System note change is derived from form change, so no need to explicitly check usually,
-    // unless logic depends solely on system note which is rare without form change.
   };
 
   const performSave = async () => {
@@ -436,12 +432,18 @@ export default function Stage6({
         else if (["cancelled", "cancel"].includes(cm))
           filteredPayload.closeMatter = "cancelled";
         else if (cm === "open")
-          filteredPayload.closeMatter = "open";
+          filteredPayload.closeMatter = isSuperAdmin ? "open" : "";
       }
 
       payload = filteredPayload;
     } else {
       payload = { ...formState };
+      
+      if (!isSuperAdmin) {
+        if (normalizeValue(payload.closeMatter) === "open") payload.closeMatter = "";
+        if (normalizeValue(payload.archiveOrder) === "open") payload.archiveOrder = "";
+      }
+
       currentConfig.noteGroups.forEach((group) => {
         const comment = payload[group.clientCommentKey] || "";
         payload[group.noteForClientKey] = comment
@@ -458,10 +460,24 @@ export default function Stage6({
       }
     }
 
+    if (!isSuperAdmin) {
+      if (normalizeValue(payload.closeMatter) === "open") {
+        payload.closeMatter = "";
+      }
+      if (normalizeValue(payload.archiveOrder) === "open") {
+        payload.archiveOrder = "";
+      }
+    }
+
     // Safe Primitive Conversion
     const safePayload = {};
     Object.keys(payload).forEach((k) => {
-      const v = payload[k];
+      let v = payload[k];
+
+      if (!isSuperAdmin && (k === "closeMatter" || k === "archiveOrder") && normalizeValue(v) === "open") {
+        v = "";
+      }
+
       if (v === null || v === undefined) {
         safePayload[k] = null;
       } else if (typeof v === "object") {
@@ -473,12 +489,7 @@ export default function Stage6({
 
     try {
       if (currentModule === "commercial") {
-        // Dual save strategy:
-        // 1. Save to Stage 6 specific endpoint
         await commercialApi.upsertStage(6, matterNumber, safePayload);
-
-        // 2. Also save to main client endpoint (root fields like closeMatter, notifySoaToClient)
-        // This ensures persistence if GET /clients/alldata pulls from root
         try {
           await api.updateClientData(matterNumber, safePayload);
         } catch (err) {
@@ -587,7 +598,7 @@ export default function Stage6({
               </div>
               <div className="flex flex-wrap gap-x-8 gap-y-2">
                 {(field.options || ["Yes", "No", "Processing", "N/R"])
-                  .filter((opt) => opt !== "Open" || localStorage.getItem("role") === "superadmin")
+                  .filter((opt) => opt !== "Open" || isSuperAdmin)
                   .map((opt) => (
                     <label key={opt} className={`flex items-center gap-2 cursor-pointer text-sm xl:text-base ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
                       <input
@@ -674,7 +685,6 @@ export default function Stage6({
           onClick={() => changeStage(stageNumber - 1)}
         />
         <div className="flex gap-2">
-          {/* Stage 6 is usually final, so Next takes to Cost/Stage7 if exists, otherwise might just be Save */}
           <Button
             label={isSaving ? "Saving..." : "Save"}
             width="w-[100px] md:w-[100px]"
@@ -682,9 +692,6 @@ export default function Stage6({
             onClick={handleSave}
             disabled={isSaving}
           />
-          {/* Some stages layouts have stage 7/Cost. If so, Next button is valid. 
-              The parent will handle logic if stageNumber+1 > max. 
-              Usually Stage6 is last, but sometimes there is cost. */}
           <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
