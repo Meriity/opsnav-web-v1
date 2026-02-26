@@ -21,6 +21,26 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-26",
+          version: "v6.6.4",
+          type: "patch",
+          category: "bugfix",
+          title: "VOCAT Client Portal Commentary Fix",
+          description: "Fixed commentary display in the VOCAT client portal where system notes and client comments were shown on the same line.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Commentary Display Separation",
+              description: "Split system note and client comment into separate, clearly labeled sections.",
+              details: "The VOCAT client portal previously displayed both the system note and client comment together on a single line under a generic 'Notes' label. Commentary is now split by the hyphen separator into two distinct UI cards — 'System Note' card and 'Client Comment' card — for improved readability and clarity.",
+              icon: Bug,
+            }
+          ],
+          module: "VOCAT, Client Portal",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-02-25",
           version: "v6.6.3",
           type: "patch",
