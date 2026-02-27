@@ -7,7 +7,8 @@ import {
   ArrowDown,
   ClipboardList,
   Trash2,
-  GripVertical
+  GripVertical,
+  ExternalLink
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -478,6 +479,18 @@ const ViewClientsTable = ({
                         <Edit size={10} className="lg:size-[10px] xl:size-3" />
                         <span className="text-[9px] lg:text-[9px] xl:text-xs">Edit</span>
                       </button>
+                      {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
+                        <a
+                          href={item.matterUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                          title="Open Matter URL"
+                        >
+                          <ExternalLink size={10} className="lg:size-[10px] xl:size-3" />
+                          <span className="text-[9px] lg:text-[9px] xl:text-xs">URL</span>
+                        </a>
+                      )}
                       {/* <button
                         onClick={() =>
                           onShare(item.matternumber, item.client_email)
@@ -635,6 +648,17 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
+                {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
+                  <a
+                    href={item.matterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                    title="Open Matter URL"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                )}
                 {/* <button
                   onClick={() =>
                     onShare(

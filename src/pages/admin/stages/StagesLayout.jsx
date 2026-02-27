@@ -1079,6 +1079,7 @@ export default function StagesLayout() {
           matterDate: clientData?.matterDate || null,
           dataEntryBy: clientData?.dataEntryBy || "",
           postcode: clientData?.postcode || "",
+          matterUrl: clientData?.matterUrl || "",
         };
       } else if (currentModule === "vocat") {
         payload = {
@@ -1097,6 +1098,7 @@ export default function StagesLayout() {
           notes: clientData?.notes || "",
           clientEmail: clientData?.clientEmail || "",
           postcode: clientData?.postcode,
+          matterUrl: clientData?.matterUrl || "",
         };
       } else if (currentModule === "print media") {
         payload = {
@@ -1139,9 +1141,9 @@ export default function StagesLayout() {
         payload.dataEntryBy = clientData?.dataEntryBy || "";
 
         if (currentModule === "commercial") {
-          payload.businessName = clientData?.businessName || "";
           payload.businessAddress = clientData?.businessAddress || "";
           payload.isTrustee = clientData?.isTrustee || "";
+          payload.matterUrl = clientData?.matterUrl || "";
         } else if (currentModule === "vocat") {
           payload.clientAddress = clientData?.clientAddress || "";
           payload.matterReferenceNumber =
@@ -1152,6 +1154,7 @@ export default function StagesLayout() {
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
           payload.propertyAddress = clientData?.propertyAddress || "";
+          payload.matterUrl = clientData?.matterUrl || "";
         }
 
         if (
@@ -2305,8 +2308,9 @@ export default function StagesLayout() {
                         </div>
                       )}
 
-                      {currentModule === "vocat" && (
+                      {(currentModule === "vocat" || currentModule === "conveyancing") && (
                         <div className="md:col-span-3">
+                          {currentModule === "vocat" && (
                           <div className="flex flex-col md:flex-row gap-4 mb-4">
                             <div className="flex-1">
                               <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -2361,6 +2365,7 @@ export default function StagesLayout() {
                               )}
                             </div>
                           </div>
+                          )}
                           <div>
                             <label className="block text-xs md:text-sm font-semibold mb-1">
                               Matter URL
@@ -2369,12 +2374,13 @@ export default function StagesLayout() {
                               <input
                                 type="url"
                                 value={clientData?.matterUrl || ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setClientData((prev) => ({
                                     ...(prev || {}),
                                     matterUrl: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  setMatterDirty(true);
+                                }}
                                 placeholder="https://example.com"
                                 className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
                               />
@@ -3200,8 +3206,9 @@ export default function StagesLayout() {
                       </div>
                     )}
                     
-                    {currentModule === "vocat" && (
+                    {(currentModule === "vocat" || currentModule === "conveyancing") && (
                       <>
+                        {currentModule === "vocat" && (
                         <div className="flex flex-row gap-4">
                           <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
@@ -3256,6 +3263,7 @@ export default function StagesLayout() {
                             )}
                           </div>
                         </div>
+                        )}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
                             Matter URL
@@ -3264,12 +3272,13 @@ export default function StagesLayout() {
                             <input
                               type="url"
                               value={clientData?.matterUrl || ""}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 setClientData((prev) => ({
                                   ...(prev || {}),
                                   matterUrl: e.target.value,
-                                }))
-                              }
+                                }));
+                                setMatterDirty(true);
+                              }}
                               placeholder="https://example.com"
                               className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
                             />

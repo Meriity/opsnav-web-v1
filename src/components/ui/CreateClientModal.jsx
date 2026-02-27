@@ -52,6 +52,7 @@ const getInitialFormData = (user, currentModule) => {
       postcode: "",
       matterDate: "",
       settlementDate: "",
+      matterUrl: "",
       dataEntryBy: user,
     };
   } else if (currentModule === "conveyancing") {
@@ -65,6 +66,7 @@ const getInitialFormData = (user, currentModule) => {
       postcode: "",
       matterDate: "",
       settlementDate: "",
+      matterUrl: "",
       dataEntryBy: user,
     };
   } else if (currentModule === "print media") {
@@ -94,6 +96,7 @@ const getInitialFormData = (user, currentModule) => {
          postcode: "",
          clientEmail: "",
          phone: "",
+         matterUrl: "",
          dataEntryBy: user
       };
   } else if (currentModule === "vocat") {
@@ -669,6 +672,7 @@ useEffect(() => {
             postcode: formData.postcode,
             matterDate: formData.matterDate,
             settlementDate: formData.settlementDate,
+            matterUrl: formData.matterUrl || "",
             dataEntryBy: formData.dataEntryBy,
           };
 
@@ -728,6 +732,7 @@ useEffect(() => {
         try {
           const payload = {
             ...formData,
+            matterUrl: formData.matterUrl || "",
             dataentryby: localStorage.getItem("user") || user,
           };
           console.log("Creating VKL client with payload:", payload);
@@ -1243,7 +1248,7 @@ useEffect(() => {
                         </div>
                       </div>
                     )}
-                    {isVocat && (
+                    {isVocat || isConveyancing ? (
                       <div className="mt-4">
                         <label className="block mb-1 font-medium">
                           Matter URL <span className="text-gray-400 text-sm">(Optional)</span>
@@ -1257,7 +1262,7 @@ useEffect(() => {
                           className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
                         />
                       </div>
-                    )}
+                    ) : null}
                 </>
               )}
 
