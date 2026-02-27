@@ -21,6 +21,40 @@ export const monthlyReleaseNotes = {
     2026: {
       February: [
         {
+          date: "2026-02-27",
+          version: "v6.6.5",
+          type: "patch",
+          category: "feature",
+          title: "Matter URL Integration & Payload Hardening",
+          description: "Enabled Matter URL tracking across Conveyancing, Commercial, and Wills modules, including direct redirection from client tables and robust payload synchronization.",
+          updates: [
+            {
+              type: "feature",
+              title: "Matter URL Field",
+              description: "Added dedicated 'Matter URL' input to Create Client and Matter Details sections for streamlined access to external resources.",
+              details: "Admins can now store and manage external links for matters across Conveyancing, Commercial, and Wills modules. The field is available in both the creation modal and the matter details layout (desktop and mobile).",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "One-Click Redirection",
+              description: "Integrated an external link icon in the action column for rapid access.",
+              details: "A new redirect icon appears for matters with an associated URL, allowing users to open external documents or sites directly from the client list.",
+              icon: Zap,
+            },
+            {
+              type: "bugfix",
+              title: "Payload Synchronization",
+              description: "Resolved issues where matter URLs were not being persisted correctly.",
+              details: "Hardened the API payload logic in StagesLayout and CreateClientModal to ensure matter URLs are consistently synced across all active modules during creation and updates.",
+              icon: Bug,
+            }
+          ],
+          module: "Conveyancing, Commercial, Wills, VOCAT",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-02-26",
           version: "v6.6.4",
           type: "patch",
