@@ -19,7 +19,70 @@ import {
 
 export const monthlyReleaseNotes = {
     2026: {
+      March: [
+        {
+          date: "2026-03-02",
+          version: "v6.6.6",
+          type: "patch",
+          category: "bugfix",
+          title: "Matter URL Redirection & Wills Address Fix",
+          description: "Streamlined matter navigation and resolved address synchronization issues in the Wills module.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Matter Number Redirection",
+              description: "Integrated Matter URL redirection directly into the reference number.",
+              details: "Removed the separate external link icon. Matter numbers / Project numbers now act as direct clickable links to external URLs, simplifying the table interface across all modules.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Wills Address Autofill",
+              description: "Fixed Google Maps integration in the Wills module.",
+              details: "Resolved a bug where address suggestions, state, and postcode fields were not being populated automatically when creating a new client in the Wills module.",
+              icon: Bug,
+            }
+          ],
+          module: "Wills, Commercial, Conveyancing, VOCAT",
+          severity: "Medium",
+          status: "Released"
+        }
+      ],
       February: [
+        {
+          date: "2026-02-27",
+          version: "v6.6.5",
+          type: "patch",
+          category: "feature",
+          title: "Matter URL Integration & Payload Hardening",
+          description: "Enabled Matter URL tracking across Conveyancing, Commercial, and Wills modules, including direct redirection from client tables and robust payload synchronization.",
+          updates: [
+            {
+              type: "feature",
+              title: "Matter URL Field",
+              description: "Added dedicated 'Matter URL' input to Create Client and Matter Details sections for streamlined access to external resources.",
+              details: "Admins can now store and manage external links for matters across Conveyancing, Commercial, and Wills modules. The field is available in both the creation modal and the matter details layout (desktop and mobile).",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "One-Click Redirection",
+              description: "Integrated an external link icon in the action column for rapid access.",
+              details: "A new redirect icon appears for matters with an associated URL, allowing users to open external documents or sites directly from the client list.",
+              icon: Zap,
+            },
+            {
+              type: "bugfix",
+              title: "Payload Synchronization",
+              description: "Resolved issues where matter URLs were not being persisted correctly.",
+              details: "Hardened the API payload logic in StagesLayout and CreateClientModal to ensure matter URLs are consistently synced across all active modules during creation and updates.",
+              icon: Bug,
+            }
+          ],
+          module: "Conveyancing, Commercial, Wills, VOCAT",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-02-26",
           version: "v6.6.4",

@@ -51,6 +51,7 @@ export const useClientStore = create(
               property_address: client.propertyAddress || "N/A",
               state: client.state || "N/A",
               client_type: client.clientType || "N/A",
+              matterUrl: client.matterUrl || "",
               settlement_date: client.settlementDate
                 ? client.settlementDate.split("T")[0]
                 : "N/A",
@@ -90,6 +91,7 @@ export const useClientStore = create(
               client_name: client.client_name || "N/A",
               billing_address: client.deliveryAddress || "N/A",
               client_type: client.orderType || "N/A",
+              matterUrl: client.matterUrl || "",
               stages: Array.isArray(client.stages) ? client.stages : [],
               order_date: client.orderDate
                 ? client.orderDate.split("T")[0]
