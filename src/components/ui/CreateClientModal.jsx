@@ -94,6 +94,7 @@ const getInitialFormData = (user, currentModule) => {
          clientType: "",
          state: "",
          postcode: "",
+         propertyAddress: "",
          clientEmail: "",
          phone: "",
          matterUrl: "",
@@ -159,7 +160,7 @@ const commercialBusinessAddressRef = useRef(null);
 
   // --- LOAD GOOGLE MAPS SCRIPT ---
   useEffect(() => {
-    if ((isPrintMedia && (createType === "order" || createType === "client")) || isConveyancing || isCommercial || isVocat) {
+    if ((isPrintMedia && (createType === "order" || createType === "client")) || isConveyancing || isCommercial || isVocat || isWills) {
       loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
         .then(() => {
           setIsGoogleMapsLoaded(true);
@@ -169,7 +170,7 @@ const commercialBusinessAddressRef = useRef(null);
           toast.error("Failed to load Google Maps. Please check your API key.");
         });
     }
-  }, [isPrintMedia, isConveyancing, isCommercial, createType, GOOGLE_MAPS_API_KEY]);
+  }, [isPrintMedia, isConveyancing, isCommercial, isVocat, isWills, createType, GOOGLE_MAPS_API_KEY]);
 
   // --- INITIALIZE GOOGLE MAPS AUTOCOMPLETE FOR ADDRESS FIELDS ---
   const initializeAutocomplete = (inputRef, onPlaceSelected) => {
@@ -497,6 +498,54 @@ useEffect(() => {
   };
 }, [isOpen, isCommercial]);
 
+
+// --- GOOGLE MAPS AUTOCOMPLETE FOR WILLS PROPERTY ADDRESS ---
+useEffect(() => {
+  if (!isWills || !isOpen) return;
+
+  let autocompleteInstance = null;
+  let placeChangedListener = null;
+
+  loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    .then(() => {
+      if (conveyancingPropertyAddressRef.current && window.google) {
+        autocompleteInstance = new window.google.maps.places.Autocomplete(
+          conveyancingPropertyAddressRef.current,
+          { types: ["address"], componentRestrictions: { country: ["au"] } }
+        );
+
+        placeChangedListener = autocompleteInstance.addListener(
+          "place_changed",
+          () => {
+            const place = autocompleteInstance.getPlace();
+            if (!place.geometry || !place.address_components) return;
+
+            let postcode = "";
+            let state = "";
+
+            place.address_components.forEach((component) => {
+              if (component.types.includes("postal_code"))
+                postcode = component.long_name;
+              if (component.types.includes("administrative_area_level_1"))
+                state = component.short_name;
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              propertyAddress: place.formatted_address,
+              postcode,
+              state,
+            }));
+          }
+        );
+      }
+    });
+
+  return () => {
+    if (placeChangedListener)
+      window.google.maps.event.removeListener(placeChangedListener);
+  };
+}, [isOpen, isWills]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -1248,10 +1297,13 @@ useEffect(() => {
                         </div>
                       </div>
                     )}
-                    {isVocat || isConveyancing ? (
+                    {isVocat || isConveyancing || isCommercial || isWills ? (
                       <div className="mt-4">
                         <label className="block mb-1 font-medium">
-                          Matter URL <span className="text-gray-400 text-sm">(Optional)</span>
+                          {isCommercial ? "Project URL" : "Matter URL"}{" "}
+                          <span className="text-gray-400 text-sm">
+                            (Optional)
+                          </span>
                         </label>
                         <input
                           type="url"

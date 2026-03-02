@@ -19,6 +19,35 @@ import {
 
 export const monthlyReleaseNotes = {
     2026: {
+      March: [
+        {
+          date: "2026-03-02",
+          version: "v6.6.6",
+          type: "patch",
+          category: "bugfix",
+          title: "Matter URL Redirection & Wills Address Fix",
+          description: "Streamlined matter navigation and resolved address synchronization issues in the Wills module.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Matter Number Redirection",
+              description: "Integrated Matter URL redirection directly into the reference number.",
+              details: "Removed the separate external link icon. Matter numbers / Project numbers now act as direct clickable links to external URLs, simplifying the table interface across all modules.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Wills Address Autofill",
+              description: "Fixed Google Maps integration in the Wills module.",
+              details: "Resolved a bug where address suggestions, state, and postcode fields were not being populated automatically when creating a new client in the Wills module.",
+              icon: Bug,
+            }
+          ],
+          module: "Wills, Commercial, Conveyancing, VOCAT",
+          severity: "Medium",
+          status: "Released"
+        }
+      ],
       February: [
         {
           date: "2026-02-27",
