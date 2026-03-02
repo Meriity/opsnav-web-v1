@@ -419,17 +419,31 @@ const Table = ({
                       {EditOrder &&
                         !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
                         (currentModule === "print media" ||
-                        (["conveyancing", "commercial", "vocat"].includes(currentModule) && localStorage.getItem("role") === "superadmin")) && (
+                        (["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && 
+                         localStorage.getItem("role") === "superadmin")) && (
                            <button
                              onClick={() => {
                                const matterId = item.matternumber || item.matterNumber || item.orderId || item.id || item._id;
-                               if (currentModule === "print media") {
-                                 navigate(`/admin/client/stages/${matterId}`);
-                               } else if (currentModule === "vocat") {
-                                 navigate(`/admin/client/stages/${matterId}/4`);
+                               const role = localStorage.getItem("role");
+                               const isUser = role === "user";
+                               const basePath = isUser ? "/user" : "/admin";
+                               
+                               let path = "";
+                               if (isUser) {
+                                 path = `/user/client/${matterId}/stages`;
                                } else {
-                                 navigate(`/admin/client/stages/${matterId}/6`);
+                                 path = `/admin/client/stages/${matterId}`;
                                }
+
+                               if (currentModule === "vocat") {
+                                 path += "/4";
+                               } else if (currentModule === "wills") {
+                                 path += "/3";
+                               } else if (currentModule !== "print media") {
+                                 path += "/6";
+                               }
+                               
+                               navigate(path);
                              }}
                              className="flex flex-col items-center space-y-0.5 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition"
                              title="Edit"
