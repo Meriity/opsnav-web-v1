@@ -305,7 +305,7 @@ const ViewClientsTable = ({
                                     href={item.matterUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline font-bold"
+                                    className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:underline font-bold inline-block"
                                   >
                                     {item[column.key]}
                                   </a>
@@ -595,28 +595,28 @@ const ViewClientsTable = ({
                   ? "Order ID"
                   : "Matter No"}  
               </p>
-              {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl ? (
-                <a
-                  href={item.matterUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-bold text-blue-600 hover:underline break-all"
-                >
-                  {currentModule === "commercial"
-                    ? item.matterNumber
-                    : currentModule === "print media"
-                    ? item.orderId
-                    : item.matternumber}
-                </a>
-              ) : (
-                <p className="text-sm font-bold text-[#2E3D99] break-all">
-                  {currentModule === "commercial"
-                    ? item.matterNumber
-                    : currentModule === "print media"
-                    ? item.orderId
-                    : item.matternumber}
-                </p>
-              )}
+                          {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
+                            <a
+                              href={item.matterUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:underline font-bold inline-block"
+                            >
+                              {currentModule === "commercial"
+                                ? item.matterNumber
+                                : currentModule === "print media"
+                                ? item.orderId
+                                : item.matternumber}
+                            </a>
+                          ) : (
+                            <p className="text-sm font-bold text-[#2E3D99] break-all">
+                              {currentModule === "commercial"
+                                ? item.matterNumber
+                                : currentModule === "print media"
+                                ? item.orderId
+                                : item.matternumber}
+                            </p>
+                          )}
             </div>
             <div className="flex justify-between items-start">
               <div>

@@ -104,6 +104,11 @@ export default function ArchivedFilterModal({
                       <option value="Commercial">Commercial</option>
                       <option value="Others">Others</option>
                     </>
+                  ) : currentModule === "wills" ? (
+                    <>
+                      <option value="Single">Single</option>
+                      <option value="Mirror">Mirror</option>
+                    </>
                   ) : (
                     <>
                       <option value="Buyer">Buyer</option>

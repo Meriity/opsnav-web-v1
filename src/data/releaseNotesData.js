@@ -15,11 +15,81 @@ import {
   BarChart3,
   ArrowUpDown,
   RefreshCw,
+  Search,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       March: [
+        {
+          date: "2026-03-02",
+          version: "v7.0.0",
+          type: "major",
+          category: "feature",
+          title: "Wills Module Overhaul & Field Unification",
+          description: "Major updates to the Wills module, tailoring client types, unifying address fields, and resolving critical stage logic and table display issues.",
+          updates: [
+            {
+              type: "feature",
+              title: "Wills Client Type Overhaul",
+              description: "Introduced specialized 'Single' and 'Mirror' radio buttons for Wills projects.",
+              details: "Replaced the generic Seller/Buyer/General dropdown with module-specific radio options, ensuring a more intuitive and tailored experience for Wills creation and matter details.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Address Field Unification",
+              description: "Unified property address handling to 'address' for the Wills module.",
+              details: "Standardized the address field across client creation, matter details, and API payloads specifically for Wills, ensuring consistency and reliability across the platform.",
+              icon: Database,
+            },
+            {
+              type: "bugfix",
+              title: "Google Maps Integration Fix (Wills)",
+              description: "Fixed Wills address disappearing after selection.",
+              details: "Resolved a bug where selecting an address from Google Maps suggestions in the Wills module would cause the field to clear immediately due to mismatched state keys.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Wills Stage Colors Fix",
+              description: "Resolved stage color display in the View Clients table.",
+              details: "Fixed a data transformation issue where Wills stage colors were not being rendered correctly in the table due to object/array data structure mismatches.",
+              icon: BarChart3,
+            },
+            {
+              type: "bugfix",
+              title: "Stage 3 Note Logic Fix",
+              description: "Corrected 'Completed' state detection in Wills Stage 3.",
+              details: "Updated system note generation to correctly recognize 'Completed' as a finished state, preventing false 'Not Received' warnings when tasks are already finalized.",
+              icon: Bug,
+            },
+            {
+              type: "improvement",
+              title: "Archived Filter Enhancement",
+              description: "Added Single/Mirror options to the Archived Clients filter.",
+              details: "Users can now filter archived Wills projects by their specific client types, improving search efficiency.",
+              icon: RefreshCw,
+            },
+            {
+              type: "feature",
+              title: "Interactive Search Navigation",
+              description: "Added 'Enter to scroll', navigation arrows, and accurate match counting to Release Notes search.",
+              details: "Users can now navigate through search matches using the Enter key or the new Up/Down arrows in the search bar. The UI now accurately counts all instances (even inside collapsed sections), automatically expands matching updates, and centers the active highlight on screen.",
+              icon: Search,
+            },
+            {
+              type: "bugfix",
+              title: "Universal Date Formatting",
+              description: "Unified date formatting across all modules, including Wills.",
+              details: "Fixed an issue where Wills dates were displayed in raw ISO format. All dates now consistently follow the DD-MM-YYYY format across active and archived views.",
+              icon: Calendar,
+            }
+          ],
+          module: "Wills, Release Notes",
+          severity: "High",
+          status: "Released"
+        },
         {
           date: "2026-03-02",
           version: "v6.6.6",

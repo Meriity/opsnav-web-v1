@@ -105,16 +105,10 @@ const formConfig = {
       options: ["Yes", "No", "Processing", "N/R"],
     },
     {
-      name: "declarationForm",
-      label: "Declaration form",
-      type: "radio",
-      options: ["Yes", "No", "Processing", "N/R"],
-    },
-    {
       name: "quoteType",
       label: "Quote Type",
       type: "radio",
-      options: ["Variable", "Fixed"],
+      options: ["Fixed", "Variable"],
     },
     { name: "quoteAmount", label: "Quote amount (incl GST)", type: "number" },
   ],

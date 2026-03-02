@@ -207,8 +207,10 @@ const ViewClients = () => {
              matterDate: client.matterDate,
              status: client.status || "active",
              // Ensure stages exists for the table renderer. 
-             // Backend should provide this, but if not, default to 3 empty/default stages
-             stages: client.stages && client.stages.length > 0 ? client.stages : [{ s1: "default", s2: "default", s3: "default" }]
+             // Backend provides stages as an object or array. ViewClientsTable expects item.stages[0]
+             stages: Array.isArray(client.stages) 
+               ? (client.stages.length > 0 ? client.stages : [{ S1: "default", S2: "default", S3: "default" }])
+               : [client.stages || { S1: "default", S2: "default", S3: "default" }]
            }));
            
            setCommercialClients(transformedData);
