@@ -16,11 +16,46 @@ import {
   ArrowUpDown,
   RefreshCw,
   Search,
+  Edit,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       March: [
+        {
+          date: "2026-03-02",
+          version: "v7.0.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Archived Clients Action Support",
+          description: "Restored and enhanced the Edit functionality for archived clients across all modules and roles.",
+          updates: [
+            {
+              type: "feature",
+              title: "Archived Edit Support",
+              description: "Enabled 'Edit' (Stage View) button for archived clients.",
+              details: "Users with Admin, Superadmin, or authorized User roles can now navigate to the stages layout for archived projects across Conveyancing, Commercial, VOCAT, and Wills modules.",
+              icon: Edit,
+            },
+            {
+              type: "improvement",
+              title: "Mobile Archive Actions",
+              description: "Added Edit button to the mobile card view for archived clients.",
+              details: "Ensured feature parity between desktop and mobile by adding the Edit action to the responsive card view in the Archived Clients section.",
+              icon: Smartphone,
+            },
+            {
+              type: "bugfix",
+              title: "Client Type Visual Fix (Wills)",
+              description: "Resolved case-sensitivity issue in Wills client type radio selection.",
+              details: "Fixed a bug where the 'Single' or 'Mirror' radio buttons were not being visually selected in the matter details section due to a lowercase/uppercase data mismatch from the backend.",
+              icon: Bug,
+            }
+          ],
+          module: "Archived Clients, Core UI",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-03-02",
           version: "v7.0.0",

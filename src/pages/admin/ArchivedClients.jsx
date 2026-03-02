@@ -34,6 +34,7 @@ import {
   Plus,
   AlertCircle,
   Users,
+  Edit,
 } from "lucide-react";
 
 function ClientsPerPage({ value, onChange }) {
@@ -1170,7 +1171,38 @@ export default function ArchivedClients() {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 flex justify-end gap-2">
+                        {localStorage.getItem("role") === "superadmin" && (
+                          <button
+                            onClick={() => {
+                              const matterId = client.id || client.matterNumber || client.orderId;
+                              const role = localStorage.getItem("role");
+                              const isUser = role === "user";
+                              const basePath = isUser ? "/user" : "/admin";
+                              
+                              let path = "";
+                              if (isUser) {
+                                path = `/user/client/${matterId}/stages`;
+                              } else {
+                                path = `/admin/client/stages/${matterId}`;
+                              }
+
+                              if (currentModule === "vocat") {
+                                path += "/4";
+                              } else if (currentModule === "wills") {
+                                path += "/3";
+                              } else if (currentModule !== "print media") {
+                                path += "/6";
+                              }
+                              
+                              navigate(path);
+                            }}
+                            className="flex items-center gap-1 text-sm text-[#2E3D99] hover:text-blue-800 font-medium"
+                          >
+                            Edit
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleViewClient(client)}
                           className="flex items-center gap-1 text-sm text-[#2E3D99] hover:text-[#1D97D7] font-medium"

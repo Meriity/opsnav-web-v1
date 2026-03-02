@@ -2224,7 +2224,7 @@ export default function StagesLayout() {
                                     type="radio"
                                     name="clientType"
                                     value={ct}
-                                    checked={(clientData?.clientType || "") === ct}
+                                    checked={(clientData?.clientType || "").toLowerCase() === ct.toLowerCase()}
                                     onChange={(e) =>
                                       setClientData((prev) => ({
                                         ...(prev || {}),
