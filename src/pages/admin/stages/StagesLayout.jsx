@@ -2308,7 +2308,7 @@ export default function StagesLayout() {
                         </div>
                       )}
 
-                      {(currentModule === "vocat" || currentModule === "conveyancing") && (
+                      {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "wills") && (
                         <div className="md:col-span-3">
                           {currentModule === "vocat" && (
                           <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -2368,7 +2368,7 @@ export default function StagesLayout() {
                           )}
                           <div>
                             <label className="block text-xs md:text-sm font-semibold mb-1">
-                              Matter URL
+                              {currentModule === "commercial" ? "Project URL" : "Matter URL"}
                             </label>
                             {canEditMatterDetails ? (
                               <input
@@ -3206,7 +3206,7 @@ export default function StagesLayout() {
                       </div>
                     )}
                     
-                    {(currentModule === "vocat" || currentModule === "conveyancing") && (
+                    {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial") && (
                       <>
                         {currentModule === "vocat" && (
                         <div className="flex flex-row gap-4">
@@ -3266,7 +3266,7 @@ export default function StagesLayout() {
                         )}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                            Matter URL
+                            {currentModule === "commercial" ? "Project URL" : "Matter URL"}
                           </label>
                           {canEditMatterDetails ? (
                             <input

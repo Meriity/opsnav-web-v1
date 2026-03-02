@@ -294,6 +294,21 @@ const ViewClientsTable = ({
                                       ""
                                     )}
                                   </div>
+                                ) : (column.key === "matternumber" ||
+                                    column.key === "matterNumber" ||
+                                    column.key === "orderId") &&
+                                  item.matterUrl &&
+                                  ["conveyancing", "commercial", "vocat", "wills"].includes(
+                                    currentModule
+                                  ) ? (
+                                  <a
+                                    href={item.matterUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline font-bold"
+                                  >
+                                    {item[column.key]}
+                                  </a>
                                 ) : (
                                   item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                                 )}
@@ -411,15 +426,30 @@ const ViewClientsTable = ({
                               ""
                             )}
                           </div>
+                        ) : (column.key === "matternumber" ||
+                            column.key === "matterNumber" ||
+                            column.key === "orderId") &&
+                          item.matterUrl &&
+                          ["conveyancing", "commercial", "vocat", "wills"].includes(
+                            currentModule
+                          ) ? (
+                          <a
+                            href={item.matterUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline font-bold"
+                          >
+                            {item[column.key]}
+                          </a>
                         ) : (
                           item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
-                      </div>
-                    </td>
-                  ))}
-                  <td className="pl-3 align-middle">
-                    <div className="flex flex-nowrap gap-0.5 justify-center">
-                      {Object.keys(item?.stages?.[0] || {}).map(
+                        </div>
+                        </td>
+                        ))}
+                        <td className="pl-3 align-middle">
+                        <div className="flex flex-nowrap gap-0.5 justify-center">
+                        {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
                             href={`/admin/client/stages/${
@@ -441,12 +471,12 @@ const ViewClientsTable = ({
                             {keyName.toUpperCase()}
                           </a>
                         )
-                      )}
-                    </div>
-                  </td>
-                  <td className="align-middle text-center">
-                    <div className="flex justify-center">
-                      <button
+                        )}
+                        </div>
+                        </td>
+                        <td className="align-middle text-center">
+                        <div className="flex justify-center">
+                        <button
                         type="button"
                         title="View Outstanding Tasks"
                         className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -458,14 +488,14 @@ const ViewClientsTable = ({
                               : item.matternumber || item.orderId
                           );
                         }}
-                      >
+                        >
                         <ClipboardList size={16} className="lg:size-4 xl:size-5" />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="pl-3 pr-2 rounded-r-2xl align-middle">
-                    <div className="flex flex-col items-center space-y-2">
-                      <button
+                        </button>
+                        </div>
+                        </td>
+                        <td className="pl-3 pr-2 rounded-r-2xl align-middle">
+                        <div className="flex flex-col items-center space-y-2">
+                        <button
                         onClick={() => {
                           const id =
                             currentModule === "commercial"
@@ -475,33 +505,21 @@ const ViewClientsTable = ({
                         }}
                         className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                         title="Edit"
-                      >
+                        >
                         <Edit size={10} className="lg:size-[10px] xl:size-3" />
                         <span className="text-[9px] lg:text-[9px] xl:text-xs">Edit</span>
-                      </button>
-                      {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
-                        <a
-                          href={item.matterUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-col items-center space-y-1 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-                          title="Open Matter URL"
-                        >
-                          <ExternalLink size={10} className="lg:size-[10px] xl:size-3" />
-                          <span className="text-[9px] lg:text-[9px] xl:text-xs">URL</span>
-                        </a>
-                      )}
-                      {/* <button
+                        </button>
+                        {/* Matter URL redirect icon removed - matter number is now a link */}
+                        {/* <button
                         onClick={() =>
                           onShare(item.matternumber, item.client_email)
                         }
                         className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
                         title="Share"
-                      >
+                        >
                         <Share2 size={12} />
                         <span className="text-xs">Share</span>
-                      </button> */}
-                      {currentModule === "print media" && (
+                        </button> */}                      {currentModule === "print media" && (
                         <button
                           onClick={() => onDelete(item)}
                           className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -577,13 +595,28 @@ const ViewClientsTable = ({
                   ? "Order ID"
                   : "Matter No"}  
               </p>
-              <p className="text-sm font-bold text-[#2E3D99] break-all">
-                {currentModule === "commercial"
-                  ? item.matterNumber
-                  : currentModule === "print media"
-                  ? item.orderId
-                  : item.matternumber}
-              </p>
+              {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl ? (
+                <a
+                  href={item.matterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-bold text-blue-600 hover:underline break-all"
+                >
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                </a>
+              ) : (
+                <p className="text-sm font-bold text-[#2E3D99] break-all">
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                </p>
+              )}
             </div>
             <div className="flex justify-between items-start">
               <div>
@@ -648,7 +681,7 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
-                {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
+                {/* {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
                   <a
                     href={item.matterUrl}
                     target="_blank"
@@ -658,7 +691,7 @@ const ViewClientsTable = ({
                   >
                     <ExternalLink size={16} />
                   </a>
-                )}
+                )} */}
                 {/* <button
                   onClick={() =>
                     onShare(

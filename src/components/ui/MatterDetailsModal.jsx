@@ -311,6 +311,21 @@ const MatterDetailsModal = ({
                 "N/A"}
             </p>
           </div>
+          {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "wills") && display.matterUrl && (
+            <div className="min-w-0 sm:col-span-2">
+              <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+                {currentModule === "commercial" ? "Project URL" : "Matter URL"}
+              </label>
+              <a 
+                href={display.matterUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm sm:text-lg font-semibold text-blue-600 hover:underline break-all"
+              >
+                {display.matterUrl}
+              </a>
+            </div>
+          )}
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
               Data Entry By
