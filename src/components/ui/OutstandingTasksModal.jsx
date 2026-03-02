@@ -3,6 +3,7 @@ import { Dialog, DialogPanel } from "@headlessui/react";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import VocatFasAPI from "../../api/vocatFasAPI";
+import WillsAPI from "../../api/willsAPI";
 import { formatDate } from "../../utils/formatters";
 import Loader from "./Loader";
 import jsPDF from "jspdf";
@@ -21,6 +22,8 @@ export default function OutstandingTasksModal({
     api = new CommercialAPI();
   } else if (currentModule === "vocat") {
     api = new VocatFasAPI();
+  } else if (currentModule === "wills") {
+    api = new WillsAPI();
   } else {
     api = new ClientAPI();
   }
@@ -82,6 +85,12 @@ export default function OutstandingTasksModal({
 
       } else if (currentModule === "vocat") {
         response = await api.getOutstandingTasks();
+      } else if (currentModule === "wills") {
+        response = await api.getOutstandingTasks(
+          page,
+          activeMatter,
+          matterFilter
+        );
       } else {
         response = await api.getAllOutstandingTasks(
           page,

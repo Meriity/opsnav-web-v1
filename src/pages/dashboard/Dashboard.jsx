@@ -1396,7 +1396,7 @@ function Dashboard() {
               loading={loading}
             />
 
-            {currentModule === "conveyancing" && (
+            {(currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat") && (
               <StatCard
                 title="Pending Matters"
                 value={totalPending || 0}
@@ -1405,7 +1405,7 @@ function Dashboard() {
                 loading={loading}
               />
             )}
-            {currentModule !== "conveyancing" && (
+            {currentModule !== "conveyancing" && currentModule !== "wills" && currentModule !== "vocat" && (
               <StatCard
                 title="Last Month"
                 value={lastrecord}
@@ -1733,7 +1733,7 @@ function Dashboard() {
                                 radius={[4, 4, 0, 0]}
                               />
                             )}
-                          {(currentModule === "conveyancing" || currentModule === "vocat") &&
+                          {(currentModule === "conveyancing" || currentModule === "vocat" || currentModule === "wills") &&
                             chartView === "last6Months" && (
                               <Bar
                                 dataKey="pendingMatters"

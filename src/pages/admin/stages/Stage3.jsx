@@ -60,20 +60,16 @@ const formConfig = {
   },
   wills: {
     fields: [
+      { key: "finalLetterToClient", name: "finalLetterToClient", label: "Final Letter to client", type: "radio" },
+      { key: "invoiced", name: "invoiced", label: "Invoiced", type: "radio" },
       {
-        key: "titleSearch",
-        label: "Title Search",
+        key: "closeMatter",
+        name: "closeMatter",
+        label: "Close Matter",
         type: "radio",
-        hasDate: true,
+        options: ["Closed", "Cancelled"],
+        triggersModal: true,
       },
-      { key: "planImage", label: "Plan Image", type: "radio" },
-      { key: "landTax", label: "Land Tax", type: "radio" },
-      { key: "instrument", label: "Instrument", type: "radio" },
-      { key: "rates", label: "Rates", type: "radio" },
-      { key: "water", label: "Water", type: "radio" },
-      { key: "ownersCorp", label: "Owners Corp", type: "radio" },
-      { key: "pexa", label: "PEXA", type: "radio" },
-      { key: "inviteBank", label: "Invite Bank", type: "radio" },
     ],
   },
   vocat: {
@@ -132,7 +128,7 @@ export default function Stage3({
   const getStatus = (value) => {
     const val = normalizeValue(value);
     if (!val) return "Not Completed";
-    if (["yes", "nr", "na", "n/a", "n/r"].includes(val)) return "Completed";
+    if (["yes", "nr", "na", "n/a", "n/r", "closed", "completed"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
     if (["processing", "inprogress", "in progress"].includes(val))
       return "In Progress";
@@ -205,7 +201,7 @@ export default function Stage3({
   }, [data, currentModule, fields, api, commercialApi, matterNumber]);
 
   const generateSystemNote = () => {
-    const green = new Set(["yes", "nr", "na", "n/a", "n/r"]);
+    const green = new Set(["yes", "nr", "na", "n/a", "n/r", "closed", "completed"]);
     const missing = fields
       .filter((f) =>
         f.type === "text"

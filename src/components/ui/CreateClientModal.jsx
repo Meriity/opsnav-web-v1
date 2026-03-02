@@ -532,7 +532,7 @@ useEffect(() => {
 
             setFormData((prev) => ({
               ...prev,
-              propertyAddress: place.formatted_address,
+              address: place.formatted_address,
               postcode,
               state,
             }));
@@ -886,7 +886,11 @@ useEffect(() => {
            }
 
            try {
-               await willsApi.createProject(formData);
+               const payload = {
+                   ...formData,
+                   clientType: formData.clientType ? formData.clientType.toLowerCase() : "",
+               };
+               await willsApi.createProject(payload);
                toast.success("Client created successfully!");
                navigate(`/admin/client/stages/${formData.matterNumber}`);
                if (typeof onClose === "function") onClose();
@@ -1091,12 +1095,11 @@ useEffect(() => {
                       </div>
                     </div> */}
 
-                    {/* Show Client Type for Commercial and Conveyancing/VKL but maybe not Wills if not needed, else include */}
                     {(isCommercial || isConveyancing || isWills) && (
                     <div>
                       <label className="block mb-1 font-medium">Client Type*</label>
                       <div className="flex gap-4 mt-2">
-                        {["Seller", "Buyer", "General"].map((type) => (
+                        {(isWills ? ["Single", "Mirror"] : ["Seller", "Buyer", "General"]).map((type) => (
                           <label key={type} className="flex items-center gap-2">
                             <input
                               type="radio"
@@ -1166,16 +1169,17 @@ useEffect(() => {
                     <input
                       type="text"
                       name={
-                        isCommercial ? "businessAddress" : isVocat ? "clientAddress" : "propertyAddress"
+                        isCommercial ? "businessAddress" : isVocat ? "clientAddress" : isWills ? "address" : "propertyAddress"
                       }
                       value={
                         isCommercial
                           ? formData.businessAddress || ""
-                          : isVocat 
+                          : isVocat
                           ? formData.clientAddress || ""
+                          : isWills
+                          ? formData.address || ""
                           : formData.propertyAddress || ""
-                      }
-                      onChange={handleChange}
+                      }                      onChange={handleChange}
                       ref={
                         isCommercial
                           ? commercialBusinessAddressRef

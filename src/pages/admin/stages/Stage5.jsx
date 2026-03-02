@@ -125,6 +125,22 @@ const formConfig = {
       },
     ],
   },
+  wills: {
+    fields: [
+      { key: "advice", name: "advice", label: "Advice", type: "radio" },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for client",
+        clientCommentLabel: "Comment for client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: ["advice"],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {

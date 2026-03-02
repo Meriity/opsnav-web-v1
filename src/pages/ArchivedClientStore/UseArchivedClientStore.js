@@ -1,6 +1,7 @@
 // src/pages/ArchivedClientStore/UseArchivedClientStore.js
 import { create } from "zustand";
 import ClientAPI from "../../api/userAPI";
+import WillsAPI from "../../api/willsAPI";
 import moment from "moment";
 import { toast } from "react-toastify";
 
@@ -24,21 +25,29 @@ export const useArchivedClientStore = create((set, get) => ({
   fetchArchivedClients: async () => {
     set({ loading: true });
     const api = new ClientAPI();
+    const willsApi = new WillsAPI();
 
     try {
       const currentModule = localStorage.getItem("currentModule");
 
-      const res =
-        currentModule === "print media"
-          ? await api.getIDGCompletedOrders()
-          : currentModule === "commercial"
-          ? await api.getClients()
-          : await api.getArchivedClients();
+      let res;
+      if (currentModule === "print media") {
+        res = await api.getIDGCompletedOrders();
+      } else if (currentModule === "commercial") {
+        res = await api.getClients();
+      } else if (currentModule === "wills") {
+        res = await willsApi.getArchivedClients();
+      } else {
+        res = await api.getArchivedClients();
+      }
 
       let sourceArray = [];
 
       // normalize source array for different responses
-      if (currentModule !== "print media") {
+      if (currentModule === "wills") {
+        sourceArray = res && Array.isArray(res.clients) ? res.clients : 
+                      (Array.isArray(res) ? res : []);
+      } else if (currentModule !== "print media") {
         sourceArray = res && Array.isArray(res.clients) ? res.clients : [];
       } else {
         if (Array.isArray(res)) sourceArray = res;

@@ -311,6 +311,8 @@ const Table = ({
                           column.render(item)
                         ) : column.key === "matter_date" ||
                           column.key === "settlement_date" ||
+                          column.key === "matterDate" ||
+                          column.key === "settlementDate" ||
                           column.key === "orderDate" ||
                           column.key === "deliveryDate" ? (
                           item[column.key] ? (

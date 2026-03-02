@@ -81,6 +81,24 @@ class WillsAPI {
     }
   }
 
+  // --- Outstanding Tasks ---
+  async getOutstandingTasks(page = 1, activeMatter = null, matterFilter = "none") {
+    try {
+      let url = `${this.baseUrl}${this.endpoints.OUTSTANDING_TASKS}?page=${page}&filter=${matterFilter}`;
+      if (activeMatter) {
+        url = `${url}&matterNumber=${activeMatter}`;
+      }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting wills outstanding tasks:", error);
+      throw error;
+    }
+  }
+
   // --- Clients ---
 
   // Get active clients (equivalent to getActiveProjects in Commercial)
@@ -105,16 +123,36 @@ class WillsAPI {
     return this.getActiveClients();
   }
 
+  async getArchivedClients() {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.ARCHIVED_CLIENTS}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getArchivedClients:", error);
+      throw error;
+    }
+  }
+
   // Derived calendar data from active clients since no specific endpoint exists yet
   async getCalendarDates() {
     try {
-      const clients = await this.getActiveClients();
-      // The Dashboard expects a list of objects with date fields.
-      // Active clients list should contain these fields if the backend returns them.
-      return clients; 
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CALENDAR_DATES}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        }
+      );
+      return await this.handleResponse(response);
     } catch (error) {
-       console.error("Error getting calendar dates:", error);
-       return [];
+      console.error("Error getting calendar dates:", error);
+      return [];
     }
   }
   

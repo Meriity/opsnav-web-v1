@@ -149,12 +149,14 @@ const formConfig = {
     noteGroups: [
       {
         id: "main",
-        systemNoteLabel: "System Note for Client",
-        clientCommentLabel: "Comment for Client",
-        systemNoteKey: "clientComment",
+        systemNoteLabel: "System Note for client",
+        clientCommentLabel: "Comment for client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
         fieldsForNote: [
           "notifySoaToClient",
+          "council",
           "settlementNotificationToClient",
           "settlementNotificationToCouncil",
           "settlementNotificationToWater",
@@ -164,9 +166,37 @@ const formConfig = {
         ],
       },
     ],
-  },
-};
-
+    },
+    wills: {
+    fields: [
+      { key: "signWill", name: "signWill", label: "Sign Will", type: "radio" },
+      {
+        key: "willAcknowledgement",
+        name: "willAcknowledgement",
+        label: "Will acknowledgement",
+        type: "radio",
+      },
+      {
+        key: "closeMatter",
+        name: "closeMatter",
+        label: "Close Matter",
+        type: "radio",
+        options: ["Completed", "Cancelled"],
+      },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for client",
+        clientCommentLabel: "Comment for client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: ["signWill", "willAcknowledgement", "closeMatter"],
+      },
+    ],
+    },
+    };
 const normalizeValue = (v) => {
   if (v === undefined || v === null) return "";
   return String(v).toLowerCase().trim();
