@@ -298,7 +298,6 @@ const commercialBusinessAddressRef = useRef(null);
             idgBillingAddressRef.current,
             {
               types: ["address"],
-              // componentRestrictions: { country: ["au", "us", "gb", "ca"] },
             }
           );
 

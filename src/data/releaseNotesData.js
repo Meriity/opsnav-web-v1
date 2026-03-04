@@ -23,6 +23,61 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-04",
+          version: "v7.1.1",
+          type: "minor",
+          category: "feature",
+          title: "UI Optimization & Data Protection",
+          description: "Introduced critical navigation guards and major UI refinements for stage indicators and matter link identification.",
+          updates: [
+            {
+              type: "feature",
+              title: "Unsaved Changes Protection",
+              description: "Implemented a robust warning system for unsaved user allocations.",
+              details: "Users are now prompted with a confirmation modal (and browser-level warning) when attempting to navigate away or close the tab while they have unsaved allocations in the View Clients table.",
+              icon: Shield,
+            },
+            {
+              type: "improvement",
+              title: "Responsive Stage Layout",
+              description: "Optimized stage indicator grid for smaller laptop screens.",
+              details: "Stages now automatically arrange into a 3-column grid on smaller screens (below 1280px) to prevent column squeezing, while remaining as a single row on larger monitors.",
+              icon: TrendingUp,
+            },
+            {
+              type: "ui_ux",
+              title: "Refined Stage Boxes",
+              description: "Redesigned stage indicators as perfect squares with centered text.",
+              details: "Introduced uniform square dimensions (16px and 24px) with flex centering and subtle hover zoom effects for a premium interactive feel.",
+              icon: Sparkles,
+            },
+            {
+              type: "ui_ux",
+              title: "Matter Link Visibility",
+              description: "Added ExternalLink icon for mobile/tablet matter links.",
+              details: "Clickable matter numbers now feature a color-matched 'ExternalLink' icon on smaller screens, making interactivity obvious without cluttering the desktop view.",
+              icon: Smartphone,
+            },
+            {
+              type: "feature",
+              title: "Bulk Allocation Saving",
+              description: "Introduced a staging system for user allocations in Print Media.",
+              details: "Allocations are now stored locally and marked with visual indicators (amber highlights) until the user explicitly clicks 'Save'. This prevents accidental API spam and allows for batch updates of production staff.",
+              icon: Database,
+            },
+            {
+              type: "improvement",
+              title: "Print Media Stage 4 Consolidation",
+              description: "Merged Image and PDF uploads into a unified capture field.",
+              details: "Simplified the 'Proof of Completion' workflow by consolidating file types and fixing loader display issues during PDF uploads.",
+              icon: Zap,
+            }
+          ],
+          module: "View Clients, Print Media Stage 4",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-03-02",
           version: "v7.0.1",
           type: "patch",

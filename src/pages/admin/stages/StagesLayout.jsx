@@ -2490,7 +2490,8 @@ export default function StagesLayout() {
                                   : ""
                               }
                             onChange={(e) => {
-                              if (!canEditMatterDetails) return;
+                              const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
+                              if (!canEditSettlement) return;
                               const dateValue = e.target.value;
                               if (currentModule === "commercial") {
                                 setClientData((prev) => ({
@@ -2513,9 +2514,9 @@ export default function StagesLayout() {
                               }
                             }}
                             className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                              !canEditMatterDetails ? "bg-gray-100" : ""
+                              !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-100" : ""
                             }`}
-                            disabled={!canEditMatterDetails}
+                            disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                           />
                       </div>
                       )}
@@ -3216,7 +3217,8 @@ export default function StagesLayout() {
                               : ""
                           }
                           onChange={(e) => {
-                            if (!canEditMatterDetails) return;
+                            const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
+                            if (!canEditSettlement) return;
                             const dateValue = e.target.value;
                             if (currentModule === "commercial") {
                               setClientData((prev) => ({
@@ -3239,9 +3241,9 @@ export default function StagesLayout() {
                             }
                           }}
                           className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                            !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                            !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-50 text-gray-500" : "bg-white"
                           }`}
-                          disabled={!canEditMatterDetails}
+                          disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                         />
                       </div>
                     )}

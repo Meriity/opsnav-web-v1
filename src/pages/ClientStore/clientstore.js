@@ -11,6 +11,8 @@ export const useClientStore = create(
       loading: false,
       error: null,
       searchQuery: "",
+      hasUnsavedChanges: false,
+      setHasUnsavedChanges: (val) => set({ hasUnsavedChanges: val }),
       stage1: {
         referral: "",
         retainer: "",

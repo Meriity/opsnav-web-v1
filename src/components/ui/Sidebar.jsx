@@ -20,11 +20,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { APP_VERSION } from "../../config/version";
 
+import { useClientStore } from "../../pages/ClientStore/clientstore.js";
+import ConfirmationModal from "./ConfirmationModal.jsx";
+
 export default function Sidebar({
   setSidebarOpen,
   isCollapsed,
   onCollapseToggle,
 }) {
+  const { hasUnsavedChanges, setHasUnsavedChanges } = useClientStore();
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
   const location = useLocation();
   const navigate = useNavigate();
@@ -139,14 +145,35 @@ export default function Sidebar({
   };
 
   const handleViewClientsClick = () => {
+    const to = isAdminRoute ? "/admin/view-clients" : "/user/view-clients";
+    if (hasUnsavedChanges) {
+      setPendingNavigation(to);
+      setShowUnsavedModal(true);
+      return;
+    }
     localStorage.removeItem("client-storage");
-    navigate(isAdminRoute ? "/admin/view-clients" : "/user/view-clients");
+    navigate(to);
     if (typeof setSidebarOpen === "function") setSidebarOpen(false);
   };
 
   const handleNavigate = (to) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(to);
+      setShowUnsavedModal(true);
+      return;
+    }
     navigate(to);
     if (typeof setSidebarOpen === "function") setSidebarOpen(false);
+  };
+
+  const confirmNavigate = () => {
+    if (pendingNavigation) {
+      setHasUnsavedChanges(false);
+      navigate(pendingNavigation);
+      if (typeof setSidebarOpen === "function") setSidebarOpen(false);
+    }
+    setShowUnsavedModal(false);
+    setPendingNavigation(null);
   };
 
   const getClickHandler = (label, to) => {
@@ -177,6 +204,15 @@ export default function Sidebar({
         variants={sidebarVariants}
         className="fixed top-0 left-0 bottom-0 h-screen md:sticky md:top-0 flex flex-col justify-between py-6 bg-gradient-to-b from-white via-gray-50/50 to-white border-r border-gray-200/50 z-[100] shadow-2xl md:shadow-none overflow-visible"
       >
+        <ConfirmationModal
+          isOpen={showUnsavedModal}
+          onClose={() => setShowUnsavedModal(false)}
+          onConfirm={confirmNavigate}
+          title="Unsaved Changes"
+          message="You have unsaved allocations. If you leave now, your changes will be lost. Do you want to continue?"
+          confirmLabel="Leave Anyway"
+          cancelLabel="Stay"
+        />
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-r from-[#2E3D99]/3 to-[#1D97D7]/3 rounded-full blur-3xl" />
