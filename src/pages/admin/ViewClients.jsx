@@ -53,6 +53,8 @@ import {
   Clipboard,
   ArrowUpDown,
   Info,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 
@@ -102,6 +104,32 @@ const ViewClients = () => {
   const [showReorderHint, setShowReorderHint] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [showTarPreview, setShowTarPreview] = useState(false);
+
+  // Batch Allocation State
+  const [pendingAllocations, setPendingAllocations] = useState({});
+  const [isSavingAllocations, setIsSavingAllocations] = useState(false);
+  const hasUnsavedAllocations = Object.keys(pendingAllocations).length > 0;
+  const { setHasUnsavedChanges } = useClientStore();
+
+  // Sync with global store for sidebar warning
+  useEffect(() => {
+    setHasUnsavedChanges(hasUnsavedAllocations);
+    
+    // Cleanup - reset when unmounting
+    return () => setHasUnsavedChanges(false);
+  }, [hasUnsavedAllocations, setHasUnsavedChanges]);
+
+  // Browser level warning (refresh/close tab)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedAllocations) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedAllocations]);
 
   const currentModule = localStorage.getItem("currentModule");
   const userRole = localStorage.getItem("role");
@@ -485,6 +513,38 @@ const ViewClients = () => {
     } catch (error) {
       console.log("Error occured!!", error);
       toast.error("Failed to update allocated user");
+    }
+  }
+
+  // Batch allocation: local-only change (no API call)
+  function handleAllocationChange(newUserValue, orderId) {
+    setPendingAllocations((prev) => ({
+      ...prev,
+      [orderId]: newUserValue,
+    }));
+  }
+
+  // Batch allocation: save all pending changes in one API call
+  async function saveAllocations() {
+    if (!hasUnsavedAllocations) return;
+    setIsSavingAllocations(true);
+    try {
+      const updates = Object.entries(pendingAllocations).map(
+        ([orderId, user]) => ({ orderId, user })
+      );
+      await api.bulkUpdateAllocatedUsers(updates);
+      toast.success(
+        `Successfully updated ${updates.length} allocation${
+          updates.length > 1 ? "s" : ""
+        }`
+      );
+      setPendingAllocations({});
+      fetchClients();
+    } catch (error) {
+      console.error("Bulk allocation save failed:", error);
+      toast.error("Failed to save allocations. Please try again.");
+    } finally {
+      setIsSavingAllocations(false);
     }
   }
 
@@ -1246,7 +1306,8 @@ const ViewClients = () => {
                   data={isDraggingMode ? draggedData : filteredClients}
                   columns={columns}
                   users={user}
-                  handleChangeUser={changeUser}
+                  handleChangeUser={handleAllocationChange}
+                  pendingAllocations={pendingAllocations}
                   onEdit={true}
                   onShare={(matterNumber, reshareEmail) => {
                     setShareDetails({ matterNumber, reshareEmail });
@@ -1316,6 +1377,47 @@ const ViewClients = () => {
             />
           </div>
         </>
+
+        {/* Floating Save Allocations Button */}
+        <AnimatePresence>
+          {currentModule === "print media" && hasUnsavedAllocations && (
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="fixed bottom-6 right-6 z-50"
+            >
+              <button
+                onClick={saveAllocations}
+                disabled={isSavingAllocations}
+                className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer group"
+                style={{
+                  boxShadow: "0 4px 20px rgba(46, 61, 153, 0.35)",
+                }}
+              >
+                {isSavingAllocations ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Save size={18} />
+                )}
+                <span>
+                  {isSavingAllocations
+                    ? "Saving..."
+                    : `Save ${Object.keys(pendingAllocations).length} Allocation${
+                        Object.keys(pendingAllocations).length > 1 ? "s" : ""
+                      }`}
+                </span>
+                {!isSavingAllocations && (
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+                  </span>
+                )}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
