@@ -476,7 +476,12 @@ export default function Stage4({
       try {
         // 1. Get signed URL from backend
         const result = await api.getGCSUploadUrl(file.type, file.size);
-        const { uploadUrl, filename, url } = result.data;
+        console.log("GCS Signed URL Response:", result);
+        const { uploadUrl, filename, url, publicUrl } = result.data;
+        
+        // Robustly derive the public URL: priority is url > publicUrl > uploadUrl (stripped of query params)
+        const finalUrl = url || publicUrl || (uploadUrl ? uploadUrl.split("?")[0] : "");
+        console.log("Derived Public URL for Metadata Sync:", finalUrl);
 
         // 2. Upload file directly to GCS
         const uploadResponse = await fetch(uploadUrl, {
@@ -491,7 +496,7 @@ export default function Stage4({
 
         // 3. Send metadata to backend
         await api.updateGCSMetadata(4, matterNumber, {
-          url,
+          url: finalUrl,
           filename,
           originalName: file.name,
         });
