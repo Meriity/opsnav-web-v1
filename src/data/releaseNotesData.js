@@ -17,11 +17,36 @@ import {
   RefreshCw,
   Search,
   Edit,
+  FolderOpen,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       March: [
+        {
+          date: "2026-03-05",
+          version: "v7.1.3",
+          type: "patch",
+          category: "bugfix",
+          title: "Re-open Matters & Payload Refinement",
+          description: "Added matter reopening for Wills and refined GCS upload payload alignment.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills Matter Reopening",
+              description: "Added support for Super Admins to re-open closed/archived Wills matters.",
+              details: "Implemented 'Open' option in Stage 3 for Wills with a safety confirmation modal and danger zone UI styling.",
+              icon: FolderOpen,
+            },
+            {
+              type: "bugfix",
+              title: "GCS Upload Sync",
+              description: "Refined GCS metadata synchronization payload.",
+              details: "Updated the sync step to use the 'url' key instead of 'publicUrl', ensuring perfect alignment with the backend's expected structure.",
+              icon: Server,
+            },
+          ],
+        },
         {
           date: "2026-03-05",
           version: "v7.1.2",

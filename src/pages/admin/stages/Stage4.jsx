@@ -476,7 +476,7 @@ export default function Stage4({
       try {
         // 1. Get signed URL from backend
         const result = await api.getGCSUploadUrl(file.type, file.size);
-        const { uploadUrl, filename, publicUrl } = result.data;
+        const { uploadUrl, filename, url } = result.data;
 
         // 2. Upload file directly to GCS
         const uploadResponse = await fetch(uploadUrl, {
@@ -491,7 +491,7 @@ export default function Stage4({
 
         // 3. Send metadata to backend
         await api.updateGCSMetadata(4, matterNumber, {
-          publicUrl,
+          url,
           filename,
           originalName: file.name,
         });
