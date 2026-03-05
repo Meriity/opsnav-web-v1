@@ -7,6 +7,8 @@ import VocatFasAPI from "@/api/vocatFasAPI";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 
 const formConfig = {
   conveyancing: {
@@ -67,7 +69,7 @@ const formConfig = {
         name: "closeMatter",
         label: "Close Matter",
         type: "radio",
-        options: ["Closed", "Cancelled"],
+        options: ["Closed", "Cancelled", "Open"],
         triggersModal: true,
       },
     ],
@@ -105,12 +107,15 @@ export default function Stage3({
   const [noteForClient, setNoteForClient] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingCloseMatter, setPendingCloseMatter] = useState(null);
 
   const originalData = useRef({});
   const hasLoaded = useRef(false);
 
   const currentModule = localStorage.getItem("currentModule");
   const isReadOnly = ["readonly", "read-only"].includes(localStorage.getItem("role"));
+  const isSuperAdmin = (localStorage.getItem("role") || "").toLowerCase().trim() === "superadmin";
 
   const fields =
     currentModule === "commercial"
@@ -130,7 +135,7 @@ export default function Stage3({
     if (!val) return "Not Completed";
     if (["yes", "nr", "na", "n/a", "n/r", "closed", "completed"].includes(val)) return "Completed";
     if (val === "no") return "Not Completed";
-    if (["processing", "inprogress", "in progress"].includes(val))
+    if (["processing", "inprogress", "in progress", "open"].includes(val))
       return "In Progress";
     return "Not Completed";
   };
@@ -218,6 +223,13 @@ export default function Stage3({
   const handleChange = (key, value) => {
     const field = fields.find((f) => f.key === key);
     const processed = field?.type === "radio" ? normalizeValue(value) : value;
+
+    if (key === "closeMatter" && ["Closed", "Cancelled", "Open"].includes(value)) {
+      if (value === "Open" && !isSuperAdmin) return;
+      setPendingCloseMatter(value);
+      setIsModalOpen(true);
+      return;
+    }
 
     setFormState((prev) => ({ ...prev, [key]: processed }));
     setStatusState((prev) => ({ ...prev, [key]: getStatus(processed) }));
@@ -332,10 +344,19 @@ export default function Stage3({
           }
         }
 
+        const isDangerField = f.key === "closeMatter";
+
         return (
-          <div key={f.key} className="mt-5">
+          <div key={f.key} className={`mt-5 ${isDangerField ? "bg-red-50 border-2 border-red-200 p-4 rounded-xl" : ""}`}>
           <div className="flex justify-between items-center mb-3">
-            <label className="font-bold text-sm xl:text-base">{f.label}</label>
+            <div className="flex items-center gap-2">
+              {isDangerField && (
+                <div className="bg-red-100 p-1.5 rounded-full text-red-600">
+                  <ExclamationTriangleIcon className="w-5 h-5" />
+                </div>
+              )}
+              <label className={`font-bold ${isDangerField ? "text-red-900 text-base lg:text-base xl:text-lg" : "text-sm xl:text-base"}`}>{f.label}</label>
+            </div>
             {f.type !== "text" && (
               <div
                 className={`w-[90px] h-[18px] flex items-center justify-center rounded-4xl ${
@@ -361,8 +382,10 @@ export default function Stage3({
                 disabled={isReadOnly}
               />
             ) : (
-              (f.options || ["Yes", "No", "Processing", "N/R"]).map((v) => (
-                <label key={v} className="flex items-center gap-2 text-sm xl:text-base">
+              (f.options || ["Yes", "No", "Processing", "N/R"])
+                .filter((v) => normalizeValue(v) !== "open" || isSuperAdmin)
+                .map((v) => (
+                <label key={v} className={`flex items-center gap-2 text-sm xl:text-base cursor-pointer ${isDangerField ? "px-3 py-1.5 rounded-lg border border-red-100 bg-white hover:bg-red-50 transition-colors" : ""}`}>
                   <input
                     type="radio"
                     checked={
@@ -370,9 +393,9 @@ export default function Stage3({
                     }
                     onChange={() => !isReadOnly && handleChange(f.key, v)}
                     disabled={false}
-                    className={isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}
+                    className={`${isDangerField ? "accent-red-600 w-4 h-4" : ""} ${isReadOnly ? "accent-gray-500 w-4 h-4 pointer-events-none" : ""}`}
                   />
-                  {v}
+                  <span className={isDangerField ? "font-medium text-red-900" : ""}>{v}</span>
                 </label>
               ))
             )}
@@ -444,6 +467,32 @@ export default function Stage3({
           />
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPendingCloseMatter(null);
+        }}
+        onConfirm={() => {
+          if (pendingCloseMatter) {
+            const processed = normalizeValue(pendingCloseMatter);
+            setFormState((prev) => ({ ...prev, closeMatter: processed }));
+            setStatusState((prev) => ({ ...prev, closeMatter: getStatus(processed) }));
+            setHasChanges(true);
+            setIsModalOpen(false);
+            setPendingCloseMatter(null);
+          }
+        }}
+        title={pendingCloseMatter === "Open" ? "Confirm Matter Reopen" : "Confirm Matter Closure"}
+        message={
+          pendingCloseMatter === "Closed"
+            ? "Are you sure you want to mark this matter as Closed? This action will archive the matter."
+            : pendingCloseMatter === "Cancelled"
+            ? "Are you sure you want to mark this matter as Cancelled? This action cannot be undone."
+            : "Are you sure you want to reopen this matter? This will restore it to an active status."
+        }
+      />
     </div>
   );
 }
