@@ -283,6 +283,43 @@ class ClientAPI {
     }
   }
 
+  async getGCSUploadUrl(filetype, filesize) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/idg/images/upload`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ fileType: filetype, fileSize: filesize }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting GCS upload URL:", error);
+      throw error;
+    }
+  }
+
+  async updateGCSMetadata(stageNumber, orderId, metadata) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/api/idg/stage/${stageNumber}/order/${orderId}/image`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(metadata),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating GCS metadata:", error);
+      throw error;
+    }
+  }
+
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
       console.log(additionalData, clientId);

@@ -468,11 +468,34 @@ export default function Stage4({
   // ---------- FILE UPLOAD / DELETE (IDG) ----------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    console.log("handleFileChange triggered. File:", file);
     if (!file) return;
     (async () => {
+      console.log("Starting GCS upload flow...");
       setIsUploading(true);
       try {
-        await api.uploadFileForOrder(matterNumber, file);
+        // 1. Get signed URL from backend
+        const result = await api.getGCSUploadUrl(file.type, file.size);
+        const { uploadUrl, filename, publicUrl } = result.data;
+
+        // 2. Upload file directly to GCS
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`GCS upload failed with status: ${uploadResponse.status}`);
+        }
+
+        // 3. Send metadata to backend
+        await api.updateGCSMetadata(4, matterNumber, {
+          publicUrl,
+          filename,
+          originalName: file.name,
+        });
+
         toast.success("File uploaded successfully!");
         setPreview(URL.createObjectURL(file));
         setfileName(file.name);
@@ -481,6 +504,7 @@ export default function Stage4({
           typeof prev === "number" ? prev + 1 : (prev || 0) + 1
         );
       } catch (err) {
+        console.error("Upload error:", err);
         toast.error("File upload failed.");
       } finally {
         setIsUploading(false);

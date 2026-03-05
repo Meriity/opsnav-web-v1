@@ -23,6 +23,44 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-05",
+          version: "v7.1.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Calendar & Upload Reliability Fixes",
+          description: "Major fixes for Wills/Print Media calendars and performance improvements for direct-to-cloud file uploads.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills Calendar Display",
+              description: "Fixed missing matter dates in the Wills module calendar.",
+              details: "Resolved a data mapping issue where client matter dates were not being correctly extracted from the backend response. Matter dates are now clearly visible in a distinct Amber color.",
+              icon: Calendar,
+            },
+            {
+              type: "bugfix",
+              title: "Print Media Order Dates",
+              description: "Added support for orderDate in Print Media calendar.",
+              details: "The calendar now displays both Order Dates (Emerald) and Delivery Dates (Amber) for Print Media, providing a complete view of the production schedule.",
+              icon: Calendar,
+            },
+            {
+              type: "improvement",
+              title: "Hardened GCS Uploads",
+              description: "Enhanced reliability of direct-to-GCS file uploads.",
+              details: "Added fileSize validation support and fixed a critical 404 error during the metadata sync step. The system now handles various file response structures more robustly.",
+              icon: Server,
+            },
+            {
+              type: "ui_ux",
+              title: "Calendar Visibility Boost",
+              description: "Improved event visibility in monthly calendar cells.",
+              details: "Increased row heights and adjusted event layouts to ensure at least two events are visible per day before collapsing. Standardized full-day durations for all critical dates.",
+              icon: Sparkles,
+            },
+          ],
+        },
+        {
           date: "2026-03-04",
           version: "v7.1.1",
           type: "minor",
