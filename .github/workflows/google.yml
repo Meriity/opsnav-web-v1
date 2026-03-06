@@ -35,7 +35,7 @@ jobs:
             echo "BACKEND_URL=https://opsnav-app-service-871399330172.us-central1.run.app"
           elif [ "$GITHUB_REF_NAME" = "demo" ]; then
             echo "MODE=demo" >> $GITHUB_ENV
-            echo "SERVICE_SUFFIX=dev" >> $GITHUB_ENV
+            echo "SERVICE_SUFFIX=demo" >> $GITHUB_ENV
             echo "BACKEND_URL=https://opsnav-app-service-demo-871399330172.us-central1.run.app"
           elif [ "$GITHUB_REF_NAME" = "development" ]; then
             echo "MODE=development" >> $GITHUB_ENV
