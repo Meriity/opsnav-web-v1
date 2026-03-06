@@ -303,7 +303,7 @@ class ClientAPI {
   async updateGCSMetadata(stageNumber, orderId, metadata) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/api/idg/stage/${stageNumber}/order/${orderId}/image`,
+        `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`,
         {
           method: "POST",
           headers: this.getHeaders(),
