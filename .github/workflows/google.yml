@@ -5,11 +5,12 @@ on:
     branches:
       - main
       - development
+      - demo
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    environment: ${{ github.ref_name == 'main' && 'prod' || (github.ref_name == 'demo' && 'demo' || 'dev') }}
     
     steps:
       - name: Checkout Code
@@ -31,9 +32,15 @@ jobs:
           if [ "$GITHUB_REF_NAME" = "main" ]; then
             echo "MODE=production" >> $GITHUB_ENV
             echo "SERVICE_SUFFIX=prod" >> $GITHUB_ENV
+            echo "BACKEND_URL=https://opsnav-app-service-871399330172.us-central1.run.app"
+          elif [ "$GITHUB_REF_NAME" = "demo" ]; then
+            echo "MODE=demo" >> $GITHUB_ENV
+            echo "SERVICE_SUFFIX=dev" >> $GITHUB_ENV
+            echo "BACKEND_URL=https://opsnav-app-service-demo-871399330172.us-central1.run.app"
           elif [ "$GITHUB_REF_NAME" = "development" ]; then
             echo "MODE=development" >> $GITHUB_ENV
             echo "SERVICE_SUFFIX=dev" >> $GITHUB_ENV
+            echo "BACKEND_URL=https://opsnav-app-service-dev-871399330172.us-central1.run.app"
           fi
 
       - name: Authenticate Docker
@@ -58,4 +65,4 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars=VITE_API_BASE_URL=${{ env.MODE == 'production' && 'https://opsnav-app-service-871399330172.us-central1.run.app' || 'https://opsnav-app-service-dev-871399330172.us-central1.run.app' }}
+            --set-env-vars=VITE_API_BASE_URL=${{ env.BACKEND_URL }}
