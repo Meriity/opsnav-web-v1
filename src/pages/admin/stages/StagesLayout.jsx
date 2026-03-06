@@ -221,6 +221,8 @@ export default function StagesLayout() {
          newData.data.deliveryAddress = address;
       } else if (currentModule === "vocat") {
         newData.clientAddress = address;
+      } else if (currentModule === "wills") {
+        newData.address = address;
       } else {
         newData.propertyAddress = address;
       }
@@ -327,6 +329,8 @@ export default function StagesLayout() {
     ? ["Real Estate", "Vehicle", "Commercial", "Others"] 
     : currentModule === "commercial" 
     ? ["Buyer", "Seller", "General"]
+    : currentModule === "wills"
+    ? ["Single", "Mirror"]
     : ["Buyer", "Seller", "Transfer"];
 
   let stages = [
@@ -338,7 +342,7 @@ export default function StagesLayout() {
     { id: 6, title: "Final Letter/Close" },
   ];
 
-  if (currentModule === "conveyancing" || currentModule === "wills") {
+  if (currentModule === "conveyancing") {
     stages = [
       { id: 1, title: "Retainer/Declaration" },
       { id: 2, title: "VOI/CAF/Approvals" },
@@ -346,6 +350,12 @@ export default function StagesLayout() {
       { id: 4, title: "DTS/DOL/SOA" },
       { id: 5, title: "Notify/Transfer/Disb" },
       { id: 6, title: "Final Letter/Close" },
+    ];
+  } else if (currentModule === "wills") {
+    stages = [
+      { id: 1, title: "Engagement" },
+      { id: 2, title: "Process" },
+      { id: 3, title: "Finalization" },
     ];
   } else if (currentModule === "print media") {
     stages = [
@@ -1136,7 +1146,9 @@ export default function StagesLayout() {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
         payload.state = clientData?.state || "";
-        payload.clientType = clientData?.clientType || "";
+        payload.clientType = currentModule === "wills" && clientData?.clientType 
+          ? clientData.clientType.toLowerCase() 
+          : clientData?.clientType || "";
         payload.clientEmail = clientData?.clientEmail || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
 
@@ -1151,6 +1163,9 @@ export default function StagesLayout() {
           payload.fasNumber = clientData?.fasNumber || "";
           payload.matterUrl = clientData?.matterUrl || "";
           payload.criminalIncidentDate = clientData?.criminalIncidentDate || null;
+        } else if (currentModule === "wills") {
+          payload.address = clientData?.address || "";
+          payload.matterUrl = clientData?.matterUrl || "";
         } else if (currentModule !== "print media") {
           // FOR CONVEYANCING: Map the address to 'propertyAddress'
           payload.propertyAddress = clientData?.propertyAddress || "";
@@ -1205,6 +1220,12 @@ export default function StagesLayout() {
       } else if (currentModule === "vocat") {
         console.log("[API] Vocat update");
         resp = await vocatApiRef.current.updateClient(
+          originalMatterNumber,
+          payload
+        );
+      } else if (currentModule === "wills") {
+        console.log("[API] Wills update");
+        resp = await willsApiRef.current.updateProject(
           originalMatterNumber,
           payload
         );
@@ -2077,9 +2098,10 @@ export default function StagesLayout() {
                               ? clientData?.data?.deliveryAddress || ""
                               : currentModule === "vocat"
                               ? clientData?.clientAddress || ""
+                              : currentModule === "wills"
+                              ? clientData?.address || ""
                               : clientData?.propertyAddress || ""
-                          }
-                          onChange={(e) => {
+                          }                          onChange={(e) => {
                             if (!canEditMatterDetails) return;
                             const value = e.target.value;
                             setClientData((prev) => {
@@ -2097,6 +2119,9 @@ export default function StagesLayout() {
                               }
                               if (currentModule === "vocat") {
                                 return { ...prev, clientAddress: value };
+                              }
+                              if (currentModule === "wills") {
+                                return { ...prev, address: value };
                               }
                               return { ...prev, propertyAddress: value };
                             });
@@ -2191,6 +2216,27 @@ export default function StagesLayout() {
                             : "Client Type"}
                         </label>
                         {canEditMatterDetails ? (
+                          currentModule === "wills" ? (
+                            <div className="flex gap-4 mt-2">
+                              {CLIENT_TYPE_OPTIONS.map((ct) => (
+                                <label key={ct} className="flex items-center gap-2 text-xs xl:text-sm">
+                                  <input
+                                    type="radio"
+                                    name="clientType"
+                                    value={ct}
+                                    checked={(clientData?.clientType || "").toLowerCase() === ct.toLowerCase()}
+                                    onChange={(e) =>
+                                      setClientData((prev) => ({
+                                        ...(prev || {}),
+                                        clientType: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                  {ct}
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
                           <select
                             id="clientType"
                             name="clientType"
@@ -2217,6 +2263,7 @@ export default function StagesLayout() {
                               </option>
                             ))}
                           </select>
+                          )
                         ) : (
                           <input
                             type="text"
@@ -2443,7 +2490,8 @@ export default function StagesLayout() {
                                   : ""
                               }
                             onChange={(e) => {
-                              if (!canEditMatterDetails) return;
+                              const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
+                              if (!canEditSettlement) return;
                               const dateValue = e.target.value;
                               if (currentModule === "commercial") {
                                 setClientData((prev) => ({
@@ -2466,9 +2514,9 @@ export default function StagesLayout() {
                               }
                             }}
                             className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                              !canEditMatterDetails ? "bg-gray-100" : ""
+                              !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-100" : ""
                             }`}
-                            disabled={!canEditMatterDetails}
+                            disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                           />
                       </div>
                       )}
@@ -2916,6 +2964,8 @@ export default function StagesLayout() {
                             ? clientData?.data?.deliveryAddress || ""
                             : currentModule === "vocat"
                             ? clientData?.clientAddress || ""
+                            : currentModule === "wills"
+                            ? clientData?.address || ""
                             : clientData?.propertyAddress || ""
                         }
                         onChange={(e) => {
@@ -2998,6 +3048,27 @@ export default function StagesLayout() {
                           : "Client Type"}
                       </label>
                       {canEditMatterDetails ? (
+                        currentModule === "wills" ? (
+                          <div className="flex gap-4 mt-2">
+                            {CLIENT_TYPE_OPTIONS.map((ct) => (
+                              <label key={ct} className="flex items-center gap-2 text-sm">
+                                <input
+                                  type="radio"
+                                  name="clientType"
+                                  value={ct}
+                                  checked={(clientData?.clientType || "") === ct}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      clientType: e.target.value,
+                                    }))
+                                  }
+                                />
+                                {ct}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
                         <select
                           id="clientType-mobile"
                           name="clientType"
@@ -3024,6 +3095,7 @@ export default function StagesLayout() {
                             </option>
                           ))}
                         </select>
+                        )
                       ) : (
                         <input
                           type="text"
@@ -3145,7 +3217,8 @@ export default function StagesLayout() {
                               : ""
                           }
                           onChange={(e) => {
-                            if (!canEditMatterDetails) return;
+                            const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
+                            if (!canEditSettlement) return;
                             const dateValue = e.target.value;
                             if (currentModule === "commercial") {
                               setClientData((prev) => ({
@@ -3168,9 +3241,9 @@ export default function StagesLayout() {
                             }
                           }}
                           className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                            !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                            !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-50 text-gray-500" : "bg-white"
                           }`}
-                          disabled={!canEditMatterDetails}
+                          disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                         />
                       </div>
                     )}

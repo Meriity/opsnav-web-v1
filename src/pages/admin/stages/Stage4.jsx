@@ -42,13 +42,8 @@ const formConfig = {
       },
       {
         name: "completionPhotos",
-        label: "Capture Proof of Completion Photos",
+        label: "Capture Proof of Completion (Image/PDF)",
         type: "image",
-      },
-      {
-        name: "completionPdf",
-        label: "Capture Proof of Completion PDF",
-        type: "pdf",
       },
       { 
         name: "closeOrder", 
@@ -132,6 +127,22 @@ const formConfig = {
       },
     ],
   },
+  wills: {
+    fields: [
+      { key: "draftWill", name: "draftWill", label: "Draft Will", type: "radio" },
+    ],
+    noteGroups: [
+      {
+        id: "main",
+        systemNoteLabel: "System Note for client",
+        clientCommentLabel: "Comment for client",
+        systemNoteKey: "systemNote",
+        clientCommentKey: "clientComment",
+        noteForClientKey: "noteForClient",
+        fieldsForNote: ["draftWill"],
+      },
+    ],
+  },
 };
 
 const normalizeValue = (v) => {
@@ -184,22 +195,15 @@ export default function Stage4({
   const [formData, setFormData] = useState({});
   const [statuses, setStatuses] = useState({});
   const [preview, setPreview] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [closeOrderModalOpen, setCloseOrderModalOpen] = useState(false);
-  const [pendingCloseOrder, setPendingCloseOrder] = useState(null);
   const [fileName, setfileName] = useState("");
   const [noteForClient, setNoteForClient] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // PDF States
-  const [pdfPreview, setPdfPreview] = useState(null);
-  const [pdfFileName, setPdfFileName] = useState("");
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
-  const [isDeletingPdf, setIsDeletingPdf] = useState(false);
-  const [showConfirmPdfModal, setShowConfirmPdfModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [closeOrderModalOpen, setCloseOrderModalOpen] = useState(false);
+  const [pendingCloseOrder, setPendingCloseOrder] = useState(null);
 
   const currentModule = useMemo(
     () => localStorage.getItem("currentModule"),
@@ -325,16 +329,17 @@ export default function Stage4({
         });
       }
 
-      // idg images
+      // idg images/files
       if (currentModule === "print media") {
         const lastImage = stageData?.images?.[stageData?.images?.length - 1];
-        setPreview(lastImage?.url || null);
-        setfileName(lastImage?.filename || "");
-
         const lastPdf = stageData?.pdfs?.[stageData?.pdfs?.length - 1];
-        if (lastPdf) {
-            setPdfPreview(lastPdf.url || null);
-            setPdfFileName(lastPdf.filename || "");
+
+        if (lastPdf && (!lastImage || new Date(lastPdf.createdAt || 0) > new Date(lastImage.createdAt || 0))) {
+          setPreview(lastPdf.url || null);
+          setfileName(lastPdf.filename || "");
+        } else if (lastImage) {
+          setPreview(lastImage.url || null);
+          setfileName(lastImage.filename || "");
         }
       }
 
@@ -460,23 +465,52 @@ export default function Stage4({
     }
   };
 
-  // ---------- IMAGE UPLOAD / DELETE (IDG) ----------
+  // ---------- FILE UPLOAD / DELETE (IDG) ----------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    console.log("handleFileChange triggered. File:", file);
     if (!file) return;
     (async () => {
+      console.log("Starting GCS upload flow...");
       setIsUploading(true);
-      setPreview(URL.createObjectURL(file));
       try {
-        await api.uploadImageForOrder(matterNumber, file);
-        toast.success("Image uploaded successfully!");
+        // 1. Get signed URL from backend
+        const result = await api.getGCSUploadUrl(file.type, file.size);
+        console.log("GCS Signed URL Response:", result);
+        const { uploadUrl, filename, url, publicUrl } = result.data;
+        
+        // Robustly derive the public URL: priority is url > publicUrl > uploadUrl (stripped of query params)
+        const finalUrl = url || publicUrl || (uploadUrl ? uploadUrl.split("?")[0] : "");
+        console.log("Derived Public URL for Metadata Sync:", finalUrl);
+
+        // 2. Upload file directly to GCS
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`GCS upload failed with status: ${uploadResponse.status}`);
+        }
+
+        // 3. Send metadata to backend
+        await api.updateGCSMetadata(4, matterNumber, {
+          url: finalUrl,
+          filename,
+          originalName: file.name,
+        });
+
+        toast.success("File uploaded successfully!");
+        setPreview(URL.createObjectURL(file));
+        setfileName(file.name);
         setHasChanges(true);
         setReloadTrigger((prev) =>
           typeof prev === "number" ? prev + 1 : (prev || 0) + 1
         );
       } catch (err) {
-        toast.error("Image upload failed.");
-        setPreview(null);
+        console.error("Upload error:", err);
+        toast.error("File upload failed.");
       } finally {
         setIsUploading(false);
       }
@@ -496,62 +530,16 @@ export default function Stage4({
       setfileName("");
       setShowConfirmModal(false);
 
-      toast.success("Image deleted successfully!");
+      toast.success("File deleted successfully!");
       setHasChanges(true);
       setReloadTrigger((prev) =>
         typeof prev === "number" ? prev + 1 : (prev || 0) + 1
       );
     } catch (err) {
-      toast.error("Failed to delete image.");
+      toast.error("Failed to delete file.");
       setShowConfirmModal(false);
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handlePdfChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    (async () => {
-      setIsUploadingPdf(true);
-      // setPdfFileName("Uploading..."); // Removed to keep UI in spinner state
-      try {
-        await api.uploadPdfForOrder(matterNumber, file);
-        toast.success("PDF uploaded successfully!");
-        setHasChanges(true);
-        setReloadTrigger((prev) =>
-          typeof prev === "number" ? prev + 1 : (prev || 0) + 1
-        );
-        setPdfFileName(file.name);
-        // setPdfPreview("uploaded"); // OLD
-        setPdfPreview(URL.createObjectURL(file)); // NEW: Immediate preview
-      } catch (err) {
-        toast.error("PDF upload failed.");
-        setPdfFileName("");
-      } finally {
-        setIsUploadingPdf(false);
-      }
-    })();
-  };
-
-  const handleDeletePdfConfirm = async () => {
-    setIsDeletingPdf(true);
-    try {
-      await api.deletePdfForOrder(matterNumber);
-      setPdfPreview(null);
-      setPdfFileName("");
-      setShowConfirmPdfModal(false);
-
-      toast.success("PDF deleted successfully!");
-      setHasChanges(true);
-      setReloadTrigger((prev) =>
-        typeof prev === "number" ? prev + 1 : (prev || 0) + 1
-      );
-    } catch (err) {
-      toast.error("Failed to delete PDF.");
-      setShowConfirmPdfModal(false);
-    } finally {
-      setIsDeletingPdf(false);
     }
   };
 
@@ -792,6 +780,8 @@ export default function Stage4({
         );
 
       case "image":
+        const isPdf = preview?.toLowerCase().endsWith(".pdf") || preview?.startsWith("blob:") && fileName?.toLowerCase().endsWith(".pdf");
+        
         return (
           <div className="w-full mt-5" key={field.name}>
             <label className="block mb-1 text-sm xl:text-base font-bold">
@@ -812,12 +802,12 @@ export default function Stage4({
                   )}
                   <p className="mt-2 text-sm text-gray-500">
                     <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
-                      {isUploading ? "Uploading..." : "Click here to upload"}
+                      {isUploading ? "Uploading..." : "Click here to upload file (Image/PDF)"}
                     </span>
                   </p>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={handleFileChange}
                     className="hidden"
                     disabled={isUploading || isReadOnly}
@@ -825,17 +815,39 @@ export default function Stage4({
                 </label>
               ) : (
                 <div className="relative w-full text-center">
-                  <img
-                    src={preview}
-                    alt="Uploaded preview"
-                    className="inline-block rounded-lg border max-w-full"
-                  />
+                  {isPdf ? (
+                    <div className="relative w-full h-40 border rounded-lg bg-gray-50 overflow-hidden group">
+                      <embed
+                        src={preview}
+                        type="application/pdf"
+                        className="w-full h-full object-cover"
+                      />
+                      <div
+                        className="absolute inset-0 bg-transparent cursor-pointer hover:bg-black/10 transition-colors flex items-center justify-center p-2"
+                        onClick={() => window.open(preview, '_blank')}
+                        title="Click to view full screen"
+                      >
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 flex justify-between items-center text-xs">
+                        <span className="font-medium text-gray-900 truncate max-w-[70%]">
+                          {fileName || "PDF Uploaded"}
+                        </span>
+                        <span className="text-green-600 font-semibold italic">PDF</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={preview}
+                      alt="Uploaded preview"
+                      className="inline-block rounded-lg border max-w-full"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
-                    className="absolute top-2 right-2 text-black p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                    className="absolute top-2 right-2 bg-white/80 text-black p-1.5 rounded-full hover:bg-red-50 hover:text-red-600 shadow-sm transition-colors z-10"
                     disabled={isDeleting || isReadOnly}
-                    title="Delete image"
+                    title="Delete file"
                     style={{ display: isReadOnly ? "none" : "block" }}
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -847,81 +859,7 @@ export default function Stage4({
           </div>
         );
       case "pdf":
-        return (
-            <div className="w-full mt-5" key={field.name}>
-              <label className="block mb-1 text-sm xl:text-base font-bold">
-                {field.label}
-              </label>
-  
-              <div className="relative w-full">
-                {!pdfPreview && !pdfFileName ? (
-                  <label
-                    className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition ${
-                      isUploadingPdf ? "opacity-50" : ""
-                    } border-gray-300 bg-gray-50 hover:bg-gray-100 `}
-                  >
-                    {isUploadingPdf ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    ) : (
-                      <CloudArrowUpIcon className="w-10 h-10 text-gray-400 hover:text-[#00AEEF]" />
-                    )}
-                    <p className="mt-2 text-sm text-gray-500">
-                      <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
-                        {isUploadingPdf ? "Uploading..." : "Click here to upload PDF"}
-                      </span>
-                    </p>
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      onChange={handlePdfChange}
-                      className="hidden"
-                      disabled={isUploadingPdf || isReadOnly}
-                    />
-                  </label>
-                ) : (
-                  <div className="relative w-full h-40 border rounded-lg bg-gray-50 overflow-hidden group">
-                    <embed
-                        src={pdfPreview}
-                        type="application/pdf"
-                        className="w-full h-full object-cover" 
-                    />
-                    <div 
-                        className="absolute inset-0 bg-transparent cursor-pointer hover:bg-black/10 transition-colors flex items-center justify-center p-2"
-                        onClick={() => window.open(pdfPreview, '_blank')}
-                        title="Click to view full screen"
-                    >
-                    </div>
-
-                    {/* Info Bar at Bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 flex justify-between items-center text-xs">
-                        <span className="font-medium text-gray-900 truncate max-w-[70%]">
-                            {pdfFileName || "PDF Uploaded"}
-                        </span>
-                        <span className="text-green-600 font-semibold">
-                            Uploaded
-                        </span>
-                    </div>
-
-                    {/* Delete Button (Top Right) */}
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation(); // Prevent opening full screen
-                            setShowConfirmPdfModal(true);
-                        }}
-                        className="absolute top-2 right-2 bg-white text-black p-1.5 rounded-full hover:bg-red-50 hover:text-red-600 shadow-sm transition-colors z-10"
-                        disabled={isDeletingPdf || isReadOnly}
-                        title="Delete PDF"
-                        style={{ display: isReadOnly ? "none" : "block" }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        {isDeletingPdf && <span className="sr-only">Deleting...</span>}
-                      </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
+        return null; 
       default:
         return null;
     }
@@ -1040,17 +978,8 @@ export default function Stage4({
         onClose={() => setShowConfirmModal(false)}
         onDiscard={() => setShowConfirmModal(false)}
         onConfirm={handleDeleteConfirm}
-        title="Remove Picture"
-        message="Are you sure you want to delete this image? This action cannot be undone."
-      />
-
-      <ConfirmationModal
-        isOpen={showConfirmPdfModal}
-        onClose={() => setShowConfirmPdfModal(false)}
-        onDiscard={() => setShowConfirmPdfModal(false)}
-        onConfirm={handleDeletePdfConfirm}
-        title="Remove PDF"
-        message="Are you sure you want to delete this PDF? This action cannot be undone."
+        title="Remove File"
+        message="Are you sure you want to delete this file? This action cannot be undone."
       />
       
       <ConfirmationModal

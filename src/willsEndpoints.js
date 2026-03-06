@@ -3,6 +3,7 @@ export const WILLS_ENDPOINTS = {
   CLIENTS: "/wills/user/clients", // POST: Create Client
   ACTIVE_CLIENTS: "/wills/user/clients/active", // GET: List Active Clients
   ARCHIVED_CLIENTS: "/wills/user/clients/archived", // GET: List Archived Clients
+  CALENDAR_DATES: "/wills/user/clients/dates", // GET: Calendar Dates
   
   // Client details (Client Routes - /wills/clients)
   CLIENT_BY_ID: "/wills/clients", // GET: Get Client (with query param ?matterNumber=...)
@@ -11,6 +12,9 @@ export const WILLS_ENDPOINTS = {
 
   // Dashboard
   DASHBOARD: "/wills/dashboard",
+
+  // Outstanding Tasks
+  OUTSTANDING_TASKS: "/wills/user/tasks/outstanding",
 
   // Stages (Client Routes - /wills/clients)
   STAGE_ONE: "/wills/clients/stage-one",

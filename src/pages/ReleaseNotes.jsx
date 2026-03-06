@@ -74,8 +74,83 @@ const ReleaseNotes = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [totalMatches, setTotalMatches] = useState(0);
+  const [isFirstNavigation, setIsFirstNavigation] = useState(true);
 
+  // Function to find and scroll to the next match
+  const navigateToMatch = (direction = "next") => {
+    // 1. Get current marks
+    const initialMarks = document.querySelectorAll("mark.search-highlight");
+    if (initialMarks.length === 0) return;
 
+    // 2. Determine new index
+    let newIndex = currentMatchIndex;
+    if (isFirstNavigation) {
+      setIsFirstNavigation(false);
+    } else {
+      if (direction === "next") {
+        newIndex = (currentMatchIndex + 1) % initialMarks.length;
+      } else {
+        newIndex = (currentMatchIndex - 1 + initialMarks.length) % initialMarks.length;
+      }
+      setCurrentMatchIndex(newIndex);
+    }
+
+    const activeMark = initialMarks[newIndex];
+    if (!activeMark) return;
+
+    // 3. Handle Expansion if needed
+    let parent = activeMark.parentElement;
+    let releaseDate = null;
+    while (parent && parent !== document.body) {
+      if (parent.getAttribute("data-release-date")) {
+        releaseDate = parent.getAttribute("data-release-date");
+        break;
+      }
+      parent = parent.parentElement;
+    }
+
+    const needsExpansion = releaseDate && !expandedUpdates[releaseDate];
+    
+    if (needsExpansion) {
+      setExpandedUpdates(prev => ({ ...prev, [releaseDate]: true }));
+    }
+
+    // 4. Scroll and Highlight (with a small delay to allow expansion/re-render)
+    setTimeout(() => {
+      // Re-query marks because re-render might have detached old ones
+      const currentMarks = document.querySelectorAll("mark.search-highlight");
+      const targetMark = currentMarks[newIndex];
+
+      if (targetMark) {
+        // Reset all
+        currentMarks.forEach(m => {
+          m.classList.remove("ring-2", "ring-[#FB4A50]", "ring-offset-1", "bg-amber-400", "scale-110", "z-10");
+          m.classList.add("bg-yellow-200");
+        });
+
+        // Highlight active
+        targetMark.classList.remove("bg-yellow-200");
+        targetMark.classList.add("ring-2", "ring-[#FB4A50]", "ring-offset-1", "bg-amber-400", "scale-110", "z-10");
+
+        // Scroll
+        targetMark.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, needsExpansion ? 150 : 50);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (searchQuery.trim()) {
+        navigateToMatch("next");
+      }
+    }
+  };
 
   // monthlyReleaseNotes imported from ../data/releaseNotesData
 
@@ -221,6 +296,33 @@ const ReleaseNotes = () => {
     }));
   };
 
+  // Reset index when search query changes
+  useEffect(() => {
+    // Use a small timeout to let the DOM update with marks
+    const timer = setTimeout(() => {
+      const marks = document.querySelectorAll("mark.search-highlight");
+      setTotalMatches(marks.length);
+      
+      if (marks.length > 0) {
+        setCurrentMatchIndex(0);
+        setIsFirstNavigation(true);
+        
+        // Reset active highlight class on all marks
+        marks.forEach(m => {
+          m.classList.remove("ring-2", "ring-[#FB4A50]", "ring-offset-1", "bg-amber-400");
+          m.classList.add("bg-yellow-200");
+        });
+        
+        // Highlight the first one as active (but don't scroll yet)
+        marks[0].classList.remove("bg-yellow-200");
+        marks[0].classList.add("ring-2", "ring-[#FB4A50]", "ring-offset-1", "bg-amber-400");
+      } else {
+        setCurrentMatchIndex(-1);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery, filteredData]);
+
   // Scroll to top
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -294,6 +396,31 @@ const ReleaseNotes = () => {
     return month.substring(0, 3);
   };
 
+  // Helper component to highlight search matches
+  const Highlight = ({ text, query }) => {
+    if (!query.trim()) return <span>{text}</span>;
+
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts = String(text).split(new RegExp(`(${escapedQuery})`, "gi"));
+
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark
+              key={i}
+              className="search-highlight bg-yellow-200 text-gray-900 rounded-sm px-0.5 font-bold transition-all duration-200"
+            >
+              {part}
+            </mark>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
@@ -358,15 +485,45 @@ const ReleaseNotes = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    onKeyDown={handleKeyDown}
                   />
 
                   {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="p-0.5 md:p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
-                    >
-                      <X className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                    </button>
+                    <div className="flex items-center gap-1 border-l border-gray-200 pl-2 ml-1">
+                      {totalMatches > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 text-[10px] md:text-xs font-bold text-[#2E3D99] min-w-[35px] justify-center">
+                            <span>{currentMatchIndex + 1}</span>
+                            <span className="text-gray-400">/</span>
+                            <span>{totalMatches}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-0.5">
+                            <button 
+                               onClick={() => navigateToMatch("prev")}
+                               className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-[#FB4A50] transition-all"
+                               title="Previous match"
+                             >
+                               <ChevronUp className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={() => navigateToMatch("next")}
+                               className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-[#FB4A50] transition-all"
+                               title="Next match"
+                             >
+                               <ChevronDown className="w-4 h-4" />
+                             </button>
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors ml-1"
+                        title="Clear search"
+                      >
+                        <X className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -897,6 +1054,7 @@ const ReleaseNotes = () => {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: index * 0.1 }}
+                                        data-release-date={release.date}
                                         className={`bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300 ${
                                           isExpanded
                                             ? "ring-1 ring-[#2E3D99]/20"
@@ -933,11 +1091,11 @@ const ReleaseNotes = () => {
 
                                               {/* Title and Description */}
                                               <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                                                {release.title}
+                                                <Highlight text={release.title} query={searchQuery} />
                                               </h3>
 
                                               <p className="text-gray-600 mb-4 text-sm md:text-base">
-                                                {release.description}
+                                                <Highlight text={release.description} query={searchQuery} />
                                               </p>
 
                                               {/* Update Pills */}
@@ -979,69 +1137,56 @@ const ReleaseNotes = () => {
                                         </button>
 
                                         {/* Expanded Details */}
-                                        <AnimatePresence>
-                                          {isExpanded && (
-                                            <motion.div
-                                              initial={{
-                                                height: 0,
-                                                opacity: 0,
-                                              }}
-                                              animate={{
-                                                height: "auto",
-                                                opacity: 1,
-                                              }}
-                                              exit={{ height: 0, opacity: 0 }}
-                                              className="overflow-hidden border-t border-gray-200"
-                                            >
-                                              <div className="p-4 md:p-6 bg-gray-50/50">
-                                                <div className="space-y-4">
-                                                  {release.updates.map(
-                                                    (update, idx) => (
-                                                      <div
-                                                        key={idx}
-                                                        className="bg-white rounded-lg p-4 border border-gray-200"
-                                                      >
-                                                        <div className="flex items-start mb-3">
-                                                          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center mr-3 flex-shrink-0">
-                                                            <update.icon className="w-4 h-4 text-[#2E3D99]" />
-                                                          </div>
-                                                          <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                              <h4 className="font-bold text-gray-900">
-                                                                {update.title}
-                                                              </h4>
-                                                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                                                                {update.type.toUpperCase()}
-                                                              </span>
-                                                            </div>
-                                                            <p className="text-gray-700 mb-2 text-sm">
-                                                              {
-                                                                update.description
-                                                              }
-                                                            </p>
-                                                            {update.details && (
-                                                              <div className="bg-gray-50 rounded p-3 text-xs text-gray-600">
-                                                                <strong className="font-semibold">
-                                                                  Details:
-                                                                </strong>{" "}
-                                                                {update.details}
-                                                              </div>
-                                                            )}
-                                                          </div>
-                                                        </div>
+                                        <motion.div
+                                          initial={false}
+                                          animate={{
+                                            height: isExpanded ? "auto" : 0,
+                                            opacity: isExpanded ? 1 : 0,
+                                            marginTop: isExpanded ? 0 : 0,
+                                          }}
+                                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                                          className="overflow-hidden border-t border-gray-200"
+                                        >
+                                          <div className="p-4 md:p-6 bg-gray-50/50">
+                                            <div className="space-y-4">
+                                              {release.updates.map(
+                                                (update, idx) => (
+                                                  <div
+                                                    key={idx}
+                                                    className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
+                                                  >
+                                                    <div className="flex items-start mb-3">
+                                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                                                        <update.icon className="w-4 h-4 text-[#2E3D99]" />
                                                       </div>
-                                                    )
-                                                  )}
-                                                </div>
-
-
-
-
-                                              </div>
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
-                                      </motion.div>
+                                                      <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                          <h4 className="font-bold text-gray-900">
+                                                            <Highlight text={update.title} query={searchQuery} />
+                                                          </h4>
+                                                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
+                                                            {update.type.toUpperCase()}
+                                                          </span>
+                                                        </div>
+                                                        <p className="text-gray-700 mb-2 text-sm">
+                                                          <Highlight text={update.description} query={searchQuery} />
+                                                        </p>
+                                                        {update.details && (
+                                                          <div className="bg-gray-50 rounded p-3 text-xs text-gray-600">
+                                                            <strong className="font-semibold">
+                                                              Details:
+                                                            </strong>{" "}
+                                                            <Highlight text={update.details} query={searchQuery} />
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        </motion.div>                                      </motion.div>
                                     );
                                   })}
                                 </div>

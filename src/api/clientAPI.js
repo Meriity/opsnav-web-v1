@@ -283,6 +283,43 @@ class ClientAPI {
     }
   }
 
+  async getGCSUploadUrl(filetype, filesize) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/idg/images/upload`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ fileType: filetype, fileSize: filesize }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting GCS upload URL:", error);
+      throw error;
+    }
+  }
+
+  async updateGCSMetadata(stageNumber, orderId, metadata) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/api/idg/stage/${stageNumber}/order/${orderId}/image`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(metadata),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating GCS metadata:", error);
+      throw error;
+    }
+  }
+
   async upsertIDGStages(clientId, stage, additionalData = {}) {
     try {
       console.log(additionalData, clientId);
@@ -363,6 +400,32 @@ class ClientAPI {
 
     } catch (error) {
       console.error('Error during PDF upload: ❌', error);
+      throw error;
+    }
+  }
+
+  async uploadFileForOrder(orderId, file) {
+    const stageNumber = 4;
+    const apiUrl = `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`;
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = this.getHeaders();
+    delete headers['Content-Type'];
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        headers: headers,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const result = await response.json();
+      console.log('File Upload successful! ✅', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error during file upload: ❌', error);
       throw error;
     }
   }

@@ -161,11 +161,12 @@ const CustomEvent = ({ event }) => {
   if (currentModule === "commercial") {
     eventTypeLabel = event.type || "Event";
   } else if (currentModule === "vocat") {
-    switch(event.type) {
+    switch (event.type) {
       case "incident":
         eventTypeLabel = "Criminal Incident";
         break;
       case "matter":
+      case "matterDate":
         eventTypeLabel = "Matter Date";
         break;
       default:
@@ -187,6 +188,13 @@ const CustomEvent = ({ event }) => {
         break;
       case "deliveryDate":
         eventTypeLabel = "Delivery";
+        break;
+      case "orderDate":
+        eventTypeLabel = "Order Date";
+        break;
+      case "matter":
+      case "matterDate":
+        eventTypeLabel = "Matter Date";
         break;
       default:
         eventTypeLabel = "Event";
@@ -271,10 +279,12 @@ const getEventColor = (event, currentModule) => {
     backgroundColor = "#8E44AD";
   } else if (event.type === "deliveryDate") {
     backgroundColor = "#F39C12";
+  } else if (event.type === "orderDate") {
+    backgroundColor = "#10B981"; // Emerald for Order Date
   } else if (event.type === "incident") {
     backgroundColor = "#EF4444"; // Red for Incident
-  } else if (event.type === "matter") {
-    backgroundColor = "#2563EB"; // Blue for Matter
+  } else if (event.type === "matter" || event.type === "matterDate") {
+    backgroundColor = "#F59E0B"; // Amber/Orange for Matter Date
   }
   return backgroundColor;
 };
@@ -301,6 +311,9 @@ const CustomAgendaEvent = ({ event, onClick }) => {
       case "titleSearch": eventTypeLabel = "Title Search"; break;
       case "settlement": eventTypeLabel = "Settlement"; break;
       case "deliveryDate": eventTypeLabel = "Delivery"; break;
+      case "orderDate": eventTypeLabel = "Order Date"; break;
+      case "matter":
+      case "matterDate": eventTypeLabel = "Matter Date"; break;
       default: eventTypeLabel = event.title;
     }
   }
@@ -589,7 +602,9 @@ const fetchCalendarData = async (currentModule) => {
 const processCalendarData = (data, currentModule) => {
   const events = [];
 
-  if (currentModule === "commercial") {
+  const mod = (currentModule || "").toLowerCase();
+
+  if (mod === "commercial") {
     const calendarItems = Array.isArray(data) ? data : [];
 
     calendarItems.forEach((item) => {
@@ -606,13 +621,15 @@ const processCalendarData = (data, currentModule) => {
         });
       }
     });
-  } else if (currentModule === "conveyancing" || currentModule === "wills") {
+  } else if (mod === "conveyancing" || mod === "wills") {
     let calendarItems = [];
 
     if (Array.isArray(data?.data?.data)) {
       calendarItems = data.data.data;
     } else if (Array.isArray(data?.data)) {
       calendarItems = data.data;
+    } else if (Array.isArray(data?.clientData)) {
+      calendarItems = data.clientData;
     } else if (Array.isArray(data)) {
       calendarItems = data;
     }
@@ -621,8 +638,8 @@ const processCalendarData = (data, currentModule) => {
       if (item.settlementDate) {
         events.push({
           title: `[${item.matterNumber}] - Settlement`,
-          start: moment(item.settlementDate).toDate(),
-          end: moment(item.settlementDate).toDate(),
+          start: moment(item.settlementDate).startOf("day").toDate(),
+          end: moment(item.settlementDate).endOf("day").toDate(),
           allDay: true,
           type: "settlement",
           clientType: item.clientType,
@@ -630,6 +647,20 @@ const processCalendarData = (data, currentModule) => {
           id: `${item.matterNumber}-settlement`,
         });
       }
+
+      if (item.matterDate) {
+        events.push({
+          title: `[${item.matterNumber}] - Matter Date`,
+          start: moment(item.matterDate).startOf("day").toDate(),
+          end: moment(item.matterDate).endOf("day").toDate(),
+          allDay: true,
+          type: "matterDate",
+          clientType: item.clientType,
+          matterNumber: item.matterNumber,
+          id: `${item.matterNumber}-matter-date`,
+        });
+      }
+
       if (item.financeApprovalDate) {
         events.push({
           title: `[${item.matterNumber}] - Finance`,
@@ -669,8 +700,8 @@ const processCalendarData = (data, currentModule) => {
       if (item.titleSearchDate) {
         events.push({
           title: `[${item.matterNumber}] - Title Search`,
-          start: moment(item.titleSearchDate).toDate(),
-          end: moment(item.titleSearchDate).toDate(),
+          start: moment(item.titleSearchDate).startOf("day").toDate(),
+          end: moment(item.titleSearchDate).endOf("day").toDate(),
           allDay: true,
           type: "titleSearch",
           clientType: item.clientType,
@@ -680,19 +711,31 @@ const processCalendarData = (data, currentModule) => {
         });
       }
     });
-  } else if (currentModule === "print media") {
+  } else if (mod === "print media") {
     let calendarItems = Array.isArray(data?.orders) ? data.orders : data;
 
     calendarItems.forEach((item) => {
       if (item.deliveryDate) {
         events.push({
-          title: `[${item.orderId}] - Order`,
-          start: moment(item.deliveryDate).toDate(),
-          end: moment(item.deliveryDate).toDate(),
+          title: `[${item.orderId}] - Delivery`,
+          start: moment(item.deliveryDate).startOf("day").toDate(),
+          end: moment(item.deliveryDate).endOf("day").toDate(),
           allDay: true,
           type: "deliveryDate",
           orderId: item.orderId,
-          id: item.orderId,
+          id: `${item.orderId}-delivery`,
+        });
+      }
+
+      if (item.orderDate) {
+        events.push({
+          title: `[${item.orderId}] - Order Date`,
+          start: moment(item.orderDate).startOf("day").toDate(),
+          end: moment(item.orderDate).endOf("day").toDate(),
+          allDay: true,
+          type: "orderDate",
+          orderId: item.orderId,
+          id: `${item.orderId}-order-date`,
         });
       }
     });
@@ -720,13 +763,12 @@ const processCalendarData = (data, currentModule) => {
           start: moment(item.matterDate).toDate(),
           end: moment(item.matterDate).toDate(),
           allDay: true,
-          type: "matter",
+          type: "matterDate",
           matterNumber: item.matterNumber,
           id: `${item.matterNumber}-matter`,
         });
       }
     });
-
   }
   
   return events;
@@ -1396,7 +1438,7 @@ function Dashboard() {
               loading={loading}
             />
 
-            {currentModule === "conveyancing" && (
+            {(currentModule === "conveyancing" || currentModule === "wills" || currentModule === "vocat") && (
               <StatCard
                 title="Pending Matters"
                 value={totalPending || 0}
@@ -1405,7 +1447,7 @@ function Dashboard() {
                 loading={loading}
               />
             )}
-            {currentModule !== "conveyancing" && (
+            {currentModule !== "conveyancing" && currentModule !== "wills" && currentModule !== "vocat" && (
               <StatCard
                 title="Last Month"
                 value={lastrecord}
@@ -1477,7 +1519,7 @@ function Dashboard() {
                   <div
                   className={`${
                     !isCompactView
-                      ? "h-[500px] overflow-visible"
+                      ? "h-[750px] overflow-visible"
                       : "h-[320px] sm:h-[400px] overflow-visible" // Reduce height on mobile for Month view to fit list below
                   }`}
                 >
@@ -1487,6 +1529,13 @@ function Dashboard() {
                     }
                     .rbc-calendar, .rbc-btn-group {
                       overflow: visible !important;
+                    }
+                    .rbc-month-row {
+                      min-height: 100px !important;
+                    }
+                    .rbc-event {
+                      min-height: 20px !important;
+                      margin-bottom: 1px !important;
                     }
                     /* Mobile Dot Styling Overrides - Apply to Tablet too */
                     ${isCompactView ? `
@@ -1733,7 +1782,7 @@ function Dashboard() {
                                 radius={[4, 4, 0, 0]}
                               />
                             )}
-                          {(currentModule === "conveyancing" || currentModule === "vocat") &&
+                          {(currentModule === "conveyancing" || currentModule === "vocat" || currentModule === "wills") &&
                             chartView === "last6Months" && (
                               <Bar
                                 dataKey="pendingMatters"

@@ -13,6 +13,7 @@ import Loader from "@/components/ui/Loader";
 import ClientAPI from "@/api/userAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import VocatFasAPI from "@/api/vocatFasAPI";
+import WillsAPI from "@/api/willsAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
@@ -33,6 +34,7 @@ import {
   Plus,
   AlertCircle,
   Users,
+  Edit,
 } from "lucide-react";
 
 function ClientsPerPage({ value, onChange }) {
@@ -129,6 +131,8 @@ export default function ArchivedClients() {
       return new CommercialAPI();
     } else if (currentModule === "vocat") {
       return new VocatFasAPI();
+    } else if (currentModule === "wills") {
+      return new WillsAPI();
     } else {
       return new ClientAPI();
     }
@@ -139,7 +143,45 @@ export default function ArchivedClients() {
   const { isLoading: vklLoading, error: vklError } = useQuery({
     queryKey: ["archivedClients", currentModule],
     queryFn: fetchArchivedClients,
-    enabled: currentModule !== "commercial" && currentModule !== "vocat" && !isFetched,
+    enabled: currentModule !== "commercial" && currentModule !== "vocat" && currentModule !== "wills" && !isFetched,
+  });
+
+  const fetchWillsArchivedClients = async () => {
+    const response = await api.getArchivedClients();
+    let data = [];
+    if (Array.isArray(response)) {
+      data = response;
+    } else if (response && Array.isArray(response.clients)) {
+      data = response.clients;
+    } else if (response && Array.isArray(response.data)) {
+      data = response.data;
+    }
+    
+    return data.map((client) => ({
+      ...client,
+      id: client.id || client._id || client.matterNumber,
+      matternumber: client.matterNumber,
+      client_name: client.clientName,
+      property_address: client.address || client.propertyAddress,
+      matter_date: client.matterDate,
+      settlement_date: client.settlementDate,
+      state: client.state,
+      type: client.clientType,
+      status: client.closeMatter || "archived",
+    }));
+  };
+
+  const {
+    data: willsData,
+    isLoading: willsLoading,
+    error: willsError,
+  } = useQuery({
+    queryKey: ["archivedClients", currentModule],
+    queryFn: fetchWillsArchivedClients,
+    enabled: currentModule === "wills",
+    onError: () => {
+      toast.error("Failed to load archived wills");
+    },
   });
 
   const fetchCommercialArchivedClients = async () => {
@@ -323,6 +365,8 @@ export default function ArchivedClients() {
       ? commercialData || []
       : currentModule === "vocat"
       ? vocatData || []
+      : currentModule === "wills"
+      ? willsData || []
       : archivedClients || [];
 
   const normalizedActiveData = useMemo(() => {
@@ -1127,7 +1171,38 @@ export default function ArchivedClients() {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 flex justify-end gap-2">
+                        {localStorage.getItem("role") === "superadmin" && (
+                          <button
+                            onClick={() => {
+                              const matterId = client.id || client.matterNumber || client.orderId;
+                              const role = localStorage.getItem("role");
+                              const isUser = role === "user";
+                              const basePath = isUser ? "/user" : "/admin";
+                              
+                              let path = "";
+                              if (isUser) {
+                                path = `/user/client/${matterId}/stages`;
+                              } else {
+                                path = `/admin/client/stages/${matterId}`;
+                              }
+
+                              if (currentModule === "vocat") {
+                                path += "/4";
+                              } else if (currentModule === "wills") {
+                                path += "/3";
+                              } else if (currentModule !== "print media") {
+                                path += "/6";
+                              }
+                              
+                              navigate(path);
+                            }}
+                            className="flex items-center gap-1 text-sm text-[#2E3D99] hover:text-blue-800 font-medium"
+                          >
+                            Edit
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleViewClient(client)}
                           className="flex items-center gap-1 text-sm text-[#2E3D99] hover:text-[#1D97D7] font-medium"

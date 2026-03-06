@@ -74,6 +74,7 @@ const ViewClientsTable = ({
   users,
   handleChangeUser,
   onDelete,
+  pendingAllocations = {},
   // Drag Props
   isDraggingMode = false,
   setDraggedData,
@@ -190,14 +191,12 @@ const ViewClientsTable = ({
                 </th>
               ))}
               <th
-                className="pl-2 lg:pl-1 pr-2 lg:pr-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm"
-                style={{ width: "12%" }}
+                className="pl-2 lg:pl-1 pr-2 lg:pr-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm w-[11%] xl:w-[14%]"
               >
                 Stages
               </th>
               <th
-                className="py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm"
-                style={{ width: "3.5%" }}
+                className="py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm pl-4 w-[6%] xl:w-[4%]"
               >
                 OT
               </th>
@@ -305,9 +304,10 @@ const ViewClientsTable = ({
                                     href={item.matterUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline font-bold"
+                                    className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center justify-center gap-1 group transition-all"
                                   >
                                     {item[column.key]}
+                                    <ExternalLink size={12} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
                                   </a>
                                 ) : (
                                   item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
@@ -392,16 +392,16 @@ const ViewClientsTable = ({
                                     localStorage.getItem("role")
                                   )
                                     ? "bg-gray-100 p-1 lg:p-1 xl:p-2 text-gray-500 rounded w-full text-[10px] lg:text-[10px] xl:text-xs"
+                                    : pendingAllocations[item.orderId]
+                                    ? "bg-[#FB4A50]/5 p-1 lg:p-1 xl:p-2 border-2 border-[#FB4A50] rounded w-full text-[10px] lg:text-[10px] xl:text-xs ring-1 ring-[#FB4A50]/20"
                                     : "bg-white p-1 lg:p-1 xl:p-2 border rounded w-full text-[10px] lg:text-[10px] xl:text-xs"
                                 }
-                                value={item.allocatedUser || ""}
+                                value={pendingAllocations[item.orderId] || item.allocatedUser || ""}
                                 onChange={(e) => {
                                   handleChangeUser(
                                     e.target.value,
                                     item.orderId
                                   );
-                                  item.allocatedUser = e.target.value;
-                                  setRefresh((prev) => !prev);
                                 }}
                                 disabled={
                                   !["admin", "superadmin"].includes(
@@ -437,9 +437,10 @@ const ViewClientsTable = ({
                             href={item.matterUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline font-bold"
+                            className="text-blue-600 hover:text-blue-800 font-bold flex items-center justify-center gap-1 group transition-all"
                           >
                             {item[column.key]}
+                            <ExternalLink size={12} className="text-blue-600 lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
                           </a>
                         ) : (
                           item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
@@ -448,7 +449,7 @@ const ViewClientsTable = ({
                         </td>
                         ))}
                         <td className="pl-3 align-middle">
-                        <div className="flex flex-nowrap gap-0.5 justify-center">
+                        <div className="grid grid-cols-3 xl:flex xl:flex-nowrap gap-0.5 justify-items-center xl:justify-center">
                         {Object.keys(item?.stages?.[0] || {}).map(
                         (keyName, index) => (
                           <a
@@ -458,7 +459,7 @@ const ViewClientsTable = ({
                                 : item.matternumber || item.orderId
                             }/${index + 1}`}
                             key={keyName}
-                            className="px-0.5 lg:px-0.5 xl:px-1 py-1 text-white rounded text-[9px] lg:text-[9px] xl:text-xs cursor-pointer"
+                            className="w-4 h-4 lg:w-4 lg:h-4 xl:w-6 xl:h-6 flex items-center justify-center text-white rounded text-[8px] lg:text-[8px] xl:text-xs 2xl:text-xs cursor-pointer transition-transform hover:scale-110 shadow-sm"
                             style={{
                               backgroundColor:
                                 stageColorMap[item?.stages?.[0]?.[keyName]] ||
@@ -474,7 +475,7 @@ const ViewClientsTable = ({
                         )}
                         </div>
                         </td>
-                        <td className="align-middle text-center">
+                        <td className="align-middle text-center pl-4">
                         <div className="flex justify-center">
                         <button
                         type="button"
@@ -595,28 +596,29 @@ const ViewClientsTable = ({
                   ? "Order ID"
                   : "Matter No"}  
               </p>
-              {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl ? (
-                <a
-                  href={item.matterUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-bold text-blue-600 hover:underline break-all"
-                >
-                  {currentModule === "commercial"
-                    ? item.matterNumber
-                    : currentModule === "print media"
-                    ? item.orderId
-                    : item.matternumber}
-                </a>
-              ) : (
-                <p className="text-sm font-bold text-[#2E3D99] break-all">
-                  {currentModule === "commercial"
-                    ? item.matterNumber
-                    : currentModule === "print media"
-                    ? item.orderId
-                    : item.matternumber}
-                </p>
-              )}
+                          {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
+                            <a
+                              href={item.matterUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center gap-1 group transition-all"
+                            >
+                              {currentModule === "commercial"
+                                ? item.matterNumber
+                                : currentModule === "print media"
+                                ? item.orderId
+                                : item.matternumber}
+                              <ExternalLink size={14} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
+                            </a>
+                          ) : (
+                            <p className="text-sm font-bold text-[#2E3D99] break-all">
+                              {currentModule === "commercial"
+                                ? item.matterNumber
+                                : currentModule === "print media"
+                                ? item.orderId
+                                : item.matternumber}
+                            </p>
+                          )}
             </div>
             <div className="flex justify-between items-start">
               <div>
@@ -780,7 +782,7 @@ const ViewClientsTable = ({
                       navigate(path);
                     }}
                     key={keyName}
-                    className="px-2 py-1 text-white rounded text-xs"
+                    className="w-6 h-6 flex items-center justify-center text-white rounded text-xs transition-transform active:scale-95 shadow-sm"
                     style={{
                       backgroundColor:
                         stageColorMap[item?.stages?.[0]?.[keyName]] ||

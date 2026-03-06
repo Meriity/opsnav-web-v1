@@ -55,7 +55,7 @@ const getInitialState = (currentModule) => {
       "VOI Note": "",
       ...commonState,
     };
-  } else if (currentModule === "conveyancing" || currentModule === "wills") {
+  } else if (currentModule === "conveyancing") {
     return {
       "VOI/CAF": "",
       "VOI/CAF Note": "",
@@ -69,6 +69,14 @@ const getInitialState = (currentModule) => {
       "Land Information Note": "",
       "Water Certificate": "",
       "Water Certificate Note": "",
+      ...commonState,
+    };
+  } else if (currentModule === "wills") {
+    return {
+      VOI: "",
+      "VOI Note": "",
+      Title: "",
+      "Title Note": "",
       ...commonState,
     };
   }
@@ -130,10 +138,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           (parseFloat(values["VOI"]) || 0) +
           (parseFloat(otherTotal) || 0)
         );
-      } else if (
-        currentModule === "conveyancing" ||
-        currentModule === "wills"
-      ) {
+      } else if (currentModule === "conveyancing") {
         totalCosts = formatNum(
           (parseFloat(values["VOI/CAF"]) || 0) +
             (parseFloat(values["Title"]) || 0) +
@@ -141,6 +146,12 @@ export default function CostComponent({ changeStage, setHasChanges }) {
             (parseFloat(values["Land Tax"]) || 0) +
             (parseFloat(values["Land Information Certificate (Rates)"]) || 0) +
             (parseFloat(values["Water Certificate"]) || 0) +
+            (parseFloat(otherTotal) || 0)
+        );
+      } else if (currentModule === "wills") {
+        totalCosts = formatNum(
+          (parseFloat(values["VOI"]) || 0) +
+            (parseFloat(values["Title"]) || 0) +
             (parseFloat(otherTotal) || 0)
         );
       } else {
@@ -314,10 +325,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           "Note 4": costData.otherFee4Note || "",
           ...commonMapped,
         };
-      } else if (
-        currentModule === "conveyancing" ||
-        currentModule === "wills"
-      ) {
+      } else if (currentModule === "conveyancing") {
         mappedData = {
           "VOI/CAF": costData.voiCaf?.$numberDecimal || "",
           "VOI/CAF Note": costData.voiCafNote || "",
@@ -333,6 +341,22 @@ export default function CostComponent({ changeStage, setHasChanges }) {
             costData.landInformationCertificateNote || "",
           "Water Certificate": costData.waterCertificate?.$numberDecimal || "",
           "Water Certificate Note": costData.waterCertificateNote || "",
+          "Other fee (1)": getDecimalValue(costData.otherFee_1) || "",
+          "Note 1": costData.otherFee1Note || "",
+          "Other fee (2)": getDecimalValue(costData.otherFee_2) || "",
+          "Note 2": costData.otherFee2Note || "",
+          "Other fee (3)": getDecimalValue(costData.otherFee_3) || "",
+          "Note 3": costData.otherFee3Note || "",
+          "Other fee (4)": getDecimalValue(costData.otherFee_4) || "",
+          "Note 4": costData.otherFee4Note || "",
+          ...commonMapped,
+        };
+      } else if (currentModule === "wills") {
+        mappedData = {
+          VOI: getDecimalValue(costData.voi) || "",
+          "VOI Note": costData.voiNote || "",
+          Title: getDecimalValue(costData.title) || "",
+          "Title Note": costData.titleNote || "",
           "Other fee (1)": getDecimalValue(costData.otherFee_1) || "",
           "Note 1": costData.otherFee1Note || "",
           "Other fee (2)": getDecimalValue(costData.otherFee_2) || "",
@@ -554,16 +578,13 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           rates: formatNumber(formValues["Rates"]),
           ratesNote: formValues["Rates Note"],
         };
-      } else if (
-        currentModule === "conveyancing" ||
-        currentModule === "wills"
-      ) {
+      } else if (currentModule === "conveyancing") {
         finalPayload = {
           ...commonPayload,
           voiCaf: formatNumber(formValues["VOI/CAF"]),
           voiCafNote: formValues["VOI/CAF Note"],
           title: formatNumber(formValues["Title"]),
-          titleNote: formValues["Title Note"],
+          titleNote: formatNumber(formValues["Title Note"]),
           plan: formatNumber(formValues["Plan"]),
           planNote: formValues["Plan Note"],
           landTax: formatNumber(formValues["Land Tax"]),
@@ -574,6 +595,14 @@ export default function CostComponent({ changeStage, setHasChanges }) {
           landInformationCertificateNote: formValues["Land Information Note"],
           waterCertificate: formatNumber(formValues["Water Certificate"]),
           waterCertificateNote: formValues["Water Certificate Note"],
+        };
+      } else if (currentModule === "wills") {
+        finalPayload = {
+          ...commonPayload,
+          voi: formatNumber(formValues["VOI"]),
+          voiNote: formValues["VOI Note"],
+          title: formatNumber(formValues["Title"]),
+          titleNote: formValues["Title Note"],
         };
       } else if (currentModule === "vocat") {
          finalPayload = {
@@ -734,7 +763,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
         )}
 
         {/* VKL specific fields */}
-        {(currentModule === "conveyancing" || currentModule === "wills") && (
+        {currentModule === "conveyancing" && (
           <>
             <CostInputRow
               label="VOI/CAF"
@@ -796,6 +825,30 @@ export default function CostComponent({ changeStage, setHasChanges }) {
               onNoteChange={(e) =>
                 handleChange("Water Certificate Note", e.target.value)
               }
+            />
+          </>
+        )}
+
+        {/* Wills specific fields */}
+        {currentModule === "wills" && (
+          <>
+            <CostInputRow
+              label="VOI"
+              amountValue={formValues["VOI"]}
+              noteValue={formValues["VOI Note"]}
+              onAmountChange={(e) =>
+                handleNumberChange("VOI", e.target.value)
+              }
+              onNoteChange={(e) => handleChange("VOI Note", e.target.value)}
+            />
+            <CostInputRow
+              label="Title"
+              amountValue={formValues["Title"]}
+              noteValue={formValues["Title Note"]}
+              onAmountChange={(e) =>
+                handleNumberChange("Title", e.target.value)
+              }
+              onNoteChange={(e) => handleChange("Title Note", e.target.value)}
             />
           </>
         )}

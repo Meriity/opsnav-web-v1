@@ -463,6 +463,31 @@ class ClientAPI {
     }
   }
 
+  // Bulk update allocated users in a single API call
+  async bulkUpdateAllocatedUsers(updates) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/idg/orders/changeuser/bulk`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            updateAllocatedUsers: updates,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error bulk updating allocated users:", error);
+      throw error;
+    }
+  }
+
   async createIDGOrder(clientData) {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders`, {
