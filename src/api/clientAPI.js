@@ -290,10 +290,15 @@ class ClientAPI {
         headers: this.getHeaders(),
         body: JSON.stringify({ fileType: filetype, fileSize: filesize }),
       });
+
+      const text = await response.text();
+      const parsed = text ? JSON.parse(text) : null;
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const msg = parsed?.message || parsed?.error || `HTTP error! status: ${response.status}`;
+        throw new Error(msg);
       }
-      return await response.json();
+      return parsed;
     } catch (error) {
       console.error("Error getting GCS upload URL:", error);
       throw error;
@@ -303,17 +308,22 @@ class ClientAPI {
   async updateGCSMetadata(stageNumber, orderId, metadata) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/api/idg/stage/${stageNumber}/order/${orderId}/image`,
+        `${this.baseUrl}/api/idg/images/stage/${stageNumber}/order/${orderId}/image`,
         {
           method: "POST",
           headers: this.getHeaders(),
           body: JSON.stringify(metadata),
         }
       );
+
+      const text = await response.text();
+      const parsed = text ? JSON.parse(text) : null;
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const msg = parsed?.message || parsed?.error || `HTTP error! status: ${response.status}`;
+        throw new Error(msg);
       }
-      return await response.json();
+      return parsed;
     } catch (error) {
       console.error("Error updating GCS metadata:", error);
       throw error;

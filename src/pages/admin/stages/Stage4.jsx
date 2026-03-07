@@ -510,7 +510,7 @@ export default function Stage4({
         );
       } catch (err) {
         console.error("Upload error:", err);
-        toast.error("File upload failed.");
+        toast.error(err.message || "File upload failed.");
       } finally {
         setIsUploading(false);
       }
@@ -804,6 +804,9 @@ export default function Stage4({
                     <span className="font-semibold text-gray-400 hover:text-[#00AEEF]">
                       {isUploading ? "Uploading..." : "Click here to upload file (Image/PDF)"}
                     </span>
+                  </p>
+                  <p className="mt-1 text-[10px] text-gray-400 font-medium">
+                    Max file size: 10MB
                   </p>
                   <input
                     type="file"
