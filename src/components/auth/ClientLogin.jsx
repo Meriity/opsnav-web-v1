@@ -96,7 +96,7 @@ function LoginForm() {
   const FloatingElement = ({ top, left, delay, size = 60 }) => {
     return (
       <motion.div
-        className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20"
+        className="absolute rounded-full bg-linear-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20"
         style={{
           width: size,
           height: size,
@@ -117,7 +117,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden flex flex-col">
+    <div className="relative min-h-screen bg-linear-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden flex flex-col">
       {/* Floating Background Elements - Hidden on small mobile */}
       <div className="hidden sm:block">
         <FloatingElement top={10} left={10} delay={0} />
@@ -176,7 +176,7 @@ function LoginForm() {
       </motion.header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex-grow flex items-center justify-center px-4 sm:px-6 pt-16 [@media(max-width:1024px)_and_(max-height:800px)]:pt-10 [@media(max-width:430px)]:pt-20 [@media(max-width:430px)]:px-3">
+      <div className="relative z-10 grow flex items-center justify-center px-4 sm:px-6 pt-16 [@media(max-width:1024px)_and_(max-height:800px)]:pt-10 [@media(max-width:430px)]:pt-20 [@media(max-width:430px)]:px-3">
         <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 [@media(max-width:1024px)_and_(max-height:800px)]:gap-4 [@media(max-width:430px)]:gap-6">
           {/* Left Side - Branding & Info */}
           <motion.div
@@ -203,7 +203,7 @@ function LoginForm() {
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:text-2xl [@media(max-width:1024px)_and_(max-height:800px)]:mb-2 [@media(max-width:430px)]:text-2xl">
               Streamline with{" "}
-              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                 Precision
               </span>
             </h1>
@@ -243,7 +243,7 @@ function LoginForm() {
                   className="bg-white/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:p-2"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-linear-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center shrink-0">
                       <feature.icon className="w-4 h-4 text-[#2E3D99]" />
                     </div>
                     <div className="text-left">
@@ -270,7 +270,7 @@ function LoginForm() {
             {/* Card Padding */}
             <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-5 sm:p-6 md:p-7 border border-gray-100 [@media(max-width:1024px)_and_(max-height:800px)]:p-4 [@media(min-width:1024px)_and_(max-height:800px)]:p-6 [@media(max-width:430px)]:p-5">
               <div className="text-center mb-4 sm:mb-5 md:mb-6 [@media(max-width:1024px)_and_(max-height:800px)]:mb-3">
-                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] mb-3 sm:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-10 [@media(max-width:1024px)_and_(max-height:800px)]:h-10 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2">
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-linear-to-r from-[#2E3D99] to-[#1D97D7] mb-3 sm:mb-4 [@media(max-width:1024px)_and_(max-height:800px)]:w-10 [@media(max-width:1024px)_and_(max-height:800px)]:h-10 [@media(max-width:1024px)_and_(max-height:800px)]:mb-2">
                   <Lock className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white [@media(max-width:1024px)_and_(max-height:800px)]:w-5 [@media(max-width:1024px)_and_(max-height:800px)]:h-5" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800 [@media(max-width:1024px)_and_(max-height:800px)]:text-xl">
@@ -330,7 +330,7 @@ function LoginForm() {
                     className="bg-red-50 border border-red-100 rounded-lg p-3 sm:p-4 [@media(max-width:1024px)_and_(max-height:800px)]:p-2"
                   >
                     <div className="flex items-center gap-2 text-red-600">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                         <svg
                           className="w-2.5 h-2.5 sm:w-3 sm:h-3"
                           fill="currentColor"
@@ -355,7 +355,7 @@ function LoginForm() {
                   disabled={isLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2.5 sm:py-3 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-70 text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-2 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-3"
+                  className="w-full bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2.5 sm:py-3 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-70 text-sm sm:text-base [@media(max-width:1024px)_and_(max-height:800px)]:py-2 [@media(max-width:1024px)_and_(max-height:800px)]:text-sm [@media(min-width:1024px)_and_(max-height:800px)]:py-3"
                 >
                   {isLoading ? (
                     <>
