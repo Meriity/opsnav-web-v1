@@ -24,6 +24,30 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-09",
+          version: "v7.2.0",
+          type: "minor",
+          category: "feature",
+          title: "Wills Module Integration & Client Portal Overhaul",
+          description: "Complete end-to-end integration of the Wills module into the Client Portal, with enhanced matter details and UI optimization across all modules.",
+          updates: [
+            {
+              type: "feature",
+              title: "Wills Client Portal Launch",
+              description: "Implemented full dashboard support for Wills matters.",
+              details: "Integrated specialized API endpoints for Wills stages and client details. Added a custom 3-stage visual mapper (Engagement, Process, Finalization) with real-time progress tracking.",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Intelligent Module Sign-In",
+              description: "Unified client login with automatic module detection.",
+              details: "The sign-in process now sequentially verifies matters across Conveyancing, Wills, and VOCAT modules, automatically setting the correct context and redirecting clients to their module-specific dashboards.",
+              icon: Shield,
+            },
+          ],
+        },
+        {
           date: "2026-03-05",
           version: "v7.1.3",
           type: "patch",
