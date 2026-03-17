@@ -225,6 +225,8 @@ export default function ClientDashboard() {
   const [matterDetails, setMatterDetails] = useState({
     Clientname: "",
     matter_number: "",
+    matter_status : "",
+    legal_costs_application_number : "",
     matter_date: "",
     settlement_date: "",
     address: "",
@@ -250,6 +252,8 @@ export default function ClientDashboard() {
     return {
       matter_date: formatDate(apiResponse.matterDate),
       matter_number: apiResponse.matterNumber.toString(),
+      matter_status : apiResponse.matterStatus || "",
+      legal_costs_application_number :  apiResponse.legalCostsApplicationNumber || "",
       reference_number: apiResponse.matterReferenceNumber || "",
       fas_number: apiResponse.fasNumber || "",
       Clientname: apiResponse.clientName,
@@ -673,7 +677,7 @@ export default function ClientDashboard() {
         const note = splitNoteParts(s1.commentary || s1.notes || s1.noteForClient); // Added commentary mapping
         
         stages.push({
-            stageName: "Initialisation",
+            stageName: "Intake",
             svg: "/stage 1.svg",
             stagecolor: s1.colorStatus,
             data: {
@@ -734,7 +738,7 @@ export default function ClientDashboard() {
         const note = splitNoteParts(s3.commentary || s3.notes || s3.noteForClient);
         
         stages.push({
-            stageName: "Searches & Analysis",
+            stageName: "Processing",
             svg: "/stage 3.svg",
             stagecolor: s3.colorStatus,
             data: {
@@ -983,6 +987,40 @@ export default function ClientDashboard() {
                         </p>
                         <p className="text-sm text-slate-800 font-semibold">
                           {matterDetails.matter_number || orderDetails.orderId}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                 {/* Matter Status */}
+                  {(matterDetails.matter_status || orderDetails.orderId) && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          {currentModule === "print media"
+                            ? "Order ID"
+                            : "Matter Status"}
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.matter_status || orderDetails.orderId}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Legal Costs Application number */}
+                  {(matterDetails.legal_costs_application_number || orderDetails.orderId) && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-x font-medium text-slate-600">
+                          {currentModule === "print media"
+                            ? "Order ID"
+                            : "Legal Costs Application Number"}
+                        </p>
+                        <p className="text-sm text-slate-800 font-semibold">
+                          {matterDetails.legal_costs_application_number || orderDetails.orderId}
                         </p>
                       </div>
                     </div>

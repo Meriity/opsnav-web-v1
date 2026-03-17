@@ -24,6 +24,88 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-17",
+          version: "v7.2.1",
+          type: "patch",
+          category: "bugfix",
+          title: "VOCAT Filter & Responsive UI Fixes",
+          description: "Addressed filter reset issues and improved Matter Status visibility on mobile and desktop views for the VOCAT module.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "VOCAT Filter Reset",
+              description: "Fixed issue where resetting filters required a manual page refresh.",
+              details: "The 'Reset' button now correctly triggers an automatic re-fetch of all active clients, ensuring the table updates instantly without a manual refresh.",
+              icon: RefreshCw,
+            },
+            {
+              type: "bugfix",
+              title: "Mobile Matter Status Visibility",
+              description: "Added missing Matter Status field to mobile and tablet views.",
+              details: "The Matter Status field is now visible and editable (based on permissions) across all responsive breakpoints in the VOCAT matter details section.",
+              icon: Smartphone,
+            },
+            {
+              type: "bugfix",
+              title: "Matter Status Field Accuracy",
+              description: "Fixed incorrect data mapping in the read-only Matter Status field.",
+              details: "Resolved a UI bug where the read-only Matter Status field on desktop was incorrectly displaying the 'Data Entry By' value.",
+              icon: Bug,
+            },
+          ],
+          module: "VOCAT/FAS",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-03-17",
+          version: "v7.2.0",
+          type: "minor",
+          category: "feature",
+          title: "VOCAT/FAS Search & UI Refinement",
+          description: "Introduced advanced search filters and major UI/field optimizations for the VOCAT/FAS module.",
+          updates: [
+            {
+              type: "feature",
+              title: "Advanced Search Filters",
+              description: "Added dedicated filters for Matter Status and Legal Costs Application Number.",
+              details: "Users can now filter VOCAT clients by their current matter status, legal costs application number, or both simultaneously via a consolidated search endpoint.",
+              icon: Search,
+            },
+            {
+              type: "improvement",
+              title: "VOCAT Field Optimization",
+              description: "Renamed and repositioned fields for better data clarity.",
+              details: "Updated field titles and layouts across VOCAT stages to improve intuitive data entry and alignment with industry terminology.",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "New Data Fields",
+              description: "Integrated Matter Status and Legal Costs Application Number fields.",
+              details: "New fields added to the VOCAT/FAS module to track critical application milestones and reference numbers.",
+              icon: Database,
+            },
+            {
+              type: "bugfix",
+              title: "Search Results Rendering",
+              description: "Fixed data transformation for VOCAT search results.",
+              details: "Resolved an issue where filtered search results were not displaying correctly in the main table due to mismatched data keys.",
+              icon: Zap,
+            },
+            {
+              type: "feature",
+              title: "Client Dashboard Enhancements",
+              description: "Integrated Matter Status and Legal Costs fields into the VOCAT Client Dashboard.",
+              details: "The VOCAT/FAS Client Dashboard now displays 'Matter Status' and 'Legal Costs Application Number' to keep clients informed of their application progress.",
+              icon: Sparkles,
+            },
+          ],
+          module: "VOCAT/FAS",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-03-05",
           version: "v7.1.3",
           type: "patch",

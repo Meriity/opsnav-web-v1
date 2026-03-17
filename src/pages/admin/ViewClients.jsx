@@ -57,6 +57,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
+import ArchivedFilterModal from "../../components/ui/ArchivedFilterModal.jsx";
+import ViewClientFilterModel from "../../components/ui/ViewClientFilterModel.jsx";
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
@@ -111,10 +113,17 @@ const ViewClients = () => {
   const hasUnsavedAllocations = Object.keys(pendingAllocations).length > 0;
   const { setHasUnsavedChanges } = useClientStore();
 
+  // New Filter model for vocat
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    matterStatus: "",
+    legalCostsApplicationNumber: "",
+  });
+
   // Sync with global store for sidebar warning
   useEffect(() => {
     setHasUnsavedChanges(hasUnsavedAllocations);
-    
+
     // Cleanup - reset when unmounting
     return () => setHasUnsavedChanges(false);
   }, [hasUnsavedAllocations, setHasUnsavedChanges]);
@@ -215,38 +224,38 @@ const ViewClients = () => {
       } else if (currentModule === "wills") {
         setCommercialLoading(true);
         try {
-           const response = await api.getActiveProjects();
-           
-           let data = [];
-           if (Array.isArray(response)) {
-             data = response;
-           } else if (response && Array.isArray(response.data)) {
-             data = response.data;
-           }
+          const response = await api.getActiveProjects();
 
-           const transformedData = data.map((client) => ({
-             ...client,
-             id: client.matterNumber || client.id || client._id,
-             matternumber: client.matterNumber,
-             client_name: client.clientName,
-             property_address: client.address || client.propertyAddress,
-             state: client.state,
-             client_type: client.clientType,
-             matterDate: client.matterDate,
-             status: client.status || "active",
-             // Ensure stages exists for the table renderer. 
-             // Backend provides stages as an object or array. ViewClientsTable expects item.stages[0]
-             stages: Array.isArray(client.stages) 
-               ? (client.stages.length > 0 ? client.stages : [{ S1: "default", S2: "default", S3: "default" }])
-               : [client.stages || { S1: "default", S2: "default", S3: "default" }]
-           }));
-           
-           setCommercialClients(transformedData);
+          let data = [];
+          if (Array.isArray(response)) {
+            data = response;
+          } else if (response && Array.isArray(response.data)) {
+            data = response.data;
+          }
+
+          const transformedData = data.map((client) => ({
+            ...client,
+            id: client.matterNumber || client.id || client._id,
+            matternumber: client.matterNumber,
+            client_name: client.clientName,
+            property_address: client.address || client.propertyAddress,
+            state: client.state,
+            client_type: client.clientType,
+            matterDate: client.matterDate,
+            status: client.status || "active",
+            // Ensure stages exists for the table renderer. 
+            // Backend provides stages as an object or array. ViewClientsTable expects item.stages[0]
+            stages: Array.isArray(client.stages)
+              ? (client.stages.length > 0 ? client.stages : [{ S1: "default", S2: "default", S3: "default" }])
+              : [client.stages || { S1: "default", S2: "default", S3: "default" }]
+          }));
+
+          setCommercialClients(transformedData);
         } catch (error) {
-           console.error("Error fetching Wills clients:", error);
-           setCommercialClients([]);
+          console.error("Error fetching Wills clients:", error);
+          setCommercialClients([]);
         } finally {
-           setCommercialLoading(false);
+          setCommercialLoading(false);
         }
       } else if (currentModule === "vocat") {
         setCommercialLoading(true);
@@ -256,11 +265,11 @@ const ViewClients = () => {
 
           let data = [];
           if (Array.isArray(response)) {
-             data = response;
+            data = response;
           } else if (Array.isArray(response?.clients)) {
-             data = response.clients;
+            data = response.clients;
           } else if (Array.isArray(response?.data)) {
-             data = response.data;
+            data = response.data;
           }
 
           const transformedData = data.map((client) => ({
@@ -272,10 +281,21 @@ const ViewClients = () => {
             matterDate: client.matterDate,
             state: client.state,
             property_address: client.clientAddress,
-            stages: Array.isArray(client.stages) ? client.stages : [client.stages || {}],
+            stages: Array.isArray(client.stages) && client.stages.length > 0 
+              ? client.stages 
+              : [client.stages || {
+                  s1: client.stageOne || "default",
+                  s2: client.stageTwo || "default",
+                  s3: client.stageThree || "default",
+                  s4: client.stageFour || "default",
+                  s5: client.stageFive || "default",
+                  s6: client.stageSix || "default"
+                }],
             status: "active",
-            matterReferenceNumber: client.matterReferenceNumber, 
+            matterReferenceNumber: client.matterReferenceNumber,
             fasNumber: client.fasNumber,
+            matterStatus: client.matterStatus,
+            legalCostsApplicationNumber: client.legalCostsApplicationNumber
           }));
 
           setCommercialClients(transformedData);
@@ -289,6 +309,8 @@ const ViewClients = () => {
         fetchClients();
       }
     };
+
+
 
     fetchData();
   }, [currentModule, api, fetchClients]);
@@ -319,8 +341,8 @@ const ViewClients = () => {
           currentModule === "print media"
             ? "delivery"
             : currentModule === "commercial"
-            ? "project"
-            : "settlement";
+              ? "project"
+              : "settlement";
       }
 
       console.log(
@@ -373,10 +395,10 @@ const ViewClients = () => {
             .includes(lowercasedQuery) ||
           String(
             client.property_address ||
-              client.propertyAddress ||
-              client.businessAddress ||
-              client.billing_address ||
-              ""
+            client.propertyAddress ||
+            client.businessAddress ||
+            client.billing_address ||
+            ""
           )
             .toLowerCase()
             .includes(lowercasedQuery) ||
@@ -389,15 +411,15 @@ const ViewClients = () => {
             .includes(lowercasedQuery) ||
           String(client.clientId || "")
             .toLowerCase()
-            .includes(lowercasedQuery) 
+            .includes(lowercasedQuery)
       );
     }
 
     // Filter 4: Allocated User (Print Media only)
     if (currentModule === "print media" && filterAllocatedUser) {
       data = data.filter((client) => {
-         const clientUser = client.allocatedUser || "";
-         return clientUser.trim().toLowerCase() === filterAllocatedUser.trim().toLowerCase();
+        const clientUser = client.allocatedUser || "";
+        return clientUser.trim().toLowerCase() === filterAllocatedUser.trim().toLowerCase();
       });
 
       // 🔹 Sort by rankOrder when a particular user is selected
@@ -408,8 +430,77 @@ const ViewClients = () => {
       });
     }
 
+    console.log("data :", data)
+
     return data;
-  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser]);
+  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser, activeFilters]);
+
+
+  // Filter data based on  the matter status and legal cost application number
+  const handleVocatFilter = async (filters) => {
+    setCommercialLoading(true);
+    try {
+
+      let response;
+
+      //  Matter Status only
+      if (filters.matterStatus && !filters.legalCostsApplicationNumber) {
+        response = await api.getClientsByMatterStatus(filters.matterStatus);
+      }
+
+      // Legal Cost only
+      else if (!filters.matterStatus && filters.legalCostsApplicationNumber) {
+        response = await api.getClientsByLegalCosts(filters.legalCostsApplicationNumber);
+      }
+
+      //  Both
+      else if (filters.matterStatus && filters.legalCostsApplicationNumber) {
+        response = await api.getClientsByMatterStatusAndLegalCosts(
+          filters.matterStatus,
+          filters.legalCostsApplicationNumber
+        );
+      } else {
+        // Fetch all active clients if no filters (Reset case)
+        response = await api.getActiveClients();
+      }
+
+      const data = response?.clients || response?.data || response || [];
+      
+      const transformedData = (Array.isArray(data) ? data : []).map((client) => ({
+        ...client,
+        id: client._id || client.id || client.matterNumber,
+        matternumber: client.matterNumber,
+        client_name: client.clientName,
+        client_type: client.clientType,
+        matterDate: client.matterDate,
+        state: client.state,
+        property_address: client.clientAddress,
+        stages: Array.isArray(client.stages) && client.stages.length > 0 
+          ? client.stages 
+          : [client.stages || {
+              s1: client.stageOne || "default",
+              s2: client.stageTwo || "default",
+              s3: client.stageThree || "default",
+              s4: client.stageFour || "default",
+              s5: client.stageFive || "default",
+              s6: client.stageSix || "default"
+            }],
+        status: "active",
+        matterReferenceNumber: client.matterReferenceNumber,
+        fasNumber: client.fasNumber,
+        matterStatus: client.matterStatus,
+        legalCostsApplicationNumber: client.legalCostsApplicationNumber
+      }));
+
+      setCommercialClients(transformedData);
+
+    } catch (error) {
+      console.error("Filter error:", error);
+      toast.error("Failed to filter clients");
+    } finally {
+      setCommercialLoading(false);
+    }
+  };
 
   let columns = [];
   if (currentModule === "commercial") {
@@ -425,16 +516,16 @@ const ViewClients = () => {
       { key: "matterDate", title: "Project Date", width: "9%" },
     ];
   } else if (currentModule === "wills") {
-     columns = [
+    columns = [
       { key: "matternumber", title: "Matter Number", width: "10%" },
       { key: "matterDate", title: "Matter Date", width: "12%" },
       { key: "client_name", title: "Client Name", width: "18%" },
       { key: "property_address", title: "Address", width: "23%" },
       { key: "state", title: "State", width: "8%" },
       { key: "client_type", title: "Type", width: "11%" },
-     ];
+    ];
   } else if (currentModule === "vocat") {
-     columns = [
+    columns = [
       { key: "matternumber", title: "Matter Number", width: "8%" },
       { key: "matterReferenceNumber", title: "Matter Ref", width: "8%" },
       { key: "fasNumber", title: "FAS Number", width: "8%" },
@@ -443,7 +534,7 @@ const ViewClients = () => {
       { key: "property_address", title: "Client Address", width: "18%" },
       { key: "state", title: "St", width: "4%" },
       { key: "client_type", title: "Type", width: "8%" },
-     ];
+    ];
   } else if (currentModule === "conveyancing") {
     columns = [
       { key: "matternumber", title: "Matter Number", width: "7%" },
@@ -509,7 +600,7 @@ const ViewClients = () => {
     try {
       await api.changeUser(user, orderId);
       // toast.success("Allocated user updated successfully");
-      fetchClients(); 
+      fetchClients();
     } catch (error) {
       console.log("Error occured!!", error);
       toast.error("Failed to update allocated user");
@@ -534,8 +625,7 @@ const ViewClients = () => {
       );
       await api.bulkUpdateAllocatedUsers(updates);
       toast.success(
-        `Successfully updated ${updates.length} allocation${
-          updates.length > 1 ? "s" : ""
+        `Successfully updated ${updates.length} allocation${updates.length > 1 ? "s" : ""
         }`
       );
       setPendingAllocations({});
@@ -564,7 +654,7 @@ const ViewClients = () => {
   const handleClientFilterChange = (selectedName) => {
     setSelectedClientName(selectedName);
   };
-  
+
   const handleDeleteClick = (order) => {
     setOrderToDelete(order);
     setShowDeleteModal(true);
@@ -578,7 +668,7 @@ const ViewClients = () => {
       setShowDeleteModal(false);
       setOrderToDelete(null);
       // Refresh logic: for simplicity reload page or refetch
-      window.location.reload(); 
+      window.location.reload();
     } catch (error) {
       console.error("Failed to delete order", error);
       toast.error(error.message || "Failed to delete order");
@@ -685,12 +775,29 @@ const ViewClients = () => {
             setIsOpen={() => setcreateOrder(false)}
           />
 
+          <ViewClientFilterModel
+            isOpen={showFilterModal}
+            setIsOpen={setShowFilterModal}
+            initialFilters={activeFilters}
+            onApply={(filter) => {
+              setActiveFilters(filter),
+                handleVocatFilter(filter)
+            }}
+            currentModule={currentModule}
+            onReset={() => {
+              const emptyFilters = {
+                matterStatus: "",
+                legalCostsApplicationNumber: ""
+              };
+              setActiveFilters(emptyFilters);
+              handleVocatFilter(emptyFilters);
+            }}
+          />
           <DateRangeModal
             isOpen={showDateRange}
             setIsOpen={() => setShowDateRange(false)}
-            subTitle={`Select the date range to filter ${
-              currentModule === "commercial" ? "projects" : "clients"
-            }.`}
+            subTitle={`Select the date range to filter ${currentModule === "commercial" ? "projects" : "clients"
+              }.`}
             handelSubmitFun={(fromDate, toDate, dateType) => {
               setDateFilter({ type: dateType, range: [fromDate, toDate] });
               setShowDateRange(false);
@@ -817,7 +924,7 @@ const ViewClients = () => {
                       if (url) {
                         setPdfPreviewUrl(url);
                         setShowTarPreview(true);
-                  
+
                         setShowTar(false);
                       }
                     }}
@@ -880,7 +987,7 @@ const ViewClients = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="flex-1 w-full bg-gray-100 p-4 overflow-hidden">
                   {pdfPreviewUrl ? (
                     <iframe
@@ -923,8 +1030,8 @@ const ViewClients = () => {
                   {currentModule === "commercial"
                     ? "Manage projects, tasks and related client details"
                     : currentModule === "print media"
-                    ? "Manage orders, deliveries and client records"
-                    : "Manage clients, matters and client details"}
+                      ? "Manage orders, deliveries and client records"
+                      : "Manage clients, matters and client details"}
                 </p>
               </div>
 
@@ -973,7 +1080,7 @@ const ViewClients = () => {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                       <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <div className="py-1">
                             {currentModule === "print media" ? (
                               <>
@@ -998,15 +1105,15 @@ const ViewClients = () => {
                                   )}
                                 </Menu.Item>
                                 <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowUploadExcelDialog(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Upload Excel
-                                        </button>
-                                      )}
-                                    </Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setShowUploadExcelDialog(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Upload Excel
+                                    </button>
+                                  )}
+                                </Menu.Item>
                                 <Menu.Item>
                                   {({ active }) => (
                                     <button
@@ -1019,38 +1126,48 @@ const ViewClients = () => {
                                 </Menu.Item>
                               </>
                             ) : (
-                                  <>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setcreateuser(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          {getCreateButtonLabel()}
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowOutstandingTask(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Outstanding Tasks
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => setShowDateRange(true)}
-                                          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
-                                        >
-                                          Select Date Range
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </>
+                              <>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setcreateuser(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      {getCreateButtonLabel()}
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setShowOutstandingTask(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Outstanding Tasks
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                {currentModule === "vocat" && <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setShowFilterModal(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Filter
+                                    </button>
+                                  )}
+                                </Menu.Item>}
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button
+                                      onClick={() => setShowDateRange(true)}
+                                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition rounded-md w-full text-left"
+                                    >
+                                      Select Date Range
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              </>
                             )}
                           </div>
                         </Menu.Items>
@@ -1080,7 +1197,7 @@ const ViewClients = () => {
                         ))}
                       </select>
 
-                       <select
+                      <select
                         name="AllocatedUser"
                         className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
                         value={filterAllocatedUser}
@@ -1101,19 +1218,19 @@ const ViewClients = () => {
                 </div>
 
                 <div className="flex w-full items-center justify-between gap-4">
-                   <div className="flex items-center gap-4">
-                      {currentModule === "print media" &&
-                        ["admin", "superadmin"].includes(
-                          localStorage.getItem("role")
-                        ) && (
-                          <>
-                            {!isDraggingMode ? (
-                              <div className="relative flex items-center gap-2">
-                                <button
+                  <div className="flex items-center gap-4">
+                    {currentModule === "print media" &&
+                      ["admin", "superadmin"].includes(
+                        localStorage.getItem("role")
+                      ) && (
+                        <>
+                          {!isDraggingMode ? (
+                            <div className="relative flex items-center gap-2">
+                              <button
                                 onClick={() => {
                                   if (!filterAllocatedUser) return;
                                   setIsDraggingMode(true);
-                                  setDraggedData(filteredClients); 
+                                  setDraggedData(filteredClients);
                                 }}
                                 disabled={!filterAllocatedUser}
                                 className={`flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 transition-colors shadow-sm ${!filterAllocatedUser ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
@@ -1123,115 +1240,125 @@ const ViewClients = () => {
                                 <span className="hidden xl:inline">Reorder</span>
                               </button>
                               {!filterAllocatedUser && (
-                                  <div className="relative flex items-center">
-                                    <button
-                                        onClick={() => setShowReorderHint(!showReorderHint)}
-                                        className="focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
-                                        title="Click for help"
-                                    >
-                                        <Info size={16} className="text-gray-400 cursor-help hover:text-blue-500 transition-colors" />
-                                    </button>
-                                    
-                                    <AnimatePresence>
-                                        {showReorderHint && (
-                                          <motion.div 
-                                              initial={{ opacity: 0, y: 10 }}
-                                              animate={{ opacity: 1, y: 0 }}
-                                              exit={{ opacity: 0, y: 10 }}
-                                              className="absolute bottom-full left-0 mb-2 w-56 p-2 bg-orange-50 text-orange-800 border border-orange-200 text-xs rounded shadow-lg z-50 text-center"
-                                          >
-                                              Select an allocated user (next to "All Clients") to enable reordering functionality.
-                                              <div className="absolute top-full left-4 transform -translate-x-1/2 border-4 border-transparent border-t-orange-50"></div>
-                                          </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                  </div>
-                              )}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => setShowReorderConfirm(true)}
-                                  className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-md text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
-                                  title="Save Order"
-                                >
-                                  <CheckCircle size={16} />
-                                  <span className="hidden xl:inline">Save</span>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setIsDraggingMode(false);
-                                    setDraggedData([]);
-                                  }}
-                                  className="flex items-center gap-1 px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
-                                  title="Cancel"
-                                >
-                                  <AlertCircle size={16} />
-                                  <span className="hidden xl:inline">Cancel</span>
-                                </button>
-                              </div>
-                            )}
-                          </>
-                        )}
-                   </div>
+                                <div className="relative flex items-center">
+                                  <button
+                                    onClick={() => setShowReorderHint(!showReorderHint)}
+                                    className="focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
+                                    title="Click for help"
+                                  >
+                                    <Info size={16} className="text-gray-400 cursor-help hover:text-blue-500 transition-colors" />
+                                  </button>
 
-                   
-                   <div className="flex items-center gap-2 ml-auto">
-                      {/* Desktop Action Buttons */}
-                      <div className="hidden lg:flex items-center gap-1.5">
+                                  <AnimatePresence>
+                                    {showReorderHint && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute bottom-full left-0 mb-2 w-56 p-2 bg-orange-50 text-orange-800 border border-orange-200 text-xs rounded shadow-lg z-50 text-center"
+                                      >
+                                        Select an allocated user (next to "All Clients") to enable reordering functionality.
+                                        <div className="absolute top-full left-4 transform -translate-x-1/2 border-4 border-transparent border-t-orange-50"></div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setShowReorderConfirm(true)}
+                                className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-md text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
+                                title="Save Order"
+                              >
+                                <CheckCircle size={16} />
+                                <span className="hidden xl:inline">Save</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setIsDraggingMode(false);
+                                  setDraggedData([]);
+                                }}
+                                className="flex items-center gap-1 px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
+                                title="Cancel"
+                              >
+                                <AlertCircle size={16} />
+                                <span className="hidden xl:inline">Cancel</span>
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                  </div>
+
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    {/* Desktop Action Buttons */}
+                    <div className="hidden lg:flex items-center gap-1.5">
                       {(currentModule === "conveyancing" ||
                         currentModule === "wills" ||
                         currentModule === "commercial" ||
                         currentModule === "vocat") && (
-                        <>
-                          {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                          <>
+                            {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() =>
+                                  currentModule === "commercial"
+                                    ? setCreateProject(true)
+                                    : setcreateuser(true)
+                                }
+                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                              >
+                                <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
+                                {currentModule === "commercial"
+                                  ? "Create Project"
+                                  : "Create Client"}
+                              </motion.button>
+                            )}
+
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() =>
-                                currentModule === "commercial"
-                                  ? setCreateProject(true)
-                                  : setcreateuser(true)
-                              }
+                              label="Outstanding Tasks"
+                              onClick={() => setShowOutstandingTask(true)}
                               className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                             >
-                              <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                              {currentModule === "commercial"
-                                ? "Create Project"
-                                : "Create Client"}
+                              <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
+                              Outstanding Tasks
                             </motion.button>
-                          )}
 
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            label="Outstanding Tasks"
-                            onClick={() => setShowOutstandingTask(true)}
-                            className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
-                          >
-                            <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
-                            Outstanding Tasks
-                          </motion.button>
+                            {currentModule === "vocat" && <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowFilterModal(true)}
+                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                            >
+                              <Filter className="w-3 h-3 sm:w-5 sm:h-5" />
+                              Filter
+                            </motion.button>}
 
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            label="Select Date Range"
-                            onClick={() => setShowDateRange(true)}
-                            className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
-                          >
-                            <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
-                            Date Range
-                          </motion.button>
-                        </>
-                      )}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              label="Select Date Range"
+                              onClick={() => setShowDateRange(true)}
+                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                            >
+                              <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
+                              Date Range
+                            </motion.button>
+                          </>
+                        )}
 
                       {currentModule === "print media" && (
                         <div className="flex items-center gap-2">
                           {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                             <>
                               <motion.button
-                                 whileHover={{ scale: 1.05 }}
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setcreateuser(true)}
                                 className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
@@ -1241,7 +1368,7 @@ const ViewClients = () => {
                               </motion.button>
 
                               <motion.button
-                                 whileHover={{ scale: 1.05 }}
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setcreateOrder(true)}
                                 className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
@@ -1274,9 +1401,9 @@ const ViewClients = () => {
                           </motion.button>
                         </div>
                       )}
-                      </div>
+                    </div>
 
-                   </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1320,17 +1447,17 @@ const ViewClients = () => {
                   handelOT={setOTActiveMatterNumber}
                   currentModule={currentModule}
                   onDelete={handleDeleteClick}
-                  
+
                   // Drag Props
                   isDraggingMode={isDraggingMode}
                   setDraggedData={setDraggedData}
                 />
               </div>
             )}
-            <ExcelUploadDialog 
-              isOpen={showUploadExcelDialog} 
-              onClose={() => setShowUploadExcelDialog(false)} 
-              onUpload={handleExcelUpload} 
+            <ExcelUploadDialog
+              isOpen={showUploadExcelDialog}
+              onClose={() => setShowUploadExcelDialog(false)}
+              onUpload={handleExcelUpload}
             />
 
             {/* Reorder Confirmation Modal */}
@@ -1338,37 +1465,37 @@ const ViewClients = () => {
               isOpen={showReorderConfirm}
               onClose={() => setShowReorderConfirm(false)}
               onConfirm={async () => {
-                 if (!filterAllocatedUser) {
-                    toast.error("Please select an allocated user to reorder tasks.");
-                    return;
-                 }
+                if (!filterAllocatedUser) {
+                  toast.error("Please select an allocated user to reorder tasks.");
+                  return;
+                }
 
-                 const selectedUserObj = user.find(u => u.name === filterAllocatedUser);
-                 if (!selectedUserObj) {
-                    toast.error("Invalid user selection.");
-                    return;
-                 }
-                 const allocatedUserID = `${selectedUserObj.id}-${selectedUserObj.name}`;
-                 
-                 const payload = {
-                    allocatedUserID: allocatedUserID,
-                    orders: draggedData.map((item, index) => ({
-                       orderId: item.orderId,
-                       rankOrder: index + 1
-                    }))
-                 };
+                const selectedUserObj = user.find(u => u.name === filterAllocatedUser);
+                if (!selectedUserObj) {
+                  toast.error("Invalid user selection.");
+                  return;
+                }
+                const allocatedUserID = `${selectedUserObj.id}-${selectedUserObj.name}`;
 
-                 try {
-                    await api.rearrangeOrders(payload);
-                    toast.success("Priority order updated successfully!");
-                    setIsDraggingMode(false);
-                    setShowReorderConfirm(false);
-                    // Refresh data
-                    window.location.reload(); 
-                 } catch (error) {
-                    console.error("Failed to reorder", error);
-                    toast.error(error.message || "Failed to save new order.");
-                 }
+                const payload = {
+                  allocatedUserID: allocatedUserID,
+                  orders: draggedData.map((item, index) => ({
+                    orderId: item.orderId,
+                    rankOrder: index + 1
+                  }))
+                };
+
+                try {
+                  await api.rearrangeOrders(payload);
+                  toast.success("Priority order updated successfully!");
+                  setIsDraggingMode(false);
+                  setShowReorderConfirm(false);
+                  // Refresh data
+                  window.location.reload();
+                } catch (error) {
+                  console.error("Failed to reorder", error);
+                  toast.error(error.message || "Failed to save new order.");
+                }
               }}
               title="Save Priority Order?"
               message="Are you sure you want to save the new arrangement of orders?"
@@ -1404,9 +1531,8 @@ const ViewClients = () => {
                 <span>
                   {isSavingAllocations
                     ? "Saving..."
-                    : `Save ${Object.keys(pendingAllocations).length} Allocation${
-                        Object.keys(pendingAllocations).length > 1 ? "s" : ""
-                      }`}
+                    : `Save ${Object.keys(pendingAllocations).length} Allocation${Object.keys(pendingAllocations).length > 1 ? "s" : ""
+                    }`}
                 </span>
                 {!isSavingAllocations && (
                   <span className="flex h-2.5 w-2.5 relative">
