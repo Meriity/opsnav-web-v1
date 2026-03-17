@@ -25,6 +25,40 @@ export const monthlyReleaseNotes = {
       March: [
         {
           date: "2026-03-17",
+          version: "v7.2.1",
+          type: "patch",
+          category: "bugfix",
+          title: "VOCAT Filter & Responsive UI Fixes",
+          description: "Addressed filter reset issues and improved Matter Status visibility on mobile and desktop views for the VOCAT module.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "VOCAT Filter Reset",
+              description: "Fixed issue where resetting filters required a manual page refresh.",
+              details: "The 'Reset' button now correctly triggers an automatic re-fetch of all active clients, ensuring the table updates instantly without a manual refresh.",
+              icon: RefreshCw,
+            },
+            {
+              type: "bugfix",
+              title: "Mobile Matter Status Visibility",
+              description: "Added missing Matter Status field to mobile and tablet views.",
+              details: "The Matter Status field is now visible and editable (based on permissions) across all responsive breakpoints in the VOCAT matter details section.",
+              icon: Smartphone,
+            },
+            {
+              type: "bugfix",
+              title: "Matter Status Field Accuracy",
+              description: "Fixed incorrect data mapping in the read-only Matter Status field.",
+              details: "Resolved a UI bug where the read-only Matter Status field on desktop was incorrectly displaying the 'Data Entry By' value.",
+              icon: Bug,
+            },
+          ],
+          module: "VOCAT/FAS",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-03-17",
           version: "v7.2.0",
           type: "minor",
           category: "feature",

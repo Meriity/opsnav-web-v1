@@ -2575,11 +2575,7 @@ export default function StagesLayout() {
                         ) : (
                           <input
                             type="text"
-                            value={
-                              clientData?.dataEntryBy ||
-                              clientData?.data?.dataEntryBy ||
-                              ""
-                            }
+                            value={clientData?.matterStatus || ""}
                             className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
                             disabled
                             readOnly
@@ -3459,6 +3455,51 @@ export default function StagesLayout() {
                         />
                       )}
                     </div>
+
+                    {/* Matter Status (VOCAT Only) - Mobile */}
+                    {currentModule === "vocat" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Matter Status
+                        </label>
+                        {canEditMatterDetails ? (
+                          <select
+                            id="matterStatus-mobile"
+                            name="matterStatus"
+                            value={clientData?.matterStatus || ""}
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                matterStatus: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                          >
+                            <option value="">Select Option</option>
+                            {[
+                              "Not Submitted",
+                              "Submitted",
+                              "Triage",
+                              "Assessment",
+                              "Notice of decision available",
+                              "Transition to FAS Complete",
+                            ].map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={clientData?.matterStatus || ""}
+                            className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    )}
 
                     {/* Legal Costs Application Number */}
                     {currentModule === "vocat" && (
