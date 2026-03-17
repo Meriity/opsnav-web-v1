@@ -76,14 +76,15 @@ const formConfig = {
   },
   vocat: {
     fields: [
-      { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No", "N/R"] },
-      { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No", "N/R"] },
+      // { key: "searchesAnalysis", label: "Searches Analysis", type: "radio", options: ["Yes", "No", "N/R"] },
+      // { key: "lettersFromParties", label: "Letters from relevant parties", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "applicatedSubmitted", label: "Application submitted", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "applicationTriaged", label: "Application triaged", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "additionalInformation", label: "Additional information requested", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "noticeOfDecisionInterim", label: "Notice of Decision (Interim)", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "bankDetailsProvided", label: "Bank details provided", type: "radio", options: ["Yes", "No", "N/R"] },
       { key: "authorisedExpenses", label: "Authorised future expenses submitted", type: "radio", options: ["Yes", "No", "N/R"] },
+      { key: "legalCostsSubmitted", label: "Legal Costs submitted", type: "radio", options: ["Yes", "No", "N/R"] },
     ],
   },
 };

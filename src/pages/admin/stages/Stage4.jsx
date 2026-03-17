@@ -101,7 +101,7 @@ const formConfig = {
       { name: "variationRequired", label: "Variation (if required)", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "fileTransfer", label: "File transferred back to VK", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "finalLetterToClient", label: "Letter to Client", type: "radio", options: ["Yes", "No", "N/R"] },
-      { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No", "N/R"] },
+      // { name: "fasApproval", label: "FAS Approval", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "invoiced", label: "Invoiced", type: "radio", options: ["Yes", "No", "N/R"] },
       { name: "closeMatter", label: "Close Matter", type: "radio", options: ["Completed", "Cancelled", "N/R", "Open"] },
     ],
@@ -120,7 +120,7 @@ const formConfig = {
           "variationRequired",
           "fileTransfer",
           "finalLetterToClient",
-          "fasApproval",
+          // "fasApproval",
           "invoiced",
           "closeMatter"
         ],
