@@ -24,28 +24,45 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
-          date: "2026-03-09",
+          date: "2026-03-17",
           version: "v7.2.0",
           type: "minor",
           category: "feature",
-          title: "Wills Module Integration & Client Portal Overhaul",
-          description: "Complete end-to-end integration of the Wills module into the Client Portal, with enhanced matter details and UI optimization across all modules.",
+          title: "VOCAT/FAS Search & UI Refinement",
+          description: "Introduced advanced search filters and major UI/field optimizations for the VOCAT/FAS module.",
           updates: [
             {
               type: "feature",
-              title: "Wills Client Portal Launch",
-              description: "Implemented full dashboard support for Wills matters.",
-              details: "Integrated specialized API endpoints for Wills stages and client details. Added a custom 3-stage visual mapper (Engagement, Process, Finalization) with real-time progress tracking.",
+              title: "Advanced Search Filters",
+              description: "Added dedicated filters for Matter Status and Legal Costs Application Number.",
+              details: "Users can now filter VOCAT clients by their current matter status, legal costs application number, or both simultaneously via a consolidated search endpoint.",
+              icon: Search,
+            },
+            {
+              type: "improvement",
+              title: "VOCAT Field Optimization",
+              description: "Renamed and repositioned fields for better data clarity.",
+              details: "Updated field titles and layouts across VOCAT stages to improve intuitive data entry and alignment with industry terminology.",
               icon: Sparkles,
             },
             {
               type: "feature",
-              title: "Intelligent Module Sign-In",
-              description: "Unified client login with automatic module detection.",
-              details: "The sign-in process now sequentially verifies matters across Conveyancing, Wills, and VOCAT modules, automatically setting the correct context and redirecting clients to their module-specific dashboards.",
-              icon: Shield,
+              title: "New Data Fields",
+              description: "Integrated Matter Status and Legal Costs Application Number fields.",
+              details: "New fields added to the VOCAT/FAS module to track critical application milestones and reference numbers.",
+              icon: Database,
+            },
+            {
+              type: "bugfix",
+              title: "Search Results Rendering",
+              description: "Fixed data transformation for VOCAT search results.",
+              details: "Resolved an issue where filtered search results were not displaying correctly in the main table due to mismatched data keys.",
+              icon: Zap,
             },
           ],
+          module: "VOCAT/FAS",
+          severity: "Medium",
+          status: "Released"
         },
         {
           date: "2026-03-05",

@@ -201,7 +201,7 @@ export default function StagesLayout() {
     let postcode = "";
     let state = "";
     // address is formatted_address
-    const address = place.formatted_address; 
+    const address = place.formatted_address;
 
     place.address_components.forEach((component) => {
       if (component.types.includes("postal_code"))
@@ -212,13 +212,13 @@ export default function StagesLayout() {
 
     setClientData((prev) => {
       const newData = { ...prev };
-      
+
       // Update Address based on module
       if (currentModule === "commercial") {
         newData.businessAddress = address;
       } else if (currentModule === "print media") {
-         if(!newData.data) newData.data = {};
-         newData.data.deliveryAddress = address;
+        if (!newData.data) newData.data = {};
+        newData.data.deliveryAddress = address;
       } else if (currentModule === "vocat") {
         newData.clientAddress = address;
       } else if (currentModule === "wills") {
@@ -228,24 +228,24 @@ export default function StagesLayout() {
       }
 
       // Update State and Postcode
-      if(currentModule === "print media") {
-          if(!newData.data) newData.data = {};
-          
-          newData.data.state = state;
-          newData.state = state; // Sync root state
-          
-          newData.data.postCode = postcode; 
-          newData.data.postcode = postcode;
-          newData.postcode = postcode; // Sync root postcode
+      if (currentModule === "print media") {
+        if (!newData.data) newData.data = {};
+
+        newData.data.state = state;
+        newData.state = state; // Sync root state
+
+        newData.data.postCode = postcode;
+        newData.data.postcode = postcode;
+        newData.postcode = postcode; // Sync root postcode
       } else {
-          newData.state = state;
-          newData.postcode = postcode;
+        newData.state = state;
+        newData.postcode = postcode;
       }
 
       return newData;
     });
     // Mark as dirty so Update button enables
-    setMatterDirty(true); 
+    setMatterDirty(true);
   };
 
   // Initialize Autocomplete Effect
@@ -269,32 +269,32 @@ export default function StagesLayout() {
             { types: ["address"], componentRestrictions: { country: ["au"] } }
           );
           desktopListener = desktopAutocomplete.addListener("place_changed", () => {
-             handlePlaceSelected(desktopAutocomplete.getPlace());
+            handlePlaceSelected(desktopAutocomplete.getPlace());
           });
         }
 
         // Mobile Input
         if (mobileAddressInputRef.current) {
           mobileAutocomplete = new window.google.maps.places.Autocomplete(
-             mobileAddressInputRef.current,
-             { types: ["address"], componentRestrictions: { country: ["au"] } }
+            mobileAddressInputRef.current,
+            { types: ["address"], componentRestrictions: { country: ["au"] } }
           );
           mobileListener = mobileAutocomplete.addListener("place_changed", () => {
-              handlePlaceSelected(mobileAutocomplete.getPlace());
+            handlePlaceSelected(mobileAutocomplete.getPlace());
           });
         }
       })
       .catch((err) => console.error("Google Maps Load Error:", err));
 
     return () => {
-      if(desktopListener) window.google.maps.event.removeListener(desktopListener);
-      if(mobileListener) window.google.maps.event.removeListener(mobileListener);
-      if(desktopAutocomplete) window.google.maps.event.clearInstanceListeners(desktopAutocomplete);
-      if(mobileAutocomplete) window.google.maps.event.clearInstanceListeners(mobileAutocomplete);
+      if (desktopListener) window.google.maps.event.removeListener(desktopListener);
+      if (mobileListener) window.google.maps.event.removeListener(mobileListener);
+      if (desktopAutocomplete) window.google.maps.event.clearInstanceListeners(desktopAutocomplete);
+      if (mobileAutocomplete) window.google.maps.event.clearInstanceListeners(mobileAutocomplete);
     };
   }, [
-    isSmallScreen, 
-    activeMobileTab, 
+    isSmallScreen,
+    activeMobileTab,
     // Re-run if screen size changes or mobile tab switches to details (mounting the input)
     currentModule
   ]);
@@ -325,13 +325,13 @@ export default function StagesLayout() {
 
   const STATE_OPTIONS = ["VIC", "NSW", "QLD", "SA"];
   const isPrintMedia = currentModule === "print media";
-  const CLIENT_TYPE_OPTIONS = isPrintMedia 
-    ? ["Real Estate", "Vehicle", "Commercial", "Others"] 
-    : currentModule === "commercial" 
-    ? ["Buyer", "Seller", "General"]
-    : currentModule === "wills"
-    ? ["Single", "Mirror"]
-    : ["Buyer", "Seller", "Transfer"];
+  const CLIENT_TYPE_OPTIONS = isPrintMedia
+    ? ["Real Estate", "Vehicle", "Commercial", "Others"]
+    : currentModule === "commercial"
+      ? ["Buyer", "Seller", "General"]
+      : currentModule === "wills"
+        ? ["Single", "Mirror"]
+        : ["Buyer", "Seller", "Transfer"];
 
   let stages = [
     { id: 1, title: "Retainer/Declaration" },
@@ -355,7 +355,7 @@ export default function StagesLayout() {
     stages = [
       { id: 1, title: "Engagement" },
       { id: 2, title: "Process" },
-      { id: 3, title: "Finalization" },
+      { id: 3, title: "Finalisation" },
     ];
   } else if (currentModule === "print media") {
     stages = [
@@ -369,16 +369,16 @@ export default function StagesLayout() {
       { id: 1, title: "Engagement & Proposal" },
       { id: 2, title: "Due Diligence & Negotiation" },
       { id: 3, title: "Execution & Registration" },
-      { id: 4, title: "Finalization & Settlement" },
+      { id: 4, title: "Finalisation & Settlement" },
       { id: 5, title: "Review & Compliance" },
       { id: 6, title: "Completion & Archiving" },
     ];
   } else if (currentModule === "vocat") {
     stages = [
       { id: 1, title: "Intake" },
-      { id: 2, title: "Types of financial assistance" },
-      { id: 3, title: "Interim approval" },
-      { id: 4, title: "Final Decision" },
+      { id: 2, title: "Assessment & Evidence" },
+      { id: 3, title: "Processing" },
+      { id: 4, title: "Finalisation" },
     ];
   }
 
@@ -408,20 +408,20 @@ export default function StagesLayout() {
     const baseUrl = isAnyAdmin ? "/admin/client/stages" : "/user/client";
     // For user route: /user/client/:matterNumber/stages/:stageNo
     // For admin route: /admin/client/stages/:matterNumber/:stageNo
-    
+
     let targetUrl;
     if (isAnyAdmin) {
       targetUrl = `${baseUrl}/${matterNumber}/7`;
     } else {
-       // Match the new User route structure: client/:matterNumber/stages/:stageNo
+      // Match the new User route structure: client/:matterNumber/stages/:stageNo
       targetUrl = `${baseUrl}/${matterNumber}/stages/7`;
     }
 
     // Force hard reload if already on the cost page or just navigation if not
     if (String(selectedStage) === "7") {
-       window.location.reload();
+      window.location.reload();
     } else {
-       window.location.href = targetUrl;
+      window.location.href = targetUrl;
     }
   };
 
@@ -669,7 +669,7 @@ export default function StagesLayout() {
 
                 const getStage6Data = () => {
                   let base = getS(s6, "stage6", "stageSix");
-                  
+
                   if (base && base.stage6) {
                     base = base.stage6;
                   }
@@ -752,53 +752,53 @@ export default function StagesLayout() {
           response = await apiRef.current.getIDGStages(matterNumber);
         } else if (currentModule === "wills") {
           try {
-             const [clientData, s1, s2, s3] = await Promise.all([
-                 willsApiRef.current.getProjectFullData(matterNumber).catch(e => null),
-                 willsApiRef.current.getStageData(1, matterNumber).catch(() => ({})),
-                 willsApiRef.current.getStageData(2, matterNumber).catch(() => ({})),
-                 willsApiRef.current.getStageData(3, matterNumber).catch(() => ({}))
-             ]);
-             
-             if (clientData) {
-                 const getS = (s, key) => s?.data || s || clientData[key] || {};
-                 response = {
-                     ...clientData,
-                     stage1: getS(s1, "stage1"),
-                     stage2: getS(s2, "stage2"),
-                     stage3: getS(s3, "stage3"),
-                     // Wills typically has 3 stages? Postman showed 3.
-                 };
-             } else {
-                 response = createDefaultProjectData(matterNumber);
-             }
+            const [clientData, s1, s2, s3] = await Promise.all([
+              willsApiRef.current.getProjectFullData(matterNumber).catch(e => null),
+              willsApiRef.current.getStageData(1, matterNumber).catch(() => ({})),
+              willsApiRef.current.getStageData(2, matterNumber).catch(() => ({})),
+              willsApiRef.current.getStageData(3, matterNumber).catch(() => ({}))
+            ]);
+
+            if (clientData) {
+              const getS = (s, key) => s?.data || s || clientData[key] || {};
+              response = {
+                ...clientData,
+                stage1: getS(s1, "stage1"),
+                stage2: getS(s2, "stage2"),
+                stage3: getS(s3, "stage3"),
+                // Wills typically has 3 stages? Postman showed 3.
+              };
+            } else {
+              response = createDefaultProjectData(matterNumber);
+            }
           } catch (e) {
-             console.error("Wills data fetch failed", e);
-             response = createDefaultProjectData(matterNumber);
+            console.error("Wills data fetch failed", e);
+            response = createDefaultProjectData(matterNumber);
           }
         } else if (currentModule === "vocat") {
           try {
-             const [clientData, s1, s2, s3, s4] = await Promise.all([
-                 vocatApiRef.current.getClient(matterNumber),
-                 vocatApiRef.current.getStageOne(matterNumber).catch(() => ({})),
-                 vocatApiRef.current.getStageTwo(matterNumber).catch(() => ({})),
-                 vocatApiRef.current.getStageThree(matterNumber).catch(() => ({})),
-                 vocatApiRef.current.getStageFour(matterNumber).catch(() => ({}))
-             ]);
-            
+            const [clientData, s1, s2, s3, s4] = await Promise.all([
+              vocatApiRef.current.getClient(matterNumber),
+              vocatApiRef.current.getStageOne(matterNumber).catch(() => ({})),
+              vocatApiRef.current.getStageTwo(matterNumber).catch(() => ({})),
+              vocatApiRef.current.getStageThree(matterNumber).catch(() => ({})),
+              vocatApiRef.current.getStageFour(matterNumber).catch(() => ({}))
+            ]);
+
             if (clientData) {
-               response = {
-                 ...clientData,
-                 stage1: s1?.data || s1 || {},
-                 stage2: s2?.data || s2 || {},
-                 stage3: s3?.data || s3 || {},
-                 stage4: s4?.data || s4 || {},
-               };
+              response = {
+                ...clientData,
+                stage1: s1?.data || s1 || {},
+                stage2: s2?.data || s2 || {},
+                stage3: s3?.data || s3 || {},
+                stage4: s4?.data || s4 || {},
+              };
             } else {
-               response = createDefaultProjectData(matterNumber);
+              response = createDefaultProjectData(matterNumber);
             }
           } catch (e) {
             console.error("Vocat fetch failed", e);
-             response = createDefaultProjectData(matterNumber);
+            response = createDefaultProjectData(matterNumber);
           }
         } else {
           response = await apiRef.current.getAllStages(matterNumber);
@@ -809,7 +809,7 @@ export default function StagesLayout() {
           response?.role || response?.currentUser?.role || null;
         if (serverRole) setRole(serverRole);
         if (response.stages && Array.isArray(response.stages)) {
-          response.stages.forEach((stage, index) => {});
+          response.stages.forEach((stage, index) => { });
         } else {
         }
         const normalized = {
@@ -866,10 +866,10 @@ export default function StagesLayout() {
               ? response.matterDate
               : new Date(response.matterDate).toISOString()
             : response.data?.orderDate
-            ? typeof response.data.orderDate === "string"
-              ? response.data.orderDate
-              : new Date(response.data.orderDate).toISOString()
-            : clientData?.matterDate || "",
+              ? typeof response.data.orderDate === "string"
+                ? response.data.orderDate
+                : new Date(response.data.orderDate).toISOString()
+              : clientData?.matterDate || "",
           settlementDate: response.settlementDate
             ? typeof response.settlementDate === "string"
               ? response.settlementDate
@@ -952,7 +952,7 @@ export default function StagesLayout() {
             Array.isArray(response.stages) &&
             response.stages.length > 0
           ) {
-            const stageObject = response.stages[0]; 
+            const stageObject = response.stages[0];
             for (let i = 1; i <= 6; i++) {
               const stageKey = `S${i}`;
               if (stageObject[stageKey]) {
@@ -1096,11 +1096,13 @@ export default function StagesLayout() {
           settlementDate: clientData?.settlementDate || null,
           notes: clientData?.notes || "",
           postcode: clientData?.postcode,
-          clientEmail: clientData?.clientEmail || "",
+          clientEmail : clientData?.clientEmail || "",
           clientAddress: clientData?.clientAddress || "",
           matterReferenceNumber: clientData?.matterReferenceNumber || "",
           fasNumber: clientData?.fasNumber || "",
           matterUrl: clientData?.matterUrl || "",
+          matterStatus :  clientData?.matterStatus || "",
+          legalCostsApplicationNumber : clientData?.legalCostsApplicationNumber || ""
         };
       } else if (currentModule !== "print media") {
         payload = {
@@ -1139,6 +1141,8 @@ export default function StagesLayout() {
         };
       }
 
+      console.log("data updated:", payload);
+
       console.log("📦 [FINAL PAYLOAD]", payload);
 
       // Include administrative fields
@@ -1146,8 +1150,8 @@ export default function StagesLayout() {
         payload.matterDate = clientData?.matterDate || null;
         payload.clientName = clientData?.clientName || "";
         payload.state = clientData?.state || "";
-        payload.clientType = currentModule === "wills" && clientData?.clientType 
-          ? clientData.clientType.toLowerCase() 
+        payload.clientType = currentModule === "wills" && clientData?.clientType
+          ? clientData.clientType.toLowerCase()
           : clientData?.clientType || "";
         payload.clientEmail = clientData?.clientEmail || "";
         payload.dataEntryBy = clientData?.dataEntryBy || "";
@@ -1324,40 +1328,40 @@ export default function StagesLayout() {
   // --- Send Reminder Logic ---
   const handleSendReminder = async () => {
     if (!clientData) return;
-    
+
     setIsSendingReminder(true);
     try {
       // 1. Define fields per stage based on module (same logic as in Stage components)
       const formConfig = {
         conveyancing: {
-          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"declarationForm", label:"Declaration form"}, {name:"contractReview", label:"Contract Review"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}, {name:"tenants", label:"Tenants"}],
-          s2: [{name:"signedContract", label:"Signed Contract"}, {name:"sendKeyDates", label:"Send Key Dates"}, {name:"voi", label:"VOI"}, {name:"caf", label:"CAF"}, {name:"depositReceipt", label:"Deposit Receipt"}, {name:"buildingAndPest", label:"Building and Pest"}, {name:"financeApproval", label:"Finance Approval"}, {name:"checkCtController", label:"Check CT Controller"}, {name:"obtainDaSeller", label:"Obtain DA(Seller)"}, {name:"vendorDisclosure", label:"Vendor Disclosure"}],
-          s3: [{name:"titleSearch", label:"Title Search"}, {name:"planImage", label:"Plan Image"}, {name:"landTax", label:"Land Tax"}, {name:"instrument", label:"Instrument"}, {name:"rates", label:"Rates"}, {name:"water", label:"Water"}, {name:"ownersCorp", label:"Owners Corp"}, {name:"pexa", label:"PEXA"}, {name:"inviteBank", label:"Invite Bank"}],
-          s4: [{name:"dts", label:"DTS"}, {name:"dutyOnline", label:"Duty Online"}, {name:"soa", label:"SOA"}, {name:"frcgw", label:"FRCGW"}, {name:"contractPrice", label:"Contract Price"}],
-          s5: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"transferDocsOnPexa", label:"Transfer Docs on PEXA"}, {name:"gstWithholding", label:"GST Withholding"}, {name:"disbursementsInPexa", label:"Disbursements in PEXA"}, {name:"addAgentFee", label:"Add Agent Fee"}, {name:"settlementNotification", label:"Settlement Notification"}, {name:"council", label:"Council"}],
-          s6: [{name:"noaToCouncilWater", label:"NOA to Council/Water"}, {name:"dutyPaid", label:"Duty Paid"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"finalLetterToAgent", label:"Final Letter to Agent"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+          s1: [{ name: "referral", label: "Referral" }, { name: "retainer", label: "Retainer" }, { name: "declarationForm", label: "Declaration form" }, { name: "contractReview", label: "Contract Review" }, { name: "quoteType", label: "Quote Type" }, { name: "quoteAmount", label: "Quote amount (incl GST)" }, { name: "tenants", label: "Tenants" }],
+          s2: [{ name: "signedContract", label: "Signed Contract" }, { name: "sendKeyDates", label: "Send Key Dates" }, { name: "voi", label: "VOI" }, { name: "caf", label: "CAF" }, { name: "depositReceipt", label: "Deposit Receipt" }, { name: "buildingAndPest", label: "Building and Pest" }, { name: "financeApproval", label: "Finance Approval" }, { name: "checkCtController", label: "Check CT Controller" }, { name: "obtainDaSeller", label: "Obtain DA(Seller)" }, { name: "vendorDisclosure", label: "Vendor Disclosure" }],
+          s3: [{ name: "titleSearch", label: "Title Search" }, { name: "planImage", label: "Plan Image" }, { name: "landTax", label: "Land Tax" }, { name: "instrument", label: "Instrument" }, { name: "rates", label: "Rates" }, { name: "water", label: "Water" }, { name: "ownersCorp", label: "Owners Corp" }, { name: "pexa", label: "PEXA" }, { name: "inviteBank", label: "Invite Bank" }],
+          s4: [{ name: "dts", label: "DTS" }, { name: "dutyOnline", label: "Duty Online" }, { name: "soa", label: "SOA" }, { name: "frcgw", label: "FRCGW" }, { name: "contractPrice", label: "Contract Price" }],
+          s5: [{ name: "notifySoaToClient", label: "Notify SOA to Client" }, { name: "transferDocsOnPexa", label: "Transfer Docs on PEXA" }, { name: "gstWithholding", label: "GST Withholding" }, { name: "disbursementsInPexa", label: "Disbursements in PEXA" }, { name: "addAgentFee", label: "Add Agent Fee" }, { name: "settlementNotification", label: "Settlement Notification" }, { name: "council", label: "Council" }],
+          s6: [{ name: "noaToCouncilWater", label: "NOA to Council/Water" }, { name: "dutyPaid", label: "Duty Paid" }, { name: "finalLetterToClient", label: "Final Letter to Client" }, { name: "finalLetterToAgent", label: "Final Letter to Agent" }, { name: "invoiced", label: "Invoiced" }, { name: "closeMatter", label: "Close Matter" }]
         },
         wills: {
-          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"declarationForm", label:"Declaration form"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}],
-          s2: [{name:"signedContract", label:"Signed Contract"}, {name:"sendKeyDates", label:"Send Key Dates"}, {name:"voi", label:"VOI"}, {name:"caf", label:"CAF"}, {name:"depositReceipt", label:"Deposit Receipt"}, {name:"buildingAndPest", label:"Building and Pest"}, {name:"financeApproval", label:"Finance Approval"}, {name:"checkCtController", label:"Check CT Controller"}, {name:"obtainDaSeller", label:"Obtain DA(Seller)"}, {name:"vendorDisclosure", label:"Vendor Disclosure"}],
-          s3: [{name:"titleSearch", label:"Title Search"}, {name:"planImage", label:"Plan Image"}, {name:"landTax", label:"Land Tax"}, {name:"instrument", label:"Instrument"}, {name:"rates", label:"Rates"}, {name:"water", label:"Water"}, {name:"ownersCorp", label:"Owners Corp"}, {name:"pexa", label:"PEXA"}, {name:"inviteBank", label:"Invite Bank"}],
-          s4: [{name:"dts", label:"DTS"}, {name:"dutyOnline", label:"Duty Online"}, {name:"soa", label:"SOA"}, {name:"frcgw", label:"FRCGW"}, {name:"contractPrice", label:"Contract Price"}],
-          s5: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"transferDocsOnPexa", label:"Transfer Docs on PEXA"}, {name:"gstWithholding", label:"GST Withholding"}, {name:"disbursementsInPexa", label:"Disbursements in PEXA"}, {name:"addAgentFee", label:"Add Agent Fee"}, {name:"settlementNotification", label:"Settlement Notification"}, {name:"council", label:"Council"}],
-          s6: [{name:"noaToCouncilWater", label:"NOA to Council/Water"}, {name:"dutyPaid", label:"Duty Paid"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"finalLetterToAgent", label:"Final Letter to Agent"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+          s1: [{ name: "referral", label: "Referral" }, { name: "retainer", label: "Retainer" }, { name: "declarationForm", label: "Declaration form" }, { name: "quoteType", label: "Quote Type" }, { name: "quoteAmount", label: "Quote amount (incl GST)" }],
+          s2: [{ name: "signedContract", label: "Signed Contract" }, { name: "sendKeyDates", label: "Send Key Dates" }, { name: "voi", label: "VOI" }, { name: "caf", label: "CAF" }, { name: "depositReceipt", label: "Deposit Receipt" }, { name: "buildingAndPest", label: "Building and Pest" }, { name: "financeApproval", label: "Finance Approval" }, { name: "checkCtController", label: "Check CT Controller" }, { name: "obtainDaSeller", label: "Obtain DA(Seller)" }, { name: "vendorDisclosure", label: "Vendor Disclosure" }],
+          s3: [{ name: "titleSearch", label: "Title Search" }, { name: "planImage", label: "Plan Image" }, { name: "landTax", label: "Land Tax" }, { name: "instrument", label: "Instrument" }, { name: "rates", label: "Rates" }, { name: "water", label: "Water" }, { name: "ownersCorp", label: "Owners Corp" }, { name: "pexa", label: "PEXA" }, { name: "inviteBank", label: "Invite Bank" }],
+          s4: [{ name: "dts", label: "DTS" }, { name: "dutyOnline", label: "Duty Online" }, { name: "soa", label: "SOA" }, { name: "frcgw", label: "FRCGW" }, { name: "contractPrice", label: "Contract Price" }],
+          s5: [{ name: "notifySoaToClient", label: "Notify SOA to Client" }, { name: "transferDocsOnPexa", label: "Transfer Docs on PEXA" }, { name: "gstWithholding", label: "GST Withholding" }, { name: "disbursementsInPexa", label: "Disbursements in PEXA" }, { name: "addAgentFee", label: "Add Agent Fee" }, { name: "settlementNotification", label: "Settlement Notification" }, { name: "council", label: "Council" }],
+          s6: [{ name: "noaToCouncilWater", label: "NOA to Council/Water" }, { name: "dutyPaid", label: "Duty Paid" }, { name: "finalLetterToClient", label: "Final Letter to Client" }, { name: "finalLetterToAgent", label: "Final Letter to Agent" }, { name: "invoiced", label: "Invoiced" }, { name: "closeMatter", label: "Close Matter" }]
         },
         commercial: {
-          s1: [{name:"referral", label:"Referral"}, {name:"retainer", label:"Retainer"}, {name:"contractReview", label:"Contract Review"}, {name:"quoteType", label:"Quote Type"}, {name:"quoteAmount", label:"Quote amount (incl GST)"}],
-          s2: [{name:"voi", label:"VOI"}, {name:"leaseTransfer", label:"Lease Transfer"}, {name:"contractOfSale", label:"Contract of Sale"}],
-          s3: [{name:"ppsrSearch", label:"PPSR Search"}, {name:"asicSearch", label:"ASIC Search"}, {name:"ratesSearch", label:"Rates Search"}, {name:"waterSearch", label:"Water Search"}, {name:"title", label:"Title"}],
-          s4: [{name:"employeesEntitlements", label:"Employees Entitlements"}, {name:"purchaseContracts", label:"Purchase Contracts"}, {name:"customerContracts", label:"Customer Contracts"}, {name:"leaseAgreement", label:"Lease Agreement"}],
-          s5: [{name:"statementOfAdjustment", label:"Statement of Adjustment"}, {name:"contractPrice", label:"Contract Price"}, {name:"liquorLicence", label:"Liquor Licence"}, {name:"transferBusinessName", label:"Transfer Business Name"}, {name:"leaseTransfer", label:"Lease Transfer"}],
-          s6: [{name:"notifySoaToClient", label:"Notify SOA to Client"}, {name:"council", label:"Council"}, {name:"settlementNotificationToClient", label:"Settlement Notification to Client"}, {name:"settlementNotificationToCouncil", label:"Settlement Notification to Council"}, {name:"settlementNotificationToWater", label:"Settlement Notification to Water"}, {name:"finalLetterToClient", label:"Final Letter to Client"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+          s1: [{ name: "referral", label: "Referral" }, { name: "retainer", label: "Retainer" }, { name: "contractReview", label: "Contract Review" }, { name: "quoteType", label: "Quote Type" }, { name: "quoteAmount", label: "Quote amount (incl GST)" }],
+          s2: [{ name: "voi", label: "VOI" }, { name: "leaseTransfer", label: "Lease Transfer" }, { name: "contractOfSale", label: "Contract of Sale" }],
+          s3: [{ name: "ppsrSearch", label: "PPSR Search" }, { name: "asicSearch", label: "ASIC Search" }, { name: "ratesSearch", label: "Rates Search" }, { name: "waterSearch", label: "Water Search" }, { name: "title", label: "Title" }],
+          s4: [{ name: "employeesEntitlements", label: "Employees Entitlements" }, { name: "purchaseContracts", label: "Purchase Contracts" }, { name: "customerContracts", label: "Customer Contracts" }, { name: "leaseAgreement", label: "Lease Agreement" }],
+          s5: [{ name: "statementOfAdjustment", label: "Statement of Adjustment" }, { name: "contractPrice", label: "Contract Price" }, { name: "liquorLicence", label: "Liquor Licence" }, { name: "transferBusinessName", label: "Transfer Business Name" }, { name: "leaseTransfer", label: "Lease Transfer" }],
+          s6: [{ name: "notifySoaToClient", label: "Notify SOA to Client" }, { name: "council", label: "Council" }, { name: "settlementNotificationToClient", label: "Settlement Notification to Client" }, { name: "settlementNotificationToCouncil", label: "Settlement Notification to Council" }, { name: "settlementNotificationToWater", label: "Settlement Notification to Water" }, { name: "finalLetterToClient", label: "Final Letter to Client" }, { name: "invoiced", label: "Invoiced" }, { name: "closeMatter", label: "Close Matter" }]
         },
         vocat: {
-          s1: [{name:"referral", label:"Referral"}, {name:"clientAuthority", label:"Client Authority"}, {name:"evidenceOfIncident", label:"Evidence of Incident"}, {name:"evidenceOfInjury", label:"Evidence of the injury"}, {name:"reportedToPolice", label:"Reported to Police"}, {name:"dateOfReport", label:"Date of report"}, {name:"policeDetailsProvided", label:"Police details provided"}, {name:"detailsOfReportPoliceStation", label:"Police station"}, {name:"detailsOfReportOfficer", label:"Officer"}, {name:"detailsOfReportEvidence", label:"Evidence of report"}, {name:"statutoryDeclaration", label:"Statutory Declaration for Nil Report"}, {name:"intakeForm", label:"Intake Form/instructions given"}, {name:"voi", label:"VOI"}, {name:"otherAssistance", label:"Other Assistance/Compensation"}, {name:"otherAssistanceDetailsProvided", label:"Details of other assistance"}, {name:"lossOfEarning", label:"Loss of earnings"}, {name:"clothing", label:"Clothing"}, {name:"securityExpenses", label:"Security expenses"}, {name:"medicalExpenses", label:"Medical expenses"}, {name:"counselling", label:"Counselling"}, {name:"safetyExpenses", label:"Safety related expenses"}, {name:"lossOrDamageClothing", label:"Loss or damage to clothing"}, {name:"recoveryExpenses", label:"Recovery expenses"}],
-          s2: [{name:"fasStandardForm", label:"FAS Standard Application Form"}, {name:"proofOfIncome", label:"Proof of Income"}, {name:"psychLetter", label:"Letter from treating psychologist/psychiatrist"}, {name:"detailsOfCounsellor", label:"Details of counsellor provided"}, {name:"counsellorReport", label:"Counsellor's report"}, {name:"evidenceOfSafetyRelatedExpenses", label:"Evidence of Safety Related Expenses"}, {name:"additionalEvidenceForSafety", label:"Additional Evidence for Safety"}, {name:"statDecClothing", label:"Statutory Declaration for Clothing"}, {name:"clothingReceipts", label:"Clothing Receipts/Invoices"}, {name:"statutoryDeclarationOfClothing", label:"Statutory Declaration of Clothing"}, {name:"additionalEvidenceForClothing", label:"Additional Evidence for Clothing"}, {name:"securityInvoices", label:"Security Invoices"}, {name:"medicalInvoices", label:"Medical Invoices"}, {name:"recoveryInvoices", label:"Recovery Invoices"}, {name:"evidenceOfEarnings", label:"Evidence of Earnings"}, {name:"letterFromDoctor", label:"Letter from Doctor/Psychiatrist"}, {name:"evidenceOfMedicalExpenses", label:"Evidence of Medical Expenses"}, {name:"additionalEvidenceForMedical", label:"Additional Evidence for Medical"}, {name:"letterOfSupportForRecovery", label:"Letter of Support for Recovery"}, {name:"evidenceOfRecoveryExpenses", label:"Evidence of Recovery Expenses"}, {name:"additionalEvidenceForRecovery", label:"Additional Evidence for Recovery"}],
-          s3: [{name:"searchesAnalysis", label:"Searches Analysis"}, {name:"lettersFromParties", label:"Letters from relevant parties"}, {name:"applicatedSubmitted", label:"Application submitted"}, {name:"applicationTriaged", label:"Application triaged"}, {name:"additionalInformation", label:"Additional information requested"}, {name:"noticeOfDecisionInterim", label:"Notice of Decision (Interim)"}, {name:"bankDetailsProvided", label:"Bank details provided"}, {name:"authorisedExpenses", label:"Authorised future expenses submitted"}],
-          s4: [{name:"noticeOfDecisionFinal", label:"Notice of Final Decision"}, {name:"bankDetailsProvided", label:"Bank details provided"}, {name:"applicationTransfer", label:"Application transferred to client"}, {name:"variationRequired", label:"Variation (if required)"}, {name:"fileTransfer", label:"File transferred back to VK"}, {name:"finalLetterToClient", label:"Letter to Client"}, {name:"fasApproval", label:"FAS Approval"}, {name:"invoiced", label:"Invoiced"}, {name:"closeMatter", label:"Close Matter"}]
+          s1: [{ name: "referral", label: "Referral" }, { name: "clientAuthority", label: "Client Authority" }, { name: "evidenceOfIncident", label: "Evidence of Incident" }, { name: "evidenceOfInjury", label: "Evidence of the injury" }, { name: "reportedToPolice", label: "Reported to Police" }, { name: "dateOfReport", label: "Date of report" }, { name: "policeDetailsProvided", label: "Police details provided" }, { name: "detailsOfReportPoliceStation", label: "Police station" }, { name: "detailsOfReportOfficer", label: "Officer" }, { name: "detailsOfReportEvidence", label: "Evidence of report" }, { name: "statutoryDeclaration", label: "Statutory Declaration for Nil Report" }, { name: "intakeForm", label: "Intake Form/instructions given" }, { name: "voi", label: "VOI" }, { name: "otherAssistance", label: "Other Assistance/Compensation" }, { name: "otherAssistanceDetailsProvided", label: "Details of other assistance" }, { name: "lossOfEarning", label: "Loss of earnings" }, { name: "clothing", label: "Clothing" }, { name: "securityExpenses", label: "Security expenses" }, { name: "medicalExpenses", label: "Medical expenses" }, { name: "counselling", label: "Counselling" }, { name: "safetyExpenses", label: "Safety related expenses" }, { name: "lossOrDamageClothing", label: "Loss or damage to clothing" }, { name: "recoveryExpenses", label: "Recovery expenses" }],
+          s2: [{ name: "fasStandardForm", label: "FAS Standard Application Form" }, { name: "proofOfIncome", label: "Proof of Income" }, { name: "psychLetter", label: "Letter from treating psychologist/psychiatrist" }, { name: "detailsOfCounsellor", label: "Details of counsellor provided" }, { name: "counsellorReport", label: "Counsellor's report" }, { name: "evidenceOfSafetyRelatedExpenses", label: "Evidence of Safety Related Expenses" }, { name: "additionalEvidenceForSafety", label: "Additional Evidence for Safety" }, { name: "statDecClothing", label: "Statutory Declaration for Clothing" }, { name: "clothingReceipts", label: "Clothing Receipts/Invoices" }, { name: "statutoryDeclarationOfClothing", label: "Statutory Declaration of Clothing" }, { name: "additionalEvidenceForClothing", label: "Additional Evidence for Clothing" }, { name: "securityInvoices", label: "Security Invoices" }, { name: "medicalInvoices", label: "Medical Invoices" }, { name: "recoveryInvoices", label: "Recovery Invoices" }, { name: "evidenceOfEarnings", label: "Evidence of Earnings" }, { name: "letterFromDoctor", label: "Letter from Doctor/Psychiatrist" }, { name: "evidenceOfMedicalExpenses", label: "Evidence of Medical Expenses" }, { name: "additionalEvidenceForMedical", label: "Additional Evidence for Medical" }, { name: "letterOfSupportForRecovery", label: "Letter of Support for Recovery" }, { name: "evidenceOfRecoveryExpenses", label: "Evidence of Recovery Expenses" }, { name: "additionalEvidenceForRecovery", label: "Additional Evidence for Recovery" }],
+          s3: [{ name: "searchesAnalysis", label: "Searches Analysis" }, { name: "lettersFromParties", label: "Letters from relevant parties" }, { name: "applicatedSubmitted", label: "Application submitted" }, { name: "applicationTriaged", label: "Application triaged" }, { name: "additionalInformation", label: "Additional information requested" }, { name: "noticeOfDecisionInterim", label: "Notice of Decision (Interim)" }, { name: "bankDetailsProvided", label: "Bank details provided" }, { name: "authorisedExpenses", label: "Authorised future expenses submitted" }],
+          s4: [{ name: "noticeOfDecisionFinal", label: "Notice of Final Decision" }, { name: "bankDetailsProvided", label: "Bank details provided" }, { name: "applicationTransfer", label: "Application transferred to client" }, { name: "variationRequired", label: "Variation (if required)" }, { name: "fileTransfer", label: "File transferred back to VK" }, { name: "finalLetterToClient", label: "Letter to Client" }, { name: "fasApproval", label: "FAS Approval" }, { name: "invoiced", label: "Invoiced" }, { name: "closeMatter", label: "Close Matter" }]
         }
       };
 
@@ -1388,112 +1392,112 @@ export default function StagesLayout() {
       for (let i = 1; i <= numStages; i++) {
         const stageFieldsConfig = moduleConfig[`s${i}`] || [];
         const sData = getStageData(i) || {};
-        
+
         let aidTypes = {};
         if (currentModule === "vocat" && i === 2) {
-            const s1 = getStageData(1) || {};
-            aidTypes = s1.aidTypes || {};
-            const hasAid = (key) => aidTypes[key] === true || s1[key] === true;
-            
-            // Vocat Stage 2 dependency filtering
-            stageFieldsConfig.forEach(field => {
-                let isVisible = true;
-                if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) isVisible = false;
-                if (field.name === "psychLetter" && !hasAid("lossOfEarning")) isVisible = false;
-                if (field.name === "statDecClothing" && !hasAid("clothing")) isVisible = false;
-                if (field.name === "clothingReceipts" && !hasAid("clothing")) isVisible = false;
-                if (field.name === "securityInvoices" && !hasAid("securityExpenses")) isVisible = false;
-                if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) isVisible = false;
-                if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) isVisible = false;
-                if (field.name === "detailsOfCounsellor" && !hasAid("counselling")) isVisible = false;
-                if (field.name === "counsellorReport" && !hasAid("counselling")) isVisible = false;
-                if (field.name === "evidenceOfSafetyRelatedExpenses" && !hasAid("safetyExpenses")) isVisible = false;
-                if (field.name === "additionalEvidenceForSafety" && !hasAid("safetyExpenses")) isVisible = false;
-                if (field.name === "statutoryDeclarationOfClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
-                if (field.name === "additionalEvidenceForClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
-                if (field.name === "evidenceOfEarnings" && !hasAid("lossOfEarning")) isVisible = false;
-                if (field.name === "letterFromDoctor" && !hasAid("lossOfEarning")) isVisible = false;
-                if (field.name === "evidenceOfMedicalExpenses" && !hasAid("medicalExpenses")) isVisible = false;
-                if (field.name === "additionalEvidenceForMedical" && !hasAid("medicalExpenses")) isVisible = false;
-                if (field.name === "letterOfSupportForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
-                if (field.name === "evidenceOfRecoveryExpenses" && !hasAid("recoveryExpenses")) isVisible = false;
-                if (field.name === "additionalEvidenceForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
+          const s1 = getStageData(1) || {};
+          aidTypes = s1.aidTypes || {};
+          const hasAid = (key) => aidTypes[key] === true || s1[key] === true;
 
-                if (isVisible) {
-                    const status = getStatus(sData[field.name]);
-                    if (status !== "Completed") {
-                         allIncompleteTasks.push({ stage: i, field: field.label });
-                    }
-                }
-            });
+          // Vocat Stage 2 dependency filtering
+          stageFieldsConfig.forEach(field => {
+            let isVisible = true;
+            if (field.name === "proofOfIncome" && !hasAid("lossOfEarning")) isVisible = false;
+            if (field.name === "psychLetter" && !hasAid("lossOfEarning")) isVisible = false;
+            if (field.name === "statDecClothing" && !hasAid("clothing")) isVisible = false;
+            if (field.name === "clothingReceipts" && !hasAid("clothing")) isVisible = false;
+            if (field.name === "securityInvoices" && !hasAid("securityExpenses")) isVisible = false;
+            if (field.name === "medicalInvoices" && !hasAid("medicalExpenses")) isVisible = false;
+            if (field.name === "recoveryInvoices" && !hasAid("recoveryExpenses")) isVisible = false;
+            if (field.name === "detailsOfCounsellor" && !hasAid("counselling")) isVisible = false;
+            if (field.name === "counsellorReport" && !hasAid("counselling")) isVisible = false;
+            if (field.name === "evidenceOfSafetyRelatedExpenses" && !hasAid("safetyExpenses")) isVisible = false;
+            if (field.name === "additionalEvidenceForSafety" && !hasAid("safetyExpenses")) isVisible = false;
+            if (field.name === "statutoryDeclarationOfClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
+            if (field.name === "additionalEvidenceForClothing" && !hasAid("lossOrDamageClothing")) isVisible = false;
+            if (field.name === "evidenceOfEarnings" && !hasAid("lossOfEarning")) isVisible = false;
+            if (field.name === "letterFromDoctor" && !hasAid("lossOfEarning")) isVisible = false;
+            if (field.name === "evidenceOfMedicalExpenses" && !hasAid("medicalExpenses")) isVisible = false;
+            if (field.name === "additionalEvidenceForMedical" && !hasAid("medicalExpenses")) isVisible = false;
+            if (field.name === "letterOfSupportForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
+            if (field.name === "evidenceOfRecoveryExpenses" && !hasAid("recoveryExpenses")) isVisible = false;
+            if (field.name === "additionalEvidenceForRecovery" && !hasAid("recoveryExpenses")) isVisible = false;
+
+            if (isVisible) {
+              const status = getStatus(sData[field.name]);
+              if (status !== "Completed") {
+                allIncompleteTasks.push({ stage: i, field: field.label });
+              }
+            }
+          });
         } else if (currentModule === "vocat" && i === 1) {
-            stageFieldsConfig.forEach(field => {
-                let isVisible = true;
-                const reported = String(sData["reportedToPolice"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-                if (["dateOfReport", "policeDetailsProvided", "detailsOfReportPoliceStation", "detailsOfReportOfficer", "detailsOfReportEvidence"].includes(field.name)) {
-                    if (reported !== "yes") isVisible = false;
-                }
-                if (field.name === "statutoryDeclaration" && reported !== "no") isVisible = false;
-                const assistance = String(sData["otherAssistance"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-                if (field.name === "otherAssistanceDetailsProvided" && assistance !== "yes") isVisible = false;
+          stageFieldsConfig.forEach(field => {
+            let isVisible = true;
+            const reported = String(sData["reportedToPolice"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+            if (["dateOfReport", "policeDetailsProvided", "detailsOfReportPoliceStation", "detailsOfReportOfficer", "detailsOfReportEvidence"].includes(field.name)) {
+              if (reported !== "yes") isVisible = false;
+            }
+            if (field.name === "statutoryDeclaration" && reported !== "no") isVisible = false;
+            const assistance = String(sData["otherAssistance"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+            if (field.name === "otherAssistanceDetailsProvided" && assistance !== "yes") isVisible = false;
 
-                if (isVisible) {
-                    // Quick check for aidTypes which are checkboxes
-                    const isCheckboxMap = ["lossOfEarning", "clothing", "securityExpenses", "medicalExpenses", "counselling", "safetyExpenses", "lossOrDamageClothing", "recoveryExpenses"];
-                    if (isCheckboxMap.includes(field.name)) {
-                        // Let's not include checkboxes in the missing fields reminder as they are optional "aids"
-                    } else {
-                        const status = getStatus(sData[field.name]);
-                        if (status !== "Completed") {
-                            allIncompleteTasks.push({ stage: i, field: field.label });
-                        }
-                    }
+            if (isVisible) {
+              // Quick check for aidTypes which are checkboxes
+              const isCheckboxMap = ["lossOfEarning", "clothing", "securityExpenses", "medicalExpenses", "counselling", "safetyExpenses", "lossOrDamageClothing", "recoveryExpenses"];
+              if (isCheckboxMap.includes(field.name)) {
+                // Let's not include checkboxes in the missing fields reminder as they are optional "aids"
+              } else {
+                const status = getStatus(sData[field.name]);
+                if (status !== "Completed") {
+                  allIncompleteTasks.push({ stage: i, field: field.label });
                 }
-            });
+              }
+            }
+          });
         } else if (currentModule === "vocat" && i === 3) {
-            stageFieldsConfig.forEach(field => {
-                let isVisible = true;
-                const noticeInterim = String(sData["noticeOfDecisionInterim"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-                if (["bankDetailsProvided", "authorisedExpenses"].includes(field.name)) {
-                    if (noticeInterim !== "yes") isVisible = false;
-                }
+          stageFieldsConfig.forEach(field => {
+            let isVisible = true;
+            const noticeInterim = String(sData["noticeOfDecisionInterim"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+            if (["bankDetailsProvided", "authorisedExpenses"].includes(field.name)) {
+              if (noticeInterim !== "yes") isVisible = false;
+            }
 
-                if (isVisible) {
-                    const status = getStatus(sData[field.name]);
-                    if (status !== "Completed") {
-                         allIncompleteTasks.push({ stage: i, field: field.label });
-                    }
-                }
-            });
+            if (isVisible) {
+              const status = getStatus(sData[field.name]);
+              if (status !== "Completed") {
+                allIncompleteTasks.push({ stage: i, field: field.label });
+              }
+            }
+          });
         } else if (currentModule === "vocat" && i === 4) {
-            stageFieldsConfig.forEach(field => {
-                let isVisible = true;
-                const variationRequired = String(sData["variationRequired"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-                if (field.name === "fileTransfer") {
-                    if (variationRequired !== "yes") isVisible = false;
-                }
+          stageFieldsConfig.forEach(field => {
+            let isVisible = true;
+            const variationRequired = String(sData["variationRequired"] || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+            if (field.name === "fileTransfer") {
+              if (variationRequired !== "yes") isVisible = false;
+            }
 
-                if (isVisible) {
-                    const status = getStatus(sData[field.name]);
-                    if (status !== "Completed") {
-                         allIncompleteTasks.push({ stage: i, field: field.label });
-                    }
-                }
-            });
+            if (isVisible) {
+              const status = getStatus(sData[field.name]);
+              if (status !== "Completed") {
+                allIncompleteTasks.push({ stage: i, field: field.label });
+              }
+            }
+          });
         } else {
-            // Standard conveyancing/commercial/wills logic
-            stageFieldsConfig.forEach(field => {
-                 const status = getStatus(sData[field.name]);
-                 if (status !== "Completed") {
-                     allIncompleteTasks.push({ stage: i, field: field.label });
-                 }
-            });
+          // Standard conveyancing/commercial/wills logic
+          stageFieldsConfig.forEach(field => {
+            const status = getStatus(sData[field.name]);
+            if (status !== "Completed") {
+              allIncompleteTasks.push({ stage: i, field: field.label });
+            }
+          });
         }
       }
 
       // Group by stage for cleaner payload/email if desired, or just send array of strings
       const tasksParam = allIncompleteTasks.map(t => `Stage ${t.stage}: ${t.field}`);
-      
+
       const payload = {
         matterNumber: matterNumber,
         module: currentModule,
@@ -1502,8 +1506,8 @@ export default function StagesLayout() {
       };
 
       if (tasksParam.length === 0) {
-         toast.info("All tasks are already completed.");
-         return;
+        toast.info("All tasks are already completed.");
+        return;
       }
 
       if (currentModule === "commercial") {
@@ -1518,10 +1522,10 @@ export default function StagesLayout() {
 
       toast.success("Reminder email sent to matter holder successfully!");
     } catch (error) {
-       console.error("Failed to send reminder:", error);
-       toast.error("Failed to send reminder email. Please try again.");
+      console.error("Failed to send reminder:", error);
+      toast.error("Failed to send reminder email. Please try again.");
     } finally {
-       setIsSendingReminder(false);
+      setIsSendingReminder(false);
     }
   };
 
@@ -1610,9 +1614,8 @@ export default function StagesLayout() {
                 {/* Mobile stages with smooth transition */}
                 {isSmallScreen && (
                   <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      isStagesCollapsed ? "max-h-0" : "max-h-96"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isStagesCollapsed ? "max-h-0" : "max-h-96"
+                      }`}
                   >
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 flex-shrink-0 px-0.5">
                       {stages.map((stage, index) => {
@@ -1621,13 +1624,12 @@ export default function StagesLayout() {
                           <div
                             key={stage.id}
                             onClick={() => RenderStage(stage.id)}
-                            className={`cursor-pointer p-2 rounded-xl shadow-sm transition-all duration-200 h-[70px] border flex flex-col justify-center relative overflow-hidden ${
-                              selectedStage === stage.id
+                            className={`cursor-pointer p-2 rounded-xl shadow-sm transition-all duration-200 h-[70px] border flex flex-col justify-center relative overflow-hidden ${selectedStage === stage.id
                                 ? "bg-white ring-2 ring-[#2E3D99] ring-offset-1 border-transparent z-10"
                                 : `${bgcolor(
-                                    stageStatus
-                                  )} border-transparent opacity-90 hover:opacity-100`
-                            }`}
+                                  stageStatus
+                                )} border-transparent opacity-90 hover:opacity-100`
+                              }`}
                           >
                             {selectedStage === stage.id && (
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2E3D99] to-[#1D97D7]" />
@@ -1635,24 +1637,22 @@ export default function StagesLayout() {
 
                             <div className="flex justify-between items-start mb-1 pl-1">
                               <p
-                                className={`font-bold font-poppins text-xs ${
-                                  selectedStage === stage.id
+                                className={`font-bold font-poppins text-xs ${selectedStage === stage.id
                                     ? "text-[#2E3D99]"
                                     : "text-gray-800"
-                                }`}
+                                  }`}
                               >
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                                  stageStatus === "In Progress" ||
-                                  stageStatus === "amber"
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${stageStatus === "In Progress" ||
+                                    stageStatus === "amber"
                                     ? "bg-amber-100 text-amber-700"
                                     : stageStatus === "Completed" ||
                                       stageStatus === "green"
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                }`}
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-red-100 text-red-700"
+                                  }`}
                               >
                                 {getStatusDisplayText(stageStatus)}
                               </div>
@@ -1687,23 +1687,21 @@ export default function StagesLayout() {
                           <li
                             key={stage.id}
                             onClick={() => RenderStage(stage.id)}
-                            className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${
-                              isActive
+                            className={`mb-5 md:shrink md:basis-0 flex-1 group flex gap-x-2 md:block cursor-pointer p-2 rounded-lg border-2 transition-all duration-300 ${isActive
                                 ? "bg-blue-50 border-[#2E3D99]/60 scale-105 shadow-lg"
                                 : "scale-95 border-gray-300"
-                            }`}
+                              }`}
                           >
                             <div className="min-w-7 min-h-5 flex flex-col items-center md:w-full md:inline-flex md:flex-wrap md:flex-row text-x align-middle">
                               <span
-                                className={`size-8 xl:size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${
-                                  isActive
+                                className={`size-8 xl:size-9 flex justify-center items-center shrink-0 font-bold rounded-full border transition-colors ${isActive
                                     ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white border-[#2E3D99]] shadow-[0_0_12px_3px_rgba(59,130,246,0.4)]"
                                     : isCompleted
-                                    ? "bg-green-600 text-white border-green-600"
-                                    : isInProgress
-                                    ? "bg-amber-500 text-white border-amber-500"
-                                    : "bg-red-500 text-gray-100 border-gray-300"
-                                }`}
+                                      ? "bg-green-600 text-white border-green-600"
+                                      : isInProgress
+                                        ? "bg-amber-500 text-white border-amber-500"
+                                        : "bg-red-500 text-gray-100 border-gray-300"
+                                  }`}
                               >
                                 {index + 1}
                               </span>
@@ -1715,15 +1713,14 @@ export default function StagesLayout() {
                                   Stage {index + 1}
                                 </p>
                                 <div
-                                  className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${
-                                    isInProgress
+                                  className={`min-w-[70px] xl:min-w-[75px] px-1 h-[18px] flex items-center justify-center rounded-4xl ${isInProgress
                                       ? "text-[#FF9500]"
                                       : isCompleted
-                                      ? "text-green-600"
-                                      : isActive
-                                      ? "text-[red]"
-                                      : "text-gray-500"
-                                  }`}
+                                        ? "text-green-600"
+                                        : isActive
+                                          ? "text-[red]"
+                                          : "text-gray-500"
+                                    }`}
                                 >
                                   <p className="text-[11px] xl:text-xs whitespace-nowrap font-bold">
                                     {getStatusDisplayText(stageStatus)}
@@ -1762,33 +1759,31 @@ export default function StagesLayout() {
                 )}
               </div>
 
-                {/* Mobile Tab Switcher - Added for better viewport management */}
+              {/* Mobile Tab Switcher - Added for better viewport management */}
               {isSmallScreen && (
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex w-full bg-white/80 backdrop-blur-sm rounded-xl p-1 border border-gray-200/60 shadow-sm">
                     <button
                       onClick={() => setActiveMobileTab("stage")}
-                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                        activeMobileTab === "stage"
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${activeMobileTab === "stage"
                           ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
                           : "text-gray-500 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       Stage Tasks
                     </button>
                     <button
                       onClick={() => setActiveMobileTab("details")}
-                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                        activeMobileTab === "details"
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${activeMobileTab === "details"
                           ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md"
                           : "text-gray-500 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {currentModule === "commercial"
                         ? "Project Details"
                         : currentModule === "print media"
-                        ? "Order Details"
-                        : "Matter Details"}
+                          ? "Order Details"
+                          : "Matter Details"}
                     </button>
                   </div>
                   {isAnyAdmin && currentModule !== "print media" && (
@@ -1825,8 +1820,8 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Project Details"
                           : currentModule === "print media"
-                          ? "Order Details"
-                          : "Matter Details"}
+                            ? "Order Details"
+                            : "Matter Details"}
                       </h2>
                       {isAnyAdmin && currentModule !== "print media" && (
                         <button
@@ -1855,8 +1850,8 @@ export default function StagesLayout() {
                           {currentModule === "commercial"
                             ? "Project Date"
                             : currentModule === "print media"
-                            ? "Order Date"
-                            : "Matter Date"}
+                              ? "Order Date"
+                              : "Matter Date"}
                         </label>
                         <input
                           id="matterDate"
@@ -1866,16 +1861,16 @@ export default function StagesLayout() {
                             canEditMatterDetails
                               ? clientData?.matterDate
                                 ? new Date(clientData.matterDate)
-                                    .toISOString()
-                                    .substring(0, 10)
+                                  .toISOString()
+                                  .substring(0, 10)
                                 : ""
                               : clientData?.matterNumber
-                              ? formatDateForDisplay(clientData.matterDate)
-                              : clientData?.data?.orderDate || clientData?.orderDate
-                              ? formatDateForDisplay(
-                                  clientData?.data?.orderDate || clientData?.orderDate
-                                )
-                              : ""
+                                ? formatDateForDisplay(clientData.matterDate)
+                                : clientData?.data?.orderDate || clientData?.orderDate
+                                  ? formatDateForDisplay(
+                                    clientData?.data?.orderDate || clientData?.orderDate
+                                  )
+                                  : ""
                           }
                           onChange={(e) => {
                             if (!canEditMatterDetails) return;
@@ -1887,9 +1882,8 @@ export default function StagesLayout() {
                               matterDate: v,
                             }));
                           }}
-                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
-                            !canEditMatterDetails ? "bg-gray-100" : ""
-                          }`}
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${!canEditMatterDetails ? "bg-gray-100" : ""
+                            }`}
                           disabled={!canEditMatterDetails}
                         />
                       </div>
@@ -1899,8 +1893,8 @@ export default function StagesLayout() {
                           {currentModule === "commercial"
                             ? "Project Number"
                             : currentModule === "print media"
-                            ? "Order ID"
-                            : "Matter Number"}
+                              ? "Order ID"
+                              : "Matter Number"}
                         </label>
                         {canEditMatterDetails ? (
                           <input
@@ -1954,63 +1948,62 @@ export default function StagesLayout() {
                               ...(prev || {}),
                               clientName: val,
                             }));
-                            
+
                             if (currentModule === "print media") {
-                                const matches = idgClients.filter(c => 
-                                    c.name.toLowerCase().includes(val.toLowerCase())
-                                );
-                                setFilteredClients(matches);
-                                setShowClientSuggestions(true);
+                              const matches = idgClients.filter(c =>
+                                c.name.toLowerCase().includes(val.toLowerCase())
+                              );
+                              setFilteredClients(matches);
+                              setShowClientSuggestions(true);
                             }
                           }}
                           onFocus={() => {
-                              if (currentModule === "print media" && canEditMatterDetails) {
-                                  setFilteredClients(idgClients);
-                                  setShowClientSuggestions(true);
-                              }
+                            if (currentModule === "print media" && canEditMatterDetails) {
+                              setFilteredClients(idgClients);
+                              setShowClientSuggestions(true);
+                            }
                           }}
                           onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
-                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
-                            !canEditMatterDetails ? "bg-gray-100" : ""
-                          }`}
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${!canEditMatterDetails ? "bg-gray-100" : ""
+                            }`}
                           disabled={!canEditMatterDetails}
                           autoComplete="off"
                         />
                         {showClientSuggestions && currentModule === "print media" && canEditMatterDetails && (
-                            <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
-                                {filteredClients.map(client => (
-                                    <li 
-                                        key={client._id}
-                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault(); // Prevent blur before selection
-                                            setClientData(prev => ({
-                                                ...prev,
-                                                clientName: client.name,
-                                                data: {
-                                                    ...(prev?.data || {}),
-                                                    client: { name: client.name, _id: client._id },
-                                                    clientId: client.clientId
-                                                }
-                                            }));
-                                            setShowClientSuggestions(false);
-                                            setMatterDirty(true);
-                                        }}
-                                    >
-                                        <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
-                                            {client.name}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400 font-medium">
-                                            ID: {client.clientId}
-                                        </div>
-                                    </li>
-                                ))}
-                                {filteredClients.length === 0 && (
-                                    <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
-                                        No clients found
-                                    </li>
-                                )}
-                            </ul>
+                          <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
+                            {filteredClients.map(client => (
+                              <li
+                                key={client._id}
+                                className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // Prevent blur before selection
+                                  setClientData(prev => ({
+                                    ...prev,
+                                    clientName: client.name,
+                                    data: {
+                                      ...(prev?.data || {}),
+                                      client: { name: client.name, _id: client._id },
+                                      clientId: client.clientId
+                                    }
+                                  }));
+                                  setShowClientSuggestions(false);
+                                  setMatterDirty(true);
+                                }}
+                              >
+                                <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
+                                  {client.name}
+                                </div>
+                                <div className="text-[10px] text-gray-400 font-medium">
+                                  ID: {client.clientId}
+                                </div>
+                              </li>
+                            ))}
+                            {filteredClients.length === 0 && (
+                              <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
+                                No clients found
+                              </li>
+                            )}
+                          </ul>
                         )}
                       </div>
 
@@ -2038,9 +2031,8 @@ export default function StagesLayout() {
                               clientEmail: val,
                             }));
                           }}
-                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${
-                            !canEditMatterDetails ? "bg-gray-100" : ""
-                          }`}
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${!canEditMatterDetails ? "bg-gray-100" : ""
+                            }`}
                           disabled={!canEditMatterDetails}
                         />
                       </div>
@@ -2082,10 +2074,10 @@ export default function StagesLayout() {
                           {currentModule === "commercial"
                             ? "Business Address"
                             : currentModule === "print media"
-                            ? "Billing Address"
-                            : currentModule === "vocat"
-                            ? "Client Address"
-                            : "Property Address"}
+                              ? "Billing Address"
+                              : currentModule === "vocat"
+                                ? "Client Address"
+                                : "Property Address"}
                         </label>
                         <input
                           id="address"
@@ -2095,13 +2087,13 @@ export default function StagesLayout() {
                             currentModule === "commercial"
                               ? clientData?.businessAddress || ""
                               : currentModule === "print media"
-                              ? clientData?.data?.deliveryAddress || ""
-                              : currentModule === "vocat"
-                              ? clientData?.clientAddress || ""
-                              : currentModule === "wills"
-                              ? clientData?.address || ""
-                              : clientData?.propertyAddress || ""
-                          }                          onChange={(e) => {
+                                ? clientData?.data?.deliveryAddress || ""
+                                : currentModule === "vocat"
+                                  ? clientData?.clientAddress || ""
+                                  : currentModule === "wills"
+                                    ? clientData?.address || ""
+                                    : clientData?.propertyAddress || ""
+                          } onChange={(e) => {
                             if (!canEditMatterDetails) return;
                             const value = e.target.value;
                             setClientData((prev) => {
@@ -2126,9 +2118,8 @@ export default function StagesLayout() {
                               return { ...prev, propertyAddress: value };
                             });
                           }}
-                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                            !canEditMatterDetails ? "bg-gray-100" : ""
-                          }`}
+                          className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!canEditMatterDetails ? "bg-gray-100" : ""
+                            }`}
                           disabled={!canEditMatterDetails}
                           ref={addressInputRef}
                         />
@@ -2141,7 +2132,7 @@ export default function StagesLayout() {
                             State
                           </label>
                           {canEditMatterDetails ? (
-                          <input
+                            <input
                               id="state"
                               name="state"
                               type="text"
@@ -2198,159 +2189,158 @@ export default function StagesLayout() {
                             pattern="^[0-9]{4}$"
                             maxLength={4}
                             inputMode="numeric"
-                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                              currentModule === "print media" ? "bg-gray-100" : ""
-                            }`}
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${currentModule === "print media" ? "bg-gray-100" : ""
+                              }`}
                           />
                         </div>
                       </div>
 
                       {/* Client Type Field */}
                       {currentModule !== "vocat" && (
-                      <div className="md:col-span-1">
-                        <label className="block text-xs md:text-sm font-semibold mb-1">
-                          {currentModule === "commercial"
-                            ? "Client Type"
-                            : currentModule === "print media"
-                            ? "Order Type"
-                            : "Client Type"}
-                        </label>
-                        {canEditMatterDetails ? (
-                          currentModule === "wills" ? (
-                            <div className="flex gap-4 mt-2">
-                              {CLIENT_TYPE_OPTIONS.map((ct) => (
-                                <label key={ct} className="flex items-center gap-2 text-xs xl:text-sm">
-                                  <input
-                                    type="radio"
-                                    name="clientType"
-                                    value={ct}
-                                    checked={(clientData?.clientType || "").toLowerCase() === ct.toLowerCase()}
-                                    onChange={(e) =>
-                                      setClientData((prev) => ({
-                                        ...(prev || {}),
-                                        clientType: e.target.value,
-                                      }))
-                                    }
-                                  />
-                                  {ct}
-                                </label>
-                              ))}
-                            </div>
+                        <div className="md:col-span-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            {currentModule === "commercial"
+                              ? "Client Type"
+                              : currentModule === "print media"
+                                ? "Order Type"
+                                : "Client Type"}
+                          </label>
+                          {canEditMatterDetails ? (
+                            currentModule === "wills" ? (
+                              <div className="flex gap-4 mt-2">
+                                {CLIENT_TYPE_OPTIONS.map((ct) => (
+                                  <label key={ct} className="flex items-center gap-2 text-xs xl:text-sm">
+                                    <input
+                                      type="radio"
+                                      name="clientType"
+                                      value={ct}
+                                      checked={(clientData?.clientType || "").toLowerCase() === ct.toLowerCase()}
+                                      onChange={(e) =>
+                                        setClientData((prev) => ({
+                                          ...(prev || {}),
+                                          clientType: e.target.value,
+                                        }))
+                                      }
+                                    />
+                                    {ct}
+                                  </label>
+                                ))}
+                              </div>
+                            ) : (
+                              <select
+                                id="clientType"
+                                name="clientType"
+                                value={
+                                  clientData?.clientType ||
+                                  clientData?.data?.orderType ||
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    clientType: e.target.value,
+                                  }))
+                                }
+                                className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                              >
+                                <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                                {(currentModule === "vocat"
+                                  ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
+                                  : CLIENT_TYPE_OPTIONS
+                                ).map((ct) => (
+                                  <option key={ct} value={ct}>
+                                    {ct}
+                                  </option>
+                                ))}
+                              </select>
+                            )
                           ) : (
-                          <select
-                            id="clientType"
-                            name="clientType"
-                            value={
-                              clientData?.clientType ||
-                              clientData?.data?.orderType ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              setClientData((prev) => ({
-                                ...(prev || {}),
-                                clientType: e.target.value,
-                              }))
-                            }
-                            className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                          >
-                            <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
-                            {(currentModule === "vocat"
-                              ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
-                              : CLIENT_TYPE_OPTIONS
-                            ).map((ct) => (
-                              <option key={ct} value={ct}>
-                                {ct}
-                              </option>
-                            ))}
-                          </select>
-                          )
-                        ) : (
-                          <input
-                            type="text"
-                            value={
-                              clientData?.clientType ||
-                              clientData?.data?.orderType
-                            }
-                            className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                            disabled
-                            readOnly
-                          />
-                        )}
-                      </div>
+                            <input
+                              type="text"
+                              value={
+                                clientData?.clientType ||
+                                clientData?.data?.orderType
+                              }
+                              className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
                       )}
                       {currentModule === "vocat" && (
                         <div className="md:col-span-3 flex flex-col md:flex-row gap-4">
-                           <div className="flex-[1.5]">
-                              <label className="block text-xs md:text-sm font-semibold mb-1">
-                                Client Type
-                              </label>
-                              {canEditMatterDetails ? (
-                                <select
-                                  id="clientType"
-                                  name="clientType"
-                                  value={clientData?.clientType || ""}
-                                  onChange={(e) =>
-                                    setClientData((prev) => ({
-                                      ...(prev || {}),
-                                      clientType: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                                >
-                                  <option value="">Select Client Type</option>
-                                  {["Primary Victim", "Related Victim", "Funeral Expenses"].map((ct) => (
-                                    <option key={ct} value={ct}>
-                                      {ct}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={clientData?.clientType || ""}
-                                  className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
-                                  disabled
-                                  readOnly
-                                />
-                              )}
-                           </div>
-                           <div className="flex-1">
-                              <label className="block text-xs md:text-sm font-semibold mb-1">
-                                Criminal Incident Date
-                              </label>
-                              {canEditMatterDetails ? (
-                                <input
-                                  id="criminalIncidentDate"
-                                  name="criminalIncidentDate"
-                                  type="date"
-                                  value={
-                                    clientData?.criminalIncidentDate
-                                      ? new Date(clientData.criminalIncidentDate)
-                                          .toISOString()
-                                          .substring(0, 10)
-                                      : ""
-                                  }
-                                  onChange={(e) => {
-                                    setClientData((prev) => ({
-                                      ...(prev || {}),
-                                      criminalIncidentDate: e.target.value,
-                                    }));
-                                  }}
-                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                />
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={
-                                    clientData?.criminalIncidentDate
-                                      ? formatDateForDisplay(clientData.criminalIncidentDate)
-                                      : ""
-                                  }
-                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                  disabled
-                                  readOnly
-                                />
-                              )}
+                          <div className="flex-[1.5]">
+                            <label className="block text-xs md:text-sm font-semibold mb-1">
+                              Client Type
+                            </label>
+                            {canEditMatterDetails ? (
+                              <select
+                                id="clientType"
+                                name="clientType"
+                                value={clientData?.clientType || ""}
+                                onChange={(e) =>
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    clientType: e.target.value,
+                                  }))
+                                }
+                                className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                              >
+                                <option value="">Select Client Type</option>
+                                {["Primary Victim", "Related Victim", "Funeral Expenses"].map((ct) => (
+                                  <option key={ct} value={ct}>
+                                    {ct}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={clientData?.clientType || ""}
+                                className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                                disabled
+                                readOnly
+                              />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs md:text-sm font-semibold mb-1">
+                              Criminal Incident Date
+                            </label>
+                            {canEditMatterDetails ? (
+                              <input
+                                id="criminalIncidentDate"
+                                name="criminalIncidentDate"
+                                type="date"
+                                value={
+                                  clientData?.criminalIncidentDate
+                                    ? new Date(clientData.criminalIncidentDate)
+                                      .toISOString()
+                                      .substring(0, 10)
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  setClientData((prev) => ({
+                                    ...(prev || {}),
+                                    criminalIncidentDate: e.target.value,
+                                  }));
+                                }}
+                                className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={
+                                  clientData?.criminalIncidentDate
+                                    ? formatDateForDisplay(clientData.criminalIncidentDate)
+                                    : ""
+                                }
+                                className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                disabled
+                                readOnly
+                              />
+                            )}
                           </div>
                         </div>
                       )}
@@ -2358,60 +2348,60 @@ export default function StagesLayout() {
                       {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "wills") && (
                         <div className="md:col-span-3">
                           {currentModule === "vocat" && (
-                          <div className="flex flex-col md:flex-row gap-4 mb-4">
-                            <div className="flex-1">
-                              <label className="block text-xs md:text-sm font-semibold mb-1">
-                                Matter Reference Number
-                              </label>
-                              {canEditMatterDetails ? (
-                                <input
-                                  type="text"
-                                  value={clientData?.matterReferenceNumber || ""}
-                                  onChange={(e) =>
-                                    setClientData((prev) => ({
-                                      ...(prev || {}),
-                                      matterReferenceNumber: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                />
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={clientData?.matterReferenceNumber || ""}
-                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                  disabled
-                                  readOnly
-                                />
-                              )}
+                            <div className="flex flex-col md:flex-row gap-4 mb-4">
+                              <div className="flex-1">
+                                <label className="block text-xs md:text-sm font-semibold mb-1">
+                                  Matter Reference Number
+                                </label>
+                                {canEditMatterDetails ? (
+                                  <input
+                                    type="text"
+                                    value={clientData?.matterReferenceNumber || ""}
+                                    onChange={(e) =>
+                                      setClientData((prev) => ({
+                                        ...(prev || {}),
+                                        matterReferenceNumber: e.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                  />
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={clientData?.matterReferenceNumber || ""}
+                                    className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                    disabled
+                                    readOnly
+                                  />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-xs md:text-sm font-semibold mb-1">
+                                  FAS Number
+                                </label>
+                                {canEditMatterDetails ? (
+                                  <input
+                                    type="text"
+                                    value={clientData?.fasNumber || ""}
+                                    onChange={(e) =>
+                                      setClientData((prev) => ({
+                                        ...(prev || {}),
+                                        fasNumber: e.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                  />
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={clientData?.fasNumber || ""}
+                                    className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                                    disabled
+                                    readOnly
+                                  />
+                                )}
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <label className="block text-xs md:text-sm font-semibold mb-1">
-                                FAS Number
-                              </label>
-                              {canEditMatterDetails ? (
-                                <input
-                                  type="text"
-                                  value={clientData?.fasNumber || ""}
-                                  onChange={(e) =>
-                                    setClientData((prev) => ({
-                                      ...(prev || {}),
-                                      fasNumber: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                />
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={clientData?.fasNumber || ""}
-                                  className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
-                                  disabled
-                                  readOnly
-                                />
-                              )}
-                            </div>
-                          </div>
                           )}
                           <div>
                             <label className="block text-xs md:text-sm font-semibold mb-1">
@@ -2446,49 +2436,49 @@ export default function StagesLayout() {
 
                       {/* Completion/Settlement/Delivery Date */}
                       {currentModule !== "vocat" && (
-                      <div className="md:col-span-1">
-                         <label className="block text-xs md:text-sm font-semibold mb-1">
+                        <div className="md:col-span-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
                             {currentModule === "commercial"
                               ? "Completion Date"
                               : currentModule === "print media"
-                              ? "Delivery Date"
-                              : "Settlement Date"}
+                                ? "Delivery Date"
+                                : "Settlement Date"}
                           </label>
-                           <input
+                          <input
                             id={
                               currentModule === "commercial"
                                 ? "completionDate"
                                 : currentModule === "print media"
-                                ? "deliveryDate"
-                                : "settlementDate"
+                                  ? "deliveryDate"
+                                  : "settlementDate"
                             }
                             name={
                               currentModule === "commercial"
                                 ? "completionDate"
                                 : currentModule === "print media"
-                                ? "deliveryDate"
-                                : "settlementDate"
+                                  ? "deliveryDate"
+                                  : "settlementDate"
                             }
                             type="date"
                             value={
-                                currentModule === "commercial"
+                              currentModule === "commercial"
+                                ? clientData?.settlementDate
+                                  ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                  : ""
+                                : currentModule !== "print media"
                                   ? clientData?.settlementDate
                                     ? new Date(clientData.settlementDate)
-                                        .toISOString()
-                                        .substring(0, 10)
-                                    : ""
-                                  : currentModule !== "print media"
-                                  ? clientData?.settlementDate
-                                    ? new Date(clientData.settlementDate)
-                                        .toISOString()
-                                        .substring(0, 10)
-                                    : ""
-                                  : clientData?.data?.deliveryDate
-                                  ? new Date(clientData.data.deliveryDate)
                                       .toISOString()
                                       .substring(0, 10)
-                                  : ""
-                              }
+                                    : ""
+                                  : clientData?.data?.deliveryDate
+                                    ? new Date(clientData.data.deliveryDate)
+                                      .toISOString()
+                                      .substring(0, 10)
+                                    : ""
+                            }
                             onChange={(e) => {
                               const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
                               if (!canEditSettlement) return;
@@ -2513,12 +2503,11 @@ export default function StagesLayout() {
                                 }));
                               }
                             }}
-                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${
-                              !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-100" : ""
-                            }`}
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-100" : ""
+                              }`}
                             disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                           />
-                      </div>
+                        </div>
                       )}
 
                       {/* Data Entry By */}
@@ -2557,6 +2546,48 @@ export default function StagesLayout() {
                         )}
                       </div>
 
+                      {/* Matter Status */}
+                      {currentModule === "vocat" && (
+                        <div className="md:col-span-2">
+                        <label className="block text-xs md:text-sm font-semibold mb-1">
+                          Matter Status
+                        </label>
+                        {canEditMatterDetails ? (
+                          <select
+                              id="matterStatus"
+                              name="matterStatus"
+                              value={clientData?.matterStatus || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  matterStatus: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            >
+                              <option value="">Select Option</option>
+                              {["Not Submitted", "Submitted", "Triage", "Assessment","Notice of decision available", "Transition to FAS Complete"].map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              clientData?.dataEntryBy ||
+                              clientData?.data?.dataEntryBy ||
+                              ""
+                            }
+                            className="w-full rounded bg-gray-100 px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                      ) }
+
 
                       {/* Is Purchaser a Trustee? (Commercial Only) */}
                       {currentModule === "commercial" && (
@@ -2593,6 +2624,37 @@ export default function StagesLayout() {
                               readOnly
                             />
                           )}
+                        </div>
+                      )}
+
+                      {/* Legal Costs Application Number */}
+                      {currentModule === "vocat" && (
+                        <div className="md:col-span-3 mb-4">
+                          <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                            Legal Costs Application Number
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              clientData?.legalCostsApplicationNumber ||
+                              ""
+                            }
+                            onChange={(e) => {
+                              const newLegalCostsApplicationNumber = e.target.value;
+                              setClientData((prev) => {
+                                const updated = { ...(prev || {}) };
+                                updated.legalCostsApplicationNumber = newLegalCostsApplicationNumber;
+                                if (updated.data) {
+                                  updated.data.legalCostsApplicationNumber = newLegalCostsApplicationNumber;
+                                } else {
+                                  updated.data = { legalCostsApplicationNumber: newLegalCostsApplicationNumber };
+                                }
+                                return updated;
+                              });
+                            }}
+                            placeholder="Enter Cost Application Number..."
+                            className="w-full border border-gray-200 rounded px-2 py-2 text-xs md:text-sm"
+                          />
                         </div>
                       )}
 
@@ -2682,15 +2744,16 @@ export default function StagesLayout() {
                         )}
                       </div>
 
+
+
                       <div className="md:col-span-3 mt-6 mb-6">
                         <div className="mt-2">
                           <button
                             type="submit"
-                            className={`w-full ${
-                              matterDirty
+                            className={`w-full ${matterDirty
                                 ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:bg-[#0086bf] text-white cursor-pointer"
                                 : "bg-gray-300 text-gray-200 cursor-not-allowed"
-                            } font-medium rounded py-2 text-base`}
+                              } font-medium rounded py-2 text-base`}
                             disabled={!matterDirty}
                           >
                             Update
@@ -2709,8 +2772,8 @@ export default function StagesLayout() {
                     {currentModule === "commercial"
                       ? "Project Details"
                       : currentModule === "print media"
-                      ? "Order Details"
-                      : "Matter Details"}
+                        ? "Order Details"
+                        : "Matter Details"}
                   </h2>
                   <form
                     className="grid grid-cols-1 gap-y-4"
@@ -2722,8 +2785,8 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Project Date"
                           : currentModule === "print media"
-                          ? "Order Date"
-                          : "Matter Date"}
+                            ? "Order Date"
+                            : "Matter Date"}
                       </label>
                       <input
                         id="matterDate"
@@ -2733,14 +2796,14 @@ export default function StagesLayout() {
                           canEditMatterDetails
                             ? clientData?.matterDate
                               ? new Date(clientData.matterDate)
-                                  .toISOString()
-                                  .substring(0, 10)
+                                .toISOString()
+                                .substring(0, 10)
                               : ""
                             : clientData?.matterNumber
-                            ? formatDateForDisplay(clientData.matterDate)
-                            : clientData?.data?.orderDate
-                            ? formatDateForDisplay(clientData.data.orderDate)
-                            : ""
+                              ? formatDateForDisplay(clientData.matterDate)
+                              : clientData?.data?.orderDate
+                                ? formatDateForDisplay(clientData.data.orderDate)
+                                : ""
                         }
                         onChange={(e) => {
                           if (!canEditMatterDetails) return;
@@ -2752,11 +2815,10 @@ export default function StagesLayout() {
                             matterDate: v,
                           }));
                         }}
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !canEditMatterDetails
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
                             ? "bg-gray-50 text-gray-500"
                             : "bg-white"
-                        }`}
+                          }`}
                         disabled={!canEditMatterDetails}
                       />
                     </div>
@@ -2766,8 +2828,8 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Project Number"
                           : currentModule === "print media"
-                          ? "Order ID"
-                          : "Matter Number"}
+                            ? "Order ID"
+                            : "Matter Number"}
                       </label>
                       {canEditMatterDetails ? (
                         <input
@@ -2824,11 +2886,10 @@ export default function StagesLayout() {
                             clientEmail: val,
                           }));
                         }}
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !canEditMatterDetails
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
                             ? "bg-gray-50 text-gray-500"
                             : "bg-white"
-                        }`}
+                          }`}
                         disabled={!canEditMatterDetails}
                       />
                     </div>
@@ -2848,68 +2909,67 @@ export default function StagesLayout() {
                           ""
                         }
                         onChange={(e) => {
-                            if (!canEditMatterDetails) return;
-                            const val = e.target.value;
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              clientName: val,
-                            }));
-                            
-                            if (currentModule === "print media") {
-                                const matches = idgClients.filter(c => 
-                                    c.name.toLowerCase().includes(val.toLowerCase())
-                                );
-                                setFilteredClients(matches);
-                                setShowClientSuggestions(true);
-                            }
+                          if (!canEditMatterDetails) return;
+                          const val = e.target.value;
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            clientName: val,
+                          }));
+
+                          if (currentModule === "print media") {
+                            const matches = idgClients.filter(c =>
+                              c.name.toLowerCase().includes(val.toLowerCase())
+                            );
+                            setFilteredClients(matches);
+                            setShowClientSuggestions(true);
+                          }
                         }}
                         onFocus={() => {
-                            if (currentModule === "print media" && canEditMatterDetails) {
-                                setFilteredClients(idgClients);
-                                setShowClientSuggestions(true);
-                            }
+                          if (currentModule === "print media" && canEditMatterDetails) {
+                            setFilteredClients(idgClients);
+                            setShowClientSuggestions(true);
+                          }
                         }}
                         onBlur={() => setTimeout(() => setShowClientSuggestions(false), 200)}
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
-                        }`}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                          }`}
                         disabled={!canEditMatterDetails}
                         autoComplete="off"
                       />
                       {showClientSuggestions && currentModule === "print media" && canEditMatterDetails && (
                         <ul className="absolute z-50 bg-white border border-gray-200 w-full max-h-48 overflow-y-auto shadow-xl rounded-lg mt-1 py-1 custom-scrollbar">
-                           {filteredClients.map(client => (
-                                <li 
-                                    key={client._id}
-                                    className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
-                                    onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        setClientData(prev => ({
-                                            ...prev,
-                                            clientName: client.name,
-                                            data: {
-                                                ...(prev?.data || {}),
-                                                client: { name: client.name, _id: client._id },
-                                                clientId: client.clientId
-                                            }
-                                        }));
-                                        setShowClientSuggestions(false);
-                                        setMatterDirty(true);
-                                    }}
-                                >
-                                    <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
-                                        {client.name}
-                                    </div>
-                                    <div className="text-[10px] text-gray-400 font-medium">
-                                        ID: {client.clientId}
-                                    </div>
-                                </li>
-                            ))}
-                            {filteredClients.length === 0 && (
-                                <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
-                                    No clients found
-                                </li>
-                            )}
+                          {filteredClients.map(client => (
+                            <li
+                              key={client._id}
+                              className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 transition-colors duration-150 flex flex-col"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setClientData(prev => ({
+                                  ...prev,
+                                  clientName: client.name,
+                                  data: {
+                                    ...(prev?.data || {}),
+                                    client: { name: client.name, _id: client._id },
+                                    clientId: client.clientId
+                                  }
+                                }));
+                                setShowClientSuggestions(false);
+                                setMatterDirty(true);
+                              }}
+                            >
+                              <div className="font-semibold truncate whitespace-nowrap w-full" title={client.name}>
+                                {client.name}
+                              </div>
+                              <div className="text-[10px] text-gray-400 font-medium">
+                                ID: {client.clientId}
+                              </div>
+                            </li>
+                          ))}
+                          {filteredClients.length === 0 && (
+                            <li className="px-4 py-3 text-xs text-gray-400 italic text-center">
+                              No clients found
+                            </li>
+                          )}
                         </ul>
                       )}
                     </div>
@@ -2950,8 +3010,8 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Business Address"
                           : currentModule === "print media"
-                          ? "Billing Address"
-                          : "Property Address"}
+                            ? "Billing Address"
+                            : "Property Address"}
                       </label>
                       <input
                         id="address-mobile"
@@ -2961,12 +3021,12 @@ export default function StagesLayout() {
                           currentModule === "commercial"
                             ? clientData?.businessAddress || ""
                             : currentModule === "print media"
-                            ? clientData?.data?.deliveryAddress || ""
-                            : currentModule === "vocat"
-                            ? clientData?.clientAddress || ""
-                            : currentModule === "wills"
-                            ? clientData?.address || ""
-                            : clientData?.propertyAddress || ""
+                              ? clientData?.data?.deliveryAddress || ""
+                              : currentModule === "vocat"
+                                ? clientData?.clientAddress || ""
+                                : currentModule === "wills"
+                                  ? clientData?.address || ""
+                                  : clientData?.propertyAddress || ""
                         }
                         onChange={(e) => {
                           if (!canEditMatterDetails) return;
@@ -2990,11 +3050,10 @@ export default function StagesLayout() {
                             return { ...prev, propertyAddress: value };
                           });
                         }}
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                          !canEditMatterDetails
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
                             ? "bg-gray-50 text-gray-500"
                             : "bg-white"
-                        }`}
+                          }`}
                         disabled={!canEditMatterDetails}
                         ref={mobileAddressInputRef}
                       />
@@ -3044,8 +3103,8 @@ export default function StagesLayout() {
                         {currentModule === "commercial"
                           ? "Client Type"
                           : currentModule === "print media"
-                          ? "Order Type"
-                          : "Client Type"}
+                            ? "Order Type"
+                            : "Client Type"}
                       </label>
                       {canEditMatterDetails ? (
                         currentModule === "wills" ? (
@@ -3069,32 +3128,32 @@ export default function StagesLayout() {
                             ))}
                           </div>
                         ) : (
-                        <select
-                          id="clientType-mobile"
-                          name="clientType"
-                          value={
-                            clientData?.clientType ||
-                            clientData?.data?.orderType ||
-                            ""
-                          }
-                          onChange={(e) =>
-                            setClientData((prev) => ({
-                              ...(prev || {}),
-                              clientType: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
-                        >
-                          <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
-                          {(currentModule === "vocat"
-                            ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
-                            : CLIENT_TYPE_OPTIONS
-                          ).map((ct) => (
-                            <option key={ct} value={ct}>
-                              {ct}
-                            </option>
-                          ))}
-                        </select>
+                          <select
+                            id="clientType-mobile"
+                            name="clientType"
+                            value={
+                              clientData?.clientType ||
+                              clientData?.data?.orderType ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                clientType: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                          >
+                            <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                            {(currentModule === "vocat"
+                              ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
+                              : CLIENT_TYPE_OPTIONS
+                            ).map((ct) => (
+                              <option key={ct} value={ct}>
+                                {ct}
+                              </option>
+                            ))}
+                          </select>
                         )
                       ) : (
                         <input
@@ -3137,11 +3196,10 @@ export default function StagesLayout() {
                             maxLength={4}
                             inputMode="numeric"
                             className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none
-                             ${
-                               currentModule === "print media"
-                                 ? "bg-gray-50 text-gray-500"
-                                 : "bg-white"
-                             }`}
+                             ${currentModule === "print media"
+                                ? "bg-gray-50 text-gray-500"
+                                : "bg-white"
+                              }`}
                           />
                         </div>
 
@@ -3191,8 +3249,8 @@ export default function StagesLayout() {
                           {currentModule === "commercial"
                             ? "Completion Date"
                             : currentModule === "print media"
-                            ? "Delivery Date"
-                            : "Settlement Date"}
+                              ? "Delivery Date"
+                              : "Settlement Date"}
                         </label>
                         <input
                           id="settlementDate-mobile"
@@ -3201,20 +3259,20 @@ export default function StagesLayout() {
                             currentModule === "commercial"
                               ? clientData?.settlementDate
                                 ? new Date(clientData.settlementDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
-                              : currentModule !== "print media"
-                              ? clientData?.settlementDate
-                                ? new Date(clientData.settlementDate)
-                                    .toISOString()
-                                    .substring(0, 10)
-                                : ""
-                              : clientData?.data?.deliveryDate
-                              ? new Date(clientData.data.deliveryDate)
                                   .toISOString()
                                   .substring(0, 10)
-                              : ""
+                                : ""
+                              : currentModule !== "print media"
+                                ? clientData?.settlementDate
+                                  ? new Date(clientData.settlementDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                  : ""
+                                : clientData?.data?.deliveryDate
+                                  ? new Date(clientData.data.deliveryDate)
+                                    .toISOString()
+                                    .substring(0, 10)
+                                  : ""
                           }
                           onChange={(e) => {
                             const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
@@ -3240,9 +3298,8 @@ export default function StagesLayout() {
                               }));
                             }
                           }}
-                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                            !(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-50 text-gray-500" : "bg-white"
-                          }`}
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-50 text-gray-500" : "bg-white"
+                            }`}
                           disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                         />
                       </div>
@@ -3260,8 +3317,8 @@ export default function StagesLayout() {
                           value={
                             clientData?.criminalIncidentDate
                               ? new Date(clientData.criminalIncidentDate)
-                                  .toISOString()
-                                  .substring(0, 10)
+                                .toISOString()
+                                .substring(0, 10)
                               : ""
                           }
                           onChange={(e) => {
@@ -3271,71 +3328,70 @@ export default function StagesLayout() {
                               criminalIncidentDate: e.target.value,
                             }));
                           }}
-                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${
-                            !canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
-                          }`}
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails ? "bg-gray-50 text-gray-500" : "bg-white"
+                            }`}
                           disabled={!canEditMatterDetails}
                         />
                       </div>
                     )}
-                    
+
                     {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial") && (
                       <>
                         {currentModule === "vocat" && (
-                        <div className="flex flex-row gap-4">
-                          <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                              Matter Reference Number
-                            </label>
-                            {canEditMatterDetails ? (
-                              <input
-                                type="text"
-                                value={clientData?.matterReferenceNumber || ""}
-                                onChange={(e) =>
-                                  setClientData((prev) => ({
-                                    ...(prev || {}),
-                                    matterReferenceNumber: e.target.value,
-                                  }))
-                                }
-                                className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={clientData?.matterReferenceNumber || ""}
-                                className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
-                                disabled
-                                readOnly
-                              />
-                            )}
+                          <div className="flex flex-row gap-4">
+                            <div className="flex-1">
+                              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                Matter Reference Number
+                              </label>
+                              {canEditMatterDetails ? (
+                                <input
+                                  type="text"
+                                  value={clientData?.matterReferenceNumber || ""}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      matterReferenceNumber: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={clientData?.matterReferenceNumber || ""}
+                                  className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                                FAS Number
+                              </label>
+                              {canEditMatterDetails ? (
+                                <input
+                                  type="text"
+                                  value={clientData?.fasNumber || ""}
+                                  onChange={(e) =>
+                                    setClientData((prev) => ({
+                                      ...(prev || {}),
+                                      fasNumber: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={clientData?.fasNumber || ""}
+                                  className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                                  disabled
+                                  readOnly
+                                />
+                              )}
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                              FAS Number
-                            </label>
-                            {canEditMatterDetails ? (
-                              <input
-                                type="text"
-                                value={clientData?.fasNumber || ""}
-                                onChange={(e) =>
-                                  setClientData((prev) => ({
-                                    ...(prev || {}),
-                                    fasNumber: e.target.value,
-                                  }))
-                                }
-                                className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={clientData?.fasNumber || ""}
-                                className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
-                                disabled
-                                readOnly
-                              />
-                            )}
-                          </div>
-                        </div>
                         )}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
@@ -3403,6 +3459,36 @@ export default function StagesLayout() {
                         />
                       )}
                     </div>
+
+                    {/* Legal Costs Application Number */}
+                    {currentModule === "vocat" && (
+                      <div className="md:col-span-3 mb-4">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Legal Costs Application Number
+                        </label>
+                        <input
+                          type="text"
+                          value={
+                            clientData?.legalCostsApplicationNumber || clientData?.data?.legalCostsApplicationNumber || ""
+                          }
+                          onChange={(e) => {
+                            const newLegalCostsApplicationNumber = e.target.value;
+                            setClientData((prev) => {
+                              const updated = { ...(prev || {}) };
+                              updated.legalCostsApplicationNumber = newLegalCostsApplicationNumber;
+                              if (updated.data) {
+                                updated.data.legalCostsApplicationNumber = newLegalCostsApplicationNumber;
+                              } else {
+                                updated.data = { legalCostsApplicationNumber: newLegalCostsApplicationNumber };
+                              }
+                              return updated;
+                            });
+                          }}
+                          placeholder="Enter Legal Costs Application Number here..."
+                          className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none"
+                        />
+                      </div>
+                    )}
 
                     {/* Notes */}
                     <div className="md:col-span-3">
@@ -3488,14 +3574,15 @@ export default function StagesLayout() {
                       )}
                     </div>
 
+
+
                     <div className="mt-3">
                       <button
                         type="submit"
-                        className={`w-full ${
-                          matterDirty
+                        className={`w-full ${matterDirty
                             ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl active:scale-[0.98]"
                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        } font-bold rounded-lg py-3 text-sm tracking-wide text-white transition-all duration-200`}
+                          } font-bold rounded-lg py-3 text-sm tracking-wide text-white transition-all duration-200`}
                         disabled={!matterDirty}
                       >
                         Update
