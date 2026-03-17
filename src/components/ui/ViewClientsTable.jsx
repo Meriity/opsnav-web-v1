@@ -454,9 +454,7 @@ const ViewClientsTable = ({
                         (keyName, index) => (
                           <a
                             href={`/admin/client/stages/${
-                              currentModule === "commercial"
-                                ? item.matterNumber
-                                : item.matternumber || item.orderId
+                              item.matterNumber || item.matternumber || item.orderId
                             }/${index + 1}`}
                             key={keyName}
                             className="w-4 h-4 lg:w-4 lg:h-4 xl:w-6 xl:h-6 flex items-center justify-center text-white rounded text-[8px] lg:text-[8px] xl:text-xs 2xl:text-xs cursor-pointer transition-transform hover:scale-110 shadow-sm"
@@ -484,9 +482,7 @@ const ViewClientsTable = ({
                         onClick={() => {
                           handelOTOpen();
                           handelOT(
-                            currentModule === "commercial"
-                              ? item.matterNumber
-                              : item.matternumber || item.orderId
+                            item.matterNumber || item.matternumber || item.orderId
                           );
                         }}
                         >
@@ -499,9 +495,7 @@ const ViewClientsTable = ({
                         <button
                         onClick={() => {
                           const id =
-                            currentModule === "commercial"
-                              ? item.matterNumber
-                              : item.matternumber || item.orderId;
+                            item.matterNumber || item.matternumber || item.orderId;
                           navigate(`/admin/client/stages/${id}`);
                         }}
                         className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"

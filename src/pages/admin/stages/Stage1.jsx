@@ -203,51 +203,51 @@ const formConfig = {
       type: "radio",
       options: ["Yes", "No", "N/R"],
     },
-    {
-      name: "typeOfAidHeader",
-      label: "Type of aid: (pick multiple)",
-      type: "header", // Just a visual label
-    },
-    {
-      name: "lossOfEarning",
-      label: "Loss of earnings",
-      type: "checkbox",
-    },
-    {
-      name: "clothing",
-      label: "Clothing",
-      type: "checkbox",
-    },
-    {
-      name: "securityExpenses",
-      label: "Security related expenses",
-      type: "checkbox",
-    },
-    {
-      name: "medicalExpenses",
-      label: "Medical expenses",
-      type: "checkbox",
-    },
-    {
-      name: "counselling",
-      label: "Counselling",
-      type: "checkbox",
-    },
-    {
-      name: "safetyExpenses",
-      label: "Safety-related expenses",
-      type: "checkbox",
-    },
-    {
-      name: "lossOrDamageClothing",
-      label: "Loss or damage to clothing",
-      type: "checkbox",
-    },
-    {
-      name: "recoveryExpenses",
-      label: "Recovery related expenses",
-      type: "checkbox",
-    },
+    // {
+    //   name: "typeOfAidHeader",
+    //   label: "Type of aid: (pick multiple)",
+    //   type: "header", // Just a visual label
+    // },
+    // {
+    //   name: "lossOfEarning",
+    //   label: "Loss of earnings",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "clothing",
+    //   label: "Clothing",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "securityExpenses",
+    //   label: "Security related expenses",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "medicalExpenses",
+    //   label: "Medical expenses",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "counselling",
+    //   label: "Counselling",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "safetyExpenses",
+    //   label: "Safety-related expenses",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "lossOrDamageClothing",
+    //   label: "Loss or damage to clothing",
+    //   type: "checkbox",
+    // },
+    // {
+    //   name: "recoveryExpenses",
+    //   label: "Recovery related expenses",
+    //   type: "checkbox",
+    // },
   ],
 };
 
@@ -442,13 +442,13 @@ export default function Stage1({
 
       const initialFormData = {};
       const initialStatuses = {};
-      const aidTypes = stageData.aidTypes || {};
+      // const aidTypes = stageData.aidTypes || {};
 
       currentFields.forEach((field) => {
         let value = "";
 
         if (currentModule === "vocat" && field.type === "checkbox") {
-             value = aidTypes[field.name] ?? stageData[field.name] ?? false;
+            //  value = aidTypes[field.name] ?? stageData[field.name] ?? false;
         } else if (field.name === "quoteAmount") {
           value =
             stageData[field.name]?.$numberDecimal ??
@@ -576,40 +576,40 @@ export default function Stage1({
       } else if (currentModule === "vocat") {
         
         // Nest aid types
-        const aidTypes = {
-             lossOfEarning: payload.lossOfEarning || false,
-             clothing: payload.clothing || false,
-             securityExpenses: payload.securityExpenses || false,
-             medicalExpenses: payload.medicalExpenses || false,
-             counselling: payload.counselling || false,
-             safetyExpenses: payload.safetyExpenses || false,
-             lossOrDamageClothing: payload.lossOrDamageClothing || false,
-             recoveryExpenses: payload.recoveryExpenses || false
-        };
-        payload.aidTypes = aidTypes;
+        // const aidTypes = {
+        //      lossOfEarning: payload.lossOfEarning || false,
+        //      clothing: payload.clothing || false,
+        //      securityExpenses: payload.securityExpenses || false,
+        //      medicalExpenses: payload.medicalExpenses || false,
+        //      counselling: payload.counselling || false,
+        //      safetyExpenses: payload.safetyExpenses || false,
+        //      lossOrDamageClothing: payload.lossOrDamageClothing || false,
+        //      recoveryExpenses: payload.recoveryExpenses || false
+        // };
+        // payload.aidTypes = aidTypes;
 
-        delete payload.lossOfEarning;
-        delete payload.clothing;
-        delete payload.securityExpenses;
-        delete payload.medicalExpenses;
-        delete payload.counselling;
-        delete payload.safetyExpenses;
-        delete payload.lossOrDamageClothing;
-        delete payload.recoveryExpenses;
+        // delete payload.lossOfEarning;
+        // delete payload.clothing;
+        // delete payload.securityExpenses;
+        // delete payload.medicalExpenses;
+        // delete payload.counselling;
+        // delete payload.safetyExpenses;
+        // delete payload.lossOrDamageClothing;
+        // delete payload.recoveryExpenses;
 
-        delete payload.typeOfAidHeader;
-        delete payload.detailsOfReportText;
+        // delete payload.typeOfAidHeader;
+        // delete payload.detailsOfReportText;
 
-        const reported = String(formData.reportedToPolice || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-        if (reported !== "yes") {
-            delete payload.dateOfReport;
-            delete payload.policeDetailsProvided;
-            delete payload.detailsOfReportPoliceStation;
-            delete payload.detailsOfReportOfficer;
-            delete payload.detailsOfReportEvidence;
-        } else {
-            delete payload.statutoryDeclaration;
-        }
+        // const reported = String(formData.reportedToPolice || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+        // if (reported !== "yes") {
+        //     delete payload.dateOfReport;
+        //     delete payload.policeDetailsProvided;
+        //     delete payload.detailsOfReportPoliceStation;
+        //     delete payload.detailsOfReportOfficer;
+        //     delete payload.detailsOfReportEvidence;
+        // } else {
+        //     delete payload.statutoryDeclaration;
+        // }
       } else {
         payload.noteForClient = noteForClient;
       }

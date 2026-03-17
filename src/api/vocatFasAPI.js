@@ -53,7 +53,7 @@ class VocatFasAPI {
 
     if (!response.ok) {
       const error = new Error(
-        data.message || `HTTP error! status: ${response.status}`
+        data.message || `HTTP error! status: ${response.status}`,
       );
       error.response = {
         status: response.status,
@@ -83,10 +83,13 @@ class VocatFasAPI {
 
   async getActiveClients() {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoints.ACTIVE_CLIENTS}`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.ACTIVE_CLIENTS}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error getting active VOCAT clients:", error);
@@ -96,10 +99,13 @@ class VocatFasAPI {
 
   async getArchivedClients() {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoints.ARCHIVED_CLIENTS}`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.ARCHIVED_CLIENTS}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error getting archived VOCAT clients:", error);
@@ -120,7 +126,6 @@ class VocatFasAPI {
     }
   }
 
-
   async getClient(matterNumber) {
     try {
       const response = await fetch(
@@ -128,7 +133,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -145,7 +150,7 @@ class VocatFasAPI {
           method: "PUT",
           headers: this.getHeaders(),
           body: JSON.stringify(updateData),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -178,11 +183,14 @@ class VocatFasAPI {
 
   async saveStageOne(data) {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoints.STAGE_ONE}`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.STAGE_ONE}`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data),
+        },
+      );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error saving Stage 1:", error);
@@ -197,7 +205,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -208,11 +216,14 @@ class VocatFasAPI {
 
   async saveStageTwo(data) {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoints.STAGE_TWO}`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.STAGE_TWO}`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data),
+        },
+      );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error saving Stage 2:", error);
@@ -227,7 +238,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -244,7 +255,7 @@ class VocatFasAPI {
           method: "POST",
           headers: this.getHeaders(),
           body: JSON.stringify(data),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -260,7 +271,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -277,7 +288,7 @@ class VocatFasAPI {
           method: "POST",
           headers: this.getHeaders(),
           body: JSON.stringify(data),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -293,7 +304,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -325,7 +336,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -343,7 +354,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -359,7 +370,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -370,10 +381,13 @@ class VocatFasAPI {
 
   async getClientDates() {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoints.CLIENT_DATES}`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CLIENT_DATES}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error fetching VOCAT client dates:", error);
@@ -385,10 +399,10 @@ class VocatFasAPI {
 
   async getDashboard(range) {
     try {
-      const url = range 
+      const url = range
         ? `${this.baseUrl}${this.endpoints.DASHBOARD}?range=${range}`
         : `${this.baseUrl}${this.endpoints.DASHBOARD}`;
-        
+
       const response = await fetch(url, {
         method: "GET",
         headers: this.getHeaders(),
@@ -409,7 +423,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -425,7 +439,7 @@ class VocatFasAPI {
         {
           method: "PATCH",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -443,7 +457,7 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -460,7 +474,7 @@ class VocatFasAPI {
           method: "PUT",
           headers: this.getHeaders(),
           body: JSON.stringify(data),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
@@ -476,11 +490,66 @@ class VocatFasAPI {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error getting outstanding tasks:", error);
+      throw error;
+    }
+  }
+
+  // View clients filter
+  // by matter status
+  async getClientsByMatterStatus(matterStatus) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CLIENTS}/search?matterStatus=${matterStatus}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error filtering by matter status:", error);
+      throw error;
+    }
+  }
+
+  // by legal costs
+  async getClientsByLegalCosts(legalCostsApplicationNumber) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CLIENTS}/search?legalCostsApplicationNumber=${legalCostsApplicationNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error filtering by legal costs:", error);
+      throw error;
+    }
+  }
+
+  // by matter status and legal cost
+  async getClientsByMatterStatusAndLegalCosts(
+    matterStatus,
+    legalCostsApplicationNumber,
+  ) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${this.endpoints.CLIENTS}/search?matterStatus=${matterStatus}&legalCostsApplicationNumber=${legalCostsApplicationNumber}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error filtering by matter status and legal costs:", error);
       throw error;
     }
   }
