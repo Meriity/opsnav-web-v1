@@ -59,6 +59,13 @@ export const monthlyReleaseNotes = {
               details: "Resolved an issue where filtered search results were not displaying correctly in the main table due to mismatched data keys.",
               icon: Zap,
             },
+            {
+              type: "feature",
+              title: "Client Dashboard Enhancements",
+              description: "Integrated Matter Status and Legal Costs fields into the VOCAT Client Dashboard.",
+              details: "The VOCAT/FAS Client Dashboard now displays 'Matter Status' and 'Legal Costs Application Number' to keep clients informed of their application progress.",
+              icon: Sparkles,
+            },
           ],
           module: "VOCAT/FAS",
           severity: "Medium",
