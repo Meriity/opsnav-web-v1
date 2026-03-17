@@ -459,6 +459,9 @@ const ViewClients = () => {
           filters.matterStatus,
           filters.legalCostsApplicationNumber
         );
+      } else {
+        // Fetch all active clients if no filters (Reset case)
+        response = await api.getActiveClients();
       }
 
       const data = response?.clients || response?.data || response || [];
@@ -781,12 +784,14 @@ const ViewClients = () => {
                 handleVocatFilter(filter)
             }}
             currentModule={currentModule}
-            onReset={() =>
-              setActiveFilters({
+            onReset={() => {
+              const emptyFilters = {
                 matterStatus: "",
                 legalCostsApplicationNumber: ""
-              })
-            }
+              };
+              setActiveFilters(emptyFilters);
+              handleVocatFilter(emptyFilters);
+            }}
           />
           <DateRangeModal
             isOpen={showDateRange}
