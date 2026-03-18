@@ -18,11 +18,53 @@ import {
   Search,
   Edit,
   FolderOpen,
+  Download,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       March: [
+        {
+          date: "2026-03-18",
+          version: "v7.2.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Archived Clients Export & UI Fixes",
+          description: "Improved data mapping, formatting, and stage tracking for archived clients export across all modules.",
+          updates: [
+            {
+              type: "feature",
+              title: "Export Stage Statuses",
+              description: "Added stage status columns (S1, S2, etc.) to the archived clients Excel export.",
+              details: "Users can now see the color-coded status (Green, Amber, Red) of each stage directly in the exported Excel file for Conveyancing, Commercial, Wills, and VOCAT modules.",
+              icon: Download,
+            },
+            {
+              type: "bugfix",
+              title: "Excel Export Referral Field",
+              description: "Included the missing 'Referral' field in the archived clients export for the Conveyancing module.",
+              details: "The Referral field is now extracted from the stage1 data and included as a column in the Excel export.",
+              icon: Download,
+            },
+            {
+              type: "bugfix",
+              title: "Export Date Formatting",
+              description: "Standardized date formatting in Excel exports to DD/MM/YYYY.",
+              details: "All date fields in the Excel export across all modules now follow a consistent DD/MM/YYYY format instead of raw ISO strings.",
+              icon: Calendar,
+            },
+            {
+              type: "bugfix",
+              title: "Table UI Date Formatting",
+              description: "Fixed inconsistent date display in the archived clients table.",
+              details: "Ensured dates in the archived clients table are properly formatted even when the backend returns uppercase keys (e.g., MATTER_DATE).",
+              icon: BarChart3,
+            },
+          ],
+          module: "Archived Clients",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-03-17",
           version: "v7.2.1",
