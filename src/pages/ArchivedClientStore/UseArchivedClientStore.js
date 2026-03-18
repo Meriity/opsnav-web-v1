@@ -60,20 +60,20 @@ export const useArchivedClientStore = create((set, get) => ({
       if (currentModule !== "print media") {
         mapped = sourceArray.map((client, index) => ({
           id: index + 1,
-          matternumber: client.matterNumber || "N/A",
-          client_name: client.clientName || "N/A",
-          property_address: client.propertyAddress || "N/A",
+          matternumber: client.matterNumber || client.MATTER_NUMBER || "N/A",
+          client_name: client.clientName || client.CLIENT_NAME || "N/A",
+          property_address: client.propertyAddress || client.PROPERTY_ADDRESS || "N/A",
           businessAddress:
-            client.businessAddress || client.propertyAddress || "N/A",
-          state: client.state || "N/A",
-          type: client.clientType || "N/A",
-          status: client.closeMatter || "N/A",
-          matter_date: formatDate(client.matterDate, "DD-MM-YYYY"),
-          settlement_date: formatDate(client.settlementDate, "DD-MM-YYYY"),
-          settlement_date_iso: client.settlementDate
-            ? moment(client.settlementDate).format("YYYY-MM-DD")
+            client.businessAddress || client.propertyAddress || client.PROPERTY_ADDRESS || "N/A",
+          state: client.state || client.STATE || "N/A",
+          type: client.clientType || client.CLIENT_TYPE || "N/A",
+          status: client.closeMatter || client.CLOSE_MATTER || "N/A",
+          matter_date: formatDate(client.matterDate || client.MATTER_DATE, "DD-MM-YYYY"),
+          settlement_date: formatDate(client.settlementDate || client.SETTLEMENT_DATE, "DD-MM-YYYY"),
+          settlement_date_iso: (client.settlementDate || client.SETTLEMENT_DATE)
+            ? moment(client.settlementDate || client.SETTLEMENT_DATE).format("YYYY-MM-DD")
             : "N/A",
-          isClosed: client.closeMatter === "closed",
+          isClosed: (client.closeMatter || client.CLOSE_MATTER) === "closed",
           // include original payload so callers can still access raw fields
           __raw: client,
         }));

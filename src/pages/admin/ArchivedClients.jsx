@@ -504,8 +504,26 @@ export default function ArchivedClients() {
         { key: "property_address", title: "Property Address" },
         { key: "state", title: "State" },
         { key: "type", title: "Client Type" },
-        { key: "matterDate", title: "Matter Date" },
-        { key: "settlementDate", title: "Settlement Date" },
+        {
+          key: "matterDate",
+          title: "Matter Date",
+          render: (client) =>
+            client.matterDate || client.matter_date
+              ? moment(client.matterDate || client.matter_date, ["DD-MM-YYYY", moment.ISO_8601]).isValid()
+                ? moment(client.matterDate || client.matter_date, ["DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY")
+                : "-"
+              : "-",
+        },
+        {
+          key: "settlementDate",
+          title: "Settlement Date",
+          render: (client) =>
+            client.settlementDate || client.settlement_date
+              ? moment(client.settlementDate || client.settlement_date, ["DD-MM-YYYY", moment.ISO_8601]).isValid()
+                ? moment(client.settlementDate || client.settlement_date, ["DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY")
+                : "-"
+              : "-",
+        },
         { key: "status", title: "Status" },
       ];
     } else if (currentModule === "print media") {
@@ -597,10 +615,10 @@ export default function ArchivedClients() {
       const from = moment(withFrom).format("YYYY-MM-DD");
       const to = moment(withTo).format("YYYY-MM-DD");
 
-      let data;
+      let rawData = [];
       if (currentModule === "commercial" || currentModule === "vocat") {
         // For commercial and vocat, filter the already-fetched list
-        data = filteredClientList.filter((client) => {
+        rawData = filteredClientList.filter((client) => {
           const dateToUse =
             currentModule === "commercial"
               ? client.settlement_date || client.settlementDate
@@ -610,39 +628,106 @@ export default function ArchivedClients() {
           const clientDate = moment(new Date(dateToUse));
           return clientDate.isBetween(withFrom, withTo, "day", "[]");
         });
-
-        if (currentModule === "vocat") {
-          data = data.map((item, index) => ({
-            id: index + 1,
-            matterNumber: item.matterNumber,
-            matterDate: item.matterDate
-              ? moment(item.matterDate).format("DD/MM/YYYY")
-              : "",
-            clientName: item.clientName,
-            clientAddress: item.clientAddress,
-            state: item.state,
-            clientType: item.clientType,
-            criminalIncidentDate: item.criminalIncidentDate
-              ? moment(item.criminalIncidentDate).format("DD/MM/YYYY")
-              : "",
-            notes: item.notes,
-            dataEntryBy: item.dataEntryBy,
-            closeMatter: item.closeMatter,
-          }));
-        }
       } else {
         const res = await api.getArchivedClientsDate(from, to);
         if (Array.isArray(res)) {
-          data = res;
+          rawData = res;
         } else {
-          data = res.data || [];
+          rawData = res.data || [];
         }
       }
 
-      if (!data || data.length === 0) {
+      if (!rawData || rawData.length === 0) {
         toast.info("No data available for the selected date range");
       } else {
-        convertToExcel(data);
+        // Map data based on module to include required fields and format dates
+        let exportData = [];
+        if (currentModule === "vocat") {
+          exportData = rawData.map((item, index) => ({
+            id: index + 1,
+            "Matter Number": item.matterNumber || item.MATTER_NUMBER,
+            "Matter Date": (item.matterDate || item.MATTER_DATE)
+              ? moment(item.matterDate || item.MATTER_DATE).format("DD/MM/YYYY")
+              : "",
+            "Client Name": item.clientName || item.CLIENT_NAME,
+            "Client Address": item.clientAddress || item.PROPERTY_ADDRESS,
+            "State": item.state || item.STATE,
+            "Client Type": item.clientType || item.CLIENT_TYPE,
+            "Criminal Incident Date": item.criminalIncidentDate
+              ? moment(item.criminalIncidentDate).format("DD/MM/YYYY")
+              : "",
+            "Notes": item.notes,
+            "Data Entry By": item.dataEntryBy || item.DATA_ENTRY_BY,
+            "Status": item.status || item.CLOSE_MATTER || "archived",
+            "S1": item.stage1?.colorStatus || item.stageOne?.colorStatus || "",
+            "S2": item.stage2?.colorStatus || item.stageTwo?.colorStatus || "",
+            "S3": item.stage3?.colorStatus || item.stageThree?.colorStatus || "",
+            "S4": item.stage4?.colorStatus || item.stageFour?.colorStatus || "",
+          }));
+        } else if (currentModule === "commercial") {
+          exportData = rawData.map((item) => ({
+            "Project Number": item.matternumber || item.matterNumber,
+            "Client Name": item.client_name || item.clientName,
+            "Business Address": item.property_address || item.businessAddress || item.business_address,
+            "State": item.state,
+            "Client Type": item.clientType || item.type,
+            "Project Date": (item.matter_date || item.matterDate) 
+              ? moment(item.matter_date || item.matterDate).format("DD/MM/YYYY") 
+              : "",
+            "Completion Date": (item.settlement_date || item.settlementDate) 
+              ? moment(item.settlement_date || item.settlementDate).format("DD/MM/YYYY") 
+              : "",
+            "Status": item.status || "archived",
+            "S1": item.stage1?.colorStatus || item.stageOne?.colorStatus || "",
+            "S2": item.stage2?.colorStatus || item.stageTwo?.colorStatus || "",
+            "S3": item.stage3?.colorStatus || item.stageThree?.colorStatus || "",
+            "S4": item.stage4?.colorStatus || item.stageFour?.colorStatus || "",
+            "S5": item.stage5?.colorStatus || item.stageFive?.colorStatus || "",
+            "S6": item.stage6?.colorStatus || item.stageSix?.colorStatus || "",
+          }));
+        } else if (currentModule === "conveyancing" || currentModule === "wills") {
+          exportData = rawData.map((item) => {
+            const row = {
+              "Matter Number": item.MATTER_NUMBER || item.matterNumber,
+              "Matter Date": (item.MATTER_DATE || item.matterDate) 
+                ? moment(item.MATTER_DATE || item.matterDate).format("DD/MM/YYYY") 
+                : "",
+              "Client Name": item.CLIENT_NAME || item.clientName,
+              "Property Address": item.PROPERTY_ADDRESS || item.propertyAddress,
+              "State": item.STATE || item.state,
+              "Client Type": item.CLIENT_TYPE || item.clientType,
+              "Settlement Date": (item.SETTLEMENT_DATE || item.settlementDate) 
+                ? moment(item.SETTLEMENT_DATE || item.settlementDate).format("DD/MM/YYYY") 
+                : "",
+              "Referral": item.stage1?.referral || "",
+              "Data Entry By": item.DATA_ENTRY_BY || item.dataEntryBy,
+              "Status": item.CLOSE_MATTER || item.closeMatter || item.status
+            };
+
+            // Add stages for Conveyancing (6 stages) and Wills (3 stages)
+            const numStages = currentModule === "wills" ? 3 : 6;
+            for (let i = 1; i <= numStages; i++) {
+               const stageKey = `stage${i}`;
+               row[`S${i}`] = item[stageKey]?.colorStatus || "";
+            }
+            return row;
+          });
+        } else if (currentModule === "print media") {
+           exportData = rawData.map((item) => ({
+            "Order ID": item.orderId || item.id,
+            "Client Name": item.clientName || item.client_name,
+            "Billing Address": item.propertyAddress || item.deliveryAddress,
+            "State": item.state,
+            "Order Type": item.ordertype || item.orderType,
+            "Order Date": item.orderDate ? moment(item.orderDate).format("DD/MM/YYYY") : "",
+            "Delivery Date": item.deliveryDate ? moment(item.deliveryDate).format("DD/MM/YYYY") : "",
+            "Status": item.status
+          }));
+        } else {
+          exportData = rawData;
+        }
+
+        convertToExcel(exportData);
       }
     } catch (e) {
       toast.error(e.message || "Export failed");
