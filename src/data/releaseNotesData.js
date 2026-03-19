@@ -25,6 +25,54 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-19",
+          version: "v7.3.0",
+          type: "minor",
+          category: "feature",
+          title: "Wills Multi-Stepper Form Implementation",
+          description: "Introduced a comprehensive 10-step guided form for Wills preparation with dynamic data capture, professional PDF generation, and real-time preview.",
+          updates: [
+            {
+              type: "feature",
+              title: "10-Step Guided Workflow",
+              description: "Consolidated 42 complex legal questions into 10 logical, easy-to-navigate phases.",
+              details: "Improved user experience with progressive disclosure, input validation, and clear stage progress indicators (Green Ticks).",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Professional PDF Generation",
+              description: "Engineered ultra-precise PDF export using jsPDF and html2canvas with manual page splitting.",
+              details: "The system now guarantees professional A4 margins and precise breaks (e.g., after Clause 4(e)(ii)), ensuring legal document integrity.",
+              icon: Download,
+            },
+            {
+              type: "feature",
+              title: "Smart Data Capture",
+              description: "Implemented count-based dynamic fields for Banks and Personal Properties.",
+              details: "Forms now ask for the number of items first and dynamically generate the required input fields, including support for Gift Ratios and Joint/Sole ownership distinctions.",
+              icon: Database,
+            },
+            {
+              type: "ui_ux",
+              title: "Real-time Legal Review",
+              description: "Seamless on-screen preview of the final Will document before export.",
+              details: "Users can see a live-updating draft of their Will with all collected data automatically bolded for better clarity and emphasis.",
+              icon: Search,
+            },
+            {
+              type: "ui_ux",
+              title: "Visual Feedback System",
+              description: "Added a visual downloader with a loading spinner for PDF generation.",
+              details: "Provides immediate async feedback to users during the document rendering and download process.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-03-18",
           version: "v7.2.2",
           type: "patch",

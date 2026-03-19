@@ -1372,24 +1372,39 @@ function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddButtonClick}
-                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden xs:inline">
-                      {getAddButtonLabel()}
-                    </span>
-                    <span className="xs:hidden">
-                      {currentModule === "print media"
-                        ? "New Order"
-                        : "New Client"}
-                    </span>
-                  </motion.button>
+                  <div className="flex gap-2">
+                    {currentModule === "wills" && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate("/admin/wills-form")}
+                        className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-[#2E3D99] text-[#2E3D99] rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all whitespace-nowrap"
+                      >
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#2E3D99]" />
+                        <span className="hidden xs:inline">Wills Multi-Stepper</span>
+                        <span className="xs:hidden">Wills Form</span>
+                      </motion.button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleAddButtonClick}
+                      className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl sm:rounded-xl font-semibold text-xs sm:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                    >
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden xs:inline">
+                        {getAddButtonLabel()}
+                      </span>
+                      <span className="xs:hidden">
+                        {currentModule === "print media"
+                          ? "New Order"
+                          : "New Client"}
+                      </span>
+                    </motion.button>
+                  </div>
                 )}
               </div>
+
             </div>
           </motion.div>
 
