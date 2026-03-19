@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
+import WillsForm from "./pages/admin/WillsForm";
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -88,6 +89,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="manage-users" element={<ManageUsers />} />
           <Route path="manage-clients" element={<ManageClients />} />
+          <Route path="wills-form" element={<WillsForm />} />
           <Route path="view-clients" element={<ViewClients />} />
           <Route path="archived-clients" element={<ArchivedClients />} />
           <Route
@@ -145,6 +147,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="view-clients" element={<ViewClients />} />
           <Route path="manage-clients" element={<ManageClients />} />
+          <Route path="wills-form" element={<WillsForm />} />
           <Route path="archived-clients" element={<ArchivedClients />} />
           <Route path="client/:matterNumber/stages/:stageNo?" element={<StagesLayout />} />
         </Route>
