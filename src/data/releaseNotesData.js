@@ -25,6 +25,26 @@ export const monthlyReleaseNotes = {
     2026: {
       March: [
         {
+          date: "2026-03-27",
+          version: "v7.3.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Client Portal Job Sorting & Minor Fixes",
+          description: "Ensured new jobs appear at the top of the list on the Client Portal and addressed minor sorting issues.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Client Portal Job Sorting",
+              description: "Fixed job sorting on the Client Portal to ensure newer jobs appear first.",
+              details: "Jobs are now sorted in descending order by creation date, ensuring that the most recent matters are immediately visible at the top of the list for clients.",
+              icon: ArrowUpDown,
+            },
+          ],
+          module: "Client Portal",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-03-19",
           version: "v7.3.0",
           type: "minor",
