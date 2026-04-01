@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import WillsForm from "./pages/admin/WillsForm";
+import ReferenceMatter from "./pages/admin/ReferenceMatter";
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -74,6 +75,7 @@ function App() {
         <Route path="/client/set-password" element={<SetClientPassword />} />
         <Route path="/client/login" element={<ClientLogin />} />
         <Route path="/client/forgotPassword" element={<ForgotPassword />} />
+        <Route path="/wills/form" element={<WillsForm />} />
 
         {/* 🔒 Protected Admin Routes */}
         <Route
@@ -91,6 +93,7 @@ function App() {
           <Route path="manage-clients" element={<ManageClients />} />
           <Route path="wills-form" element={<WillsForm />} />
           <Route path="view-clients" element={<ViewClients />} />
+          <Route path="reference-matter" element={<ReferenceMatter />} />
           <Route path="archived-clients" element={<ArchivedClients />} />
           <Route
             path="client/stages/:matterNumber/:stageNo?"
@@ -146,6 +149,7 @@ function App() {
         >
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="view-clients" element={<ViewClients />} />
+          <Route path="reference-matter" element={<ReferenceMatter />} />
           <Route path="manage-clients" element={<ManageClients />} />
           <Route path="wills-form" element={<WillsForm />} />
           <Route path="archived-clients" element={<ArchivedClients />} />

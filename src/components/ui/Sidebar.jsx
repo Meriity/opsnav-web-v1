@@ -15,6 +15,7 @@ import {
   FolderArchive,
   UserCog,
   Users,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -60,36 +61,46 @@ export default function Sidebar({
       to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
     },
     {
-  label:
-    currentModule === "print media"
-      ? "View Orders"
-      : currentModule === "commercial"
-      ? "View Projects"
-      : "View Clients",
-  icon: ViewClientsIcon,
-  to:
-    currentModule === "commercial"
-      ? "/admin/view-clients"
-      : isAdminRoute
-      ? "/admin/view-clients"
-      : "/user/view-clients",
-},
-{
-  label:
-    currentModule === "print media"
-      ? "Completed Orders"
-      : currentModule === "commercial"
-      ? "Archived Projects"
-      : "Archived Clients",
-  icon: ArchivedChatsIcon,
-  to:
-    currentModule === "commercial"
-      ? "/admin/archived-clients"
-      : isAdminRoute
-      ? "/admin/archived-clients"
-      : "/user/archived-clients",
-},
-
+      label:
+        currentModule === "print media"
+          ? "View Orders"
+          : currentModule === "commercial"
+          ? "View Projects"
+          : "View Clients",
+      icon: ViewClientsIcon,
+      to:
+        currentModule === "commercial"
+          ? "/admin/view-clients"
+          : isAdminRoute
+          ? "/admin/view-clients"
+          : "/user/view-clients",
+    },
+    ...(currentModule === "wills"
+      ? [
+          {
+            label: "Reference Matter",
+            icon: BookOpen,
+            to: isAdminRoute
+              ? "/admin/reference-matter"
+              : "/user/reference-matter",
+          },
+        ]
+      : []),
+    {
+      label:
+        currentModule === "print media"
+          ? "Completed Orders"
+          : currentModule === "commercial"
+          ? "Archived Projects"
+          : "Archived Clients",
+      icon: ArchivedChatsIcon,
+      to:
+        currentModule === "commercial"
+          ? "/admin/archived-clients"
+          : isAdminRoute
+          ? "/admin/archived-clients"
+          : "/user/archived-clients",
+    },
   ];
 
   if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
@@ -130,6 +141,8 @@ export default function Sidebar({
       case "Archived Projects":
       case "Completed/Archived":
         return FolderArchive;
+      case "Reference Matter":
+        return BookOpen;
       default:
         return LayoutDashboard;
     }

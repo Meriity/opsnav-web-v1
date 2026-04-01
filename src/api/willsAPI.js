@@ -3,13 +3,10 @@ import { getApiBaseUrl } from "../utils/apiConfig";
 
 class WillsAPI {
   constructor() {
-    this.baseUrl = getApiBaseUrl("wills"); // Assuming 'wills' maps to the correct port/path in apiConfig, or defaults to backend
-    // If getApiBaseUrl doesn't support 'wills' yet, might need to use a default or check that file. 
-    // Usually it just returns the localhost:5000 or production URL.
+    this.baseUrl = getApiBaseUrl("wills"); 
     if (!this.baseUrl || this.baseUrl === "undefined") {
-        this.baseUrl = "http://localhost:5000"; // Fallback based on Postman variable
+        this.baseUrl = "http://localhost:5000"; 
     }
-    this.endpoints = WILLS_ENDPOINTS;
   }
 
   getHeaders() {
@@ -68,7 +65,7 @@ class WillsAPI {
     try {
       // Postman: /wills/dashboard?range=sixMonths
       const response = await fetch(
-        `${this.baseUrl}${this.endpoints.DASHBOARD}?range=${range}`,
+        `${this.baseUrl}${WILLS_ENDPOINTS.DASHBOARD}?range=${range}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -84,7 +81,7 @@ class WillsAPI {
   // --- Outstanding Tasks ---
   async getOutstandingTasks(page = 1, activeMatter = null, matterFilter = "none") {
     try {
-      let url = `${this.baseUrl}${this.endpoints.OUTSTANDING_TASKS}?page=${page}&filter=${matterFilter}`;
+      let url = `${this.baseUrl}${WILLS_ENDPOINTS.OUTSTANDING_TASKS}?page=${page}&filter=${matterFilter}`;
       if (activeMatter) {
         url = `${url}&matterNumber=${activeMatter}`;
       }
@@ -105,7 +102,7 @@ class WillsAPI {
   async getActiveClients() {
     try {
       const response = await fetch(
-        `${this.baseUrl}${this.endpoints.ACTIVE_CLIENTS}`,
+        `${this.baseUrl}${WILLS_ENDPOINTS.ACTIVE_CLIENTS}`,
         {
            method: "GET", 
            headers: this.getHeaders(),
@@ -126,7 +123,7 @@ class WillsAPI {
   async getArchivedClients() {
     try {
       const response = await fetch(
-        `${this.baseUrl}${this.endpoints.ARCHIVED_CLIENTS}`,
+        `${this.baseUrl}${WILLS_ENDPOINTS.ARCHIVED_CLIENTS}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -143,7 +140,7 @@ class WillsAPI {
   async getCalendarDates() {
     try {
       const response = await fetch(
-        `${this.baseUrl}${this.endpoints.CALENDAR_DATES}`,
+        `${this.baseUrl}${WILLS_ENDPOINTS.CALENDAR_DATES}`,
         {
           method: "GET",
           headers: this.getHeaders(),
@@ -159,7 +156,7 @@ class WillsAPI {
   async createProject(clientData) {
       // Maps to Create Wills Client
       try {
-          const response = await fetch(`${this.baseUrl}${this.endpoints.CLIENTS}`, {
+          const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CLIENTS}`, {
               method: "POST",
               headers: this.getHeaders(),
               body: JSON.stringify(clientData)
@@ -175,7 +172,7 @@ class WillsAPI {
       // Maps to Update Wills Client: PUT /wills/client/{{matterNumber}}
       try {
           // Note: endpoints.CLIENT_UPDATE is /wills/client
-          const response = await fetch(`${this.baseUrl}${this.endpoints.CLIENT_UPDATE}/${matterNumber}`, {
+          const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CLIENT_UPDATE}/${matterNumber}`, {
               method: "PUT",
               headers: this.getHeaders(),
               body: JSON.stringify(clientData)
@@ -190,7 +187,7 @@ class WillsAPI {
   async getProjectFullData(matterNumber) {
       // Using Get Wills Client: GET /wills/client?matterNumber=...
       try {
-          const response = await fetch(`${this.baseUrl}${this.endpoints.CLIENT_BY_ID}?matterNumber=${matterNumber}`, {
+          const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CLIENT_BY_ID}?matterNumber=${matterNumber}`, {
               method: "GET",
               headers: this.getHeaders()
           });
@@ -203,17 +200,13 @@ class WillsAPI {
 
   async checkClientExists(matterNumber) {
     try {
-        const response = await fetch(`${this.baseUrl}${this.endpoints.CHECK_CLIENT_EXISTS}/${matterNumber}`, {
+        const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CHECK_CLIENT_EXISTS}/${matterNumber}`, {
             method: "GET",
             headers: this.getHeaders()
         });
         return await this.handleResponse(response);
     } catch (error) {
         console.error("Error checking checkClientExists:", error);
-         // Treat 404 as false (client doesn't exist) if handleResponse throws it, 
-         // but handleResponse throws for 404. We might want to catch it here to return false/true structure?
-         // But the modal expects the response object or boolean logic.
-         // Let's rely on call site handling or standard behavior. The endpoint likely returns { exists: boolean }.
         throw error;
     }
   }
@@ -221,9 +214,9 @@ class WillsAPI {
   // --- Stages ---
   async upsertStage(stageNumber, matterNumber, stageData) {
       const endpointMap = {
-          1: this.endpoints.STAGE_ONE,
-          2: this.endpoints.STAGE_TWO,
-          3: this.endpoints.STAGE_THREE
+          1: WILLS_ENDPOINTS.STAGE_ONE,
+          2: WILLS_ENDPOINTS.STAGE_TWO,
+          3: WILLS_ENDPOINTS.STAGE_THREE
       };
       const endpoint = endpointMap[stageNumber];
       if (!endpoint) throw new Error(`Invalid stage number: ${stageNumber}`);
@@ -243,9 +236,9 @@ class WillsAPI {
 
   async getStageData(stageNumber, matterNumber) {
       const endpointMap = {
-          1: this.endpoints.STAGE_ONE_BY_ID,
-          2: this.endpoints.STAGE_TWO_BY_ID,
-          3: this.endpoints.STAGE_THREE_BY_ID
+          1: WILLS_ENDPOINTS.STAGE_ONE_BY_ID,
+          2: WILLS_ENDPOINTS.STAGE_TWO_BY_ID,
+          3: WILLS_ENDPOINTS.STAGE_THREE_BY_ID
       };
       const endpoint = endpointMap[stageNumber];
       if (!endpoint) throw new Error(`Invalid stage number: ${stageNumber}`);
@@ -266,7 +259,7 @@ class WillsAPI {
   // --- Costs ---
   async upsertCost(matterNumber, costData) {
       try {
-          const response = await fetch(`${this.baseUrl}${this.endpoints.COST}`, {
+          const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.COST}`, {
               method: "POST",
               headers: this.getHeaders(),
               body: JSON.stringify({ matterNumber, ...costData })
@@ -279,7 +272,7 @@ class WillsAPI {
 
   async getCostData(matterNumber) {
     try {
-        const response = await fetch(`${this.baseUrl}${this.endpoints.COST_BY_ID}/${matterNumber}`, {
+        const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.COST_BY_ID}/${matterNumber}`, {
             method: "GET",
             headers: this.getHeaders()
         });
@@ -306,6 +299,143 @@ class WillsAPI {
       return await response.json();
     } catch (error) {
       console.error("Error sending reminder email:", error);
+      throw error;
+    }
+  }
+
+  // --- Form V1 ---
+  cleanPayload(data) {
+    const cleaned = { ...data };
+    
+    // Explicitly set isDeleted to false
+    cleaned.isDeleted = false;
+    
+    // Nullify guardian if all its fields are null/empty
+    if (cleaned.guardian) {
+      const g = cleaned.guardian;
+      const isActuallyEmpty = (
+        (g.name === null || g.name === "") &&
+        (g.address === null || g.address === "") &&
+        (g.isExecutor === null) &&
+        (g.relation?.category === null || g.relation?.category === "")
+      );
+      if (isActuallyEmpty) {
+        cleaned.guardian = null;
+      }
+    }
+
+    // Nullify funeral if all its fields are null/empty
+    if (cleaned.funeral) {
+      const f = cleaned.funeral;
+      const isActuallyEmpty = (
+        (f.hasPlan === null) &&
+        (f.type === null || f.type === "") &&
+        (f.details === null || f.details === "")
+      );
+      if (isActuallyEmpty) {
+        cleaned.funeral = null;
+      }
+    }
+
+    return cleaned;
+  }
+
+  async createWillsForm(data) {
+    try {
+      const cleanedData = this.cleanPayload(data);
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORM_CREATE}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(cleanedData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating wills form:", error);
+      throw error;
+    }
+  }
+
+  async updateWillsForm(data) {
+    try {
+      const cleanedData = this.cleanPayload(data);
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORM_UPDATE}`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify(cleanedData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating wills form:", error);
+      throw error;
+    }
+  }
+
+  async getSubmittedForms() {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.SUBMITTED_FORMS}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting submitted forms:", error);
+      throw error;
+    }
+  }
+
+  async convertToMatter(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CONVERT_TO_MATTER}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error converting to matter:", error);
+      throw error;
+    }
+  }
+
+  // --- File Upload V1 ---
+  async generateSignedUrls(files) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.GENERATE_SIGNED_URLS}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ files }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error generating signed URLs:", error);
+      throw error;
+    }
+  }
+
+  async uploadMultipleUrls(urls, matterReferenceNumber) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.UPLOAD_MULTIPLE_URLS}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ urls, matterReferenceNumber }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error uploading multiple URLs:", error);
+      throw error;
+    }
+  }
+
+  async sendWillsEmail(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.SEND_EMAIL}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error sending wills email:", error);
       throw error;
     }
   }

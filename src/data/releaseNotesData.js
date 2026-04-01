@@ -23,6 +23,56 @@ import {
 
 export const monthlyReleaseNotes = {
     2026: {
+      April: [
+        {
+          date: "2026-04-01",
+          version: "v7.4.0",
+          type: "major",
+          category: "feature",
+          title: "Wills Form Power Update: GCS Uploads & Email Delivery",
+          description: "Massive feature update for the Wills module, introducing direct-to-cloud file uploads, dynamic client link delivery, and hardened submission reliability.",
+          updates: [
+            {
+              type: "feature",
+              title: "Direct GCS File Uploads",
+              description: "Integrated Google Cloud Storage (GCS) using V4 Signed URLs for ultra-reliable file handling.",
+              details: "Users can now upload complex legal documents (PDFs) directly to GCS from the Wills form. The system manages secure signatures and PascalCase header alignment for perfect cloud synchronization.",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Send Wills Form Feature",
+              description: "New Dashboard capability to send preparation links directly to clients.",
+              details: "Introduced a 'Send Wills Form' button and modal on the Dashboard, allowing admins to instantly dispatch Wills forms via a new backend email trigger.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic Environment Detection",
+              description: "Automated URL routing using window.location.origin.",
+              details: "The system now automatically identifies if it is running on dev.opsnav.com or opsnav.com, ensuring all client links are always environment-accurate without manual configuration.",
+              icon: TrendingUp,
+            },
+            {
+              type: "feature",
+              title: "Submission Data Protection",
+              description: "Hardened API payloads with 'isDeleted: false' enforcement.",
+              details: "Ensured maximum data integrity by stripping internal metadata and explicitly enforcing active status during all form submissions.",
+              icon: Shield,
+            },
+            {
+              type: "improvement",
+              title: "Maps Autocomplete Integration",
+              description: "Universal address search across all Wills form phases.",
+              details: "Integrated Google Maps Places Autocomplete for every address field in the 10-step wizard, including executors and guardians.",
+              icon: Search,
+            },
+          ],
+          module: "Wills, Dashboard",
+          severity: "High",
+          status: "Released"
+        },
+      ],
       March: [
         {
           date: "2026-03-27",

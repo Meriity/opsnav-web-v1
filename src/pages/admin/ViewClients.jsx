@@ -1435,7 +1435,6 @@ const ViewClients = () => {
                   users={user}
                   handleChangeUser={handleAllocationChange}
                   pendingAllocations={pendingAllocations}
-                  onEdit={true}
                   onShare={(matterNumber, reshareEmail) => {
                     setShareDetails({ matterNumber, reshareEmail });
                     setShowShareDialog(true);

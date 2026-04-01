@@ -2,18 +2,30 @@ import React from "react";
 
 const WillsPreview = ({ formData }) => {
   const {
-    fullName, occupation, address,
-    executorName1, executorRelation1,
-    addSecondExecutor, executorName2, executorRelation2, executorAddress2,
-    beneficiaries, jointProperties, soleProperties,
-    jointBanks, singleBanks,
-    hasGuardian, isExecutorGuardian, guardianName, guardianRelation,
-    funeralPlanned, funeralDetails, funeralChoice,
-    jointPersonalProperties, solePersonalProperties,
-    digitalRightsBeneficiary
+    personal,
+    executors,
+    beneficiaries,
+    properties,
+    bankAccounts,
+    guardian,
+    funeral,
+    personalAssets,
+    other
   } = formData;
 
-  const primaryBeneficiary = beneficiaries[0] || { name: "", relation: "" };
+  const { fullName, occupation, address } = personal;
+  const primaryExecutor = executors[0] || { name: "", relation: { category: "" }, address: "" };
+  const secondaryExecutor = executors[1];
+  const primaryBeneficiary = beneficiaries[0] || { name: "", relation: { category: "" } };
+
+  const jointProperties = properties.joint || [];
+  const soleProperties = properties.sole || [];
+  const jointBanks = bankAccounts.joint || [];
+  const singleBanks = bankAccounts.single || [];
+  const jointPersonalProperties = personalAssets.joint || [];
+  const solePersonalProperties = personalAssets.sole || [];
+
+  const digitalRightsBeneficiary = other.digitalBeneficiary;
 
   const BoldValue = ({ children, placeholder = "____________________" }) => (
     <span className="font-bold uppercase tracking-tight">{children || placeholder}</span>
@@ -40,9 +52,9 @@ const WillsPreview = ({ formData }) => {
         <div className="flex gap-4">
           <span className="min-w-[20px]">2.</span>
           <p>
-            <span className="font-bold uppercase">I APPOINT</span> as my executor and trustee my <BoldValue>{executorRelation1}</BoldValue> <BoldValue>{executorName1}</BoldValue> 
-            {addSecondExecutor === "Yes" ? (
-              <> unless unable or unwilling to act or continue to act in which event I APPOINT my <BoldValue>{executorRelation2}</BoldValue> <BoldValue>{executorName2}</BoldValue> of <BoldValue>{executorAddress2}</BoldValue></>
+            <span className="font-bold uppercase">I APPOINT</span> as my executor and trustee my <BoldValue>{primaryExecutor.relation?.category === "Other" ? primaryExecutor.relation?.customValue : primaryExecutor.relation?.category}</BoldValue> <BoldValue>{primaryExecutor.name}</BoldValue> 
+            {secondaryExecutor ? (
+              <> unless unable or unwilling to act or continue to act in which event I APPOINT my <BoldValue>{secondaryExecutor.relation?.category === "Other" ? secondaryExecutor.relation?.customValue : secondaryExecutor.relation?.category}</BoldValue> <BoldValue>{secondaryExecutor.name}</BoldValue> of <BoldValue>{secondaryExecutor.address}</BoldValue></>
             ) : ""} 
             <span className="font-bold uppercase"> AND I DECLARE</span> that the expression ‘my trustees’ when hereinafter used and where the context permits shall mean and include the executor or executors and trustee or trustees for the time being of my will whether original, surviving, substituted or additionally appointed, and I direct that providing one trustee remains other trustees may retire without being replaced.
           </p>
@@ -72,10 +84,14 @@ const WillsPreview = ({ formData }) => {
             <div className="flex gap-4">
               <span className="min-w-[20px]">(b)</span>
               <div className="flex-1 space-y-2">
-                <p>To give to my <BoldValue>{executorRelation1}</BoldValue> <BoldValue>{executorName1}</BoldValue> all my properties listed below:</p>
+                <p>To give to my <BoldValue>{primaryExecutor.relation?.category === "Other" ? primaryExecutor.relation?.customValue : primaryExecutor.relation?.category}</BoldValue> <BoldValue>{primaryExecutor.name}</BoldValue> all my properties listed below:</p>
                 <div className="space-y-1 pl-6">
-                  <p>(i) <BoldValue>{soleProperties[0]?.address}</BoldValue>, <BoldValue>{soleProperties[0]?.volumeFolio}</BoldValue></p>
-                  <p>(ii) monies held in <BoldValue>{jointBanks[0]?.bankName}</BoldValue>, with account ending in <BoldValue placeholder="____">{jointBanks[0]?.lastFour}</BoldValue></p>
+                  {soleProperties.map((p, i) => (
+                    <p key={i}>({i === 0 ? "i" : "i".repeat(i+1)}) <BoldValue>{p.address}</BoldValue>, <BoldValue>{p.volumeFolio}</BoldValue></p>
+                  ))}
+                  {jointBanks.filter(b => b.beneficiary === primaryExecutor.name).map((b, i) => (
+                    <p key={i}>(ii) monies held in <BoldValue>{b.bankName}</BoldValue>, with account ending in <BoldValue placeholder="____">{b.last4}</BoldValue></p>
+                  ))}
                 </div>
                 <p className="italic">provided they survive me, and if not, this gift shall form part of the rest and residue of my estate;</p>
               </div>
@@ -107,7 +123,7 @@ const WillsPreview = ({ formData }) => {
                   {/* 4(e)(i) */}
                   <div className="space-y-1">
                     <p>
-                      (i) To give to my <BoldValue>{primaryBeneficiary.relation}</BoldValue> <BoldValue>{primaryBeneficiary.name}</BoldValue> my following Properties transferred as a sole proprietor provided she survives me and if not this gift shall form part of the rest and residue of my estate;
+                      (i) To give to my <BoldValue>{primaryBeneficiary.relation?.category === "Other" ? primaryBeneficiary.relation?.customValue : primaryBeneficiary.relation?.category}</BoldValue> <BoldValue>{primaryBeneficiary.name}</BoldValue> my following Properties transferred as a sole proprietor provided she survives me and if not this gift shall form part of the rest and residue of my estate;
                     </p>
                     <div className="pl-6 space-y-0.5">
                       <p>(1) <BoldValue>{jointProperties[0]?.address}</BoldValue>, <BoldValue>{jointProperties[0]?.volumeFolio}</BoldValue></p>
@@ -118,14 +134,18 @@ const WillsPreview = ({ formData }) => {
                   {/* 4(e)(ii) */}
                   <div className="space-y-1">
                     <p>
-                      (ii) To give to my daughter <BoldValue>{primaryBeneficiary.name}</BoldValue> my share of the monies held in:
+                      (ii) To give my share of the monies held in the following accounts to the respective beneficiaries listed below:
                     </p>
                     <div className="pl-6 space-y-0.5">
-                      <p>(1) <BoldValue>{jointBanks[0]?.bankName}</BoldValue>, with account ending in <BoldValue placeholder="____">{jointBanks[0]?.lastFour}</BoldValue></p>
-                      <p>(2) <BoldValue>{singleBanks[0]?.bankName}</BoldValue>, with account ending in <BoldValue placeholder="____">{singleBanks[0]?.lastFour}</BoldValue></p>
-                      <p>(3) All contents from the safe deposit (if any)</p>
+                      {jointBanks.map((b, i) => (
+                        <p key={`j-${i}`}>({i + 1}) <BoldValue>{b.bankName}</BoldValue>, account ending in <BoldValue placeholder="____">{b.last4}</BoldValue> to my <BoldValue>{b.beneficiary || primaryBeneficiary.name}</BoldValue></p>
+                      ))}
+                      {singleBanks.map((b, i) => (
+                        <p key={`s-${i}`}>({jointBanks.length + i + 1}) <BoldValue>{b.bankName}</BoldValue>, account ending in <BoldValue placeholder="____">{b.last4}</BoldValue> to my <BoldValue>{b.beneficiary || primaryBeneficiary.name}</BoldValue></p>
+                      ))}
+                      <p>({jointBanks.length + singleBanks.length + 1}) All contents from the safe deposit (if any)</p>
                     </div>
-                    <p className="italic">provided she survives me and if not, this gift shall form part of the rest and residue of my estate;</p>
+                    <p className="italic text-[10px] mt-2">provided they survive me and if not, this gift shall form part of the rest and residue of my estate;</p>
                   </div>
                 </div>
               </div>
@@ -144,7 +164,7 @@ const WillsPreview = ({ formData }) => {
                   {/* 4(e)(iii) */}
                   <div className="space-y-1 mt-4">
                     <p>
-                      (iii) To give to my <BoldValue>{primaryBeneficiary.relation}</BoldValue> <BoldValue>{primaryBeneficiary.name}</BoldValue> my share in the proceeds of sale of the below items provided she survives me and if not, this gift shall form part of the rest and residue of my estate;
+                      (iii) To give to my <BoldValue>{primaryBeneficiary.relation?.category === "Other" ? primaryBeneficiary.relation?.customValue : primaryBeneficiary.relation?.category}</BoldValue> <BoldValue>{primaryBeneficiary.name}</BoldValue> my share in the proceeds of sale of the below items provided she survives me and if not, this gift shall form part of the rest and residue of my estate;
                     </p>
                     <div className="pl-6 space-y-0.5">
                       <p>(1) <BoldValue>{jointPersonalProperties[0]?.type || solePersonalProperties[0]?.type}</BoldValue>;</p>
@@ -171,11 +191,11 @@ const WillsPreview = ({ formData }) => {
           <span className="min-w-[20px]">5.</span>
           <p>
             If the other parent of any of my children has not survived me then I <span className="font-bold uppercase">APPOINT</span> my 
-            {hasGuardian === "Yes" ? (
-               <> <BoldValue>{isExecutorGuardian === "Yes" ? executorRelation1 : guardianRelation}</BoldValue> <BoldValue>{isExecutorGuardian === "Yes" ? executorName1 : guardianName}</BoldValue></>
+            { (guardian.name || guardian.isExecutor === true) ? (
+               <> <BoldValue>{guardian.isExecutor === true ? (primaryExecutor.relation?.category === "Other" ? primaryExecutor.relation?.customValue : primaryExecutor.relation?.category) : (guardian.relation?.category === "Other" ? guardian.relation?.customValue : guardian.relation?.category)}</BoldValue> <BoldValue>{guardian.isExecutor === true ? primaryExecutor.name : guardian.name}</BoldValue></>
             ) : " ____________________ ____________________"}
-            {addSecondExecutor === "Yes" ? (
-               <> unless unable or unwilling to act or continue to act in which event I APPOINT my <BoldValue>{executorRelation2}</BoldValue> <BoldValue>{executorName2}</BoldValue> of <BoldValue>{executorAddress2}</BoldValue></>
+            {secondaryExecutor ? (
+               <> unless unable or unwilling to act or continue to act in which event I APPOINT my <BoldValue>{secondaryExecutor.relation?.category === "Other" ? secondaryExecutor.relation?.customValue : secondaryExecutor.relation?.category}</BoldValue> <BoldValue>{secondaryExecutor.name}</BoldValue> of <BoldValue>{secondaryExecutor.address}</BoldValue></>
             ) : ""} 
             as guardian of my minor children.
           </p>
@@ -185,7 +205,7 @@ const WillsPreview = ({ formData }) => {
         <div className="flex gap-4">
           <span className="min-w-[20px]">6.</span>
           <p>
-            <span className="font-bold uppercase">I DIRECT</span> my executor to arrange for <BoldValue>{funeralPlanned === "Yes" ? funeralDetails : funeralChoice}</BoldValue>.
+            <span className="font-bold uppercase">I DIRECT</span> my executor to arrange for <BoldValue>{funeral.details || "____________________"}</BoldValue>.
           </p>
         </div>
 
