@@ -303,39 +303,23 @@ class WillsAPI {
     }
   }
 
-  // --- Form V1 ---
   cleanPayload(data) {
     const cleaned = { ...data };
     
     // Explicitly set isDeleted to false
     cleaned.isDeleted = false;
-    
-    // Nullify guardian if all its fields are null/empty
-    if (cleaned.guardian) {
-      const g = cleaned.guardian;
-      const isActuallyEmpty = (
-        (g.name === null || g.name === "") &&
-        (g.address === null || g.address === "") &&
-        (g.isExecutor === null) &&
-        (g.relation?.category === null || g.relation?.category === "")
-      );
-      if (isActuallyEmpty) {
-        cleaned.guardian = null;
-      }
-    }
 
-    // Nullify funeral if all its fields are null/empty
-    if (cleaned.funeral) {
-      const f = cleaned.funeral;
-      const isActuallyEmpty = (
-        (f.hasPlan === null) &&
-        (f.type === null || f.type === "") &&
-        (f.details === null || f.details === "")
-      );
-      if (isActuallyEmpty) {
-        cleaned.funeral = null;
-      }
-    }
+    // Strip internal/backend-only fields that might interfere with updates
+    delete cleaned._id;
+    delete cleaned.__v;
+    delete cleaned.createdAt;
+    delete cleaned.updatedAt;
+    delete cleaned.willsUrl;
+    delete cleaned.converted;
+    delete cleaned.isCompleted;
+    // Exact match for requested payload
+    delete cleaned.numSingleBanks;
+    delete cleaned.numJointBanks;
 
     return cleaned;
   }
@@ -358,7 +342,8 @@ class WillsAPI {
   async updateWillsForm(data) {
     try {
       const cleanedData = this.cleanPayload(data);
-      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORM_UPDATE}`, {
+      const url = `${this.baseUrl}${WILLS_ENDPOINTS.FORM_UPDATE}`;
+      const response = await fetch(url, {
         method: "PATCH",
         headers: this.getHeaders(),
         body: JSON.stringify(cleanedData),

@@ -26,6 +26,23 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-01",
+          version: "v7.4.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Form Payload Fixes",
+          description: "Resolved 500 internal server errors during Wills form updates.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Payload Identifier Restoration",
+              description: "Added matterReferenceNumber back to the update payload.",
+              details: "Ensured the backend can correctly map PATCH requests to the specific Wills drafting record by explicitly including the `matterReferenceNumber` in the sanitized payload body.",
+              icon: Bug,
+            }
+          ]
+        },
+        {
+          date: "2026-04-01",
           version: "v7.4.0",
           type: "major",
           category: "feature",
