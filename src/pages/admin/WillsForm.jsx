@@ -105,16 +105,18 @@ const WillsForm = () => {
       fetchForm();
     }
   }, [location.search]);
-  const [formData, setFormData] = useState({
+
+  const INITIAL_STATE = {
     firmId: localStorage.getItem("userID") || "",
     email: "",
+    matterReferenceNumber: "", // New explicit identifier field
     personal: {
       fullName: "",
       occupation: "",
       phone: "",
       address: "",
-      existingWill: null, // Use null for initial state
-      existingWillFiles: [], // Array of { name, url }
+      existingWill: null,
+      existingWillFiles: [],
     },
     executors: [
       {
@@ -163,7 +165,15 @@ const WillsForm = () => {
     status: "draft",
     numSingleBanks: "0",
     numJointBanks: "0"
-  });
+  };
+
+  const [formData, setFormData] = useState(INITIAL_STATE);
+  const formDataRef = useRef(INITIAL_STATE);
+  
+  // Sync Ref with State to ensure async handlers (like submit) always have the latest data
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   const steps = [
     "Personal", 
@@ -329,44 +339,60 @@ const WillsForm = () => {
     toast.info("File removed from list");
   };
 
+  const submitForm = async (status = "submitted") => {
+    // Always use the latest data from the Ref
+    const updatedData = { 
+      ...formDataRef.current, 
+      status
+    };
+    
+    if (updatedData.matterReferenceNumber) {
+      await api.current.updateWillsForm(updatedData);
+      setFormData(updatedData);
+    } else {
+      const response = await api.current.createWillsForm(updatedData);
+      if (response?.data) {
+        setFormData(response.data);
+        return response.data;
+      }
+    }
+    return updatedData;
+  };
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Final submission check
+      // Final submission check if not already submitted
       if (formData.status !== "submitted") {
-        const updatedData = { ...formData, status: "submitted" };
-        await api.current.updateWillsForm(updatedData);
-        setFormData(updatedData);
+        await submitForm("submitted");
       }
-      await generateWillsPDF("wills-preview-doc", `Will_${formData.personal?.fullName || 'Draft'}.pdf`);
+      
+      // Use latest formData (including any new matterReferenceNumber) for PDF filename
+      const fileName = `Will_${formData.personal?.fullName || 'Draft'}.pdf`;
+      await generateWillsPDF("wills-preview-doc", fileName);
       toast.success("PDF generated and form submitted!");
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to submit form!");
+      toast.error(error.message || "Failed to submit form!");
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const syncToApi = async (step, data) => {
+  const syncToApi = async () => {
+    if (!isDirty) return;
     try {
-      if (step === 1) {
-        await api.current.createWillsForm({ ...data, status: "draft" });
-        console.log("Form created successfully");
-      } else if (step > 1 && isDirty) {
-        await api.current.updateWillsForm({ ...data, status: "draft" });
-        console.log("Form updated successfully");
-      }
+      await submitForm("draft");
       setIsDirty(false);
     } catch (error) {
-      console.error(`Error in stage ${step} sync:`, error);
-      toast.error("Failed to save progress!");
+      console.error("Error syncing progress:", error);
+      toast.error("Failed to auto-save progress!");
     }
   };
 
   const nextStep = async () => {
     if (currentStep < 10) {
-      await syncToApi(currentStep, formData);
+      await syncToApi();
       setCurrentStep((prev) => Math.min(prev + 1, steps.length));
     }
   };
@@ -523,14 +549,12 @@ const WillsForm = () => {
               <button
                 onClick={currentStep === 10 ? async () => {
                   try {
-                    const updatedData = { ...formData, status: "submitted" };
-                    await api.current.updateWillsForm(updatedData);
-                    setFormData(updatedData);
+                    await submitForm("submitted");
                     toast.success("Form submitted successfully!");
                     navigate(-1);
                   } catch (err) {
                     console.error("Submission error:", err);
-                    toast.error("Failed to submit form!");
+                    toast.error(err.message || "Failed to submit form!");
                   }
                 } : nextStep}
                 className="flex items-center gap-4 px-12 py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
