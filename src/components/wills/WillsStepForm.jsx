@@ -11,7 +11,12 @@ const WillsStepForm = ({
   handleInputChange,
   handleArrayChange,
   addArrayItem,
-  removeArrayItem
+  removeArrayItem,
+  isGoogleMapsLoaded,
+  email,
+  onFileUpload,
+  onFileDelete,
+  isUploading
 }) => {
   const relationshipOptions = [
     "Spouse", "Brother", "Sister", "Mother", "Father", 
@@ -28,48 +33,46 @@ const WillsStepForm = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <InputGroup label="Enter your full name" name="fullName" value={formData.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-          <InputGroup label="Enter your occupation" name="occupation" value={formData.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
-          <InputGroup label="Email" name="email" value={formData.email} onChange={handleInputChange} placeholder="email@example.com" type="email" icon={<Mail className="w-4 h-4" />} />
-          <InputGroup label="Phone number" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
+          <InputGroup label="Enter your full name" name="personal.fullName" value={formData.personal.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+          <InputGroup label="Enter your occupation" name="personal.occupation" value={formData.personal.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
+          <InputGroup label="Email" name="email" value={email} onChange={handleInputChange} placeholder="email@example.com" type="email" icon={<Mail className="w-4 h-4" />} />
+          <InputGroup label="Phone number" name="personal.phone" value={formData.personal.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
         </div>
 
-        <div className="space-y-4">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-            <Home className="w-4 h-4" /> Residential address
-          </label>
-          <textarea
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            rows={3}
-            placeholder="Enter your full residential address"
-            className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all outline-none resize-none shadow-sm"
-          />
-        </div>
+        <AddressInputGroup 
+          label="Residential address" 
+          value={formData.personal.address} 
+          onAddressSelect={(addr) => handleInputChange({ target: { name: "personal.address", value: addr } })} 
+          placeholder="Enter your full residential address" 
+          icon={<Home className="w-4 h-4" />} 
+          isLoaded={isGoogleMapsLoaded}
+        />
 
-        <div className="space-y-4">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-            <FileText className="w-4 h-4" /> Is there an existing Will?
-          </label>
-          <div className="flex gap-4">
-             {["Yes", "No"].map(option => (
-               <label key={option} className="flex-1 cursor-pointer">
-                 <input type="radio" name="existingWill" value={option} checked={formData.existingWill === option} onChange={handleInputChange} className="hidden peer" />
-                 <div className="p-4 text-center rounded-2xl border-2 border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-sm">
-                   {option}
-                 </div>
-               </label>
-             ))}
+        <YesNoToggle 
+          label="Is there an existing Will?" 
+          name="personal.existingWill" 
+          value={formData.personal.existingWill} 
+          onChange={handleInputChange} 
+        />
+
+        {formData.personal.existingWill === true && (
+          <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+            <FileUploadSection 
+              files={formData.personal.existingWillFiles || []}
+              onFileUpload={onFileUpload}
+              onFileDelete={onFileDelete}
+              isUploading={isUploading}
+            />
           </div>
-          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-            <Shield className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Note</p>
-              <p className="text-[13px] text-amber-700 font-medium leading-relaxed">
-                The Will we draft will <strong>revoke all previous Wills</strong>.
-              </p>
-            </div>
+        )}
+
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+          <Shield className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Note</p>
+            <p className="text-[13px] text-amber-700 font-medium leading-relaxed">
+              The Will we draft will <strong>revoke all previous Wills</strong>.
+            </p>
           </div>
         </div>
       </div>
@@ -78,6 +81,9 @@ const WillsStepForm = ({
 
   // --- STEP 2: Executor (Q7-Q13) ---
   if (step === 2) {
+    const executors = formData.executors;
+    const addSecondExecutor = executors.length > 1;
+
     return (
       <div className="space-y-8">
         <div>
@@ -87,21 +93,77 @@ const WillsStepForm = ({
 
         <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <InputGroup label="Enter the Executor’s full name" name="executorName1" value={formData.executorName1} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-            <SelectGroup label="What is your relationship with the Executor?" name="executorRelation1" value={formData.executorRelation1} onChange={handleInputChange} options={relationshipOptions} icon={<Users className="w-4 h-4" />} />
+            <InputGroup label="Enter the Executor’s full name" value={executors[0]?.name} onChange={(e) => handleArrayChange("executors", 0, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+            <div className="space-y-2">
+              <SelectGroup 
+                label="What is your relationship with the Executor?" 
+                value={executors[0]?.relation?.category} 
+                onChange={(e) => handleArrayChange("executors", 0, "relation.category", e.target.value)} 
+                options={relationshipOptions} 
+                icon={<Users className="w-4 h-4" />} 
+              />
+              {executors[0]?.relation?.category === "Other" && (
+                <input 
+                  placeholder="Please specify..." 
+                  value={executors[0]?.relation?.customValue || ""} 
+                  onChange={(e) => handleArrayChange("executors", 0, "relation.customValue", e.target.value)}
+                  className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none text-xs" 
+                />
+              )}
+            </div>
           </div>
-          <InputGroup label="Enter full address of the Executor" name="executorAddress1" value={formData.executorAddress1} onChange={handleInputChange} placeholder="Full Address" icon={<Home className="w-4 h-4" />} />
-        </div>
+            <AddressInputGroup 
+              label="Enter full address of the Executor" 
+              value={executors[0]?.address} 
+              onAddressSelect={(addr) => handleArrayChange("executors", 0, "address", addr)} 
+              placeholder="Full Address" 
+              icon={<Home className="w-4 h-4" />} 
+              isLoaded={isGoogleMapsLoaded}
+            />
+          </div>
 
-        <YesNoToggle label="Do you want add another Executor?" name="addSecondExecutor" value={formData.addSecondExecutor} onChange={handleInputChange} />
+        <YesNoToggle 
+          label="Do you want add another Executor?" 
+          value={addSecondExecutor} 
+          onChange={(e) => {
+            if (e.target.value === true && executors.length === 1) {
+              addArrayItem("executors", { name: "", relation: { category: null, customValue: "" }, address: "" });
+            } else if (e.target.value === false && executors.length > 1) {
+              removeArrayItem("executors", 1);
+            }
+          }} 
+        />
 
-        {formData.addSecondExecutor === "Yes" && (
+        {addSecondExecutor === true && (
           <div className="bg-[#2E3D99]/5 p-8 rounded-[32px] border border-[#2E3D99]/10 space-y-8 transition-all animate-in fade-in slide-in-from-top-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <InputGroup label="Enter the second Executor’s full name" name="executorName2" value={formData.executorName2} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-              <SelectGroup label="What is your relationship with the Executor?" name="executorRelation2" value={formData.executorRelation2} onChange={handleInputChange} options={relationshipOptions} icon={<Users className="w-4 h-4" />} />
+              <InputGroup label="Enter the second Executor’s full name" value={executors[1]?.name} onChange={(e) => handleArrayChange("executors", 1, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+              <div className="space-y-2">
+                <SelectGroup 
+                  label="What is your relationship with the Executor?" 
+                  value={executors[1]?.relation?.category} 
+                  onChange={(e) => handleArrayChange("executors", 1, "relation.category", e.target.value)} 
+                  options={relationshipOptions} 
+                  icon={<Users className="w-4 h-4" />} 
+                />
+                {executors[1]?.relation?.category === "Other" && (
+                  <input 
+                    placeholder="Please specify..." 
+                    value={executors[1]?.relation?.customValue || ""} 
+                    onChange={(e) => handleArrayChange("executors", 1, "relation.customValue", e.target.value)}
+                    className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none text-xs" 
+                  />
+                )}
+              </div>
             </div>
-            <InputGroup label="Enter full address of the second Executor" name="executorAddress2" value={formData.executorAddress2} onChange={handleInputChange} placeholder="Full Address" icon={<Home className="w-4 h-4" />} />
+            <AddressInputGroup 
+              label="Enter full address of the second Executor" 
+              value={executors[1]?.address} 
+              onAddressSelect={(addr) => handleArrayChange("executors", 1, "address", addr)} 
+              placeholder="Full Address" 
+              icon={<Home className="w-4 h-4" />} 
+              isLoaded={isGoogleMapsLoaded}
+            />
           </div>
         )}
       </div>
@@ -110,6 +172,9 @@ const WillsStepForm = ({
 
   // --- STEP 3: Beneficiaries (Q14-Q20) ---
   if (step === 3) {
+    const beneficiaries = formData.beneficiaries;
+    const numBeneficiaries = beneficiaries.length.toString();
+
     return (
       <div className="space-y-8">
         <div>
@@ -126,15 +191,14 @@ const WillsStepForm = ({
                    type="radio" 
                    name="numBeneficiaries" 
                    value={num} 
-                   checked={formData.numBeneficiaries === num} 
+                   checked={numBeneficiaries === num} 
                    onChange={(e) => {
-                     handleInputChange(e);
                      const n = parseInt(num);
-                     const current = formData.beneficiaries.length;
+                     const current = beneficiaries.length;
                      if (n > current) {
-                       for(let i=0; i<n-current; i++) addArrayItem("beneficiaries", { name: "", age: "", relation: "", address: "" });
+                       for(let i=0; i<n-current; i++) addArrayItem("beneficiaries", { name: "", age: "", relation: { category: null, customValue: "" }, address: "" });
                      } else if (n < current) {
-                       for(let i=0; i<current-n; i++) removeArrayItem("beneficiaries", formData.beneficiaries.length - 1 - i);
+                       for(let i=0; i<current-n; i++) removeArrayItem("beneficiaries", beneficiaries.length - 1 - i);
                      }
                    }} 
                    className="hidden peer" 
@@ -148,7 +212,7 @@ const WillsStepForm = ({
         </div>
 
         <div className="space-y-8">
-          {formData.beneficiaries.map((beneficiary, index) => (
+          {beneficiaries.map((beneficiary, index) => (
             <div key={index} className="bg-white p-8 rounded-[32px] border border-gray-200 shadow-sm relative group">
               <div className="absolute -top-3 left-8 px-4 py-1.5 bg-[#1D97D7] text-white text-[11px] font-bold rounded-full uppercase tracking-wider">
                 Beneficiary {index + 1}
@@ -157,11 +221,34 @@ const WillsStepForm = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
                 <InputGroup label={`Enter the Beneficiary's full name`} value={beneficiary.name} onChange={(e) => handleArrayChange("beneficiaries", index, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
                 <InputGroup label={`What is the age of the Beneficiary`} value={beneficiary.age} onChange={(e) => handleArrayChange("beneficiaries", index, "age", e.target.value)} placeholder="Age" type="number" icon={<FileText className="w-4 h-4" />} />
-                <SelectGroup label={`What is your relationship with the Beneficiary?`} value={beneficiary.relation} onChange={(e) => handleArrayChange("beneficiaries", index, "relation", e.target.value)} options={relationshipOptions} icon={<Users className="w-4 h-4" />} />
-                <InputGroup label={`Enter full address of the Beneficiary`} value={beneficiary.address} onChange={(e) => handleArrayChange("beneficiaries", index, "address", e.target.value)} placeholder="Full Address" icon={<Home className="w-4 h-4" />} />
+                <div className="space-y-2">
+                  <SelectGroup 
+                    label={`What is your relationship with the Beneficiary?`} 
+                    value={beneficiary.relation?.category} 
+                    onChange={(e) => handleArrayChange("beneficiaries", index, "relation.category", e.target.value)} 
+                    options={relationshipOptions} 
+                    icon={<Users className="w-4 h-4" />} 
+                  />
+                  {beneficiary.relation?.category === "Other" && (
+                    <input 
+                      placeholder="Please specify..." 
+                      value={beneficiary.relation?.customValue || ""} 
+                      onChange={(e) => handleArrayChange("beneficiaries", index, "relation.customValue", e.target.value)}
+                      className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none text-xs" 
+                    />
+                  )}
+                </div>
+                <AddressInputGroup 
+                  label={`Enter full address of the Beneficiary`} 
+                  value={beneficiary.address} 
+                  onAddressSelect={(addr) => handleArrayChange("beneficiaries", index, "address", addr)} 
+                  placeholder="Full Address" 
+                  icon={<Home className="w-4 h-4" />} 
+                  isLoaded={isGoogleMapsLoaded}
+                />
               </div>
 
-              {index < formData.beneficiaries.length - 1 && (
+              {index < beneficiaries.length - 1 && (
                 <div className="mt-8 pt-6 border-t border-gray-100">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">Do you want add another Beneficiary? (Included below)</p>
                 </div>
@@ -185,25 +272,27 @@ const WillsStepForm = ({
         <StepPropertySection 
           title="Joint Ownership Properties"
           description="Do you own any real-estate properties as joint ownership?"
-          arrayName="jointProperties"
-          properties={formData.jointProperties}
+          arrayName="properties.joint"
+          properties={formData.properties.joint}
           beneficiaries={formData.beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           loopQ="Do you own any other realestate properties as joint ownership?"
+          isGoogleMapsLoaded={isGoogleMapsLoaded}
         />
 
         <StepPropertySection 
           title="Sole Ownership Properties"
           description="Do you own any real-estate properties as sole ownership?"
-          arrayName="soleProperties"
-          properties={formData.soleProperties}
+          arrayName="properties.sole"
+          properties={formData.properties.sole}
           beneficiaries={formData.beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           loopQ="Do you own any other realestate properties as sole ownership?"
+          isGoogleMapsLoaded={isGoogleMapsLoaded}
         />
       </div>
     );
@@ -221,33 +310,31 @@ const WillsStepForm = ({
         <StepBankSection 
           title="Bank Accounts (Joint)"
           description="Do you have any Joint bank accounts?"
-          arrayName="jointBanks"
+          arrayName="bankAccounts.joint"
           numName="numJointBanks"
-          numValue={formData.numJointBanks}
-          accounts={formData.jointBanks}
+          numValue={(formData.bankAccounts.joint.length || 0).toString()}
+          accounts={formData.bankAccounts.joint}
+          beneficiaries={formData.beneficiaries}
           handleInputChange={handleInputChange}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
-          toggleName="hasJointBanks" // Not in formData but handled via accounts.length or explicit toggle
-          initialChoice={formData.jointBanks.length > 0 ? "Yes" : "No"}
           countLabel="How many bank accounts do you own as joint accounts?"
         />
 
         <StepBankSection 
           title="Bank Accounts (Single)"
           description="Do you have any bank accounts under your name only?"
-          arrayName="singleBanks"
+          arrayName="bankAccounts.single"
           numName="numSingleBanks"
-          numValue={formData.numSingleBanks}
-          accounts={formData.singleBanks}
+          numValue={(formData.bankAccounts.single.length || 0).toString()}
+          accounts={formData.bankAccounts.single}
+          beneficiaries={formData.beneficiaries}
           handleInputChange={handleInputChange}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
-          toggleName="hasSingleBanks"
-          initialChoice={formData.singleBanks.length > 0 ? "Yes" : "No"}
-          countLabel="How many bank accounts do you own as single accounts?"
+          countLabel="How many bank accounts do you own under your name only?"
         />
       </div>
     );
@@ -256,32 +343,15 @@ const WillsStepForm = ({
   // --- STEP 6: Guardians (Q32-Q33) ---
   if (step === 6) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Guardian for Minors</h3>
-          <p className="text-gray-500">Future care for your children.</p>
-        </div>
-
-        <div className="space-y-6">
-          <YesNoToggle label="Do you want to select any guardian to the minor children?" name="hasGuardian" value={formData.hasGuardian} onChange={handleInputChange} />
-          
-          {formData.hasGuardian === "Yes" && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-top-4">
-              <YesNoToggle label="Do you want to appoint the Executor as guardian?" name="isExecutorGuardian" value={formData.isExecutorGuardian} onChange={handleInputChange} />
-              
-              {formData.isExecutorGuardian === "No" && (
-                <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 space-y-8">
-                  <InputGroup label="Enter the name of the guardian" name="guardianName" value={formData.guardianName} onChange={handleInputChange} icon={<User className="w-4 h-4" />} />
-                  <InputGroup label="Address of the guardian" name="guardianAddress" value={formData.guardianAddress} onChange={handleInputChange} icon={<Home className="w-4 h-4" />} />
-                  <SelectGroup label="Your relationship to the guardian" name="guardianRelation" value={formData.guardianRelation} onChange={handleInputChange} options={relationshipOptions} icon={<Users className="w-4 h-4" />} />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <StepGuardianSection 
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isGoogleMapsLoaded={isGoogleMapsLoaded}
+        relationshipOptions={relationshipOptions}
+      />
     );
   }
+
 
   // --- STEP 7: Funeral (Q34) ---
   if (step === 7) {
@@ -293,14 +363,14 @@ const WillsStepForm = ({
         </div>
 
         <div className="space-y-8">
-          <YesNoToggle label="Do you have a funeral arrangement planned?" name="funeralPlanned" value={formData.funeralPlanned} onChange={handleInputChange} />
+          <YesNoToggle label="Do you have a funeral arrangement planned?" name="funeral.hasPlan" value={formData.funeral.hasPlan} onChange={handleInputChange} />
 
-          {formData.funeralPlanned === "Yes" ? (
+          {formData.funeral.hasPlan === true ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
               <label className="text-sm font-bold text-gray-700">Please provide all details of the funeral plan</label>
               <textarea
-                name="funeralDetails"
-                value={formData.funeralDetails}
+                name="funeral.details"
+                value={formData.funeral.details ?? ""}
                 onChange={handleInputChange}
                 rows={5}
                 placeholder="Enter details..."
@@ -313,7 +383,7 @@ const WillsStepForm = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  {["Buried", "Cremation", "Donate for medical research"].map((option, idx) => (
                    <label key={option} className="cursor-pointer">
-                     <input type="radio" name="funeralChoice" value={option} checked={formData.funeralChoice === option} onChange={handleInputChange} className="hidden peer" />
+                     <input type="radio" name="funeral.details" value={option} checked={formData.funeral.details === option} onChange={handleInputChange} className="hidden peer" />
                      <div className="p-6 text-center rounded-[24px] border-2 border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-xs uppercase tracking-wider">
                        {idx + 1}. {option}
                      </div>
@@ -339,8 +409,8 @@ const WillsStepForm = ({
         <StepPersonalPropertySection 
           title="Joint Personal Properties"
           description="Do you own any personal properties as joint ownership?"
-          arrayName="jointPersonalProperties"
-          properties={formData.jointPersonalProperties}
+          arrayName="personalAssets.joint"
+          properties={formData.personalAssets.joint}
           beneficiaries={formData.beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
@@ -351,8 +421,8 @@ const WillsStepForm = ({
         <StepPersonalPropertySection 
           title="Sole Personal Properties"
           description="Do you own any personal properties as sole ownership?"
-          arrayName="solePersonalProperties"
-          properties={formData.solePersonalProperties}
+          arrayName="personalAssets.sole"
+          properties={formData.personalAssets.sole}
           beneficiaries={formData.beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
@@ -373,17 +443,17 @@ const WillsStepForm = ({
         </div>
 
         <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 space-y-10">
-          <YesNoToggle label="Has anyone been promised a benefit under the will?" name="promisedBenefit" value={formData.promisedBenefit} onChange={handleInputChange} />
+          <YesNoToggle label="Has anyone been promised a benefit under the will?" name="other.promisedBenefit" value={formData.other.promisedBenefit} onChange={handleInputChange} />
           
-          <YesNoToggle label="Are any Family Court orders still on foot, has a binding financial agreement been entered into, is there a registered relationship under the Family Court Act 1997 or an unregistered domestic partner?" name="familyCourtOrders" value={formData.familyCourtOrders} onChange={handleInputChange} />
+          <YesNoToggle label="Are any Family Court orders still on foot, has a binding financial agreement been entered into, is there a registered relationship under the Family Court Act 1997 or an unregistered domestic partner?" name="other.legalMatters" value={formData.other.legalMatters} onChange={handleInputChange} />
 
-          <YesNoToggle label="Are there any other matters which might affect the dispositions in the will?" name="otherMatters" value={formData.otherMatters} onChange={handleInputChange} />
+          <YesNoToggle label="Are there any other matters which might affect the dispositions in the will?" name="other.otherNotes" value={formData.other.otherNotes} onChange={handleInputChange} />
         </div>
 
         <InputGroup 
           label="Beneficiary of all your digital rights" 
-          name="digitalRightsBeneficiary" 
-          value={formData.digitalRightsBeneficiary} 
+          name="other.digitalBeneficiary" 
+          value={formData.other.digitalBeneficiary} 
           onChange={handleInputChange} 
           placeholder="e.g. Spouse / Name of Beneficiary" 
           icon={<Shield className="w-4 h-4" />} 
@@ -397,7 +467,7 @@ const WillsStepForm = ({
 
 // --- Sub-components (Reused) ---
 
-const StepPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ }) => {
+const StepPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ, isGoogleMapsLoaded }) => {
   const hasItems = properties.length > 0;
   
   return (
@@ -409,7 +479,7 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
         </div>
         {!hasItems && (
           <button 
-            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", recipient: "", ratio: "50/50" })}
+            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" })}
             className="px-6 py-2.5 bg-[#2E3D99] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#1D97D7] transition-all shadow-lg"
           >
             <Plus size={16} /> ADD PROPERTY
@@ -424,19 +494,26 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
               <Trash2 size={18} />
             </button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <InputGroup label="i. enter the property address" value={prop.address} onChange={(e) => handleArrayChange(arrayName, idx, "address", e.target.value)} icon={<Home size={14} />} />
+              <AddressInputGroup 
+                label="i. enter the property address" 
+                value={prop.address} 
+                onAddressSelect={(addr) => handleArrayChange(arrayName, idx, "address", addr)} 
+                placeholder="Property Address" 
+                icon={<Home size={14} />} 
+                isLoaded={isGoogleMapsLoaded}
+              />
               <InputGroup label="ii. enter the Volume and Folio" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} icon={<Archive size={14} />} />
-              <SelectGroup label="iii. Whom do you want to give this property to" value={prop.recipient} onChange={(e) => handleArrayChange(arrayName, idx, "recipient", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Users size={14} />} />
+              <SelectGroup label="iii. Whom do you want to give this property to" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Users size={14} />} />
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Gift ratio</label>
                 <div className="flex gap-2">
-                   {["50/50", "Other"].map(r => (
-                     <button key={r} onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "50/50" ? "50/50" : "Other")} className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "50/50") ? "border-[#2E3D99] bg-[#2E3D99]/5 text-[#2E3D99]" : "border-gray-50 text-gray-400"}`}>
+                   {["Equally", "Other"].map(r => (
+                     <button key={r} onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally") ? "border-[#2E3D99] bg-[#2E3D99]/5 text-[#2E3D99]" : "border-gray-50 text-gray-400"}`}>
                        {r}
                      </button>
                    ))}
                 </div>
-                {prop.ratio !== "50/50" && (
+                {prop.ratio !== "Equally" && (
                    <input placeholder="Enter other ratio..." value={prop.ratio === "Other" ? "" : prop.ratio} onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} className="w-full mt-2 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs" />
                 )}
               </div>
@@ -445,7 +522,7 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
         ))}
         {hasItems && (
           <button 
-            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", recipient: "", ratio: "50/50" })}
+            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" })}
             className="w-full py-6 border-2 border-dashed border-gray-200 rounded-[32px] text-gray-400 font-bold hover:border-[#2E3D99] hover:text-[#2E3D99] hover:bg-gray-50 transition-all flex items-center justify-center gap-3 bg-white/50"
           >
             <Plus size={20} /> {loopQ}
@@ -457,16 +534,16 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
 };
 
 const StepBankSection = ({ 
-  title, description, arrayName, numName, numValue, accounts, 
+  title, description, arrayName, numName, numValue, accounts, beneficiaries, 
   handleInputChange, handleArrayChange, addArrayItem, removeArrayItem, countLabel 
 }) => {
-  const [choice, setChoice] = React.useState(accounts.length > 0 ? "Yes" : "No");
+  const [choice, setChoice] = React.useState(accounts.length > 0);
 
   const syncAccounts = (num) => {
     const n = parseInt(num) || 0;
     const current = accounts.length;
     if (n > current) {
-      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", lastFour: "" });
+      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", last4: "", beneficiary: "" });
     } else if (n < current) {
       for(let i=0; i<current-n; i++) removeArrayItem(arrayName, accounts.length - 1 - i);
     }
@@ -480,26 +557,26 @@ const StepBankSection = ({
           <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">{description}</p>
         </div>
         <div className="flex bg-gray-50 rounded-xl p-1 border border-gray-200">
-          {["Yes", "No"].map(opt => (
+          {[ { label: "Yes", val: true }, { label: "No", val: false } ].map(opt => (
             <button 
-              key={opt} 
+              key={opt.label} 
               type="button" 
               onClick={() => {
-                setChoice(opt);
-                if (opt === "No") {
+                setChoice(opt.val);
+                if (opt.val === false) {
                   syncAccounts(0);
                   handleInputChange({ target: { name: numName, value: "0" } });
                 }
               }} 
-              className={`px-8 py-2 text-xs font-bold rounded-lg transition-all ${choice === opt ? "bg-[#2E3D99] text-white shadow-md" : "text-gray-400 hover:bg-gray-50"}`}
+              className={`px-8 py-2 text-xs font-bold rounded-lg transition-all ${choice === opt.val ? "bg-[#2E3D99] text-white shadow-md" : "text-gray-400 hover:bg-gray-50"}`}
             >
-              {opt}
+              {opt.label}
             </button>
           ))}
         </div>
       </div>
 
-      {choice === "Yes" && (
+      {choice === true && (
         <div className="space-y-8 animate-in slide-in-from-top-4 duration-500">
           <div className="space-y-4">
             <label className="text-sm font-bold text-gray-700">{countLabel}</label>
@@ -533,13 +610,92 @@ const StepBankSection = ({
                 </div>
                 <div className="space-y-6 mt-2">
                    <InputGroup label="i. Name of Bank" value={acc.bankName} onChange={(e) => handleArrayChange(arrayName, idx, "bankName", e.target.value)} icon={<Landmark size={14} />} />
-                   <InputGroup label="ii. Last four digits of the account" value={acc.lastFour} onChange={(e) => handleArrayChange(arrayName, idx, "lastFour", e.target.value)} maxLength={4} icon={<Shield size={14} />} />
+                   <InputGroup label="ii. Last four digits of the account" value={acc.last4} onChange={(e) => handleArrayChange(arrayName, idx, "last4", e.target.value)} maxLength={4} icon={<Shield size={14} />} />
+                   <SelectGroup 
+                      label="iii. Whom do you want to give this property to" 
+                      value={acc.beneficiary} 
+                      onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} 
+                      options={beneficiaries.map(b => b.name).filter(Boolean)} 
+                      icon={<Users size={14} />} 
+                    />
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, relationshipOptions }) => {
+  const [guardianChoice, setGuardianChoice] = React.useState(
+    (formData.guardian?.name || formData.guardian?.isExecutor !== null) ? (formData.guardian?.isExecutor === false && !formData.guardian?.name ? false : true) : null
+  );
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">Guardian for Minors</h3>
+        <p className="text-gray-500">Future care for your children.</p>
+      </div>
+
+      <div className="space-y-6">
+        <YesNoToggle 
+          label="Do you want to select any guardian to the minor children?" 
+          value={guardianChoice} 
+          onChange={(e) => {
+            setGuardianChoice(e.target.value);
+            if (e.target.value === false) {
+              handleInputChange({ target: { name: "guardian.name", value: "" } });
+              handleInputChange({ target: { name: "guardian.isExecutor", value: false } });
+              handleInputChange({ target: { name: "guardian.address", value: "" } });
+              handleInputChange({ target: { name: "guardian.relation.category", value: null } });
+              handleInputChange({ target: { name: "guardian.relation.customValue", value: "" } });
+            } else {
+              handleInputChange({ target: { name: "guardian.isExecutor", value: null } });
+            }
+          }} 
+        />
+        
+        {guardianChoice === true && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-top-4">
+            <YesNoToggle label="Do you want to appoint the Executor as guardian?" name="guardian.isExecutor" value={formData.guardian.isExecutor} onChange={handleInputChange} />
+            
+            {formData.guardian.isExecutor === false && (
+              <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 space-y-8">
+                <InputGroup label="Enter the name of the guardian" name="guardian.name" value={formData.guardian.name} onChange={handleInputChange} icon={<User className="w-4 h-4" />} />
+                <AddressInputGroup 
+                  label="Address of the guardian" 
+                  value={formData.guardian.address} 
+                  onAddressSelect={(addr) => handleInputChange({ target: { name: "guardian.address", value: addr } })} 
+                  placeholder="Guardian Address" 
+                  icon={<Home className="w-4 h-4" />} 
+                  isLoaded={isGoogleMapsLoaded}
+                />
+                <div className="space-y-2">
+                  <SelectGroup 
+                    label="Your relationship to the guardian" 
+                    name="guardian.relation.category" 
+                    value={formData.guardian.relation?.category} 
+                    onChange={handleInputChange} 
+                    options={relationshipOptions} 
+                    icon={<Users className="w-4 h-4" />} 
+                  />
+                  {formData.guardian.relation?.category === "Other" && (
+                    <input 
+                      placeholder="Please specify..." 
+                      value={formData.guardian.relation?.customValue || ""} 
+                      onChange={(e) => handleInputChange({ target: { name: "guardian.relation.customValue", value: e.target.value } })}
+                      className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none text-xs" 
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -556,7 +712,7 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
         </div>
         {!hasItems && (
           <button 
-            onClick={() => addArrayItem(arrayName, { type: "", recipient: "", ratio: "50/50" })}
+            onClick={() => addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" })}
             className="px-6 py-2.5 bg-[#2E3D99] text-white rounded-xl font-bold text-xs shadow-lg flex items-center justify-center gap-2 hover:bg-[#1D97D7] transition-all"
           >
             <Plus size={16} /> ADD ITEM
@@ -572,22 +728,22 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
             </button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <InputGroup label="i. enter the property type" value={prop.type} onChange={(e) => handleArrayChange(arrayName, idx, "type", e.target.value)} placeholder="e.g. Motor Vehicle" icon={<Archive size={14} />} />
-              <SelectGroup label="ii. Whom do you want to give this property to" value={prop.recipient} onChange={(e) => handleArrayChange(arrayName, idx, "recipient", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
+              <SelectGroup label="ii. Whom do you want to give this property to" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700">Gift ratio</label>
                 <div className="flex gap-2">
-                   {["50/50", "Other"].map(r => (
+                   {["Equally", "Other"].map(r => (
                      <button 
                        key={r} 
                        type="button"
-                       onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "50/50" ? "50/50" : "Other")} 
-                       className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "50/50" && prop.ratio !== undefined) ? "border-[#2E3D99] bg-[#2E3D99]/5 text-[#2E3D99]" : "border-gray-50 text-gray-400"}`}
+                       onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
+                       className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "border-[#2E3D99] bg-[#2E3D99]/5 text-[#2E3D99]" : "border-gray-50 text-gray-400"}`}
                      >
                        {r}
                      </button>
                    ))}
                 </div>
-                {(prop.ratio !== "50/50" && prop.ratio !== undefined) && (
+                {(prop.ratio !== "Equally" && prop.ratio !== undefined) && (
                    <input 
                      placeholder="Enter other ratio..." 
                      value={prop.ratio === "Other" ? "" : prop.ratio} 
@@ -601,7 +757,7 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
         ))}
         {hasItems && (
           <button 
-            onClick={() => addArrayItem(arrayName, { type: "", recipient: "", ratio: "50/50" })} 
+            onClick={() => addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" })} 
             className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[32px] text-gray-400 font-bold hover:border-[#2E3D99] hover:text-[#2E3D99] transition-all flex items-center justify-center gap-2"
           >
             <Plus size={18} /> {loopQ}
@@ -619,7 +775,7 @@ const InputGroup = ({ label, name, value, onChange, placeholder, type = "text", 
     <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
       {icon} {label}
     </label>
-    <input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} maxLength={maxLength} className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all shadow-sm outline-none" />
+    <input type={type} name={name} value={value ?? ""} onChange={onChange} placeholder={placeholder} maxLength={maxLength} className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all shadow-sm outline-none" />
   </div>
 );
 
@@ -628,7 +784,7 @@ const SelectGroup = ({ label, name, value, onChange, options, icon }) => (
     <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
       {icon} {label}
     </label>
-    <select name={name} value={value} onChange={onChange} className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] shadow-sm outline-none">
+    <select name={name} value={value ?? ""} onChange={onChange} className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] shadow-sm outline-none">
       <option value="">Select Option</option>
       {options.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
     </select>
@@ -639,22 +795,172 @@ const YesNoToggle = ({ label, name, value, onChange }) => (
   <div className="flex items-start justify-between gap-12 group pb-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 -mx-4 px-4 rounded-xl transition-all">
     <label className="text-sm font-bold text-gray-700 leading-relaxed pt-1.5 flex-1">{label}</label>
     <div className="flex bg-white rounded-2xl p-1.5 border border-gray-100 shadow-sm h-fit flex-shrink-0 animate-in fade-in slide-in-from-right-2">
-      {["Yes", "No"].map(opt => (
+      {[ { label: "Yes", val: true }, { label: "No", val: false } ].map(opt => (
         <button 
-          key={opt} 
+          key={opt.label} 
           type="button" 
-          onClick={() => onChange({ target: { name, value: opt } })} 
+          onClick={() => onChange({ target: { name, value: opt.val } })} 
           className={`px-8 py-2.5 text-[11px] font-bold rounded-xl transition-all uppercase tracking-wider ${
-            value === opt 
+            value === opt.val 
               ? "bg-[#2E3D99] text-white shadow-lg shadow-blue-900/20" 
               : "text-gray-400 hover:text-[#1D97D7] hover:bg-gray-50"
           }`}
         >
-          {opt}
+          {opt.label}
         </button>
       ))}
     </div>
   </div>
 );
+
+const AddressInputGroup = ({ label, value, onAddressSelect, placeholder, icon, isLoaded }) => {
+  const inputRef = React.useRef(null);
+  const [inputValue, setInputValue] = React.useState(value || "");
+
+  React.useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  React.useEffect(() => {
+    if (!isLoaded || !inputRef.current || !window.google) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+      types: ["address"],
+      componentRestrictions: { country: ["au"] },
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address) {
+        onAddressSelect(place.formatted_address);
+      }
+    });
+
+    return () => {
+      if (listener) window.google.maps.event.removeListener(listener);
+      if (autocomplete && window.google) {
+        window.google.maps.event.clearInstanceListeners(autocomplete);
+      }
+    };
+  }, [isLoaded]);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+        {icon} {label}
+      </label>
+      <input 
+        ref={inputRef}
+        type="text" 
+        value={inputValue} 
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          onAddressSelect(e.target.value);
+        }} 
+        placeholder={placeholder} 
+        className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all shadow-sm outline-none" 
+      />
+    </div>
+  );
+};
+
+const FileUploadSection = ({ files, onFileUpload, onFileDelete, isUploading }) => {
+  const fileInputRef = React.useRef(null);
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onFileUpload(e.target.files);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <FileText className="w-4 h-4" /> Upload existing Wills (PDF)
+        </label>
+        {files.length > 0 && (
+          <span className="text-[10px] font-bold text-[#2E3D99] bg-[#2E3D99]/5 px-3 py-1 rounded-full uppercase tracking-wider">
+            {files.length} {files.length === 1 ? 'File' : 'Files'} Uploaded
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div 
+          onClick={!isUploading ? handleFileClick : undefined}
+          className={`group relative h-48 border-2 border-dashed rounded-[32px] transition-all flex flex-col items-center justify-center gap-3 cursor-pointer overflow-hidden
+            ${isUploading ? "border-gray-200 bg-gray-50 cursor-wait" : "border-gray-100 hover:border-[#2E3D99] hover:bg-gray-50/50"}
+          `}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            multiple 
+            accept=".pdf" 
+            className="hidden" 
+          />
+          
+          {isUploading ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-[#2E3D99]/20 border-t-[#2E3D99] rounded-full animate-spin" />
+              <p className="text-xs font-bold text-gray-400">Uploading files...</p>
+            </div>
+          ) : (
+            <>
+              <div className="p-4 bg-gray-50 rounded-2xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#2E3D99]" />
+              </div>
+              <div className="text-center px-6">
+                <p className="text-xs font-bold text-gray-700">Click to upload PDFs</p>
+                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-medium">Multiple files allowed</p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          {files.map((file, idx) => (
+            <div 
+              key={idx} 
+              className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-[20px] shadow-sm animate-in slide-in-from-right-4 duration-300"
+              style={{ animationDelay: `${idx * 50}ms` }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-red-50 rounded-xl">
+                  <FileText className="w-4 h-4 text-red-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-gray-700 truncate">{file.urlName}</p>
+                  <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#1D97D7] hover:underline font-medium">View document</a>
+                </div>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFileDelete(file.urlName);
+                }}
+                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {files.length === 0 && !isUploading && (
+            <div className="h-full flex flex-col items-center justify-center opacity-40 grayscale scale-90">
+              <FileText className="w-8 h-8 text-gray-300 mb-2" />
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">No files uploaded yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default WillsStepForm;

@@ -1,11 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check, FileText } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
+import WillsAPI from "../../api/willsAPI";
 import { generateWillsPDF } from "../../components/utils/generateWillsPDF";
+import { toast } from "react-toastify";
+
+// Helper function to load Google Maps script
+const loadGoogleMapsScript = (apiKey) => {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) {
+      resolve();
+      return;
+    }
+    const existingScript = document.querySelector(
+      'script[src*="maps.googleapis.com"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener("load", resolve);
+      existingScript.addEventListener("error", reject);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", resolve);
+    script.addEventListener("error", reject);
+    document.head.appendChild(script);
+  });
+};
 
 const FloatingElement = ({ top, left, delay, size = 60 }) => (
   <motion.div
@@ -31,44 +58,111 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
 
 const WillsForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const api = useRef(new WillsAPI());
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
+
+  useEffect(() => {
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        setIsGoogleMapsLoaded(true);
+      })
+      .catch((error) => {
+        console.error("Error loading Google Maps:", error);
+      });
+  }, [GOOGLE_MAPS_API_KEY]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const matterNumber = params.get("matterNumber");
+    const firmIdInUrl = params.get("firmId");
+
+    if (firmIdInUrl) {
+      setFormData(prev => ({ ...prev, firmId: firmIdInUrl }));
+    }
+
+    if (matterNumber) {
+      const fetchForm = async () => {
+        try {
+          const data = await api.current.getProjectFullData(matterNumber);
+          if (data) {
+            setFormData(data);
+            // Optionally set step to 10 (Review) if it's already submitted
+            if (data.status === "submitted") {
+              setCurrentStep(10);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching wills form:", error);
+          toast.error("Failed to load form data");
+        }
+      };
+      fetchForm();
+    }
+  }, [location.search]);
   const [formData, setFormData] = useState({
-    fullName: "",
-    occupation: "",
+    firmId: localStorage.getItem("userID") || "",
     email: "",
-    phone: "",
-    address: "",
-    existingWill: "No",
-    executorName1: "",
-    executorRelation1: "",
-    executorAddress1: "",
-    addSecondExecutor: "No",
-    executorName2: "",
-    executorRelation2: "",
-    executorAddress2: "",
-    numBeneficiaries: "1",
-    beneficiaries: [{ name: "", age: "", relation: "", address: "" }],
-    jointProperties: [],
-    soleProperties: [],
-    jointBanks: [],
-    numJointBanks: "0",
-    singleBanks: [],
+    personal: {
+      fullName: "",
+      occupation: "",
+      phone: "",
+      address: "",
+      existingWill: null, // Use null for initial state
+      existingWillFiles: [], // Array of { name, url }
+    },
+    executors: [
+      {
+        name: "",
+        relation: { category: null, customValue: "" },
+        address: ""
+      }
+    ],
+    beneficiaries: [
+      {
+        name: "",
+        age: "",
+        relation: { category: null, customValue: "" },
+        address: ""
+      }
+    ],
+    properties: {
+      joint: [],
+      sole: []
+    },
+    bankAccounts: {
+      joint: [],
+      single: []
+    },
+    guardian: {
+      isExecutor: null,
+      name: "",
+      relation: { category: null, customValue: "" },
+      address: ""
+    },
+    funeral: {
+      hasPlan: null,
+      type: "",
+      details: ""
+    },
+    personalAssets: {
+      joint: [],
+      sole: []
+    },
+    other: {
+      promisedBenefit: null,
+      legalMatters: null,
+      otherNotes: null,
+      digitalBeneficiary: ""
+    },
+    status: "draft",
     numSingleBanks: "0",
-    hasGuardian: "No",
-    isExecutorGuardian: "No",
-    guardianName: "",
-    guardianAddress: "",
-    guardianRelation: "",
-    funeralPlanned: "No",
-    funeralDetails: "",
-    funeralChoice: "",
-    jointPersonalProperties: [],
-    solePersonalProperties: [],
-    promisedBenefit: "No",
-    familyCourtOrders: "No",
-    otherMatters: "No",
-    digitalRightsBeneficiary: "",
+    numJointBanks: "0"
   });
 
   const steps = [
@@ -84,44 +178,197 @@ const WillsForm = () => {
     "Review"
   ];
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const setNestedValue = (obj, path, value) => {
+    const keys = path.split('.');
+    const lastKey = keys.pop();
+    const target = keys.reduce((acc, key) => {
+      if (!acc[key]) acc[key] = {};
+      return acc[key];
+    }, obj);
+    target[lastKey] = value;
   };
 
-  const handleArrayChange = (arrayName, index, field, value) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setIsDirty(true);
     setFormData((prev) => {
-      const newArray = [...prev[arrayName]];
-      newArray[index] = { ...newArray[index], [field]: value };
-      return { ...prev, [arrayName]: newArray };
+      const newData = JSON.parse(JSON.stringify(prev));
+      // Map empty string to null ONLY for category and boolean fields to avoid validation errors
+      const isNullField = (name.endsWith('.category') || name === 'category' || name === 'personal.existingWill' || name === 'guardian.isExecutor' || name === 'funeral.hasPlan' || name === 'other.promisedBenefit' || name === 'other.legalMatters' || name === 'other.otherNotes');
+      const finalValue = isNullField && value === "" ? null : value;
+      setNestedValue(newData, name, finalValue);
+      return newData;
     });
   };
 
-  const addArrayItem = (arrayName, emptyItem) => {
-    setFormData((prev) => ({
-      ...prev,
-      [arrayName]: [...prev[arrayName], emptyItem],
-    }));
+  const handleArrayChange = (arrayPath, index, field, value) => {
+    setIsDirty(true);
+    setFormData((prev) => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      const keys = arrayPath.split('.');
+      let targetArray = newData;
+      for (const key of keys) {
+        targetArray = targetArray[key];
+      }
+      
+      if (field.includes('.')) {
+        // Map empty string to null for category and boolean fields
+        const isNullField = (field.endsWith('.category') || field === 'category' || field === 'personal.existingWill' || field === 'guardian.isExecutor' || field === 'funeral.hasPlan' || field === 'other.promisedBenefit' || field === 'other.legalMatters' || field === 'other.otherNotes');
+        const finalValue = isNullField && value === "" ? null : value;
+        setNestedValue(targetArray[index], field, finalValue);
+      } else {
+        targetArray[index][field] = value;
+      }
+      return newData;
+    });
   };
 
-  const removeArrayItem = (arrayName, index) => {
-    setFormData((prev) => ({
+  const addArrayItem = (arrayPath, emptyItem) => {
+    setIsDirty(true);
+    setFormData((prev) => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      const keys = arrayPath.split('.');
+      let targetArray = newData;
+      const lastKey = keys.pop();
+      for (const key of keys) {
+        if (!targetArray[key]) targetArray[key] = {};
+        targetArray = targetArray[key];
+      }
+      if (!targetArray[lastKey]) targetArray[lastKey] = [];
+      targetArray[lastKey].push(emptyItem);
+      return newData;
+    });
+  };
+
+  const removeArrayItem = (arrayPath, index) => {
+    setIsDirty(true);
+    setFormData((prev) => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      const keys = arrayPath.split('.');
+      let targetArray = newData;
+      for (const key of keys) {
+        targetArray = targetArray[key];
+      }
+      targetArray.splice(index, 1);
+      return newData;
+    });
+  };
+
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    try {
+      const fileData = Array.from(files).map(file => ({
+        fileType: file.type,
+        fileSize: file.size
+      }));
+
+      // 1. Generate Signed URLs
+      const response = await api.current.generateSignedUrls(fileData);
+      const signedUrls = response.urls || response.data || response;
+      
+      const uploadResults = [];
+
+      // 2. Upload to GCS
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const signedUrlData = signedUrls[i];
+        const { signedUrl: uploadUrl, fileUrl: url, fileType: backendFileType } = signedUrlData;
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": backendFileType || file.type || "application/pdf"
+          },
+          body: file
+        });
+
+        if (!uploadResponse.ok) {
+          const errorMsg = `GCS upload failed: ${uploadResponse.status}`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+        }
+        
+        uploadResults.push({ 
+          urlName: file.name, 
+          url: url // This matches fileUrl from response
+        });
+      }
+
+      // 3. Sync Metadata
+      const matterNumber = formData.matterNumber || "1234567";
+      await api.current.uploadMultipleUrls(uploadResults, matterNumber);
+
+      // 4. Update State
+      setFormData(prev => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          existingWillFiles: [...(prev.personal.existingWillFiles || []), ...uploadResults]
+        }
+      }));
+      
+      toast.success("Files uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload files");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileDelete = (fileName) => {
+    setFormData(prev => ({
       ...prev,
-      [arrayName]: prev[arrayName].filter((_, i) => i !== index),
+      personal: {
+        ...prev.personal,
+        existingWillFiles: (prev.personal.existingWillFiles || []).filter(f => f.urlName !== fileName)
+      }
     }));
+    toast.info("File removed from list");
   };
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      await generateWillsPDF("wills-preview-doc", `Will_${formData.fullName || 'Draft'}.pdf`);
+      // Final submission check
+      if (formData.status !== "submitted") {
+        const updatedData = { ...formData, status: "submitted" };
+        await api.current.updateWillsForm(updatedData);
+        setFormData(updatedData);
+      }
+      await generateWillsPDF("wills-preview-doc", `Will_${formData.personal?.fullName || 'Draft'}.pdf`);
+      toast.success("PDF generated and form submitted!");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Failed to submit form!");
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  const syncToApi = async (step, data) => {
+    try {
+      if (step === 1) {
+        await api.current.createWillsForm({ ...data, status: "draft" });
+        console.log("Form created successfully");
+      } else if (step > 1 && isDirty) {
+        await api.current.updateWillsForm({ ...data, status: "draft" });
+        console.log("Form updated successfully");
+      }
+      setIsDirty(false);
+    } catch (error) {
+      console.error(`Error in stage ${step} sync:`, error);
+      toast.error("Failed to save progress!");
+    }
+  };
+
+  const nextStep = async () => {
+    if (currentStep < 10) {
+      await syncToApi(currentStep, formData);
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+    }
   };
 
   const prevStep = () => {
@@ -251,6 +498,11 @@ const WillsForm = () => {
                       handleArrayChange={handleArrayChange}
                       addArrayItem={addArrayItem}
                       removeArrayItem={removeArrayItem}
+                      isGoogleMapsLoaded={isGoogleMapsLoaded}
+                      email={formData.email}
+                      onFileUpload={handleFileUpload}
+                      onFileDelete={handleFileDelete}
+                      isUploading={isUploading}
                     />
                   )}
                 </motion.div>
@@ -269,7 +521,18 @@ const WillsForm = () => {
               </button>
               
               <button
-                onClick={currentStep === 10 ? () => navigate(-1) : nextStep}
+                onClick={currentStep === 10 ? async () => {
+                  try {
+                    const updatedData = { ...formData, status: "submitted" };
+                    await api.current.updateWillsForm(updatedData);
+                    setFormData(updatedData);
+                    toast.success("Form submitted successfully!");
+                    navigate(-1);
+                  } catch (err) {
+                    console.error("Submission error:", err);
+                    toast.error("Failed to submit form!");
+                  }
+                } : nextStep}
                 className="flex items-center gap-4 px-12 py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 {currentStep === 10 ? "Finish" : "Next Phase"} <ChevronRight size={20} />

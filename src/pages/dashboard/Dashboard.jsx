@@ -26,6 +26,7 @@ import {
   Globe,
   Target,
   Info,
+  Send,
 } from "lucide-react";
 import {
   BarChart,
@@ -45,6 +46,7 @@ import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import WillsAPI from "../../api/willsAPI";
 import VocatFasAPI from "../../api/vocatFasAPI";
+import SendWillsFormModal from "../../components/wills/SendWillsFormModal";
 import { create } from "zustand";
 
 // --- Calendar Imports ---
@@ -1268,6 +1270,25 @@ function Dashboard() {
     return "New Client";
   };
 
+  // --- Wills Email Modal ---
+  const [isSendWillsModalOpen, setIsSendWillsModalOpen] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  const handleSendWillsFormEmail = async (data) => {
+    setIsSendingEmail(true);
+    try {
+      const api = new WillsAPI();
+      await api.sendWillsEmail(data);
+      toast.success("Wills form link sent successfully!");
+      setIsSendWillsModalOpen(false);
+    } catch (error) {
+      console.error("Error sending wills email:", error);
+      toast.error(error.message || "Failed to send email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const handleAddButtonClick = () => {
     if (currentModule === "commercial") {
       setCreateProject(true);
@@ -1374,16 +1395,32 @@ function Dashboard() {
                 {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
                   <div className="flex gap-2">
                     {currentModule === "wills" && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate("/admin/wills-form")}
-                        className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-[#2E3D99] text-[#2E3D99] rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all whitespace-nowrap"
-                      >
-                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#2E3D99]" />
-                        <span className="hidden xs:inline">Wills Multi-Stepper</span>
-                        <span className="xs:hidden">Wills Form</span>
-                      </motion.button>
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIsSendWillsModalOpen(true)}
+                          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#2E3D99]/5 text-[#2E3D99] border border-[#2E3D99]/20 rounded-xl font-semibold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all whitespace-nowrap"
+                        >
+                          <Send className="w-4 h-4 sm:w-5 sm:h-5 text-[#2E3D99]" />
+                          <span className="hidden xs:inline text-[#2E3D99]">Send Wills Form</span>
+                          <span className="xs:hidden">Send Form</span>
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                          const firmId = localStorage.getItem("userID") || "";
+                          const url = `${window.location.origin}/wills/form?firmId=${firmId}`;
+                          window.open(url, "_blank");
+                        }}
+                          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-[#2E3D99] text-[#2E3D99] rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all whitespace-nowrap"
+                        >
+                          <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#2E3D99]" />
+                          <span className="hidden xs:inline">Wills Multi-Stepper</span>
+                          <span className="xs:hidden">Wills Form</span>
+                        </motion.button>
+                      </>
                     )}
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -1984,7 +2021,14 @@ function Dashboard() {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* --- Modals --- */}
+      <SendWillsFormModal
+        isOpen={isSendWillsModalOpen}
+        onClose={() => setIsSendWillsModalOpen(false)}
+        onSend={handleSendWillsFormEmail}
+        isLoading={isSendingEmail}
+      />
+
       <CreateClientModal
         createType="client"
         companyName={currentModule}
