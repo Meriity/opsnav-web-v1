@@ -253,12 +253,15 @@ export default function Stage5({
         // Typically "System Note - Client Comment"
         noteGroups.forEach((group) => {
           const noteString = stageData[group.noteForClientKey] || "";
-          const noteParts = noteString
-            .split(" - ")
-            .filter((p) => p.trim() !== "");
-          // part[0] is system note, rest is client comment
-          const clientComment =
-            noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
+          let clientComment = "";
+          if (noteString.includes(" - ")) {
+            const parts = noteString.split(" - ");
+            if (parts.length > 1) {
+              clientComment = parts.slice(1).join(" - ").trim();
+            }
+          } else {
+            clientComment = "";
+          }
 
           // We store the client comment in formState for the specific group key
           newForm[group.clientCommentKey] = clientComment;
@@ -366,11 +369,8 @@ export default function Stage5({
       // Standard modules
       noteGroups.forEach((group) => {
         const comment = payload[group.clientCommentKey] || "";
-        // If system note says "Pending: ...", we combine.
-        // format: "SystemNote - ClientComment"
-        payload[group.noteForClientKey] = comment
-          ? `${systemNote} - ${comment}`
-          : systemNote;
+        // ALWAYS include the " - " separator to keep system note and manual comment distinct
+        payload[group.noteForClientKey] = `${systemNote} - ${comment}`.trim();
 
         // cleanup temp keys
         delete payload[group.clientCommentKey];

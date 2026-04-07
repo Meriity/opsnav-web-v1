@@ -1,19 +1,19 @@
 import React from "react";
 
-const WillsPreview = ({ formData }) => {
+const WillsPreview = ({ formData = {} }) => {
   const {
-    personal,
-    executors,
-    beneficiaries,
-    properties,
-    bankAccounts,
-    guardian,
-    funeral,
-    personalAssets,
-    other
+    personal = {},
+    executors = [],
+    beneficiaries = [],
+    properties = { joint: [], sole: [] },
+    bankAccounts = { joint: [], single: [] },
+    guardian = { relation: {} },
+    funeral = {},
+    personalAssets = { joint: [], sole: [] },
+    other = {}
   } = formData;
 
-  const { fullName, occupation, address } = personal;
+  const { fullName = "", occupation = "", address = "" } = personal;
   const primaryExecutor = executors[0] || { name: "", relation: { category: "" }, address: "" };
   const secondaryExecutor = executors[1];
   const primaryBeneficiary = beneficiaries[0] || { name: "", relation: { category: "" } };
@@ -25,7 +25,7 @@ const WillsPreview = ({ formData }) => {
   const jointPersonalProperties = personalAssets.joint || [];
   const solePersonalProperties = personalAssets.sole || [];
 
-  const digitalRightsBeneficiary = other.digitalBeneficiary;
+  const digitalRightsBeneficiary = other.digitalBeneficiary || "";
 
   const BoldValue = ({ children, placeholder = "____________________" }) => (
     <span className="font-bold uppercase tracking-tight">{children || placeholder}</span>

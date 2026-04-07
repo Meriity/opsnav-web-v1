@@ -13,6 +13,7 @@ export default function ConfirmationModal({
   isLogout,
   confirmLabel = "Save & Continue",
   cancelLabel = "Leave",
+  confirmDisabled = false,
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -103,7 +104,7 @@ export default function ConfirmationModal({
                     <Button
                       label={isConfirming ? "Processing..." : confirmLabel}
                       onClick={handleConfirm}
-                      disabled={isConfirming}
+                      disabled={isConfirming || confirmDisabled}
                       textColor="text-white"
                       bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
                       width="w-40"

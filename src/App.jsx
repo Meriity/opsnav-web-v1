@@ -76,6 +76,7 @@ function App() {
         <Route path="/client/login" element={<ClientLogin />} />
         <Route path="/client/forgotPassword" element={<ForgotPassword />} />
         <Route path="/wills/form" element={<WillsForm />} />
+        <Route path="/wills/form/v1/get-by-reference-number/:referenceNumber" element={<WillsForm />} />
 
         {/* 🔒 Protected Admin Routes */}
         <Route

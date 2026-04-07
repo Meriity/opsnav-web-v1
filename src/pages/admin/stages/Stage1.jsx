@@ -338,7 +338,7 @@ export default function Stage1({
         clientComment: parts.slice(1).join(" - ")?.trim() || "" 
       };
     }
-    return { systemNote: "", clientComment: note.trim() };
+    return { systemNote: note.trim(), clientComment: "" };
   }
 
   const generateSystemNote = () => {
