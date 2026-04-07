@@ -10,6 +10,7 @@ import {
   GripVertical,
   ExternalLink,
   RefreshCw,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -76,6 +77,8 @@ const ViewClientsTable = ({
   handleChangeUser,
   onEdit,
   onDelete,
+  onConvert,
+  onDownloadDocx,
   pendingAllocations = {},
   editIcon,
   editText,
@@ -210,7 +213,7 @@ const ViewClientsTable = ({
                 </th>
               )}
               {showActions && (
-                <th className="px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl" style={{ width: "5%" }}>
+                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${onConvert || onDownloadDocx ? "w-[12%] xl:w-[15%]" : "w-[6%] xl:w-[5%]"}`}>
                   Action
                 </th>
               )}
@@ -510,27 +513,50 @@ const ViewClientsTable = ({
                         )}
                         {showActions && (
                           <td className={`pl-3 pr-2 rounded-r-2xl align-middle`}>
-                            <div className="flex flex-col items-center space-y-2">
-                              <button
-                                onClick={() => {
-                                  const id =
-                                    item.matterNumber || item.matternumber || item.orderId;
-                                  if (typeof onEdit === "function") {
-                                    onEdit(item);
-                                  } else {
-                                    navigate(`/admin/client/stages/${id}`);
-                                  }
-                                }}
-                                className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                                title={editTooltip || "Edit"}
-                              >
-                                {editIcon === "convert" ? (
-                                  <RefreshCw size={10} className="lg:size-[10px] xl:size-3" />
-                                ) : (
+                            <div className="flex flex-row items-center justify-center space-x-2">
+                              {onEdit ? (
+                                <button
+                                  onClick={() => onEdit(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title={editTooltip || "Edit"}
+                                >
                                   <Edit size={10} className="lg:size-[10px] xl:size-3" />
-                                )}
-                                <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
-                              </button>
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                </button>
+                              ) : (
+                                 <button
+                                  onClick={() => {
+                                    const id =
+                                      item.matterNumber || item.matternumber || item.orderId;
+                                    navigate(`/admin/client/stages/${id}`);
+                                  }}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title={editTooltip || "Edit"}
+                                >
+                                  <Edit size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                </button>
+                              )}
+                              {onConvert && (
+                                <button
+                                  onClick={() => onConvert(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Convert to matter"
+                                >
+                                  <RefreshCw size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Convert</span>
+                                </button>
+                              )}
+                              {onDownloadDocx && (
+                                <button
+                                  onClick={() => onDownloadDocx(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Download .docx"
+                                >
+                                  <FileText size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Docx</span>
+                                </button>
+                              )}
                               {currentModule === "print media" && (
                                 <button
                                   onClick={() => onDelete(item)}
@@ -695,6 +721,33 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(item)}
+                    className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Review"
+                  >
+                    <Edit size={16} className="text-blue-600" />
+                  </button>
+                )}
+                {onConvert && (
+                  <button
+                    onClick={() => onConvert(item)}
+                    className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Convert"
+                  >
+                    <RefreshCw size={16} className="text-emerald-600" />
+                  </button>
+                )}
+                {onDownloadDocx && (
+                  <button
+                    onClick={() => onDownloadDocx(item)}
+                    className="p-1 text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Download .docx"
+                  >
+                    <FileText size={16} className="text-black" />
+                  </button>
+                )}
                 {/* {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
                   <a
                     href={item.matterUrl}

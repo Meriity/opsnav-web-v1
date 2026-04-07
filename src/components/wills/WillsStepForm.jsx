@@ -18,6 +18,46 @@ const WillsStepForm = ({
   onFileDelete,
   isUploading
 }) => {
+  // --- SAFETY CHECK: Ensure formData and its nested objects exist ---
+  if (!formData) return null;
+
+  const data = {
+    personal: formData.personal || {},
+    executors: formData.executors || [],
+    beneficiaries: formData.beneficiaries || [],
+    properties: {
+      joint: formData.properties?.joint || [],
+      sole: formData.properties?.sole || []
+    },
+    bankAccounts: {
+      joint: formData.bankAccounts?.joint || [],
+      single: formData.bankAccounts?.single || []
+    },
+    guardian: formData.guardian || { relation: {} },
+    funeral: formData.funeral || {},
+    personalAssets: {
+      joint: formData.personalAssets?.joint || [],
+      sole: formData.personalAssets?.sole || []
+    },
+    other: formData.other || {},
+    numSingleBanks: formData.numSingleBanks || "0",
+    numJointBanks: formData.numJointBanks || "0",
+  };
+
+  const {
+    personal,
+    executors,
+    beneficiaries,
+    properties,
+    bankAccounts,
+    guardian,
+    funeral,
+    personalAssets,
+    other,
+    numSingleBanks,
+    numJointBanks,
+  } = data;
+
   const relationshipOptions = [
     "Spouse", "Brother", "Sister", "Mother", "Father", 
     "Son", "Daughter", "Friend", "Cousin", "Other"
@@ -33,15 +73,15 @@ const WillsStepForm = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <InputGroup label="Enter your full name" name="personal.fullName" value={formData.personal.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-          <InputGroup label="Enter your occupation" name="personal.occupation" value={formData.personal.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
+          <InputGroup label="Enter your full name" name="personal.fullName" value={personal.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+          <InputGroup label="Enter your occupation" name="personal.occupation" value={personal.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
           <InputGroup label="Email" name="email" value={email} onChange={handleInputChange} placeholder="email@example.com" type="email" icon={<Mail className="w-4 h-4" />} />
-          <InputGroup label="Phone number" name="personal.phone" value={formData.personal.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
+          <InputGroup label="Phone number" name="personal.phone" value={personal.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
         </div>
 
         <AddressInputGroup 
           label="Residential address" 
-          value={formData.personal.address} 
+          value={personal.address} 
           onAddressSelect={(addr) => handleInputChange({ target: { name: "personal.address", value: addr } })} 
           placeholder="Enter your full residential address" 
           icon={<Home className="w-4 h-4" />} 
@@ -51,14 +91,14 @@ const WillsStepForm = ({
         <YesNoToggle 
           label="Is there an existing Will?" 
           name="personal.existingWill" 
-          value={formData.personal.existingWill} 
+          value={personal.existingWill} 
           onChange={handleInputChange} 
         />
 
-        {formData.personal.existingWill === true && (
+        {personal.existingWill === true && (
           <div className="animate-in fade-in slide-in-from-top-4 duration-500">
             <FileUploadSection 
-              files={formData.personal.existingWillFiles || []}
+              files={personal.existingWillFiles || []}
               onFileUpload={onFileUpload}
               onFileDelete={onFileDelete}
               isUploading={isUploading}
@@ -81,7 +121,6 @@ const WillsStepForm = ({
 
   // --- STEP 2: Executor (Q7-Q13) ---
   if (step === 2) {
-    const executors = formData.executors;
     const addSecondExecutor = executors.length > 1;
 
     return (
@@ -172,8 +211,7 @@ const WillsStepForm = ({
 
   // --- STEP 3: Beneficiaries (Q14-Q20) ---
   if (step === 3) {
-    const beneficiaries = formData.beneficiaries;
-    const numBeneficiaries = beneficiaries.length.toString();
+    const nBeneficiaries = beneficiaries.length.toString();
 
     return (
       <div className="space-y-8">
@@ -191,7 +229,7 @@ const WillsStepForm = ({
                    type="radio" 
                    name="numBeneficiaries" 
                    value={num} 
-                   checked={numBeneficiaries === num} 
+                   checked={nBeneficiaries === num} 
                    onChange={(e) => {
                      const n = parseInt(num);
                      const current = beneficiaries.length;
@@ -273,8 +311,8 @@ const WillsStepForm = ({
           title="Joint Ownership Properties"
           description="Do you own any real-estate properties as joint ownership?"
           arrayName="properties.joint"
-          properties={formData.properties.joint}
-          beneficiaries={formData.beneficiaries}
+          properties={properties.joint}
+          beneficiaries={beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
@@ -286,8 +324,8 @@ const WillsStepForm = ({
           title="Sole Ownership Properties"
           description="Do you own any real-estate properties as sole ownership?"
           arrayName="properties.sole"
-          properties={formData.properties.sole}
-          beneficiaries={formData.beneficiaries}
+          properties={properties.sole}
+          beneficiaries={beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
@@ -312,9 +350,9 @@ const WillsStepForm = ({
           description="Do you have any Joint bank accounts?"
           arrayName="bankAccounts.joint"
           numName="numJointBanks"
-          numValue={(formData.bankAccounts.joint.length || 0).toString()}
-          accounts={formData.bankAccounts.joint}
-          beneficiaries={formData.beneficiaries}
+          numValue={(bankAccounts.joint.length || 0).toString()}
+          accounts={bankAccounts.joint}
+          beneficiaries={beneficiaries}
           handleInputChange={handleInputChange}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
@@ -327,9 +365,9 @@ const WillsStepForm = ({
           description="Do you have any bank accounts under your name only?"
           arrayName="bankAccounts.single"
           numName="numSingleBanks"
-          numValue={(formData.bankAccounts.single.length || 0).toString()}
-          accounts={formData.bankAccounts.single}
-          beneficiaries={formData.beneficiaries}
+          numValue={(bankAccounts.single.length || 0).toString()}
+          accounts={bankAccounts.single}
+          beneficiaries={beneficiaries}
           handleInputChange={handleInputChange}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
@@ -344,7 +382,7 @@ const WillsStepForm = ({
   if (step === 6) {
     return (
       <StepGuardianSection 
-        formData={formData}
+        formData={data}
         handleInputChange={handleInputChange}
         isGoogleMapsLoaded={isGoogleMapsLoaded}
         relationshipOptions={relationshipOptions}
@@ -363,14 +401,14 @@ const WillsStepForm = ({
         </div>
 
         <div className="space-y-8">
-          <YesNoToggle label="Do you have a funeral arrangement planned?" name="funeral.hasPlan" value={formData.funeral.hasPlan} onChange={handleInputChange} />
+          <YesNoToggle label="Do you have a funeral arrangement planned?" name="funeral.hasPlan" value={funeral.hasPlan} onChange={handleInputChange} />
 
-          {formData.funeral.hasPlan === true ? (
+          {funeral.hasPlan === true ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
               <label className="text-sm font-bold text-gray-700">Please provide all details of the funeral plan</label>
               <textarea
                 name="funeral.details"
-                value={formData.funeral.details ?? ""}
+                value={funeral.details ?? ""}
                 onChange={handleInputChange}
                 rows={5}
                 placeholder="Enter details..."
@@ -383,7 +421,7 @@ const WillsStepForm = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  {["Buried", "Cremation", "Donate for medical research"].map((option, idx) => (
                    <label key={option} className="cursor-pointer">
-                     <input type="radio" name="funeral.details" value={option} checked={formData.funeral.details === option} onChange={handleInputChange} className="hidden peer" />
+                     <input type="radio" name="funeral.details" value={option} checked={funeral.details === option} onChange={handleInputChange} className="hidden peer" />
                      <div className="p-6 text-center rounded-[24px] border-2 border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-xs uppercase tracking-wider">
                        {idx + 1}. {option}
                      </div>
@@ -410,8 +448,8 @@ const WillsStepForm = ({
           title="Joint Personal Properties"
           description="Do you own any personal properties as joint ownership?"
           arrayName="personalAssets.joint"
-          properties={formData.personalAssets.joint}
-          beneficiaries={formData.beneficiaries}
+          properties={personalAssets.joint}
+          beneficiaries={beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
@@ -422,8 +460,8 @@ const WillsStepForm = ({
           title="Sole Personal Properties"
           description="Do you own any personal properties as sole ownership?"
           arrayName="personalAssets.sole"
-          properties={formData.personalAssets.sole}
-          beneficiaries={formData.beneficiaries}
+          properties={personalAssets.sole}
+          beneficiaries={beneficiaries}
           handleArrayChange={handleArrayChange}
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
@@ -443,17 +481,17 @@ const WillsStepForm = ({
         </div>
 
         <div className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 space-y-10">
-          <YesNoToggle label="Has anyone been promised a benefit under the will?" name="other.promisedBenefit" value={formData.other.promisedBenefit} onChange={handleInputChange} />
+          <YesNoToggle label="Has anyone been promised a benefit under the will?" name="other.promisedBenefit" value={other.promisedBenefit} onChange={handleInputChange} />
           
-          <YesNoToggle label="Are any Family Court orders still on foot, has a binding financial agreement been entered into, is there a registered relationship under the Family Court Act 1997 or an unregistered domestic partner?" name="other.legalMatters" value={formData.other.legalMatters} onChange={handleInputChange} />
+          <YesNoToggle label="Are any Family Court orders still on foot, has a binding financial agreement been entered into, is there a registered relationship under the Family Court Act 1997 or an unregistered domestic partner?" name="other.legalMatters" value={other.legalMatters} onChange={handleInputChange} />
 
-          <YesNoToggle label="Are there any other matters which might affect the dispositions in the will?" name="other.otherNotes" value={formData.other.otherNotes} onChange={handleInputChange} />
+          <YesNoToggle label="Are there any other matters which might affect the dispositions in the will?" name="other.otherNotes" value={other.otherNotes} onChange={handleInputChange} />
         </div>
 
         <InputGroup 
           label="Beneficiary of all your digital rights" 
           name="other.digitalBeneficiary" 
-          value={formData.other.digitalBeneficiary} 
+          value={other.digitalBeneficiary} 
           onChange={handleInputChange} 
           placeholder="e.g. Spouse / Name of Beneficiary" 
           icon={<Shield className="w-4 h-4" />} 
@@ -543,7 +581,7 @@ const StepBankSection = ({
     const n = parseInt(num) || 0;
     const current = accounts.length;
     if (n > current) {
-      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", last4: "", beneficiary: "" });
+      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", last4: "", beneficiary: "", ratio: "Equally" });
     } else if (n < current) {
       for(let i=0; i<current-n; i++) removeArrayItem(arrayName, accounts.length - 1 - i);
     }
@@ -618,6 +656,29 @@ const StepBankSection = ({
                       options={beneficiaries.map(b => b.name).filter(Boolean)} 
                       icon={<Users size={14} />} 
                     />
+                   <div className="space-y-2">
+                     <label className="text-sm font-bold text-gray-700">Gift ratio</label>
+                     <div className="flex gap-2">
+                        {["Equally", "Other"].map(r => (
+                          <button 
+                            key={r} 
+                            type="button"
+                            onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
+                            className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 transition-all ${acc.ratio === r || (r === "Other" && acc.ratio !== "Equally" && acc.ratio !== undefined) ? "border-[#2E3D99] bg-[#2E3D99]/5 text-[#2E3D99]" : "border-gray-50 text-gray-400"}`}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                     </div>
+                     {(acc.ratio !== "Equally" && acc.ratio !== undefined) && (
+                        <input 
+                          placeholder="Enter other ratio..." 
+                          value={acc.ratio === "Other" ? "" : acc.ratio} 
+                          onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
+                          className="w-full mt-2 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs animate-in slide-in-from-top-2" 
+                        />
+                     )}
+                   </div>
                 </div>
               </div>
             ))}

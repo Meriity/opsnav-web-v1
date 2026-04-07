@@ -337,13 +337,16 @@ export default function Stage6({
       } else {
         currentConfig.noteGroups.forEach((group) => {
           const noteString = stageData[group.noteForClientKey] || "";
-          const noteParts = noteString
-            .split(" - ")
-            .filter((part) => part.trim() !== "");
-          loadedSystemNote = noteParts[0]?.trim() || "";
-          loadedClientComment =
-            noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
-          newForm[group.clientCommentKey] = loadedClientComment;
+          let clientComment = "";
+          if (noteString.includes(" - ")) {
+            const parts = noteString.split(" - ");
+            if (parts.length > 1) {
+              clientComment = parts.slice(1).join(" - ").trim();
+            }
+          } else {
+            clientComment = "";
+          }
+          newForm[group.clientCommentKey] = clientComment;
         });
       }
 
@@ -476,9 +479,8 @@ export default function Stage6({
 
       currentConfig.noteGroups.forEach((group) => {
         const comment = payload[group.clientCommentKey] || "";
-        payload[group.noteForClientKey] = comment
-          ? `${systemNote} - ${comment}`
-          : systemNote;
+        // ALWAYS include the " - " separator to keep system note and manual comment distinct
+        payload[group.noteForClientKey] = `${systemNote} - ${comment}`.trim();
         delete payload[group.clientCommentKey]; // remove temp key
       });
 

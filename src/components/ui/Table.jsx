@@ -238,12 +238,8 @@ const Table = ({
                         : ""
                     }`}
                   >
-                    <div
-                      className={`flex items-center justify-${
-                        isLeftAligned ? "start" : "center"
-                      } gap-1 ${isLeftAligned ? "pl-3" : ""}`}
-                    >
-                      <span>{column.title}</span>
+                    <div className="flex flex-col items-center justify-center gap-0.5">
+                      <span className="leading-tight">{column.title}</span>
                       <span>
                         {isSorted ? (
                           sortDirection === "asc" ? (

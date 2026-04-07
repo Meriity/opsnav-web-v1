@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check, FileText } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
+import SimplifiedReview from "../../components/wills/SimplifiedReview";
 import WillsAPI from "../../api/willsAPI";
 import { generateWillsPDF } from "../../components/utils/generateWillsPDF";
 import { toast } from "react-toastify";
+import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
 
 // Helper function to load Google Maps script
 const loadGoogleMapsScript = (apiKey) => {
@@ -59,13 +61,29 @@ const FloatingElement = ({ top, left, delay, size = 60 }) => (
 const WillsForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { referenceNumber } = useParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const api = useRef(new WillsAPI());
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
+
+  const finalRefNumber = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const pathParts = window.location.pathname.split("/");
+    const refFromPath = pathParts.includes("get-by-reference-number") 
+      ? pathParts[pathParts.indexOf("get-by-reference-number") + 1] 
+      : null;
+    return referenceNumber || refFromPath;
+  }, [location.search, referenceNumber, location.pathname]);
+
+  const isFromReference = useMemo(() => {
+    return new URLSearchParams(location.search).has("matterNumber") || !!finalRefNumber;
+  }, [location.search, finalRefNumber]);
 
   useEffect(() => {
     loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
@@ -79,21 +97,33 @@ const WillsForm = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const matterNumber = params.get("matterNumber");
     const firmIdInUrl = params.get("firmId");
 
     if (firmIdInUrl) {
       setFormData(prev => ({ ...prev, firmId: firmIdInUrl }));
     }
 
-    if (matterNumber) {
+    const matterNumber = params.get("matterNumber");
+
+    if (finalRefNumber || matterNumber) {
       const fetchForm = async () => {
         try {
-          const data = await api.current.getProjectFullData(matterNumber);
-          if (data) {
-            setFormData(data);
-            // Optionally set step to 10 (Review) if it's already submitted
-            if (data.status === "submitted") {
+          let response;
+          if (finalRefNumber) {
+            // Priority: Call the reference number API if it's in the URL path
+            response = await api.current.getFormByReferenceNumber(finalRefNumber);
+          } else {
+            // Fallback: Call standard project data API
+            response = await api.current.getProjectFullData(matterNumber);
+          }
+            
+          if (response) {
+            // Extract the actual form data from the response (handles {data: {...}} or direct object)
+            const actualData = response.data || response;
+            setFormData(actualData);
+            
+            // Automatically jump to Step 10 (Review) if from reference or already submitted
+            if (actualData.status === "submitted" || finalRefNumber) {
               setCurrentStep(10);
             }
           }
@@ -104,7 +134,7 @@ const WillsForm = () => {
       };
       fetchForm();
     }
-  }, [location.search]);
+  }, [location.search, finalRefNumber]);
 
   const INITIAL_STATE = {
     firmId: localStorage.getItem("userID") || "",
@@ -346,15 +376,29 @@ const WillsForm = () => {
       status
     };
     
-    if (updatedData.matterReferenceNumber) {
-      await api.current.updateWillsForm(updatedData);
-      setFormData(updatedData);
-    } else {
-      const response = await api.current.createWillsForm(updatedData);
-      if (response?.data) {
-        setFormData(response.data);
-        return response.data;
+    try {
+      if (finalRefNumber) {
+        // Use the new PATCH API if we have a reference number from the URL
+        const response = await api.current.updateFormByReferenceNumber(finalRefNumber, updatedData);
+        if (response?.data) {
+          setFormData(response.data);
+          return response.data;
+        }
+      } else if (updatedData.matterReferenceNumber) {
+        // Fallback for query-param based updates
+        await api.current.updateWillsForm(updatedData);
+        setFormData(updatedData);
+      } else {
+        // Standard creation flow
+        const response = await api.current.createWillsForm(updatedData);
+        if (response?.data) {
+          setFormData(response.data);
+          return response.data;
+        }
       }
+    } catch (error) {
+      console.error("Error in submitForm:", error);
+      throw error;
     }
     return updatedData;
   };
@@ -433,15 +477,19 @@ const WillsForm = () => {
         <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
           
           <div className="flex items-center justify-between mb-8 print:hidden">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-500 hover:text-[#2E3D99] transition-colors group"
-            >
-              <div className="p-2 rounded-lg group-hover:bg-[#2E3D99]/5">
-                <ChevronLeft size={20} />
-              </div>
-              <span className="text-sm font-semibold uppercase tracking-wider">Back</span>
-            </button>
+            {isFromReference ? (
+              <button 
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-gray-500 hover:text-[#2E3D99] transition-colors group"
+              >
+                <div className="p-2 rounded-lg group-hover:bg-[#2E3D99]/5">
+                  <ChevronLeft size={20} />
+                </div>
+                <span className="text-sm font-semibold uppercase tracking-wider">Back</span>
+              </button>
+            ) : (
+              <div /> // Spacer for layout consistency
+            )}
             <div className="text-right">
               <h1 className="text-2xl font-bold text-[#2E3D99]">Wills Preparation</h1>
             </div>
@@ -496,24 +544,36 @@ const WillsForm = () => {
                     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500 print:block print:p-0 print:space-y-0">
                       <div className="flex items-center justify-between border-b border-gray-100 pb-8 print:hidden">
                         <div>
-                          <h2 className="text-3xl font-bold text-[#2E3D99]">Final Review</h2>
-                          <p className="text-sm text-gray-500 mt-1 font-medium italic">Please verify the legal document before downloading.</p>
+                          <h2 className="text-3xl font-bold text-[#2E3D99]">
+                            {isFromReference ? "Final Review" : "Confirm Your Details"}
+                          </h2>
+                          <p className="text-sm text-gray-500 mt-1 font-medium italic">
+                            {isFromReference 
+                              ? "Please verify the legal document before downloading."
+                              : "Review your entries below before submitting the form."}
+                          </p>
                         </div>
-                        <button 
-                          onClick={handleDownload}
-                          disabled={isDownloading}
-                          className="flex items-center gap-3 px-8 py-4 bg-[#2E3D99] text-white rounded-2xl hover:bg-[#1D97D7] transition-all font-bold text-sm shadow-xl shadow-blue-900/10 disabled:opacity-70 disabled:cursor-not-allowed group"
-                        >
-                          {isDownloading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <FileText size={18} className="group-hover:rotate-12 transition-transform" />
-                          )}
-                          {isDownloading ? "GENERATING PDF..." : "DOWNLOAD AS PDF"}
-                        </button>
+                        {isFromReference && (
+                          <button 
+                            onClick={handleDownload}
+                            disabled={isDownloading}
+                            className="flex items-center gap-3 px-8 py-4 bg-[#2E3D99] text-white rounded-2xl hover:bg-[#1D97D7] transition-all font-bold text-sm shadow-xl shadow-blue-900/10 disabled:opacity-70 disabled:cursor-not-allowed group"
+                          >
+                            {isDownloading ? (
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <FileText size={18} className="group-hover:rotate-12 transition-transform" />
+                            )}
+                            {isDownloading ? "GENERATING PDF..." : "DOWNLOAD AS PDF"}
+                          </button>
+                        )}
                       </div>
-                      <div className="bg-[#F8FAFC] rounded-[32px] p-6 md:p-12 border border-blue-50/30 shadow-inner max-h-[1200px] overflow-y-auto custom-scrollbar print:bg-white print:p-0 print:m-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible print:block">
-                        <WillsPreview formData={formData} />
+                      <div className={`${isFromReference ? "bg-[#F8FAFC] rounded-[32px] p-6 md:p-12 border border-blue-50/30 shadow-inner max-h-[800px] overflow-y-auto" : ""} print:bg-white print:p-0 print:m-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible print:block`}>
+                        {isFromReference ? (
+                          <WillsPreview formData={formData} />
+                        ) : (
+                          <SimplifiedReview formData={formData} />
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -547,24 +607,35 @@ const WillsForm = () => {
               </button>
               
               <button
-                onClick={currentStep === 10 ? async () => {
-                  try {
-                    await submitForm("submitted");
-                    toast.success("Form submitted successfully!");
-                    navigate(-1);
-                  } catch (err) {
-                    console.error("Submission error:", err);
-                    toast.error(err.message || "Failed to submit form!");
-                  }
-                } : nextStep}
+                onClick={currentStep === 10 ? () => setIsSubmitModalOpen(true) : nextStep}
                 className="flex items-center gap-4 px-12 py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                {currentStep === 10 ? "Finish" : "Next Phase"} <ChevronRight size={20} />
+                {currentStep === 10 ? "Submit" : "Next Phase"} <ChevronRight size={20} />
               </button>
             </div>
           </div>
         </div>
       </main>
+
+      <SubmitConfirmationModal
+        isOpen={isSubmitModalOpen}
+        onClose={() => setIsSubmitModalOpen(false)}
+        isLoading={isSubmitting}
+        onConfirm={async () => {
+          setIsSubmitting(true);
+          try {
+            await submitForm("submitted");
+            toast.success("Form submitted successfully!");
+            setIsSubmitModalOpen(false);
+            navigate(-1);
+          } catch (err) {
+            console.error("Submission error:", err);
+            toast.error(err.message || "Failed to submit form!");
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -368,6 +368,58 @@ class WillsAPI {
     }
   }
 
+  async getFormByReferenceNumber(referenceNumber) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.GET_BY_REFERENCE}/${referenceNumber}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting form by reference number:", error);
+      throw error;
+    }
+  }
+
+  async downloadDocx(referenceNumber) {
+    try {
+      const { generateWillsDocx } = await import("../components/utils/generateWillsDocx");
+      
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.GET_BY_REFERENCE}/${referenceNumber}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch document data: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // The API returns { message: "...", data: { ... } }
+      const formData = result.data || result;
+
+      await generateWillsDocx(formData, `Will_${referenceNumber}.docx`);
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      throw error;
+    }
+  }
+
+  async updateFormByReferenceNumber(referenceNumber, payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.UPDATE_BY_REFERENCE}/${referenceNumber}`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating form by reference number:", error);
+      throw error;
+    }
+  }
+
   async convertToMatter(payload) {
     try {
       const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.CONVERT_TO_MATTER}`, {

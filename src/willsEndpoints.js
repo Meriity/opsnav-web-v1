@@ -45,6 +45,8 @@ export const WILLS_ENDPOINTS = {
   FORM_UPDATE: "/wills/form/v1/update",
   SUBMITTED_FORMS: "/wills/form/v1/show-submitted-forms",
   CONVERT_TO_MATTER: "/wills/form/v1/convert-to-matter",
+  GET_BY_REFERENCE: "/wills/form/v1/get-by-reference-number",
+  UPDATE_BY_REFERENCE: "/wills/form/v1/update-by-reference-number",
 
   // File Upload V1
   GENERATE_SIGNED_URLS: "/wills/form/v1/generate-signed-urls",
