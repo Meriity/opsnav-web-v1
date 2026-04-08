@@ -74,11 +74,13 @@ const WillsForm = () => {
 
   const finalRefNumber = useMemo(() => {
     const params = new URLSearchParams(location.search);
+    const matterNumberFromQuery = params.get("matterNumber");
+    const refFromQuery = params.get("referenceNumber");
     const pathParts = window.location.pathname.split("/");
     const refFromPath = pathParts.includes("get-by-reference-number") 
       ? pathParts[pathParts.indexOf("get-by-reference-number") + 1] 
       : null;
-    return referenceNumber || refFromPath;
+    return referenceNumber || refFromPath || matterNumberFromQuery || refFromQuery;
   }, [location.search, referenceNumber, location.pathname]);
 
   const isFromReference = useMemo(() => {
@@ -337,8 +339,29 @@ const WillsForm = () => {
       }
 
       // 3. Sync Metadata
-      const matterNumber = formData.matterNumber || "1234567";
-      await api.current.uploadMultipleUrls(uploadResults, matterNumber);
+      let refNumber = finalRefNumber || formData.matterReferenceNumber || formData.matterNumber;
+      
+      if (!refNumber || refNumber === "1234567") {
+        try {
+          const createResponse = await api.current.createWillsForm(formData);
+          const createdData = createResponse.data || createResponse;
+          refNumber = createdData.matterReferenceNumber || createdData.MatterReferenceNumber;
+          
+          if (refNumber) {
+            // Update local state and ref with the new identity
+            setFormData(prev => ({ ...prev, matterReferenceNumber: refNumber }));
+            formDataRef.current.matterReferenceNumber = refNumber;
+          } else {
+            throw new Error("Form created but no reference number returned");
+          }
+        } catch (createError) {
+          console.error("Auto-create failed:", createError);
+          throw new Error("Please save the form at least once before uploading files");
+        }
+      }
+
+      const finalFormattedRef = refNumber.startsWith("REF") ? refNumber : `REF${refNumber}`;
+      await api.current.uploadMultipleUrls(uploadResults, finalFormattedRef);
 
       // 4. Update State
       setFormData(prev => ({

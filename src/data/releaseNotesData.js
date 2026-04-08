@@ -26,6 +26,33 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-08",
+          version: "v7.4.3",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Reference Number & Upload Fix",
+          description: "Resolved critical issues in the Wills module where file uploads were failing for new form sessions due to missing or incorrectly formatted reference numbers.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills File Upload Identity",
+              description: "Implemented robust detection for matterReferenceNumber from URL parameters and query strings.",
+              details: "Resolved the 'REF1234567' fallback error by ensuring the system correctly extracts the real identity from the URL, supporting both path parameters and query strings.",
+              icon: Bug,
+            },
+            {
+              type: "feature",
+              title: "Auto-Provisioning for New Forms",
+              description: "Automatic draft creation during the first file upload on brand-new forms.",
+              details: "Users can now upload documents to completely new forms without saving first; the system automatically creates the backend record to generate a valid REF number before proceeding with the upload.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills, API Integration",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-04-07",
           version: "v7.4.2",
           type: "patch",
