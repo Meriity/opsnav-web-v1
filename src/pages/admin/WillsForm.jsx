@@ -7,7 +7,7 @@ import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
 import SimplifiedReview from "../../components/wills/SimplifiedReview";
 import WillsAPI from "../../api/willsAPI";
-import { generateWillsPDF } from "../../components/utils/generateWillsPDF";
+import { generateWillsDocx } from "../../components/utils/generateWillsDocx";
 import { toast } from "react-toastify";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
 
@@ -83,9 +83,11 @@ const WillsForm = () => {
     return referenceNumber || refFromPath || matterNumberFromQuery || refFromQuery;
   }, [location.search, referenceNumber, location.pathname]);
 
+
   const isFromReference = useMemo(() => {
     return new URLSearchParams(location.search).has("matterNumber") || !!finalRefNumber;
   }, [location.search, finalRefNumber]);
+
 
   useEffect(() => {
     loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
@@ -434,10 +436,10 @@ const WillsForm = () => {
         await submitForm("submitted");
       }
       
-      // Use latest formData (including any new matterReferenceNumber) for PDF filename
-      const fileName = `Will_${formData.personal?.fullName || 'Draft'}.pdf`;
-      await generateWillsPDF("wills-preview-doc", fileName);
-      toast.success("PDF generated and form submitted!");
+      // Use latest formData (including any new matterReferenceNumber) for filename
+      const fileName = `Will_${formData.personal?.fullName || 'Draft'}.docx`;
+      await generateWillsDocx(formData, fileName);
+      toast.success("DOCX generated and form submitted!");
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error(error.message || "Failed to submit form!");
@@ -587,7 +589,7 @@ const WillsForm = () => {
                             ) : (
                               <FileText size={18} className="group-hover:rotate-12 transition-transform" />
                             )}
-                            {isDownloading ? "GENERATING PDF..." : "DOWNLOAD AS PDF"}
+                            {isDownloading ? "GENERATING DOCX..." : "DOWNLOAD AS DOCX"}
                           </button>
                         )}
                       </div>
@@ -595,7 +597,7 @@ const WillsForm = () => {
                         {isFromReference ? (
                           <WillsPreview formData={formData} />
                         ) : (
-                          <SimplifiedReview formData={formData} />
+                          <SimplifiedReview formData={formData} onEdit={goToStep} />
                         )}
                       </div>
                     </div>

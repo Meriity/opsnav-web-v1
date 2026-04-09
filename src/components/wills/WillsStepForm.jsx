@@ -650,7 +650,7 @@ const StepBankSection = ({
                    <InputGroup label="i. Name of Bank" value={acc.bankName} onChange={(e) => handleArrayChange(arrayName, idx, "bankName", e.target.value)} icon={<Landmark size={14} />} />
                    <InputGroup label="ii. Last four digits of the account" value={acc.last4} onChange={(e) => handleArrayChange(arrayName, idx, "last4", e.target.value)} maxLength={4} icon={<Shield size={14} />} />
                    <SelectGroup 
-                      label="iii. Whom do you want to give this property to" 
+                      label="iii. Whom do you want to give this bank account to" 
                       value={acc.beneficiary} 
                       onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} 
                       options={beneficiaries.map(b => b.name).filter(Boolean)} 

@@ -78,7 +78,6 @@ export default function ReferenceMatter() {
 
   const handleEditClick = (item) => {
     const matterNumber = item.reference_matter_number;
-    // New navigation pattern as requested
     const path = `/wills/form/v1/get-by-reference-number/${matterNumber}`;
     navigate(path);
   };
@@ -140,9 +139,11 @@ export default function ReferenceMatter() {
   };
 
   return (
-    <div className="space-y-4 p-2">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       <Header />
-      <div className="flex flex-col gap-3 p-5">
+
+      <main className="flex-1 space-y-4 p-2 relative z-10">
+        <div className="flex flex-col gap-3 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="max-w-3xl">
             <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
@@ -191,6 +192,7 @@ export default function ReferenceMatter() {
           )}
         </div>
       </div>
+    </main>
 
       <ConfirmationModal
         isOpen={isConvertModalOpen}
