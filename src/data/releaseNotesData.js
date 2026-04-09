@@ -26,6 +26,47 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-09",
+          version: "v7.4.4",
+          type: "patch",
+          category: "feature",
+          title: "Wills Module Refined Legal Standard & DOCX Migration",
+          description: "Major overhaul of the Wills generation engine, transitioning to professional Microsoft Word (.docx) exports and refining legal clause structures for strict compliance.",
+          updates: [
+            {
+              type: "feature",
+              title: "Wills DOCX Migration",
+              description: "Replaced legacy PDF export with high-fidelity Word document generation.",
+              details: "Integrated a custom docx library implementation that ensures perfect legal formatting, standard fonts (Times New Roman), and preserved spacing across all pages.",
+              icon: Download,
+            },
+            {
+              type: "improvement",
+              title: "Refined Clause Structures",
+              description: "Updated Clause 11, 12, and 16 to meet specific legal formatting requirements.",
+              details: "Implemented nested Roman numerals for Bank accounts, alphabetical numbering (a, b, c) for Assets, and refined bolding logic for legal markers. Updated Clause 16 with required legal fallback phrasing.",
+              icon: FileText,
+            },
+            {
+              type: "ui_ux",
+              title: "Professional Signature Block",
+              description: "Enhanced witnessing section with professional dividers and expanded address fields.",
+              details: "Replaced legacy parentheses with clean vertical divider lines and expanded the Witness Address section to three dotted lines for better handwritten input.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "System Cleanup & Polishing",
+              description: "Removed obsolete utilities and fixed UI typos.",
+              details: "Deleted the redundant generateWillsPDF utility and corrected form label typos (e.g., 'Bank Account' label fix) to improve data entry clarity.",
+              icon: Trash2,
+            },
+          ],
+          module: "Wills, Document Generation",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-04-08",
           version: "v7.4.3",
           type: "patch",
