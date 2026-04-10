@@ -447,7 +447,7 @@ export default function Stage2({
                clientComment = parts.slice(1).join(" - ");
             }
           } else {
-            clientComment = rawNote;
+            clientComment = "";
           }
           initialFormData[group.clientCommentKey] = clientComment;
         });

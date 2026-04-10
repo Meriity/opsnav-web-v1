@@ -322,8 +322,8 @@ export default function Stage4({
             loadedSystemNote = noteParts[0]?.trim() || "";
             loadedClientComment = noteParts.length > 1 ? noteParts.slice(1).join(" - ").trim() : "";
           } else {
-            loadedSystemNote = "";
-            loadedClientComment = noteString.trim();
+            loadedSystemNote = noteString.trim();
+            loadedClientComment = "";
           }
           initialFormData[group.clientCommentKey] = loadedClientComment;
         });

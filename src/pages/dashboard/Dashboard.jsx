@@ -1392,7 +1392,7 @@ function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {!["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                {["admin", "superadmin", "user"].includes(localStorage.getItem("role")) && (
                   <div className="flex gap-2">
                     {currentModule === "wills" && (
                       <>

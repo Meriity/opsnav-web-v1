@@ -187,7 +187,7 @@ export default function Stage3({
       const clientNote =
         currentModule === "commercial"
           ? stageData.noteForClient || ""
-          : rawNoteForClient.includes(" - ") ? rawNoteForClient.split(" - ").slice(1).join(" - ") : rawNoteForClient;
+          : rawNoteForClient.includes(" - ") ? rawNoteForClient.split(" - ").slice(1).join(" - ") : "";
 
       setFormState(newForm);
       setStatusState(newStatus);
@@ -260,9 +260,7 @@ export default function Stage3({
       payload.noteForClient = noteForClient || "";
       payload.matterNumber = matterNumber;
     } else {
-      payload.noteForClient = noteForClient
-        ? `${systemNote} - ${noteForClient}`
-        : systemNote;
+      payload.noteForClient = `${systemNote} - ${noteForClient || ""}`.trim();
 
       fields.forEach((f) => {
         if (f.hasDate) {

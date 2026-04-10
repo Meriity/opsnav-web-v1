@@ -70,11 +70,17 @@ export default function ReferenceMatter() {
   }, [data, searchQuery]);
 
   const columns = [
-    { key: "reference_matter_number", title: "Reference Matter Number", width: "25%" },
-    { key: "client_name", title: "Client Name", width: "25%" },
+    { key: "reference_matter_number", title: "Reference Matter Number", width: "22%" },
+    { key: "client_name", title: "Client Name", width: "22%" },
     { key: "matter_status", title: "Matter Status", width: "20%" },
-    { key: "submitted_at", title: "Submitted At", width: "20%" },
+    { key: "submitted_at", title: "Submitted At", width: "21%" },
   ];
+
+  const handleEditClick = (item) => {
+    const matterNumber = item.reference_matter_number;
+    const path = `/wills/form/v1/get-by-reference-number/${matterNumber}`;
+    navigate(path);
+  };
 
   const handleConvertClick = (item) => {
     setSelectedMatter(item);
@@ -105,14 +111,43 @@ export default function ReferenceMatter() {
     }
   };
 
+  const handleDownloadDocx = async (item) => {
+    const referenceNumber = item.reference_matter_number;
+    if (!referenceNumber || referenceNumber === "N/A") {
+      toast.error("Reference number not found");
+      return;
+    }
+
+    const toastId = toast.loading("Preparing DOCX...");
+    try {
+      await willsApi.downloadDocx(referenceNumber);
+      toast.update(toastId, { 
+        render: "DOCX downloaded successfully!", 
+        type: "success", 
+        isLoading: false,
+        autoClose: 3000 
+      });
+    } catch (error) {
+      console.error("Error downloading DOCX:", error);
+      toast.update(toastId, { 
+        render: error.message || "Failed to download DOCX", 
+        type: "error", 
+        isLoading: false,
+        autoClose: 3000 
+      });
+    }
+  };
+
   return (
-    <div className="space-y-4 p-2">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       <Header />
-      <div className="flex flex-col gap-3 p-5">
+
+      <main className="flex-1 space-y-4 p-2 relative z-10">
+        <div className="flex flex-col gap-3 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="max-w-3xl">
             <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
-              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                 Reference Matter
               </span>
             </h1>
@@ -135,7 +170,7 @@ export default function ReferenceMatter() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-hidden">
           {loading ? (
             <div className="p-20">
               <Loader />
@@ -148,14 +183,16 @@ export default function ReferenceMatter() {
               itemsPerPage={10}
               showStages={false}
               showTasks={false}
-              onEdit={handleConvertClick}
-              editIcon="convert"
-              editText="Convert"
-              editTooltip="convert to matter"
+              onEdit={handleEditClick}
+              onConvert={handleConvertClick}
+              onDownloadDocx={handleDownloadDocx}
+              editText="Review"
+              editTooltip="Review wills form"
             />
           )}
         </div>
       </div>
+    </main>
 
       <ConfirmationModal
         isOpen={isConvertModalOpen}
@@ -170,7 +207,7 @@ export default function ReferenceMatter() {
             You are about to convert reference matter <span className="font-bold text-gray-900">{selectedMatter?.reference_matter_number}</span> to a permanent matter.
           </p>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Matter Number</label>
+            <label className="text-xs gap-2 flex items-center font-semibold text-gray-700 uppercase tracking-wider">Matter Number</label>
             <input
               type="text"
               value={matterNumberInput}
