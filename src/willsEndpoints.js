@@ -39,4 +39,17 @@ export const WILLS_ENDPOINTS = {
   // Client View
   SEND_CLIENT_LINK: "/wills/client-view/send-link",
   CLIENT_SIGNIN: "/wills/client-view/signin",
+
+  // Form V1 (New Request Body Structure)
+  FORM_CREATE: "/wills/form/v1/create",
+  FORM_UPDATE: "/wills/form/v1/update",
+  SUBMITTED_FORMS: "/wills/form/v1/show-submitted-forms",
+  CONVERT_TO_MATTER: "/wills/form/v1/convert-to-matter",
+  GET_BY_REFERENCE: "/wills/form/v1/get-by-reference-number",
+  UPDATE_BY_REFERENCE: "/wills/form/v1/update-by-reference-number",
+
+  // File Upload V1
+  GENERATE_SIGNED_URLS: "/wills/form/v1/generate-signed-urls",
+  UPLOAD_MULTIPLE_URLS: "/wills/form/v1/upload-multiple-urls",
+  SEND_EMAIL: "/wills/form/v1/send-email",
 };

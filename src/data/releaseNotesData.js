@@ -19,11 +19,277 @@ import {
   Edit,
   FolderOpen,
   Download,
+  FileText,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
+      April: [
+        {
+          date: "2026-04-09",
+          version: "v7.4.4",
+          type: "patch",
+          category: "feature",
+          title: "Wills Module Refined Legal Standard & DOCX Migration",
+          description: "Major overhaul of the Wills generation engine, transitioning to professional Microsoft Word (.docx) exports and refining legal clause structures for strict compliance.",
+          updates: [
+            {
+              type: "feature",
+              title: "Wills DOCX Migration",
+              description: "Replaced legacy PDF export with high-fidelity Word document generation.",
+              details: "Integrated a custom docx library implementation that ensures perfect legal formatting, standard fonts (Times New Roman), and preserved spacing across all pages.",
+              icon: Download,
+            },
+            {
+              type: "improvement",
+              title: "Refined Clause Structures",
+              description: "Updated Clause 11, 12, and 16 to meet specific legal formatting requirements.",
+              details: "Implemented nested Roman numerals for Bank accounts, alphabetical numbering (a, b, c) for Assets, and refined bolding logic for legal markers. Updated Clause 16 with required legal fallback phrasing.",
+              icon: FileText,
+            },
+            {
+              type: "ui_ux",
+              title: "Professional Signature Block",
+              description: "Enhanced witnessing section with professional dividers and expanded address fields.",
+              details: "Replaced legacy parentheses with clean vertical divider lines and expanded the Witness Address section to three dotted lines for better handwritten input.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "System Cleanup & Polishing",
+              description: "Removed obsolete utilities and fixed UI typos.",
+              details: "Deleted the redundant generateWillsPDF utility and corrected form label typos (e.g., 'Bank Account' label fix) to improve data entry clarity.",
+              icon: Trash2,
+            },
+          ],
+          module: "Wills, Document Generation",
+          severity: "High",
+          status: "Released"
+        },
+        {
+          date: "2026-04-08",
+          version: "v7.4.3",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Reference Number & Upload Fix",
+          description: "Resolved critical issues in the Wills module where file uploads were failing for new form sessions due to missing or incorrectly formatted reference numbers.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills File Upload Identity",
+              description: "Implemented robust detection for matterReferenceNumber from URL parameters and query strings.",
+              details: "Resolved the 'REF1234567' fallback error by ensuring the system correctly extracts the real identity from the URL, supporting both path parameters and query strings.",
+              icon: Bug,
+            },
+            {
+              type: "feature",
+              title: "Auto-Provisioning for New Forms",
+              description: "Automatic draft creation during the first file upload on brand-new forms.",
+              details: "Users can now upload documents to completely new forms without saving first; the system automatically creates the backend record to generate a valid REF number before proceeding with the upload.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills, API Integration",
+          severity: "High",
+          status: "Released"
+        },
+        {
+          date: "2026-04-07",
+          version: "v7.4.2",
+          type: "patch",
+          category: "improvement",
+          title: "Wills UX & Table Layout Refinement",
+          description: "Major UI/UX improvements to the Wills module submission flow and global table alignment fixes.",
+          updates: [
+            {
+              type: "feature",
+              title: "Simplified Wills Review",
+              description: "Introduced a high-density 'Simplified Review' modal for Wills reference matters.",
+              details: "Admins can now instantly review all Wills submission data (Personal, Executors, Beneficiaries, Assets) in a clean, professional modal without leaving the dashboard.",
+              icon: FileText,
+            },
+            {
+              type: "feature",
+              title: "Wills Excel Export",
+              description: "Added a professional Excel export for the Wills Reference Matter table.",
+              details: "Admins can now download the entire list of submitted Wills forms with accurate column mapping and professional formatting (bold headers, auto-adjusted widths).",
+              icon: Download,
+            },
+            {
+              type: "improvement",
+              title: "Wills Back Button Logic",
+              description: "Restored 'Back' button visibility for Reference Matter entries while keeping it hidden for Dashboard starts.",
+              details: "Improved navigation context by conditionally showing the Back button only when the user has a previous page to return to, such as the Reference Matter list.",
+              icon: Search,
+            },
+            {
+              type: "ui_ux",
+              title: "Enhanced Submission Feedback",
+              description: "Added a persistent loading state and 'Submitting...' label to the final confirmation button.",
+              details: "The 'Confirm Submission' button now remains in its blue gradient style with a spinner during processing, providing clearer visual feedback to the user.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic Table Alignment",
+              description: "Fixed 'scrambled' layouts by making the Action column width dynamic across all modules.",
+              details: "Re-engineered the View Clients table to automatically scale column widths based on the number of action icons, ensuring perfect alignment for Conveyancing and other modules.",
+              icon: ArrowUpDown,
+            },
+            {
+              type: "bugfix",
+              title: "Action Label Standardization",
+              description: "Reverted default action labels from 'Review' back to 'Edit' for non-Wills modules.",
+              details: "Ensured that standard modules maintain their familiar 'Edit' terminology, keeping the specialized 'Review' label isolated to the Wills Reference Matter view.",
+              icon: Edit,
+            },
+            {
+              type: "ui_ux",
+              title: "User Management Header Polish",
+              description: "Optimal sorting icon placement and alignment in the Manage Users table.",
+              details: "Moved sorting arrows to a secondary line for better readability and resolved an alignment bug where icons in left-aligned columns (Email, Display Name) were slightly off-center.",
+              icon: Sparkles,
+            },
+          ],
+          module: "Wills, Table UI, User Management",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-04-01",
+          version: "v7.4.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Form Payload Fixes",
+          description: "Resolved 500 internal server errors during Wills form updates.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Payload Identifier Restoration",
+              description: "Added matterReferenceNumber back to the update payload.",
+              details: "Ensured the backend can correctly map PATCH requests to the specific Wills drafting record by explicitly including the `matterReferenceNumber` in the sanitized payload body.",
+              icon: Bug,
+            }
+          ]
+        },
+        {
+          date: "2026-04-01",
+          version: "v7.4.0",
+          type: "major",
+          category: "feature",
+          title: "Wills Form Power Update: GCS Uploads & Email Delivery",
+          description: "Massive feature update for the Wills module, introducing direct-to-cloud file uploads, dynamic client link delivery, and hardened submission reliability.",
+          updates: [
+            {
+              type: "feature",
+              title: "Direct GCS File Uploads",
+              description: "Integrated Google Cloud Storage (GCS) using V4 Signed URLs for ultra-reliable file handling.",
+              details: "Users can now upload complex legal documents (PDFs) directly to GCS from the Wills form. The system manages secure signatures and PascalCase header alignment for perfect cloud synchronization.",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Send Wills Form Feature",
+              description: "New Dashboard capability to send preparation links directly to clients.",
+              details: "Introduced a 'Send Wills Form' button and modal on the Dashboard, allowing admins to instantly dispatch Wills forms via a new backend email trigger.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic Environment Detection",
+              description: "Automated URL routing using window.location.origin.",
+              details: "The system now automatically identifies if it is running on dev.opsnav.com or opsnav.com, ensuring all client links are always environment-accurate without manual configuration.",
+              icon: TrendingUp,
+            },
+            {
+              type: "feature",
+              title: "Submission Data Protection",
+              description: "Hardened API payloads with 'isDeleted: false' enforcement.",
+              details: "Ensured maximum data integrity by stripping internal metadata and explicitly enforcing active status during all form submissions.",
+              icon: Shield,
+            },
+            {
+              type: "improvement",
+              title: "Maps Autocomplete Integration",
+              description: "Universal address search across all Wills form phases.",
+              details: "Integrated Google Maps Places Autocomplete for every address field in the 10-step wizard, including executors and guardians.",
+              icon: Search,
+            },
+          ],
+          module: "Wills, Dashboard",
+          severity: "High",
+          status: "Released"
+        },
+      ],
       March: [
+        {
+          date: "2026-03-27",
+          version: "v7.3.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Client Portal Job Sorting & Minor Fixes",
+          description: "Ensured new jobs appear at the top of the list on the Client Portal and addressed minor sorting issues.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Client Portal Job Sorting",
+              description: "Fixed job sorting on the Client Portal to ensure newer jobs appear first.",
+              details: "Jobs are now sorted in descending order by creation date, ensuring that the most recent matters are immediately visible at the top of the list for clients.",
+              icon: ArrowUpDown,
+            },
+          ],
+          module: "Client Portal",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-03-19",
+          version: "v7.3.0",
+          type: "minor",
+          category: "feature",
+          title: "Wills Multi-Stepper Form Implementation",
+          description: "Introduced a comprehensive 10-step guided form for Wills preparation with dynamic data capture, professional PDF generation, and real-time preview.",
+          updates: [
+            {
+              type: "feature",
+              title: "10-Step Guided Workflow",
+              description: "Consolidated 42 complex legal questions into 10 logical, easy-to-navigate phases.",
+              details: "Improved user experience with progressive disclosure, input validation, and clear stage progress indicators (Green Ticks).",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Professional PDF Generation",
+              description: "Engineered ultra-precise PDF export using jsPDF and html2canvas with manual page splitting.",
+              details: "The system now guarantees professional A4 margins and precise breaks (e.g., after Clause 4(e)(ii)), ensuring legal document integrity.",
+              icon: Download,
+            },
+            {
+              type: "feature",
+              title: "Smart Data Capture",
+              description: "Implemented count-based dynamic fields for Banks and Personal Properties.",
+              details: "Forms now ask for the number of items first and dynamically generate the required input fields, including support for Gift Ratios and Joint/Sole ownership distinctions.",
+              icon: Database,
+            },
+            {
+              type: "ui_ux",
+              title: "Real-time Legal Review",
+              description: "Seamless on-screen preview of the final Will document before export.",
+              details: "Users can see a live-updating draft of their Will with all collected data automatically bolded for better clarity and emphasis.",
+              icon: Search,
+            },
+            {
+              type: "ui_ux",
+              title: "Visual Feedback System",
+              description: "Added a visual downloader with a loading spinner for PDF generation.",
+              details: "Provides immediate async feedback to users during the document rendering and download process.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills",
+          severity: "High",
+          status: "Released"
+        },
         {
           date: "2026-03-18",
           version: "v7.2.2",

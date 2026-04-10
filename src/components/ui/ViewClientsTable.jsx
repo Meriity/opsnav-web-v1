@@ -8,7 +8,9 @@ import {
   ClipboardList,
   Trash2,
   GripVertical,
-  ExternalLink
+  ExternalLink,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -73,11 +75,21 @@ const ViewClientsTable = ({
   currentModule,
   users,
   handleChangeUser,
+  onEdit,
   onDelete,
+  onConvert,
+  onDownloadDocx,
   pendingAllocations = {},
+  editIcon,
+  editText,
+  editTooltip,
   // Drag Props
   isDraggingMode = false,
   setDraggedData,
+  // Visibility Props
+  showStages = true,
+  showTasks = true,
+  showActions = true,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -190,22 +202,21 @@ const ViewClientsTable = ({
                   </div>
                 </th>
               ))}
-              <th
-                className="pl-2 lg:pl-1 pr-2 lg:pr-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm w-[11%] xl:w-[14%]"
-              >
-                Stages
-              </th>
-              <th
-                className="py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm pl-4 w-[6%] xl:w-[4%]"
-              >
-                OT
-              </th>
-              <th
-                className="px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl"
-                style={{ width: "5%" }}
-              >
-                Action
-              </th>
+              {showStages && (
+                <th className="pl-2 lg:pl-1 pr-2 lg:pr-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm w-[11%] xl:w-[14%]">
+                  Stages
+                </th>
+              )}
+              {showTasks && (
+                <th className="py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm pl-4 w-[6%] xl:w-[4%]">
+                  OT
+                </th>
+              )}
+              {showActions && (
+                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${onConvert || onDownloadDocx ? "w-[12%] xl:w-[15%]" : "w-[6%] xl:w-[5%]"}`}>
+                  Action
+                </th>
+              )}
             </tr>
           </thead>
           
@@ -316,16 +327,22 @@ const ViewClientsTable = ({
                              </td>
                            ))}
                            {/* Stages, OT, Action Columns (Simplified for drag mode - usually static) */}
-                            <td className="pl-3 align-middle text-gray-400 scale-90 opacity-50 pointer-events-none">
-                                {/* Disabled Stages View */}
-                                <div className="text-xs text-center">Stages (Locked)</div>
-                            </td>
+                           {showStages && (
+                             <td className="pl-3 align-middle text-gray-400 scale-90 opacity-50 pointer-events-none">
+                                 {/* Disabled Stages View */}
+                                 <div className="text-xs text-center">Stages (Locked)</div>
+                             </td>
+                           )}
+                           {showTasks && (
                              <td className="text-center align-middle text-gray-400 pointer-events-none">
-                                <ClipboardList size={16} className="mx-auto lg:size-4 xl:size-5 opacity-50" />
-                            </td>
-                            <td className="text-center rounded-r-2xl align-middle pointer-events-none">
-                                <Edit size={10} className="mx-auto lg:size-[10px] xl:size-3 opacity-50" />
-                            </td>
+                                 <ClipboardList size={16} className="mx-auto lg:size-4 xl:size-5 opacity-50" />
+                             </td>
+                           )}
+                           {showActions && (
+                             <td className="text-center rounded-r-2xl align-middle pointer-events-none">
+                                 <Edit size={10} className="mx-auto lg:size-[10px] xl:size-3 opacity-50" />
+                             </td>
+                           )}
                          </>
                        )}
                      </SortableRow>
@@ -448,88 +465,115 @@ const ViewClientsTable = ({
                         </div>
                         </td>
                         ))}
-                        <td className="pl-3 align-middle">
-                        <div className="grid grid-cols-3 xl:flex xl:flex-nowrap gap-0.5 justify-items-center xl:justify-center">
-                        {Object.keys(item?.stages?.[0] || {}).map(
-                        (keyName, index) => (
-                          <a
-                            href={`/admin/client/stages/${
-                              item.matterNumber || item.matternumber || item.orderId
-                            }/${index + 1}`}
-                            key={keyName}
-                            className="w-4 h-4 lg:w-4 lg:h-4 xl:w-6 xl:h-6 flex items-center justify-center text-white rounded text-[8px] lg:text-[8px] xl:text-xs 2xl:text-xs cursor-pointer transition-transform hover:scale-110 shadow-sm"
-                            style={{
-                              backgroundColor:
-                                stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                                stageColorMap["default"],
-                            }}
-                            title={`Stage ${keyName}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {keyName.toUpperCase()}
-                          </a>
-                        )
+                        {showStages && (
+                          <td className="pl-3 align-middle">
+                            <div className="grid grid-cols-3 xl:flex xl:flex-nowrap gap-0.5 justify-items-center xl:justify-center">
+                              {Object.keys(item?.stages?.[0] || {}).map(
+                                (keyName, index) => (
+                                  <a
+                                    href={`/admin/client/stages/${
+                                      item.matterNumber || item.matternumber || item.orderId
+                                    }/${index + 1}`}
+                                    key={keyName}
+                                    className="w-4 h-4 lg:w-4 lg:h-4 xl:w-6 xl:h-6 flex items-center justify-center text-white rounded text-[8px] lg:text-[8px] xl:text-xs 2xl:text-xs cursor-pointer transition-transform hover:scale-110 shadow-sm"
+                                    style={{
+                                      backgroundColor:
+                                        stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                                        stageColorMap["default"],
+                                    }}
+                                    title={`Stage ${keyName}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {keyName.toUpperCase()}
+                                  </a>
+                                )
+                              )}
+                            </div>
+                          </td>
                         )}
-                        </div>
-                        </td>
-                        <td className="align-middle text-center pl-4">
-                        <div className="flex justify-center">
-                        <button
-                        type="button"
-                        title="View Outstanding Tasks"
-                        className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => {
-                          handelOTOpen();
-                          handelOT(
-                            item.matterNumber || item.matternumber || item.orderId
-                          );
-                        }}
-                        >
-                        <ClipboardList size={16} className="lg:size-4 xl:size-5" />
-                        </button>
-                        </div>
-                        </td>
-                        <td className="pl-3 pr-2 rounded-r-2xl align-middle">
-                        <div className="flex flex-col items-center space-y-2">
-                        <button
-                        onClick={() => {
-                          const id =
-                            item.matterNumber || item.matternumber || item.orderId;
-                          navigate(`/admin/client/stages/${id}`);
-                        }}
-                        className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                        title="Edit"
-                        >
-                        <Edit size={10} className="lg:size-[10px] xl:size-3" />
-                        <span className="text-[9px] lg:text-[9px] xl:text-xs">Edit</span>
-                        </button>
-                        {/* Matter URL redirect icon removed - matter number is now a link */}
-                        {/* <button
-                        onClick={() =>
-                          onShare(item.matternumber, item.client_email)
-                        }
-                        className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
-                        title="Share"
-                        >
-                        <Share2 size={12} />
-                        <span className="text-xs">Share</span>
-                        </button> */}                      {currentModule === "print media" && (
-                        <button
-                          onClick={() => onDelete(item)}
-                          className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                          title="Delete"
-                        >
-                          <Trash2 size={10} className="lg:size-[10px] xl:size-3" />
-                          <span className="text-[9px] lg:text-[9px] xl:text-xs">Delete</span>
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+                        {showTasks && (
+                          <td className="align-middle text-center pl-4">
+                            <div className="flex justify-center">
+                              <button
+                                type="button"
+                                title="View Outstanding Tasks"
+                                className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  handelOTOpen();
+                                  handelOT(
+                                    item.matterNumber || item.matternumber || item.orderId
+                                  );
+                                }}
+                              >
+                                <ClipboardList size={16} className="lg:size-4 xl:size-5" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                        {showActions && (
+                          <td className={`pl-3 pr-2 rounded-r-2xl align-middle`}>
+                            <div className="flex flex-row items-center justify-center space-x-2">
+                              {onEdit ? (
+                                <button
+                                  onClick={() => onEdit(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title={editTooltip || "Edit"}
+                                >
+                                  <Edit size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                </button>
+                              ) : (
+                                 <button
+                                  onClick={() => {
+                                    const id =
+                                      item.matterNumber || item.matternumber || item.orderId;
+                                    navigate(`/admin/client/stages/${id}`);
+                                  }}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title={editTooltip || "Edit"}
+                                >
+                                  <Edit size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                </button>
+                              )}
+                              {onConvert && (
+                                <button
+                                  onClick={() => onConvert(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Convert to matter"
+                                >
+                                  <RefreshCw size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Convert</span>
+                                </button>
+                              )}
+                              {onDownloadDocx && (
+                                <button
+                                  onClick={() => onDownloadDocx(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Download .docx"
+                                >
+                                  <FileText size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Docx</span>
+                                </button>
+                              )}
+                              {currentModule === "print media" && (
+                                <button
+                                  onClick={() => onDelete(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Delete</span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
           )}
         </table>
         </DndContext>
@@ -677,6 +721,33 @@ const ViewClientsTable = ({
                 >
                   <Edit size={16} />
                 </button>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(item)}
+                    className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Review"
+                  >
+                    <Edit size={16} className="text-blue-600" />
+                  </button>
+                )}
+                {onConvert && (
+                  <button
+                    onClick={() => onConvert(item)}
+                    className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Convert"
+                  >
+                    <RefreshCw size={16} className="text-emerald-600" />
+                  </button>
+                )}
+                {onDownloadDocx && (
+                  <button
+                    onClick={() => onDownloadDocx(item)}
+                    className="p-1 text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Download .docx"
+                  >
+                    <FileText size={16} className="text-black" />
+                  </button>
+                )}
                 {/* {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (
                   <a
                     href={item.matterUrl}
