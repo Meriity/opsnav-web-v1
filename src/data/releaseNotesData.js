@@ -26,6 +26,40 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-13",
+          version: "v7.5.0",
+          type: "minor",
+          category: "feature",
+          title: "Home Page Redesign & UI Enhancement",
+          description: "Major visual overhaul of the Home page with improved section descriptions, interactive animations, and structural refinements for better engagement.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Home Page Redesign",
+              description: "Complete visual and structural refresh of the public landing page.",
+              details: "Introduced a modernized layout with atmospheric bloom effects, increased grid visibility in the hero section, and descriptive subheadings across all major sections (Pricing, Testimonials, FAQ, and Story).",
+              icon: Sparkles,
+            },
+            {
+              type: "ui_ux",
+              title: "Enhanced Footer CTA",
+              description: "Refined the 'Ready to Transform' section with better layering.",
+              details: "Repositioned the bloom effect behind the CTA card to create a 'hero' rising effect, ensuring it doesn't obscure the content while providing a beautiful atmospheric glow.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Animated Story Icons",
+              description: "Added dynamic animations to the 'Story So Far' section icons.",
+              details: "Implemented subtle scale pulses, rotations, and frequent shimmer effects to the custom SVG icons to make the milestone stats feel more alive.",
+              icon: RefreshCw,
+            },
+          ],
+          module: "Home, Landing Page",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-04-09",
           version: "v7.4.4",
           type: "patch",
