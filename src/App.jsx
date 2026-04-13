@@ -64,6 +64,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/release-notes" element={<ReleaseNotes />} />
+        <Route path="/cookie-policy" element={<ComingSoon />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signup-success" element={<SignUpSuccess />} />
         <Route path="/get-started-free" element={<GetStartedFree />} />

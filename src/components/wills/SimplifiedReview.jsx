@@ -78,7 +78,7 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
         ))}
       </Section>
 
-      <Section title="3. Beneficiaries details" icon={Users} onEdit={() => onEdit?.(3)}>
+      <Section title="3. Beneficiaries Details" icon={Users} onEdit={() => onEdit?.(3)}>
         {beneficiaries.map((ben, i) => (
           <div key={i} className={i > 0 ? "pt-4 border-t border-gray-50" : ""}>
             <p className="text-[10px] font-black text-[#2E3D99] uppercase mb-3 tracking-widest">Beneficiary {i + 1}</p>
@@ -166,7 +166,7 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
         <Row label="Special Details" value={funeral.details} />
       </Section>
 
-      <Section title="8. Personal properties" icon={Landmark} onEdit={() => onEdit?.(8)}>
+      <Section title="8. Personal Properties" icon={Landmark} onEdit={() => onEdit?.(8)}>
         {personalAssets.joint.length > 0 && (
           <div className="space-y-4">
             <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Joint Personal Properties</p>

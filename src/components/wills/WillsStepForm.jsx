@@ -3,7 +3,6 @@ import { User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shie
 
 /**
  * WillsStepForm - Handles the 10-step logic for 42 questions.
- * (Dynamic generation for Banks per user request).
  */
 const WillsStepForm = ({ 
   step, 
@@ -68,7 +67,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal Details</h3>
           <p className="text-gray-500">Please provide your foundation information.</p>
         </div>
 
@@ -126,7 +125,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Executor details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Executor Details</h3>
           <p className="text-gray-500">Appoint your primary and optional second executor.</p>
         </div>
 
@@ -216,7 +215,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Beneficiaries details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Beneficiaries Details</h3>
           <p className="text-gray-500">Specify who inherits from your estate.</p>
         </div>
 
@@ -440,7 +439,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-12">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal properties</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal Properties</h3>
           <p className="text-gray-500">Motor Vechicles, House Hold Items, Shares, etc</p>
         </div>
 
