@@ -28,6 +28,26 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-20",
+          version: "v7.5.3",
+          type: "patch",
+          category: "feature",
+          title: "Address Reuse & UX Enhancements",
+          description: "Introduced 'Same as Residential' address reuse and improved form navigation stability.",
+          updates: [
+            {
+              type: "feature",
+              title: "Address Reuse Option",
+              description: "Added 'Same as Residential' button to all address fields.",
+              details: "Users can now instantly reuse their residential address for executors, beneficiaries, properties, and guardians, significantly reducing repetitive data entry.",
+              icon: Sparkles,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-04-20",
           version: "v7.5.2",
           type: "patch",
           category: "bugfix",

@@ -55,4 +55,5 @@ export const WILLS_ENDPOINTS = {
   SIGNUP: "/wills/form/v1/signup",
   LOGIN: "/wills/form/v1/login",
   UNLOCK_FORM: "/wills/form/v1/unlock-form",
+  LOAD_FORM_V1: "/wills/form/v1",
 };

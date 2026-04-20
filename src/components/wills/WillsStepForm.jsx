@@ -155,6 +155,8 @@ const WillsStepForm = ({
               placeholder="Full Address" 
               icon={<Home className="w-4 h-4" />} 
               isLoaded={isGoogleMapsLoaded}
+              residentialAddress={personal.address}
+              showUseResidential={true}
             />
           </div>
 
@@ -199,6 +201,8 @@ const WillsStepForm = ({
               placeholder="Full Address" 
               icon={<Home className="w-4 h-4" />} 
               isLoaded={isGoogleMapsLoaded}
+              residentialAddress={personal.address}
+              showUseResidential={true}
             />
           </div>
         )}
@@ -280,6 +284,8 @@ const WillsStepForm = ({
                   placeholder="Full Address" 
                   icon={<Home className="w-4 h-4" />} 
                   isLoaded={isGoogleMapsLoaded}
+                  residentialAddress={personal.address}
+                  showUseResidential={true}
                 />
               </div>
 
@@ -315,6 +321,7 @@ const WillsStepForm = ({
           removeArrayItem={removeArrayItem}
           loopQ="Do you own any other realestate properties as joint ownership?"
           isGoogleMapsLoaded={isGoogleMapsLoaded}
+          residentialAddress={personal.address}
         />
 
         <StepPropertySection 
@@ -328,6 +335,7 @@ const WillsStepForm = ({
           removeArrayItem={removeArrayItem}
           loopQ="Do you own any other realestate properties as sole ownership?"
           isGoogleMapsLoaded={isGoogleMapsLoaded}
+          residentialAddress={personal.address}
         />
       </div>
     );
@@ -383,6 +391,7 @@ const WillsStepForm = ({
         handleInputChange={handleInputChange}
         isGoogleMapsLoaded={isGoogleMapsLoaded}
         relationshipOptions={relationshipOptions}
+        residentialAddress={personal.address}
       />
     );
   }
@@ -502,7 +511,7 @@ const WillsStepForm = ({
 
 // --- Sub-components (Reused) ---
 
-const StepPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ, isGoogleMapsLoaded }) => {
+const StepPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ, isGoogleMapsLoaded, residentialAddress }) => {
   const hasItems = properties.length > 0;
   
   return (
@@ -536,6 +545,8 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
                 placeholder="Property Address" 
                 icon={<Home size={14} />} 
                 isLoaded={isGoogleMapsLoaded}
+                residentialAddress={residentialAddress}
+                showUseResidential={true}
               />
               <InputGroup label="ii. enter the Volume and Folio" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} icon={<Archive size={14} />} />
               <SelectGroup label="iii. Whom do you want to give this property to" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Users size={14} />} />
@@ -686,7 +697,7 @@ const StepBankSection = ({
   );
 };
 
-const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, relationshipOptions }) => {
+const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, relationshipOptions, residentialAddress }) => {
   const [guardianChoice, setGuardianChoice] = React.useState(
     (formData.guardian?.name || formData.guardian?.isExecutor !== null) ? (formData.guardian?.isExecutor === false && !formData.guardian?.name ? false : true) : null
   );
@@ -730,6 +741,8 @@ const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, 
                   placeholder="Guardian Address" 
                   icon={<Home className="w-4 h-4" />} 
                   isLoaded={isGoogleMapsLoaded}
+                  residentialAddress={residentialAddress}
+                  showUseResidential={true}
                 />
                 <div className="space-y-2">
                   <SelectGroup 
@@ -875,7 +888,7 @@ const YesNoToggle = ({ label, name, value, onChange }) => {
     </div>
   );
 };
-const AddressInputGroup = ({ label, value, onAddressSelect, placeholder, icon, isLoaded }) => {
+const AddressInputGroup = ({ label, value, onAddressSelect, placeholder, icon, isLoaded, residentialAddress, showUseResidential }) => {
   const inputRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState(value || "");
 
@@ -908,24 +921,34 @@ const AddressInputGroup = ({ label, value, onAddressSelect, placeholder, icon, i
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-        {icon} {label}
-      </label>
-      <input 
+      <div className="flex justify-between items-center">
+        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          {icon} {label}
+        </label>
+        {showUseResidential && residentialAddress && value !== residentialAddress && (
+          <button 
+            type="button"
+            onClick={() => onAddressSelect(residentialAddress)}
+            className="text-[10px] text-[#2E3D99] font-bold uppercase tracking-wider hover:text-[#1D97D7] transition-colors"
+          >
+            Same as Residential
+          </button>
+        )}
+      </div>
+      <input
         ref={inputRef}
-        type="text" 
-        value={inputValue} 
+        type="text"
+        value={inputValue}
         onChange={(e) => {
           setInputValue(e.target.value);
           onAddressSelect(e.target.value);
-        }} 
-        placeholder={placeholder} 
-        className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all shadow-sm outline-none" 
+        }}
+        placeholder={placeholder}
+        className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all shadow-sm outline-none"
       />
     </div>
   );
 };
-
 const FileUploadSection = ({ files, onFileUpload, onFileDelete, isUploading }) => {
   const fileInputRef = React.useRef(null);
 
