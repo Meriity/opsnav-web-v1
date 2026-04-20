@@ -357,8 +357,9 @@ const ViewClients = () => {
         const matterDate = client.matterDate || client.matter_date;
 
         const isIncluded = (dateStr) => {
-          if (!dateStr) return false;
-          return moment(dateStr).isBetween(start, end, null, "[]");
+          if (!dateStr || dateStr === "N/A") return false;
+          const parsed = moment(dateStr, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]);
+          return parsed.isValid() && parsed.isBetween(start, end, null, "[]");
         };
 
         // Check against the correct column

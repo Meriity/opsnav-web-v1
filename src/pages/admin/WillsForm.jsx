@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, FileText, LogOut } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
@@ -9,7 +9,10 @@ import SimplifiedReview from "../../components/wills/SimplifiedReview";
 import WillsAPI from "../../api/willsAPI";
 import { generateWillsDocx } from "../../components/utils/generateWillsDocx";
 import { toast } from "react-toastify";
+import WillsSignUp from "../../components/wills/WillsSignUp";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
+import { APP_VERSION } from "../../config/version";
+
 
 // Helper function to load Google Maps script
 const loadGoogleMapsScript = (apiKey) => {
@@ -69,6 +72,8 @@ const WillsForm = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignedUp, setIsSignedUp] = useState(false);
+
   const api = useRef(new WillsAPI());
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
 
@@ -88,6 +93,34 @@ const WillsForm = () => {
     return new URLSearchParams(location.search).has("matterNumber") || !!finalRefNumber;
   }, [location.search, finalRefNumber]);
 
+  useEffect(() => {
+    if (isFromReference) {
+      setIsSignedUp(true);
+    }
+  }, [isFromReference]);
+
+
+
+  useEffect(() => {
+    // Session Persistence: Check for client session on refresh
+    const clientToken = localStorage.getItem("clientAuthToken");
+    const clientEmail = localStorage.getItem("clientEmail");
+    const clientName = localStorage.getItem("clientName");
+
+    if (clientToken && !isFromReference) {
+      setIsSignedUp(true);
+      if (clientEmail || clientName) {
+        setFormData(prev => ({
+          ...prev,
+          email: clientEmail || (prev && prev.email) || "",
+          personal: {
+            ...(prev ? prev.personal : {}),
+            fullName: clientName || (prev && prev.personal ? prev.personal.fullName : "")
+          }
+        }));
+      }
+    }
+  }, [isFromReference]);
 
   useEffect(() => {
     loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
@@ -122,9 +155,16 @@ const WillsForm = () => {
           }
             
           if (response) {
-            // Extract the actual form data from the response (handles {data: {...}} or direct object)
+            // Extract the actual form data from the response
             const actualData = response.data || response;
-            setFormData(actualData);
+            // Merge with INITIAL_STATE to ensure safety of nested objects
+            setFormData(prev => ({
+              ...INITIAL_STATE,
+              ...actualData,
+              personal: { ...INITIAL_STATE.personal, ...(actualData.personal || {}) },
+              executors: actualData.executors || INITIAL_STATE.executors,
+              beneficiaries: actualData.beneficiaries || INITIAL_STATE.beneficiaries,
+            }));
             
             // Automatically jump to Step 10 (Review) if from reference or already submitted
             if (actualData.status === "submitted" || finalRefNumber) {
@@ -474,7 +514,37 @@ const WillsForm = () => {
     setCurrentStep(step);
   };
 
+  const handleSignUp = (signUpData) => {
+    setFormData((prev) => ({
+      ...prev,
+      personal: {
+        ...(prev ? prev.personal : {}),
+        fullName: signUpData.name,
+      },
+      email: signUpData.email,
+    }));
+    setIsSignedUp(true);
+  };
+
+  const handleLogout = () => {
+    // Clear client session related data
+    localStorage.removeItem("clientAuthToken");
+    localStorage.removeItem("matterReferenceNumber");
+    localStorage.removeItem("clientEmail");
+    localStorage.removeItem("clientName");
+    
+    // Reset state and navigate
+    setIsSignedUp(false);
+    toast.info("Logged out successfully");
+    navigate("/admin/dashboard");
+  };
+
+  if (!isSignedUp) {
+    return <WillsSignUp onSignUp={handleSignUp} />;
+  }
+
   return (
+
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col overflow-x-hidden relative print:p-0 print:bg-white">
       <div className="print:hidden">
         <Header />
@@ -502,23 +572,35 @@ const WillsForm = () => {
         <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
           
           <div className="flex items-center justify-between mb-8 print:hidden">
-            {isFromReference ? (
-              <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-gray-500 hover:text-[#2E3D99] transition-colors group"
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="px-3.5 py-1.5 text-[#2E3D99] border border-[#2E3D99] rounded-lg hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] font-medium transition-all duration-300 text-sm flex items-center gap-2"
               >
-                <div className="p-2 rounded-lg group-hover:bg-[#2E3D99]/5">
-                  <ChevronLeft size={20} />
-                </div>
-                <span className="text-sm font-semibold uppercase tracking-wider">Back</span>
-              </button>
-            ) : (
-              <div /> // Spacer for layout consistency
-            )}
-            <div className="text-right">
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </motion.button>
+
+              {isFromReference && (
+                <button 
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-2 text-gray-500 hover:text-[#2E3D99] transition-colors group"
+                >
+                  <div className="p-2 rounded-lg group-hover:bg-[#2E3D99]/5">
+                    <ChevronLeft size={20} />
+                  </div>
+                  <span className="text-sm font-semibold uppercase tracking-wider">Back</span>
+                </button>
+              )}
+            </div>
+            
+            <div className="text-right hidden sm:block">
               <h1 className="text-2xl font-bold text-[#2E3D99]">Wills Preparation</h1>
             </div>
           </div>
+
 
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mb-12 overflow-x-auto no-scrollbar print:hidden">
             <div className="flex items-center justify-between min-w-[900px] px-4">

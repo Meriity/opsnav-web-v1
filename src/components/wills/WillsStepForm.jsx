@@ -3,7 +3,6 @@ import { User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shie
 
 /**
  * WillsStepForm - Handles the 10-step logic for 42 questions.
- * (Dynamic generation for Banks per user request).
  */
 const WillsStepForm = ({ 
   step, 
@@ -68,14 +67,12 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal Details</h3>
           <p className="text-gray-500">Please provide your foundation information.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <InputGroup label="Enter your full name" name="personal.fullName" value={personal.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
           <InputGroup label="Enter your occupation" name="personal.occupation" value={personal.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
-          <InputGroup label="Email" name="email" value={email} onChange={handleInputChange} placeholder="email@example.com" type="email" icon={<Mail className="w-4 h-4" />} />
           <InputGroup label="Phone number" name="personal.phone" value={personal.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
         </div>
 
@@ -126,7 +123,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Executor details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Executor Details</h3>
           <p className="text-gray-500">Appoint your primary and optional second executor.</p>
         </div>
 
@@ -216,7 +213,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-8">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Beneficiaries details</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Beneficiaries Details</h3>
           <p className="text-gray-500">Specify who inherits from your estate.</p>
         </div>
 
@@ -440,7 +437,7 @@ const WillsStepForm = ({
     return (
       <div className="space-y-12">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal properties</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Personal Properties</h3>
           <p className="text-gray-500">Motor Vechicles, House Hold Items, Shares, etc</p>
         </div>
 
