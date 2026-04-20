@@ -610,7 +610,7 @@ export default function Header() {
                   </AnimatePresence>
                 </div>
               </div>
-              {!isPrintMedia && <NotificationBell />}
+              {!isPrintMedia && currentModule !== "wills" && <NotificationBell />}
             </div>
           </div>
         </div>

@@ -72,9 +72,7 @@ const WillsStepForm = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <InputGroup label="Enter your full name" name="personal.fullName" value={personal.fullName} onChange={handleInputChange} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
           <InputGroup label="Enter your occupation" name="personal.occupation" value={personal.occupation} onChange={handleInputChange} placeholder="Occupation" icon={<Briefcase className="w-4 h-4" />} />
-          <InputGroup label="Email" name="email" value={email} onChange={handleInputChange} placeholder="email@example.com" type="email" icon={<Mail className="w-4 h-4" />} />
           <InputGroup label="Phone number" name="personal.phone" value={personal.phone} onChange={handleInputChange} placeholder="Phone number" icon={<Phone className="w-4 h-4" />} />
         </div>
 

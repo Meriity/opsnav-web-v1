@@ -52,4 +52,7 @@ export const WILLS_ENDPOINTS = {
   GENERATE_SIGNED_URLS: "/wills/form/v1/generate-signed-urls",
   UPLOAD_MULTIPLE_URLS: "/wills/form/v1/upload-multiple-urls",
   SEND_EMAIL: "/wills/form/v1/send-email",
+  SIGNUP: "/wills/form/v1/signup",
+  LOGIN: "/wills/form/v1/login",
+  UNLOCK_FORM: "/wills/form/v1/unlock-form",
 };
