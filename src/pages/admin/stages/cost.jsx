@@ -6,6 +6,7 @@ import StageAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import CostInputRow from "@/components/ui/CostInputRow";
 import VocatFasAPI from "@/api/vocatFasAPI";
+import WillsAPI from "@/api/willsAPI";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -100,6 +101,7 @@ export default function CostComponent({ changeStage, setHasChanges }) {
   const StagesAPI = useMemo(() => new StageAPI(), []);
   const commercialApi = useMemo(() => new CommercialAPI(), []);
   const vocatApi = useMemo(() => new VocatFasAPI(), []);
+  const willsApi = useMemo(() => new WillsAPI(), []);
 
   // --- State ---
   const [formValues, setFormValues] = useState(getInitialState(currentModule));
@@ -217,6 +219,19 @@ export default function CostComponent({ changeStage, setHasChanges }) {
              stage1Data = s1Data?.data || {};
           } catch(e) {
               console.error("Error fetching VOCAT cost data", e);
+              costData = {};
+              stage1Data = {};
+          }
+      } else if (currentModule === "wills") {
+          try {
+             const [cData, s1Data] = await Promise.all([
+                 willsApi.getCostData(matterNumber),
+                 willsApi.getStageData(1, matterNumber)
+             ]);
+             costData = cData || {};
+             stage1Data = s1Data || {};
+          } catch(e) {
+              console.error("Error fetching Wills cost data", e);
               costData = {};
               stage1Data = {};
           }
@@ -625,10 +640,9 @@ export default function CostComponent({ changeStage, setHasChanges }) {
 
       if (currentModule === "commercial") {
         return commercialApi.upsertCost(matterNumber, finalPayload);
-      } else if (
-        currentModule === "conveyancing" ||
-        currentModule === "wills"
-      ) {
+      } else if (currentModule === "wills") {
+        return willsApi.upsertCost(matterNumber, finalPayload);
+      } else if (currentModule === "conveyancing") {
         return api.upsertCost(finalPayload);
       } else if (currentModule === "vocat") {
         return vocatApi.saveCost(finalPayload);

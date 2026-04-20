@@ -51,7 +51,7 @@ class WillsAPI {
 
     if (!response.ok) {
       const error = new Error(
-        data.message || `HTTP error! status: ${response.status}`
+        data.error || data.message || `HTTP error! status: ${response.status}`
       );
       error.response = { status: response.status, data };
       throw error;
@@ -434,6 +434,22 @@ class WillsAPI {
     }
   }
 
+  async unlockForm(matterReferenceNumber) {
+    try {
+      // POST /v1/unlock-form
+      // Body: { "matterReferenceNumber": "..." }
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.UNLOCK_FORM}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ matterReferenceNumber }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in unlockForm:", error);
+      throw error;
+    }
+  }
+
   // --- File Upload V1 ---
   async generateSignedUrls(files) {
     try {
@@ -473,6 +489,38 @@ class WillsAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error sending wills email:", error);
+      throw error;
+    }
+  }
+
+  async signup(payload) {
+    try {
+      // firmId is retrieved from localStorage("userID") as requested
+      const firmId = localStorage.getItem("userID");
+      const fullPayload = { ...payload, firmId };
+      
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.SIGNUP}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullPayload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Signup:", error);
+      throw error;
+    }
+  }
+
+  async login(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.LOGIN}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Login:", error);
       throw error;
     }
   }

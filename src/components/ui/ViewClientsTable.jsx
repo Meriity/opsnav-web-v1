@@ -11,6 +11,7 @@ import {
   ExternalLink,
   RefreshCw,
   FileText,
+  Unlock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -79,6 +80,7 @@ const ViewClientsTable = ({
   onDelete,
   onConvert,
   onDownloadDocx,
+  onUnlock,
   pendingAllocations = {},
   editIcon,
   editText,
@@ -557,6 +559,16 @@ const ViewClientsTable = ({
                                   <span className="text-[9px] lg:text-[9px] xl:text-xs">Docx</span>
                                 </button>
                               )}
+                              {onUnlock && (
+                                <button
+                                  onClick={() => onUnlock(item)}
+                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-[#2E3D99] hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Unlock Form"
+                                >
+                                  <Unlock size={10} className="lg:size-[10px] xl:size-3" />
+                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Unlock</span>
+                                </button>
+                              )}
                               {currentModule === "print media" && (
                                 <button
                                   onClick={() => onDelete(item)}
@@ -746,6 +758,15 @@ const ViewClientsTable = ({
                     title="Download .docx"
                   >
                     <FileText size={16} className="text-black" />
+                  </button>
+                )}
+                {onUnlock && (
+                  <button
+                    onClick={() => onUnlock(item)}
+                    className="p-1 text-[#2E3D99] hover:bg-blue-50 transition-colors cursor-pointer"
+                    title="Unlock Form"
+                  >
+                    <Unlock size={16} />
                   </button>
                 )}
                 {/* {["conveyancing", "commercial", "vocat", "wills"].includes(currentModule) && item.matterUrl && (

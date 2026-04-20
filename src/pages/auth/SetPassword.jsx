@@ -8,12 +8,12 @@ import {
   Lock,
   Shield,
   Sparkles,
-  CheckCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { APP_VERSION } from "../../config/version";
+import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
 
 function SetPassword() {
   const api = new AuthAPI();
@@ -29,19 +29,9 @@ function SetPassword() {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("token");
 
-  const checkPasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 1;
-    if (/[A-Z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    setPasswordStrength(strength);
-  };
-
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setPassword(value);
-    checkPasswordStrength(value);
     if (error) setError("");
   };
 
@@ -120,29 +110,6 @@ function SetPassword() {
       />
     );
   };
-
-  const PasswordRequirement = ({ text, met }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-2"
-    >
-      <div
-        className={`w-4 h-4 rounded-full flex items-center justify-center ${
-          met ? "bg-green-100" : "bg-gray-100"
-        }`}
-      >
-        {met ? (
-          <CheckCircle className="w-3 h-3 text-green-600" />
-        ) : (
-          <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-        )}
-      </div>
-      <span className={`text-xs ${met ? "text-green-600" : "text-gray-500"}`}>
-        {text}
-      </span>
-    </motion.div>
-  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden flex flex-col">
@@ -235,73 +202,14 @@ function SetPassword() {
             </p>
 
             {/* Password Requirements */}
-            <div className="space-y-3 hidden lg:block [@media(max-width:1024px)_and_(max-height:800px)]:space-y-2">
-              <h3 className="font-semibold text-gray-800 text-sm">
+            <div className="hidden lg:block mt-2">
+              <h3 className="font-semibold text-gray-800 text-sm mb-3">
                 Password Requirements:
               </h3>
-              <div className="grid grid-cols-1 gap-2">
-                <PasswordRequirement
-                  text="At least 8 characters long"
-                  met={password.length >= 8}
-                />
-                <PasswordRequirement
-                  text="Contains uppercase letter"
-                  met={/[A-Z]/.test(password)}
-                />
-                <PasswordRequirement
-                  text="Contains number"
-                  met={/[0-9]/.test(password)}
-                />
-                <PasswordRequirement
-                  text="Contains special character"
-                  met={/[^A-Za-z0-9]/.test(password)}
-                />
-              </div>
-
-              {/* Password Strength Indicator */}
-              <div className="mt-4">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-medium text-gray-700">
-                    Password Strength
-                  </span>
-                  <span className="text-xs font-medium text-gray-700">
-                    {passwordStrength === 0 && "Very Weak"}
-                    {passwordStrength === 1 && "Weak"}
-                    {passwordStrength === 2 && "Fair"}
-                    {passwordStrength === 3 && "Good"}
-                    {passwordStrength === 4 && "Strong"}
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <motion.div
-                    className={`h-full ${
-                      passwordStrength === 0
-                        ? "w-0"
-                        : passwordStrength === 1
-                        ? "w-1/4 bg-red-500"
-                        : passwordStrength === 2
-                        ? "w-1/2 bg-yellow-500"
-                        : passwordStrength === 3
-                        ? "w-3/4 bg-blue-500"
-                        : "w-full bg-green-500"
-                    }`}
-                    initial={{ width: 0 }}
-                    animate={{
-                      width:
-                        passwordStrength === 0
-                          ? "0%"
-                          : passwordStrength === 1
-                          ? "25%"
-                          : passwordStrength === 2
-                          ? "50%"
-                          : passwordStrength === 3
-                          ? "75%"
-                          : "100%",
-                    }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              </div>
+              <PasswordStrengthMeter 
+                password={password} 
+                onStrengthChange={setPasswordStrength} 
+              />
             </div>
           </motion.div>
 
@@ -392,28 +300,14 @@ function SetPassword() {
                 </div>
 
                 {/* Mobile Password Requirements */}
-                <div className="lg:hidden space-y-3">
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                <div className="lg:hidden mt-4">
+                  <h3 className="font-semibold text-gray-800 text-sm mb-3">
                     Requirements:
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <PasswordRequirement
-                      text="8+ characters"
-                      met={password.length >= 8}
-                    />
-                    <PasswordRequirement
-                      text="Uppercase letter"
-                      met={/[A-Z]/.test(password)}
-                    />
-                    <PasswordRequirement
-                      text="Number"
-                      met={/[0-9]/.test(password)}
-                    />
-                    <PasswordRequirement
-                      text="Special char"
-                      met={/[^A-Za-z0-9]/.test(password)}
-                    />
-                  </div>
+                  <PasswordStrengthMeter 
+                    password={password} 
+                    onStrengthChange={setPasswordStrength} 
+                  />
                 </div>
 
                 {error && (
