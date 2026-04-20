@@ -64,19 +64,41 @@ const WillsSignUp = ({ onSignUp }) => {
           password: formData.password
         });
 
-        // Extract name from response for better personalization
-        const finalName = response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
-
         // Save token
         const token = response.token || response.authToken || response.data?.token;
         if (token) {
           localStorage.setItem("clientAuthToken", token);
           localStorage.setItem("clientEmail", formData.email);
-          localStorage.setItem("clientName", finalName);
         }
 
+        // 1. Extract matterReferenceNumber from login data
+        const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
+        
+        let loadedData = null;
+        if (refNumber) {
+          localStorage.setItem("matterReferenceNumber", refNumber);
+          
+          // 2. Automatically call LOAD FORM (GET /v1/:ref)
+          try {
+            const loadResponse = await api.current.loadFormV1(refNumber);
+            loadedData = loadResponse.data || loadResponse;
+          } catch (loadErr) {
+            console.error("Secondary Load Form error:", loadErr);
+            // We don't block login if load fails, but we log it
+          }
+        }
+
+        // Extract name for personalization
+        const finalName = loadedData?.personal?.fullName || response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
+        localStorage.setItem("clientName", finalName);
+
         toast.success("Login successful!  ");
-        onSignUp({ email: formData.email, name: finalName });
+        onSignUp({ 
+          email: formData.email, 
+          name: finalName, 
+          referenceNumber: refNumber,
+          loadedData: loadedData 
+        });
       } else {
         // Handle Signup
         if (!formData.fullName.trim()) throw new Error("Full name is required");
