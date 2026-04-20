@@ -849,28 +849,32 @@ const SelectGroup = ({ label, name, value, onChange, options, icon }) => (
   </div>
 );
 
-const YesNoToggle = ({ label, name, value, onChange }) => (
-  <div className="flex items-start justify-between gap-12 group pb-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 -mx-4 px-4 rounded-xl transition-all">
-    <label className="text-sm font-bold text-gray-700 leading-relaxed pt-1.5 flex-1">{label}</label>
-    <div className="flex bg-white rounded-2xl p-1.5 border border-gray-100 shadow-sm h-fit flex-shrink-0 animate-in fade-in slide-in-from-right-2">
-      {[ { label: "Yes", val: true }, { label: "No", val: false } ].map(opt => (
-        <button 
-          key={opt.label} 
-          type="button" 
-          onClick={() => onChange({ target: { name, value: opt.val } })} 
-          className={`px-8 py-2.5 text-[11px] font-bold rounded-xl transition-all uppercase tracking-wider ${
-            value === opt.val 
-              ? "bg-[#2E3D99] text-white shadow-lg shadow-blue-900/20" 
-              : "text-gray-400 hover:text-[#1D97D7] hover:bg-gray-50"
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+const YesNoToggle = ({ label, name, value, onChange }) => {
+  // Normalize value: convert string "true"/"false" to actual boolean if needed
+  const normalizedValue = value === "true" ? true : value === "false" ? false : value;
 
+  return (
+    <div className="flex items-start justify-between gap-12 group pb-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 -mx-4 px-4 rounded-xl transition-all">
+      <label className="text-sm font-bold text-gray-700 leading-relaxed pt-1.5 flex-1">{label}</label>
+      <div className="flex bg-white rounded-2xl p-1.5 border border-gray-100 shadow-sm h-fit flex-shrink-0 animate-in fade-in slide-in-from-right-2">
+        {[ { label: "Yes", val: true }, { label: "No", val: false } ].map(opt => (
+          <button
+            key={opt.label}
+            type="button"
+            onClick={() => onChange({ target: { name, value: opt.val } })}
+            className={`px-8 py-2.5 text-[11px] font-bold rounded-xl transition-all uppercase tracking-wider ${
+              normalizedValue === opt.val
+                ? "bg-[#2E3D99] text-white shadow-lg shadow-blue-900/20"
+                : "text-gray-400 hover:text-[#1D97D7] hover:bg-gray-50"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 const AddressInputGroup = ({ label, value, onAddressSelect, placeholder, icon, isLoaded }) => {
   const inputRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState(value || "");

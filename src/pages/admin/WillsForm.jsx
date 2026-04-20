@@ -162,8 +162,8 @@ const WillsForm = () => {
               ...INITIAL_STATE,
               ...actualData,
               personal: { ...INITIAL_STATE.personal, ...(actualData.personal || {}) },
-              executors: actualData.executors || INITIAL_STATE.executors,
-              beneficiaries: actualData.beneficiaries || INITIAL_STATE.beneficiaries,
+              executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : INITIAL_STATE.executors,
+              beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : INITIAL_STATE.beneficiaries,
             }));
             
             // Automatically jump to Step 10 (Review) if from reference or already submitted
@@ -173,11 +173,10 @@ const WillsForm = () => {
           }
         } catch (error) {
           console.error("Error fetching wills form:", error);
-          toast.error("Failed to load form data");
+          toast.error(error.message || "Failed to load form data");
         }
-      };
-      fetchForm();
-    }
+        };
+        fetchForm();    }
   }, [location.search, finalRefNumber]);
 
   const INITIAL_STATE = {
@@ -294,7 +293,11 @@ const WillsForm = () => {
       for (const key of keys) {
         targetArray = targetArray[key];
       }
-      
+            
+      if (!targetArray[index]) {
+        targetArray[index] = {};
+      }
+
       if (field.includes('.')) {
         // Map empty string to null for category and boolean fields
         const isNullField = (field.endsWith('.category') || field === 'category' || field === 'personal.existingWill' || field === 'guardian.isExecutor' || field === 'funeral.hasPlan' || field === 'other.promisedBenefit' || field === 'other.legalMatters' || field === 'other.otherNotes');
@@ -442,24 +445,25 @@ const WillsForm = () => {
     };
     
     try {
+      let response;
       if (finalRefNumber) {
         // Use the new PATCH API if we have a reference number from the URL
-        const response = await api.current.updateFormByReferenceNumber(finalRefNumber, updatedData);
-        if (response?.data) {
-          setFormData(response.data);
-          return response.data;
-        }
+        response = await api.current.updateFormByReferenceNumber(finalRefNumber, updatedData);
       } else if (updatedData.matterReferenceNumber) {
         // Fallback for query-param based updates
-        await api.current.updateWillsForm(updatedData);
-        setFormData(updatedData);
+        response = await api.current.updateWillsForm(updatedData);
       } else {
         // Standard creation flow
-        const response = await api.current.createWillsForm(updatedData);
-        if (response?.data) {
-          setFormData(response.data);
-          return response.data;
-        }
+        response = await api.current.createWillsForm(updatedData);
+      }
+
+      if (response) {
+        const actualData = response.data || response;
+        setFormData(prev => ({
+          ...prev,
+          ...actualData
+        }));
+        return actualData;
       }
     } catch (error) {
       console.error("Error in submitForm:", error);
@@ -495,7 +499,7 @@ const WillsForm = () => {
       setIsDirty(false);
     } catch (error) {
       console.error("Error syncing progress:", error);
-      toast.error("Failed to auto-save progress!");
+      toast.error(error.message || "Failed to auto-save progress!");
     }
   };
 
@@ -515,15 +519,39 @@ const WillsForm = () => {
   };
 
   const handleSignUp = (signUpData) => {
-    setFormData((prev) => ({
-      ...prev,
-      personal: {
-        ...(prev ? prev.personal : {}),
-        fullName: signUpData.name,
-      },
-      email: signUpData.email,
-    }));
     setIsSignedUp(true);
+    
+    if (signUpData.loadedData) {
+      const actualData = signUpData.loadedData.data || signUpData.loadedData;
+      
+      setFormData(prev => ({
+        ...INITIAL_STATE,
+        ...actualData,
+        personal: { 
+          ...INITIAL_STATE.personal, 
+          ...(actualData.personal || {}),
+          fullName: signUpData.name || actualData.personal?.fullName || prev.personal?.fullName
+        },
+        email: signUpData.email || actualData.email || prev.email,
+        executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : INITIAL_STATE.executors,
+        beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : INITIAL_STATE.beneficiaries,
+      }));
+
+      // Automatically jump to Step 10 (Review) if already submitted
+      if (actualData.status === "submitted") {
+        setCurrentStep(10);
+      }
+    } else {
+      // Fallback for simple signup
+      setFormData((prev) => ({
+        ...prev,
+        personal: {
+          ...(prev ? prev.personal : {}),
+          fullName: signUpData.name,
+        },
+        email: signUpData.email,
+      }));
+    }
   };
 
   const handleLogout = () => {
@@ -595,7 +623,7 @@ const WillsForm = () => {
                 </button>
               )}
             </div>
-            
+
             <div className="text-right hidden sm:block">
               <h1 className="text-2xl font-bold text-[#2E3D99]">Wills Preparation</h1>
             </div>

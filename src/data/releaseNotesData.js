@@ -20,11 +20,53 @@ import {
   FolderOpen,
   Download,
   FileText,
+  Eye,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       April: [
+        {
+          date: "2026-04-20",
+          version: "v7.5.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Form Stability & Disclosure Fixes",
+          description: "Critical fixes for Wills form interactivity, data persistence, and error communication.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills Form Interactivity",
+              description: "Resolved 'Cannot set properties of undefined' errors in multi-item arrays.",
+              details: "Fixed a crash in handleArrayChange that occurred when updating executors or beneficiaries if the array was uninitialized or empty from the backend.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Step 9 Disclosure Visibility",
+              description: "Fixed disclosure fields (Yes/No) showing as empty.",
+              details: "Implemented normalization to correctly handle string 'true'/'false' values from the backend, ensuring disclosure selections are accurately reflected in the UI.",
+              icon: Eye,
+            },
+            {
+              type: "improvement",
+              title: "Enhanced Error Communication",
+              description: "Direct display of backend error messages in toast notifications.",
+              details: "Updated the API handler and form to pass through specific server errors like 'Form is locked', replacing generic 'Internal Server Error' messages.",
+              icon: Info,
+            },
+            {
+              type: "bugfix",
+              title: "Submission Flow Reliability",
+              description: "Ensured 'Next' button correctly triggers Update instead of Create after first save.",
+              details: "Improved state synchronization to preserve the matterReferenceNumber immediately after initial form creation, preventing duplicate draft records.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills Form",
+          severity: "High",
+          status: "Released"
+        },
         {
           date: "2026-04-13",
           version: "v7.5.0",
