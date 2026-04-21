@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, FileText, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
@@ -11,7 +11,9 @@ import { generateWillsDocx } from "../../components/utils/generateWillsDocx";
 import { toast } from "react-toastify";
 import WillsSignUp from "../../components/wills/WillsSignUp";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
-import { APP_VERSION } from "../../config/version";
+import WillsSmartTips from "../../components/wills/WillsSmartTips";
+import { WILLS_TIPS } from "../../data/willsTipsData";
+import { Lock } from "lucide-react";
 
 
 // Helper function to load Google Maps script
@@ -72,7 +74,10 @@ const WillsForm = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [error, setError] = useState("");
 
   const api = useRef(new WillsAPI());
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
@@ -85,16 +90,23 @@ const WillsForm = () => {
     const refFromPath = pathParts.includes("get-by-reference-number") 
       ? pathParts[pathParts.indexOf("get-by-reference-number") + 1] 
       : null;
-    return referenceNumber || refFromPath || matterNumberFromQuery || refFromQuery;
+    
+    const urlRef = referenceNumber || refFromPath || matterNumberFromQuery || refFromQuery;
+    if (urlRef) return urlRef;
+
+    // Session Persistence fallback:
+    return localStorage.getItem("matterReferenceNumber");
   }, [location.search, referenceNumber, location.pathname]);
 
 
   const isFromReference = useMemo(() => {
-    return new URLSearchParams(location.search).has("matterNumber") || !!finalRefNumber;
-  }, [location.search, finalRefNumber]);
+    const params = new URLSearchParams(location.search);
+    const hasUrlParam = params.has("matterNumber") || params.has("referenceNumber") || window.location.pathname.includes("get-by-reference-number");
+    return hasUrlParam || !!referenceNumber;
+  }, [location.search, referenceNumber, location.pathname]);
 
   useEffect(() => {
-    if (isFromReference) {
+    if (isFromReference || localStorage.getItem("matterReferenceNumber")) {
       setIsSignedUp(true);
     }
   }, [isFromReference]);
@@ -104,21 +116,11 @@ const WillsForm = () => {
   useEffect(() => {
     // Session Persistence: Check for client session on refresh
     const clientToken = localStorage.getItem("clientAuthToken");
-    const clientEmail = localStorage.getItem("clientEmail");
-    const clientName = localStorage.getItem("clientName");
 
+    // If we have a token but aren't from an explicit URL reference, 
+    // we still mark as signed up to trigger the fetch logic via finalRefNumber
     if (clientToken && !isFromReference) {
       setIsSignedUp(true);
-      if (clientEmail || clientName) {
-        setFormData(prev => ({
-          ...prev,
-          email: clientEmail || (prev && prev.email) || "",
-          personal: {
-            ...(prev ? prev.personal : {}),
-            fullName: clientName || (prev && prev.personal ? prev.personal.fullName : "")
-          }
-        }));
-      }
     }
   }, [isFromReference]);
 
@@ -147,8 +149,17 @@ const WillsForm = () => {
         try {
           let response;
           if (finalRefNumber) {
-            // Priority: Call the reference number API if it's in the URL path
-            response = await api.current.getFormByReferenceNumber(finalRefNumber);
+            // Check if this is an explicit URL reference or a session persistence reload
+            const params = new URLSearchParams(location.search);
+            const isUrlRef = !!(referenceNumber || params.get("matterNumber") || params.get("referenceNumber") || window.location.pathname.includes("get-by-reference-number"));
+            
+            if (isUrlRef) {
+              // Priority: Call the reference number API if it's explicitly in the URL
+              response = await api.current.getFormByReferenceNumber(finalRefNumber);
+            } else {
+              // Session Persistence: Use loadFormV1 (matching sign-in behavior)
+              response = await api.current.loadFormV1(finalRefNumber);
+            }
           } else {
             // Fallback: Call standard project data API
             response = await api.current.getProjectFullData(matterNumber);
@@ -157,27 +168,50 @@ const WillsForm = () => {
           if (response) {
             // Extract the actual form data from the response
             const actualData = response.data || response;
-            // Merge with INITIAL_STATE to ensure safety of nested objects
-            setFormData(prev => ({
-              ...INITIAL_STATE,
-              ...actualData,
-              personal: { ...INITIAL_STATE.personal, ...(actualData.personal || {}) },
-              executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : INITIAL_STATE.executors,
-              beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : INITIAL_STATE.beneficiaries,
-            }));
             
-            // Automatically jump to Step 10 (Review) if from reference or already submitted
-            if (actualData.status === "submitted" || finalRefNumber) {
+              setFormData(prev => {
+                // Deep merge strategy to ensure all fields are captured
+                const merged = {
+                  ...INITIAL_STATE,
+                  ...prev, // Keep what we have
+                  ...actualData, // Overwrite with DB data
+                  personal: { 
+                    ...INITIAL_STATE.personal, 
+                    ...(prev.personal || {}), 
+                    ...(actualData.personal || {}) 
+                  },
+                  executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : (prev.executors || INITIAL_STATE.executors),
+                  beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : (prev.beneficiaries || INITIAL_STATE.beneficiaries),
+                  // Ensure ID is explicitly kept
+                  matterReferenceNumber: actualData.matterReferenceNumber || finalRefNumber || prev.matterReferenceNumber
+                };
+
+                // Registration data pre-fill fallback
+                if (!merged.personal.fullName) {
+                   merged.personal.fullName = localStorage.getItem("clientName") || "";
+                }
+                if (!merged.email) {
+                   merged.email = localStorage.getItem("clientEmail") || "";
+                }
+                if (!merged.personal.email) {
+                   merged.personal.email = localStorage.getItem("clientEmail") || "";
+                }
+
+                return merged;
+              });
+            
+            // Automatically jump to Step 10 (Review) if from an EXPLICIT URL reference or already submitted
+            if (actualData.status === "submitted" || isFromReference) {
               setCurrentStep(10);
             }
           }
         } catch (error) {
           console.error("Error fetching wills form:", error);
-          toast.error(error.message || "Failed to load form data");
+          setError("Failed to load your form data. Please refresh or try again later.");
         }
         };
         fetchForm();    }
-  }, [location.search, finalRefNumber]);
+  }, [location.search, finalRefNumber, isFromReference]);
 
   const INITIAL_STATE = {
     firmId: localStorage.getItem("userID") || "",
@@ -388,9 +422,9 @@ const WillsForm = () => {
       
       if (!refNumber || refNumber === "1234567") {
         try {
-          const createResponse = await api.current.createWillsForm(formData);
-          const createdData = createResponse.data || createResponse;
-          refNumber = createdData.matterReferenceNumber || createdData.MatterReferenceNumber;
+          const updateResponse = await api.current.updateWillsForm(formData);
+          const updatedData = updateResponse.data || updateResponse;
+          refNumber = updatedData.matterReferenceNumber || updatedData.MatterReferenceNumber;
           
           if (refNumber) {
             // Update local state and ref with the new identity
@@ -417,7 +451,7 @@ const WillsForm = () => {
         }
       }));
       
-      toast.success("Files uploaded successfully");
+      setIsDirty(false);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload files");
@@ -453,8 +487,8 @@ const WillsForm = () => {
         // Fallback for query-param based updates
         response = await api.current.updateWillsForm(updatedData);
       } else {
-        // Standard creation flow
-        response = await api.current.createWillsForm(updatedData);
+        // Standard update flow
+        response = await api.current.updateWillsForm(updatedData);
       }
 
       if (response) {
@@ -503,10 +537,32 @@ const WillsForm = () => {
     }
   };
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await submitForm("draft");
+      setIsDirty(false);
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error(error.message || "Failed to save progress");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const nextStep = async () => {
     if (currentStep < 10) {
-      await syncToApi();
-      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+      setIsSaving(true);
+      try {
+        await submitForm("draft");
+        setIsDirty(false);
+        setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+      } catch (error) {
+        console.error("Error saving on next step:", error);
+        toast.error("Failed to save progress. Please try again.");
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -521,6 +577,17 @@ const WillsForm = () => {
   const handleSignUp = (signUpData) => {
     setIsSignedUp(true);
     
+    // Persist session to localStorage for reload recovery
+    if (signUpData.referenceNumber) {
+      localStorage.setItem("matterReferenceNumber", signUpData.referenceNumber);
+    }
+    if (signUpData.email) {
+      localStorage.setItem("clientEmail", signUpData.email);
+    }
+    if (signUpData.name) {
+      localStorage.setItem("clientName", signUpData.name);
+    }
+    
     if (signUpData.loadedData) {
       const actualData = signUpData.loadedData.data || signUpData.loadedData;
       
@@ -533,6 +600,7 @@ const WillsForm = () => {
           fullName: signUpData.name || actualData.personal?.fullName || prev.personal?.fullName
         },
         email: signUpData.email || actualData.email || prev.email,
+        matterReferenceNumber: signUpData.referenceNumber || actualData.matterReferenceNumber || prev.matterReferenceNumber,
         executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : INITIAL_STATE.executors,
         beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : INITIAL_STATE.beneficiaries,
       }));
@@ -550,6 +618,7 @@ const WillsForm = () => {
           fullName: signUpData.name,
         },
         email: signUpData.email,
+        matterReferenceNumber: signUpData.referenceNumber,
       }));
     }
   };
@@ -561,10 +630,9 @@ const WillsForm = () => {
     localStorage.removeItem("clientEmail");
     localStorage.removeItem("clientName");
     
-    // Reset state and navigate
+    // Reset state - this will trigger re-render to show WillsSignUp
     setIsSignedUp(false);
     toast.info("Logged out successfully");
-    navigate("/admin/dashboard");
   };
 
   if (!isSignedUp) {
@@ -596,157 +664,197 @@ const WillsForm = () => {
       <FloatingElement top={40} left={92} delay={4} size={40} />
       <FloatingElement top={10} left={95} delay={0.5} size={30} />
 
-      <main className="flex-1 flex flex-col py-8 px-4 md:px-12 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
+      <main className="flex-1 flex flex-col py-10 px-4 md:px-16 lg:px-24 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
         <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
           
-          <div className="flex items-center justify-between mb-8 print:hidden">
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="px-3.5 py-1.5 text-[#2E3D99] border border-[#2E3D99] rounded-lg hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] font-medium transition-all duration-300 text-sm flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </motion.button>
+          {/* Top Progress Bar - Now outside the main box as per reference */}
+          <div className="bg-white rounded-full shadow-sm border border-gray-100 p-3 pl-8 pr-8 mb-8 flex items-center justify-between print:hidden max-w-5xl mx-auto w-full transition-all">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <span className="text-[13px] font-bold text-gray-800">
+                  Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 — {steps[currentStep-1]}
+                </span>
+                <div className="h-4 w-[1px] bg-gray-100 hidden sm:block" />
+                <div className="hidden sm:flex items-center gap-2 text-gray-400 text-[12px] font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  {WILLS_TIPS[currentStep]?.estimate || "3-5 mins"}
+                </div>
+              </div>
 
-              {isFromReference && (
-                <button 
-                  onClick={() => navigate(-1)}
-                  className="flex items-center gap-2 text-gray-500 hover:text-[#2E3D99] transition-colors group"
-                >
-                  <div className="p-2 rounded-lg group-hover:bg-[#2E3D99]/5">
-                    <ChevronLeft size={20} />
-                  </div>
-                  <span className="text-sm font-semibold uppercase tracking-wider">Back</span>
-                </button>
-              )}
+              {/* Progress Bar */}
+              <div className="hidden md:flex items-center gap-3">
+                <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(currentStep / 10) * 100}%` }}
+                    className="h-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 tabular-nums">
+                  {Math.round((currentStep / 10) * 100)}% COMPLETE
+                </span>
+              </div>
             </div>
 
-            <div className="text-right hidden sm:block">
-              <h1 className="text-2xl font-bold text-[#2E3D99]">Wills Preparation</h1>
-            </div>
-          </div>
-
-
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mb-12 overflow-x-auto no-scrollbar print:hidden">
-            <div className="flex items-center justify-between min-w-[900px] px-4">
-              {steps.map((step, idx) => {
-                const stepNum = idx + 1;
-                const isActive = currentStep === stepNum;
-                const isCompleted = currentStep > stepNum;
-                
-                return (
-                  <React.Fragment key={idx}>
-                    <button 
-                      onClick={() => goToStep(stepNum)}
-                      className={`flex flex-col items-center gap-2 group transition-all`}
-                    >
-                      <div className={`
-                        w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold transition-all duration-300
-                        ${isActive ? "bg-[#2E3D99] text-white ring-4 ring-[#2E3D99]/10" : ""}
-                        ${isCompleted ? "bg-[#22C55E] text-white" : ""}
-                        ${!isActive && !isCompleted ? "bg-gray-50 text-gray-400 group-hover:bg-gray-200" : ""}
-                      `}>
-                        {isCompleted ? <Check size={16} /> : stepNum}
-                      </div>
-                      <span className={`text-[10px] font-bold transition-colors uppercase tracking-tight ${isActive ? "text-[#2E3D99]" : "text-gray-400"}`}>
-                        {step}
-                      </span>
-                    </button>
-                    {idx < steps.length - 1 && (
-                      <div className={`h-[2px] flex-1 mx-3 transition-colors duration-500 ${isCompleted ? "bg-[#22C55E]" : "bg-gray-100"}`} />
-                    )}
-                  </React.Fragment>
-                );
-              })}
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                <div className={`w-1.5 h-1.5 rounded-full ${isDirty ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isDirty ? "Unsaved" : "Saved"}</span>
+              </div>
+              <button onClick={handleLogout} title="Logout" className="p-2 text-gray-400 hover:text-[#2E3D99] transition-all hover:bg-gray-50 rounded-full">
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
 
-          <div className="flex-1 bg-white rounded-[40px] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden flex flex-col print:shadow-none print:border-none print:rounded-none print:block print:p-0">
-            <div className="flex-1 overflow-y-auto p-8 md:p-16 custom-scrollbar print:overflow-visible print:p-0 print:m-0 print:block">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.4 }}
-                  className="print:block"
-                >
-                  {currentStep === 10 ? (
-                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500 print:block print:p-0 print:space-y-0">
-                      <div className="flex items-center justify-between border-b border-gray-100 pb-8 print:hidden">
-                        <div>
-                          <h2 className="text-3xl font-bold text-[#2E3D99]">
-                            {isFromReference ? "Final Review" : "Confirm Your Details"}
-                          </h2>
-                          <p className="text-sm text-gray-500 mt-1 font-medium italic">
-                            {isFromReference 
-                              ? "Please verify the legal document before downloading."
-                              : "Review your entries below before submitting the form."}
-                          </p>
-                        </div>
-                        {isFromReference && (
-                          <button 
-                            onClick={handleDownload}
-                            disabled={isDownloading}
-                            className="flex items-center gap-3 px-8 py-4 bg-[#2E3D99] text-white rounded-2xl hover:bg-[#1D97D7] transition-all font-bold text-sm shadow-xl shadow-blue-900/10 disabled:opacity-70 disabled:cursor-not-allowed group"
-                          >
-                            {isDownloading ? (
-                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                              <FileText size={18} className="group-hover:rotate-12 transition-transform" />
-                            )}
-                            {isDownloading ? "GENERATING DOCX..." : "DOWNLOAD AS DOCX"}
-                          </button>
-                        )}
-                      </div>
-                      <div className={`${isFromReference ? "bg-[#F8FAFC] rounded-[32px] p-6 md:p-12 border border-blue-50/30 shadow-inner max-h-[800px] overflow-y-auto" : ""} print:bg-white print:p-0 print:m-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible print:block`}>
-                        {isFromReference ? (
-                          <WillsPreview formData={formData} />
-                        ) : (
-                          <SimplifiedReview formData={formData} onEdit={goToStep} />
-                        )}
-                      </div>
+          {/* Unified Premium Card */}
+          <div className="bg-white rounded-[40px] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden flex flex-col p-6 md:p-8 lg:p-10 print:shadow-none print:border-none print:rounded-none transition-all">
+            
+            {/* 1. Header Section (Inside Card) */}
+            <div className="mb-6 space-y-2">
+              <AnimatePresence>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-6"
+                  >
+                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3 text-red-600 text-sm font-bold shadow-sm">
+                       <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs flex-shrink-0">!</div>
+                       <span className="flex-1">{error}</span>
+                       <button onClick={() => setError("")} className="p-1 hover:bg-red-100 rounded-lg transition-colors">
+                         <X size={16} />
+                       </button>
                     </div>
-                  ) : (
-                    <WillsStepForm 
-                      step={currentStep} 
-                      formData={formData} 
-                      handleInputChange={handleInputChange}
-                      handleArrayChange={handleArrayChange}
-                      addArrayItem={addArrayItem}
-                      removeArrayItem={removeArrayItem}
-                      isGoogleMapsLoaded={isGoogleMapsLoaded}
-                      email={formData.email}
-                      onFileUpload={handleFileUpload}
-                      onFileDelete={handleFileDelete}
-                      isUploading={isUploading}
-                    />
-                  )}
-                </motion.div>
+                  </motion.div>
+                )}
               </AnimatePresence>
+
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-[#1E293B] tracking-tight">
+                  {WILLS_TIPS[currentStep]?.title}
+                </h2>
+                {/* Circled Step Number */}
+                <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#2E3D99] font-bold text-sm border border-gray-100">
+                  {currentStep}
+                </div>
+                {/* Info Icon */}
+                <div className="p-1.5 rounded-full bg-gray-50 border border-gray-100 group cursor-help transition-all hover:bg-white hover:shadow-sm">
+                   <Info size={16} className="text-gray-300 group-hover:text-[#2E3D99] transition-colors" />
+                </div>
+              </div>
+              <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
+                {WILLS_TIPS[currentStep]?.description}
+              </p>
             </div>
 
-            <div className="p-8 bg-gray-50/30 border-t border-gray-50 flex items-center justify-between backdrop-blur-sm print:hidden">
-              <button
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold transition-all ${
-                  currentStep === 1 ? "text-gray-200 cursor-not-allowed" : "text-gray-500 hover:text-[#2E3D99] hover:bg-white border border-transparent hover:border-gray-100 shadow-sm"
-                }`}
-              >
-                <ChevronLeft size={20} /> Back
-              </button>
+            {/* 2. Content Body Section (Two Columns Inside Card) */}
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 grow">
               
-              <button
-                onClick={currentStep === 10 ? () => setIsSubmitModalOpen(true) : nextStep}
-                className="flex items-center gap-4 px-12 py-4 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                {currentStep === 10 ? "Submit" : "Next Phase"} <ChevronRight size={20} />
-              </button>
+              {/* Left Column: Form Section */}
+              <div className="flex-1 min-w-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="print:block"
+                  >
+                    {currentStep === 10 ? (
+                      <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500 print:block print:p-0 print:space-y-0 text-center max-w-2xl mx-auto py-12">
+                        <div className="w-20 h-20 bg-[#22C55E]/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                          <Check size={40} className="text-[#22C55E]" />
+                        </div>
+                        <h2 className="text-4xl font-bold text-[#2E3D99]">Ready to Finalise?</h2>
+                        <p className="text-gray-500 font-medium">Review your details below to ensure everything is correct.</p>
+                        <div className={`${isFromReference ? "bg-[#F8FAFC] rounded-[32px] p-6 md:p-12 border border-blue-50/30 shadow-inner mt-12" : ""} print:bg-white print:p-0 print:m-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible print:block text-left`}>
+                          {isFromReference ? <WillsPreview formData={formData} /> : <SimplifiedReview formData={formData} onEdit={goToStep} />}
+                        </div>
+                      </div>
+                    ) : (
+                      <WillsStepForm 
+                        step={currentStep} 
+                        formData={formData} 
+                        handleInputChange={handleInputChange}
+                        handleArrayChange={handleArrayChange}
+                        addArrayItem={addArrayItem}
+                        removeArrayItem={removeArrayItem}
+                        isGoogleMapsLoaded={isGoogleMapsLoaded}
+                        email={formData.email}
+                        onFileUpload={handleFileUpload}
+                        onFileDelete={handleFileDelete}
+                        isUploading={isUploading}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Right Column: Tips & Navigation */}
+              <div className="lg:w-[380px] flex flex-col gap-8">
+                {/* Smart Tips Card */}
+                <div className="bg-[#F1F5F9] rounded-[32px] overflow-hidden border border-gray-100/50">
+                  <WillsSmartTips 
+                    tips={WILLS_TIPS[currentStep]?.tips || []} 
+                    isMobile={false}
+                    isInline={true}
+                  />
+                </div>
+
+                {/* Navigation Buttons aligned below Tips */}
+                <div className="flex items-center justify-between gap-3 mt-auto pt-6 border-t border-gray-50 lg:border-none lg:pt-0">
+                  <button
+                    onClick={prevStep}
+                    disabled={currentStep === 1}
+                    className={`flex items-center gap-2 text-[13px] font-bold transition-all px-4 py-3 rounded-xl ${
+                      currentStep === 1 ? "text-gray-200 cursor-not-allowed" : "text-gray-500 hover:text-[#2E3D99] hover:bg-gray-50"
+                    }`}
+                  >
+                    <ChevronLeft size={16} /> Back
+                  </button>
+
+                  <div className="flex items-center gap-3 flex-1">
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white text-[#2E3D99] border-2 border-[#2E3D99]/10 rounded-2xl font-bold hover:bg-[#2E3D99]/5 transition-all disabled:opacity-50 text-[14px]"
+                    >
+                      <Save size={16} /> Save
+                    </button>
+
+                    <button
+                      onClick={currentStep === 10 ? () => setIsSubmitModalOpen(true) : nextStep}
+                      disabled={isSaving}
+                      className="flex-[1.5] flex items-center justify-center gap-1 px-3 py-3 bg-[#2E3D99] text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:bg-[#1D97D7] transition-all disabled:opacity-70 text-[14px]"
+                    >
+                      {currentStep === 10 ? "Submit Will" : "Next"}
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Social Proof/Trust Footer */}
+            <div className="mt-2 pt-3 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+              <div className="flex items-center text-gray-400 group transition-all cursor-default">
+                <div className="p-2 bg-blue-50/50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                  <Shield size={14} className="text-[#2E3D99]/60" />
+                </div>
+                <span className="text-[12px] font-bold  text-black group-hover:opacity-100 transition-opacity">
+                  Your information is securely stored and handled in accordance with Australian privacy standards.
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50/80 rounded-full border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
+                <div className={`w-1.5 h-1.5 rounded-full ${isDirty ? "bg-amber-400 animate-pulse" : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]"}`} />
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[1px] leading-none">
+                  {isDirty ? "unsaved" : "all data saved"}
+                </p>
+              </div>
             </div>
           </div>
         </div>

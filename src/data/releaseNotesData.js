@@ -21,11 +21,60 @@ import {
   Download,
   FileText,
   Eye,
+  Save,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       April: [
+        {
+          date: "2026-04-21",
+          version: "v7.5.4",
+          type: "patch",
+          category: "feature",
+          title: "Unified Wills UI & Auth Refinement",
+          description: "Major visual and functional overhaul of the Wills form, featuring a unified 'legal-tech' aesthetic, compact layout optimization, and refined authentication UX.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Unified Container Design",
+              description: "Migrated the Wills form to a single, high-end card architecture.",
+              details: "Centralized all content, metadata, and navigation into a cohesive premium container. Removed redundant headers from individual steps to ensure a unified visual flow.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Compact Layout Optimization",
+              description: "Aggressively refined spacing to eliminate unnecessary white space.",
+              details: "Tightened padding, margins, and column gaps across the entire form. Limited container width to prevent stretching on large screens, resulting in a dense, professional feel.",
+              icon: Zap,
+            },
+            {
+              type: "feature",
+              title: "Refined Navigation & Persistence",
+              description: "Re-separated 'Save' and 'Next' actions with explicit API syncing.",
+              details: "Restored a dedicated Save button and ensured the Next button triggers a mandatory API check-point, providing a more predictable and reliable submission flow.",
+              icon: Save,
+            },
+            {
+              type: "ui_ux",
+              title: "Inline Auth Handling",
+              description: "Removed toast notifications in favor of semantic inline alerts.",
+              details: "Signup and Sign-in errors are now managed entirely through high-fidelity inline indicators, matching the modern 'Zero-Alert' design philosophy.",
+              icon: Shield,
+            },
+            {
+              type: "improvement",
+              title: "UX & Iconography Finish",
+              description: "Polished iconography and highlighted critical legal questions.",
+              details: "Updated signup icons (ShieldCheck, ListChecks, History, Lightbulb) for better clarity and increased font sizes for critical decisions like 'Existing Will' status.",
+              icon: Info,
+            },
+          ],
+          module: "Wills Form, Auth",
+          severity: "High",
+          status: "Released"
+        },
         {
           date: "2026-04-20",
           version: "v7.5.3",
