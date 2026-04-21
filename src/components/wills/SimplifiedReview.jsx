@@ -1,41 +1,34 @@
 import { User, Shield, Users, Landmark, Home, Heart, FileText, Smartphone, Info, Pencil } from "lucide-react";
 
 const Section = ({ title, icon: Icon, children, onEdit }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm transition-all hover:shadow-md relative group/section">
-    <div className="flex items-center justify-between border-b border-gray-50 pb-4">
+  <div className="bg-white rounded-[32px] border border-gray-100 p-8 space-y-6 shadow-sm transition-all hover:shadow-md relative group/section">
+    <div className="flex items-center justify-between border-b border-gray-50 pb-5">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-blue-50 rounded-lg text-[#2E3D99]">
+        <div className="p-2.5 bg-[#2E3D99]/5 rounded-xl text-[#2E3D99]">
           <Icon size={20} />
         </div>
-        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
       </div>
       {onEdit && (
-        <div className="relative group">
-          <button
-            onClick={onEdit}
-            className="p-2 text-gray-400 hover:text-[#2E3D99] hover:bg-blue-50 rounded-lg transition-all transform hover:scale-110 active:scale-95"
-            aria-label={`Edit ${title}`}
-          >
-            <Pencil size={18} />
-          </button>
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20 shadow-lg">
-            Edit this phase
-            <div className="absolute top-full right-3 border-4 border-transparent border-t-gray-900" />
-          </div>
-        </div>
+        <button
+          onClick={onEdit}
+          className="p-2.5 text-gray-300 hover:text-[#2E3D99] hover:bg-[#2E3D99]/5 rounded-xl transition-all transform hover:scale-110 active:scale-95"
+          aria-label={`Edit ${title}`}
+        >
+          <Pencil size={18} />
+        </button>
       )}
     </div>
-    <div className="space-y-3 pt-2">
+    <div className="space-y-4 pt-2">
       {children}
     </div>
   </div>
 );
 
 const Row = ({ label, value, isList = false }) => (
-  <div className={`flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 ${!isList ? "py-1" : ""}`}>
-    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider min-w-[180px]">{label}:</span>
-    <span className="text-sm font-semibold text-gray-700">{value || "Not provided"}</span>
+  <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 ${!isList ? "py-1.5" : ""}`}>
+    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest min-w-[160px]">{label}</span>
+    <span className="text-sm font-semibold text-gray-700 leading-relaxed">{value || <span className="text-gray-300 italic font-medium">Not provided</span>}</span>
   </div>
 );
 
