@@ -276,9 +276,9 @@ const WillsStepForm = ({
       <div className="space-y-5">
         <SmartTipsInline hasTips={tipData.tips.length > 0} />
 
-        <div className="space-y-6">
+        <div className="space-y-6 mb-12">
           <label className="text-sm font-bold text-gray-700">How many beneficiaries will be in the Will?</label>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-5 gap-4 max-w-md">
              {["1", "2", "3", "4", "5"].map(num => (
                <label key={num} className="cursor-pointer">
                  <input 
@@ -297,7 +297,7 @@ const WillsStepForm = ({
                    }} 
                    className="hidden peer" 
                  />
-                 <div className="p-4 text-center rounded-2xl border border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-sm">
+                 <div className="py-4 text-center rounded-2xl border border-gray-100 transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#2E3D99] peer-checked:to-[#1D97D7] peer-checked:text-white peer-checked:shadow-lg peer-checked:shadow-blue-900/20 peer-checked:border-transparent hover:bg-gray-50 font-bold text-sm">
                    {num}
                  </div>
                </label>
@@ -482,7 +482,7 @@ const WillsStepForm = ({
                  {["Buried", "Cremation", "Donate for research"].map((option, idx) => (
                    <label key={option} className="cursor-pointer">
                      <input type="radio" name="funeral.details" value={option} checked={funeral.details === option} onChange={handleInputChange} className="hidden peer" />
-                     <div className="p-6 text-center rounded-[28px] border border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-[11px] uppercase tracking-wider">
+                     <div className="p-6 text-center rounded-[28px] border border-gray-100 transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#2E3D99] peer-checked:to-[#1D97D7] peer-checked:text-white peer-checked:shadow-lg peer-checked:shadow-blue-900/20 peer-checked:border-transparent hover:bg-gray-50 font-bold text-[11px] uppercase tracking-wider">
                        {idx + 1}. {option}
                      </div>
                    </label>
@@ -573,7 +573,7 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
         {!hasItems && (
           <button 
             onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" })}
-            className="px-6 py-2.5 bg-[#2E3D99] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-lg shadow-blue-900/10 flex items-center justify-center gap-2 hover:bg-[#1D97D7] transition-all flex-shrink-0"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-md shadow-blue-900/20 hover:brightness-110 flex items-center justify-center gap-2 transition-all flex-shrink-0"
           >
             <Plus size={14} /> Add Property
           </button>
@@ -607,7 +607,7 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
                        key={r} 
                        type="button"
                        onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                       className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-white text-[#2E3D99] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                       className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
                      >
                        {r}
                      </button>
@@ -676,7 +676,7 @@ const StepBankSection = ({
                   handleInputChange({ target: { name: numName, value: "0" } });
                 }
               }} 
-              className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${choice === opt.val ? "bg-[#2E3D99] text-white shadow-md shadow-blue-900/10" : "text-gray-400 hover:text-gray-600"}`}
+              className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${choice === opt.val ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
             >
               {opt.label}
             </button>
@@ -686,9 +686,9 @@ const StepBankSection = ({
 
       {choice === true && (
         <div className="space-y-12 animate-in slide-in-from-top-4 duration-500">
-          <div className="space-y-6">
+          <div className="space-y-6 mb-8">
             <label className="text-[13px] font-bold text-gray-700">{countLabel}</label>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-5 gap-4 max-w-md">
                {["1", "2", "3", "4", "5"].map(num => (
                  <label key={num} className="cursor-pointer">
                    <input 
@@ -702,7 +702,7 @@ const StepBankSection = ({
                      }} 
                      className="hidden peer"
                    />
-                   <div className="p-4 text-center rounded-2xl border border-gray-100 transition-all peer-checked:border-[#2E3D99] peer-checked:bg-[#2E3D99]/5 peer-checked:text-[#2E3D99] hover:bg-gray-50 font-bold text-sm">
+                   <div className="py-4 text-center rounded-2xl border border-gray-100 transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#2E3D99] peer-checked:to-[#1D97D7] peer-checked:text-white peer-checked:shadow-lg peer-checked:shadow-blue-900/20 peer-checked:border-transparent hover:bg-gray-50 font-bold text-sm">
                      {num}
                    </div>
                  </label>
@@ -734,7 +734,7 @@ const StepBankSection = ({
                             key={r} 
                             type="button"
                             onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                            className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${acc.ratio === r || (r === "Other" && acc.ratio !== "Equally" && acc.ratio !== undefined) ? "bg-white text-[#2E3D99] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                           className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${acc.ratio === r || (r === "Other" && acc.ratio !== "Equally" && acc.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
                           >
                             {r}
                           </button>
@@ -842,7 +842,7 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
         {!hasItems && (
           <button 
             onClick={() => addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" })}
-            className="px-6 py-2.5 bg-[#2E3D99] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-lg shadow-blue-900/10 flex items-center justify-center gap-2 hover:bg-[#1D97D7] transition-all flex-shrink-0"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-md shadow-blue-900/20 hover:brightness-110 flex items-center justify-center gap-2 transition-all flex-shrink-0"
           >
             <Plus size={14} /> Add Item
           </button>
@@ -866,7 +866,7 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
                        key={r} 
                        type="button"
                        onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                       className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-white text-[#2E3D99] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                       className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
                      >
                        {r}
                      </button>
@@ -955,18 +955,18 @@ const YesNoToggle = ({ label, name, value, onChange, helper, largeLabel = false 
         </div>
         <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm h-fit flex-shrink-0">
           {[ { label: "YES", val: true }, { label: "No", val: false } ].map(opt => (
-            <button
-              key={opt.label}
-              type="button"
-              onClick={() => onChange({ target: { name, value: opt.val } })}
-              className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${
-                normalizedValue === opt.val
-                  ? "bg-[#2E3D99] text-white shadow-md shadow-blue-900/10"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              {opt.label}
-            </button>
+             <button
+               key={opt.label}
+               type="button"
+               onClick={() => onChange({ target: { name, value: opt.val } })}
+               className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${
+                 normalizedValue === opt.val
+                   ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20"
+                   : "text-gray-400 hover:text-gray-600"
+               }`}
+             >
+               {opt.label}
+             </button>
           ))}
         </div>
       </div>

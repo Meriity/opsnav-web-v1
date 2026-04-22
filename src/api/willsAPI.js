@@ -29,7 +29,14 @@ class WillsAPI {
       } catch {
         errorData = { message: "Internal server error" };
       }
-      const error = new Error(errorData.error || errorData.message || "Internal server error");
+      
+      const message = errorData.error || errorData.message || "Internal server error";
+      console.error(`[WillsAPI] Backend 500 Error: ${message}`, {
+          url: response.url,
+          data: errorData
+      });
+
+      const error = new Error(message);
       error.response = { status: response.status, data: errorData };
       throw error;
     }
