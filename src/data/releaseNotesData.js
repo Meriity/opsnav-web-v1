@@ -28,6 +28,47 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-22",
+          version: "v7.5.5",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Module Aesthetic & Stability Polish",
+          description: "Final refinement of the Wills preparation module, restoring the premium aesthetic, resolving build stability issues, and cleaning up the interface.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Premium Aesthetic Restoration",
+              description: "Re-applied high-contrast blue gradients to all primary buttons and form toggles.",
+              details: "Ensured consistent brand application of the #2E3D99 to #1D97D7 gradient across 'Add Property', 'Add Item', 'Next', and 'Submit' buttons.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Build & Module Stability",
+              description: "Integrated node-polyfills to resolve browser compatibility issues.",
+              details: "Fixed the 'stream' and 'util' module externalization errors, ensuring the document generation engine remains stable across all browsers.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "UI Hierarchy & Cleanup",
+              description: "Removed redundant interface icons to improve scanability.",
+              details: "Eliminated unnecessary info icons next to step indicators and form titles for a cleaner, more focused user experience.",
+              icon: Trash2,
+            },
+            {
+              type: "improvement",
+              title: "Enhanced Error Diagnostics",
+              description: "Improved API error logging for faster troubleshooting.",
+              details: "Updated the Wills API service to capture and report detailed backend error messages directly in the console for 500-level failures.",
+              icon: Info,
+            },
+          ],
+          module: "Wills Module, Build Config",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-04-21",
           version: "v7.5.4",
           type: "patch",

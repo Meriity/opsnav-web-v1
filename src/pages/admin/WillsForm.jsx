@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield, X } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
@@ -739,10 +739,7 @@ const WillsForm = () => {
                 <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#2E3D99] font-bold text-sm border border-gray-100">
                   {currentStep}
                 </div>
-                {/* Info Icon */}
-                <div className="p-1.5 rounded-full bg-gray-50 border border-gray-100 group cursor-help transition-all hover:bg-white hover:shadow-sm">
-                   <Info size={16} className="text-gray-300 group-hover:text-[#2E3D99] transition-colors" />
-                </div>
+
               </div>
               <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
                 {WILLS_TIPS[currentStep]?.description}
@@ -828,7 +825,7 @@ const WillsForm = () => {
                     <button
                       onClick={currentStep === 10 ? () => setIsSubmitModalOpen(true) : nextStep}
                       disabled={isSaving}
-                      className="flex-[1.5] flex items-center justify-center gap-1 px-3 py-3 bg-[#2E3D99] text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:bg-[#1D97D7] transition-all disabled:opacity-70 text-[14px]"
+                      className="flex-[1.5] flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:brightness-110 transition-all disabled:opacity-70 text-[14px]"
                     >
                       {currentStep === 10 ? "Submit Will" : "Next"}
                       <ChevronRight size={18} />
