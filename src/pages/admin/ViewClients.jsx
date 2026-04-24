@@ -9,6 +9,7 @@ import {
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import AdminAPI from "../../api/adminAPI";
@@ -62,6 +63,7 @@ import ViewClientFilterModel from "../../components/ui/ViewClientFilterModel.jsx
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
+  const location = useLocation();
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
@@ -306,7 +308,40 @@ const ViewClients = () => {
           setCommercialLoading(false);
         }
       } else {
-        fetchClients();
+        const queryParams = new URLSearchParams(location.search);
+        const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
+
+        if (currentModule === "print media" && isMyJobsView) {
+          setCommercialLoading(true);
+          try {
+            const response = await api.getMyJobs();
+            console.log("My Jobs response:", response);
+            // useClientStore.fetchClients usually sets the global 'clients' state.
+            // But here we might want to set it manually if we are bypassing the store's default fetch.
+            // For now, let's look at how fetchClients works. 
+            // It uses the store. If we want to use the store, we'd need to add getMyJobs to the store.
+            // Alternatively, we can use local state for My Jobs if it's simpler, 
+            // but the table uses 'Clients' from the store.
+            
+            // Looking at the store usage: 
+            // const { clients: Clients, fetchClients, ... } = useClientStore();
+            
+            // I will update the store to support this or use a local override.
+            // Actually, I'll just set the commercialClients state if it's easier, 
+            // but ViewClientsTable uses Clients for print media.
+            
+            // Let's assume for now I can just refetch using a modified store method 
+            // or just set local state and update the memo.
+            setCommercialClients(response || []);
+        } catch (error) {
+          console.error("Error fetching my jobs:", error);
+          setCommercialClients([]); // Ensure blank state shows the "No jobs" message
+        } finally {
+          setCommercialLoading(false);
+        }
+        } else {
+          fetchClients();
+        }
       }
     };
 
@@ -316,7 +351,10 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   const filteredClients = useMemo(() => {
-    let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialClients : Clients;
+    const queryParams = new URLSearchParams(location.search);
+    const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
+    
+    let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialClients : Clients;
 
     if (!Array.isArray(data)) return [];
 
@@ -434,7 +472,7 @@ const ViewClients = () => {
     console.log("data :", data)
 
     return data;
-  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser, activeFilters]);
+  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser, activeFilters, location.pathname]);
 
 
   // Filter data based on  the matter status and legal cost application number
@@ -685,6 +723,8 @@ const ViewClients = () => {
   };
 
   const getPageTitle = () => {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs") return "My Jobs";
     if (currentModule === "commercial") return "View Projects";
     if (currentModule === "print media") return "View Orders";
     return "View Clients";
@@ -722,8 +762,11 @@ const ViewClients = () => {
     return currentModule === "print media";
   };
 
+  const queryParams = new URLSearchParams(location.search);
+  const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
+
   const isLoading =
-    (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialLoading : loading;
+    (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialLoading : loading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
@@ -1422,7 +1465,7 @@ const ViewClients = () => {
 
             {isLoading ? (
               <Loader />
-            ) : filteredClients.length === 0 ? (
+            ) : (filteredClients.length === 0 && !isMyJobsView) ? (
               <div className="py-10 text-center text-gray-500">
                 {currentModule === "commercial"
                   ? "No projects found"

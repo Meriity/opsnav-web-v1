@@ -15,7 +15,9 @@ import {
   Info,
   FileText,
   Power,
+  PlusCircle,
 } from "lucide-react";
+import CreateClientModal from "../../components/ui/CreateClientModal.jsx";
 
 import ClientAPI from "../../api/clientAPI";
 
@@ -41,6 +43,8 @@ export default function IDGClientDashboard() {
   const [unitNumber, setunitNumber] = useState();
   const [isClicked, setIsClicked] = useState(false);
   const [btn, setbtn] = useState("Update");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clientId, setClientId] = useState(null);
   const api = new ClientAPI();
 
   useEffect(() => {
@@ -49,6 +53,7 @@ export default function IDGClientDashboard() {
         if (!encodedOrderId) return;
         const decodedOrderId = atob(String(encodedOrderId).trim());
         if (!decodedOrderId || decodedOrderId.trim() === "") return;
+        setClientId(decodedOrderId);
 
         const response = await api.getIDGClients(decodedOrderId);
         if (response && response.orders) {
@@ -210,7 +215,15 @@ export default function IDGClientDashboard() {
            </div>
            
            <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-              <button
+               {/* <button
+                 onClick={() => setIsModalOpen(true)}
+                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:shadow-lg hover:shadow-blue-900/20 transition-all duration-200 active:scale-95 group"
+               >
+                 <PlusCircle size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                 <span>Create Order</span>
+               </button> */}
+
+               <button
                 onClick={() => {
                   localStorage.clear();
                   window.location.href = "/client/login";
@@ -229,7 +242,7 @@ export default function IDGClientDashboard() {
              Hello, <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{localStorage.getItem("name") || "Client"}</span> <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
            </h1>
            <p className="text-lg text-gray-600 max-w-2xl">
-             Welcome back to your project dashboard. Track your active orders and view history below.
+             Create new orders, track progress in real time, and view your complete order history — all in one place.
            </p>
         </div>
 
@@ -322,13 +335,36 @@ export default function IDGClientDashboard() {
                      <div className="space-y-6">
                         <h3 className="text-lg font-bold text-gray-900 border-l-4 border-[#2E3D99] pl-3">Order Details</h3>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                           
+                           {/* Category & Work Type */}
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-2 border-b border-gray-50">
+                             <div className="flex gap-4">
+                                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2E3D99]">
+                                   <Package size={20} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                   <p className="text-sm text-gray-400 font-medium tracking-tight">Category</p>
+                                   <p className="text-gray-900 font-bold mt-1 uppercase tracking-wider text-xs truncate bg-blue-50/50 px-2 py-1 rounded w-fit">{selectedJob.orderType || "N/A"}</p>
+                                </div>
+                             </div>
+                             <div className="flex gap-4">
+                                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2E3D99]">
+                                   <FileText size={20} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                   <p className="text-sm text-gray-400 font-medium tracking-tight">Work Type</p>
+                                   <p className="text-gray-900 font-bold mt-1 uppercase tracking-wider text-xs truncate bg-blue-50/50 px-2 py-1 rounded w-fit">{selectedJob.work || "N/A"}</p>
+                                </div>
+                             </div>
+                           </div>
+
                            <div className="flex gap-4">
                               <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2E3D99]">
                                  <Info size={20} />
                               </div>
                               <div>
-                                 <p className="text-sm text-gray-500 font-medium">Description</p>
-                                 <p className="text-gray-900 font-medium mt-1">{selectedJob.order_details}</p>
+                                 <p className="text-sm text-gray-500 font-medium">Order Description</p>
+                                 <p className="text-gray-900 font-medium mt-1 leading-relaxed">{selectedJob.order_details}</p>
                               </div>
                            </div>
 
@@ -455,10 +491,10 @@ export default function IDGClientDashboard() {
                       <p className="text-gray-500 font-medium text-lg">No active orders right now.</p>
                    </div>
                 ) : (
-                   <div className="grid grid-cols-1 gap-4">
-                      {orders.filter(j => ["ordered", "booked"].includes(j.status)).map((job) => (
+                    <div className="grid grid-cols-1 gap-4">
+                      {orders.filter(j => ["ordered", "booked"].includes(j.status)).map((job, idx) => (
                          <div 
-                           key={job.id}
+                           key={job.orderId || job.id || idx}
                            onClick={() => setSelectedJob(job)}
                            className="group bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                          >
@@ -518,10 +554,10 @@ export default function IDGClientDashboard() {
                       <p className="text-gray-500 font-medium text-lg">No completed orders yet.</p>
                    </div>
                 ) : (
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {orders.filter(j => j.status === "completed").map((job) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {orders.filter(j => j.status === "completed").map((job, idx) => (
                          <div 
-                           key={job.id}
+                           key={job.orderId || job.id || idx}
                            onClick={() => setSelectedJob(job)}
                            className="bg-white/60 backdrop-blur-sm border border-white/60 rounded-2xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 cursor-pointer group flex justify-between gap-4"
                          >
@@ -575,6 +611,23 @@ export default function IDGClientDashboard() {
         </footer>
       </div>
 
+      <CreateClientModal
+        isOpen={isModalOpen}
+        setIsOpen={setIsModalOpen}
+        createType="order"
+        isClientView={true}
+        preselectedClientId={clientId}
+        onClose={() => {
+          setIsModalOpen(false);
+          // Refresh orders after creation
+          if(clientId) {
+            api.getIDGClients(clientId).then(resp => {
+              if (resp && resp.orders) setOrders(resp.orders);
+            });
+          }
+        }}
+      />
+
        <style>{`
          @keyframes wave {
             0% { transform: rotate(0deg); }
@@ -601,4 +654,3 @@ export default function IDGClientDashboard() {
     </div>
   );
 }
-
