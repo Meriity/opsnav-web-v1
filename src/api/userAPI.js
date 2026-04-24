@@ -294,9 +294,13 @@ class ClientAPI {
     }
   }
 
-  async getIDGClients() {
+  async getIDGClients(clientId = null) {
     try {
-      const response = await fetch(`${this.baseUrl}/idg/clients`, {
+      const url = clientId 
+        ? `${this.baseUrl}/idg/clients/details/${clientId}`
+        : `${this.baseUrl}/idg/clients`;
+        
+      const response = await fetch(url, {
         method: "GET",
         headers: this.getHeaders(),
       });
@@ -307,9 +311,11 @@ class ClientAPI {
 
       const data = await response.json();
       console.log(data);
-      return data.data;
+      // If clientId is provided, return the data directly (assuming it's the client object)
+      // Otherwise, return data.data (as per existing logic for the list)
+      return clientId ? data : data.data;
     } catch (error) {
-      console.error("Error getting IDG clients:", error);
+      console.error("Error getting IDG client(s):", error);
       throw error;
     }
   }
@@ -519,6 +525,25 @@ class ClientAPI {
       return await response.json();
     } catch (error) {
       console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+
+  async createIDGOrderClientView(orderData) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/client`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating order from client view:", error);
       throw error;
     }
   }

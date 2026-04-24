@@ -64,6 +64,9 @@ import ViewClientFilterModel from "../../components/ui/ViewClientFilterModel.jsx
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
+  
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
@@ -308,37 +311,28 @@ const ViewClients = () => {
           setCommercialLoading(false);
         }
       } else {
-        const queryParams = new URLSearchParams(location.search);
-        const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
-
         if (currentModule === "print media" && isMyJobsView) {
           setCommercialLoading(true);
           try {
             const response = await api.getMyJobs();
             console.log("My Jobs response:", response);
-            // useClientStore.fetchClients usually sets the global 'clients' state.
-            // But here we might want to set it manually if we are bypassing the store's default fetch.
-            // For now, let's look at how fetchClients works. 
-            // It uses the store. If we want to use the store, we'd need to add getMyJobs to the store.
-            // Alternatively, we can use local state for My Jobs if it's simpler, 
-            // but the table uses 'Clients' from the store.
+
+            const data = response?.orders || (Array.isArray(response) ? response : []);
             
-            // Looking at the store usage: 
-            // const { clients: Clients, fetchClients, ... } = useClientStore();
-            
-            // I will update the store to support this or use a local override.
-            // Actually, I'll just set the commercialClients state if it's easier, 
-            // but ViewClientsTable uses Clients for print media.
-            
-            // Let's assume for now I can just refetch using a modified store method 
-            // or just set local state and update the memo.
-            setCommercialClients(response || []);
-        } catch (error) {
-          console.error("Error fetching my jobs:", error);
-          setCommercialClients([]); // Ensure blank state shows the "No jobs" message
-        } finally {
-          setCommercialLoading(false);
-        }
+            const transformedData = data.map((order) => ({
+              ...order,
+              id: order._id || order.orderId,
+              // Map some common keys if needed but we'll update column keys to match response
+              stages: [{ S1: "default" }]
+            }));
+
+            setCommercialClients(transformedData);
+          } catch (error) {
+            console.error("Error fetching my jobs:", error);
+            setCommercialClients([]);
+          } finally {
+            setCommercialLoading(false);
+          }
         } else {
           fetchClients();
         }
@@ -351,9 +345,6 @@ const ViewClients = () => {
   }, [currentModule, api, fetchClients]);
 
   const filteredClients = useMemo(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
-    
     let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialClients : Clients;
 
     if (!Array.isArray(data)) return [];
@@ -587,18 +578,35 @@ const ViewClients = () => {
       { key: "building_and_pest_date", title: "B&P Date", width: "9%" },
     ];
   } else if (currentModule === "print media") {
-    columns = [
-      { key: "clientId", title: "Client ID", width: "5%" },
-      { key: "orderId", title: "Order ID", width: "6%" },
-      { key: "client_name", title: "Client Name", width: "8.5%" },
-      { key: "client_type", title: "Type", width: "10%" },
-      { key: "allocatedUser", title: "Allocated User", width: "10%" },
-      { key: "order_date", title: "Order Date", width: "10%" },
-      { key: "delivery_date", title: "Delivery Date", width: "10%" },
-      { key: "orderDetails", title: "Order Details", width: "8%" },
-      { key: "billing_address", title: "Delivery Address", width: "7.5%" },
-      { key: "postcode", title: "Post Code", width: "4.5%" },
-    ];
+    if (isMyJobsView) {
+      columns = [
+        { key: "orderId", title: "Order ID", width: "8%" },
+        { key: "orderType", title: "Type", width: "10%" },
+        { key: "status", title: "Status", width: "8%" },
+        { key: "unitNumber", title: "Unit", width: "6%" },
+        { key: "orderSubType", title: "Work Type", width: "10%" },
+        { key: "deliveryAddress", title: "Delivery Address", width: "14%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "orderDate", title: "Order Date", width: "9%" },
+        { key: "order_details", title: "Order Details", width: "15%" },
+        { key: "notes", title: "Notes", width: "9%" },
+      ];
+    } else {
+      columns = [
+        { key: "clientId", title: "Client ID", width: "5%" },
+        { key: "orderId", title: "Order ID", width: "6%" },
+        { key: "client_name", title: "Client Name", width: "8.5%" },
+        { key: "client_type", title: "Type", width: "7.5%" },
+        { key: "orderSubType", title: "Work Type", width: "8%" },
+        { key: "unitNumber", title: "Unit", width: "4%" },
+        { key: "allocatedUser", title: "Allocated User", width: "10%" },
+        { key: "order_date", title: "Order Date", width: "9%" },
+        { key: "delivery_date", title: "Delivery Date", width: "9%" },
+        { key: "orderDetails", title: "Order Details", width: "8%" },
+        { key: "billing_address", title: "Delivery Address", width: "7.5%" },
+        { key: "postcode", title: "Post Code", width: "4.5%" },
+      ];
+    }
   }
 
   const FloatingElement = ({ top, left, delay, size = 60 }) => (
@@ -761,9 +769,6 @@ const ViewClients = () => {
   const shouldShowCreateOrder = () => {
     return currentModule === "print media";
   };
-
-  const queryParams = new URLSearchParams(location.search);
-  const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
 
   const isLoading =
     (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialLoading : loading;
@@ -1494,6 +1499,8 @@ const ViewClients = () => {
                   // Drag Props
                   isDraggingMode={isDraggingMode}
                   setDraggedData={setDraggedData}
+                  isMyJobsView={isMyJobsView}
+                  showStages={!(isMyJobsView && currentModule === "print media")}
                 />
               </div>
             )}

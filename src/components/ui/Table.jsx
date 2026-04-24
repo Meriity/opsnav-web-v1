@@ -266,9 +266,9 @@ const Table = ({
             </tr>
           </thead>
           <tbody>
-            {currentData.map((item) => (
+            {currentData.map((item, index) => (
               <tr
-                key={item.id || item.email}
+                key={item.id || item._id || item.orderId || item.matterNumber || item.email || index}
                 className={`bg-white rounded-2xl transition-all ${
                   hoverEffect ? "hover:shadow-xl" : ""
                 }`}
@@ -399,7 +399,7 @@ const Table = ({
                             </span>
                           </button>
                         )}
-                      {OnEye && currentModule !== "print media" && (
+                      {OnEye && (
                           <button
                            onClick={() => {
                              console.log("Table: Eye clicked for item:", item);

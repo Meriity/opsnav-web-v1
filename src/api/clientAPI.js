@@ -917,6 +917,24 @@ class ClientAPI {
     }
   }
 
+  async getArchivedClients() {
+    try {
+      const response = await fetch(`${this.baseUrl}/user/clients/archived`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return data;
+    } catch (error) {
+      console.error("Error getting archived clients:", error);
+      throw error;
+    }
+  }
+
   async getIDGOrders() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/orders/status/active`, {
@@ -1014,6 +1032,25 @@ class ClientAPI {
       return await response.json();
     } catch (error) {
       console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+
+  async createIDGOrderClientView(orderData) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/client`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating order from client view:", error);
       throw error;
     }
   }

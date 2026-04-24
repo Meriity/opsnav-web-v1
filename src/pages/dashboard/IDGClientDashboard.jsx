@@ -215,13 +215,13 @@ export default function IDGClientDashboard() {
            </div>
            
            <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-               {/* <button
+               <button
                  onClick={() => setIsModalOpen(true)}
                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] hover:shadow-lg hover:shadow-blue-900/20 transition-all duration-200 active:scale-95 group"
                >
                  <PlusCircle size={18} className="group-hover:rotate-90 transition-transform duration-300" />
                  <span>Create Order</span>
-               </button> */}
+               </button>
 
                <button
                 onClick={() => {

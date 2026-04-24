@@ -95,13 +95,16 @@ const getInitialFormData = (user, currentModule) => {
       postcode: "",
       abn: "",
       client: "",
-      category: "",
+      orderType: "",
       priority: "",
-      unit: "",
-      work: "",
+      unitNumber: "",
+      orderSubType: "",
       orderDate: new Date().toISOString().split("T")[0],
+      deliveryDate: "",
       deliveryAddress: "",
+      order_details: "",
       dataEntryBy: user,
+      client_name: "",
     };
   } else if (currentModule === "wills") {
      return {
@@ -303,8 +306,8 @@ const commercialBusinessAddressRef = useRef(null);
 
   // --- GOOGLE MAPS AUTOCOMPLETE FOR IDG CLIENT BILLING ADDRESS ---
   useEffect(() => {
-    // Only run for IDG client form
-    if (!isPrintMedia || createType !== "client") return;
+    // Only run for IDG forms
+    if (!isPrintMedia || (createType !== "client" && createType !== "order")) return;
 
     let autocompleteInstance = null;
     let placeChangedListener = null;
@@ -596,7 +599,7 @@ useEffect(() => {
               toast.error("Could not load clients for selection.");
             }
           };
-          fetchClients();
+          if (!isClientView) fetchClients();
         }
       }
     }
@@ -612,7 +615,7 @@ useEffect(() => {
     }
 
     if (name === "orderType") {
-      setFormData((prev) => ({ ...prev, orderType: value, work: "" }));
+      setFormData((prev) => ({ ...prev, orderType: value, orderSubType: "" }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -865,19 +868,20 @@ useEffect(() => {
           
         } else if (createType === "order") {
           const requiredFields = [
-            "client",
+            !isClientView && "client",
             "orderType",
             "priority",
             "deliveryAddress",
             "orderDate",
             "deliveryDate",
             "order_details",
-          ];
+            "unitNumber",
+          ].filter(Boolean);
 
-          // Work is only required if it's not "Others" and orderType is selected
+          // Subtype is only required if it's not "Others" and orderType is selected
           const isWorkRequired = formData.orderType && formData.orderType !== "Others";
           
-          if (requiredFields.some((field) => !formData[field]) || (isWorkRequired && !formData.work)) {
+          if (requiredFields.some((field) => !formData[field]) || (isWorkRequired && !formData.orderSubType)) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
             return;
@@ -885,21 +889,29 @@ useEffect(() => {
 
           const payload = {
             orderId: id.orderId,
-            clientId: formData.client,
+            ...(isClientView ? {} : { clientId: formData.client }),
+            client_name: isClientView ? (localStorage.getItem("name") || "Client") : "",
             orderType: formData.orderType,
             priority: formData.priority,
-            unit: formData.unit || "",
-            work: formData.work || "",
+            unitNumber: formData.unitNumber || "",
+            orderSubType: formData.orderSubType || "",
             deliveryAddress: formData.deliveryAddress,
             country: formData.country || "",
             state: formData.state || "",
-            postcode: formData.postcode || "",
+            postCode: formData.postcode || "",
             orderDate: formData.orderDate,
             deliveryDate: formData.deliveryDate,
             order_details: formData.order_details,
+            dataEntryBy: isClientView ? "Client" : (localStorage.getItem("user") || "Admin"),
           };
           console.log(payload);
-          await api.createIDGOrder(payload);
+
+          if (isClientView) {
+            await api.createIDGOrderClientView(payload);
+          } else {
+            await api.createIDGOrder(payload);
+          }
+
           toast.success("Order created successfully!");
           if (typeof onClose === "function") onClose();
         }
@@ -1531,28 +1543,30 @@ useEffect(() => {
                         disabled
                       />
                     </div>
-                    <div>
-                      <label className="block mb-1 font-medium">
-                        Select Client*
-                      </label>
-                      <select
-                        name="client"
-                        value={formData.client || ""}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-2 rounded-md border border-gray-300 ${
-                          isClientView && preselectedClientId ? "bg-gray-100 cursor-not-allowed" : "bg-white/80 backdrop-blur-sm"
-                        }`}
-                        required
-                        disabled={isClientView && !!preselectedClientId}
-                      >
-                        <option value="">Select a Client</option>
-                        {clients.map((client) => (
-                          <option key={client._id} value={client._id}>
-                            {client.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {!isClientView && (
+                      <div>
+                        <label className="block mb-1 font-medium">
+                          Select Client*
+                        </label>
+                        <select
+                          name="client"
+                          value={formData.client || ""}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-2 rounded-md border border-gray-300 ${
+                            isClientView && preselectedClientId ? "bg-gray-100 cursor-not-allowed" : "bg-white/80 backdrop-blur-sm"
+                          }`}
+                          required
+                          disabled={isClientView && !!preselectedClientId}
+                        >
+                          <option value="">Select a Client</option>
+                          {clients.map((client) => (
+                            <option key={client._id} value={client._id}>
+                              {client.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -1575,10 +1589,10 @@ useEffect(() => {
                       </select>
                     </div>
                     <div>
-                      <label className="block mb-1 font-medium">Work*</label>
+                      <label className="block mb-1 font-medium">Work Type*</label>
                       <select
-                        name="work"
-                        value={formData.work || ""}
+                        name="orderSubType"
+                        value={formData.orderSubType || ""}
                         onChange={handleChange}
                         className={`w-full px-4 py-2 rounded-md border border-gray-300 ${
                           !formData.orderType || formData.orderType === "Others"
@@ -1609,19 +1623,17 @@ useEffect(() => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block mb-1 font-medium">
-                        Unit
-                        <span className="text-xs text-gray-400 ml-2">
-                          (Optional)
-                        </span>
+                        Unit Number*
                       </label>
                       <input
                         type="text"
-                        name="unit"
-                        value={formData.unit || ""}
+                        name="unitNumber"
+                        value={formData.unitNumber || ""}
                         onChange={handleChange}
-                        placeholder="e.g., Unit 100"
+                        placeholder="e.g., 100"
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500"
                         autoComplete="off"
+                        required
                       />
                     </div>
                     <div>

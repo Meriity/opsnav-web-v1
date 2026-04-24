@@ -93,6 +93,7 @@ const ViewClientsTable = ({
   showStages = true,
   showTasks = true,
   showActions = true,
+  isMyJobsView = false,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -217,7 +218,7 @@ const ViewClientsTable = ({
                 </th>
               )}
               {showActions && (
-                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${currentModule === "print media" ? "w-[10%] xl:w-[8%]" : (currentModule === "wills" && onConvert ? "w-[16%] xl:w-[14%]" : (onConvert || onDownloadDocx ? "w-[12%] xl:w-[15%]" : "w-[6%] xl:w-[5%]"))}`}>
+                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${currentModule === "print media" ? "w-[6%] xl:w-[6%]" : (currentModule === "wills" && onConvert ? "w-[18%] xl:w-[15%]" : (onConvert || onDownloadDocx ? "w-[14%] xl:w-[12%]" : "w-[7%] xl:w-[6%]"))}`}>
                   Action
                 </th>
               )}
@@ -396,7 +397,7 @@ const ViewClientsTable = ({
                           "delivery_date",
                           "settlementDate",
                           "matterDate",
-                        ].includes(column.key) ? (
+                        ].includes(column.key) || column.key === "orderDate" ? (
                           item[column.key] &&
                           item[column.key] !== "-" &&
                           item[column.key] !== "N/A" ? (
@@ -404,8 +405,17 @@ const ViewClientsTable = ({
                           ) : (
                             <span className="font-bold text-gray-500">—</span>
                           )
+                        ) : column.key === "status" && isMyJobsView ? (
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            item.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                            item.status === "booked" ? "bg-amber-100 text-amber-700" :
+                            "bg-blue-100 text-blue-700"
+                          }`}>
+                             {item.status}
+                          </span>
                         ) : (column.key === "billing_address" ||
                             column.key === "businessAddress" ||
+                            column.key === "deliveryAddress" ||
                             column.key === "property_address") &&
                           item[column.key] ? (
                           <a
@@ -531,8 +541,8 @@ const ViewClientsTable = ({
                           </td>
                         )}
                         {showActions && (
-                          <td className={`pl-3 pr-2 rounded-r-2xl align-middle`}>
-                            <div className="flex flex-row items-center justify-center space-x-2">
+                          <td className={`px-2 rounded-r-2xl align-middle`}>
+                            <div className={`flex flex-row items-center justify-center ${currentModule === "print media" ? "space-x-0.5 lg:space-x-1" : currentModule === "wills" && onConvert ? "space-x-3 lg:space-x-4" : "space-x-2"}`}>
                               {onEdit ? (
                                 <button
                                   onClick={() => onEdit(item)}
@@ -670,37 +680,48 @@ const ViewClientsTable = ({
             ) : (
              // Standard View
              <>
-            <div className="flex justify-between items-center border-b pb-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {currentModule === "commercial"
-                  ? "Project No"
-                  : currentModule === "print media"
-                  ? "Order ID"
-                  : "Matter No"}  
-              </p>
-                          {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
-                            <a
-                              href={item.matterUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center gap-1 group transition-all"
-                            >
-                              {currentModule === "commercial"
-                                ? item.matterNumber
-                                : currentModule === "print media"
-                                ? item.orderId
-                                : item.matternumber}
-                              <ExternalLink size={14} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
-                            </a>
-                          ) : (
-                            <p className="text-sm font-bold text-[#2E3D99] break-all">
-                              {currentModule === "commercial"
-                                ? item.matterNumber
-                                : currentModule === "print media"
-                                ? item.orderId
-                                : item.matternumber}
-                            </p>
-                          )}
+             <div className="flex justify-between items-center border-b pb-2">
+              <div className="flex flex-col">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {currentModule === "commercial"
+                    ? "Project No"
+                    : currentModule === "print media"
+                    ? "Order ID"
+                    : "Matter No"}  
+                </p>
+                {isMyJobsView && item.status && (
+                   <span className={`mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase w-fit ${
+                    item.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                    item.status === "booked" ? "bg-amber-100 text-amber-700" :
+                    "bg-blue-100 text-blue-700"
+                  }`}>
+                     {item.status}
+                  </span>
+                )}
+              </div>
+              {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
+                <a
+                  href={item.matterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center gap-1 group transition-all"
+                >
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                  <ExternalLink size={14} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
+                </a>
+              ) : (
+                <p className="text-sm font-bold text-[#2E3D99] break-all">
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                </p>
+              )}
             </div>
             <div className="flex justify-between items-start">
               <div>
@@ -714,11 +735,13 @@ const ViewClientsTable = ({
                 <p className="text-sm break-words">
                   {item.businessAddress ||
                   item.property_address ||
+                  item.deliveryAddress ||
                   item.billing_address ? (
                     <a
                       href={`https://www.google.com/maps?q=${encodeURIComponent(
                         item.businessAddress ||
                           item.property_address ||
+                          item.deliveryAddress ||
                           item.billing_address
                       )}`}
                       target="_blank"
@@ -727,14 +750,32 @@ const ViewClientsTable = ({
                     >
                       {item.businessAddress ||
                         item.property_address ||
+                        item.deliveryAddress ||
                         item.billing_address}
                     </a>
                   ) : (
                     item.businessAddress ||
                     item.property_address ||
+                    item.deliveryAddress ||
                     item.billing_address
                   )}
                 </p>
+                {isMyJobsView && (
+                  <div className="mt-3 space-y-2 pt-2 border-t border-gray-100">
+                    <div className="flex justify-between items-center text-xs">
+                       <span className="text-gray-400 font-medium">Order Date:</span>
+                       <span className="text-gray-700 font-bold">
+                          {item.orderDate ? formatDate(item.orderDate) : (item.order_date ? formatDate(item.order_date) : "-")}
+                       </span>
+                    </div>
+                    <div className="flex flex-col text-xs">
+                       <span className="text-gray-400 font-medium mb-1">Order Details:</span>
+                       <span className="text-gray-700 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
+                          {item.order_details || item.orderDetails || "-"}
+                       </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <button

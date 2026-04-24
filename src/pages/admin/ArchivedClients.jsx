@@ -14,6 +14,7 @@ import ClientAPI from "@/api/userAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import VocatFasAPI from "@/api/vocatFasAPI";
 import WillsAPI from "@/api/willsAPI";
+import AdminAPI from "@/api/adminAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
@@ -21,6 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MatterDetailsModal from "@/components/ui/MatterDetailsModal";
 import { useClientDetails } from "@/hooks/useClientDetails";
 import { motion } from "framer-motion";
+import ConfirmationModal from "@/components/ui/ConfirmationModal.jsx";
 import {
   Archive,
   Download,
@@ -35,6 +37,7 @@ import {
   AlertCircle,
   Users,
   Edit,
+  Trash2,
 } from "lucide-react";
 
 function ClientsPerPage({ value, onChange }) {
@@ -113,6 +116,11 @@ export default function ArchivedClients() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(100);
+
+  // Delete order state (Print Media only)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const adminApi = useMemo(() => new AdminAPI(), []);
 
   // Handle navigation from search dropdown
   const location = useLocation();
@@ -1192,6 +1200,10 @@ export default function ArchivedClients() {
                     headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                     OnEye={handleViewClient}
                     EditOrder={true}
+                    onDelete={currentModule === "print media" ? (item) => {
+                      setOrderToDelete(item);
+                      setShowDeleteModal(true);
+                    } : undefined}
                     sortedColumn={sortedColumn}
                     sortDirection={sortDirection}
                     handleSort={handleSort}
@@ -1302,6 +1314,18 @@ export default function ArchivedClients() {
                       </div>
 
                       <div className="mt-4 flex justify-end gap-2">
+                        {currentModule === "print media" && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                          <button
+                            onClick={() => {
+                              setOrderToDelete(client);
+                              setShowDeleteModal(true);
+                            }}
+                            className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        )}
                         {localStorage.getItem("role") === "superadmin" && (
                           <button
                             onClick={() => {
@@ -1400,6 +1424,39 @@ export default function ArchivedClients() {
         matter={selectedClient}
         currentModule={currentModule}
         isLoading={clientDetailsLoading}
+      />
+
+      {/* Delete Order Confirmation Modal (Print Media only) */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setOrderToDelete(null);
+        }}
+        title="Delete Completed Order"
+        message={`Are you sure you want to permanently delete order ${orderToDelete?.orderId || orderToDelete?.id || ""}? This action cannot be undone.`}
+        confirmLabel="Delete Order"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          if (!orderToDelete) return;
+          try {
+            const orderId = orderToDelete.orderId || orderToDelete.id || orderToDelete._id;
+            await adminApi.deleteIDGOrder(orderId);
+            toast.success(`Order ${orderId} deleted successfully`);
+            setShowDeleteModal(false);
+            setOrderToDelete(null);
+            // Refresh the page to reflect the deletion
+            queryClient.invalidateQueries(["archivedClients", currentModule]);
+            window.location.reload();
+          } catch (error) {
+            console.error("Failed to delete order:", error);
+            toast.error(error.message || "Failed to delete order");
+          }
+        }}
+        onDiscard={() => {
+          setShowDeleteModal(false);
+          setOrderToDelete(null);
+        }}
       />
     </div>
   );
