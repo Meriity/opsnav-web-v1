@@ -109,6 +109,8 @@ const WillsForm = () => {
     if (isFromReference || localStorage.getItem("matterReferenceNumber")) {
       setIsSignedUp(true);
     }
+    // Contextualize global search for Wills module
+    localStorage.setItem("currentModule", "wills");
   }, [isFromReference]);
 
 

@@ -1148,8 +1148,8 @@ export default function StagesLayout() {
             clientData?.data?.orderType ||
             "",
           deliveryDate: clientData?.data?.deliveryDate || null,
-          unit: clientData?.data?.unit || "",
-          work: clientData?.data?.work || "",
+          unitNumber: clientData?.data?.unitNumber || "",
+          orderSubType: clientData?.data?.orderSubType || "",
           dataEntryBy:
             clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
         };
@@ -2210,19 +2210,19 @@ export default function StagesLayout() {
                         {currentModule === "print media" && (
                           <div className="flex-1">
                             <label className="block text-xs md:text-sm font-semibold mb-1">
-                              Unit
+                              Unit Number
                             </label>
                             <input
                               type="text"
-                              value={clientData?.data?.unit || ""}
+                              value={clientData?.data?.unitNumber || ""}
                               onChange={(e) =>
                                 setClientData((prev) => ({
                                   ...prev,
-                                  data: { ...(prev?.data || {}), unit: e.target.value }
+                                  data: { ...(prev?.data || {}), unitNumber: e.target.value }
                                 }))
                               }
                               className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
-                              placeholder="Unit"
+                              placeholder="Unit Number"
                             />
                           </div>
                         )}
@@ -2305,15 +2305,15 @@ export default function StagesLayout() {
                       {currentModule === "print media" && (
                         <div className="md:col-span-1">
                           <label className="block text-xs md:text-sm font-semibold mb-1">
-                            Work
+                            Work Type
                           </label>
                           {canEditMatterDetails ? (
                             <select
-                              value={clientData?.data?.work || ""}
+                              value={clientData?.data?.orderSubType || ""}
                               onChange={(e) =>
                                 setClientData((prev) => ({
                                   ...prev,
-                                  data: { ...(prev?.data || {}), work: e.target.value }
+                                  data: { ...(prev?.data || {}), orderSubType: e.target.value }
                                 }))
                               }
                               className={`w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200 ${!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"
@@ -2334,7 +2334,7 @@ export default function StagesLayout() {
                           ) : (
                             <input
                               type="text"
-                              value={clientData?.data?.work || ""}
+                              value={clientData?.data?.orderSubType || ""}
                               className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
                               disabled
                               readOnly
@@ -3242,15 +3242,15 @@ export default function StagesLayout() {
                     {currentModule === "print media" && (
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          Work
+                          Work Type
                         </label>
                         {canEditMatterDetails ? (
                           <select
-                            value={clientData?.data?.work || ""}
+                            value={clientData?.data?.orderSubType || ""}
                             onChange={(e) =>
                               setClientData((prev) => ({
                                 ...prev,
-                                data: { ...(prev?.data || {}), work: e.target.value }
+                                data: { ...(prev?.data || {}), orderSubType: e.target.value }
                               }))
                             }
                             className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"
@@ -3273,7 +3273,7 @@ export default function StagesLayout() {
                         ) : (
                           <input
                             type="text"
-                            value={clientData?.data?.work || ""}
+                            value={clientData?.data?.orderSubType || ""}
                             className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
                             disabled
                             readOnly
@@ -3318,19 +3318,19 @@ export default function StagesLayout() {
                         {currentModule === "print media" && (
                           <div className="mt-4">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                              Unit
+                              Unit Number
                             </label>
                             <input
                               type="text"
-                              value={clientData?.data?.unit || ""}
+                              value={clientData?.data?.unitNumber || ""}
                               onChange={(e) =>
                                 setClientData((prev) => ({
                                   ...prev,
-                                  data: { ...(prev?.data || {}), unit: e.target.value }
+                                  data: { ...(prev?.data || {}), unitNumber: e.target.value }
                                 }))
-                              }
+                               }
                               className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
-                              placeholder="Unit"
+                              placeholder="Unit Number"
                             />
                           </div>
                         )}

@@ -31,7 +31,7 @@ export const WILLS_ENDPOINTS = {
   COST_BY_ID: "/wills/clients/costs", // + /{{matterNumber}}
 
   // Search
-  SEARCH_CLIENTS: "/wills/user/clients/active", // Re-using active list for search filtering on frontend for now, or check if search exists
+  SEARCH_CLIENTS: "/wills/user/clients/active",
 
   // Check Exists
   CHECK_CLIENT_EXISTS: "/wills/clients/check", // + /{{matterNumber}}

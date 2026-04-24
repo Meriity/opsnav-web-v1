@@ -108,6 +108,8 @@ export const useClientStore = create(
                 ? client.allocatedUserID.substring(client.allocatedUserID.indexOf("-") + 1).trim() || "N/A"
                 : "N/A",
               rankOrder: client.rankOrder,
+              unitNumber: client.unitNumber || client.unit || "N/A",
+              orderSubType: client.orderSubType || client.work || "N/A",
             }));
 
             clients = filteredResponse.clients.map((client) => ({
