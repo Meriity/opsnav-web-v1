@@ -257,7 +257,23 @@ class ClientAPI {
       }
       return await response.json();
     } catch (error) {
-      console.error("Error getting cost:", error);
+      console.error("Error getting IDG orders:", error);
+      throw error;
+    }
+  }
+
+  async getMyJobs() {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders/my-jobs`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting my jobs:", error);
       throw error;
     }
   }

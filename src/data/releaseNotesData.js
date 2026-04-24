@@ -28,6 +28,82 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-24",
+          version: "v7.5.6",
+          type: "patch",
+          category: "feature",
+          title: "Wills & Print Media Administrative Enhancements",
+          description: "Major visual and structural overhaul including a 10-step Wills navigator, dynamic Print Media 'Work' selection logic, and optimized table actions across multiple modules.",
+          updates: [
+            {
+              type: "feature",
+              title: "10-Step Glassmorphic Phase Stepper",
+              description: "Implemented a connected, 10-step linear progress navigator for the Wills module.",
+              details: "Replaced the legacy progress bar with a custom-engineered Glassmorphic stepper. Features dynamic status indicators: Green (Completed) with check-marks, Glowing Amber (Active) with step-specific labels, and Minimalist Silver (Pending).",
+              icon: Sparkles,
+            },
+            {
+              type: "feature",
+              title: "Dependent Work Selection logic",
+              description: "Implemented dynamic 'Work' dropdown logic for Print Media orders.",
+              details: "The 'Work' field now automatically filters options based on the selected 'Order Type' (e.g., Real Estate, Vehicle, Commercial), ensuring data consistency between order creation and administrative oversight.",
+              icon: Database,
+            },
+            {
+              type: "ui_ux",
+              title: "Action Column Optimization",
+              description: "Overhauled the 'Action' column across Print Media and Wills Reference tabs.",
+              details: "Migrated to a high-density, icon-only layout for the Action column. Increased icon sizes to 18px and added module-specific hover effects, resolving alignment issues caused by long text labels.",
+              icon: Edit,
+            },
+            {
+              type: "feature",
+              title: "IDG Order Details Expansion",
+              description: "Integrated 'Unit' and 'Work' fields into the administrative Order Details panel.",
+              details: "Added missing administrative fields to both Desktop and Mobile views of the print media module, with full data persistence via the handleupdate synchronization.",
+              icon: Save,
+            },
+            {
+              type: "improvement",
+              title: "Wills Terminology Standardization",
+              description: "Unified nomenclature from 'Stages' to 'Steps' across the Wills preparation flow.",
+              details: "Refined all labels, tooltips, and headers to consistently use 'Step' terminology, ensuring a more intuitive and straightforward document preparation experience.",
+              icon: FileText,
+            },
+            {
+              type: "improvement",
+              title: "Hardcoded Module Prioritization",
+              description: "Enforced a logical sorting order for the Work Selection module listing.",
+              details: "Restructured the module access list to prioritize high-frequency tasks: Conveyancing, Wills & Estates, VOCAT - FAS, Commercial Law, and Signage & Print.",
+              icon: ArrowUpDown,
+            },
+            {
+              type: "ui_ux",
+              title: "My Jobs Layout Restoration",
+              description: "Restored table header visibility and upgraded the empty-state interface.",
+              details: "Fixed a layout bug where table headers were hidden in the My Jobs section. Implemented a professional empty-state with Lucide-powered iconography for assigned tasks.",
+              icon: Eye,
+            },
+            {
+              type: "improvement",
+              title: "Print Media Production Flow",
+              description: "Optimized Stage 4 field ordering for the Print Media module.",
+              details: "Moved the 'Close Order' control below the client comment section specifically for Print Media to better align with the production review workflow.",
+              icon: RefreshCw,
+            },
+            {
+              type: "improvement",
+              title: "Interactive Micro-Animations",
+              description: "Added premium Framer Motion animations to the navigation stepper.",
+              details: "Introduced subtle scaling, active-state 'ping' effects, and smooth layout transitions to make the multi-step navigation feel fluid and responsive.",
+              icon: Zap,
+            },
+          ],
+          module: "Wills, Print Media, My Jobs, Work Selection",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-04-22",
           version: "v7.5.5",
           type: "patch",

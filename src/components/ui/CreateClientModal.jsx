@@ -7,6 +7,20 @@ import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
+
+const workMapping = {
+  "Real Estate": ["Installation", "Removal", "Pointers"],
+  "Vehicle": ["Vinyl Writing", "Bumper Stickers", "Logos", "PPF"],
+  "Commercial": [
+    "Shop front",
+    "Windows Tinting",
+    "Windows Frosting",
+    "Windows Graphics",
+  ],
+  Banners: ["Backdrops", "Pullup", "Media Wall"],
+};
+
 // Helper function to load Google Maps script
 const loadGoogleMapsScript = (apiKey) => {
   return new Promise((resolve, reject) => {
@@ -83,6 +97,8 @@ const getInitialFormData = (user, currentModule) => {
       client: "",
       category: "",
       priority: "",
+      unit: "",
+      work: "",
       orderDate: new Date().toISOString().split("T")[0],
       deliveryAddress: "",
       dataEntryBy: user,
@@ -125,6 +141,8 @@ export default function CreateClientModal({
   setIsOpen,
   createType,
   onClose,
+  preselectedClientId = null,
+  isClientView = false,
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -563,6 +581,12 @@ useEffect(() => {
             clientId: "",
             orderId: `IDGORD${Math.floor(10000000 + Math.random() * 90000000)}`,
           });
+
+          // Pre-select client if provided (for client dashboard)
+          if (isClientView && preselectedClientId) {
+            setFormData((prev) => ({ ...prev, client: preselectedClientId }));
+          }
+
           const fetchClients = async () => {
             try {
               const fetchedClients = await api.getIDGClients();
@@ -576,7 +600,7 @@ useEffect(() => {
         }
       }
     }
-  }, [isOpen, createType, isPrintMedia, currentModule, user]);
+  }, [isOpen, createType, isPrintMedia, currentModule, user, isClientView, preselectedClientId]);
 
   // --- HANDLERS ---
   const handleChange = (e) => {
@@ -586,7 +610,12 @@ useEffect(() => {
       if (!/^\d*$/.test(value)) return;
       setMatterNumberError("");
     }
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "orderType") {
+      setFormData((prev) => ({ ...prev, orderType: value, work: "" }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const checkMatterNumberExists = async (number) => {
@@ -844,7 +873,11 @@ useEffect(() => {
             "deliveryDate",
             "order_details",
           ];
-          if (requiredFields.some((field) => !formData[field])) {
+
+          // Work is only required if it's not "Others" and orderType is selected
+          const isWorkRequired = formData.orderType && formData.orderType !== "Others";
+          
+          if (requiredFields.some((field) => !formData[field]) || (isWorkRequired && !formData.work)) {
             toast.error("Please fill all required fields.");
             setIsLoading(false);
             return;
@@ -855,6 +888,8 @@ useEffect(() => {
             clientId: formData.client,
             orderType: formData.orderType,
             priority: formData.priority,
+            unit: formData.unit || "",
+            work: formData.work || "",
             deliveryAddress: formData.deliveryAddress,
             country: formData.country || "",
             state: formData.state || "",
@@ -1504,8 +1539,11 @@ useEffect(() => {
                         name="client"
                         value={formData.client || ""}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                        className={`w-full px-4 py-2 rounded-md border border-gray-300 ${
+                          isClientView && preselectedClientId ? "bg-gray-100 cursor-not-allowed" : "bg-white/80 backdrop-blur-sm"
+                        }`}
                         required
+                        disabled={isClientView && !!preselectedClientId}
                       >
                         <option value="">Select a Client</option>
                         {clients.map((client) => (
@@ -1532,8 +1570,59 @@ useEffect(() => {
                         <option value="Real Estate">Real Estate</option>
                         <option value="Vehicle">Vehicle</option>
                         <option value="Commercial">Commercial</option>
+                        <option value="Banners">Banners</option>
                         <option value="Others">Others</option>
                       </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">Work*</label>
+                      <select
+                        name="work"
+                        value={formData.work || ""}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-2 rounded-md border border-gray-300 ${
+                          !formData.orderType || formData.orderType === "Others"
+                            ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                            : "bg-white/80 backdrop-blur-sm"
+                        }`}
+                        required={formData.orderType && formData.orderType !== "Others"}
+                        disabled={!formData.orderType || formData.orderType === "Others"}
+                      >
+                        <option value="">Select Work Type</option>
+                        {formData.orderType &&
+                          workMapping[formData.orderType]?.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        {formData.orderType === "Others" && (
+                          <option value="General">General</option>
+                        )}
+                      </select>
+                      {(!formData.orderType || formData.orderType === "Others") && (
+                        <p className="text-[10px] text-gray-400 mt-1 italic">
+                          Select a Category (Real Estate, Vehicle, etc.) first to see available Work options.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block mb-1 font-medium">
+                        Unit
+                        <span className="text-xs text-gray-400 ml-2">
+                          (Optional)
+                        </span>
+                      </label>
+                      <input
+                        type="text"
+                        name="unit"
+                        value={formData.unit || ""}
+                        onChange={handleChange}
+                        placeholder="e.g., Unit 100"
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500"
+                        autoComplete="off"
+                      />
                     </div>
                     <div>
                       <label className="block mb-1 font-medium">

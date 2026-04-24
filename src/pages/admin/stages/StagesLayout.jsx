@@ -44,6 +44,18 @@ const loadGoogleMapsScript = (apiKey) => {
   });
 };
 
+const workMapping = {
+  "Real Estate": ["Installation", "Removal", "Pointers"],
+  "Vehicle": ["Vinyl Writing", "Bumper Stickers", "Logos", "PPF"],
+  "Commercial": [
+    "Shop front",
+    "Windows Tinting",
+    "Windows Frosting",
+    "Windows Graphics",
+  ],
+  Banners: ["Backdrops", "Pullup", "Media Wall"],
+};
+
 const formatDateForDisplay = (isoString) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -1136,6 +1148,8 @@ export default function StagesLayout() {
             clientData?.data?.orderType ||
             "",
           deliveryDate: clientData?.data?.deliveryDate || null,
+          unit: clientData?.data?.unit || "",
+          work: clientData?.data?.work || "",
           dataEntryBy:
             clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
         };
@@ -2193,6 +2207,25 @@ export default function StagesLayout() {
                               }`}
                           />
                         </div>
+                        {currentModule === "print media" && (
+                          <div className="flex-1">
+                            <label className="block text-xs md:text-sm font-semibold mb-1">
+                              Unit
+                            </label>
+                            <input
+                              type="text"
+                              value={clientData?.data?.unit || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  data: { ...(prev?.data || {}), unit: e.target.value }
+                                }))
+                              }
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                              placeholder="Unit"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Client Type Field */}
@@ -2261,6 +2294,47 @@ export default function StagesLayout() {
                                 clientData?.clientType ||
                                 clientData?.data?.orderType
                               }
+                              className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
+                              disabled
+                              readOnly
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {currentModule === "print media" && (
+                        <div className="md:col-span-1">
+                          <label className="block text-xs md:text-sm font-semibold mb-1">
+                            Work
+                          </label>
+                          {canEditMatterDetails ? (
+                            <select
+                              value={clientData?.data?.work || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  data: { ...(prev?.data || {}), work: e.target.value }
+                                }))
+                              }
+                              className={`w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200 ${!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"
+                                  ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                                  : "bg-white"
+                                }`}
+                              disabled={!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"}
+                            >
+                              <option value="">Select Work</option>
+                              {(clientData?.clientType || clientData?.data?.orderType) &&
+                                workMapping[clientData?.clientType || clientData?.data?.orderType]?.map((w) => (
+                                  <option key={w} value={w}>{w}</option>
+                                ))}
+                              {(clientData?.clientType || clientData?.data?.orderType) === "Others" && (
+                                <option value="General">General</option>
+                              )}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={clientData?.data?.work || ""}
                               className="w-full rounded bg-gray-100 px-2 py-[8px] text-xs md:text-sm border border-gray-200"
                               disabled
                               readOnly
@@ -3165,6 +3239,49 @@ export default function StagesLayout() {
                       )}
                     </div>
 
+                    {currentModule === "print media" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          Work
+                        </label>
+                        {canEditMatterDetails ? (
+                          <select
+                            value={clientData?.data?.work || ""}
+                            onChange={(e) =>
+                              setClientData((prev) => ({
+                                ...prev,
+                                data: { ...(prev?.data || {}), work: e.target.value }
+                              }))
+                            }
+                            className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"
+                                ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                                : "bg-white"
+                              }`}
+                            disabled={!(clientData?.clientType || clientData?.data?.orderType) || (clientData?.clientType || clientData?.data?.orderType) === "Others"}
+                          >
+                            <option value="">Select Work</option>
+                            {(clientData?.clientType || clientData?.data?.orderType) &&
+                              workMapping[clientData?.clientType || clientData?.data?.orderType]?.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            {(clientData?.clientType || clientData?.data?.orderType) === "Others" && (
+                              <option value="General">General</option>
+                            )}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={clientData?.data?.work || ""}
+                            className="w-full rounded-lg bg-gray-50 px-3 py-3 text-sm border border-gray-200 text-gray-500"
+                            disabled
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    )}
+
                     {/* Post Code & Trustee (Mobile) */}
                     {currentModule !== "vocat" && (
                       <div className={currentModule === "commercial" ? "flex flex-row gap-4 w-full" : ""}>
@@ -3198,6 +3315,25 @@ export default function StagesLayout() {
                               }`}
                           />
                         </div>
+                        {currentModule === "print media" && (
+                          <div className="mt-4">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Unit
+                            </label>
+                            <input
+                              type="text"
+                              value={clientData?.data?.unit || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  data: { ...(prev?.data || {}), unit: e.target.value }
+                                }))
+                              }
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                              placeholder="Unit"
+                            />
+                          </div>
+                        )}
 
                         {currentModule === "commercial" && (
                           <div className="flex-1">
@@ -3417,6 +3553,26 @@ export default function StagesLayout() {
                             />
                           )}
                         </div>
+
+                        {currentModule === "print media" && (
+                          <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Unit
+                            </label>
+                            <input
+                              type="text"
+                              value={clientData?.data?.unit || ""}
+                              onChange={(e) =>
+                                setClientData((prev) => ({
+                                  ...prev,
+                                  data: { ...(prev?.data || {}), unit: e.target.value }
+                                }))
+                              }
+                              className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
+                              placeholder="Unit"
+                            />
+                          </div>
+                        )}
                       </>
                     )}
 

@@ -16,6 +16,7 @@ import {
   UserCog,
   Users,
   BookOpen,
+  Briefcase,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -35,7 +36,9 @@ export default function Sidebar({
   const { isOpen, setIsOpen, dropdownRef, buttonRef } = useDropdown();
   const location = useLocation();
   const navigate = useNavigate();
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isAdminRoute =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.includes("/idg/orders/my-jobs");
   const currentModule = localStorage.getItem("currentModule");
   const userRole = localStorage.getItem("role");
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -103,6 +106,27 @@ export default function Sidebar({
     },
   ];
 
+  // Add My Jobs for Print Media
+  if (currentModule === "print media") {
+    // Find index of Completed Orders to place it next to it
+    const completedIndex = menuItems.findIndex(
+      (item) => item.label === "Completed Orders"
+    );
+    if (completedIndex !== -1) {
+      menuItems.splice(completedIndex, 0, {
+        label: "My Jobs",
+        icon: Briefcase,
+        to: "/idg/orders/my-jobs",
+      });
+    } else {
+      menuItems.push({
+        label: "My Jobs",
+        icon: Briefcase,
+        to: "/idg/orders/my-jobs",
+      });
+    }
+  }
+
   if (isAdminRoute && (userRole === "admin" || userRole === "superadmin")) {
     menuItems.splice(1, 0, {
       label: "Manage Users",
@@ -143,6 +167,8 @@ export default function Sidebar({
         return FolderArchive;
       case "Reference Matter":
         return BookOpen;
+      case "My Jobs":
+        return Briefcase;
       default:
         return LayoutDashboard;
     }

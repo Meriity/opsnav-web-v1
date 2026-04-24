@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield, X, CheckCircle2, Clock, Circle, RotateCw, AlertCircle, MinusCircle } from "lucide-react";
 import Header from "../../components/layout/Header";
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
@@ -294,6 +294,18 @@ const WillsForm = () => {
     "Disclosures", 
     "Review"
   ];
+
+  const phases = steps.map((title, index) => ({
+    id: index + 1,
+    title,
+    step: index + 1
+  }));
+
+  const getPhaseStatus = (phase) => {
+    if (currentStep > phase.step) return "completed";
+    if (currentStep === phase.step) return "inprogress";
+    return "pending";
+  };
 
   const setNestedValue = (obj, path, value) => {
     const keys = path.split('.');
@@ -667,6 +679,84 @@ const WillsForm = () => {
       <main className="flex-1 flex flex-col py-10 px-4 md:px-16 lg:px-24 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
         <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
           
+          {/* Premium Phase Navigation Stepper - 10 Stages */}
+          <div className="hidden md:block mb-10 max-w-6xl mx-auto w-full">
+            <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/50 shadow-xl shadow-blue-900/5 relative overflow-hidden group">
+              {/* Progress Line Background */}
+              <div className="absolute top-[48px] left-[8%] right-[8%] h-0.5 bg-gray-100 print:hidden" />
+              
+              <div className="relative flex justify-between items-start">
+                {phases.map((phase, idx) => {
+                  const status = getPhaseStatus(phase);
+                  const isActive = currentStep === phase.step;
+                  
+                  return (
+                    <div 
+                       key={phase.id}
+                       onClick={() => goToStep(phase.step)}
+                       className="flex flex-col items-center gap-4 transition-all duration-300 relative z-10"
+                       style={{ width: "9%" }}
+                    >
+                      {/* Connector Line (Dynamic) */}
+                      {idx < phases.length - 1 && (
+                        <div 
+                          className={`absolute top-[18px] left-[50%] w-full h-[3px] transition-all duration-700 -z-10 ${
+                            status === "completed" ? "bg-emerald-400" : "bg-transparent"
+                          }`}
+                        />
+                      )}
+
+                      {/* Status Indicator */}
+                      <motion.div 
+                        whileHover={{ scale: 1.1 }}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 cursor-pointer shadow-sm relative ${
+                          status === "completed" 
+                            ? "bg-green-500 text-white border-4 border-white shadow-emerald-200" 
+                            : status === "inprogress" 
+                              ? "bg-amber-400 text-white scale-110 shadow-lg shadow-amber-200 border-4 border-white" 
+                              : "bg-white border-2 border-gray-200 text-gray-300"
+                        }`}
+                      >
+                        {status === "completed" ? (
+                          <Check size={16} strokeWidth={4} />
+                        ) : (
+                          <span className="text-[11px] font-black">{phase.id}</span>
+                        )}
+
+                        {/* Active Glow */}
+                        {status === "inprogress" && (
+                          <motion.div 
+                            layoutId="active-glow"
+                            className="absolute -inset-2 rounded-full border-2 border-amber-400/20 animate-ping shadow-[0_0_20px_rgba(251,191,36,0.3)]"
+                          />
+                        )}
+                      </motion.div>
+
+                      {/* Label */}
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`text-[10px] font-black uppercase tracking-tighter transition-colors duration-300 ${
+                          status === "inprogress" ? "text-amber-600" : status === "completed" ? "text-emerald-600" : "text-gray-400"
+                        }`}>
+                          {status === "inprogress" ? "Step" : `Step ${phase.id}`}
+                        </span>
+                        
+                        {isActive && (
+                          <motion.span 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-[12px] font-bold text-[#1E293B] text-center leading-none whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-sm border border-gray-50"
+                          >
+                            {phase.title}
+                          </motion.span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {/* Top Progress Bar - Now outside the main box as per reference */}
           <div className="bg-white rounded-full shadow-sm border border-gray-100 p-3 pl-8 pr-8 mb-8 flex items-center justify-between print:hidden max-w-5xl mx-auto w-full transition-all">
             <div className="flex items-center gap-6">

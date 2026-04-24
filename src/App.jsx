@@ -138,6 +138,19 @@ function App() {
           }
         />
 
+        <Route
+          path="idg/orders/my-jobs"
+          element={
+            <RequireAuth>
+              <AutoLogoutWrapper>
+                <AppLayout />
+              </AutoLogoutWrapper>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<ViewClients />} />
+        </Route>
+
         {/* 🔒 Protected User Routes */}
         <Route
           path="/user"

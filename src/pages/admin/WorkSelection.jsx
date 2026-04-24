@@ -20,10 +20,29 @@ function WorkSelection() {
 
   // Parse access list
   const accessList = useMemo(() => {
-    return (localStorage.getItem("access") || "")
+    const rawList = (localStorage.getItem("access") || "")
       .split(",")
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
+
+    const preferredOrder = [
+      "conveyancing",
+      "wills",
+      "vocat",
+      "commercial",
+      "print media",
+    ];
+
+    return rawList.sort((a, b) => {
+      const indexA = preferredOrder.indexOf(a.toLowerCase());
+      const indexB = preferredOrder.indexOf(b.toLowerCase());
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+
+      return indexA - indexB;
+    });
   }, []);
 
   // Handle Module Selection

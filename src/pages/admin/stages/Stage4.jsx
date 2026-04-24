@@ -892,7 +892,13 @@ export default function Stage4({
 
   return (
     <div className="overflow-y-auto">
-      {currentConfig.fields.map(renderField)}
+      {/* 
+        For Print Media, we want "Close Order" to appear at the very bottom, 
+        so we filter it out from the initial map and render it manually later.
+      */}
+      {currentConfig.fields
+        .filter((f) => currentModule === "print media" ? f.name !== "closeOrder" : true)
+        .map(renderField)}
 
       {currentModule === "commercial" ? (
         <>
@@ -943,6 +949,11 @@ export default function Stage4({
           </div>
         ))
       )}
+
+      {/* Render Close Order at the bottom for Print Media */}
+      {currentModule === "print media" &&
+        currentConfig.fields.find((f) => f.name === "closeOrder") &&
+        renderField(currentConfig.fields.find((f) => f.name === "closeOrder"))}
 
       <div className="flex justify-between mt-10">
         <Button

@@ -999,6 +999,25 @@ class ClientAPI {
       throw error;
     }
   }
+  async createIDGOrder(clientData) {
+    try {
+      const response = await fetch(`${this.baseUrl}/idg/orders`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(clientData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+
   async getAllIDGClients() {
     try {
       const response = await fetch(`${this.baseUrl}/idg/clients`, {
