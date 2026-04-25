@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield, X, CheckCircle2, Clock, Circle, RotateCw, AlertCircle, MinusCircle } from "lucide-react";
-import Header from "../../components/layout/Header";
+// Header replaced with custom Wills header inline
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
 import SimplifiedReview from "../../components/wills/SimplifiedReview";
@@ -657,7 +657,59 @@ const WillsForm = () => {
 
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col overflow-x-hidden relative print:p-0 print:bg-white">
       <div className="print:hidden">
-        <Header />
+        {/* Custom Wills Header — shows client name and firm logo instead of admin header */}
+        <header className="sticky top-0 z-40 mb-3 md:mb-8 transition-all duration-500">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]" />
+          <div className="absolute bottom-[-1px] left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#2E3D99]/15 to-transparent" />
+          
+          <div className="relative px-4 py-3 md:px-10 md:py-5 flex justify-between items-center transition-all">
+            <div className="flex items-center gap-4 md:gap-8 min-w-0">
+              {/* Logo Container */}
+              <div className="relative group">
+                <div className="absolute -inset-2 bg-gradient-to-tr from-[#2E3D99]/10 to-[#1D97D7]/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative bg-white rounded-2xl p-1.5 md:p-2 shadow-sm border border-gray-100/50 group-hover:border-[#2E3D99]/20 transition-all duration-300">
+                  <img
+                    className="h-7 w-7 md:h-10 md:w-10 object-contain flex-shrink-0"
+                    src={localStorage.getItem("logo") || "/Logo.png"}
+                    alt="Logo"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-base md:text-2xl font-black text-[#1E293B] tracking-tight truncate leading-none">
+                  Hello, <span className="bg-gradient-to-r from-[#2E3D99] via-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{formData.personal?.fullName || localStorage.getItem("clientName") || "there"}</span>
+                </h1>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <div className="px-2.5 py-0.5 rounded-full bg-[#2E3D99]/5 border border-[#2E3D99]/10 flex items-center gap-1.5">
+                    <FileText size={10} className="text-[#2E3D99]" />
+                    <span className="text-[9px] md:text-[10px] text-[#2E3D99] font-bold uppercase tracking-wider">Wills Form</span>
+                  </div>
+                  
+                  
+                </div>
+              </div>
+            </div>
+
+            {/* Logout Buttons */}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleLogout} 
+                className="hidden md:flex items-center gap-2.5 px-5 py-2.5 bg-white border border-gray-100 text-[#1E293B] rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow-md hover:bg-gray-50 hover:border-gray-200 transition-all duration-300 active:scale-95 group"
+              >
+                <LogOut size={14} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                <span>Logout</span>
+              </button>
+              
+              <button 
+                onClick={handleLogout} 
+                className="md:hidden flex items-center justify-center w-10 h-10 bg-white border border-gray-100 text-gray-400 rounded-xl shadow-sm hover:text-red-500 hover:bg-gray-50 transition-all active:scale-95"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
+        </header>
       </div>
       
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none print:hidden">
@@ -678,49 +730,58 @@ const WillsForm = () => {
       <FloatingElement top={40} left={92} delay={4} size={40} />
       <FloatingElement top={10} left={95} delay={0.5} size={30} />
 
-      <main className="flex-1 flex flex-col py-10 px-4 md:px-16 lg:px-24 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
+      <main className="flex-1 flex flex-col py-4 px-3 md:py-10 md:px-16 lg:px-24 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
         <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
           
           {/* Premium Phase Navigation Stepper - 10 Stages */}
           <div className="hidden md:block mb-10 max-w-6xl mx-auto w-full">
-            <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/50 shadow-xl shadow-blue-900/5 relative overflow-hidden group">
-              {/* Progress Line Background */}
-              <div className="absolute top-[48px] left-[8%] right-[8%] h-0.5 bg-gray-100 print:hidden" />
+            <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-6 pb-4 border border-white/50 shadow-xl shadow-blue-900/5 relative overflow-hidden group">
               
-              <div className="relative flex justify-between items-start">
-                {phases.map((phase, idx) => {
+              {/* Continuous Track — background gray line */}
+              <div className="absolute top-[42px] left-[5%] right-[5%] h-[3px] bg-gray-100 rounded-full print:hidden" />
+              
+              {/* Continuous Track — green progress overlay */}
+              {(() => {
+                // Find the rightmost completed step to draw the green line to
+                // Progress line extends up to the current step position
+                const progressIndex = currentStep - 1; // 0-indexed
+                const progressPercent = progressIndex > 0 ? (progressIndex / (phases.length - 1)) * 100 : 0;
+                
+                return progressPercent > 0 ? (
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    className="absolute top-[42px] left-[5%] h-[3px] bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full print:hidden z-[1]"
+                  />
+                ) : null;
+              })()}
+              
+              <div className="relative flex justify-between items-start z-[2]">
+                {phases.map((phase) => {
                   const status = getPhaseStatus(phase);
-                  const isActive = currentStep === phase.step;
                   
                   return (
                     <div 
                        key={phase.id}
                        onClick={() => goToStep(phase.step)}
-                       className="flex flex-col items-center gap-4 transition-all duration-300 relative z-10"
-                       style={{ width: "9%" }}
+                       className="flex flex-col items-center gap-3 transition-all duration-300 cursor-pointer"
+                       style={{ width: "10%" }}
                     >
-                      {/* Connector Line (Dynamic) */}
-                      {idx < phases.length - 1 && (
-                        <div 
-                          className={`absolute top-[18px] left-[50%] w-full h-[3px] transition-all duration-700 -z-10 ${
-                            status === "completed" ? "bg-emerald-400" : "bg-transparent"
-                          }`}
-                        />
-                      )}
-
                       {/* Status Indicator */}
                       <motion.div 
-                        whileHover={{ scale: 1.1 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 cursor-pointer shadow-sm relative ${
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-sm relative ${
                           status === "completed" 
-                            ? "bg-green-500 text-white border-4 border-white shadow-emerald-200" 
+                            ? "bg-emerald-500 text-white border-[3px] border-white shadow-emerald-200/60 shadow-md" 
                             : status === "inprogress" 
-                              ? "bg-amber-400 text-white scale-110 shadow-lg shadow-amber-200 border-4 border-white" 
-                              : "bg-white border-2 border-gray-200 text-gray-300"
+                              ? "bg-amber-400 text-white scale-110 shadow-lg shadow-amber-200/60 border-[3px] border-white" 
+                              : "bg-white border-2 border-gray-200 text-gray-300 hover:border-gray-300"
                         }`}
                       >
                         {status === "completed" ? (
-                          <Check size={16} strokeWidth={4} />
+                          <Check size={16} strokeWidth={3.5} />
                         ) : (
                           <span className="text-[11px] font-black">{phase.id}</span>
                         )}
@@ -735,19 +796,19 @@ const WillsForm = () => {
                       </motion.div>
 
                       {/* Label */}
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`text-[10px] font-black uppercase tracking-tighter transition-colors duration-300 ${
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className={`text-[9px] font-black uppercase tracking-wider transition-colors duration-300 ${
                           status === "inprogress" ? "text-amber-600" : status === "completed" ? "text-emerald-600" : "text-gray-400"
                         }`}>
-                          {status === "inprogress" ? "Step" : `Step ${phase.id}`}
+                          Step {phase.id}
                         </span>
                         
                         <span 
-                          className={`text-[11px] font-bold text-center leading-none whitespace-nowrap px-2 py-1 rounded-full transition-all duration-300 ${
+                          className={`text-[11px] font-bold text-center leading-tight whitespace-nowrap transition-all duration-300 ${
                             status === "inprogress" 
-                              ? "text-[#1E293B] bg-white shadow-sm border border-gray-50 scale-105" 
+                              ? "text-[#1E293B]" 
                               : status === "completed" 
-                                ? "text-emerald-600/80" 
+                                ? "text-emerald-700" 
                                 : "text-gray-400"
                           }`}
                         >
@@ -761,11 +822,48 @@ const WillsForm = () => {
             </div>
           </div>
 
+          {/* Mobile Step Indicator — compact horizontal stepper for small screens */}
+          <div className="md:hidden mb-4">
+            <div className="bg-white/60 backdrop-blur-md rounded-2xl p-3 border border-white/50 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-800">Step <span className="text-[#2E3D99]">{currentStep}</span>/10</span>
+                <span className="text-[10px] font-bold text-gray-400">{Math.round((currentStep / 10) * 100)}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(currentStep / 10) * 100}%` }}
+                  className="h-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-full"
+                />
+              </div>
+              <div className="flex items-center justify-between mt-4 overflow-x-auto overflow-y-hidden scrollbar-hide w-full gap-2 py-1">
+                {phases.map((phase) => {
+                  const status = getPhaseStatus(phase);
+                  return (
+                    <button
+                      key={phase.id}
+                      onClick={() => goToStep(phase.step)}
+                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                        status === "completed"
+                          ? "bg-emerald-500 text-white"
+                          : status === "inprogress"
+                            ? "bg-amber-400 text-white scale-110 shadow-sm"
+                            : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
+                      {status === "completed" ? <Check size={14} strokeWidth={3} /> : phase.id}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {/* Top Progress Bar - Now outside the main box as per reference */}
-          <div className="bg-white rounded-full shadow-sm border border-gray-100 p-3 pl-8 pr-8 mb-8 flex items-center justify-between print:hidden max-w-5xl mx-auto w-full transition-all">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <span className="text-[13px] font-bold text-gray-800">
+          <div className="bg-white rounded-2xl md:rounded-full shadow-sm border border-gray-100 p-2.5 px-4 md:p-3 md:pl-8 md:pr-8 mb-4 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between print:hidden max-w-5xl mx-auto w-full transition-all gap-2 sm:gap-0">
+            <div className="flex items-center gap-3 md:gap-6 w-full sm:w-auto">
+              <div className="flex items-center gap-2 md:gap-4 flex-1 sm:flex-initial">
+                <span className="text-[12px] md:text-[13px] font-bold text-gray-800">
                   Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 — {steps[currentStep-1]}
                 </span>
                 <div className="h-4 w-[1px] bg-gray-100 hidden sm:block" />
@@ -790,14 +888,11 @@ const WillsForm = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-5">
+            <div className="flex items-center justify-between sm:justify-start gap-5 w-full sm:w-auto">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
                 <div className={`w-1.5 h-1.5 rounded-full ${isDirty ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isDirty ? "Unsaved" : "Saved"}</span>
               </div>
-              <button onClick={handleLogout} title="Logout" className="p-2 text-gray-400 hover:text-[#2E3D99] transition-all hover:bg-gray-50 rounded-full">
-                <LogOut size={16} />
-              </button>
             </div>
           </div>
 
@@ -826,14 +921,13 @@ const WillsForm = () => {
               </AnimatePresence>
 
               <div className="flex items-center gap-4">
+                {/* Circled Step Number */}
+                <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#2E3D99] font-bold text-sm border border-gray-100 flex-shrink-0">
+                  {currentStep}
+                </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-[#1E293B] tracking-tight">
                   {WILLS_TIPS[currentStep]?.title}
                 </h2>
-                {/* Circled Step Number */}
-                <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#2E3D99] font-bold text-sm border border-gray-100">
-                  {currentStep}
-                </div>
-
               </div>
               <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
                 {WILLS_TIPS[currentStep]?.description}
@@ -878,6 +972,7 @@ const WillsForm = () => {
                         onFileUpload={handleFileUpload}
                         onFileDelete={handleFileDelete}
                         isUploading={isUploading}
+                        toggleTips={() => setIsSidebarOpen(!isSidebarOpen)}
                       />
                     )}
                   </motion.div>
@@ -969,6 +1064,14 @@ const WillsForm = () => {
             setIsSubmitting(false);
           }
         }}
+      />
+
+      {/* Mobile Tips Overlay */}
+      <WillsSmartTips 
+        tips={WILLS_TIPS[currentStep]?.tips || []} 
+        isMobile={true}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(false)}
       />
     </div>
   );
