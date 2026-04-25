@@ -742,15 +742,17 @@ const WillsForm = () => {
                           {status === "inprogress" ? "Step" : `Step ${phase.id}`}
                         </span>
                         
-                        {isActive && (
-                          <motion.span 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-[12px] font-bold text-[#1E293B] text-center leading-none whitespace-nowrap bg-white px-2 py-1 rounded-full shadow-sm border border-gray-50"
-                          >
-                            {phase.title}
-                          </motion.span>
-                        )}
+                        <span 
+                          className={`text-[11px] font-bold text-center leading-none whitespace-nowrap px-2 py-1 rounded-full transition-all duration-300 ${
+                            status === "inprogress" 
+                              ? "text-[#1E293B] bg-white shadow-sm border border-gray-50 scale-105" 
+                              : status === "completed" 
+                                ? "text-emerald-600/80" 
+                                : "text-gray-400"
+                          }`}
+                        >
+                          {phase.title}
+                        </span>
                       </div>
                     </div>
                   );
