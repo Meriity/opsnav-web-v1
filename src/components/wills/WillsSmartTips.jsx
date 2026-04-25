@@ -52,14 +52,23 @@ const WillsSmartTips = ({ tips, isMobile = false, isOpen = false, onToggle, isIn
     return (
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-x-4 bottom-24 z-50 lg:hidden"
-          >
-            {content}
-          </motion.div>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onToggle}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] lg:hidden"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] lg:hidden"
+            >
+              {content}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     );

@@ -29,6 +29,54 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-25",
+          version: "v7.5.9",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Module Responsive 'Shutter' UI & Desktop Optimization",
+          description: "Engineered a next-generation responsive architecture for the Wills form, featuring on-demand collapsible sections for mobile and a synchronized permanently-expanded layout for desktop users.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Responsive Shutter (Accordion) UI",
+              description: "Implemented collapsible repeatable sections for mobile and tablet responsiveness.",
+              details: "Repeatable form areas (Executors, Beneficiaries, Real Estate, Bank Accounts, Personal Assets) now feature a 'shutter' design on smaller screens. This accordion-style UI allows users to collapse redundant fields, drastically reducing vertical scrolling while maintaining a clean, manageable interface on mobile devices.",
+              icon: Smartphone,
+            },
+            {
+              type: "ui_ux",
+              title: "Desktop-First Static Expansion",
+              description: "Ensured repeatable sections remain permanently expanded on larger screens.",
+              details: "Developed a useIsDesktop detection layer that overrides collapsible behavior on laptops and desktops. On these screens, sections remain statically expanded as per original professional designs, removing unnecessary toggle interactions for keyboard-driven data entry.",
+              icon: BarChart3,
+            },
+            {
+              type: "ui_ux",
+              title: "Minimalist Numbering System",
+              description: "Redesigned numbering badges for a more elegant, premium look.",
+              details: "Replaced heavy, dark-blue circular badges with sophisticated minimalist indicators. On desktop, items now use a light-themed badge with a dedicated vertical separator, aligning with a high-end 'Legal Tech' aesthetic.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Action Visibility & Contrast Overhaul",
+              description: "Significantly improved visibility for 'Add', 'Remove', and 'Custom Ratio' elements.",
+              details: "Upgraded Add/Remove buttons with high-contrast borders and primary-accent colors. Standardized 'Enter custom ratio' inputs to match the main form's visual weight, ensuring these previously faint fields are now clearly visible and accessible.",
+              icon: Zap,
+            },
+            {
+              type: "ui_ux",
+              title: "Step 7 Minimalist Redesign",
+              description: "Simplified funeral preference selections with cleaner, reactive buttons.",
+              details: "Reverted the burial/cremation selection to a streamlined, icon-free button grid. Enhanced the hover states with reactive borders and subtle background tints for better tactile response.",
+              icon: Edit,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-04-25",
           version: "v7.5.8",
           type: "patch",
           category: "improvement",

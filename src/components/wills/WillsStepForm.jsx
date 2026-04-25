@@ -1,6 +1,7 @@
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { WILLS_TIPS } from "../../data/willsTipsData";
-import { Info, Lightbulb, ChevronRight, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart } from "lucide-react";
+import { Info, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity } from "lucide-react";
 
 /**
  * Helper Components for Step Layouts
@@ -26,10 +27,13 @@ const StepHeader = ({ title, description, stepNumber }) => (
   </div>
 );
 
-const SmartTipsInline = ({ hasTips }) => {
+const SmartTipsInline = ({ hasTips, onToggle }) => {
   if (!hasTips) return null;
   return (
-    <div className="flex items-center gap-2 mb-8 group cursor-pointer lg:hidden">
+    <div 
+      onClick={onToggle}
+      className="flex items-center gap-2 mb-8 group cursor-pointer lg:hidden"
+    >
       <div className="p-1.5 rounded-lg bg-amber-50 border border-amber-100/50">
         <Lightbulb size={16} className="text-amber-500" />
       </div>
@@ -39,9 +43,6 @@ const SmartTipsInline = ({ hasTips }) => {
   );
 };
 
-/**
- * WillsStepForm - Handles the 10-step logic for 42 questions.
- */
 const WillsStepForm = ({ 
   step, 
   formData, 
@@ -53,8 +54,39 @@ const WillsStepForm = ({
   email,
   onFileUpload,
   onFileDelete,
-  isUploading
+  isUploading,
+  toggleTips
 }) => {
+  const [expandedIndices, setExpandedIndices] = React.useState({});
+
+  // Detect desktop view to keep sections open
+  const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
+  
+  React.useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const toggleExpand = (section, index) => {
+    if (isDesktop) return; // Keep open on desktop
+    setExpandedIndices(prev => {
+      const sectionIndices = prev[section] || [];
+      if (sectionIndices.includes(index)) {
+        return { ...prev, [section]: sectionIndices.filter(i => i !== index) };
+      } else {
+        return { ...prev, [section]: [...sectionIndices, index] };
+      }
+    });
+  };
+
+  const isItemExpanded = (section, index) => {
+    if (isDesktop) return true; // Always expanded on desktop
+    // Default to first item expanded if no state yet for this section
+    if (!expandedIndices[section]) return index === 0;
+    return expandedIndices[section].includes(index);
+  };
+
   // --- SAFETY CHECK: Ensure formData and its nested objects exist ---
   if (!formData) return null;
 
@@ -105,7 +137,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[1];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <InputGroup 
@@ -160,7 +192,7 @@ const WillsStepForm = ({
           </div>
         )}
 
-        <div className="mt-2 p-4 bg-amber-50/50 border border-amber-100 rounded-[28px] flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+        <div className="mt-2 p-3 md:p-4 bg-amber-50/50 border border-amber-100 rounded-2xl md:rounded-[28px] flex items-start gap-2 md:gap-3 animate-in fade-in slide-in-from-top-2">
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-amber-200/50 flex-shrink-0 shadow-sm">
             <Info className="w-5 h-5 text-amber-500" />
           </div>
@@ -182,7 +214,7 @@ const WillsStepForm = ({
 
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -230,37 +262,67 @@ const WillsStepForm = ({
         />
 
         {addSecondExecutor === true && (
-          <div className="p-8 rounded-[40px] bg-[#2E3D99]/[0.02] border border-[#2E3D99]/5 space-y-8 transition-all animate-in fade-in slide-in-from-top-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputGroup label="Second Executor’s full name" value={executors[1]?.name} onChange={(e) => handleArrayChange("executors", 1, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-              <div className="space-y-2">
-                <SelectGroup 
-                  label="Relationship with the second Executor" 
-                  value={executors[1]?.relation?.category} 
-                  onChange={(e) => handleArrayChange("executors", 1, "relation.category", e.target.value)} 
-                  options={relationshipOptions} 
-                  icon={<Users className="w-4 h-4" />} 
-                />
-                {executors[1]?.relation?.category === "Other" && (
-                  <input 
-                    placeholder="Please specify..." 
-                    value={executors[1]?.relation?.customValue || ""} 
-                    onChange={(e) => handleArrayChange("executors", 1, "relation.customValue", e.target.value)}
-                    className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300" 
-                  />
-                )}
+          <div className="p-4 md:p-8 rounded-2xl md:rounded-[40px] bg-[#2E3D99]/[0.02] border border-[#2E3D99]/5 transition-all animate-in fade-in slide-in-from-top-4 overflow-hidden">
+            {/* Mobile/Tablet Shutter Toggle */}
+            <button 
+              onClick={() => toggleExpand("executors", 1)}
+              className="w-full flex items-center justify-between group py-2 lg:hidden"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#2E3D99]/5 border border-[#2E3D99]/20 text-[#2E3D99] flex items-center justify-center font-bold text-[13px] shadow-sm">
+                  2
+                </div>
+                <h4 className="text-sm font-bold text-gray-800">Second Executor {executors[1]?.name && `— ${executors[1].name}`}</h4>
               </div>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("executors", 1) ? "rotate-180" : ""}`} />
+            </button>
+
+            <div className="hidden lg:flex items-center gap-4 mb-10">
+              <div className="w-10 h-10 rounded-2xl bg-[#2E3D99]/5 border border-[#2E3D99]/10 text-[#2E3D99] flex items-center justify-center font-bold text-lg shadow-sm">
+                2
+              </div>
+              <div className="h-6 w-[2px] bg-[#2E3D99]/10 rounded-full" />
+              <h4 className="text-xl font-bold text-gray-900 tracking-tight">Second Executor</h4>
             </div>
-            <AddressInputGroup 
-              label="Full address of the second Executor" 
-              value={executors[1]?.address} 
-              onAddressSelect={(addr) => handleArrayChange("executors", 1, "address", addr)} 
-              placeholder="Full Address" 
-              icon={<Home className="w-4 h-4" />} 
-              isLoaded={isGoogleMapsLoaded}
-              residentialAddress={personal.address}
-              showUseResidential={true}
-            />
+
+            {isItemExpanded("executors", 1) && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="space-y-5 md:space-y-8 mt-5 md:mt-8 pt-5 md:pt-8 border-t border-[#2E3D99]/5"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputGroup label="Second Executor’s full name" value={executors[1]?.name} onChange={(e) => handleArrayChange("executors", 1, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+                  <div className="space-y-2">
+                    <SelectGroup 
+                      label="Relationship with the second Executor" 
+                      value={executors[1]?.relation?.category} 
+                      onChange={(e) => handleArrayChange("executors", 1, "relation.category", e.target.value)} 
+                      options={relationshipOptions} 
+                      icon={<Users className="w-4 h-4" />} 
+                    />
+                    {executors[1]?.relation?.category === "Other" && (
+                      <input 
+                        placeholder="Please specify..." 
+                        value={executors[1]?.relation?.customValue || ""} 
+                        onChange={(e) => handleArrayChange("executors", 1, "relation.customValue", e.target.value)}
+                        className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300" 
+                      />
+                    )}
+                  </div>
+                </div>
+                <AddressInputGroup 
+                  label="Full address of the second Executor" 
+                  value={executors[1]?.address} 
+                  onAddressSelect={(addr) => handleArrayChange("executors", 1, "address", addr)} 
+                  placeholder="Full Address" 
+                  icon={<Home className="w-4 h-4" />} 
+                  isLoaded={isGoogleMapsLoaded}
+                  residentialAddress={personal.address}
+                  showUseResidential={true}
+                />
+              </motion.div>
+            )}
           </div>
         )}
       </div>
@@ -274,7 +336,7 @@ const WillsStepForm = ({
 
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <div className="space-y-6 mb-12">
           <label className="text-sm font-bold text-gray-700">How many beneficiaries will be in the Will?</label>
@@ -307,47 +369,67 @@ const WillsStepForm = ({
 
         <div className="space-y-5">
           {beneficiaries.map((beneficiary, index) => (
-            <div key={index} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative group">
-              <div className="absolute -top-3 left-8 px-4 py-1.5 bg-[#2E3D99] text-white text-[10px] font-bold rounded-full uppercase tracking-widest">
-                Beneficiary {index + 1}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-                <InputGroup label={`Beneficiary's full name`} value={beneficiary.name} onChange={(e) => handleArrayChange("beneficiaries", index, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
-                <InputGroup label={`Age of the Beneficiary`} value={beneficiary.age} onChange={(e) => handleArrayChange("beneficiaries", index, "age", e.target.value)} placeholder="Age" type="number" icon={<FileText className="w-4 h-4" />} />
-                <div className="space-y-2">
-                  <SelectGroup 
-                    label={`Relationship with the Beneficiary`} 
-                    value={beneficiary.relation?.category} 
-                    onChange={(e) => handleArrayChange("beneficiaries", index, "relation.category", e.target.value)} 
-                    options={relationshipOptions} 
-                    icon={<Users className="w-4 h-4" />} 
-                  />
-                  {beneficiary.relation?.category === "Other" && (
-                    <input 
-                      placeholder="Please specify..." 
-                      value={beneficiary.relation?.customValue || ""} 
-                      onChange={(e) => handleArrayChange("beneficiaries", index, "relation.customValue", e.target.value)}
-                      className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300" 
-                    />
-                  )}
+            <div key={index} className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[40px] border border-gray-100 shadow-sm relative group overflow-hidden">
+            {/* Mobile/Tablet Shutter Toggle */}
+            <button 
+              onClick={() => toggleExpand("beneficiaries", index)}
+              className="w-full text-left flex items-center justify-between lg:hidden"
+            >
+              <div className="flex items-center gap-3">
+                 <div className="w-7 h-7 bg-white border-2 border-[#2E3D99]/30 text-[#2E3D99] text-[12px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                  {index + 1}
                 </div>
-                <AddressInputGroup 
-                  label={`Full address of the Beneficiary`} 
-                  value={beneficiary.address} 
-                  onAddressSelect={(addr) => handleArrayChange("beneficiaries", index, "address", addr)} 
-                  placeholder="Full Address" 
-                  icon={<Home className="w-4 h-4" />} 
-                  isLoaded={isGoogleMapsLoaded}
-                  residentialAddress={personal.address}
-                  showUseResidential={true}
-                />
+                {beneficiary.name && !isItemExpanded("beneficiaries", index) && (
+                  <span className="text-sm font-bold text-gray-800 animate-in fade-in slide-in-from-left-2">— {beneficiary.name}</span>
+                )}
               </div>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("beneficiaries", index) ? "rotate-180" : ""}`} />
+            </button>
 
-              {index < beneficiaries.length - 1 && (
-                <div className="mt-8 pt-6 border-t border-gray-50">
-                  <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">Additional Beneficiary Section</p>
-                </div>
+            <div className="hidden lg:flex items-center gap-4 mb-10">
+               <div className="w-12 h-12 bg-white border-2 border-[#2E3D99]/10 text-[#2E3D99] text-xl font-extrabold rounded-2xl flex items-center justify-center shadow-sm">
+                {index + 1}
+              </div>
+              <div className="h-6 w-[1.5px] bg-gray-100 rounded-full" />
+              <span className="text-xl font-bold text-gray-900 tracking-tight">Beneficiary</span>
+            </div>
+            
+            {isItemExpanded("beneficiaries", index) && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-50"
+                >
+                  <InputGroup label={`Beneficiary's full name`} value={beneficiary.name} onChange={(e) => handleArrayChange("beneficiaries", index, "name", e.target.value)} placeholder="Full Name" icon={<User className="w-4 h-4" />} />
+                  <InputGroup label={`Age of the Beneficiary`} value={beneficiary.age} onChange={(e) => handleArrayChange("beneficiaries", index, "age", e.target.value)} placeholder="Age" type="number" icon={<FileText className="w-4 h-4" />} />
+                  <div className="space-y-2">
+                    <SelectGroup 
+                      label={`Relationship with the Beneficiary`} 
+                      value={beneficiary.relation?.category} 
+                      onChange={(e) => handleArrayChange("beneficiaries", index, "relation.category", e.target.value)} 
+                      options={relationshipOptions} 
+                      icon={<Users className="w-4 h-4" />} 
+                    />
+                    {beneficiary.relation?.category === "Other" && (
+                      <input 
+                        placeholder="Please specify..." 
+                        value={beneficiary.relation?.customValue || ""} 
+                        onChange={(e) => handleArrayChange("beneficiaries", index, "relation.customValue", e.target.value)}
+                        className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300" 
+                      />
+                    )}
+                  </div>
+                  <AddressInputGroup 
+                    label={`Full address of the Beneficiary`} 
+                    value={beneficiary.address} 
+                    onAddressSelect={(addr) => handleArrayChange("beneficiaries", index, "address", addr)} 
+                    placeholder="Full Address" 
+                    icon={<Home className="w-4 h-4" />} 
+                    isLoaded={isGoogleMapsLoaded}
+                    residentialAddress={personal.address}
+                    showUseResidential={true}
+                  />
+                </motion.div>
               )}
             </div>
           ))}
@@ -361,7 +443,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[4];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <StepPropertySection 
           title="Joint Ownership Properties"
@@ -375,6 +457,9 @@ const WillsStepForm = ({
           loopQ="Add another Joint Property"
           isGoogleMapsLoaded={isGoogleMapsLoaded}
           residentialAddress={personal.address}
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
 
         <StepPropertySection 
@@ -389,6 +474,9 @@ const WillsStepForm = ({
           loopQ="Add another Sole Property"
           isGoogleMapsLoaded={isGoogleMapsLoaded}
           residentialAddress={personal.address}
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
       </div>
     );
@@ -399,7 +487,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[5];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <StepBankSection 
           title="Bank Accounts (Joint)"
@@ -414,6 +502,9 @@ const WillsStepForm = ({
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           countLabel="How many bank accounts do you own as joint accounts?"
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
 
         <StepBankSection 
@@ -429,6 +520,9 @@ const WillsStepForm = ({
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           countLabel="How many bank accounts do you own under your name only?"
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
       </div>
     );
@@ -439,7 +533,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[6];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <StepGuardianSection 
           formData={data}
@@ -458,7 +552,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[7];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <div className="space-y-5">
           <YesNoToggle label="Do you have a funeral arrangement planned?" name="funeral.hasPlan" value={funeral.hasPlan} onChange={handleInputChange} />
@@ -476,14 +570,21 @@ const WillsStepForm = ({
               />
             </div>
           ) : (
-            <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
-              <label className="text-[13px] font-bold text-gray-700">Choose your preference:</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 {["Buried", "Cremation", "Donate for research"].map((option, idx) => (
-                   <label key={option} className="cursor-pointer">
-                     <input type="radio" name="funeral.details" value={option} checked={funeral.details === option} onChange={handleInputChange} className="hidden peer" />
-                     <div className="p-6 text-center rounded-[28px] border border-gray-100 transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#2E3D99] peer-checked:to-[#1D97D7] peer-checked:text-white peer-checked:shadow-lg peer-checked:shadow-blue-900/20 peer-checked:border-transparent hover:bg-gray-50 font-bold text-[11px] uppercase tracking-wider">
-                       {idx + 1}. {option}
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
+              <label className="text-[13px] font-bold text-gray-700 ml-1">Choose your preference:</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 {["Buried", "Cremation", "Donate for research"].map((option) => (
+                   <label key={option} className="cursor-pointer h-full">
+                     <input 
+                       type="radio" 
+                       name="funeral.details" 
+                       value={option} 
+                       checked={funeral.details === option} 
+                       onChange={handleInputChange} 
+                       className="hidden peer" 
+                     />
+                     <div className="py-4 px-6 text-center rounded-2xl border-2 border-gray-50 bg-white transition-all duration-300 peer-checked:border-[#2E3D99] peer-checked:bg-blue-50/40 text-gray-400 peer-checked:text-[#2E3D99] font-bold text-xs uppercase tracking-widest hover:border-[#2E3D99]/30 hover:bg-gray-50/80 hover:text-gray-600 shadow-sm peer-checked:shadow-md">
+                       {option}
                      </div>
                    </label>
                  ))}
@@ -500,7 +601,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[8];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <StepPersonalPropertySection 
           title="Joint Personal Properties"
@@ -512,6 +613,9 @@ const WillsStepForm = ({
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           loopQ="Add another Joint Item"
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
 
         <StepPersonalPropertySection 
@@ -524,6 +628,9 @@ const WillsStepForm = ({
           addArrayItem={addArrayItem}
           removeArrayItem={removeArrayItem}
           loopQ="Add another Sole Item"
+          isItemExpanded={isItemExpanded}
+          onToggleExpand={toggleExpand}
+          isDesktop={isDesktop}
         />
       </div>
     );
@@ -534,7 +641,7 @@ const WillsStepForm = ({
     const tipData = WILLS_TIPS[9];
     return (
       <div className="space-y-5">
-        <SmartTipsInline hasTips={tipData.tips.length > 0} />
+        <SmartTipsInline hasTips={tipData.tips.length > 0} onToggle={toggleTips} />
 
         <div className="space-y-10">
           <YesNoToggle label="Has anyone been promised a benefit under the will?" name="other.promisedBenefit" value={other.promisedBenefit} onChange={handleInputChange} />
@@ -560,7 +667,11 @@ const WillsStepForm = ({
 };
 
 // --- Sub-components (Reused) ---
-const StepPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ, isGoogleMapsLoaded, residentialAddress }) => {
+const StepPropertySection = ({ 
+  title, description, arrayName, properties, beneficiaries, 
+  handleArrayChange, addArrayItem, removeArrayItem, loopQ, 
+  isGoogleMapsLoaded, residentialAddress, isItemExpanded, onToggleExpand, isDesktop
+}) => {
   const hasItems = properties.length > 0;
   
   return (
@@ -582,11 +693,59 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
 
       <div className="space-y-5">
         {properties.map((prop, idx) => (
-          <div key={idx} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative group animate-in zoom-in-95 duration-300">
-            <button onClick={() => removeArrayItem(arrayName, idx)} className="absolute top-6 right-6 text-gray-200 hover:text-red-500 transition-colors">
-              <Trash2 size={18} />
+          <div key={idx} className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[40px] border border-gray-100 shadow-sm relative group animate-in zoom-in-95 duration-300 overflow-hidden">
+            {/* Mobile/Tablet Shutter Toggle */}
+            <button 
+              onClick={() => onToggleExpand(arrayName, idx)}
+              className="w-full text-left flex items-center justify-between group lg:hidden"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 bg-white border-2 border-[#2E3D99]/30 text-[#2E3D99] text-[12px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                   {idx + 1}
+                </div>
+                {prop.address && !isItemExpanded(arrayName, idx) && (
+                  <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
+                    — {prop.address}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeArrayItem(arrayName, idx);
+                  }} 
+                  className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded(arrayName, idx) ? "rotate-180" : ""}`} />
+              </div>
             </button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {/* Desktop Header */}
+            <div className="hidden lg:flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white border-2 border-[#2E3D99]/10 text-[#2E3D99] text-xl font-extrabold rounded-2xl flex items-center justify-center shadow-sm">
+                  {idx + 1}
+                </div>
+                <div className="h-6 w-[1.5px] bg-gray-100 rounded-full" />
+                <span className="text-xl font-bold text-gray-900 tracking-tight">Property Detail</span>
+              </div>
+              <button 
+                onClick={() => removeArrayItem(arrayName, idx)} 
+                className="p-2.5 rounded-xl bg-white text-red-500 hover:text-white hover:bg-red-500 transition-all border border-red-100 hover:border-red-500 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 shadow-sm active:scale-95"
+              >
+                <Trash2 size={14} /> Remove Property
+              </button>
+            </div>
+            
+            {isItemExpanded(arrayName, idx) && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 pt-8 border-t border-gray-50"
+              >
               <AddressInputGroup 
                 label="Property address" 
                 value={prop.address} 
@@ -614,26 +773,27 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
                    ))}
                 </div>
                 {(prop.ratio !== "Equally" && prop.ratio !== undefined) && (
-                   <input 
-                     placeholder="Enter custom ratio" 
-                     value={prop.ratio === "Other" ? "" : prop.ratio} 
-                     onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                     className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300 animate-in slide-in-from-top-2" 
-                   />
+                    <input 
+                      placeholder="Enter custom ratio" 
+                      value={prop.ratio === "Other" ? "" : prop.ratio} 
+                      onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
+                      className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
+                    />
                 )}
-              </div>
-            </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         ))}
         {hasItems && (
           <button 
             onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" })} 
-            className="w-full py-8 border-2 border-dashed border-gray-100 rounded-[40px] text-gray-300 font-bold text-[11px] uppercase tracking-wider hover:border-[#2E3D99] hover:text-[#2E3D99] hover:bg-gray-50/10 transition-all flex items-center justify-center gap-3 group"
+            className="w-full py-6 border-2 border-dashed border-gray-100 rounded-3xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/40 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-3 group"
           >
-            <div className="p-2 rounded-full border border-gray-100 group-hover:border-[#2E3D99]/20">
-              <Plus size={16} />
+            <div className="p-2 rounded-full bg-gray-50 text-gray-300 group-hover:bg-[#2E3D99]/10 group-hover:text-[#2E3D99] transition-all">
+              <Plus size={20} />
             </div>
-            {loopQ}
+            <span className="text-sm font-bold tracking-tight uppercase">{loopQ}</span>
           </button>
         )}
       </div>
@@ -643,7 +803,8 @@ const StepPropertySection = ({ title, description, arrayName, properties, benefi
 
 const StepBankSection = ({ 
   title, description, arrayName, numName, numValue, accounts, beneficiaries, 
-  handleInputChange, handleArrayChange, addArrayItem, removeArrayItem, countLabel 
+  handleInputChange, handleArrayChange, addArrayItem, removeArrayItem, countLabel,
+  isItemExpanded, onToggleExpand, isDesktop
 }) => {
   const [choice, setChoice] = React.useState(accounts.length > 0);
 
@@ -712,12 +873,40 @@ const StepBankSection = ({
 
           <div className="space-y-5">
             {accounts.map((acc, idx) => (
-              <div key={idx} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative group animate-in slide-in-from-bottom-4">
-                <div className="absolute -top-3 left-8 px-4 py-1.5 bg-[#2E3D99] text-white text-[10px] font-bold rounded-full uppercase tracking-widest">
-                  Account {idx + 1}
+              <div key={idx} className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[40px] border border-gray-100 shadow-sm relative group animate-in slide-in-from-bottom-4 overflow-hidden">
+                {/* Mobile/Tablet Shutter Toggle */}
+                <button 
+                  onClick={() => onToggleExpand(arrayName, idx)}
+                  className="w-full text-left flex items-center justify-between group lg:hidden"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 bg-white border-2 border-[#2E3D99]/30 text-[#2E3D99] text-[12px] font-bold rounded-full flex items-center justify-center">
+                       {idx + 1}
+                    </div>
+                    {acc.bankName && !isItemExpanded(arrayName, idx) && (
+                      <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
+                        — {acc.bankName} {acc.last4 ? `(xxxx ${acc.last4})` : ""}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded(arrayName, idx) ? "rotate-180" : ""}`} />
+                </button>
+
+                <div className="hidden lg:flex items-center gap-4 mb-10">
+                   <div className="w-12 h-12 bg-white border-2 border-[#2E3D99]/10 text-[#2E3D99] text-xl font-extrabold rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
+                    {idx + 1}
+                  </div>
+                  <div className="h-6 w-[1.5px] bg-gray-100 rounded-full" />
+                  <span className="text-xl font-bold text-gray-900 tracking-tight">Bank Detail</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-                   <InputGroup label="Bank" value={acc.bankName} onChange={(e) => handleArrayChange(arrayName, idx, "bankName", e.target.value)} placeholder="e.g. CBA" icon={<Landmark size={14} />} />
+                
+                {isItemExpanded(arrayName, idx) && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-50"
+                  >
+                     <InputGroup label="Bank" value={acc.bankName} onChange={(e) => handleArrayChange(arrayName, idx, "bankName", e.target.value)} placeholder="e.g. CBA" icon={<Landmark size={14} />} />
                    <InputGroup label="Last four digits" value={acc.last4} onChange={(e) => handleArrayChange(arrayName, idx, "last4", e.target.value)} maxLength={4} placeholder="e.g. 1234" icon={<Shield size={14} />} />
                    <SelectGroup 
                       label="Who should inherit this account" 
@@ -745,11 +934,12 @@ const StepBankSection = ({
                           placeholder="Enter custom ratio" 
                           value={acc.ratio === "Other" ? "" : acc.ratio} 
                           onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                          className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300 animate-in slide-in-from-top-2" 
+                          className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
                         />
                      )}
                    </div>
-                </div>
+                </motion.div>
+                )}
               </div>
             ))}
           </div>
@@ -790,7 +980,7 @@ const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, 
             <YesNoToggle label="Do you want to appoint the Executor as guardian?" name="guardian.isExecutor" value={formData.guardian.isExecutor} onChange={handleInputChange} />
             
             {formData.guardian.isExecutor === false && (
-              <div className="bg-[#2E3D99]/[0.02] p-8 rounded-[40px] border border-[#2E3D99]/5 space-y-8 mt-8">
+              <div className="bg-[#2E3D99]/[0.02] p-4 md:p-8 rounded-2xl md:rounded-[40px] border border-[#2E3D99]/5 space-y-5 md:space-y-8 mt-4 md:mt-8">
                 <InputGroup label="Guardian's full name" name="guardian.name" value={formData.guardian.name} onChange={handleInputChange} icon={<User className="w-4 h-4" />} />
                 <AddressInputGroup 
                   label="Guardian's full address" 
@@ -829,7 +1019,11 @@ const StepGuardianSection = ({ formData, handleInputChange, isGoogleMapsLoaded, 
   );
 };
 
-const StepPersonalPropertySection = ({ title, description, arrayName, properties, beneficiaries, handleArrayChange, addArrayItem, removeArrayItem, loopQ }) => {
+const StepPersonalPropertySection = ({ 
+  title, description, arrayName, properties, beneficiaries, 
+  handleArrayChange, addArrayItem, removeArrayItem, loopQ,
+  isItemExpanded, onToggleExpand, isDesktop
+}) => {
   const hasItems = properties.length > 0;
   
   return (
@@ -851,12 +1045,59 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
 
       <div className="space-y-5">
         {properties.map((prop, idx) => (
-          <div key={idx} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative group animate-in zoom-in-95 duration-300">
-            <button onClick={() => removeArrayItem(arrayName, idx)} className="absolute top-6 right-6 text-gray-200 hover:text-red-500 transition-colors">
-              <Trash2 size={18} />
+          <div key={idx} className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[40px] border border-gray-100 shadow-sm relative group animate-in zoom-in-95 duration-300 overflow-hidden">
+            {/* Mobile/Tablet Shutter Toggle */}
+            <button 
+              onClick={() => onToggleExpand(arrayName, idx)}
+              className="w-full text-left flex items-center justify-between group lg:hidden"
+            >
+              <div className="flex items-center gap-3">
+                 <div className="w-7 h-7 bg-white border-2 border-[#2E3D99]/30 text-[#2E3D99] text-[12px] font-bold rounded-full flex items-center justify-center whitespace-nowrap">
+                   {idx + 1}
+                </div>
+                {prop.type && !isItemExpanded(arrayName, idx) && (
+                  <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
+                    — {prop.type}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeArrayItem(arrayName, idx);
+                  }} 
+                  className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded(arrayName, idx) ? "rotate-180" : ""}`} />
+              </div>
             </button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputGroup label="Property type" value={prop.type} onChange={(e) => handleArrayChange(arrayName, idx, "type", e.target.value)} placeholder="e.g. Motor Vehicle" icon={<Archive size={14} />} />
+
+            <div className="hidden lg:flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white border-2 border-[#2E3D99]/10 text-[#2E3D99] text-xl font-extrabold rounded-2xl flex items-center justify-center shadow-sm">
+                   {idx + 1}
+                </div>
+                <div className="h-6 w-[1.5px] bg-gray-100 rounded-full" />
+                <span className="text-xl font-bold text-gray-900 tracking-tight">Asset Detail</span>
+              </div>
+              <button 
+                onClick={() => removeArrayItem(arrayName, idx)} 
+                className="p-2.5 rounded-xl bg-white text-red-500 hover:text-white hover:bg-red-500 transition-all border border-red-100 hover:border-red-500 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 shadow-sm active:scale-95"
+              >
+                <Trash2 size={14} /> Remove Item
+              </button>
+            </div>
+            
+            {isItemExpanded(arrayName, idx) && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 pt-8 border-t border-gray-50"
+              >
+                <InputGroup label="Property type" value={prop.type} onChange={(e) => handleArrayChange(arrayName, idx, "type", e.target.value)} placeholder="e.g. Motor Vehicle" icon={<Archive size={14} />} />
               <SelectGroup label="Who do you want to give this property to" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
               <div className="space-y-3">
                 <label className="text-[13px] font-bold text-gray-700">Gift ratio</label>
@@ -873,26 +1114,27 @@ const StepPersonalPropertySection = ({ title, description, arrayName, properties
                    ))}
                 </div>
                 {(prop.ratio !== "Equally" && prop.ratio !== undefined) && (
-                   <input 
-                     placeholder="Enter custom ratio" 
-                     value={prop.ratio === "Other" ? "" : prop.ratio} 
-                     onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                     className="w-full mt-2 p-3 bg-white border border-gray-100 rounded-xl outline-none text-sm placeholder:text-gray-300 animate-in slide-in-from-top-2" 
-                   />
+                    <input 
+                      placeholder="Enter custom ratio" 
+                      value={prop.ratio === "Other" ? "" : prop.ratio} 
+                      onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
+                      className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
+                    />
                 )}
-              </div>
-            </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         ))}
         {hasItems && (
           <button 
             onClick={() => addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" })} 
-            className="w-full py-8 border-2 border-dashed border-gray-100 rounded-[40px] text-gray-300 font-bold text-[11px] uppercase tracking-wider hover:border-[#2E3D99] hover:text-[#2E3D99] hover:bg-gray-50/10 transition-all flex items-center justify-center gap-3 group"
+            className="w-full py-6 border-2 border-dashed border-gray-100 rounded-3xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/40 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-3 group"
           >
-            <div className="p-2 rounded-full border border-gray-100 group-hover:border-[#2E3D99]/20">
-              <Plus size={16} />
+            <div className="p-2 rounded-full bg-gray-50 text-gray-300 group-hover:bg-[#2E3D99]/10 group-hover:text-[#2E3D99] transition-all">
+              <Plus size={20} />
             </div>
-            {loopQ}
+            <span className="text-sm font-bold tracking-tight uppercase">{loopQ}</span>
           </button>
         )}
       </div>
