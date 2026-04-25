@@ -28,6 +28,26 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-25",
+          version: "v7.5.8",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Stepper Stage Title Visibility",
+          description: "Fixed the 10-step phase navigator so all stage names are permanently visible, improving navigation clarity.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Always-Visible Stage Titles",
+              description: "Stage names now display beneath every step in the Wills phase stepper, not just the active step.",
+              details: "Previously, stage titles (Personal, Executor, Beneficiaries, etc.) were only rendered when the user clicked on a step. The stepper now permanently displays all 10 titles with status-aware styling: bold dark text with a white pill background for the active step, emerald for completed steps, and muted gray for pending steps.",
+              icon: Eye,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-04-24",
           version: "v7.5.7",
           type: "patch",
