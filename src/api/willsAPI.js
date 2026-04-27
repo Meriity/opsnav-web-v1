@@ -545,6 +545,34 @@ class WillsAPI {
       throw error;
     }
   }
+
+  async forgotPassword(email) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORGOT_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Forgot Password:", error);
+      throw error;
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.RESET_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Reset Password:", error);
+      throw error;
+    }
+  }
 }
 
 export default WillsAPI;

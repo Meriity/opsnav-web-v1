@@ -103,6 +103,7 @@ const getInitialFormData = (user, currentModule) => {
       deliveryDate: "",
       deliveryAddress: "",
       order_details: "",
+      distance: "",
       dataEntryBy: user,
       client_name: "",
     };
@@ -902,6 +903,7 @@ useEffect(() => {
             orderDate: formData.orderDate,
             deliveryDate: formData.deliveryDate,
             order_details: formData.order_details,
+            distance: formData.distance || "",
             dataEntryBy: isClientView ? "Client" : (localStorage.getItem("user") || "Admin"),
           };
           console.log(payload);
@@ -1620,7 +1622,7 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block mb-1 font-medium">
                         Unit Number*
@@ -1651,6 +1653,17 @@ useEffect(() => {
                         <option value="Standard">Standard</option>
                         <option value="Urgent">Urgent</option>
                       </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium">Distance</label>
+                      <input
+                        type="text"
+                        name="distance"
+                        value={formData.distance || ""}
+                        onChange={handleChange}
+                        placeholder="e.g. 5"
+                        className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm"
+                      />
                     </div>
                   </div>
                   <div>

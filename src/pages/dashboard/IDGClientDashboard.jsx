@@ -372,10 +372,16 @@ export default function IDGClientDashboard() {
                               <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2E3D99]">
                                  <MapPin size={20} />
                               </div>
-                              <div>
+                              <div className="flex-1">
                                  <p className="text-sm text-gray-500 font-medium">Delivery Address</p>
                                  <p className="text-gray-900 font-medium mt-1">{selectedJob.deliveryAddress}</p>
                               </div>
+                              {selectedJob.distance && (
+                                <div className="flex-1">
+                                   <p className="text-sm text-gray-500 font-medium">Distance</p>
+                                   <p className="text-gray-900 font-medium mt-1">{selectedJob.distance}</p>
+                                </div>
+                              )}
                            </div>
                            
                            <div className="flex gap-4">

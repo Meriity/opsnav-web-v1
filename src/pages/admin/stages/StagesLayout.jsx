@@ -930,6 +930,14 @@ export default function StagesLayout() {
             response.data?.stageSix ||
             clientData?.stage6 ||
             {},
+          distance:
+            response.distance ||
+            response.data?.distance ||
+            "",
+          data: {
+            ...(response.data || {}),
+            distance: response.distance || response.data?.distance || ""
+          },
           status:
             response.status ||
             (currentModule === "vocat" ? response.closeMatter : undefined) ||
@@ -1149,6 +1157,7 @@ export default function StagesLayout() {
             "",
           deliveryDate: clientData?.data?.deliveryDate || null,
           unitNumber: clientData?.data?.unitNumber || "",
+          distance: clientData?.data?.distance || "",
           orderSubType: clientData?.data?.orderSubType || "",
           dataEntryBy:
             clientData?.data?.dataEntryBy || clientData?.dataEntryBy || "",
@@ -2508,8 +2517,8 @@ export default function StagesLayout() {
                         </div>
                       )}
 
-                      {/* Completion/Settlement/Delivery Date */}
-                      {currentModule !== "vocat" && (
+                      {/* Completion/Settlement/Delivery Date / Distance */}
+                      <div className={`md:col-span-2 grid ${currentModule === "print media" ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
                         <div className="md:col-span-1">
                           <label className="block text-xs md:text-sm font-semibold mb-1">
                             {currentModule === "commercial"
@@ -2582,7 +2591,31 @@ export default function StagesLayout() {
                             disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
                           />
                         </div>
-                      )}
+
+                        {currentModule === "print media" && (
+                          <div className="md:col-span-1">
+                            <label className="block text-xs md:text-sm font-semibold mb-1">
+                              Distance
+                            </label>
+                            <input
+                              type="text"
+                              value={clientData?.data?.distance || ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setClientData((prev) => ({
+                                  ...(prev || {}),
+                                  data: {
+                                    ...((prev && prev.data) || {}),
+                                    distance: val,
+                                  },
+                                }));
+                              }}
+                              placeholder="e.g. 5"
+                              className="w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200"
+                            />
+                          </div>
+                        )}
+                      </div>
 
                       {/* Data Entry By */}
                       <div className="md:col-span-1">
@@ -2850,47 +2883,73 @@ export default function StagesLayout() {
                     onSubmit={handleupdate}
                   >
                     {/* Mobile form fields - similar structure but simplified */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                        {currentModule === "commercial"
-                          ? "Project Date"
-                          : currentModule === "print media"
-                            ? "Order Date"
-                            : "Matter Date"}
-                      </label>
-                      <input
-                        id="matterDate"
-                        name="matterDate"
-                        type={canEditMatterDetails ? "date" : "text"}
-                        value={
-                          canEditMatterDetails
-                            ? clientData?.matterDate
-                              ? new Date(clientData.matterDate)
-                                .toISOString()
-                                .substring(0, 10)
-                              : ""
-                            : clientData?.matterNumber
-                              ? formatDateForDisplay(clientData.matterDate)
-                              : clientData?.data?.orderDate
-                                ? formatDateForDisplay(clientData.data.orderDate)
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          {currentModule === "commercial"
+                            ? "Project Date"
+                            : currentModule === "print media"
+                              ? "Order Date"
+                              : "Matter Date"}
+                        </label>
+                        <input
+                          id="matterDate"
+                          name="matterDate"
+                          type={canEditMatterDetails ? "date" : "text"}
+                          value={
+                            canEditMatterDetails
+                              ? clientData?.matterDate
+                                ? new Date(clientData.matterDate)
+                                  .toISOString()
+                                  .substring(0, 10)
                                 : ""
-                        }
-                        onChange={(e) => {
-                          if (!canEditMatterDetails) return;
-                          const v = e.target.value
-                            ? new Date(e.target.value).toISOString()
-                            : "";
-                          setClientData((prev) => ({
-                            ...(prev || {}),
-                            matterDate: v,
-                          }));
-                        }}
-                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
-                            ? "bg-gray-50 text-gray-500"
-                            : "bg-white"
-                          }`}
-                        disabled={!canEditMatterDetails}
-                      />
+                              : clientData?.matterNumber
+                                ? formatDateForDisplay(clientData.matterDate)
+                                : clientData?.data?.orderDate
+                                  ? formatDateForDisplay(clientData.data.orderDate)
+                                  : ""
+                          }
+                          onChange={(e) => {
+                            if (!canEditMatterDetails) return;
+                            const v = e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : "";
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              matterDate: v,
+                            }));
+                          }}
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
+                              ? "bg-gray-50 text-gray-500"
+                              : "bg-white"
+                            }`}
+                          disabled={!canEditMatterDetails}
+                        />
+                      </div>
+
+                      {currentModule === "print media" && (
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                            Distance
+                          </label>
+                          <input
+                            type="text"
+                            value={clientData?.data?.distance || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setClientData((prev) => ({
+                                ...(prev || {}),
+                                data: {
+                                  ...((prev && prev.data) || {}),
+                                  distance: val,
+                                },
+                              }));
+                            }}
+                            placeholder="e.g. 5"
+                            className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 bg-white outline-none"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>

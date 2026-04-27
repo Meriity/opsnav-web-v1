@@ -12,7 +12,7 @@ export const WILLS_ENDPOINTS = {
 
   // Dashboard
   DASHBOARD: "/wills/dashboard",
-
+  
   // Outstanding Tasks
   OUTSTANDING_TASKS: "/wills/user/tasks/outstanding",
 
@@ -54,6 +54,8 @@ export const WILLS_ENDPOINTS = {
   SEND_EMAIL: "/wills/form/v1/send-email",
   SIGNUP: "/wills/form/v1/signup",
   LOGIN: "/wills/form/v1/login",
+  FORGOT_PASSWORD: "/wills/form/v1/forgot-password",
+  RESET_PASSWORD: "/wills/form/v1/reset-password",
   UNLOCK_FORM: "/wills/form/v1/unlock-form",
   LOAD_FORM_V1: "/wills/form/v1",
 };

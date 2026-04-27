@@ -313,6 +313,7 @@ const ViewClients = () => {
       } else {
         if (currentModule === "print media" && isMyJobsView) {
           setCommercialLoading(true);
+          setCommercialClients([]); // Clear old data before fetching new
           try {
             const response = await api.getMyJobs();
             console.log("My Jobs response:", response);
@@ -342,7 +343,7 @@ const ViewClients = () => {
 
 
     fetchData();
-  }, [currentModule, api, fetchClients]);
+  }, [currentModule, api, fetchClients, isMyJobsView]);
 
   const filteredClients = useMemo(() => {
     let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialClients : Clients;
@@ -585,11 +586,12 @@ const ViewClients = () => {
         { key: "status", title: "Status", width: "8%" },
         { key: "unitNumber", title: "Unit", width: "6%" },
         { key: "orderSubType", title: "Work Type", width: "10%" },
-        { key: "deliveryAddress", title: "Delivery Address", width: "14%" },
-        { key: "state", title: "State", width: "5%" },
-        { key: "orderDate", title: "Order Date", width: "9%" },
-        { key: "order_details", title: "Order Details", width: "15%" },
-        { key: "notes", title: "Notes", width: "9%" },
+        {key: "deliveryAddress", title: "Delivery Address", width: "12%"},
+        {key: "state", title: "State", width: "5%"},
+        {key: "distance", title: "Distance", width: "7%"},
+        {key: "orderDate", title: "Order Date", width: "9%"},
+        {key: "order_details", title: "Order Details", width: "12%"},
+        {key: "notes", title: "Notes", width: "9%"},
       ];
     } else {
       columns = [
@@ -602,9 +604,10 @@ const ViewClients = () => {
         { key: "allocatedUser", title: "Allocated User", width: "10%" },
         { key: "order_date", title: "Order Date", width: "9%" },
         { key: "delivery_date", title: "Delivery Date", width: "9%" },
-        { key: "orderDetails", title: "Order Details", width: "8%" },
-        { key: "billing_address", title: "Delivery Address", width: "7.5%" },
-        { key: "postcode", title: "Post Code", width: "4.5%" },
+        {key: "orderDetails", title: "Order Details", width: "8%"},
+        {key: "billing_address", title: "Delivery Address", width: "7.5%"},
+        {key: "distance", title: "Distance", width: "6%"},
+        {key: "postcode", title: "Post Code", width: "4.5%"},
       ];
     }
   }

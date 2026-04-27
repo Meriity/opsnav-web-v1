@@ -110,6 +110,7 @@ export const useClientStore = create(
               rankOrder: client.rankOrder,
               unitNumber: client.unitNumber || client.unit || "N/A",
               orderSubType: client.orderSubType || client.work || "N/A",
+              distance: client.distance || "N/A",
             }));
 
             clients = filteredResponse.clients.map((client) => ({
