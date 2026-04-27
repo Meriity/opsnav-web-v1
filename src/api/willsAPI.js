@@ -10,7 +10,8 @@ class WillsAPI {
   }
 
   getHeaders() {
-    const token = localStorage.getItem("authToken");
+    // Prioritize clientAuthToken for returning users/clients, fallback to admin authToken
+    const token = localStorage.getItem("clientAuthToken") || localStorage.getItem("authToken");
     const headers = {
       "Content-Type": "application/json",
     };
@@ -28,7 +29,14 @@ class WillsAPI {
       } catch {
         errorData = { message: "Internal server error" };
       }
-      const error = new Error(errorData.message || "Internal server error");
+      
+      const message = errorData.error || errorData.message || "Internal server error";
+      console.error(`[WillsAPI] Backend 500 Error: ${message}`, {
+          url: response.url,
+          data: errorData
+      });
+
+      const error = new Error(message);
       error.response = { status: response.status, data: errorData };
       throw error;
     }
@@ -521,6 +529,47 @@ class WillsAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error in Wills Login:", error);
+      throw error;
+    }
+  }
+
+  async loadFormV1(matterReferenceNumber) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.LOAD_FORM_V1}/${matterReferenceNumber}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in LOAD FORM V1:", error);
+      throw error;
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORGOT_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Forgot Password:", error);
+      throw error;
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.RESET_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Reset Password:", error);
       throw error;
     }
   }

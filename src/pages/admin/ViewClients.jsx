@@ -9,6 +9,7 @@ import {
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import ViewClientsTable from "../../components/ui/ViewClientsTable";
 import { useEffect, useState, Fragment, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import ClientAPI from "../../api/userAPI";
 import CommercialAPI from "../../api/commercialAPI";
 import AdminAPI from "../../api/adminAPI";
@@ -62,6 +63,10 @@ import ViewClientFilterModel from "../../components/ui/ViewClientFilterModel.jsx
 
 const ViewClients = () => {
   const [createuser, setcreateuser] = useState(false);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const isMyJobsView = queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs";
+  
   const [createOrder, setcreateOrder] = useState(false);
   const [createProject, setCreateProject] = useState(false);
   const [showOutstandingTask, setShowOutstandingTask] = useState(false);
@@ -306,17 +311,42 @@ const ViewClients = () => {
           setCommercialLoading(false);
         }
       } else {
-        fetchClients();
+        if (currentModule === "print media" && isMyJobsView) {
+          setCommercialLoading(true);
+          setCommercialClients([]); // Clear old data before fetching new
+          try {
+            const response = await api.getMyJobs();
+            console.log("My Jobs response:", response);
+
+            const data = response?.orders || (Array.isArray(response) ? response : []);
+            
+            const transformedData = data.map((order) => ({
+              ...order,
+              id: order._id || order.orderId,
+              // Map some common keys if needed but we'll update column keys to match response
+              stages: [{ S1: "default" }]
+            }));
+
+            setCommercialClients(transformedData);
+          } catch (error) {
+            console.error("Error fetching my jobs:", error);
+            setCommercialClients([]);
+          } finally {
+            setCommercialLoading(false);
+          }
+        } else {
+          fetchClients();
+        }
       }
     };
 
 
 
     fetchData();
-  }, [currentModule, api, fetchClients]);
+  }, [currentModule, api, fetchClients, isMyJobsView]);
 
   const filteredClients = useMemo(() => {
-    let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialClients : Clients;
+    let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialClients : Clients;
 
     if (!Array.isArray(data)) return [];
 
@@ -434,7 +464,7 @@ const ViewClients = () => {
     console.log("data :", data)
 
     return data;
-  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser, activeFilters]);
+  }, [dateFilter, Clients, commercialClients, selectedClientName, currentModule, searchQuery, filterAllocatedUser, activeFilters, location.pathname]);
 
 
   // Filter data based on  the matter status and legal cost application number
@@ -549,18 +579,37 @@ const ViewClients = () => {
       { key: "building_and_pest_date", title: "B&P Date", width: "9%" },
     ];
   } else if (currentModule === "print media") {
-    columns = [
-      { key: "clientId", title: "Client ID", width: "5%" },
-      { key: "orderId", title: "Order ID", width: "6%" },
-      { key: "client_name", title: "Client Name", width: "8.5%" },
-      { key: "client_type", title: "Type", width: "10%" },
-      { key: "allocatedUser", title: "Allocated User", width: "10%" },
-      { key: "order_date", title: "Order Date", width: "10%" },
-      { key: "delivery_date", title: "Delivery Date", width: "10%" },
-      { key: "orderDetails", title: "Order Details", width: "8%" },
-      { key: "billing_address", title: "Delivery Address", width: "7.5%" },
-      { key: "postcode", title: "Post Code", width: "4.5%" },
-    ];
+    if (isMyJobsView) {
+      columns = [
+        { key: "orderId", title: "Order ID", width: "8%" },
+        { key: "orderType", title: "Type", width: "10%" },
+        { key: "status", title: "Status", width: "8%" },
+        { key: "unitNumber", title: "Unit", width: "6%" },
+        { key: "orderSubType", title: "Work Type", width: "10%" },
+        {key: "deliveryAddress", title: "Delivery Address", width: "12%"},
+        {key: "state", title: "State", width: "5%"},
+        {key: "distance", title: "Distance", width: "7%"},
+        {key: "orderDate", title: "Order Date", width: "9%"},
+        {key: "order_details", title: "Order Details", width: "12%"},
+        {key: "notes", title: "Notes", width: "9%"},
+      ];
+    } else {
+      columns = [
+        { key: "clientId", title: "Client ID", width: "5%" },
+        { key: "orderId", title: "Order ID", width: "6%" },
+        { key: "client_name", title: "Client Name", width: "8.5%" },
+        { key: "client_type", title: "Type", width: "7.5%" },
+        { key: "orderSubType", title: "Work Type", width: "8%" },
+        { key: "unitNumber", title: "Unit", width: "4%" },
+        { key: "allocatedUser", title: "Allocated User", width: "10%" },
+        { key: "order_date", title: "Order Date", width: "9%" },
+        { key: "delivery_date", title: "Delivery Date", width: "9%" },
+        {key: "orderDetails", title: "Order Details", width: "8%"},
+        {key: "billing_address", title: "Delivery Address", width: "7.5%"},
+        {key: "distance", title: "Distance", width: "6%"},
+        {key: "postcode", title: "Post Code", width: "4.5%"},
+      ];
+    }
   }
 
   const FloatingElement = ({ top, left, delay, size = 60 }) => (
@@ -685,6 +734,8 @@ const ViewClients = () => {
   };
 
   const getPageTitle = () => {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs") return "My Jobs";
     if (currentModule === "commercial") return "View Projects";
     if (currentModule === "print media") return "View Orders";
     return "View Clients";
@@ -723,7 +774,7 @@ const ViewClients = () => {
   };
 
   const isLoading =
-    (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat") ? commercialLoading : loading;
+    (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialLoading : loading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
@@ -1422,7 +1473,7 @@ const ViewClients = () => {
 
             {isLoading ? (
               <Loader />
-            ) : filteredClients.length === 0 ? (
+            ) : (filteredClients.length === 0 && !isMyJobsView) ? (
               <div className="py-10 text-center text-gray-500">
                 {currentModule === "commercial"
                   ? "No projects found"
@@ -1451,6 +1502,8 @@ const ViewClients = () => {
                   // Drag Props
                   isDraggingMode={isDraggingMode}
                   setDraggedData={setDraggedData}
+                  isMyJobsView={isMyJobsView}
+                  showStages={!(isMyJobsView && currentModule === "print media")}
                 />
               </div>
             )}

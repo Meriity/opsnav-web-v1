@@ -12,8 +12,9 @@ import {
   RefreshCw,
   FileText,
   Unlock,
+  Briefcase,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Pagination from "./Pagination";
 import { formatDate } from "../../utils/formatters";
 
@@ -92,10 +93,12 @@ const ViewClientsTable = ({
   showStages = true,
   showTasks = true,
   showActions = true,
+  isMyJobsView = false,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const navigate = useNavigate();
+  const location = useLocation();
   const stageColorMap = {
     green: "green",
     red: "red",
@@ -215,7 +218,7 @@ const ViewClientsTable = ({
                 </th>
               )}
               {showActions && (
-                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${onConvert || onDownloadDocx ? "w-[12%] xl:w-[15%]" : "w-[6%] xl:w-[5%]"}`}>
+                <th className={`px-1 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm rounded-r-2xl ${currentModule === "print media" ? "w-[6%] xl:w-[6%]" : (currentModule === "wills" && onConvert ? "w-[18%] xl:w-[15%]" : (onConvert || onDownloadDocx ? "w-[14%] xl:w-[12%]" : "w-[7%] xl:w-[6%]"))}`}>
                   Action
                 </th>
               )}
@@ -354,8 +357,23 @@ const ViewClientsTable = ({
              </tbody>
           ) : (
             <tbody>
-            {currentData.map((item) => {
-              return (
+              {currentData.length === 0 && (new URLSearchParams(location.search).get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs") ? (
+                  <tr>
+                    <td colSpan={columns.length + (showStages ? 1 : 0) + (showTasks ? 1 : 0) + (showActions ? 1 : 0)} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center">
+                          <ClipboardList className="w-10 h-10 text-[#2E3D99]" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-xl font-bold text-gray-900">No jobs assigned to you</h3>
+                          <p className="text-gray-500 max-w-sm mx-auto">
+                            Contact admin to get the job assigned to you.
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentData.map((item) => (
                 <tr
                   key={item.id}
                   className="bg-white rounded-2xl transition-all hover:shadow-xl"
@@ -379,7 +397,7 @@ const ViewClientsTable = ({
                           "delivery_date",
                           "settlementDate",
                           "matterDate",
-                        ].includes(column.key) ? (
+                        ].includes(column.key) || column.key === "orderDate" ? (
                           item[column.key] &&
                           item[column.key] !== "-" &&
                           item[column.key] !== "N/A" ? (
@@ -387,8 +405,17 @@ const ViewClientsTable = ({
                           ) : (
                             <span className="font-bold text-gray-500">—</span>
                           )
+                        ) : column.key === "status" && isMyJobsView ? (
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            item.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                            item.status === "booked" ? "bg-amber-100 text-amber-700" :
+                            "bg-blue-100 text-blue-700"
+                          }`}>
+                             {item.status}
+                          </span>
                         ) : (column.key === "billing_address" ||
                             column.key === "businessAddress" ||
+                            column.key === "deliveryAddress" ||
                             column.key === "property_address") &&
                           item[column.key] ? (
                           <a
@@ -514,78 +541,77 @@ const ViewClientsTable = ({
                           </td>
                         )}
                         {showActions && (
-                          <td className={`pl-3 pr-2 rounded-r-2xl align-middle`}>
-                            <div className="flex flex-row items-center justify-center space-x-2">
+                          <td className={`px-2 rounded-r-2xl align-middle`}>
+                            <div className={`flex flex-row items-center justify-center ${currentModule === "print media" ? "space-x-0.5 lg:space-x-1" : currentModule === "wills" && onConvert ? "space-x-3 lg:space-x-4" : "space-x-2"}`}>
                               {onEdit ? (
                                 <button
                                   onClick={() => onEdit(item)}
-                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" || currentModule === "print media" ? "text-[#2E3D99] hover:bg-blue-50" : "text-black hover:text-gray-700 hover:bg-gray-100"}`}
                                   title={editTooltip || "Edit"}
                                 >
-                                  <Edit size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                  <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {!(currentModule === "print media" || (currentModule === "wills" && onConvert)) && <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>}
                                 </button>
                               ) : (
-                                 <button
+                                <button
                                   onClick={() => {
                                     const id =
                                       item.matterNumber || item.matternumber || item.orderId;
                                     navigate(`/admin/client/stages/${id}`);
                                   }}
-                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" || currentModule === "print media" ? "text-[#2E3D99] hover:bg-blue-50" : "text-black hover:text-gray-700 hover:bg-gray-100"}`}
                                   title={editTooltip || "Edit"}
                                 >
-                                  <Edit size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>
+                                  <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {!(currentModule === "print media" || (currentModule === "wills" && onConvert)) && <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>}
                                 </button>
                               )}
                               {onConvert && (
                                 <button
                                   onClick={() => onConvert(item)}
-                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" ? "text-emerald-600 hover:bg-emerald-50" : "text-black hover:text-gray-700 hover:bg-gray-100"}`}
                                   title="Convert to matter"
                                 >
-                                  <RefreshCw size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Convert</span>
+                                  <RefreshCw size={currentModule === "wills" && onConvert ? 18 : 10} className={currentModule === "wills" && onConvert ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {!(currentModule === "wills" && onConvert) && <span className="text-[9px] lg:text-[9px] xl:text-xs">Convert</span>}
                                 </button>
                               )}
                               {onDownloadDocx && (
                                 <button
                                   onClick={() => onDownloadDocx(item)}
-                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" ? "text-slate-600 hover:bg-slate-50" : "text-black hover:bg-gray-100"}`}
                                   title="Download .docx"
                                 >
-                                  <FileText size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Docx</span>
+                                  <FileText size={currentModule === "wills" && onConvert ? 18 : 10} className={currentModule === "wills" && onConvert ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {!(currentModule === "wills" && onConvert) && <span className="text-[9px] lg:text-[9px] xl:text-xs">Docx</span>}
                                 </button>
                               )}
                               {onUnlock && (
                                 <button
                                   onClick={() => onUnlock(item)}
-                                  className="flex flex-col items-center space-y-1 p-1 text-black hover:text-[#2E3D99] hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" || currentModule === "print media" ? "text-[#2E3D99] hover:bg-blue-50" : "text-black hover:text-[#2E3D99] hover:bg-gray-100"}`}
                                   title="Unlock Form"
                                 >
-                                  <Unlock size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Unlock</span>
+                                  <Unlock size={currentModule === "wills" && onConvert ? 18 : 10} className={currentModule === "wills" && onConvert ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {!(currentModule === "wills" && onConvert) && <span className="text-[9px] lg:text-[9px] xl:text-xs">Unlock</span>}
                                 </button>
                               )}
                               {currentModule === "print media" && (
                                 <button
                                   onClick={() => onDelete(item)}
-                                  className="flex flex-col items-center space-y-1 p-1 text-red-500 hover:text-red-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  className="flex flex-col items-center space-y-1 p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 cursor-pointer"
                                   title="Delete"
                                 >
-                                  <Trash2 size={10} className="lg:size-[10px] xl:size-3" />
-                                  <span className="text-[9px] lg:text-[9px] xl:text-xs">Delete</span>
+                                  <Trash2 size={18} />
+                                  {/* No text label for print media delete */}
                                 </button>
                               )}
                             </div>
                           </td>
                         )}
                       </tr>
-                    );
-                  })}
-                </tbody>
+                    ))}
+            </tbody>
           )}
         </table>
         </DndContext>
@@ -593,7 +619,23 @@ const ViewClientsTable = ({
 
       {/* Mobile & Tablet Card View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-        {currentData.map((item, index) => (
+        {currentData.length === 0 && (new URLSearchParams(location.search).get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs") ? (
+            <div className="col-span-full bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+               <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                    <ClipboardList className="w-8 h-8 text-[#2E3D99]" />
+                  </div>
+                  <div className="space-y-1 px-4">
+                    <h3 className="text-lg font-bold text-gray-900 leading-tight border-none outline-none">
+                        No jobs assigned to you
+                    </h3>
+                    <p className="text-sm text-gray-500 font-medium max-w-xs mx-auto">
+                      Contact admin to get the job assigned to you.
+                    </p>
+                  </div>
+                </div>
+            </div>
+          ) : currentData.map((item, index) => (
           <div
             key={item.id}
             className={`bg-white rounded-2xl shadow p-4 space-y-3 ${isDraggingMode ? 'border-2 border-dashed border-[#2E3D99]/50' : ''}`}
@@ -638,37 +680,48 @@ const ViewClientsTable = ({
             ) : (
              // Standard View
              <>
-            <div className="flex justify-between items-center border-b pb-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {currentModule === "commercial"
-                  ? "Project No"
-                  : currentModule === "print media"
-                  ? "Order ID"
-                  : "Matter No"}  
-              </p>
-                          {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
-                            <a
-                              href={item.matterUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center gap-1 group transition-all"
-                            >
-                              {currentModule === "commercial"
-                                ? item.matterNumber
-                                : currentModule === "print media"
-                                ? item.orderId
-                                : item.matternumber}
-                              <ExternalLink size={14} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
-                            </a>
-                          ) : (
-                            <p className="text-sm font-bold text-[#2E3D99] break-all">
-                              {currentModule === "commercial"
-                                ? item.matterNumber
-                                : currentModule === "print media"
-                                ? item.orderId
-                                : item.matternumber}
-                            </p>
-                          )}
+             <div className="flex justify-between items-center border-b pb-2">
+              <div className="flex flex-col">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {currentModule === "commercial"
+                    ? "Project No"
+                    : currentModule === "print media"
+                    ? "Order ID"
+                    : "Matter No"}  
+                </p>
+                {isMyJobsView && item.status && (
+                   <span className={`mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase w-fit ${
+                    item.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                    item.status === "booked" ? "bg-amber-100 text-amber-700" :
+                    "bg-blue-100 text-blue-700"
+                  }`}>
+                     {item.status}
+                  </span>
+                )}
+              </div>
+              {(currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") && item.matterUrl ? (
+                <a
+                  href={item.matterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent hover:opacity-80 font-bold flex items-center gap-1 group transition-all"
+                >
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                  <ExternalLink size={14} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
+                </a>
+              ) : (
+                <p className="text-sm font-bold text-[#2E3D99] break-all">
+                  {currentModule === "commercial"
+                    ? item.matterNumber
+                    : currentModule === "print media"
+                    ? item.orderId
+                    : item.matternumber}
+                </p>
+              )}
             </div>
             <div className="flex justify-between items-start">
               <div>
@@ -682,11 +735,13 @@ const ViewClientsTable = ({
                 <p className="text-sm break-words">
                   {item.businessAddress ||
                   item.property_address ||
+                  item.deliveryAddress ||
                   item.billing_address ? (
                     <a
                       href={`https://www.google.com/maps?q=${encodeURIComponent(
                         item.businessAddress ||
                           item.property_address ||
+                          item.deliveryAddress ||
                           item.billing_address
                       )}`}
                       target="_blank"
@@ -695,14 +750,38 @@ const ViewClientsTable = ({
                     >
                       {item.businessAddress ||
                         item.property_address ||
+                        item.deliveryAddress ||
                         item.billing_address}
                     </a>
                   ) : (
                     item.businessAddress ||
                     item.property_address ||
+                    item.deliveryAddress ||
                     item.billing_address
                   )}
                 </p>
+                {isMyJobsView && (
+                  <div className="mt-3 space-y-2 pt-2 border-t border-gray-100">
+                    <div className="flex justify-between items-center text-xs">
+                       <span className="text-gray-400 font-medium">Order Date:</span>
+                       <span className="text-gray-700 font-bold">
+                          {item.orderDate ? formatDate(item.orderDate) : (item.order_date ? formatDate(item.order_date) : "-")}
+                       </span>
+                    </div>
+                    {item.distance && (
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="text-gray-400 font-medium">Distance:</span>
+                         <span className="text-gray-700 font-bold">{item.distance}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col text-xs">
+                       <span className="text-gray-400 font-medium mb-1">Order Details:</span>
+                       <span className="text-gray-700 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
+                          {item.order_details || item.orderDetails || "-"}
+                       </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <button

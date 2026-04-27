@@ -7,16 +7,19 @@ import {
   Lock, 
   ArrowRight, 
   Sparkles,
-  Shield,
+  ShieldCheck,
   Zap,
   Info,
   Eye,
-  EyeOff
+  EyeOff,
+  History,
+  ListChecks,
+  Lightbulb
 } from "lucide-react";
 import { APP_VERSION } from "../../config/version";
 import WillsAPI from "../../api/willsAPI";
-import { toast } from "react-toastify";
 import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
+import WillsForgotPasswordModal from "./WillsForgotPasswordModal";
 
 const WillsSignUp = ({ onSignUp }) => {
   const [isLoginForm, setIsLoginForm] = useState(false);
@@ -25,11 +28,13 @@ const WillsSignUp = ({ onSignUp }) => {
     email: "",
     password: "",
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   
   const api = useRef(new WillsAPI());
   
@@ -46,15 +51,51 @@ const WillsSignUp = ({ onSignUp }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleLoginSuccess = async (response, email) => {
+    // Save token
+    const token = response.token || response.authToken || response.data?.token;
+    if (token) {
+      localStorage.setItem("clientAuthToken", token);
+      localStorage.setItem("clientEmail", email);
+    }
+
+    // 1. Extract matterReferenceNumber from login data
+    const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
+    
+    let loadedData = null;
+    if (refNumber) {
+      localStorage.setItem("matterReferenceNumber", refNumber);
+      
+      // 2. Automatically call LOAD FORM (GET /v1/:ref)
+      try {
+        const loadResponse = await api.current.loadFormV1(refNumber);
+        loadedData = loadResponse.data || loadResponse;
+      } catch (loadErr) {
+        console.error("Secondary Load Form error:", loadErr);
+        // We don't block login if load fails, but we log it
+      }
+    }
+
+    // Extract name for personalization
+    const finalName = loadedData?.personal?.fullName || response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
+    localStorage.setItem("clientName", finalName);
+
+    onSignUp({ 
+      email: email, 
+      name: finalName, 
+      referenceNumber: refNumber,
+      loadedData: loadedData 
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setInfoMessage("");
     setIsLoading(true);
 
     try {
       if (isLoginForm) {
-        // Handle Login
+        console.log("[WillsSignUp] Initiating LOGIN flow for:", formData.email);
         if (!formData.email.trim() || !formData.password.trim()) {
           throw new Error("Email and password are required");
         }
@@ -63,62 +104,70 @@ const WillsSignUp = ({ onSignUp }) => {
           email: formData.email,
           password: formData.password
         });
-
-        // Extract name from response for better personalization
-        const finalName = response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
-
-        // Save token
-        const token = response.token || response.authToken || response.data?.token;
-        if (token) {
-          localStorage.setItem("clientAuthToken", token);
-          localStorage.setItem("clientEmail", formData.email);
-          localStorage.setItem("clientName", finalName);
-        }
-
-        toast.success("Login successful!  ");
-        onSignUp({ email: formData.email, name: finalName });
+        console.log("[WillsSignUp] Login successful");
+        await handleLoginSuccess(response, formData.email);
       } else {
-        // Handle Signup
-        if (!formData.fullName.trim()) throw new Error("Full name is required");
+        console.log("[WillsSignUp] Initiating SIGNUP flow for:", formData.email);
         if (!formData.email.trim()) throw new Error("Email is required");
-        if (passwordStrength < 3) throw new Error("Password is too weak. Please meet the requirements.");
 
-        const response = await api.current.signup({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password
-        });
+        // Attempt Signup
+        try {
+          // 1. Basic validation
+          if (!formData.fullName.trim()) throw new Error("Full name is required");
+          
+          // 2. Attempt Signup API Call
+          console.log("[WillsSignUp] Calling SIGNUP API...");
+          const response = await api.current.signup({
+            fullName: formData.fullName,
+            email: formData.email,
+            password: formData.password
+          });
+          
+          console.log("[WillsSignUp] Signup successful");
+          
+          // Save reference number
+          const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
+          if (refNumber) localStorage.setItem("matterReferenceNumber", refNumber);
+          
+          // Save token if returned
+          const token = response.token || response.authToken || response.data?.token;
+          if (token) {
+            localStorage.setItem("clientAuthToken", token); 
+            localStorage.setItem("clientEmail", formData.email);
+            localStorage.setItem("clientName", formData.fullName);
+          }
 
-        // Save reference number from response
-        const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
-        if (refNumber) {
-          localStorage.setItem("matterReferenceNumber", refNumber);
+          if (onSignUp) onSignUp({ 
+            email: formData.email, 
+            name: formData.fullName, 
+            referenceNumber: refNumber 
+          });
+        } catch (signupErr) {
+          const msg = signupErr.message.toLowerCase();
+          const alreadyExists = msg.includes("already") || msg.includes("exists") || msg.includes("registered");
+          
+          if (alreadyExists) {
+            console.log("[WillsSignUp] Detection: User already exists. Switching to Login flow.");
+            setInfoMessage("We found your account! Welcome back—please enter your password to continue.");
+            setIsLoginForm(true);
+            setError("");
+            setIsLoading(false);
+            return;
+          }
+
+          // If not an "already exists" error, check password strength before showing other errors
+          if (passwordStrength < 3) {
+            console.warn("[WillsSignUp] Signup blocked: Password strength too low");
+            throw new Error("Password is too weak. Please meet the requirements.");
+          }
+
+          // Otherwise re-throw the actual signup error
+          throw signupErr;
         }
-
-        // Save token if returned
-        const token = response.token || response.authToken || response.data?.token;
-        if (token) {
-          localStorage.setItem("clientAuthToken", token); // Save as client token instead to preserve Admin session
-          localStorage.setItem("clientEmail", formData.email);
-          localStorage.setItem("clientName", formData.fullName);
-        }
-
-        toast.success("Account initialized successfully!");
-        onSignUp({ email: formData.email, name: formData.fullName, referenceNumber: refNumber });
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      const errorMsg = err.message || "An unexpected error occurred";
-      
-      // MNC-Style Auto-toggle to login if user already exists
-      if (errorMsg.toLowerCase().includes("already exists")) {
-        setInfoMessage("We found your account! Welcome back—please enter your password to continue.");
-        setIsLoginForm(true);
-        setError(""); // Clear error for the transition
-      } else {
-        setError(errorMsg);
-        toast.error(errorMsg);
-      }
+      console.error("[WillsSignUp] Auth error:", err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -214,21 +263,22 @@ const WillsSignUp = ({ onSignUp }) => {
             <p className="text-lg text-gray-600 mb-8 max-w-xl">
               {isLoginForm 
                 ? "Sign in to resume your Will preparation exactly where you left off. Your data remains encrypted and protected."
-                : "Initialize your secure session to start preparing your Will. Your data is protected with enterprise-grade security."}
+                : "Initialise your secure session to start preparing your Will. Your data is protected with enterprise-grade security."}
             </p>
-
-            <div className="space-y-4 hidden lg:block">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 hidden lg:grid max-w-2xl mt-4">
               {[
-                { icon: Shield, title: "Secure & Compliant", desc: "Aligned with Australian Data Privacy Standards" },
-                { icon: Zap, title: "Smart Automation", desc: "Streamlined 10-step induction process" },
+                { icon: ShieldCheck, title: "Secure & Compliant", desc: "Aligned with Australian Data Privacy Standards" },
+                { icon: ListChecks, title: "Step-by-Step Guidance", desc: "Broken into easy stages for simple progression" },
+                { icon: History, title: "Progress Save & Resume", desc: "Return anytime and continue where you left off" },
+                { icon: Lightbulb, title: "Smart Assistance", desc: "Expert tips and guidance to help you complete your form" },
               ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/10 flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-5 h-5 text-[#2E3D99]" />
+                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-white/40 border border-white/60 shadow-sm backdrop-blur-sm hover:shadow-md transition-all duration-300">
+                  <div className="w-12 h-12 rounded-xl bg-[#EDF2FE] flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-6 h-6 text-[#2E3D99]" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{item.title}</h3>
-                    <p className="text-sm text-gray-500">{item.desc}</p>
+                  <div className="flex flex-col">
+                    <h3 className="font-bold text-[#2E3D99] text-[15px] leading-tight">{item.title}</h3>
+                    <p className="text-[13px] text-gray-500 mt-1.5 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -283,7 +333,7 @@ const WillsSignUp = ({ onSignUp }) => {
                 </div>
 
                 <h2 className="text-2xl font-bold text-gray-800">
-                  {isLoginForm ? "Login to Account" : "Initialize Your Account"}
+                  {isLoginForm ? "Login to Account" : "Initialise Your Account"}
                 </h2>
                 <p className="text-gray-600 mt-1 text-sm">
                   {isLoginForm ? "Enter your credentials to continue" : "Please provide your details to proceed"}
@@ -427,6 +477,35 @@ const WillsSignUp = ({ onSignUp }) => {
                   </AnimatePresence>
                 </div>
 
+                {isLoginForm && (
+                  <div className="flex justify-end -mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPasswordOpen(true)}
+                      className="text-[12px] font-bold text-[#2E3D99] hover:text-[#1D97D7] transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
+                {!isLoginForm && (
+                  <div className="flex items-start gap-3 mb-6">
+                    <div className="flex items-center h-5 mt-0.5">
+                      <input
+                        id="terms"
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="w-4 h-4 text-[#2E3D99] border-gray-300 rounded focus:ring-[#2E3D99] cursor-pointer"
+                      />
+                    </div>
+                    <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer select-none">
+                      I agree to the <span className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">terms of privacy</span> of collecting and processing my data.
+                    </label>
+                  </div>
+                )}
+
                 {/* Red Error Message */}
                 <AnimatePresence>
                   {error && (
@@ -446,17 +525,17 @@ const WillsSignUp = ({ onSignUp }) => {
 
                 <motion.button
                   type="submit"
-                  disabled={isLoading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3.5 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70 group shadow-md"
+                  disabled={isLoading || (!isLoginForm && !agreedToTerms)}
+                  whileHover={(!isLoginForm && !agreedToTerms) ? {} : { scale: 1.02 }}
+                  whileTap={(!isLoginForm && !agreedToTerms) ? {} : { scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-3.5 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale-[0.3] group shadow-md"
                 >
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
                       <span>
-                        {infoMessage ? "Sign In to Continue" : (isLoginForm ? "Login" : "Sign Up")}
+                        {infoMessage ? "Sign In to Continue" : (isLoginForm ? "Login" : "Complete Sign Up")}
                       </span>
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </>
@@ -479,6 +558,11 @@ const WillsSignUp = ({ onSignUp }) => {
                     {isLoginForm ? "Create an account" : "Sign in here"}
                   </button>
                 </p>
+                <div className="mt-4">
+                   <p className="text-[11px] text-gray-400">
+                     Please read our <span className="text-[#2E3D99] font-medium border-b border-[#2E3D99]/40 hover:border-[#2E3D99] cursor-pointer transition-all">Privacy Policy</span> before proceeding.
+                   </p>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -498,6 +582,10 @@ const WillsSignUp = ({ onSignUp }) => {
           Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span>
         </p>
       </footer>
+      <WillsForgotPasswordModal 
+        isOpen={isForgotPasswordOpen} 
+        onClose={() => setIsForgotPasswordOpen(false)} 
+      />
     </div>
   );
 };

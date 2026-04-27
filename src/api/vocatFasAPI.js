@@ -1,5 +1,5 @@
 import { VOCAT_FAS_ENDPOINTS } from "../vocatFasEndpoints";
-import { getApiBaseUrl } from "../utils/apiConfig";
+import { getApiBaseUrl, getApiHeaders } from "../utils/apiConfig";
 
 class VocatFasAPI {
   constructor() {
