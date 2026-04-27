@@ -19,6 +19,7 @@ import {
 import { APP_VERSION } from "../../config/version";
 import WillsAPI from "../../api/willsAPI";
 import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
+import WillsForgotPasswordModal from "./WillsForgotPasswordModal";
 
 const WillsSignUp = ({ onSignUp }) => {
   const [isLoginForm, setIsLoginForm] = useState(false);
@@ -33,6 +34,7 @@ const WillsSignUp = ({ onSignUp }) => {
   const [infoMessage, setInfoMessage] = useState("");
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   
   const api = useRef(new WillsAPI());
   
@@ -49,15 +51,51 @@ const WillsSignUp = ({ onSignUp }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleLoginSuccess = async (response, email) => {
+    // Save token
+    const token = response.token || response.authToken || response.data?.token;
+    if (token) {
+      localStorage.setItem("clientAuthToken", token);
+      localStorage.setItem("clientEmail", email);
+    }
+
+    // 1. Extract matterReferenceNumber from login data
+    const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
+    
+    let loadedData = null;
+    if (refNumber) {
+      localStorage.setItem("matterReferenceNumber", refNumber);
+      
+      // 2. Automatically call LOAD FORM (GET /v1/:ref)
+      try {
+        const loadResponse = await api.current.loadFormV1(refNumber);
+        loadedData = loadResponse.data || loadResponse;
+      } catch (loadErr) {
+        console.error("Secondary Load Form error:", loadErr);
+        // We don't block login if load fails, but we log it
+      }
+    }
+
+    // Extract name for personalization
+    const finalName = loadedData?.personal?.fullName || response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
+    localStorage.setItem("clientName", finalName);
+
+    onSignUp({ 
+      email: email, 
+      name: finalName, 
+      referenceNumber: refNumber,
+      loadedData: loadedData 
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setInfoMessage("");
     setIsLoading(true);
 
     try {
       if (isLoginForm) {
-        // Handle Login
+        console.log("[WillsSignUp] Initiating LOGIN flow for:", formData.email);
         if (!formData.email.trim() || !formData.password.trim()) {
           throw new Error("Email and password are required");
         }
@@ -66,83 +104,70 @@ const WillsSignUp = ({ onSignUp }) => {
           email: formData.email,
           password: formData.password
         });
-
-        // Save token
-        const token = response.token || response.authToken || response.data?.token;
-        if (token) {
-          localStorage.setItem("clientAuthToken", token);
-          localStorage.setItem("clientEmail", formData.email);
-        }
-
-        // 1. Extract matterReferenceNumber from login data
-        const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
-        
-        let loadedData = null;
-        if (refNumber) {
-          localStorage.setItem("matterReferenceNumber", refNumber);
-          
-          // 2. Automatically call LOAD FORM (GET /v1/:ref)
-          try {
-            const loadResponse = await api.current.loadFormV1(refNumber);
-            loadedData = loadResponse.data || loadResponse;
-          } catch (loadErr) {
-            console.error("Secondary Load Form error:", loadErr);
-            // We don't block login if load fails, but we log it
-          }
-        }
-
-        // Extract name for personalization
-        const finalName = loadedData?.personal?.fullName || response.fullName || response.name || response.data?.fullName || response.data?.name || formData.fullName || "User";
-        localStorage.setItem("clientName", finalName);
-
-        localStorage.setItem("clientName", finalName);
-
-        onSignUp({ 
-          email: formData.email, 
-          name: finalName, 
-          referenceNumber: refNumber,
-          loadedData: loadedData 
-        });
+        console.log("[WillsSignUp] Login successful");
+        await handleLoginSuccess(response, formData.email);
       } else {
-        // Handle Signup
-        if (!formData.fullName.trim()) throw new Error("Full name is required");
+        console.log("[WillsSignUp] Initiating SIGNUP flow for:", formData.email);
         if (!formData.email.trim()) throw new Error("Email is required");
-        if (passwordStrength < 3) throw new Error("Password is too weak. Please meet the requirements.");
 
-        const response = await api.current.signup({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password
-        });
+        // Attempt Signup
+        try {
+          // 1. Basic validation
+          if (!formData.fullName.trim()) throw new Error("Full name is required");
+          
+          // 2. Attempt Signup API Call
+          console.log("[WillsSignUp] Calling SIGNUP API...");
+          const response = await api.current.signup({
+            fullName: formData.fullName,
+            email: formData.email,
+            password: formData.password
+          });
+          
+          console.log("[WillsSignUp] Signup successful");
+          
+          // Save reference number
+          const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
+          if (refNumber) localStorage.setItem("matterReferenceNumber", refNumber);
+          
+          // Save token if returned
+          const token = response.token || response.authToken || response.data?.token;
+          if (token) {
+            localStorage.setItem("clientAuthToken", token); 
+            localStorage.setItem("clientEmail", formData.email);
+            localStorage.setItem("clientName", formData.fullName);
+          }
 
-        // Save reference number from response
-        const refNumber = response.matterReferenceNumber || response.data?.matterReferenceNumber;
-        if (refNumber) {
-          localStorage.setItem("matterReferenceNumber", refNumber);
+          if (onSignUp) onSignUp({ 
+            email: formData.email, 
+            name: formData.fullName, 
+            referenceNumber: refNumber 
+          });
+        } catch (signupErr) {
+          const msg = signupErr.message.toLowerCase();
+          const alreadyExists = msg.includes("already") || msg.includes("exists") || msg.includes("registered");
+          
+          if (alreadyExists) {
+            console.log("[WillsSignUp] Detection: User already exists. Switching to Login flow.");
+            setInfoMessage("We found your account! Welcome back—please enter your password to continue.");
+            setIsLoginForm(true);
+            setError("");
+            setIsLoading(false);
+            return;
+          }
+
+          // If not an "already exists" error, check password strength before showing other errors
+          if (passwordStrength < 3) {
+            console.warn("[WillsSignUp] Signup blocked: Password strength too low");
+            throw new Error("Password is too weak. Please meet the requirements.");
+          }
+
+          // Otherwise re-throw the actual signup error
+          throw signupErr;
         }
-
-        // Save token if returned
-        const token = response.token || response.authToken || response.data?.token;
-        if (token) {
-          localStorage.setItem("clientAuthToken", token); // Save as client token instead to preserve Admin session
-          localStorage.setItem("clientEmail", formData.email);
-          localStorage.setItem("clientName", formData.fullName);
-        }
-
-        onSignUp({ email: formData.email, name: formData.fullName, referenceNumber: refNumber });
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      const errorMsg = err.message || "An unexpected error occurred";
-      
-      // MNC-Style Auto-toggle to login if user already exists
-      if (errorMsg.toLowerCase().includes("already exists")) {
-        setInfoMessage("We found your account! Welcome back—please enter your password to continue.");
-        setIsLoginForm(true);
-        setError(""); // Clear error for the transition
-      } else {
-        setError(errorMsg);
-      }
+      console.error("[WillsSignUp] Auth error:", err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -452,6 +477,18 @@ const WillsSignUp = ({ onSignUp }) => {
                   </AnimatePresence>
                 </div>
 
+                {isLoginForm && (
+                  <div className="flex justify-end -mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPasswordOpen(true)}
+                      className="text-[12px] font-bold text-[#2E3D99] hover:text-[#1D97D7] transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
                 {!isLoginForm && (
                   <div className="flex items-start gap-3 mb-6">
                     <div className="flex items-center h-5 mt-0.5">
@@ -545,6 +582,10 @@ const WillsSignUp = ({ onSignUp }) => {
           Powered by <span className="font-bold text-[#2E3D99]">OpsNav™</span>
         </p>
       </footer>
+      <WillsForgotPasswordModal 
+        isOpen={isForgotPasswordOpen} 
+        onClose={() => setIsForgotPasswordOpen(false)} 
+      />
     </div>
   );
 };

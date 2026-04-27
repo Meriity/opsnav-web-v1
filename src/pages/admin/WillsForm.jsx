@@ -11,6 +11,7 @@ import { generateWillsDocx } from "../../components/utils/generateWillsDocx";
 import { toast } from "react-toastify";
 import WillsSignUp from "../../components/wills/WillsSignUp";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
+import WillsSuccess from "../../components/wills/WillsSuccess";
 import WillsSmartTips from "../../components/wills/WillsSmartTips";
 import { WILLS_TIPS } from "../../data/willsTipsData";
 import { Lock } from "lucide-react";
@@ -78,6 +79,7 @@ const WillsForm = () => {
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState("");
+  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
 
   const api = useRef(new WillsAPI());
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
@@ -649,6 +651,16 @@ const WillsForm = () => {
     toast.info("Logged out successfully");
   };
 
+  if (isSuccessfullySubmitted) {
+    return (
+      <WillsSuccess 
+        name={formData.personal?.fullName} 
+        referenceNumber={formData.matterReferenceNumber || finalRefNumber} 
+        email={formData.email} 
+      />
+    );
+  }
+
   if (!isSignedUp) {
     return <WillsSignUp onSignUp={handleSignUp} />;
   }
@@ -1056,7 +1068,7 @@ const WillsForm = () => {
             await submitForm("submitted");
             toast.success("Form submitted successfully!");
             setIsSubmitModalOpen(false);
-            navigate(-1);
+            setIsSuccessfullySubmitted(true);
           } catch (err) {
             console.error("Submission error:", err);
             toast.error(err.message || "Failed to submit form!");

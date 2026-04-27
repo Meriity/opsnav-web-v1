@@ -768,6 +768,12 @@ const ViewClientsTable = ({
                           {item.orderDate ? formatDate(item.orderDate) : (item.order_date ? formatDate(item.order_date) : "-")}
                        </span>
                     </div>
+                    {item.distance && (
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="text-gray-400 font-medium">Distance:</span>
+                         <span className="text-gray-700 font-bold">{item.distance}</span>
+                      </div>
+                    )}
                     <div className="flex flex-col text-xs">
                        <span className="text-gray-400 font-medium mb-1">Order Details:</span>
                        <span className="text-gray-700 italic bg-gray-50 p-2 rounded-lg border border-gray-100">

@@ -255,6 +255,11 @@ const MatterDetailsModal = ({
               : details.clients) ||
             details.project ||
             details;
+
+          // Ensure distance is picked up
+          if (details.data?.distance || details.distance) {
+            normalized.distance = details.data?.distance || details.distance;
+          }
         }
 
         if (normalized && mounted) {
@@ -361,6 +366,14 @@ const MatterDetailsModal = ({
                 </label>
                 <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
                   {display.orderSubType || display.work || "N/A"}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+                  Distance
+                </label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                  {display.distance || "N/A"}
                 </p>
               </div>
             </>
