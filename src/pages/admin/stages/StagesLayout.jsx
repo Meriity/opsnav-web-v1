@@ -2595,7 +2595,7 @@ export default function StagesLayout() {
                         {currentModule === "print media" && (
                           <div className="md:col-span-1">
                             <label className="block text-xs md:text-sm font-semibold mb-1">
-                              Distance
+                              Distance (km)
                             </label>
                             <input
                               type="text"
@@ -2930,7 +2930,7 @@ export default function StagesLayout() {
                       {currentModule === "print media" && (
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                            Distance
+                            Distance (km)
                           </label>
                           <input
                             type="text"

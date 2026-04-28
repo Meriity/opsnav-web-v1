@@ -33,6 +33,40 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-28",
+          version: "v7.5.10",
+          type: "patch",
+          category: "ui_ux",
+          title: "Print Media Mobile Optimization",
+          description: "Refined the UI of the Print Media module within the mobile and tablet views to improve data visibility and layout efficiency.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Distance Unit Standardization",
+              description: "Appended '(km)' to all distance values and labels to ensure clarity.",
+              details: "Updated the distance field labels in the Create Order form, Order Details, Review Modal, and Stages Layout to include '(km)'. Also appended 'km' to the data output across mobile and desktop views.",
+              icon: Zap,
+            },
+            {
+              type: "ui_ux",
+              title: "Mobile Card Layout Refinements",
+              description: "Optimized spacing and layout alignment for Print Media cards.",
+              details: "Swapped 'Order Date' and 'Delivery Date' positions for better workflow alignment. Made 'Order Details' text bold and removed redundant address blocks, renaming 'Billing Address' to 'Delivery Address'.",
+              icon: Layout,
+            },
+            {
+              type: "bugfix",
+              title: "Mobile Missing Fields Fix",
+              description: "Resolved missing 'Client Name' and 'Unit Number' in mobile views.",
+              details: "Added safe nested data fallbacks to properly extract the Client Name in the 'My Jobs' view. Removed overly restrictive rendering conditions so 'Unit Number' consistently displays above the Delivery Address.",
+              icon: Eye,
+            },
+          ],
+          module: "Print Media",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-04-27",
           version: "v7.5.9",
           type: "major",

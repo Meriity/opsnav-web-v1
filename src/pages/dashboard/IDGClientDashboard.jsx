@@ -378,8 +378,10 @@ export default function IDGClientDashboard() {
                               </div>
                               {selectedJob.distance && (
                                 <div className="flex-1">
-                                   <p className="text-sm text-gray-500 font-medium">Distance</p>
-                                   <p className="text-gray-900 font-medium mt-1">{selectedJob.distance}</p>
+                                   <p className="text-sm text-gray-500 font-medium">Distance (km)</p>
+                                   <p className="text-gray-900 font-medium mt-1">
+                                      {selectedJob.distance !== "N/A" && selectedJob.distance !== "-" && !String(selectedJob.distance).toLowerCase().includes("km") ? `${selectedJob.distance} km` : selectedJob.distance}
+                                   </p>
                                 </div>
                               )}
                            </div>

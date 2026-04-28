@@ -1655,7 +1655,7 @@ useEffect(() => {
                       </select>
                     </div>
                     <div>
-                      <label className="block mb-1 font-medium">Distance</label>
+                      <label className="block mb-1 font-medium">Distance (km)</label>
                       <input
                         type="text"
                         name="distance"

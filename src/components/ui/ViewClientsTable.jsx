@@ -257,7 +257,6 @@ const ViewClientsTable = ({
                                key={column.key}
                                className={`px-1 lg:px-1 xl:px-2 py-3 text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm text-black align-middle break-words`}
                              >
-                               {/* Content Logic (Same as before) */}
                                <div
                                 className="lg:font-normal 2xl:text-center"
                                 title={item[column.key]}
@@ -325,6 +324,10 @@ const ViewClientsTable = ({
                                     {item[column.key]}
                                     <ExternalLink size={12} className="text-[#1D97D7] lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
                                   </a>
+                                ) : column.key === "distance" ? (
+                                  item[column.key] && item[column.key] !== "N/A" && item[column.key] !== "-" ? (
+                                    String(item[column.key]).toLowerCase().includes("km") ? item[column.key] : `${item[column.key]} km`
+                                  ) : <span className="font-bold text-gray-500">—</span>
                                 ) : (
                                   item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                                 )}
@@ -488,6 +491,10 @@ const ViewClientsTable = ({
                             {item[column.key]}
                             <ExternalLink size={12} className="text-blue-600 lg:hidden group-hover:scale-110 transition-transform flex-shrink-0" />
                           </a>
+                        ) : column.key === "distance" ? (
+                          item[column.key] && item[column.key] !== "N/A" && item[column.key] !== "-" ? (
+                            String(item[column.key]).toLowerCase().includes("km") ? item[column.key] : `${item[column.key]} km`
+                          ) : <span className="font-bold text-gray-500">—</span>
                         ) : (
                           item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
                         )}
@@ -667,13 +674,15 @@ const ViewClientsTable = ({
                  </div>
                  
                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    {(item.clientName || item.client_name || item.client?.clientName || item.client?.name || item.client?.client_name) && (
+                      <div>
+                          <span className="block text-gray-400">Client</span>
+                          <span className="font-semibold">{item.clientName || item.client_name || item.client?.clientName || item.client?.name || item.client?.client_name}</span>
+                      </div>
+                    )}
                     <div>
-                        <span className="block text-gray-400">Client</span>
-                        <span className="font-semibold">{item.clientName || item.client_name}</span>
-                    </div>
-                     <div>
                         <span className="block text-gray-400">Address</span>
-                        <span className="break-words">{item.billing_address || item.businessAddress || "-"}</span>
+                        <span className="break-words">{item.deliveryAddress || item.billing_address || item.businessAddress || "-"}</span>
                     </div>
                  </div>
               </div>
@@ -725,11 +734,17 @@ const ViewClientsTable = ({
             </div>
             <div className="flex justify-between items-start">
               <div>
+                {currentModule === "print media" && (
+                  <div className="mb-2">
+                    <p className="text-xs text-gray-500">Unit Number</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words">{item.unitNumber || item.unit || "-"}</p>
+                  </div>
+                )}
                 <p className="text-xs text-gray-500">
                   {currentModule === "commercial"
                     ? "Business Address"
                     : currentModule === "print media"
-                    ? "Billing Address"
+                    ? "Delivery Address"
                     : "Property Address"}
                 </p>
                 <p className="text-sm break-words">
@@ -760,28 +775,7 @@ const ViewClientsTable = ({
                     item.billing_address
                   )}
                 </p>
-                {isMyJobsView && (
-                  <div className="mt-3 space-y-2 pt-2 border-t border-gray-100">
-                    <div className="flex justify-between items-center text-xs">
-                       <span className="text-gray-400 font-medium">Order Date:</span>
-                       <span className="text-gray-700 font-bold">
-                          {item.orderDate ? formatDate(item.orderDate) : (item.order_date ? formatDate(item.order_date) : "-")}
-                       </span>
-                    </div>
-                    {item.distance && (
-                      <div className="flex justify-between items-center text-xs">
-                         <span className="text-gray-400 font-medium">Distance:</span>
-                         <span className="text-gray-700 font-bold">{item.distance}</span>
-                      </div>
-                    )}
-                    <div className="flex flex-col text-xs">
-                       <span className="text-gray-400 font-medium mb-1">Order Details:</span>
-                       <span className="text-gray-700 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
-                          {item.order_details || item.orderDetails || "-"}
-                       </span>
-                    </div>
-                  </div>
-                )}
+
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -885,43 +879,69 @@ const ViewClientsTable = ({
               </div>
             </div>
 
+            {(isMyJobsView || currentModule === "print media") && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs">
+                   <span className="text-gray-400 font-medium">Delivery Date:</span>
+                   <span className="text-gray-700 font-bold">
+                      {item.deliveryDate ? formatDate(item.deliveryDate) : (item.delivery_date ? formatDate(item.delivery_date) : (item.settlementDate ? formatDate(item.settlementDate) : (item.settlement_date ? formatDate(item.settlement_date) : "-")))}
+                   </span>
+                </div>
+                {item.distance && (
+                  <div className="flex items-center gap-2 text-xs">
+                     <span className="text-gray-400 font-medium">Distance (km):</span>
+                     <span className="text-gray-700 font-bold">
+                        {item.distance !== "N/A" && item.distance !== "-" && !String(item.distance).toLowerCase().includes("km") ? `${item.distance} km` : item.distance}
+                     </span>
+                  </div>
+                )}
+                <div className="flex flex-col text-xs">
+                   <span className="text-gray-400 font-medium mb-1">Order Details:</span>
+                   <span className="text-gray-700 font-bold bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      {item.order_details || item.orderDetails || "-"}
+                   </span>
+                </div>
+              </div>
+            )}
 
-            <div>
-              <p className="text-xs text-gray-500">Client Name</p>
-              <p className="font-semibold break-words">
-                {item.clientName || item.client_name}
-              </p>
-            </div>
+            {(item.clientName || item.client_name || item.client?.clientName || item.client?.name || item.client?.client_name) && (
+              <div>
+                <p className="text-xs text-gray-500">Client Name</p>
+                <p className="font-semibold break-words">
+                  {item.clientName || item.client_name || item.client?.clientName || item.client?.name || item.client?.client_name}
+                </p>
+              </div>
+            )}
 
-            <div>
-              <p className="text-xs text-gray-500">
-                {currentModule === "commercial"
-                  ? "Business Address"
-                  : currentModule === "print media"
-                  ? "Billing Address"
-                  : "Property Address"}
-              </p>
-              <p className="text-sm break-words">
-                {item.businessAddress ||
-                  item.property_address ||
-                  item.billing_address}
-              </p>
-            </div>
+            {currentModule !== "print media" && (
+              <div>
+                <p className="text-xs text-gray-500">
+                  {currentModule === "commercial"
+                    ? "Business Address"
+                    : "Property Address"}
+                </p>
+                <p className="text-sm break-words">
+                  {item.businessAddress ||
+                    item.property_address ||
+                    item.billing_address}
+                </p>
+              </div>
+            )}
 
-            <div className="flex justify-between text-xs pt-2">
+            <div className="flex justify-between text-xs">
               <div>
                 <p className="text-gray-500">
                   {currentModule === "commercial"
                     ? "Completion Date"
                     : currentModule === "print media"
-                    ? "Delivery Date"
+                    ? "Order Date"
                     : "Settlement Date"}
                 </p>
                 <p>
                   {formatDate(
-                    item.settlementDate ||
-                      item.settlement_date ||
-                      item.delivery_date
+                    currentModule === "print media"
+                      ? (item.orderDate || item.order_date)
+                      : (item.settlementDate || item.settlement_date || item.delivery_date || item.deliveryDate)
                   )}
                 </p>
               </div>
@@ -933,32 +953,34 @@ const ViewClientsTable = ({
               </div>
             </div>
 
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Stages</p>
-              <div className="flex flex-wrap gap-1">
-                {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
-                  <button
-                    onClick={() => {
-                      const path = `/admin/client/stages/${
-                        currentModule === "commercial"
-                          ? item.matterNumber
-                          : item.matternumber || item.orderId
-                      }/${index + 1}`;
-                      navigate(path);
-                    }}
-                    key={keyName}
-                    className="w-6 h-6 flex items-center justify-center text-white rounded text-xs transition-transform active:scale-95 shadow-sm"
-                    style={{
-                      backgroundColor:
-                        stageColorMap[item?.stages?.[0]?.[keyName]] ||
-                        stageColorMap["default"],
-                    }}
-                  >
-                    {keyName.toUpperCase()}
-                  </button>
-                ))}
+            {showStages && !isMyJobsView && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Stages</p>
+                <div className="flex flex-wrap gap-1">
+                  {Object.keys(item?.stages?.[0] || {}).map((keyName, index) => (
+                    <button
+                      onClick={() => {
+                        const path = `/admin/client/stages/${
+                          currentModule === "commercial"
+                            ? item.matterNumber
+                            : item.matternumber || item.orderId
+                        }/${index + 1}`;
+                        navigate(path);
+                      }}
+                      key={keyName}
+                      className="w-6 h-6 flex items-center justify-center text-white rounded text-xs transition-transform active:scale-95 shadow-sm"
+                      style={{
+                        backgroundColor:
+                          stageColorMap[item?.stages?.[0]?.[keyName]] ||
+                          stageColorMap["default"],
+                      }}
+                    >
+                      {keyName.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             </>
             )}
           </div>
