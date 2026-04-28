@@ -370,10 +370,10 @@ const MatterDetailsModal = ({
               </div>
               <div className="min-w-0">
                 <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-                  Distance
+                  Distance (km)
                 </label>
                 <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
-                  {display.distance || "N/A"}
+                  {display.distance ? (display.distance !== "N/A" && display.distance !== "-" && !String(display.distance).toLowerCase().includes("km") ? `${display.distance} km` : display.distance) : "N/A"}
                 </p>
               </div>
             </>
