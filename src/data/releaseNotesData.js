@@ -34,6 +34,26 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-28",
+          version: "v7.5.11",
+          type: "patch",
+          category: "bugfix",
+          title: "Print Media Unit Number Requirement",
+          description: "Removed the mandatory requirement for the Unit Number field during Print Media order creation.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Optional Unit Number",
+              description: "The Unit Number field is no longer strictly enforced when creating new Print Media orders.",
+              details: "Removed frontend validation and UI asterisks from the Create Order form, allowing users to successfully submit orders without specifying a unit number. Corrected legacy release notes that incorrectly stated the field was mandatory.",
+              icon: Edit,
+            },
+          ],
+          module: "Print Media",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-04-28",
           version: "v7.5.10",
           type: "patch",
           category: "ui_ux",
@@ -229,7 +249,7 @@ export const monthlyReleaseNotes = {
               type: "feature",
               title: "API Schema Standardization",
               description: "Standardized Print Media API fields by renaming 'Unit' to 'unitNumber' and 'Work' to 'orderSubType'.",
-              details: "Renamed internal keys across the frontend to align with the new backend schema. Enforced 'unitNumber' as a mandatory field during order creation to ensure complete production data.",
+              details: "Renamed internal keys across the frontend to align with the new backend schema for accurate 'unitNumber' mapping.",
               icon: Database,
             },
             {
