@@ -49,8 +49,12 @@ const MatterDetailsModal = ({
 
     if (stageData && stageData.costData && !Array.isArray(stageData.costData))
       pushIfObject(stageData.costData);
+    if (stageData && stageData.cost && !Array.isArray(stageData.cost))
+      pushIfObject(stageData.cost);
     if (matter && matter.costData && !Array.isArray(matter.costData))
       pushIfObject(matter.costData);
+    if (matter && matter.cost && !Array.isArray(matter.cost))
+      pushIfObject(matter.cost);
 
     const seen = new Set();
     const deduped = [];
@@ -135,13 +139,21 @@ const MatterDetailsModal = ({
       case "waterCertificate":
         return "Water Certificate";
       case "otherFee_1":
-        return "Other Fee 1";
+      case "fee1":
+        return "Fee 1";
       case "otherFee_2":
-        return "Other Fee 2";
+      case "fee2":
+        return "Fee 2";
       case "otherFee_3":
-        return "Other Fee 3";
+      case "fee3":
+        return "Fee 3";
       case "otherFee_4":
-        return "Other Fee 4";
+      case "fee4":
+        return "Fee 4";
+      case "fixedCost":
+        return "Fixed Cost";
+      case "variableCost":
+        return "Variable Cost";
       case "otherTotal":
         return "Other Total";
       default:
@@ -160,6 +172,12 @@ const MatterDetailsModal = ({
     "otherFee_2",
     "otherFee_3",
     "otherFee_4",
+    "fee1",
+    "fee2",
+    "fee3",
+    "fee4",
+    "fixedCost",
+    "variableCost",
     "otherTotal",
   ];
 
@@ -237,6 +255,11 @@ const MatterDetailsModal = ({
               : details.clients) ||
             details.project ||
             details;
+
+          // Ensure distance is picked up
+          if (details.data?.distance || details.distance) {
+            normalized.distance = details.data?.distance || details.distance;
+          }
         }
 
         if (normalized && mounted) {
@@ -275,7 +298,7 @@ const MatterDetailsModal = ({
           <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
           Client Information
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
               Client Name
@@ -294,15 +317,31 @@ const MatterDetailsModal = ({
           </div>
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-              Client Type
+              Contact Number
             </label>
             <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
-              {display.clientType || display.type || display.ordertype || "N/A"}
+              {display.contact || display.phone || "N/A"}
             </p>
           </div>
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-              Reference Number
+              Company
+            </label>
+            <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+              {display.company || "N/A"}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+              Client Type
+            </label>
+            <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+              {display.clientType || display.type || display.ordertype || display.orderType || "N/A"}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+              Order ID
             </label>
             <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
               {display.matternumber ||
@@ -311,20 +350,33 @@ const MatterDetailsModal = ({
                 "N/A"}
             </p>
           </div>
-          {(currentModule === "vocat" || currentModule === "conveyancing" || currentModule === "commercial" || currentModule === "wills") && display.matterUrl && (
-            <div className="min-w-0 sm:col-span-2">
-              <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-                {currentModule === "commercial" ? "Project URL" : "Matter URL"}
-              </label>
-              <a 
-                href={display.matterUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm sm:text-lg font-semibold text-blue-600 hover:underline break-all"
-              >
-                {display.matterUrl}
-              </a>
-            </div>
+          {currentModule === "print media" && (
+            <>
+              <div className="min-w-0">
+                <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+                  Unit Number
+                </label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                  {display.unitNumber || display.unit || "N/A"}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+                  Work Type
+                </label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                  {display.orderSubType || display.work || "N/A"}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <label className="text-xs sm:text-sm font-medium text-gray-500 block">
+                  Distance (km)
+                </label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                  {display.distance ? (display.distance !== "N/A" && display.distance !== "-" && !String(display.distance).toLowerCase().includes("km") ? `${display.distance} km` : display.distance) : "N/A"}
+                </p>
+              </div>
+            </>
           )}
           <div className="min-w-0">
             <label className="text-xs sm:text-sm font-medium text-gray-500 block">
@@ -337,43 +389,142 @@ const MatterDetailsModal = ({
         </div>
       </div>
 
-      {/* Property/Business Information */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
-          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
-          {currentModule === "commercial"
-            ? "Business Information"
-            : currentModule === "print media"
-            ? "Billing Information"
-            : "Property Information"}
-        </h3>
-        <div className="space-y-2 sm:space-y-3">
-          <div className="min-w-0">
-            <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-              Address
-            </label>
-            <p className="text-sm sm:text-lg font-semibold text-gray-900 break-words">
-              {currentModule === "commercial"
-                ? display.business_address || display.businessAddress || "N/A"
-                : display.property_address || display.propertyAddress || "N/A"}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="min-w-0">
-              <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-                State
-              </label>
-              <p className="text-sm sm:text-lg font-semibold text-gray-900">
-                {display.state || "N/A"}
-              </p>
+      {/* Order & Stages Information for Print Media */}
+      {currentModule === "print media" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
+              Order Details
+            </h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block">Priority</label>
+                  <p className={`text-sm font-bold uppercase ${display.priority === 'Urgent' ? 'text-red-600' : 'text-gray-900'}`}>
+                    {display.priority || "Standard"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block">Status</label>
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold capitalize ${getStatusColor(display.status)}`}>
+                    {display.status || "N/A"}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-gray-500 block">Order Description</label>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {display.order_details || display.notes || "No details provided"}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <label className="text-xs sm:text-sm font-medium text-gray-500 block">
-                Postcode
-              </label>
-              <p className="text-sm sm:text-lg font-semibold text-gray-900">
-                {display.postcode || "N/A"}
-              </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
+              Production Stages
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((num) => {
+                const stageColor = display.stages?.[0]?.[`S${num}`] || 'gray';
+                const stageLabels = { 1: 'S1', 2: 'S2', 3: 'S3', 4: 'S4' };
+                return (
+                  <div key={num} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
+                    <div className={`w-3 h-3 rounded-full shadow-sm ${
+                      stageColor === 'red' ? 'bg-red-500 shadow-red-200' : 
+                      stageColor === 'amber' ? 'bg-amber-500 shadow-amber-200' : 
+                      stageColor === 'green' ? 'bg-green-500 shadow-green-200' : 
+                      'bg-gray-300 shadow-gray-100'
+                    }`} />
+                    <span className="text-sm font-bold text-gray-700">{stageLabels[num]}</span>
+                    <span className="text-xs text-gray-400 capitalize">{stageColor}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location & Dates Information */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          {/* Address Column */}
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
+              Location Details
+            </h3>
+            <div className="space-y-4">
+              {currentModule === "print media" ? (
+                <>
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">Billing Address</label>
+                    <p className="text-sm font-semibold text-gray-900 leading-snug">
+                      {display.billingAddress || display.property_address || display.propertyAddress || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">Delivery Address</label>
+                    <p className="text-sm font-semibold text-gray-900 leading-snug">
+                      {display.deliveryAddress || "N/A"}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">
+                    {currentModule === "commercial" ? "Business Address" : "Property Address"}
+                  </label>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug">
+                    {currentModule === "commercial"
+                      ? display.business_address || display.businessAddress || "N/A"
+                      : display.property_address || display.propertyAddress || "N/A"}
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block">State</label>
+                  <p className="text-sm font-semibold text-gray-900 uppercase">{display.state || "N/A"}</p>
+                </div>
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block">Postcode</label>
+                  <p className="text-sm font-semibold text-gray-900">{display.postcode || display.postCode || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dates Column */}
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mr-2" />
+              Key Dates
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">
+                    {currentModule === "print media" ? "Order Date" : (currentModule === "commercial" ? "Project Start" : "Matter Date")}
+                  </label>
+                  <p className="text-sm font-semibold text-gray-900">{formatDate(display.orderDate || display.matterDate || display.matter_date)}</p>
+                </div>
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">
+                    {currentModule === "print media" ? "Delivery Date" : (currentModule === "commercial" ? "Project End" : "Settlement Date")}
+                  </label>
+                  <p className="text-sm font-semibold text-gray-900">{formatDate(display.deliveryDate || display.settlementDate || display.settlement_date)}</p>
+                </div>
+              </div>
+              {display.createdAt && (
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-500 block leading-tight mb-1">Created On</label>
+                  <p className="text-sm font-semibold text-gray-900">{formatDate(display.createdAt)}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -465,14 +616,21 @@ const MatterDetailsModal = ({
                     return (
                       <div
                         key={key}
-                        className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded text-sm"
+                        className="flex flex-col p-2 sm:p-3 bg-gray-50 rounded text-sm"
                       >
-                        <span className="text-gray-700 truncate mr-2">
-                          {labelForKey(key)}
-                        </span>
-                        <span className="font-semibold text-gray-900 whitespace-nowrap">
-                          {formatCurrency(numeric)}
-                        </span>
+                        <div className="flex justify-between items-center w-full">
+                          <span className="text-gray-700 truncate mr-2">
+                            {labelForKey(key)}
+                          </span>
+                          <span className="font-semibold text-gray-900 whitespace-nowrap">
+                            {formatCurrency(numeric)}
+                          </span>
+                        </div>
+                        {(cost[`${key}Note`] || cost[`${key.replace(/_/g, "")}Note`]) && (
+                          <div className="mt-1 text-xs text-gray-500 italic border-t border-gray-200/50 pt-1">
+                            {cost[`${key}Note`] || cost[`${key.replace(/_/g, "")}Note`]}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -576,6 +734,7 @@ const MatterDetailsModal = ({
                   <div className="flex-shrink-0">
                     <img
                       src={
+                        localStorage.getItem("logo") ||
                         display.logo ||
                         display.__raw?.logo ||
                         "/logo-placeholder.png"
@@ -612,6 +771,7 @@ const MatterDetailsModal = ({
                         {display.clientType ||
                           display.type ||
                           display.ordertype ||
+                          display.orderType ||
                           "N/A"}
                       </span>
                       <span className="truncate">
@@ -667,10 +827,6 @@ const MatterDetailsModal = ({
             {/* Footer */}
             <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                {/* <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Last updated: {formatDate(display.updatedAt)}</span>
-                </div> */}
                 <div className="flex space-x-2 sm:space-x-3 justify-end">
                   <button
                     onClick={onClose}

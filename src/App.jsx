@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import WillsForm from "./pages/admin/WillsForm";
 import ReferenceMatter from "./pages/admin/ReferenceMatter";
+import WillsResetPassword from "./pages/wills/WillsResetPassword";
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -64,6 +65,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/release-notes" element={<ReleaseNotes />} />
+        <Route path="/cookie-policy" element={<ComingSoon />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signup-success" element={<SignUpSuccess />} />
         <Route path="/get-started-free" element={<GetStartedFree />} />
@@ -75,6 +77,7 @@ function App() {
         <Route path="/client/set-password" element={<SetClientPassword />} />
         <Route path="/client/login" element={<ClientLogin />} />
         <Route path="/client/forgotPassword" element={<ForgotPassword />} />
+        <Route path="/wills/form/reset-password" element={<WillsResetPassword />} />
         <Route path="/wills/form" element={<WillsForm />} />
         <Route path="/wills/form/v1/get-by-reference-number/:referenceNumber" element={<WillsForm />} />
 
@@ -136,6 +139,19 @@ function App() {
             </RequireAuthClient>
           }
         />
+
+        <Route
+          path="idg/orders/my-jobs"
+          element={
+            <RequireAuth>
+              <AutoLogoutWrapper>
+                <AppLayout />
+              </AutoLogoutWrapper>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<ViewClients />} />
+        </Route>
 
         {/* 🔒 Protected User Routes */}
         <Route

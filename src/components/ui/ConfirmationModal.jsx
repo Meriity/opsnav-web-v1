@@ -73,7 +73,9 @@ export default function ConfirmationModal({
                 {title}
               </Dialog.Title>
               <div className="mt-2">
-                <p className="text-sm text-gray-600">{message || children}</p>
+              <div className="mt-2 text-sm text-gray-600">
+                {message || children}
+              </div>
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">

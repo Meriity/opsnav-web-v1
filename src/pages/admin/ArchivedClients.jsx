@@ -14,6 +14,7 @@ import ClientAPI from "@/api/userAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import VocatFasAPI from "@/api/vocatFasAPI";
 import WillsAPI from "@/api/willsAPI";
+import AdminAPI from "@/api/adminAPI";
 import { useArchivedClientStore } from "../ArchivedClientStore/UseArchivedClientStore.js";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
@@ -21,6 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MatterDetailsModal from "@/components/ui/MatterDetailsModal";
 import { useClientDetails } from "@/hooks/useClientDetails";
 import { motion } from "framer-motion";
+import ConfirmationModal from "@/components/ui/ConfirmationModal.jsx";
 import {
   Archive,
   Download,
@@ -35,6 +37,7 @@ import {
   AlertCircle,
   Users,
   Edit,
+  Trash2,
 } from "lucide-react";
 
 function ClientsPerPage({ value, onChange }) {
@@ -113,6 +116,11 @@ export default function ArchivedClients() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [clientsPerPage, setClientsPerPage] = useState(100);
+
+  // Delete order state (Print Media only)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const adminApi = useMemo(() => new AdminAPI(), []);
 
   // Handle navigation from search dropdown
   const location = useLocation();
@@ -389,23 +397,33 @@ export default function ArchivedClients() {
     if (fromDate && toDate) {
       filteredData = filteredData.filter((client) => {
         let clientDate;
+        
+        // Helper for robust parsing
+        const parseDate = (d) => {
+          if (!d || d === "N/A") return moment.invalid();
+          return moment(d, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]);
+        };
+
         if (currentModule === "commercial") {
-          clientDate = moment(
-            new Date(client?.settlement_date || client?.settlementDate)
-          );
+          clientDate = parseDate(client?.settlement_date || client?.settlementDate);
         } else if (currentModule === "print media") {
           if (client.deliveryDate && client.deliveryDate !== "N/A") {
-            clientDate = moment(client.deliveryDate);
+            clientDate = parseDate(client.deliveryDate);
           } else if (client.orderDate && client.orderDate !== "N/A") {
-             clientDate = moment(client.orderDate);
+             clientDate = parseDate(client.orderDate);
           } else {
             return false;
           }
+        } else if (currentModule === "vocat") {
+          // Vocat uses matterDate primarily as it doesn't have a settlementDate field in the UI
+          clientDate = parseDate(client.matterDate || client.matter_date);
         } else {
-          if (!client?.settlement_date) return false;
-          clientDate = moment(client.settlement_date);
+          // For Conveyancing and Wills: STRICTLY use settlement date
+          const dateToUse = client.settlement_date || client.settlementDate;
+          if (!dateToUse) return false;
+          clientDate = parseDate(dateToUse);
         }
-        return clientDate.isBetween(fromDate, toDate, "day", "[]");
+        return clientDate.isValid() && clientDate.isBetween(fromDate, toDate, "day", "[]");
       });
     }
 
@@ -616,17 +634,20 @@ export default function ArchivedClients() {
       const to = moment(withTo).format("YYYY-MM-DD");
 
       let rawData = [];
-      if (currentModule === "commercial" || currentModule === "vocat") {
-        // For commercial and vocat, filter the already-fetched list
+      if (currentModule === "commercial" || currentModule === "vocat" || currentModule === "wills") {
+        // For commercial, vocat and wills, filter the already-fetched list
         rawData = filteredClientList.filter((client) => {
           const dateToUse =
             currentModule === "commercial"
               ? client.settlement_date || client.settlementDate
-              : client.matterDate;
+              : currentModule === "vocat"
+              ? client.matterDate
+              : client.settlementDate || client.settlement_date; // Wills use settlement date
 
           if (!dateToUse) return false;
-          const clientDate = moment(new Date(dateToUse));
-          return clientDate.isBetween(withFrom, withTo, "day", "[]");
+          // Use robust parsing for export as well
+          const clientDate = moment(dateToUse, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]);
+          return clientDate.isValid() && clientDate.isBetween(withFrom, withTo, "day", "[]");
         });
       } else {
         const res = await api.getArchivedClientsDate(from, to);
@@ -640,6 +661,30 @@ export default function ArchivedClients() {
       if (!rawData || rawData.length === 0) {
         toast.info("No data available for the selected date range");
       } else {
+
+        const getCostValue = (item, field) => {
+            if (item[field] !== undefined && item[field] !== null) {
+                return item[field]?.$numberDecimal || item[field];
+            }
+            if (Array.isArray(item.costData) && item.costData.length > 0) {
+                const val = item.costData[0][field];
+                if (val !== undefined && val !== null) return val?.$numberDecimal || val;
+            }
+            if (item.costData && typeof item.costData === 'object' && !Array.isArray(item.costData)) {
+                const val = item.costData[field];
+                if (val !== undefined && val !== null) return val?.$numberDecimal || val;
+            }
+            if (Array.isArray(item.cost) && item.cost.length > 0) {
+                const val = item.cost[0][field];
+                if (val !== undefined && val !== null) return val?.$numberDecimal || val;
+            }
+            if (item.cost && typeof item.cost === 'object' && !Array.isArray(item.cost)) {
+                const val = item.cost[field];
+                if (val !== undefined && val !== null) return val?.$numberDecimal || val;
+            }
+            return "";
+        };
+
         // Map data based on module to include required fields and format dates
         let exportData = [];
         if (currentModule === "vocat") {
@@ -653,6 +698,8 @@ export default function ArchivedClients() {
             "Client Address": item.clientAddress || item.PROPERTY_ADDRESS,
             "State": item.state || item.STATE,
             "Client Type": item.clientType || item.CLIENT_TYPE,
+            "Total Cost": getCostValue(item, "totalCosts") || getCostValue(item, "TOTAL_COSTS") || "",
+            "Invoice Amount": getCostValue(item, "invoiceAmount") || getCostValue(item, "INVOICE_AMOUNT") || "",
             "Criminal Incident Date": item.criminalIncidentDate
               ? moment(item.criminalIncidentDate).format("DD/MM/YYYY")
               : "",
@@ -677,6 +724,8 @@ export default function ArchivedClients() {
             "Completion Date": (item.settlement_date || item.settlementDate) 
               ? moment(item.settlement_date || item.settlementDate).format("DD/MM/YYYY") 
               : "",
+            "Total Cost": getCostValue(item, "totalCosts") || getCostValue(item, "TOTAL_COSTS") || "",
+            "Invoice Amount": getCostValue(item, "invoiceAmount") || getCostValue(item, "INVOICE_AMOUNT") || "",
             "Status": item.status || "archived",
             "S1": item.stage1?.colorStatus || item.stageOne?.colorStatus || "",
             "S2": item.stage2?.colorStatus || item.stageTwo?.colorStatus || "",
@@ -699,6 +748,8 @@ export default function ArchivedClients() {
               "Settlement Date": (item.SETTLEMENT_DATE || item.settlementDate) 
                 ? moment(item.SETTLEMENT_DATE || item.settlementDate).format("DD/MM/YYYY") 
                 : "",
+              "Total Cost": getCostValue(item, "totalCosts") || getCostValue(item, "TOTAL_COSTS") || "",
+              "Invoice Amount": getCostValue(item, "invoiceAmount") || getCostValue(item, "INVOICE_AMOUNT") || "",
               "Referral": item.stage1?.referral || "",
               "Data Entry By": item.DATA_ENTRY_BY || item.dataEntryBy,
               "Status": item.CLOSE_MATTER || item.closeMatter || item.status
@@ -719,6 +770,8 @@ export default function ArchivedClients() {
             "Billing Address": item.propertyAddress || item.deliveryAddress,
             "State": item.state,
             "Order Type": item.ordertype || item.orderType,
+            "Total Cost": getCostValue(item, "totalCosts") || getCostValue(item, "TOTAL_COSTS") || "",
+            "Invoice Amount": getCostValue(item, "invoiceAmount") || getCostValue(item, "INVOICE_AMOUNT") || "",
             "Order Date": item.orderDate ? moment(item.orderDate).format("DD/MM/YYYY") : "",
             "Delivery Date": item.deliveryDate ? moment(item.deliveryDate).format("DD/MM/YYYY") : "",
             "Status": item.status
@@ -1147,6 +1200,10 @@ export default function ArchivedClients() {
                     headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                     OnEye={handleViewClient}
                     EditOrder={true}
+                    onDelete={currentModule === "print media" ? (item) => {
+                      setOrderToDelete(item);
+                      setShowDeleteModal(true);
+                    } : undefined}
                     sortedColumn={sortedColumn}
                     sortDirection={sortDirection}
                     handleSort={handleSort}
@@ -1257,6 +1314,18 @@ export default function ArchivedClients() {
                       </div>
 
                       <div className="mt-4 flex justify-end gap-2">
+                        {currentModule === "print media" && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                          <button
+                            onClick={() => {
+                              setOrderToDelete(client);
+                              setShowDeleteModal(true);
+                            }}
+                            className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-medium"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        )}
                         {localStorage.getItem("role") === "superadmin" && (
                           <button
                             onClick={() => {
@@ -1355,6 +1424,39 @@ export default function ArchivedClients() {
         matter={selectedClient}
         currentModule={currentModule}
         isLoading={clientDetailsLoading}
+      />
+
+      {/* Delete Order Confirmation Modal (Print Media only) */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setOrderToDelete(null);
+        }}
+        title="Delete Completed Order"
+        message={`Are you sure you want to permanently delete order ${orderToDelete?.orderId || orderToDelete?.id || ""}? This action cannot be undone.`}
+        confirmLabel="Delete Order"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          if (!orderToDelete) return;
+          try {
+            const orderId = orderToDelete.orderId || orderToDelete.id || orderToDelete._id;
+            await adminApi.deleteIDGOrder(orderId);
+            toast.success(`Order ${orderId} deleted successfully`);
+            setShowDeleteModal(false);
+            setOrderToDelete(null);
+            // Refresh the page to reflect the deletion
+            queryClient.invalidateQueries(["archivedClients", currentModule]);
+            window.location.reload();
+          } catch (error) {
+            console.error("Failed to delete order:", error);
+            toast.error(error.message || "Failed to delete order");
+          }
+        }}
+        onDiscard={() => {
+          setShowDeleteModal(false);
+          setOrderToDelete(null);
+        }}
       />
     </div>
   );

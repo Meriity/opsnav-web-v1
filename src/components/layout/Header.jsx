@@ -39,14 +39,19 @@ export default function Header() {
   const { archivedClients } = useArchivedClientStore();
 
   const navigate = useNavigate();
-  const currentModule = localStorage.getItem("currentModule");
-  const isPrintMedia = currentModule === "print media";
+  const currentModule = (localStorage.getItem("currentModule") || "").toLowerCase();
+  const location = useLocation();
+  
+  // Robust module state detection
+  const isPrintMedia = currentModule === "print media" || currentModule === "idg" || location.pathname.includes("/idg/") || location.pathname.includes("/orders");
+  const isWills = currentModule === "wills" || location.pathname.includes("/wills");
+  const isCommercial = currentModule === "commercial" || location.pathname.includes("/commercial");
+  const isVocat = currentModule === "vocat" || location.pathname.includes("/vocat");
 
   const searchBoxRef = useRef(null);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const location = useLocation();
   const isArchivedPage = location.pathname.includes("archived");
 
   const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 0 });
@@ -130,7 +135,9 @@ export default function Header() {
     const isArchived =
       status === "closed" ||
       status === "archived" ||
+      status === "completed" ||
       closeMatter === "closed" ||
+      closeMatter === "completed" ||
       closeMatter === "cancelled";
 
     if (isArchived) {
@@ -165,17 +172,41 @@ export default function Header() {
     try {
       const lowercasedValue = value.toLowerCase();
 
+      // Normalize helper to handle nested arrays
+      const normalize = (data) => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        // IMPORTANT: Check activeOrders/closedOrders BEFORE clients
+        // because IDG API returns { activeOrders: [...], clients: [...], users: [...] }
+        return data.activeOrders || data.closedOrders || data.orders || data.data || data.clients || [];
+      };
+
       let response = [];
-      if (currentModule === "commercial") {
-        response = isArchivedPage
-          ? await commercialApi.getArchivedProjects()
-          : await commercialApi.getActiveProjects();
+      if (isCommercial) {
+        try {
+          const [activeResult, archivedResult] = await Promise.allSettled([
+            commercialApi.getActiveProjects(),
+            commercialApi.getArchivedProjects()
+          ]);
+          const active = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'commercial', isArchived: false })) : [];
+          const archived = archivedResult.status === 'fulfilled' ? normalize(archivedResult.value).map(i => ({ ...i, type: 'commercial', isArchived: true })) : [];
+          response = [...active, ...archived];
+        } catch (e) {
+          console.warn("Error fetching Commercial search results:", e);
+          response = [];
+        }
       }
 
       // 🔹 WILLS
-      else if (currentModule === "wills") {
+      else if (isWills) {
         try {
-          response = await willsApi.getActiveProjects();
+          const [activeResult, archivedResult] = await Promise.allSettled([
+            willsApi.getActiveClients(),
+            willsApi.getArchivedClients()
+          ]);
+          const active = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'wills', isArchived: false })) : [];
+          const archived = archivedResult.status === 'fulfilled' ? normalize(archivedResult.value).map(i => ({ ...i, type: 'wills', isArchived: true })) : [];
+          response = [...active, ...archived];
         } catch (e) {
           console.warn("Error fetching Wills search results:", e);
           response = [];
@@ -183,55 +214,85 @@ export default function Header() {
       }
 
       // 🔹 PRINT MEDIA
-      else if (currentModule === "print media") {
+      else if (isPrintMedia) {
         try {
-          // Fetch all active orders to support client-side filtering and badging
-          // response = await api.getIDGSearchResult(value);
-           const result = await api.getIDGOrders();
-           response = result.activeOrders || []; 
+           console.log("[SEARCH DEBUG] Entering Print Media block");
+           const [activeResult, completedResult] = await Promise.allSettled([
+             api.getIDGOrders(),
+             api.getCompletedIDGOrders()
+           ]);
+
+           console.log("[SEARCH DEBUG] Active result status:", activeResult.status, "value sample:", activeResult.status === 'fulfilled' ? (Array.isArray(activeResult.value) ? activeResult.value.length + " items" : JSON.stringify(Object.keys(activeResult.value || {}))) : activeResult.reason);
+           console.log("[SEARCH DEBUG] Completed result status:", completedResult.status, "value sample:", completedResult.status === 'fulfilled' ? (Array.isArray(completedResult.value) ? completedResult.value.length + " items" : JSON.stringify(Object.keys(completedResult.value || {}))) : completedResult.reason);
+
+           const activeOrders = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'print media', isArchived: false })) : [];
+           const completedOrders = completedResult.status === 'fulfilled' ? normalize(completedResult.value).map(i => ({ ...i, type: 'print media', isArchived: true })) : [];
+
+           console.log("[SEARCH DEBUG] Normalized active:", activeOrders.length, "completed:", completedOrders.length);
+           if (activeOrders.length > 0) console.log("[SEARCH DEBUG] Sample order keys:", Object.keys(activeOrders[0]));
+
+           response = [...activeOrders, ...completedOrders];
         } catch (e) {
-          console.warn(
-            "Error fetching IDG search results, falling back to empty:",
-            e
-          );
+          console.warn("Error fetching IDG search results:", e);
           response = [];
         }
       }
 
       // 🔹 VOCAT
-      else if (currentModule === "vocat") {
+      else if (isVocat) {
         try {
           const vocatApi = new VocatFasAPI(); 
-          response = await vocatApi.getActiveClients();
+          const [activeResult, archivedResult] = await Promise.allSettled([
+            vocatApi.getActiveClients(),
+            vocatApi.getArchivedClients()
+          ]);
+          const active = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'vocat', isArchived: false })) : [];
+          const archived = archivedResult.status === 'fulfilled' ? normalize(archivedResult.value).map(i => ({ ...i, type: 'vocat', isArchived: true })) : [];
+          response = [...active, ...archived];
         } catch (e) {
           console.warn("Error fetching VOCAT search results:", e);
           response = [];
         }
       }
 
-      // 🔹 ARCHIVED
+      // 🔹 ARCHIVED (Fallback/Zustand logic)
       else if (archivedClients && archivedClients.length > 0) {
         response = archivedClients.map((c) => c.__raw || c);
       }
+
       // 🔹 DEFAULT (Conveyancing)
       else {
         try {
-          response = await api.getClients();
+          const [activeResult, archivedResult] = await Promise.allSettled([
+            api.getClients(),
+            api.getArchivedClients ? api.getArchivedClients() : Promise.resolve([])
+          ]);
+          const active = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'conveyancing', isArchived: false })) : [];
+          const archived = archivedResult.status === 'fulfilled' ? normalize(archivedResult.value).map(i => ({ ...i, type: 'conveyancing', isArchived: true })) : [];
+          response = [...active, ...archived];
         } catch (e) {
-          console.warn(
-            "Error fetching clients for search, falling back to empty:",
-            e
-          );
+          console.warn("Error fetching clients for search:", e);
           response = [];
         }
       }
 
-      // Normalize
-      response = Array.isArray(response)
-        ? response
-        : response?.data || response?.clients || [];
+      // 🔹 GLOBAL DISCOVERY FALLBACK (If no results in current module, search IDG if query looks like IDG)
+      if (response.length === 0 && lowercasedValue.includes("idg")) {
+        try {
+          const [activeResult, completedResult] = await Promise.allSettled([
+            api.getIDGOrders(),
+            api.getCompletedIDGOrders()
+          ]);
+          const active = activeResult.status === 'fulfilled' ? normalize(activeResult.value).map(i => ({ ...i, type: 'print media', isArchived: false })) : [];
+          const completed = completedResult.status === 'fulfilled' ? normalize(completedResult.value).map(i => ({ ...i, type: 'print media', isArchived: true })) : [];
+          response = [...active, ...completed];
+        } catch (e) {
+          console.warn("Global IDG discovery failed:", e);
+        }
+      }
 
       const searchWords = lowercasedValue.split(/\s+/).filter(Boolean);
+      console.log("[SEARCH DEBUG] Module:", currentModule, "isPrintMedia:", isPrintMedia, "Total response items:", response.length, "Search words:", searchWords);
 
       const getNumericIdentifiers = (item) => {
         const raw = item.__raw || item;
@@ -244,96 +305,59 @@ export default function Header() {
       const filteredResults = (response || [])
         .map((item) => {
           const raw = item.__raw || item;
-          let matchedField = null; // Store which field matched
+          let matchedField = null;
 
-          const printMediaIds = [
-            { val: String(raw.orderId), key: "Order ID" },
-            { val: String(raw.clientId), key: "Client ID" }
+          // 1. Identify all searchable fields (Numeric/IDs & General Text)
+          const searchPool = [
+            // IDs & Numbers (Prioritize these)
+            { val: raw.matterNumber || raw.matternumber || raw.MATTER_NUMBER, key: "Matter Number" },
+            { val: raw.orderId || raw.ORDER_ID || raw.order_id || raw.orderID, key: "Order ID" },
+            { val: raw.clientId || raw.client_id || raw.CLIENT_ID || raw.clientID, key: "Client ID" },
+            { val: raw.fasNumber || raw.fas_number || raw.FAS_NUMBER, key: "FAS Number" },
+            { val: raw.referenceNumber || raw.reference_number || raw.id || raw._id, key: "Ref ID" },
+            
+            // Names & Text
+            { val: raw.clientName || raw.client_name || raw.CLIENT_NAME || raw.name, key: "Client Name" },
+            { val: raw.businessName || raw.BUSINESS_NAME, key: "Business Name" },
+            { val: raw.propertyAddress || raw.PROPERTY_ADDRESS || raw.deliveryAddress || raw.billingAddress || raw.property_address || raw.businessAddress || raw.delivery_address || raw.billing_address, key: "Address" },
+            { val: raw.state || raw.STATE, key: "State" },
+            { val: raw.clientType || raw.type || raw.CLIENT_TYPE || raw.orderType || raw.workType, key: "Type" },
+            { val: raw.notes || raw.NOTES, key: "Notes" },
+            { val: raw.matterReferenceNumber || raw.MATTER_REFERENCE_NUMBER, key: "Matter Ref" },
+            { val: raw.postCode || raw.postcode || raw.postalCode || raw.POSTCODE || raw.post_code, key: "Post Code" },
           ]
             .filter((f) => f.val && f.val !== "undefined" && f.val !== "null")
             .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
 
-          const numericFields = [
-            { 
-              val: String(raw.matterNumber), 
-              key: currentModule === "commercial" ? "Project number" : "Matter number" 
-            },
-          ];
+          const isMatch = searchWords.every((word) => {
+            const lowerWord = word.toLowerCase();
+            const numericWord = word.replace(/\D/g, "");
+            const hasNumbers = /\d/.test(word);
 
-            // 🔹 COMMON FIELDS (Conveyancing / Commercial / VOCAT / Print Media)
-            const textFields = [
-              { val: raw.clientName || raw.client_name, key: "Client Name" },
-              { val: raw.businessName, key: "Business Name" },
-              {
-                val:
-                  raw.businessAddress ||
-                  raw.propertyAddress ||
-                  raw.property_address,
-                key: "Address",
-              },
-              { val: raw.state, key: "State" },
-              { val: raw.clientType || raw.type, key: "Client Type" },
-              { val: raw.referral || raw.referralName, key: "Referral" },
+            const matched = searchPool.find((f) => {
+              // Exact matches or substring matches for alphanumeric words
+              if (f.val.includes(lowerWord)) return true;
               
-              // Added Notes as per user data
-              { val: raw.notes, key: "Notes" }, 
-
-              // VOCAT Specific
-              { val: raw.matterReferenceNumber, key: "Matter Ref" },
-              { val: raw.fasNumber, key: "FAS Number" },
-            ]
-              .filter((f) => f.val)
-              .map((f) => ({ ...f, val: String(f.val).toLowerCase() }));
-
-            const isMatch = searchWords.every((word) => {
-              const lowerWord = word.toLowerCase();
-              const numericWord = word.replace(/\D/g, "");
-              const isPureNumeric = /^\d+$/.test(word);
-
-              // Helper to check match and set matchedField
-              const check = (list) => {
-                const match = list.find((f) => {
-                  if (f.key.toLowerCase().includes("number") && isPureNumeric) {
-                    return f.val === numericWord || f.val.startsWith(numericWord);
-                  }
-                  return f.val.includes(lowerWord);
-                });
-
-                if (match) {
-                  // If matchedField is not set, set it.
-                  // If it IS set, only overwrite if the new match is "more specific" (e.g. ID or Name vs general text)
-                  if (!matchedField) {
-                    matchedField = match.key;
-                  } else {
-                    const isSpecific = 
-                      match.key.toLowerCase().includes("number") || 
-                      match.key.includes("ID") || 
-                      match.key.includes("Ref") ||
-                      match.key === "Client Name" || 
-                      match.key === "Business Name";
-                    
-                    if (isSpecific) {
-                       matchedField = match.key;
-                    }
-                  }
-                  return true;
+              // If word has numbers, try matching the numeric part against IDs
+              if (hasNumbers && numericWord.length > 2) {
+                if (f.key.toLowerCase().includes("id") || f.key.toLowerCase().includes("number")) {
+                  return f.val.includes(numericWord);
                 }
-                return false;
-              };
+              }
+              return false;
+            });
 
-            // 🟠 PRINT MEDIA — ALPHANUMERIC SAFE SEARCH
-            if (isPrintMedia) {
-              return check(printMediaIds) || check(textFields);
+            if (matched) {
+              // Prioritize specific fields for "Matched Field" label
+              if (!matchedField || 
+                 (matched.key.toLowerCase().includes("id") || 
+                  matched.key.toLowerCase().includes("number") ||
+                  matched.key.includes("Name"))) {
+                matchedField = matched.key;
+              }
+              return true;
             }
-
-            // 🔵 COMMERCIAL / CONVEYANCING / VOCAT — STRICT NUMERIC
-            if (isPureNumeric) {
-               // Check numeric AND text fields (for things like FAS number which might be numeric)
-              return check(numericFields) || check(textFields);
-            }
-
-            // 🔵 TEXT SEARCH
-            return check(textFields);
+            return false;
           });
 
           return isMatch ? { ...item, matchedField } : null;
@@ -610,7 +634,7 @@ export default function Header() {
                   </AnimatePresence>
                 </div>
               </div>
-              {!isPrintMedia && <NotificationBell />}
+              {!isPrintMedia && currentModule !== "wills" && <NotificationBell />}
             </div>
           </div>
         </div>
@@ -676,7 +700,7 @@ export default function Header() {
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-[#2E3D99] group-hover:scale-125 transition-transform" />
                             <span className="font-bold text-gray-800 text-sm group-hover:text-[#2E3D99] transition-colors">
-                              {item?.matterNumber || item?.orderId}
+                              {item?.matterNumber || item?.matternumber || item?.orderId || item?.orderid || item?.id || item?.referenceNumber || "Unknown ID"}
                             </span>
                             {/* Hide status for Print Media as requested */}
                             {item?.status && !isPrintMedia && (
@@ -707,13 +731,16 @@ export default function Header() {
 
                           <div className="pl-4">
                             <p className="text-sm font-medium text-gray-600 truncate">
-                              {item?.clientName}
+                              {item?.clientName || item?.client_name || item?.CLIENT_NAME || "Unknown Client"}
                             </p>
                             <p className="text-xs text-gray-400 truncate max-w-[200px]">
                               {item?.propertyAddress ||
+                                item?.property_address ||
                                 item?.deliveryAddress ||
+                                item?.billingAddress ||
                                 item?.businessAddress ||
                                 item?.clientEmail ||
+                                item?.email ||
                                 "No detailed info"}
                             </p>
                           </div>

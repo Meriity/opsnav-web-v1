@@ -12,7 +12,7 @@ export const WILLS_ENDPOINTS = {
 
   // Dashboard
   DASHBOARD: "/wills/dashboard",
-
+  
   // Outstanding Tasks
   OUTSTANDING_TASKS: "/wills/user/tasks/outstanding",
 
@@ -31,7 +31,7 @@ export const WILLS_ENDPOINTS = {
   COST_BY_ID: "/wills/clients/costs", // + /{{matterNumber}}
 
   // Search
-  SEARCH_CLIENTS: "/wills/user/clients/active", // Re-using active list for search filtering on frontend for now, or check if search exists
+  SEARCH_CLIENTS: "/wills/user/clients/active",
 
   // Check Exists
   CHECK_CLIENT_EXISTS: "/wills/clients/check", // + /{{matterNumber}}
@@ -52,4 +52,10 @@ export const WILLS_ENDPOINTS = {
   GENERATE_SIGNED_URLS: "/wills/form/v1/generate-signed-urls",
   UPLOAD_MULTIPLE_URLS: "/wills/form/v1/upload-multiple-urls",
   SEND_EMAIL: "/wills/form/v1/send-email",
+  SIGNUP: "/wills/form/v1/signup",
+  LOGIN: "/wills/form/v1/login",
+  FORGOT_PASSWORD: "/wills/form/v1/forgot-password",
+  RESET_PASSWORD: "/wills/form/v1/reset-password",
+  UNLOCK_FORM: "/wills/form/v1/unlock-form",
+  LOAD_FORM_V1: "/wills/form/v1",
 };

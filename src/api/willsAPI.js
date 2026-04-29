@@ -10,7 +10,8 @@ class WillsAPI {
   }
 
   getHeaders() {
-    const token = localStorage.getItem("authToken");
+    // Prioritize clientAuthToken for returning users/clients, fallback to admin authToken
+    const token = localStorage.getItem("clientAuthToken") || localStorage.getItem("authToken");
     const headers = {
       "Content-Type": "application/json",
     };
@@ -28,7 +29,14 @@ class WillsAPI {
       } catch {
         errorData = { message: "Internal server error" };
       }
-      const error = new Error(errorData.message || "Internal server error");
+      
+      const message = errorData.error || errorData.message || "Internal server error";
+      console.error(`[WillsAPI] Backend 500 Error: ${message}`, {
+          url: response.url,
+          data: errorData
+      });
+
+      const error = new Error(message);
       error.response = { status: response.status, data: errorData };
       throw error;
     }
@@ -51,7 +59,7 @@ class WillsAPI {
 
     if (!response.ok) {
       const error = new Error(
-        data.message || `HTTP error! status: ${response.status}`
+        data.error || data.message || `HTTP error! status: ${response.status}`
       );
       error.response = { status: response.status, data };
       throw error;
@@ -434,6 +442,22 @@ class WillsAPI {
     }
   }
 
+  async unlockForm(matterReferenceNumber) {
+    try {
+      // POST /v1/unlock-form
+      // Body: { "matterReferenceNumber": "..." }
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.UNLOCK_FORM}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ matterReferenceNumber }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in unlockForm:", error);
+      throw error;
+    }
+  }
+
   // --- File Upload V1 ---
   async generateSignedUrls(files) {
     try {
@@ -473,6 +497,79 @@ class WillsAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error sending wills email:", error);
+      throw error;
+    }
+  }
+
+  async signup(payload) {
+    try {
+      // firmId is retrieved from localStorage("userID") as requested
+      const firmId = localStorage.getItem("userID");
+      const fullPayload = { ...payload, firmId };
+      
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.SIGNUP}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullPayload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Signup:", error);
+      throw error;
+    }
+  }
+
+  async login(payload) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.LOGIN}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Login:", error);
+      throw error;
+    }
+  }
+
+  async loadFormV1(matterReferenceNumber) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.LOAD_FORM_V1}/${matterReferenceNumber}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in LOAD FORM V1:", error);
+      throw error;
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.FORGOT_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Forgot Password:", error);
+      throw error;
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.RESET_PASSWORD}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error in Wills Reset Password:", error);
       throw error;
     }
   }

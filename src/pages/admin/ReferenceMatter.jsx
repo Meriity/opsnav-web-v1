@@ -14,6 +14,7 @@ export default function ReferenceMatter() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
   const [selectedMatter, setSelectedMatter] = useState(null);
   const [matterNumberInput, setMatterNumberInput] = useState("");
 
@@ -111,6 +112,30 @@ export default function ReferenceMatter() {
     }
   };
 
+  const handleUnlockForm = (item) => {
+    setSelectedMatter(item);
+    setIsUnlockModalOpen(true);
+  };
+
+  const handleConfirmUnlock = async () => {
+    const referenceNumber = selectedMatter?.reference_matter_number;
+    if (!referenceNumber || referenceNumber === "N/A") {
+      toast.error("Reference number not found");
+      return;
+    }
+
+    try {
+      await willsApi.unlockForm(referenceNumber);
+      toast.success("Form unlocked successfully!");
+      setIsUnlockModalOpen(false);
+      fetchSubmittedForms(); // Refresh the list
+    } catch (error) {
+      console.error("Error unlocking form:", error);
+      toast.error(error.message || "Failed to unlock form");
+      throw error;
+    }
+  };
+
   const handleDownloadDocx = async (item) => {
     const referenceNumber = item.reference_matter_number;
     if (!referenceNumber || referenceNumber === "N/A") {
@@ -186,6 +211,7 @@ export default function ReferenceMatter() {
               onEdit={handleEditClick}
               onConvert={handleConvertClick}
               onDownloadDocx={handleDownloadDocx}
+              onUnlock={handleUnlockForm}
               editText="Review"
               editTooltip="Review wills form"
             />
@@ -217,6 +243,24 @@ export default function ReferenceMatter() {
               autoFocus
             />
           </div>
+        </div>
+      </ConfirmationModal>
+      
+      <ConfirmationModal
+        isOpen={isUnlockModalOpen}
+        onClose={() => setIsUnlockModalOpen(false)}
+        onConfirm={handleConfirmUnlock}
+        title="Unlock Form"
+        confirmLabel="Unlock Now"
+        cancelLabel="Cancel"
+      >
+        <div className="py-2 space-y-2">
+          <p className="text-gray-700">
+            Are you sure you want to unlock the form for <span className="font-bold text-[#2E3D99]">{selectedMatter?.client_name}</span>?
+          </p>
+          <p className="text-gray-500 text-xs">
+            This will enable the client to edit and resubmit their information.
+          </p>
         </div>
       </ConfirmationModal>
     </div>

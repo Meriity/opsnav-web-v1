@@ -4,12 +4,22 @@ import path from "path";
 import { fileURLToPath } from "url";
 import tailwindcss from "@tailwindcss/vite";
 import svgr from "vite-plugin-svgr";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), svgr({ exportAsDefault: false })],
+  plugins: [
+    react(), 
+    tailwindcss(), 
+    svgr({ exportAsDefault: false }),
+    nodePolyfills({
+      include: ["stream", "util"],
+    }),
+  ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
