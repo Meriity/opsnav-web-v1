@@ -876,7 +876,6 @@ useEffect(() => {
             "orderDate",
             "deliveryDate",
             "order_details",
-            "unitNumber",
           ].filter(Boolean);
 
           // Subtype is only required if it's not "Others" and orderType is selected
@@ -1625,7 +1624,7 @@ useEffect(() => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block mb-1 font-medium">
-                        Unit Number*
+                        Unit Number
                       </label>
                       <input
                         type="text"
@@ -1635,7 +1634,6 @@ useEffect(() => {
                         placeholder="e.g., 100"
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500"
                         autoComplete="off"
-                        required
                       />
                     </div>
                     <div>
@@ -1655,7 +1653,7 @@ useEffect(() => {
                       </select>
                     </div>
                     <div>
-                      <label className="block mb-1 font-medium">Distance</label>
+                      <label className="block mb-1 font-medium">Distance (km)</label>
                       <input
                         type="text"
                         name="distance"
