@@ -90,7 +90,7 @@ export default function SignUpSuccess() {
           transition={{ delay: 0.4 }}
           className="text-gray-600 mb-8 text-lg leading-relaxed"
         >
-          Thank you for signing up. Our team has received your request and will contact you shortly to set up your free 14-day trial.
+          Thank you for signing up. Our team has received your request and will contact you shortly to set up your free 1-Month trial.
         </motion.p>
 
         <motion.button

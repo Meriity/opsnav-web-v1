@@ -14,7 +14,8 @@ import {
   EyeOff,
   History,
   ListChecks,
-  Lightbulb
+  Lightbulb,
+  Phone
 } from "lucide-react";
 import { APP_VERSION } from "../../config/version";
 import WillsAPI from "../../api/willsAPI";
@@ -26,6 +27,7 @@ const WillsSignUp = ({ onSignUp }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    phone: "",
     password: "",
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -120,6 +122,7 @@ const WillsSignUp = ({ onSignUp }) => {
           const response = await api.current.signup({
             fullName: formData.fullName,
             email: formData.email,
+            phone: formData.phone,
             password: formData.password
           });
           
@@ -418,6 +421,24 @@ const WillsSignUp = ({ onSignUp }) => {
                             required
                             className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 transition-all"
                             placeholder="john@example.com"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Phone Field */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Phone className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 transition-all"
+                            placeholder="+61 400 000 000"
                           />
                         </div>
                       </div>
