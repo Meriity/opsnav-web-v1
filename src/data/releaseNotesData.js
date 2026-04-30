@@ -33,6 +33,54 @@ export const monthlyReleaseNotes = {
     2026: {
       April: [
         {
+          date: "2026-04-30",
+          version: "v7.6.11",
+          type: "major",
+          category: "feature",
+          title: "Premium Homepage Redesign & Localization",
+          description: "A major aesthetic and structural overhaul of the OpsNav homepage, optimized for the Australian market with enhanced interactivity and responsive layouts.",
+          updates: [
+            {
+              type: "feature",
+              title: "Homepage Redesign",
+              description: "Complete visual refresh with premium gradients, atmospheric animations, and localized content.",
+              details: "Implemented a high-performance homepage with custom concentric circle reveals, animated background patterns, and a modernized hero section. All pricing and testimonial content has been curated for the Australian legal-tech market.",
+              icon: Layout,
+            },
+            {
+              type: "ui_ux",
+              title: "Interactive Most Popular Badge",
+              description: "Added a spinning yellow star (⭐) to the featured plan to drive user engagement.",
+              details: "Engineered a Framer Motion-powered interactive badge for the Growth plan, featuring a continuous 360-degree rotation that works seamlessly across desktop, tablet, and mobile views.",
+              icon: Sparkles,
+            },
+            {
+              type: "ui_ux",
+              title: "Responsive Tablet Pricing Grid",
+              description: "Replaced horizontal carousels with a native grid layout for tablet devices.",
+              details: "Optimized the 'Choose Your Plan' section for medium viewports (768px-1024px) by implementing a 2+1 grid structure, ensuring all pricing options are visible at a glance without scrolling.",
+              icon: Smartphone,
+            },
+            {
+              type: "feature",
+              title: "Australian Localization",
+              description: "Full compliance with Australian market standards for pricing and hosting.",
+              details: "Updated iconography for AUD/GST disclosures, securely hosted indicators, and privacy standards. Replaced flag emojis with high-resolution SVG assets from flagcdn for consistent cross-platform rendering.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "improvement",
+              title: "Global CTA Polish",
+              description: "Refined Call-to-Action buttons with adaptive padding and safe-text wrapping.",
+              details: "Updated the primary 'Start 1-Month Free Trial' buttons to use responsive horizontal padding and whitespace management, preventing text clipping on small mobile devices.",
+              icon: Zap,
+            },
+          ],
+          module: "Home, Landing Page",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-04-28",
           version: "v7.5.11",
           type: "patch",
@@ -57,7 +105,7 @@ export const monthlyReleaseNotes = {
           version: "v7.5.10",
           type: "patch",
           category: "ui_ux",
-          title: "Print Media Mobile Optimization",
+          title: "Print Media Mobile Optimisation",
           description: "Refined the UI of the Print Media module within the mobile and tablet views to improve data visibility and layout efficiency.",
           updates: [
             {
@@ -70,7 +118,7 @@ export const monthlyReleaseNotes = {
             {
               type: "ui_ux",
               title: "Mobile Card Layout Refinements",
-              description: "Optimized spacing and layout alignment for Print Media cards.",
+              description: "Optimised spacing and layout alignment for Print Media cards.",
               details: "Swapped 'Order Date' and 'Delivery Date' positions for better workflow alignment. Made 'Order Details' text bold and removed redundant address blocks, renaming 'Billing Address' to 'Delivery Address'.",
               icon: Layout,
             },
@@ -91,8 +139,8 @@ export const monthlyReleaseNotes = {
           version: "v7.5.9",
           type: "major",
           category: "feature",
-          title: "Multi-Module Synchronization & Print Media Optimization",
-          description: "A comprehensive update synchronizing Wills, Print Media, and Administrative workflows with enhanced data fields, premium branding, and optimized navigation.",
+          title: "Multi-Module Synchronisation & Print Media Optimisation",
+          description: "A comprehensive update synchronizing Wills, Print Media, and Administrative workflows with enhanced data fields, premium branding, and optimised navigation.",
           updates: [
             {
               type: "feature",
@@ -104,7 +152,7 @@ export const monthlyReleaseNotes = {
             {
               type: "ui_ux",
               title: "Branding & Layout Restoration",
-              description: "Restored Print Media branding and optimized the module's container layout.",
+              description: "Restored Print Media branding and optimised the module's container layout.",
               details: "Fixed a visibility issue where branding elements were pushed off-screen. Wrapped the entire Print Media interface in a premium container and increased background grid visibility for a more professional aesthetic.",
               icon: Layout,
             },
@@ -118,7 +166,7 @@ export const monthlyReleaseNotes = {
             {
               type: "feature",
               title: "Account Detection & Success Flow",
-              description: "Optimized Wills signup with account detection and an animated success screen.",
+              description: "Optimised Wills signup with account detection and an animated success screen.",
               details: "Added a 'Login Probe' to detect existing accounts during signup and introduced a high-fidelity 'Thank You' view upon successful form submission.",
               icon: Sparkles,
             },
@@ -222,7 +270,7 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "feature",
           title: "Wills & Print Media Administrative Enhancements",
-          description: "Major visual and structural overhaul including a 10-step Wills navigator, dynamic Print Media 'Work' selection logic, and optimized table actions across multiple modules.",
+          description: "Major visual and structural overhaul including a 10-step Wills navigator, dynamic Print Media 'Work' selection logic, and optimised table actions across multiple modules.",
           updates: [
             {
               type: "feature",
@@ -276,7 +324,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "Print Media Production Flow",
-              description: "Optimized Stage 4 field ordering for the Print Media module.",
+              description: "Optimised Stage 4 field ordering for the Print Media module.",
               details: "Moved the 'Close Order' control below the client comment section specifically for Print Media to better align with the production review workflow.",
               icon: RefreshCw,
             },
@@ -339,7 +387,7 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "feature",
           title: "Unified Wills UI & Auth Refinement",
-          description: "Major visual and functional overhaul of the Wills form, featuring a unified 'legal-tech' aesthetic, compact layout optimization, and refined authentication UX.",
+          description: "Major visual and functional overhaul of the Wills form, featuring a unified 'legal-tech' aesthetic, compact layout optimisation, and refined authentication UX.",
           updates: [
             {
               type: "ui_ux",
@@ -350,7 +398,7 @@ export const monthlyReleaseNotes = {
             },
             {
               type: "improvement",
-              title: "Compact Layout Optimization",
+              title: "Compact Layout Optimisation",
               description: "Aggressively refined spacing to eliminate unnecessary white space.",
               details: "Tightened padding, margins, and column gaps across the entire form. Limited container width to prevent stretching on large screens, resulting in a dense, professional feel.",
               icon: Zap,
@@ -434,7 +482,7 @@ export const monthlyReleaseNotes = {
               type: "bugfix",
               title: "Submission Flow Reliability",
               description: "Ensured 'Next' button correctly triggers Update instead of Create after first save.",
-              details: "Improved state synchronization to preserve the matterReferenceNumber immediately after initial form creation, preventing duplicate draft records.",
+              details: "Improved state synchronisation to preserve the matterReferenceNumber immediately after initial form creation, preventing duplicate draft records.",
               icon: Zap,
             },
           ],
@@ -635,7 +683,7 @@ export const monthlyReleaseNotes = {
               type: "feature",
               title: "Direct GCS File Uploads",
               description: "Integrated Google Cloud Storage (GCS) using V4 Signed URLs for ultra-reliable file handling.",
-              details: "Users can now upload complex legal documents (PDFs) directly to GCS from the Wills form. The system manages secure signatures and PascalCase header alignment for perfect cloud synchronization.",
+              details: "Users can now upload complex legal documents (PDFs) directly to GCS from the Wills form. The system manages secure signatures and PascalCase header alignment for perfect cloud synchronisation.",
               icon: Sparkles,
             },
             {
@@ -822,7 +870,7 @@ export const monthlyReleaseNotes = {
           type: "minor",
           category: "feature",
           title: "VOCAT/FAS Search & UI Refinement",
-          description: "Introduced advanced search filters and major UI/field optimizations for the VOCAT/FAS module.",
+          description: "Introduced advanced search filters and major UI/field optimisations for the VOCAT/FAS module.",
           updates: [
             {
               type: "feature",
@@ -833,7 +881,7 @@ export const monthlyReleaseNotes = {
             },
             {
               type: "improvement",
-              title: "VOCAT Field Optimization",
+              title: "VOCAT Field Optimisation",
               description: "Renamed and repositioned fields for better data clarity.",
               details: "Updated field titles and layouts across VOCAT stages to improve intuitive data entry and alignment with industry terminology.",
               icon: Sparkles,
@@ -882,7 +930,7 @@ export const monthlyReleaseNotes = {
             {
               type: "bugfix",
               title: "GCS Upload Sync",
-              description: "Refined GCS metadata synchronization payload.",
+              description: "Refined GCS metadata synchronisation payload.",
               details: "Updated the sync step to use the 'url' key instead of 'publicUrl', ensuring perfect alignment with the backend's expected structure.",
               icon: Server,
             },
@@ -931,7 +979,7 @@ export const monthlyReleaseNotes = {
           version: "v7.1.1",
           type: "minor",
           category: "feature",
-          title: "UI Optimization & Data Protection",
+          title: "UI Optimisation & Data Protection",
           description: "Introduced critical navigation guards and major UI refinements for stage indicators and matter link identification.",
           updates: [
             {
@@ -944,7 +992,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "Responsive Stage Layout",
-              description: "Optimized stage indicator grid for smaller laptop screens.",
+              description: "Optimised stage indicator grid for smaller laptop screens.",
               details: "Stages now automatically arrange into a 3-column grid on smaller screens (below 1280px) to prevent column squeezing, while remaining as a single row on larger monitors.",
               icon: TrendingUp,
             },
@@ -1090,7 +1138,7 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "bugfix",
           title: "Matter URL Redirection & Wills Address Fix",
-          description: "Streamlined matter navigation and resolved address synchronization issues in the Wills module.",
+          description: "Streamlined matter navigation and resolved address synchronisation issues in the Wills module.",
           updates: [
             {
               type: "bugfix",
@@ -1119,7 +1167,7 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "feature",
           title: "Matter URL Integration & Payload Hardening",
-          description: "Enabled Matter URL tracking across Conveyancing, Commercial, and Wills modules, including direct redirection from client tables and robust payload synchronization.",
+          description: "Enabled Matter URL tracking across Conveyancing, Commercial, and Wills modules, including direct redirection from client tables and robust payload synchronisation.",
           updates: [
             {
               type: "feature",
@@ -1137,7 +1185,7 @@ export const monthlyReleaseNotes = {
             },
             {
               type: "bugfix",
-              title: "Payload Synchronization",
+              title: "Payload Synchronisation",
               description: "Resolved issues where matter URLs were not being persisted correctly.",
               details: "Hardened the API payload logic in StagesLayout and CreateClientModal to ensure matter URLs are consistently synced across all active modules during creation and updates.",
               icon: Bug,
@@ -1247,7 +1295,7 @@ export const monthlyReleaseNotes = {
           type: "minor",
           category: "feature",
           title: "Reopen Archived Matters & UI Polishing",
-          description: "Superadmins can now reopen archived matters for Conveyancing, Commercial, and VOCAT. Also includes UI layout optimizations.",
+          description: "Superadmins can now reopen archived matters for Conveyancing, Commercial, and VOCAT. Also includes UI layout optimisations.",
           updates: [
             {
               type: "feature",
@@ -1258,7 +1306,7 @@ export const monthlyReleaseNotes = {
             },
             {
               type: "ui_ux",
-              title: "Header Layout Optimization",
+              title: "Header Layout Optimisation",
               description: "Reduced excessive padding and margins in the Archived Clients action bar.",
               details: "Tightened the spacing for better visibility on tablet and laptop screens by optimizing paddings and margins.",
               icon: Sparkles,
@@ -1368,7 +1416,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "Mobile Header Alignment",
-              description: "Optimized header layout on mobile devices.",
+              description: "Optimised header layout on mobile devices.",
               details: "Aligned the 'Show entries' dropdown and 'Three dots' menu on the same row, removing duplicate controls for a cleaner interface.",
               icon: Smartphone,
             },
@@ -1409,7 +1457,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "Main Pages Responsiveness",
-              description: "Optimized layouts for small laptops and tablets.",
+              description: "Optimised layouts for small laptops and tablets.",
               details: "Fixed layout breaking points between 1024px and 1280px. The sidebar and main grid now adapt seamlessly to small laptop screens, eliminating visual clutter.",
               icon: Smartphone,
             },
@@ -1417,7 +1465,7 @@ export const monthlyReleaseNotes = {
               type: "fix",
               title: "Sidebar Interaction",
               description: "Resolved sidebar closing and icon issues.",
-              details: "Fixed the sidebar behavior to ensure it closes correctly on outside clicks and prevents the 'double icon' glitch on specific resolutions.",
+              details: "Fixed the sidebar behaviour to ensure it closes correctly on outside clicks and prevents the 'double icon' glitch on specific resolutions.",
               icon: Bug,
             },
             {
@@ -1574,13 +1622,13 @@ export const monthlyReleaseNotes = {
               type: "feature",
               title: "Dashboard Modernization",
               description: "Redesigned headers and logo integration for a seamless look.",
-              details: "Modernized typography, integrated OpsNav logo, and optimized layout in both IDG and Standard dashboards.",
+              details: "Modernized typography, integrated OpsNav logo, and optimised layout in both IDG and Standard dashboards.",
               icon: Sparkles,
             },
             {
               type: "improvement",
               title: "VOCAT Layout & Search",
-              description: "Optimized Client Details layout and improved search capabilities.",
+              description: "Optimised Client Details layout and improved search capabilities.",
               details: "Grouped reference numbers, added dedicated table columns, enabled search by Ref/FAS numbers with match reason badges.",
               icon: TrendingUp,
             },
@@ -1621,7 +1669,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "Matter Details Layout",
-              description: "Optimized Matter Details layout for better readability.",
+              description: "Optimised Matter Details layout for better readability.",
               details: "Post Code is now visible in Matter Details and positioned side-by-side with Data Entry By (1:2 ratio).",
               icon: TrendingUp,
             },
@@ -1695,7 +1743,7 @@ export const monthlyReleaseNotes = {
             {
               type: "improvement",
               title: "UI/UX Refinements",
-              description: "Optimized layout for Client Type and Incident Date.",
+              description: "Optimised layout for Client Type and Incident Date.",
               details: "Implemented a 1.5:1 responsive layout ratio for critical client information fields to improve readability and data entry speed.",
               icon: TrendingUp,
             }
@@ -1764,7 +1812,7 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "bugfix",
           title: "Mobile Experience Improvements",
-          description: "Optimized the calendar view and dashboard layout for mobile devices.",
+          description: "Optimised the calendar view and dashboard layout for mobile devices.",
           updates: [
             {
               type: "fix",
@@ -1817,7 +1865,7 @@ export const monthlyReleaseNotes = {
               type: "fix",
               title: "Order Data Display",
               description: "Fixed Order details - Order date and Order type not showing updated data.",
-              details: "Resolved data synchronization issue that prevented updated order information from displaying correctly in the UI.",
+              details: "Resolved data synchronisation issue that prevented updated order information from displaying correctly in the UI.",
               icon: Database,
             }
           ],

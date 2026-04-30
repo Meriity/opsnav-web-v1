@@ -161,7 +161,7 @@ const WillsForm = () => {
               // Priority: Call the reference number API if it's explicitly in the URL
               response = await api.current.getFormByReferenceNumber(finalRefNumber);
             } else {
-              // Session Persistence: Use loadFormV1 (matching sign-in behavior)
+              // Session Persistence: Use loadFormV1 (matching sign-in behaviour)
               response = await api.current.loadFormV1(finalRefNumber);
             }
           } else {
@@ -648,7 +648,7 @@ const WillsForm = () => {
     
     // Reset state - this will trigger re-render to show WillsSignUp
     setIsSignedUp(false);
-    toast.info("Logged out successfully");
+    toast.info("Signed out successfully");
   };
 
   if (isSuccessfullySubmitted) {
@@ -710,7 +710,7 @@ const WillsForm = () => {
                 className="hidden md:flex items-center gap-2.5 px-5 py-2.5 bg-white border border-gray-100 text-[#1E293B] rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow-md hover:bg-gray-50 hover:border-gray-200 transition-all duration-300 active:scale-95 group"
               >
                 <LogOut size={14} className="text-gray-400 group-hover:text-red-500 transition-colors" />
-                <span>Logout</span>
+                <span>Sign Out</span>
               </button>
               
               <button 

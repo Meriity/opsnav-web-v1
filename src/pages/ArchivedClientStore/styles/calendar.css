@@ -102,7 +102,7 @@
   outline-offset: 2px;
 }
 
-/* Mobile optimizations */
+/* Mobile optimisations */
 @media (max-width: 768px) {
   .custom-event-content {
     padding: 1px 2px;
