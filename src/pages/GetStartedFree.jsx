@@ -10,6 +10,7 @@ import {
   FileText,
   CheckCircle,
   Sparkles,
+  Phone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -22,6 +23,7 @@ function GetStartedFree() {
     name: "",
     companyName: "",
     email: "",
+    phone: "",
     state: "",
     address: "",
     services: {
@@ -112,6 +114,7 @@ function GetStartedFree() {
         const payload = {
           fullName: formData.name,
           email: formData.email,
+          phone: formData.phone,
           companyName: formData.companyName,
           state: formData.state,
           address: formData.address,
@@ -267,6 +270,26 @@ function GetStartedFree() {
             required
             className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
             placeholder="you@company.com"
+          />
+        </div>
+      </div>
+
+      {/* Phone Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Phone className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
+            placeholder="+61 400 000 000"
           />
         </div>
       </div>
@@ -483,10 +506,10 @@ function GetStartedFree() {
           <a href="/terms" className="text-[#2E3D99] hover:underline">
             Terms of Service
           </a>{" "}
-          and{" "}
+          {/* and{" "}
           <a href="#" className="text-[#2E3D99] hover:underline">
             Privacy Policy
-          </a>
+          </a> */}
         </p>
       </div>
     </motion.div>
@@ -574,9 +597,9 @@ function GetStartedFree() {
             </h1>
 
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
-              Experience the power of OpsNav with our 14-day free trial. No
+              Experience the power of OpsNav with our 1-Month Free trial. No
               credit card required. Fill out the form and our team will contact
-              you to set up your personalized trial.
+              you to set up your personalised trial.
             </p>
 
             {/* Progress Steps - Main indicator (Desktop) */}
@@ -632,7 +655,7 @@ function GetStartedFree() {
               {[
                 {
                   icon: "🚀",
-                  title: "14-Day Free Trial",
+                  title: "Start 1-Month Free trial",
                   description:
                     "Full access to all features, no credit card required",
                 },

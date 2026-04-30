@@ -35,6 +35,40 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-30",
+          version: "v7.7.13",
+          type: "patch",
+          category: "bugfix",
+          title: "Get Started Free Sync & UX Polish",
+          description: "Synchronised the free trial request flow with global lead capture standards and refined Australian spelling conventions.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Free Trial Form Synchronization",
+              description: "Added the missing Phone Number field to the 'Get Started Free' form.",
+              details: "Resolved the discrepancy between demo and trial forms by integrating phone number collection into the free trial flow, ensuring all leads are captured with complete contact data.",
+              icon: Phone,
+            },
+            {
+              type: "improvement",
+              title: "Trial Period Branding",
+              description: "Updated trial duration labels to '1-Month Free trial' across the interface.",
+              details: "Standardised branding from 14-day to 1-Month free trial to align with current marketing campaigns and user expectations.",
+              icon: Sparkles,
+            },
+            {
+              type: "ui_ux",
+              title: "Localization (AU Spelling)",
+              description: "Updated 'personalized' to 'personalised' for Australian market alignment.",
+              details: "Performed a global audit of user-facing strings to ensure consistency with Australian English spelling conventions across all landing and management pages.",
+              icon: RefreshCw,
+            },
+          ],
+          module: "Get Started, Landing Page",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-04-30",
           version: "v7.7.12",
           type: "patch",
           category: "feature",
@@ -1324,13 +1358,13 @@ export const monthlyReleaseNotes = {
           type: "patch",
           category: "bugfix",
           title: "Client Portal Personalization",
-          description: "Enhanced client dashboard with personalized greetings.",
+          description: "Enhanced client dashboard with personalised greetings.",
           updates: [
             {
               type: "bugfix",
               title: "First Name Greeting",
               description: "Resolved issue where the full client name format was displayed in the dashboard greeting.",
-              details: "Implemented robust first name extraction to handle various formats like 'LastName, FirstName' or names with titles, providing a more personalized 'Hello [FirstName]' experience.",
+              details: "Implemented robust first name extraction to handle various formats like 'LastName, FirstName' or names with titles, providing a more personalised 'Hello [FirstName]' experience.",
               icon: Sparkles,
             }
           ],

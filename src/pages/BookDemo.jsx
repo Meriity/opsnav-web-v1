@@ -153,7 +153,7 @@ function BookDemo() {
         }
 
         toast.success(
-          "Thank you for booking a demo! Our team will contact you shortly to schedule your personalized demo."
+          "Thank you for booking a demo! Our team will contact you shortly to schedule your personalised demo."
         );
         navigate("/");
       } catch (error) {
@@ -581,7 +581,7 @@ function BookDemo() {
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20">
               <Video className="w-3.5 h-3.5 text-[#2E3D99]" />
               <span className="text-xs font-medium text-gray-700">
-                Book a Personalized Demo
+                Book a Personalised Demo
               </span>
             </div>
 
@@ -594,7 +594,7 @@ function BookDemo() {
             </h1>
 
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
-              See OpsNav in action with a live, personalized demo. Our experts
+              See OpsNav in action with a live, personalised demo. Our experts
               will show you how to streamline your operations and answer all
               your questions.
             </p>
