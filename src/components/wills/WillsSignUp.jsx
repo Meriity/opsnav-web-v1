@@ -148,9 +148,8 @@ const WillsSignUp = ({ onSignUp }) => {
           
           if (alreadyExists) {
             console.log("[WillsSignUp] Detection: User already exists. Switching to Login flow.");
-            setInfoMessage("We found your account! Welcome back—please enter your password to continue.");
             setIsLoginForm(true);
-            setError("");
+            setError("You've already registered! Please sign in with your credentials.");
             setIsLoading(false);
             return;
           }
@@ -333,7 +332,7 @@ const WillsSignUp = ({ onSignUp }) => {
                 </div>
 
                 <h2 className="text-2xl font-bold text-gray-800">
-                  {isLoginForm ? "Login to Account" : "Initialise Your Account"}
+                  {isLoginForm ? "Sign In to Account" : "Initialise Your Account"}
                 </h2>
                 <p className="text-gray-600 mt-1 text-sm">
                   {isLoginForm ? "Enter your credentials to continue" : "Please provide your details to proceed"}
@@ -535,7 +534,7 @@ const WillsSignUp = ({ onSignUp }) => {
                   ) : (
                     <>
                       <span>
-                        {infoMessage ? "Sign In to Continue" : (isLoginForm ? "Login" : "Complete Sign Up")}
+                        {infoMessage ? "Sign In to Continue" : (isLoginForm ? "Sign In" : "Complete Sign Up")}
                       </span>
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </>
