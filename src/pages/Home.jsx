@@ -218,6 +218,7 @@ const plans = [
     price: "$0",
     period: "/month",
     cta: "Start Free",
+    path: "/get-started-free",
     highlight: false,
     icon: "rocket",
     features: [
@@ -234,6 +235,7 @@ const plans = [
     price: "$66",
     period: "/month per workflow",
     cta: "Start 1-Month Free Trial",
+    path: "/get-started-free",
     highlight: true,
     icon: "chart",
     features: [
@@ -253,6 +255,7 @@ const plans = [
     price: "Custom Pricing",
     period: "",
     cta: "Contact Us",
+    path: "/contact-support",
     highlight: false,
     icon: "building",
     features: [
@@ -803,6 +806,8 @@ export default function Home() {
     setActiveLink(item);
     if (item === "Home") {
       window.scrollTo({ top: 0, behaviour: "smooth" });
+    } else if (item === "Contact Us") {
+      navigate("/contact-support");
     } else {
       const id = item.toLowerCase().replace(/\s+/g, "");
       const el = document.getElementById(id);
@@ -1677,7 +1682,10 @@ export default function Home() {
                             <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
                             <span className="text-sm text-gray-400">{plan.period}</span>
                           </div>
-                          <button className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
+                          <button 
+                            onClick={() => navigate(plan.path)}
+                            className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl transition-all duration-300 mb-6"
+                          >
                             {plan.cta}
                           </button>
                           <ul className="flex flex-col gap-3">
@@ -1702,7 +1710,10 @@ export default function Home() {
                         <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-3xl" : "text-5xl"}`}>{plan.price}</span>
                         {plan.period && <span className="text-sm text-gray-400">{plan.period}</span>}
                       </div>
-                      <button className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all duration-300 mb-6">
+                      <button 
+                        onClick={() => navigate(plan.path)}
+                        className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all duration-300 mb-6"
+                      >
                         {plan.cta}
                       </button>
                       <ul className="flex flex-col gap-3">
@@ -1734,7 +1745,12 @@ export default function Home() {
                     <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-2xl" : "text-4xl"}`}>{plan.price}</span>
                     {plan.period && <span className="text-xs text-gray-400">{plan.period}</span>}
                   </div>
-                  <button className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all mb-5">{plan.cta}</button>
+                  <button 
+                    onClick={() => navigate(plan.path)}
+                    className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all mb-5"
+                  >
+                    {plan.cta}
+                  </button>
                   <ul className="flex flex-col gap-2.5">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5">
@@ -1770,7 +1786,12 @@ export default function Home() {
                           <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
                           <span className="text-sm text-gray-400">{plan.period}</span>
                         </div>
-                        <button className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg mb-5">{plan.cta}</button>
+                        <button 
+                          onClick={() => navigate(plan.path)}
+                          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg mb-5"
+                        >
+                          {plan.cta}
+                        </button>
                         <ul className="grid grid-cols-2 gap-2.5">
                           {plan.features.map((f, i) => (
                             <li key={i} className="flex items-start gap-2">
@@ -1827,7 +1848,12 @@ export default function Home() {
                         <span className="text-4xl font-bold bg-gradient-to-br from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{plan.price}</span>
                         <span className="text-xs text-gray-400 mb-1">{plan.period}</span>
                       </div>
-                      <button className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg">{plan.cta}</button>
+                      <button 
+                        onClick={() => navigate(plan.path)}
+                        className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg"
+                      >
+                        {plan.cta}
+                      </button>
                       <ul className="flex flex-col gap-2 mt-2">
                         {plan.features.map((f, i) => (
                           <li key={i} className="flex items-start gap-2">
@@ -1849,7 +1875,12 @@ export default function Home() {
                       <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-2xl" : "text-4xl"}`}>{plan.price}</span>
                       {plan.period && <span className="text-xs text-gray-400 mb-1">{plan.period}</span>}
                     </div>
-                    <button className="w-full py-2.5 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20">{plan.cta}</button>
+                    <button 
+                      onClick={() => navigate(plan.path)}
+                      className="w-full py-2.5 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20"
+                    >
+                      {plan.cta}
+                    </button>
                     <ul className="flex flex-col gap-2 mt-2">
                       {plan.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
@@ -2642,7 +2673,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 bg-[#2E3D99]/5 text-gray-500 px-4 py-2 rounded-full border border-[#2E3D99]/10">
               <ShieldCheck className="w-4 h-4 text-[#2E3D99]" />
               <span className="text-xs sm:text-sm font-medium">
-                Metrics based on internal data and customer feedback as of May 2025.
+                Metrics based on internal data and customer feedback as of March 2026.
               </span>
             </div>
           </motion.div>
@@ -2965,7 +2996,7 @@ export default function Home() {
                       <div className="w-10 h-10 rounded-lg bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
                         <MapPin size={18} className="text-[#2E3D99]" />
                       </div>
-                      <span>Australia</span>
+                      <span>Melbourne, Australia</span>
                     </div>
                   </div>
                 </div>
@@ -2980,7 +3011,7 @@ export default function Home() {
                       { Icon: FaFacebookF, href: "https://www.facebook.com/opsnav", color: "text-[#1877F2]" },
                       { Icon: FaXTwitter, href: "https://x.com/opsnav_official", color: "text-gray-900" },
                       { Icon: FaLinkedinIn, href: "https://www.linkedin.com/company/opsnav/posts/?feedView=all", color: "text-[#0A66C2]" },
-                      { Icon: FaInstagram, href: "#", color: "text-[#E4405F]" },
+                      { Icon: FaInstagram, href: "https://www.instagram.com/opsnav.official", color: "text-[#E4405F]" },
                       { Icon: FaYoutube, href: "https://www.youtube.com/@OpsNav_Official", color: "text-[#FF0000]" }
                     ].map(({ Icon, href, color }, i) => (
                       <motion.a
