@@ -872,7 +872,7 @@ export default function Home() {
 
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="relative min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden">
+      <div className="relative h-auto lg:min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden">
         <FloatingElement top={10} left={10} delay={0} />
         <FloatingElement top={20} left={85} delay={1} size={80} />
         <FloatingElement top={70} left={5} delay={2} size={40} />
@@ -1050,12 +1050,12 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-24 pb-8 sm:pt-36 sm:pb-16 lg:pt-28 lg:pb-20">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-24 pb-8 sm:pt-36 sm:pb-16 lg:pt-28 lg:pb-20 large-monitor-hero">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 sm:mb-8 border border-[#2E3D99]/20 max-w-[90%]"
+            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 sm:mb-8 border border-[#2E3D99]/20 max-w-[90%] large-monitor-badge"
           >
             <Sparkles className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium text-gray-700 truncate">
@@ -1067,7 +1067,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold max-w-5xl leading-tight px-4 mx-auto"
+            className="w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold max-w-5xl leading-tight px-4 mx-auto large-monitor-headline"
           >
             <span className="bg-gradient-to-r from-[#2E3D99] via-[#1D97D7] to-[#1D97D7] bg-clip-text text-transparent">
               Ready-to-Go, Industry-Aligned Workflows Built for Real Operations
@@ -1082,7 +1082,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="w-full mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4"
+            className="w-full mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 large-monitor-desc"
           >
             OpsNav (Operations Navigator) is a purpose-built, industry-aligned platform that combines task-level tracking, AI-powered insights, and complete operational visibility - so you can run your operations with structure, clarity, and confidence.
           </motion.p>
@@ -1091,7 +1091,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center px-4"
+            className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center px-4 large-monitor-buttons"
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -1142,6 +1142,7 @@ export default function Home() {
               lg:right-auto
               lg:mt-12 
               lg:mx-auto
+              large-monitor-scroll
               
             "
           >
@@ -1194,7 +1195,7 @@ export default function Home() {
       </div>
 
       {/* Hero Dashboard Mockup Section */}
-      <section className="w-full pt-10 pb-10 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="hidden sm:block w-full pt-10 pb-10 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-center">
           {/* Intense linear bloom spread entirely across the top border area */}
           <div className="absolute -top-16 w-full h-48 bg-gradient-to-r from-transparent via-[#4cb3f8]/50 to-transparent blur-[120px] opacity-100 z-0 pointer-events-none" />
@@ -2977,10 +2978,10 @@ export default function Home() {
                   <div className="flex gap-4 lg:justify-end">
                     {[
                       { Icon: FaFacebookF, href: "https://www.facebook.com/opsnav", color: "text-[#1877F2]" },
-                      { Icon: FaXTwitter, href: "#", color: "text-gray-900" },
+                      { Icon: FaXTwitter, href: "https://x.com/opsnav_official", color: "text-gray-900" },
                       { Icon: FaLinkedinIn, href: "https://www.linkedin.com/company/opsnav/posts/?feedView=all", color: "text-[#0A66C2]" },
                       { Icon: FaInstagram, href: "#", color: "text-[#E4405F]" },
-                      { Icon: FaYoutube, href: "#", color: "text-[#FF0000]" }
+                      { Icon: FaYoutube, href: "https://www.youtube.com/@OpsNav_Official", color: "text-[#FF0000]" }
                     ].map(({ Icon, href, color }, i) => (
                       <motion.a
                         key={i}

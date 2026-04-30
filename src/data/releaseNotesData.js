@@ -34,6 +34,47 @@ export const monthlyReleaseNotes = {
       April: [
         {
           date: "2026-04-30",
+          version: "v7.7.11",
+          type: "major",
+          category: "feature",
+          title: "Leads Management & Header Optimization",
+          description: "Introduced a dedicated Leads Management interface with icon-based module selection and a streamlined administrative header.",
+          updates: [
+            {
+              type: "feature",
+              title: "Leads Management Dashboard",
+              description: "New administrative view for tracking and managing incoming inquiries.",
+              details: "Implemented a high-performance table for viewing leads with real-time search, pagination, and detailed inquiry tracking. Integrated backend API for seamless data synchronization.",
+              icon: FileText,
+            },
+            {
+              type: "ui_ux",
+              title: "Icon-Based Module Selection",
+              description: "Visual module indicators with tooltips for rapid identification.",
+              details: "Replaced text-based module lists with dynamic, gradient-styled icons (Home, Briefcase, etc.) matching the Admin User Management pattern, enhancing scanability and professional feel.",
+              icon: Sparkles,
+            },
+            {
+              type: "ui_ux",
+              title: "Simplified Admin Header",
+              description: "A focused header variant for high-priority administrative tasks.",
+              details: "Created a simplified header mode that removes distractions (Search, User info, Stats) and features a larger, prominent brand logo and an explicit 'Back to Home' button.",
+              icon: Layout,
+            },
+            {
+              type: "improvement",
+              title: "Global Responsive Refinements",
+              description: "Optimized layouts for mobile and tablet viewports.",
+              details: "Fixed spacing issues in hero sections, refined button padding for touch devices, and ensured the Leads table remains fully functional across all device sizes.",
+              icon: Smartphone,
+            },
+          ],
+          module: "Leads, Global Header",
+          severity: "High",
+          status: "Released"
+        },
+        {
+          date: "2026-04-30",
           version: "v7.6.11",
           type: "major",
           category: "feature",

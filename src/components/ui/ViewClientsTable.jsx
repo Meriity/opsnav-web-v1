@@ -189,6 +189,8 @@ const ViewClientsTable = ({
                   onClick={() => handleSort(column.key)}
                   className={`px-1 lg:px-1 xl:px-2 py-3 text-center text-[10px] lg:text-[10px] xl:text-xs 2xl:text-sm ${
                     colIndex === 0 && !isDraggingMode ? "rounded-l-2xl" : ""
+                  } ${
+                    colIndex === columns.length - 1 && !showStages && !showTasks && !showActions ? "rounded-r-2xl" : ""
                   } ${!isDraggingMode ? "cursor-pointer" : "cursor-default"} select-none`}
                 >
                   <div className="flex flex-col items-center whitespace-normal break-words">
@@ -329,7 +331,13 @@ const ViewClientsTable = ({
                                     String(item[column.key]).toLowerCase().includes("km") ? item[column.key] : `${item[column.key]} km`
                                   ) : <span className="font-bold text-gray-500">—</span>
                                 ) : (
-                                  item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
+                                  column.render ? (
+                                    column.render(item)
+                                  ) : item[column.key] || item[column.key] === 0 ? (
+                                    item[column.key]
+                                  ) : (
+                                    <span className="font-bold text-gray-500">—</span>
+                                  )
                                 )}
                               </div>
                              </td>
@@ -496,7 +504,13 @@ const ViewClientsTable = ({
                             String(item[column.key]).toLowerCase().includes("km") ? item[column.key] : `${item[column.key]} km`
                           ) : <span className="font-bold text-gray-500">—</span>
                         ) : (
-                          item[column.key] || item[column.key] === 0 ? item[column.key] : <span className="font-bold text-gray-500">—</span>
+                        column.render ? (
+                          column.render(item)
+                        ) : item[column.key] || item[column.key] === 0 ? (
+                          item[column.key]
+                        ) : (
+                          <span className="font-bold text-gray-500">—</span>
+                        )
                         )}
                         </div>
                         </td>

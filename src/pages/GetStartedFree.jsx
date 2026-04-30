@@ -29,6 +29,7 @@ function GetStartedFree() {
       commercial: false,
       wills: false,
       printMedia: false,
+      vocatFas: false,
     },
     additionalComments: "",
   });
@@ -119,15 +120,16 @@ function GetStartedFree() {
             .map(([key]) => {
               switch (key) {
                 case "printMedia":
-                  return "Signage & Print";
+                  return "signage & print";
                 case "wills":
-                  return "Wills & Estates";
+                  return "wills & estates";
+                case "vocatFas":
+                  return "vocat & fas";
                 default:
-                  return key.charAt(0).toUpperCase() + key.slice(1);
+                  return key.toLowerCase();
               }
             }),
           comments: formData.additionalComments,
-          type: "free_trial",
         };
 
         const response = await fetch(
@@ -194,6 +196,7 @@ function GetStartedFree() {
     { id: "commercial", label: "Commercial", icon: "💼" },
     { id: "wills", label: "Wills", icon: "📝" },
     { id: "printMedia", label: "Signage & Print", icon: "📰" },
+    { id: "vocatFas", label: "Vocat & FAS", icon: "⚖️" },
   ];
 
   // Step 1: Basic Information - Compact
