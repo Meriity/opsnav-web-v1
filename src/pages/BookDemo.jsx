@@ -30,6 +30,7 @@ function BookDemo() {
       commercial: false,
       wills: false,
       printMedia: false,
+      vocatFas: false,
     },
     additionalComments: "",
   });
@@ -120,15 +121,16 @@ function BookDemo() {
             .map(([key]) => {
               switch (key) {
                 case "printMedia":
-                  return "Signage & Print";
+                  return "signage & print";
                 case "wills":
-                  return "Wills & Estates";
+                  return "wills & estates";
+                case "vocatFas":
+                  return "vocat & fas";
                 default:
-                  return key.charAt(0).toUpperCase() + key.slice(1);
+                  return key.toLowerCase();
               }
             }),
           comments: formData.additionalComments,
-          type: "demo_request",
         };
 
         const response = await fetch(
@@ -195,6 +197,7 @@ function BookDemo() {
     { id: "commercial", label: "Commercial", icon: "💼" },
     { id: "wills", label: "Wills", icon: "📝" },
     { id: "printMedia", label: "Signage & Print", icon: "📰" },
+    { id: "vocatFas", label: "Vocat & FAS", icon: "⚖️" },
   ];
 
   // Step 1: Basic Information - Compact
@@ -480,10 +483,6 @@ function BookDemo() {
           By clicking "Book Demo", you agree to our{" "}
           <a href="/terms" className="text-[#2E3D99] hover:underline">
             Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="text-[#2E3D99] hover:underline">
-            Privacy Policy
           </a>
         </p>
       </div>
