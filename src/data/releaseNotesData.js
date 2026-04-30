@@ -27,11 +27,46 @@ import {
   ShieldCheck,
   Layout,
   Lock,
+  Phone,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       April: [
+        {
+          date: "2026-04-30",
+          version: "v7.7.12",
+          type: "patch",
+          category: "feature",
+          title: "Lead Capture Enhancement: Phone Support",
+          description: "Expanded lead capture capabilities to include contact phone numbers across the booking and management flow.",
+          updates: [
+            {
+              type: "feature",
+              title: "Phone Number Field Integration",
+              description: "Added contact number collection to the 'Book a Demo' form.",
+              details: "Integrated a new 'Phone Number' field in the demo booking interface with real-time validation and localized placeholder support. The field is now a standard part of the lead capture payload.",
+              icon: Phone,
+            },
+            {
+              type: "ui_ux",
+              title: "Extended Leads Table",
+              description: "New 'Phone' column in the administrative leads view.",
+              details: "Updated the Leads Management dashboard to display captured phone numbers, ensuring administrators have all necessary contact details at a glance.",
+              icon: Layout,
+            },
+            {
+              type: "improvement",
+              title: "Dynamic API Environment Mapping",
+              description: "Ensured leads endpoint resilience across all environments.",
+              details: "Refactored the leads data service to use dynamic base URL mapping, preventing hardcoded endpoint failures in production and staging environments.",
+              icon: Zap,
+            },
+          ],
+          module: "Leads, Book Demo",
+          severity: "Medium",
+          status: "Released"
+        },
         {
           date: "2026-04-30",
           version: "v7.7.11",

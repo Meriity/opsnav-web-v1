@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ViewClientsTable from "../components/ui/ViewClientsTable";
 import Header from "../components/layout/Header";
+import { getApiBaseUrl } from "../utils/apiConfig";
 
 const MODULE_ICONS = {
   "conveyancing": {
@@ -48,9 +49,7 @@ const LeadsTable = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const response = await fetch(
-          "https://opsnav-app-service-dev-871399330172.us-central1.run.app/lead/"
-        );
+        const response = await fetch(`${getApiBaseUrl()}/lead/`);
         if (!response.ok) {
           throw new Error("Failed to fetch leads");
         }
@@ -161,6 +160,7 @@ const LeadsTable = () => {
               columns={[
                 { key: "fullName", title: "Full Name", width: "15%" },
                 { key: "email", title: "Email", width: "15%" },
+                { key: "phone", title: "Phone", width: "10%" },
                 { key: "companyName", title: "Company", width: "15%" },
                 { key: "state", title: "State", width: "10%" },
                 { key: "address", title: "Address", width: "15%" },
