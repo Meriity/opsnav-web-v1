@@ -11,6 +11,7 @@ import {
   FileText,
   CheckCircle,
   Sparkles,
+  Phone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { APP_VERSION } from "../../config/version";
@@ -22,6 +23,7 @@ function SignUp() {
     name: "",
     companyName: "",
     email: "",
+    phone: "",
     state: "",
     address: "",
     services: {
@@ -29,6 +31,7 @@ function SignUp() {
       commercial: false,
       wills: false,
       printMedia: false,
+      vocatFas: false,
     },
     additionalComments: "",
   });
@@ -111,6 +114,7 @@ function SignUp() {
         const payload = {
           fullName: formData.name,
           email: formData.email,
+          phone: formData.phone,
           companyName: formData.companyName,
           state: formData.state,
           address: formData.address,
@@ -122,6 +126,8 @@ function SignUp() {
                   return "Signage & Print";
                 case "wills":
                   return "Wills & Estates";
+                case "vocatFas":
+                  return "Vocat & FAS";
                 default:
                   return key.charAt(0).toUpperCase() + key.slice(1);
               }
@@ -191,6 +197,7 @@ function SignUp() {
     { id: "commercial", label: "Commercial", icon: "💼" },
     { id: "wills", label: "Wills", icon: "📝" },
     { id: "printMedia", label: "Signage & Print", icon: "📰" },
+    { id: "vocatFas", label: "Vocat & FAS", icon: "⚖️" },
   ];
 
   // Step 1: Basic Information - Compact
@@ -261,6 +268,26 @@ function SignUp() {
             required
             className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
             placeholder="you@company.com"
+          />
+        </div>
+      </div>
+
+      {/* Phone Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Phone className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
+            placeholder="+61 400 000 000"
           />
         </div>
       </div>
@@ -570,7 +597,7 @@ function SignUp() {
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
               Join thousands of professionals who trust OpsNav to streamline
               their operations. Fill out the form and our team will contact you
-              to set up your free 14-day trial.
+              to set up your free 1-Month trial.
             </p>
 
             {/* Progress Steps - Main indicator (Desktop) */}
@@ -626,7 +653,7 @@ function SignUp() {
               {[
                 {
                   icon: "🚀",
-                  title: "14-Day Free Trial",
+                  title: "1-Month Free Trial",
                   description:
                     "Full access to all features, no credit card required",
                 },

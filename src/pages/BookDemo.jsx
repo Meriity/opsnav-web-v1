@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Sparkles,
   Video,
+  Phone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -23,6 +24,7 @@ function BookDemo() {
     name: "",
     companyName: "",
     email: "",
+    phone: "",
     state: "",
     address: "",
     services: {
@@ -30,6 +32,7 @@ function BookDemo() {
       commercial: false,
       wills: false,
       printMedia: false,
+      vocatFas: false,
     },
     additionalComments: "",
   });
@@ -112,6 +115,7 @@ function BookDemo() {
         const payload = {
           fullName: formData.name,
           email: formData.email,
+          phone: formData.phone,
           companyName: formData.companyName,
           state: formData.state,
           address: formData.address,
@@ -120,15 +124,16 @@ function BookDemo() {
             .map(([key]) => {
               switch (key) {
                 case "printMedia":
-                  return "Signage & Print";
+                  return "signage & print";
                 case "wills":
-                  return "Wills & Estates";
+                  return "wills & estates";
+                case "vocatFas":
+                  return "vocat & fas";
                 default:
-                  return key.charAt(0).toUpperCase() + key.slice(1);
+                  return key.toLowerCase();
               }
             }),
           comments: formData.additionalComments,
-          type: "demo_request",
         };
 
         const response = await fetch(
@@ -148,7 +153,7 @@ function BookDemo() {
         }
 
         toast.success(
-          "Thank you for booking a demo! Our team will contact you shortly to schedule your personalized demo."
+          "Thank you for booking a demo! Our team will contact you shortly to schedule your personalised demo."
         );
         navigate("/");
       } catch (error) {
@@ -195,6 +200,7 @@ function BookDemo() {
     { id: "commercial", label: "Commercial", icon: "💼" },
     { id: "wills", label: "Wills", icon: "📝" },
     { id: "printMedia", label: "Signage & Print", icon: "📰" },
+    { id: "vocatFas", label: "Vocat & FAS", icon: "⚖️" },
   ];
 
   // Step 1: Basic Information - Compact
@@ -265,6 +271,26 @@ function BookDemo() {
             required
             className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
             placeholder="you@company.com"
+          />
+        </div>
+      </div>
+
+      {/* Phone Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Phone className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
+            placeholder="+61 400 000 000"
           />
         </div>
       </div>
@@ -480,10 +506,6 @@ function BookDemo() {
           By clicking "Book Demo", you agree to our{" "}
           <a href="/terms" className="text-[#2E3D99] hover:underline">
             Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="text-[#2E3D99] hover:underline">
-            Privacy Policy
           </a>
         </p>
       </div>
@@ -559,7 +581,7 @@ function BookDemo() {
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full mb-4 border border-[#2E3D99]/20">
               <Video className="w-3.5 h-3.5 text-[#2E3D99]" />
               <span className="text-xs font-medium text-gray-700">
-                Book a Personalized Demo
+                Book a Personalised Demo
               </span>
             </div>
 
@@ -572,7 +594,7 @@ function BookDemo() {
             </h1>
 
             <p className="text-sm sm:text-base text-gray-600 mb-6 max-w-xl">
-              See OpsNav in action with a live, personalized demo. Our experts
+              See OpsNav in action with a live, personalised demo. Our experts
               will show you how to streamline your operations and answer all
               your questions.
             </p>

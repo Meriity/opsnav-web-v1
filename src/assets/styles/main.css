@@ -21,3 +21,29 @@ body {
     width: 100%;
   }
 }
+
+/* Target 27" monitors specifically (Width > 1800px) */
+@media (min-width: 1800px) {
+  .large-monitor-hero {
+    padding-top: 16rem !important; /* pt-64 */
+    padding-bottom: 12rem !important; /* pb-48 */
+  }
+  .large-monitor-badge {
+    margin-bottom: 4rem !important; /* mb-16 */
+  }
+  .large-monitor-headline {
+    font-size: 4.5rem !important; /* text-7xl */
+    max-width: 80rem !important; /* max-w-7xl */
+  }
+  .large-monitor-desc {
+    margin-top: 3rem !important; /* mt-12 */
+    font-size: 1.5rem !important; /* text-2xl */
+    max-width: 72rem !important; /* max-w-6xl */
+  }
+  .large-monitor-buttons {
+    margin-top: 4rem !important; /* mt-16 */
+  }
+  .large-monitor-scroll {
+    margin-top: 8rem !important; /* mt-32 */
+  }
+}

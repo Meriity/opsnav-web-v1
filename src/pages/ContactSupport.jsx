@@ -136,7 +136,7 @@ function ContactSupport() {
     { value: "PASSWORD_RESET", label: "Password Reset" },
     { value: "ACCOUNT_ACCESS", label: "Account Access" },
     { value: "EMAIL_CHANGE", label: "Email Change" },
-    { value: "OTHER", label: "Other Issue" },
+    { value: "OTHER", label: "Other" },
   ];
 
   const quickTips = [
