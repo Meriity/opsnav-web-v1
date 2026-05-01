@@ -28,6 +28,7 @@ import BookDemo from "./pages/BookDemo";
 import ComingSoon from "./pages/ComingSoon";
 import AutoLogoutWrapper from "./contexts/autoLogoutWrapper";
 import IDGClientDashboard from "./pages/dashboard/IDGClientDashboard";
+import LeadsTable from "./pages/LeadsTable";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../src/components/ui/custom-toast.css";
@@ -63,6 +64,7 @@ function App() {
         {/* 🔓 Public Routes */}
         {/* <Route path="/" element={<ComingSoon/>}  /> */}
         <Route path="/" element={<Home />} />
+        <Route path="/leads" element={<LeadsTable />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/release-notes" element={<ReleaseNotes />} />
         <Route path="/cookie-policy" element={<ComingSoon />} />

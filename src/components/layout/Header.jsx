@@ -12,6 +12,7 @@ import {
   Calendar,
   Clock,
   Command,
+  Home,
 } from "lucide-react";
 import ClientAPI from "../../api/clientAPI";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +24,7 @@ import CommercialAPI from "../../api/commercialAPI";
 import WillsAPI from "../../api/willsAPI";
 import VocatFasAPI from "../../api/vocatFasAPI";
 
-export default function Header() {
+export default function Header({ simplified = false }) {
   const { searchQuery, setSearchQuery } = useSearchStore();
   const debouncedInput = useDebounce(searchQuery, 500);
   const [searchResult, setSearchResult] = useState([]);
@@ -491,151 +492,169 @@ export default function Header() {
 
         <div className="relative px-4 py-2 md:px-6 md:py-2 flex flex-col md:flex-row justify-between items-center gap-2 lg:gap-3">
           <div className="flex flex-row md:flex-col lg:flex-row items-center md:items-start lg:items-center gap-4 md:gap-1 lg:gap-4 w-full md:flex md:w-auto lg:flex lg:w-auto lg:min-w-[200px]">
-            <div className="flex flex-col items-end">
+            <div 
+              className="flex flex-col items-end cursor-pointer"
+              onClick={() => navigate("/")}
+            >
               <img
-                className={`h-auto object-contain w-12 transition-all duration-300 ease-in-out`}
+                className={`h-auto object-contain ${simplified ? 'w-24' : 'w-12'} transition-all duration-300 ease-in-out hover:scale-110`}
                 src={localStorage.getItem("logo") || "/Logo.png"}
                 alt="Logo"
               />
-              
             </div>
             {/* <img src="../public/Logo_vk.png" alt="Logo" className="h-auto object-contain w-14 transition-all duration-300 ease-in-out"/> */}
-            <div className="flex flex-col items-start gap-1">
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2"
-              >
-                <h1 className="text-lg font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                  Hello, {localStorage.getItem("user") || "Admin"}
-                </h1>
-                <span className="animate-pulse hidden md:block">👋</span>
-              </motion.div>
+            
+            {!simplified && (
+              <div className="flex flex-col items-start gap-1">
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                    Hello, {localStorage.getItem("user") || "Admin"}
+                  </h1>
+                  <span className="animate-pulse hidden md:block">👋</span>
+                </motion.div>
 
-              <div className="hidden lg:flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3 h-3 text-[#2E3D99]" />
-                  <span>{formattedDate}</span>
-                </div>
-                <div className="w-px h-3 bg-gray-300" />
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-[#1D97D7]" />
-                  <span className="tabular-nums">{formattedTime}</span>
+                <div className="hidden lg:flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-[#2E3D99]" />
+                    <span>{formattedDate}</span>
+                  </div>
+                  <div className="w-px h-3 bg-gray-300" />
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-[#1D97D7]" />
+                    <span className="tabular-nums">{formattedTime}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-            <div className="hidden md:block scale-90 origin-right">
-              <SidebarModuleSwitcher />
-            </div>
-
-            <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto relative z-20">
-              
-              <button
-                onClick={toggleFullScreen}
-                className="hidden lg:flex p-2 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
+            {simplified ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/")}
+                className="px-4 py-2 text-[#2E3D99] border border-[#2E3D99] rounded-xl hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] font-semibold transition-all duration-300 text-xs lg:text-sm flex items-center gap-2 shadow-sm"
               >
-                {isFullScreen ? (
-                  <Minimize2 className="w-5 h-5" />
-                ) : (
-                  <Maximize2 className="w-5 h-5" />
-                )}
-              </button>
+                <Home className="w-4 h-4" />
+                <span>Back to Home</span>
+              </motion.button>
+            ) : (
+              <>
+                <div className="hidden md:block scale-90 origin-right">
+                  <SidebarModuleSwitcher />
+                </div>
 
-              <div
-                ref={searchBoxRef}
-                className={`
-                  relative transition-all duration-500 ease-out
-                  ${
-                    isFocused
-                      ? "w-full md:w-[300px] lg:w-[380px]"
-                      : "w-full md:w-[220px] lg:w-[280px]"
-                  }
-                `}
-              >
-                <div
-                  className={`
-                  absolute -inset-0.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-2xl opacity-0 transition-opacity duration-300 blur-sm
-                  ${isFocused ? "opacity-30" : "opacity-0"}
-                `}
-                />
+                <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto relative z-20">
+                  <button
+                    onClick={toggleFullScreen}
+                    className="hidden lg:flex p-2 rounded-xl bg-gray-50 text-gray-500 hover:text-[#2E3D99] hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-100"
+                  >
+                    {isFullScreen ? (
+                      <Minimize2 className="w-5 h-5" />
+                    ) : (
+                      <Maximize2 className="w-5 h-5" />
+                    )}
+                  </button>
 
                   <div
-                  className={`
-                  relative flex items-center gap-3 px-4 py-1.5 rounded-xl border transition-all duration-300 bg-white
-                  ${
-                    isFocused
-                      ? "border-transparent shadow-lg ring-1 ring-[#2E3D99]/10"
-                      : "border-gray-200 shadow-sm hover:border-[#2E3D99]/30 hover:shadow-md"
-                  }
-                `}
-                >
-                  <Search
-                    className={`w-4 h-4 transition-colors duration-300 ${
-                      isFocused ? "text-[#2E3D99]" : "text-gray-400"
-                    }`}
-                  />
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    placeholder={
-                      currentModule === "print media"
-                        ? "Search..."
-                        : "Search Matter # or Client..."
-                    }
-                    className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
-                    value={searchQuery}
-                    onChange={handleSearchOnchange}
-                    onFocus={() => {
-                      setShowDropdown(true);
-                      setIsFocused(true);
-                    }}
-                    onBlur={() => {
-                      setTimeout(() => setIsFocused(false), 200);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setShowDropdown(false);
+                    ref={searchBoxRef}
+                    className={`
+                      relative transition-all duration-500 ease-out
+                      ${
+                        isFocused
+                          ? "w-full md:w-[300px] lg:w-[380px]"
+                          : "w-full md:w-[220px] lg:w-[280px]"
                       }
-                    }}
-                  />
+                    `}
+                  >
+                    <div
+                      className={`
+                      absolute -inset-0.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-2xl opacity-0 transition-opacity duration-300 blur-sm
+                      ${isFocused ? "opacity-30" : "opacity-0"}
+                    `}
+                    />
 
-                  <AnimatePresence>
-                    {searchQuery ? (
-                      <motion.button
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        onClick={() => {
-                          setSearchQuery("");
-                          inputRef.current?.focus();
+                      <div
+                      className={`
+                      relative flex items-center gap-3 px-4 py-1.5 rounded-xl border transition-all duration-300 bg-white
+                      ${
+                        isFocused
+                          ? "border-transparent shadow-lg ring-1 ring-[#2E3D99]/10"
+                          : "border-gray-200 shadow-sm hover:border-[#2E3D99]/30 hover:shadow-md"
+                      }
+                    `}
+                    >
+                      <Search
+                        className={`w-4 h-4 transition-colors duration-300 ${
+                          isFocused ? "text-[#2E3D99]" : "text-gray-400"
+                        }`}
+                      />
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        placeholder={
+                          currentModule === "print media"
+                            ? "Search..."
+                            : "Search Matter # or Client..."
+                        }
+                        className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 font-medium"
+                        value={searchQuery}
+                        onChange={handleSearchOnchange}
+                        onFocus={() => {
+                          setShowDropdown(true);
+                          setIsFocused(true);
                         }}
-                        className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </motion.button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.5 }}
-                        className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] text-gray-400 font-medium cursor-pointer"
-                        onClick={() => inputRef.current?.focus()}
-                      >
-                        {isMac ? (
-                          <Command className="w-3 h-3" />
+                        onBlur={() => {
+                          setTimeout(() => setIsFocused(false), 200);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setShowDropdown(false);
+                          }
+                        }}
+                      />
+
+                      <AnimatePresence>
+                        {searchQuery ? (
+                          <motion.button
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            onClick={() => {
+                              setSearchQuery("");
+                              inputRef.current?.focus();
+                            }}
+                            className="p-1 rounded-full bg-gray-100 text-gray-500 hover:bg-[#FB4A50] hover:text-white transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </motion.button>
                         ) : (
-                          <span className="text-[10px] font-bold">Ctrl</span>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.5 }}
+                            className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] text-gray-400 font-medium cursor-pointer"
+                            onClick={() => inputRef.current?.focus()}
+                          >
+                            {isMac ? (
+                              <Command className="w-3 h-3" />
+                            ) : (
+                              <span className="text-[10px] font-bold">Ctrl</span>
+                            )}
+                            <span>K</span>
+                          </motion.div>
                         )}
-                        <span>K</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                  {!isPrintMedia && currentModule !== "wills" && <NotificationBell />}
                 </div>
-              </div>
-              {!isPrintMedia && currentModule !== "wills" && <NotificationBell />}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </header>

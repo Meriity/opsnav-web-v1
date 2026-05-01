@@ -11,6 +11,7 @@ import {
   Shield,
   Cloud,
   Building,
+  Rocket,
   CheckCircle,
   ChevronRight,
   Star,
@@ -37,6 +38,12 @@ import {
   ChevronDown,
   Phone,
   Mail,
+  Check,
+  MapPin,
+  Flag,
+  ArrowUp,
+  Info,
+  EyeOff,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -49,9 +56,9 @@ import {
   FaLinkedin,
   FaLinkedinIn,
   FaXTwitter,
+  FaYoutube,
 } from "react-icons/fa6";
 import { APP_VERSION } from "../config/version";
-// dashboard image is served from /dashboard.png via the public folder
 
 const ScrollIndicator = "/down-arrow.png";
 
@@ -63,7 +70,7 @@ const featureSections = [
     description:
       "Tailored views and permissions for Super Admins, Staff, and Clients.",
     points: [
-      "Customized views for different user roles",
+      "Customised views for different user roles",
       "Granular permission controls",
       "Role-specific workflows",
     ],
@@ -145,11 +152,11 @@ const featureSections = [
     id: 5,
     title: "Automated Reporting & Notifications",
     description:
-      "Automated report generation with real-time notifications and customizable alerts.",
+      "Automated report generation with real-time notifications and customisable alerts.",
     points: [
       "Automated report generation",
       "Real-time notifications",
-      "Customizable alerts",
+      "Customisable alerts",
     ],
     image: {
       desktop:
@@ -181,94 +188,82 @@ const featureSections = [
   },
 ];
 
-// Trusted company Data
-const companies = [
-  {
-    name: "Benefex",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Benefex_logo.svg/320px-Benefex_logo.svg.png",
-    fallback: "B",
-    color: "#22c55e",
-  },
-  {
-    name: "Invincible",
-    logo: null,
-    fallback: "INVINCIBLE",
-    color: "#1D4ED8",
-  },
-  {
-    name: "Cover",
-    logo: null,
-    fallback: "COVER",
-    color: "#374151",
-  },
-  {
-    name: "Canvas",
-    logo: null,
-    fallback: "CANVAS",
-    color: "#6B7280",
-  },
-  {
-    name: "Robinhood",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Robinhood_Logo.svg/320px-Robinhood_Logo.svg.png",
-    fallback: "Robinhood",
-    color: "#16a34a",
-  },
-  {
-    name: "Stripe",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/320px-Stripe_Logo%2C_revised_2016.svg.png",
-    fallback: "Stripe",
-    color: "#6366f1",
-  },
-  {
-    name: "Shopify",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shopify_logo_2018.svg/320px-Shopify_logo_2018.svg.png",
-    fallback: "Shopify",
-    color: "#16a34a",
-  },
+// Industry Data for scroll
+const industries = [
+  "Conveyancing",
+  "Wills & Estates",
+  "Victims of Crime",
+  "Commercial Law",
+  "Print & Signage",
+  "Manufacturing",
+  "Logistics",
+  "Construction",
+  "Property & Real Estate",
+  "Legal & Compliance",
+  "Field Services",
+  "Installations",
+  "Project Operations",
+  "Marketing & Agencies",
+  "Trades & Services",
+  "NDIS Providers",
+  "Financial Services",
+  "Consulting & Professional Services",
 ];
-
-// Logo slider duplicate for infinite effect
-const allCompanies = [...companies, ...companies];
 
 // Pricing plans
 const plans = [
   {
-    name: "Free Plan",
-    tagline: "Perfect For solo users getting started",
+    name: "Starter Plan",
+    tagline: "Get started with a basic workflow setup",
     price: "$0",
-    period: "/Month",
-    cta: "Get Started",
+    period: "/month",
+    cta: "Start Free",
+    path: "/get-started-free",
     highlight: false,
+    icon: "rocket",
     features: [
-      "Lorem ipsum dolor sit amet",
-      "Lorem ipsum dolor sit",
-      "Lorem ipsum dolor sit",
+      "Access to a basic workflow",
+      "Task-level tracking across stages",
+      "Status updates and progress tracking",
+      "Basic operational visibility",
+      "No client dashboard",
     ],
   },
   {
-    name: "Pro Plan",
-    tagline: "Best for growing teams or start ups",
-    price: "$120",
-    period: "/Month",
-    cta: "Get Started",
+    name: "Growth Plan",
+    tagline: "Scale your operations with flexible workflows",
+    price: "$66",
+    period: "/month per workflow",
+    cta: "Start 1-Month Free Trial",
+    path: "/get-started-free",
     highlight: true,
+    icon: "chart",
     features: [
-      "Lorem ipsum dolor sit",
-      "Lorem ipsum dolor sit",
-      "Lorem ipsum dolor sit",
+      "Create and manage multiple workflows",
+      "Industry-aligned workflow templates",
+      "Task-level tracking with stages and status",
+      "AI-powered insights and reminders",
+      "Client dashboard with real-time updates",
+      "Custom branding with your logo",
+      "Email notifications using your business email",
+      "Team collaboration and activity tracking",
     ],
   },
   {
     name: "Enterprise Plan",
-    tagline: "Tailored for large-scale support operations",
-    price: "$450",
-    period: "/Month",
-    cta: "Get Started",
+    tagline: "Custom solutions for complex operations",
+    price: "Custom Pricing",
+    period: "",
+    cta: "Contact Us",
+    path: "/contact-support",
     highlight: false,
+    icon: "building",
     features: [
-      "Lorem ipsum dolor sit amet consectetur. Nunc risus ac duis donec est est quam.",
-      "Lorem ipsum dolor sit amet consectetur. Nunc risus ac duis donec est est quam.",
-      "Lorem ipsum dolor sit",
+      "Everything in Growth Plan",
+      "Advanced workflow customisation",
+      "Multi-team / multi-department support",
+      "Priority onboarding and support",
+      "Tailored setup for your business needs",
     ],
   },
 ];
@@ -276,48 +271,48 @@ const plans = [
 // Testimonial
 const testimonials = [
   {
-    name: "Ritika Sharma",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    name: "Sarah Jenkins",
+    avatar: "https://randomuser.me/api/portraits/women/45.jpg",
     text: "OpsNav brought complete structure to our workflows. Everything is now clear, trackable, and on time.",
   },
   {
-    name: "Karan Mehta",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    text: "We customized OpsNav to fit our exact process, and it just works. Accountability and visibility improved instantly.",
+    name: "Mark Thompson",
+    avatar: "https://randomuser.me/api/portraits/men/33.jpg",
+    text: "We customised OpsNav to fit our exact process, and it just works. Accountability and visibility improved instantly.",
   },
   {
-    name: "Ananya Rao",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
+    name: "Chloe Davies",
+    avatar: "https://randomuser.me/api/portraits/women/69.jpg",
     text: "No more missed steps or constant follow-ups. Our team always knows what to do next.",
   },
   {
-    name: "Vikram Nair",
-    avatar: "https://randomuser.me/api/portraits/men/54.jpg",
+    name: "James Wilson",
+    avatar: "https://randomuser.me/api/portraits/men/55.jpg",
     text: "The onboarding was seamless and the support team is incredibly responsive. Highly recommended.",
   },
   {
-    name: "Priya Iyer",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
+    name: "Emily Brown",
+    avatar: "https://randomuser.me/api/portraits/women/13.jpg",
     text: "OpsNav gave us the visibility we were missing. Our clients notice the difference in how we operate.",
   },
   {
-    name: "Arjun Patel",
-    avatar: "https://randomuser.me/api/portraits/men/76.jpg",
+    name: "Liam Smith",
+    avatar: "https://randomuser.me/api/portraits/men/77.jpg",
     text: "Switching to OpsNav was the best operational decision we made this year. Clarity at every level.",
   },
   {
-    name: "Sneha Desai",
-    avatar: "https://randomuser.me/api/portraits/women/29.jpg",
+    name: "Olivia Taylor",
+    avatar: "https://randomuser.me/api/portraits/women/30.jpg",
     text: "Tasks no longer fall through the cracks. The whole team is aligned and moving in the same direction.",
   },
   {
-    name: "Rahul Gupta",
-    avatar: "https://randomuser.me/api/portraits/men/18.jpg",
+    name: "Noah Miller",
+    avatar: "https://randomuser.me/api/portraits/men/19.jpg",
     text: "OpsNav simplified what used to be a chaotic process. We scaled our operations without adding headcount.",
   },
   {
-    name: "Divya Menon",
-    avatar: "https://randomuser.me/api/portraits/women/55.jpg",
+    name: "Mia Williams",
+    avatar: "https://randomuser.me/api/portraits/women/56.jpg",
     text: "The reporting features alone are worth it. Our leadership team finally has real-time visibility.",
   },
 ];
@@ -326,68 +321,100 @@ const testimonials = [
 const faqData = {
   "Getting Started": [
     {
-      q: "Lorem ipsum dolor sit amet consectetur. Imperdiet.",
-      a: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Imperdiet nunc id volutpat lacus laoreet non curabitur gravida arcu. Egestas dui id ornare arcu odio ut.",
+      q: "What is OpsNav and how does it work?",
+      a: "OpsNav (Operations Navigator) is a workflow management platform designed to run structured operations. It brings together stages, tasks, and updates into one system using industry-aligned workflows, giving your team full visibility and control.",
     },
     {
-      q: "Lorem ipsum dolor sit amet consectetur. Odio et mi.",
-      a: "Odio et mi natoque penatibus et magnis dis parturient montes nascetur ridiculus mus. Volutpat blandit aliquam etiam erat velit scelerisque in dictum.",
+      q: "How quickly can I get started with OpsNav?",
+      a: "You can get started in minutes using ready-to-go workflows. There’s no need to build processes from scratch - simply use or customise workflows based on your operations.",
     },
     {
-      q: "Lorem ipsum dolor sit amet consectetur. Consectetur.",
-      a: "Consectetur adipiscing elit ut aliquam purus sit amet luctus venenatis. Lectus magna fringilla urna porttitor rhoncus dolor purus non enim.",
+      q: "Do I need technical knowledge to use OpsNav?",
+      a: "No. OpsNav is built for operational teams, not developers. It’s intuitive and easy to use, with structured stages and task tracking designed for real business workflows.",
     },
     {
-      q: "Lorem ipsum dolor sit amet consectetur. Tristique.",
-      a: "Tristique senectus et netus et malesuada fames ac turpis egestas. Volutpat blandit aliquam etiam erat velit scelerisque in dictum non consectetur.",
-    },
-    {
-      q: "Lorem ipsum dolor sit amet consectetur. Amet et.",
-      a: "Amet et malesuada fames ac turpis egestas integer eget aliquet nibh. Praesent tristique magna sit amet purus gravida quis blandit.",
+      q: "Is there a free trial available?",
+      a: "Yes. OpsNav offers a 1-month free trial with no credit card required, so you can explore the platform risk-free.",
     },
   ],
-  "Collaboration": [
+  "Workflows & Features": [
     {
-      q: "How do teams collaborate inside OpsNav?",
-      a: "OpsNav provides shared workspaces, task assignments, and real-time updates so every team member stays aligned without constant check-ins.",
+      q: "What makes OpsNav different from other workflow tools?",
+      a: "OpsNav provides industry-aligned workflows with built-in structure, unlike generic tools. It's designed for real operations - helping teams manage stages, tasks, and updates with clarity, not just track tasks.",
     },
     {
-      q: "Can I assign tasks to multiple team members?",
-      a: "Yes, tasks can be assigned to one or multiple members with deadlines, priority levels, and status tracking built in.",
+      q: "Can I customise workflows for my business?",
+      a: "Yes. You can customise workflows to match your processes, including stages, tasks, and updates - while still benefiting from pre-built structures.",
     },
     {
-      q: "Is there a notification system for team updates?",
-      a: "OpsNav sends in-app and email notifications for task updates, mentions, and deadline reminders so nothing slips through.",
+      q: "Does OpsNav support task-level tracking?",
+      a: "Yes. OpsNav offers detailed task-level tracking within structured stages, ensuring progress is clear and nothing gets missed.",
     },
     {
-      q: "Can external clients view progress?",
-      a: "Yes, the Client Portal gives external stakeholders a read-only view of project progress without exposing internal data.",
-    },
-    {
-      q: "Does OpsNav support role-based permissions?",
-      a: "Absolutely. You can define roles with fine-grained permissions — admins, managers, contributors, and view-only guests.",
+      q: "How does OpsNav improve productivity?",
+      a: "OpsNav helps teams achieve up to 5x productivity improvement by reducing manual follow-ups, structuring workflows, and providing real-time operational visibility",
     },
   ],
-  "Support": [
+  "Client & Team Management": [
     {
-      q: "How do I reach the OpsNav support team?",
-      a: "You can reach us via live chat, email at support@opsnav.com, or through the Help Center available 24/7.",
+      q: "What is the client dashboard in OpsNav?",
+      a: "OpsNav includes a client dashboard that allows your clients to view real-time updates on their work, reducing back-and-forth communication and improving transparency.",
     },
     {
-      q: "What is the average response time for support?",
-      a: "Our team typically responds within 2 hours during business hours and within 12 hours on weekends.",
+      q: "How does OpsNav keep teams aligned?",
+      a: "OpsNav keeps teams aligned through shared workflows, real-time updates, and complete visibility across stages and tasks - so everyone knows what's happening and what's next.",
     },
     {
-      q: "Is onboarding assistance available?",
-      a: "Yes, all paid plans include a dedicated onboarding session with one of our product specialists to get your team set up fast.",
+      q: "Does OpsNav send notifications and updates?",
+      a: "Yes. OpsNav supports email notifications using your business email, keeping both your team and clients informed in real time.",
+    },
+  ],
+  "Pricing & Plans": [
+    {
+      q: "How does OpsNav pricing work?",
+      a: "OpsNav uses a workflow-based pricing model, where you only pay for the workflows you use. This keeps pricing simple and scalable as your operations grow.",
     },
     {
-      q: "Where can I find tutorials and documentation?",
-      a: "Our docs site at docs.opsnav.com has step-by-step guides, video walkthroughs, and API references.",
+      q: "What is included in the Starter plan?",
+      a: "The Starter plan includes access to a basic workflow setup, task tracking, and operational visibility - ideal for getting started.",
     },
     {
-      q: "Can I request a feature or report a bug?",
-      a: "Yes! Use the feedback button inside the app or email feedback@opsnav.com. We review all submissions weekly.",
+      q: "What do I get with the Growth plan?",
+      a: "The Growth plan includes multiple workflows, client dashboards, AI-powered insights, custom branding, email notifications, and full operational visibility.",
+    },
+    {
+      q: "Do you offer enterprise or custom plans?",
+      a: "Yes. OpsNav offers custom enterprise solutions for businesses with complex workflows, multi-team operations, and advanced requirements.",
+    },
+  ],
+  "Data Privacy & Security": [
+    {
+      q: "How does OpsNav handle sensitive data?",
+      a: "OpsNav is built for industries that manage sensitive information. Data is handled with strict access controls, structured permissions, and secure workflows - ensuring only authorised users can access and manage critical information.",
+    },
+    {
+      q: "Where is my data hosted?",
+      a: "Your data is securely hosted on enterprise-grade cloud infrastructure located in Australia, ensuring local data residency, reliability, and compliance with Australian standards.",
+    },
+    {
+      q: "How is my data protected in OpsNav?",
+      a: "OpsNav uses secure cloud infrastructure, controlled access, and industry-standard security practices to protect your data and maintain system integrity.",
+    },
+    {
+      q: "Does OpsNav comply with Australian data privacy laws?",
+      a: "Yes. OpsNav is designed to handle and protect data in alignment with Australian data privacy laws and principles, ensuring responsible collection, use, and management of personal and business information.",
+    },
+     {
+      q: "Who owns the data stored in OpsNav?",
+      a: "You retain full ownership of your data at all times. OpsNav provides the platform to manage and operate your workflows - your data always belongs to your business.",
+    },
+    {
+      q: "Can I control access to data within my team?",
+      a: "Yes. OpsNav includes role-based access controls, allowing you to define who can view, edit, and manage workflows and data across your organisation.",
+    },
+    {
+      q: "Does OpsNav share or sell my data?",
+      a: "No. OpsNav does not sell, share, or use your data beyond what is required to provide and improve the platform.",
     },
   ],
 };
@@ -481,29 +508,6 @@ const FeatureCard = ({ icon: Icon, title, description, index }) => {
     </motion.div>
   );
 };
-
-const LogoCard = ({ company }) => (
-  <div className="flex items-center justify-center mx-10 min-w-[140px]">
-    {company.logo ? (
-      <img
-        src={company.logo}
-        alt={company.name}
-        className="h-8 w-auto object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
-        loading="lazy"
-        onError={(e) => {
-          e.target.style.display = "none";
-          e.target.nextSibling.style.display = "flex";
-        }}
-      />
-    ) : null}
-    <span
-      style={{ display: company.logo ? "none" : "flex", color: company.color }}
-      className="items-center gap-1 font-bold text-lg tracking-wide opacity-50 hover:opacity-90 transition-opacity duration-300 whitespace-nowrap"
-    >
-      {company.name}
-    </span>
-  </div>
-);
 
 const CheckIcon = ({ highlight }) => (
   <div
@@ -793,7 +797,7 @@ export default function Home() {
   const handleScrollToFeatures = () => {
     const el = document.getElementById("features");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.scrollIntoView({ behaviour: "smooth", block: "start" });
     }
     setIsMobileMenuOpen(false);
   };
@@ -801,12 +805,14 @@ export default function Home() {
   const scrollToSection = (item) => {
     setActiveLink(item);
     if (item === "Home") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behaviour: "smooth" });
+    } else if (item === "Contact Us") {
+      navigate("/contact-support");
     } else {
       const id = item.toLowerCase().replace(/\s+/g, "");
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.scrollIntoView({ behaviour: "smooth", block: "start" });
       }
     }
     setIsMobileMenuOpen(false);
@@ -857,6 +863,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [openIndex, setOpenIndex] = useState(null);
 
+  // Pricing tab for mobile/tablet
+  const [activePlanTab, setActivePlanTab] = useState(1); // Default to Growth Plan (index 1)
+
   const handleTab = (tab) => {
     setActiveTab(tab);
     setOpenIndex(null);
@@ -867,8 +876,8 @@ export default function Home() {
   };
 
   return (
-    <>
-      <div className="relative min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <div className="relative h-auto lg:min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 overflow-hidden">
         <FloatingElement top={10} left={10} delay={0} />
         <FloatingElement top={20} left={85} delay={1} size={80} />
         <FloatingElement top={70} left={5} delay={2} size={40} />
@@ -973,7 +982,7 @@ export default function Home() {
             : "bg-transparent py-4 sm:py-6"
             }`}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="flex items-center gap-3"
@@ -1046,12 +1055,12 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 min-h-screen pt-16 sm:pt-20 mt-8">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-24 pb-8 sm:pt-36 sm:pb-16 lg:pt-28 lg:pb-20 large-monitor-hero">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 sm:mb-8 border border-[#2E3D99]/20 max-w-[90%]"
+            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-6 sm:mb-8 border border-[#2E3D99]/20 max-w-[90%] large-monitor-badge"
           >
             <Sparkles className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium text-gray-700 truncate">
@@ -1063,14 +1072,14 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold max-w-6xl leading-tight px-4"
+            className="w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold max-w-5xl leading-tight px-4 mx-auto large-monitor-headline"
           >
             <span className="bg-gradient-to-r from-[#2E3D99] via-[#1D97D7] to-[#1D97D7] bg-clip-text text-transparent">
-              Customizable Workflow Management System
+              Ready-to-Go, Industry-Aligned Workflows Built for Real Operations
             </span>
-            <br />
-            <span className="text-gray-800">
-              Built To Fit Your Business
+            <br className="hidden lg:block" />
+            <span className="text-gray-800 mt-2 block">
+              Structured Execution Without the Chaos
             </span>
           </motion.h1>
 
@@ -1078,16 +1087,16 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl leading-relaxed px-4"
+            className="w-full mt-6 text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 large-monitor-desc"
           >
-            OpsNav Lets You Build Workflows That Match Your Business, So You Can Standardize Execution, Track Progress, And Scale Without Chaos.
+            OpsNav (Operations Navigator) is a purpose-built, industry-aligned platform that combines task-level tracking, AI-powered insights, and complete operational visibility - so you can run your operations with structure, clarity, and confidence.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center px-4"
+            className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center px-4 large-monitor-buttons"
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -1113,9 +1122,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base px-4"
+            className="w-full mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base px-4"
           >
-            No credit card required • Cancel anytime
+            No credit card required • No lock-ins • Cancel anytime
           </motion.div>
 
           <motion.div
@@ -1138,6 +1147,7 @@ export default function Home() {
               lg:right-auto
               lg:mt-12 
               lg:mx-auto
+              large-monitor-scroll
               
             "
           >
@@ -1190,7 +1200,7 @@ export default function Home() {
       </div>
 
       {/* Hero Dashboard Mockup Section */}
-      <section className="w-full pt-10 pb-10 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="hidden sm:block w-full pt-10 pb-10 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-center">
           {/* Intense linear bloom spread entirely across the top border area */}
           <div className="absolute -top-16 w-full h-48 bg-gradient-to-r from-transparent via-[#4cb3f8]/50 to-transparent blur-[120px] opacity-100 z-0 pointer-events-none" />
@@ -1223,43 +1233,113 @@ export default function Home() {
       </section>
 
 
-      {/* Trusted Companies */}
-      <section className="w-full py-14 bg-white">
-        <div className="max-w-5xl mx-auto px-4 text-center mb-10">
-          <h2 className="text-1xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">
-            Trusted By 500+{" "}
+      {/* Built for Teams Across Industries */}
+      <section className="w-full py-10 sm:py-14 bg-white">
+        <div className="max-w-5xl mx-auto px-4 text-center mb-8 sm:mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+            Built for Teams Across{" "}
             <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-              Growing Companies
+              Industries
             </span>
           </h2>
         </div>
-        {/* Slider wrapper */}
-        <div className="relative w-full overflow-hidden">
-          {/* Left fade */}
-          <div className="absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-          {/* Right fade */}
-          <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
-          <motion.div
-            className="flex items-center"
-            style={{ willChange: "transform" }}
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{
-              duration: 22,
-              ease: "linear",
-              repeat: Infinity,
-            }}
-          >
-            {allCompanies.map((company, i) => (
-              <LogoCard key={`${company.name}-${i}`} company={company} />
-            ))}
-          </motion.div>
+        {/* Marquee CSS */}
+        <style>{`
+          @keyframes marquee-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @keyframes marquee-right {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+          }
+          .marquee-track-left {
+            display: flex;
+            width: max-content;
+            animation: marquee-left 25s linear infinite;
+          }
+          .marquee-track-right {
+            display: flex;
+            width: max-content;
+            animation: marquee-right 28s linear infinite;
+          }
+          .marquee-track-left:hover,
+          .marquee-track-right:hover {
+            animation-play-state: paused;
+          }
+          @media (max-width: 768px) {
+            .marquee-track-left {
+              animation-duration: 25s;
+            }
+            .marquee-track-right {
+              animation-duration: 28s;
+            }
+          }
+        `}</style>
+
+        {/* Row 1 - scrolls left */}
+        <div className="relative w-full overflow-hidden mb-4 sm:mb-6" style={{ touchAction: "pan-x" }}>
+          <div className="absolute left-0 top-0 h-full w-16 sm:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 h-full w-16 sm:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="marquee-track-left">
+            {[...industries, ...industries].map((industry, i) => {
+              const colors = [
+                "#2E3D99", "#1D97D7", "#22c55e", "#6366f1",
+                "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4",
+                "#16a34a", "#1D4ED8"
+              ];
+              return (
+                <div key={`row1-${i}`} className="flex-shrink-0 mx-3 sm:mx-5">
+                  <span
+                    style={{ 
+                      background: `linear-gradient(135deg, ${colors[i % colors.length]}15, ${colors[i % colors.length]}08)`,
+                      borderColor: `${colors[i % colors.length]}30`,
+                      color: colors[i % colors.length]
+                    }}
+                    className="inline-block px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border text-sm sm:text-base font-semibold whitespace-nowrap hover:shadow-md transition-all duration-300 cursor-default"
+                  >
+                    {industry}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Row 2 - scrolls right (reverse) */}
+        <div className="relative w-full overflow-hidden" style={{ touchAction: "pan-x" }}>
+          <div className="absolute left-0 top-0 h-full w-16 sm:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 h-full w-16 sm:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="marquee-track-right">
+            {[...industries.slice().reverse(), ...industries.slice().reverse()].map((industry, i) => {
+              const colors = [
+                "#06b6d4", "#8b5cf6", "#ec4899", "#f59e0b",
+                "#6366f1", "#22c55e", "#1D97D7", "#2E3D99",
+                "#16a34a", "#1D4ED8"
+              ];
+              return (
+                <div key={`row2-${i}`} className="flex-shrink-0 mx-3 sm:mx-5">
+                  <span
+                    style={{ 
+                      background: `linear-gradient(135deg, ${colors[i % colors.length]}15, ${colors[i % colors.length]}08)`,
+                      borderColor: `${colors[i % colors.length]}30`,
+                      color: colors[i % colors.length]
+                    }}
+                    className="inline-block px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border text-sm sm:text-base font-semibold whitespace-nowrap hover:shadow-md transition-all duration-300 cursor-default"
+                  >
+                    {industry}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
       <div id="features" className="py-12 sm:py-16 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1276,12 +1356,11 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
               Everything you need to{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                streamline operations
+                streamline your operations
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Comprehensive tools designed specifically for operations
-              management
+              Purpose-built features designed to manage every stage, task, and update in one place 
             </p>
           </motion.div>
 
@@ -1487,7 +1566,7 @@ export default function Home() {
 
       {/* All Features at a Glance */}
       <div className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-[#2E3D99]/5 to-[#1D97D7]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1532,7 +1611,7 @@ export default function Home() {
             <FeatureCard
               icon={Clock}
               title="Automated Reporting"
-              description="Automated report generation with real-time notifications and customizable alerts."
+              description="Automated report generation with real-time notifications and customisable alerts."
               index={4}
             />
             <FeatureCard
@@ -1547,163 +1626,340 @@ export default function Home() {
 
       {/* Price Plan Card */}
 
-      <section id="pricing" ref={ref} className="w-full py-20 sm:py-28 bg-gray-50/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-
+      <section id="pricing" ref={ref} className="w-full py-12 sm:py-20 md:py-28 bg-gray-50/60">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           {/* Heading */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <div className="inline-flex items-center gap-2 bg-[#2E3D99]/10 text-[#2E3D99] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-4">
+            <div className="inline-flex items-center gap-2 bg-[#2E3D99]/10 text-[#2E3D99] px-3 py-1.5 rounded-full mb-3">
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm font-medium">
                 PLANS & PRICING
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold text-gray-800 mb-2 sm:mb-4">
               Choose Your{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                 Plan
               </span>
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-3xl mx-auto px-4">
               Flexible pricing options to support your business at every stage of growth.
             </p>
           </motion.div>
 
-          {/* Cards */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center"
-          >
-            {plans.map((plan) => {
-              if (plan.highlight) {
-                return (
-                  <motion.div
-                    key={plan.name}
-                    variants={cardVariants}
-                    whileHover={{ y: -6 }}
-                    className="relative z-10 scale-[1.03] md:scale-[1.05]"
-                    style={{ padding: "2px", borderRadius: "1.25rem" }}
-                  >
-                    {/* Gradient glow border layer */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        borderRadius: "1.25rem",
-                        background:
-                          "linear-gradient(160deg, #2E3D99 0%, #1D97D7 55%, #a8e4f7 100%)",
-                        boxShadow:
-                          "0 0 30px 8px rgba(29,151,215,0.40), 0 0 64px 12px rgba(46,61,153,0.20)",
-                        zIndex: 0,
-                      }}
-                    />
-
-                    {/* White card surface */}
-                    <div
-                      className="relative z-10 bg-white flex flex-col gap-5 p-7 sm:p-8"
-                      style={{ borderRadius: "calc(1.25rem - 2px)" }}
-                    >
-                      {/* Most Popular badge */}
-                      <div className="absolute -top-5 left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap">
+          {/* Desktop Laptop Grid (lg screens only) */}
+          <div className="relative hidden lg:block max-w-6xl mx-auto">
+            
+            <div className="relative grid grid-cols-3 gap-8 items-start">
+              {plans.map((plan) => (
+                <div key={plan.name} className="relative flex flex-col">
+                  {plan.highlight ? (
+                    /* ── Most Popular Card (gradient border) ── */
+                    <div className="relative z-10">
+                      {/* Centered "Most Popular" badge overlapping the top edge */}
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                        <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-xs font-bold px-5 py-1.5 rounded-full shadow-md whitespace-nowrap">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            style={{ display: "inline-block" }}
+                          >⭐</motion.span>
                           Most Popular
                         </span>
                       </div>
-
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-bold mb-1.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                          {plan.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-snug">{plan.tagline}</p>
+                      {/* Gradient border wrapper */}
+                      <div style={{ padding: "2px", borderRadius: "1rem", background: "linear-gradient(160deg, #2E3D99 0%, #1D97D7 55%, #a8e4f7 100%)" }}>
+                        <div className="bg-white rounded-[0.9rem] p-8 flex flex-col gap-1">
+                          <h3 className="text-2xl font-bold text-gray-900 mt-2">{plan.name}</h3>
+                          <p className="text-sm text-gray-500 mb-4">{plan.tagline}</p>
+                          <div className="flex items-baseline gap-1 mb-6">
+                            <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
+                            <span className="text-sm text-gray-400">{plan.period}</span>
+                          </div>
+                          <button 
+                            onClick={() => navigate(plan.path)}
+                            className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg hover:shadow-xl transition-all duration-300 mb-6"
+                          >
+                            {plan.cta}
+                          </button>
+                          <ul className="flex flex-col gap-3">
+                            {plan.features.map((f, i) => (
+                              <li key={i} className="flex items-start gap-3">
+                                <div className="w-5 h-5 rounded mt-0.5 bg-[#2E3D99] flex items-center justify-center flex-shrink-0">
+                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                </div>
+                                <span className="text-sm text-gray-600 leading-snug">{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-
-                      <div className="flex items-end gap-1">
-                        <span className="text-5xl sm:text-6xl font-bold leading-none tracking-tight bg-gradient-to-br from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                          {plan.price}
-                        </span>
-                        <span className="text-sm text-gray-400 font-medium mb-1.5">{plan.period}</span>
+                    </div>
+                  ) : (
+                    /* ── Side Cards ── */
+                    <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-8 flex flex-col gap-1 h-full">
+                      <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                      <p className="text-sm text-gray-500 mb-4">{plan.tagline}</p>
+                      <div className="flex items-baseline gap-1 mb-6">
+                        <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-3xl" : "text-5xl"}`}>{plan.price}</span>
+                        {plan.period && <span className="text-sm text-gray-400">{plan.period}</span>}
                       </div>
-
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="w-full py-3 rounded-xl font-semibold text-white text-base bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg shadow-[#2E3D99]/25 hover:shadow-xl transition-all duration-300"
+                      <button 
+                        onClick={() => navigate(plan.path)}
+                        className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all duration-300 mb-6"
                       >
                         {plan.cta}
-                      </motion.button>
-
-                      <div className="h-px bg-gray-100" />
-
+                      </button>
                       <ul className="flex flex-col gap-3">
-                        {plan.features.map((feature, i) => (
+                        {plan.features.map((f, i) => (
                           <li key={i} className="flex items-start gap-3">
-                            <CheckIcon highlight={true} />
-                            <span className="text-sm text-gray-600 leading-snug">{feature}</span>
+                            <div className="w-5 h-5 rounded mt-0.5 bg-[#1D97D7]/15 flex items-center justify-center flex-shrink-0">
+                              <Check className="w-3 h-3 text-[#1D97D7]" strokeWidth={3} />
+                            </div>
+                            <span className="text-sm text-gray-600 leading-snug">{f}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
-                  </motion.div>
-                );
-              }
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
 
-              return (
-                <motion.div
-                  key={plan.name}
-                  variants={cardVariants}
-                  whileHover={{ y: -6, boxShadow: "0 20px 48px rgba(46,61,153,0.10)" }}
-                  className="relative rounded-2xl p-7 sm:p-8 flex flex-col gap-5 bg-white shadow-md shadow-gray-200/80 transition-all duration-300"
-                >
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-bold mb-1.5 text-gray-900">
-                      {plan.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 leading-snug">{plan.tagline}</p>
+          {/* Tablet Grid View (md screens only) */}
+          <div className="hidden md:block lg:hidden">
+            {/* Top row: 2 side cards */}
+            <div className="grid grid-cols-2 gap-5 mb-5">
+              {plans.filter((p) => !p.highlight).map((plan) => (
+                <div key={plan.name} className="bg-white border border-gray-100 rounded-2xl p-7 shadow-md flex flex-col">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                  <p className="text-xs text-gray-500 mb-4">{plan.tagline}</p>
+                  <div className="flex items-baseline gap-1 mb-5">
+                    <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-2xl" : "text-4xl"}`}>{plan.price}</span>
+                    {plan.period && <span className="text-xs text-gray-400">{plan.period}</span>}
                   </div>
-
-                  <div className="flex items-end gap-1">
-                    <span className="text-5xl sm:text-6xl font-bold leading-none tracking-tight text-gray-900">
-                      {plan.price}
-                    </span>
-                    <span className="text-sm text-gray-400 font-medium mb-1.5">{plan.period}</span>
-                  </div>
-
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] text-base border-2 border-[#2E3D99]/30 hover:border-[#2E3D99] hover:bg-[#2E3D99]/5 transition-all duration-300"
+                  <button 
+                    onClick={() => navigate(plan.path)}
+                    className="w-full py-3 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20 hover:bg-[#2E3D99]/5 transition-all mb-5"
                   >
                     {plan.cta}
-                  </motion.button>
-
-                  <div className="h-px bg-gray-100" />
-
-                  <ul className="flex flex-col gap-3">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckIcon highlight={false} />
-                        <span className="text-sm text-gray-600 leading-snug">{feature}</span>
+                  </button>
+                  <ul className="flex flex-col gap-2.5">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <div className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5"><Check className="w-2.5 h-2.5 text-gray-400" /></div>
+                        <span className="text-xs text-gray-500 leading-snug">{f}</span>
                       </li>
                     ))}
                   </ul>
-                </motion.div>
-              );
-            })}
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom row: Featured 'Most Popular' card centered */}
+            <div className="flex justify-center">
+              <div className="w-full max-w-[520px]">
+                {plans.filter((p) => p.highlight).map((plan) => (
+                  <div key={plan.name} className="relative pt-6">
+                    <div className="absolute -top-0 left-1/2 -translate-x-1/2 z-10">
+                      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-xs font-bold px-6 py-2 rounded-full shadow-md whitespace-nowrap">
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                          style={{ display: "inline-block" }}
+                        >⭐</motion.span>
+                        Most Popular
+                      </span>
+                    </div>
+                    <div style={{ padding: "2px", borderRadius: "1rem", background: "linear-gradient(160deg, #2E3D99 0%, #1D97D7 55%, #a8e4f7 100%)" }}>
+                      <div className="bg-white rounded-[0.9rem] p-7 flex flex-col">
+                        <h3 className="text-2xl font-bold text-gray-900 mt-2 mb-1">{plan.name}</h3>
+                        <p className="text-sm text-gray-500 mb-4">{plan.tagline}</p>
+                        <div className="flex items-baseline gap-1 mb-5">
+                          <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
+                          <span className="text-sm text-gray-400">{plan.period}</span>
+                        </div>
+                        <button 
+                          onClick={() => navigate(plan.path)}
+                          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg mb-5"
+                        >
+                          {plan.cta}
+                        </button>
+                        <ul className="grid grid-cols-2 gap-2.5">
+                          {plan.features.map((f, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <div className="w-4 h-4 rounded bg-[#2E3D99] flex items-center justify-center flex-shrink-0 mt-0.5"><Check className="w-2.5 h-2.5 text-white" /></div>
+                              <span className="text-xs text-gray-600 leading-snug">{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Tab View */}
+          <div className="md:hidden space-y-6">
+            <div className="flex justify-center mb-8">
+              <div className="bg-gray-100 p-1 rounded-xl flex gap-1">
+                {plans.map((plan, idx) => (
+                  <button key={plan.name} onClick={() => setActivePlanTab(idx)} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activePlanTab === idx ? "bg-white text-[#2E3D99] shadow-sm" : "text-gray-500"}`}>{plan.name.split(" ")[0]}</button>
+                ))}
+              </div>
+            </div>
+
+            {plans.map((plan, idx) => (
+              <motion.div
+                key={plan.name}
+                initial={false}
+                animate={{ 
+                  opacity: activePlanTab === idx ? 1 : 0,
+                  display: activePlanTab === idx ? "block" : "none"
+                }}
+              >
+                {plan.highlight ? (
+                  <div className="p-0.5 rounded-2xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
+                    <div className="bg-white rounded-[0.9rem] p-6 flex flex-col gap-4">
+                      <div className="flex justify-between items-center">
+                         <div className="w-10 h-10 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center">
+                           <BarChart3 className="w-5 h-5 text-[#2E3D99]" />
+                         </div>
+                         <span className="inline-flex items-center gap-1 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-[10px] font-semibold px-3 py-1 rounded-full shadow-sm">
+                           <motion.span
+                             animate={{ rotate: 360 }}
+                             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                             style={{ display: "inline-block" }}
+                           >⭐</motion.span>
+                           MOST POPULAR
+                         </span>
+                      </div>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{plan.name}</h3>
+                      <div className="flex items-end gap-1">
+                        <span className="text-4xl font-bold bg-gradient-to-br from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{plan.price}</span>
+                        <span className="text-xs text-gray-400 mb-1">{plan.period}</span>
+                      </div>
+                      <button 
+                        onClick={() => navigate(plan.path)}
+                        className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] shadow-lg"
+                      >
+                        {plan.cta}
+                      </button>
+                      <ul className="flex flex-col gap-2 mt-2">
+                        {plan.features.map((f, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <CheckIcon highlight={true} />
+                            <span className="text-xs text-gray-600">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-gray-100 shadow-md rounded-2xl p-6 flex flex-col gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center">
+                      {plan.icon === "rocket" && <Rocket className="w-5 h-5 text-[#2E3D99]" />}
+                      {plan.icon === "building" && <Building className="w-5 h-5 text-[#2E3D99]" />}
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                    <div className="flex items-end gap-1">
+                      <span className={`font-bold text-gray-900 ${plan.price === "Custom Pricing" ? "text-2xl" : "text-4xl"}`}>{plan.price}</span>
+                      {plan.period && <span className="text-xs text-gray-400 mb-1">{plan.period}</span>}
+                    </div>
+                    <button 
+                      onClick={() => navigate(plan.path)}
+                      className="w-full py-2.5 rounded-xl font-semibold text-[#2E3D99] border-2 border-[#2E3D99]/20"
+                    >
+                      {plan.cta}
+                    </button>
+                    <ul className="flex flex-col gap-2 mt-2">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckIcon highlight={false} />
+                          <span className="text-xs text-gray-600">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Trust signals bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="mt-12 md:mt-16 bg-white rounded-xl sm:rounded-2xl shadow-md border border-gray-100 p-6 md:p-8"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-4">
+              <div className="flex items-center gap-4 justify-start">
+                <div className="w-10 h-10 rounded-full bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-[#2E3D99]" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">1-Month Free Trial</p>
+                  <p className="text-xs text-gray-500">Explore all features risk-free</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 justify-start sm:justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-5 h-5 text-[#2E3D99]" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">No Credit Card Required</p>
+                  <p className="text-xs text-gray-500">Get started in seconds</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 justify-start sm:justify-end">
+                <div className="w-10 h-10 rounded-full bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-5 h-5 text-[#2E3D99]" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Cancel Anytime</p>
+                  <p className="text-xs text-gray-500">No lock-ins. No hassle.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* AUD footnote */}
+          <p className="text-center font-semibold
+             text-xs sm:text-sm text-gray-400 mt-6">
+            
+          </p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="mt-12 flex justify-center"
+          >
+            <div className="inline-flex items-center gap-2 bg-[#2E3D99]/5 text-gray-500 px-4 py-2 rounded-full border border-[#2E3D99]/10">
+              <Info className="w-4 h-4 text-[#2E3D99]" />
+              <span className="text-xs sm:text-sm font-medium">
+                Prices are in AUD and exclude GST.
+              </span>
+            </div>
           </motion.div>
 
         </div>
       </section>
 
       {/* Mid-Page Responsive Mockup Section */}
-      <section className="w-full pt-8 sm:pt-10 pb-0 sm:pb-0 px-4 sm:px-6 lg:px-8 relative bg-white">
+      <section className="w-full pt-8 sm:pt-10 pb-0 sm:pb-0 px-4 sm:px-6 lg:px-8 relative bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-center">
           
           <div className="text-center mb-0 sm:mb-2 flex flex-col items-center">
@@ -1903,7 +2159,7 @@ export default function Home() {
 
       {/* Why Choose OpsNav */}
       <div className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-[#2E3D99]/5 to-[#1D97D7]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1913,18 +2169,15 @@ export default function Home() {
           >
             <div className="inline-flex items-center gap-2 bg-[#2E3D99]/10 text-[#2E3D99] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-4">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">
+              <span className="text-xs sm:text-sm font-medium uppercase tracking-wide">
                 WHY CHOOSE OPSNAV
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
-              Built for the modern{" "}
-              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                practice
-              </span>
+              Built for <span className="text-[#2E3D99]">Real Operations,</span> Not Just Tasks
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Experience a platform designed by industry experts to solve real-world operational challenges.
+              Designed to bring structure, visibility, and control to your workflows - so your team can execute with clarity and confidence.
             </p>
           </motion.div>
 
@@ -1939,45 +2192,45 @@ export default function Home() {
               >
                 {[
                   {
-                    icon: ShieldCheck,
-                    title: "Enterprise Security",
+                    icon: Layers,
+                    title: "Industry-Aligned Workflows",
                     description:
-                      "End-to-end encryption, role-based access control, and GDPR compliance.",
+                      "Purpose-built workflows designed around how your industry actually operates - ready to use from day one.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
-                    icon: Globe,
-                    title: "Global Infrastructure",
+                    icon: Target,
+                    title: "Structured Task Management",
                     description:
-                      "Hosted on Cloud with multi-region redundancy.",
+                      "Organize every task into clear stages with defined progress, so nothing gets missed or delayed.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
-                    icon: Zap,
-                    title: "Lightning Fast",
+                    icon: Activity,
+                    title: "Complete Operational Visibility",
                     description:
-                      "Optimized for performance with sub-second response times.",
-                    gradient: "from-[#2E3D99] to-[#1D97D7]",
-                  },
-                  {
-                    icon: Users,
-                    title: "Team Collaboration",
-                    description:
-                      "Real-time updates, comments, and @mentions for seamless teamwork.",
-                    gradient: "from-[#2E3D99] to-[#1D97D7]",
-                  },
-                  {
-                    icon: Building,
-                    title: "Expertise",
-                    description:
-                      "Built by professionals who understand your workflow.",
+                      "Track every stage, task, and update in one place with full visibility across your operations.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                   {
                     icon: BarChart3,
-                    title: "Actionable Insights",
+                    title: "Client Dashboard",
                     description:
-                      "Advanced analytics and reporting to drive business decisions.",
+                      "Give your clients real-time access to updates, reducing back-and-forth and improving transparency.",
+                    gradient: "from-[#2E3D99] to-[#1D97D7]",
+                  },
+                  {
+                    icon: Sparkles,
+                    title: "AI-Powered Insights",
+                    description:
+                      "Get real-time insights, reminders, and visibility into bottlenecks - without chasing your team.",
+                    gradient: "from-[#2E3D99] to-[#1D97D7]",
+                  },
+                  {
+                    icon: RefreshCw,
+                    title: "Connected Operations",
+                    description:
+                      "Seamlessly connect your workflows, tools, and updates - so everything works together in one place.",
                     gradient: "from-[#2E3D99] to-[#1D97D7]",
                   },
                 ].map((feature, index) => (
@@ -2012,7 +2265,7 @@ export default function Home() {
               onClick={() => {
                 setCurrentWhyChooseIndex((prev) => {
                   if (prev === 0) {
-                    return 4;
+                    return 5;
                   } else {
                     return prev - 1;
                   }
@@ -2026,8 +2279,8 @@ export default function Home() {
             <button
               onClick={() => {
                 setCurrentWhyChooseIndex((prev) => {
-                  if (prev === 4) {
-                    return 0; // When at slide 5 (index 4), go to slide 1 (index 0)
+                  if (prev === 5) {
+                    return 0; // When at slide 6 (index 5), go to slide 1 (index 0)
                   } else {
                     return prev + 1; // Go to next slide
                   }
@@ -2040,7 +2293,7 @@ export default function Home() {
 
             {/* Dots Indicator */}
             <div className="flex justify-center gap-1.5 mt-4">
-              {[0, 1, 2, 3, 4].map((index) => (
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentWhyChooseIndex(index)}
@@ -2058,44 +2311,45 @@ export default function Home() {
           <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {[
               {
-                icon: ShieldCheck,
-                title: "Enterprise Security",
+                icon: Layers,
+                title: "Industry-Aligned Workflows",
                 description:
-                  "End-to-end encryption, role-based access control, and GDPR compliance.",
+                  "Purpose-built workflows designed around how your industry actually operates - ready to use from day one.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
-                icon: Globe,
-                title: "Global Infrastructure",
-                description: "Hosted on Cloud with multi-region redundancy.",
+                icon: Target,
+                title: "Structured Task Management",
+                description:
+                  "Organize every task into clear stages with defined progress, so nothing gets missed or delayed.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
-                icon: Zap,
-                title: "Lightning Fast",
+                icon: Activity,
+                title: "Complete Operational Visibility",
                 description:
-                  "Optimized for performance with sub-second response times.",
-                gradient: "from-[#2E3D99] to-[#1D97D7]",
-              },
-              {
-                icon: Users,
-                title: "Team Collaboration",
-                description:
-                  "Real-time updates, comments, and @mentions for seamless teamwork.",
-                gradient: "from-[#2E3D99] to-[#1D97D7]",
-              },
-              {
-                icon: Building,
-                title: "Expertise",
-                description:
-                  "Built by professionals who understand your workflow.",
+                  "Track every stage, task, and update in one place with full visibility across your operations.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
               {
                 icon: BarChart3,
-                title: "Actionable Insights",
+                title: "Client Dashboard",
                 description:
-                  "Advanced analytics and reporting to drive business decisions.",
+                  "Give your clients real-time access to updates, reducing back-and-forth and improving transparency.",
+                gradient: "from-[#2E3D99] to-[#1D97D7]",
+              },
+              {
+                icon: Sparkles,
+                title: "AI-Powered Insights",
+                description:
+                  "Get real-time insights, reminders, and visibility into bottlenecks - without chasing your team.",
+                gradient: "from-[#2E3D99] to-[#1D97D7]",
+              },
+              {
+                icon: RefreshCw,
+                title: "Connected Operations",
+                description:
+                  "Seamlessly connect your workflows, tools, and updates - so everything works together in one place.",
                 gradient: "from-[#2E3D99] to-[#1D97D7]",
               },
             ].map((feature, index) => (
@@ -2134,7 +2388,7 @@ export default function Home() {
 
       {/* The OpsNav Story */}
       <section id="aboutus" ref={ref} className="w-full py-16 sm:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -2150,12 +2404,12 @@ export default function Home() {
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
               The OpsNav{" "}
-              <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+              <span className="text-[#2E3D99]">
                 Story So Far
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Our journey of helping teams achieve operational excellence, one step at a time.
+              Our journey of helping teams bring structure to their operations, one workflow at a time.
             </p>
           </motion.div>
 
@@ -2167,8 +2421,10 @@ export default function Home() {
           >
             {[
               {
-                value: "1M+",
-                label: "Documents Processed",
+                value: "75K+",
+                label: "Tasks & Workflow Actions Managed",
+                subLabel: "Workflows executed and tasks completed across teams.",
+                highlight: true,
                 icon: (
                   <motion.svg
                     viewBox="0 0 56 56"
@@ -2215,8 +2471,10 @@ export default function Home() {
                 ),
               },
               {
-                value: "24%",
-                label: "Faster Operations",
+                value: "Up to 5X",
+                label: "Productivity Improvement",
+                subLabel: "Teams achieve up to 5x more output with structured workflows and automation.",
+                highlight: true,
                 icon: (
                   <motion.svg
                     viewBox="0 0 56 56"
@@ -2260,8 +2518,10 @@ export default function Home() {
                 ),
               },
               {
-                value: "4.8",
-                label: "Average Rating",
+                value: "60%",
+                label: "Less Manual Follow-Ups",
+                subLabel: "Reduced back-and-forth with clients through transparency and real-time updates.",
+                highlight: true,
                 icon: (
                   <motion.svg
                     viewBox="0 0 56 56"
@@ -2309,8 +2569,10 @@ export default function Home() {
                 ),
               },
               {
-                value: "10K+",
-                label: "Teams Onboarded",
+                value: "150+",
+                label: "Teams Using OpsNav",
+                subLabel: "Growing community of operations-focused teams trusting OpsNav.",
+                highlight: true,
                 icon: (
                   <motion.svg
                     viewBox="0 0 56 56"
@@ -2383,23 +2645,44 @@ export default function Home() {
                 <div className="flex items-center justify-center">
                   {stat.icon}
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col items-center gap-1">
                   <span className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-none">
                     {stat.value}
                   </span>
-                  <span className="text-sm text-gray-400 font-medium leading-snug">
+                  <span className={`text-sm font-medium leading-snug ${stat.highlight ? 'text-gray-900 font-bold' : 'text-gray-400'}`}>
                     {stat.label}
                   </span>
+                  {stat.subLabel && (
+                    <span className="text-[11px] text-gray-500 font-medium mt-1 leading-tight max-w-[160px]">
+                      {stat.subLabel}
+                    </span>
+                  )}
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* Footnote */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="mt-12 flex justify-center"
+          >
+            <div className="inline-flex items-center gap-2 bg-[#2E3D99]/5 text-gray-500 px-4 py-2 rounded-full border border-[#2E3D99]/10">
+              <ShieldCheck className="w-4 h-4 text-[#2E3D99]" />
+              <span className="text-xs sm:text-sm font-medium">
+                Metrics based on internal data and customer feedback as of March 2026.
+              </span>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Testimonial */}
       <section ref={ref} className="w-full py-16 sm:py-24 bg-gradient-to-br from-[#2E3D99]/5 to-[#1D97D7]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* Heading */}
           <motion.div
@@ -2412,7 +2695,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 bg-[#2E3D99]/10 text-[#2E3D99] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-4">
               <MessageSquareQuote className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm font-medium">
-                WHAT OUR CLIENTS SAYS
+                WHAT OUR CUSTOMERS SAYS
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
@@ -2422,31 +2705,23 @@ export default function Home() {
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              See how teams across the globe are transforming their workflows with OpsNav.
+              See how teams are bringing structure, visibility, and control to their operations with OpsNav.
             </p>
           </motion.div>
 
-          {/* ── MOBILE: 1 card, no dots ── */}
-          <div className="block sm:hidden">
-            <div className="relative overflow-hidden">
-              <AnimatePresence custom={mobDir} mode="wait">
-                <motion.div
-                  key={mobCurrent}
-                  custom={mobDir}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  className="pt-8 pb-8"
-                >
-                  <TestimonialCard person={testimonials[mobCurrent]} />
-                </motion.div>
-              </AnimatePresence>
+          {/* ── MOBILE & TABLET: Swipeable Carousel ── */}
+          <div className="block lg:hidden">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-8 pt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {testimonials.map((person, i) => (
+                <div key={i} className="flex-shrink-0 w-[85vw] sm:w-[350px] md:w-[400px] snap-center">
+                  <TestimonialCard person={person} />
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* ── TABLET + DESKTOP: 3 cards with dots ── */}
-          <div className="hidden sm:block">
+          {/* ── DESKTOP: 3 cards with dots ── */}
+          <div className="hidden lg:block">
             <div className="relative overflow-hidden">
               <AnimatePresence custom={deskDir} mode="wait">
                 <motion.div
@@ -2465,7 +2740,7 @@ export default function Home() {
               </AnimatePresence>
             </div>
 
-            {/* Dots — desktop/tablet only */}
+            {/* Dots - desktop only */}
             <div className="flex items-center justify-center gap-3 mt-10">
               {desktopSlides.map((_, i) => (
                 <button
@@ -2488,7 +2763,7 @@ export default function Home() {
       </section>
 
       <section ref={ref} className="w-full py-16 sm:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Heading */}
           <motion.div
@@ -2505,13 +2780,13 @@ export default function Home() {
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
-              Everything You{" "}
+              Everything You Need to{" "}
               <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                Need to Know
+                Know About OpsNav
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Find answers to common questions about our platform, features, and support.
+              Find answers about workflows, pricing, features, and how OpsNav helps you run structured operations with clarity and control.
             </p>
           </motion.div>
 
@@ -2525,7 +2800,7 @@ export default function Home() {
             {/* Full-width gray baseline */}
             <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-200 rounded-full" />
 
-            <div className="flex items-center gap-0">
+            <div className="flex items-center gap-0 overflow-x-auto hide-scrollbar">
               {tabs.map((tab) => (
                 <button
                   key={tab}
@@ -2577,137 +2852,272 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA & Footer Container with Bleeding Glows */}
-      <div className="w-full relative bg-white">
-        {/* Ambient Top Bloom Glow above the CTA box */}
-        <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[80%] sm:w-[70%] h-[300px] sm:h-[400px] bg-gradient-to-r from-[#2E3D99]/30 via-[#15BBEF]/35 to-[#2E3D99]/30 blur-[100px] sm:blur-[140px] rounded-full pointer-events-none " />
-
+      {/* CTA & Footer Container */}
+      <div className="w-full relative bg-white overflow-hidden">
         {/* CTA Section */}
-        <section className="relative z-20 w-full px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-10 sm:pb-16">
-          <div className="max-w-5xl mx-auto relative">
-            {/* Bloom effect arising from behind the card's head */}
-            <div className="absolute -top-[60px] left-1/2 -translate-x-1/2 w-[400px] h-[120px] bg-[#15BBEF]/25 blur-[60px] rounded-full pointer-events-none z-0" />
-
+        <section className="relative z-20 w-full pt-16 sm:pt-24 pb-12 sm:pb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
+              transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="relative z-10 overflow-hidden bg-white/80 backdrop-blur-2xl rounded-t-xl shadow-[0_-4px_30px_rgb(0,0,0,0.06)] border-t border-x border-white/60 text-center px-6 sm:px-12 lg:px-20 pt-16 pb-20"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)',
-                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)'
-              }}
+              className="relative w-full rounded-3xl bg-gradient-to-br from-[#2E3D99]/[0.02] to-[#1D97D7]/[0.05] overflow-hidden shadow-sm border border-[#2E3D99]/10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24 text-center z-10"
             >
-              <div className="relative z-10">
-                <h2 className="text-3xl sm:text-4xl md:text-[42px] font-bold text-black mb-6 tracking-tight">
-                  Ready To Transform Your Operations?
+              {/* Background pattern - left dots */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20, y: "-50%" }}
+                whileInView={{ opacity: 0.50, x: 0, y: "-50%" }}
+                animate={{ 
+                  y: ["-50%", "-52%", "-50%"],
+                }}
+                transition={{
+                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+                  opacity: { duration: 1 },
+                  x: { duration: 1 }
+                }}
+                viewport={{ once: false }}
+                className="hidden lg:block absolute left-0 top-1/2 -translate-x-[10%] w-[350px] h-[350px] pointer-events-none"
+                style={{ 
+                  backgroundImage: 'radial-gradient(#2E3D99 2px, transparent 2px)', 
+                  backgroundSize: '24px 24px', 
+                  WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 70%)',
+                  maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 70%)'
+                }} 
+              />
+
+              {/* Background pattern - right concentric circles */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 0.1, ease: "easeOut" }}
+                viewport={{ once: false }}
+                className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-[600px] h-[600px] rounded-full border-[60px] border-[#1D97D7]/[0.05] pointer-events-none" 
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                viewport={{ once: false }}
+                className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-[450px] h-[450px] rounded-full border-[60px] border-[#1D97D7]/[0.1] pointer-events-none" 
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                viewport={{ once: false }}
+                className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-[300px] h-[300px] rounded-full bg-[#1D97D7]/[0.15] pointer-events-none" 
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 0.7, ease: "easeOut" }}
+                viewport={{ once: false }}
+                className="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-[150px] h-[150px] rounded-full bg-[#1D97D7]/[0.25] pointer-events-none" 
+              />
+
+              <div className="relative z-20 flex flex-col items-center">
+                <h2 className="text-3xl sm:text-4xl md:text-[44px] font-bold text-gray-900 mb-6 tracking-tight leading-tight max-w-3xl">
+                  Ready to Transform How You <br className="hidden sm:block" />
+                  Run <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">Operations?</span>
                 </h2>
 
-                <p className="text-lg sm:text-xl text-gray-800 mb-10 max-w-2xl mx-auto font-medium">
-                  Join Thousands Of Professionals Who Trust OpsNav To
+                <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl font-medium">
+                  Move from scattered tools to structured workflows 
                   <br className="hidden sm:block" />
-                  Streamline Their Workflow
+                  with complete visibility and control.
                 </p>
 
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-5 mb-6">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => navigate("/get-started-free")}
-                  className="w-full sm:w-[230px] h-[48px] rounded-lg bg-[linear-gradient(90deg,#303D98,#24A5E4)] text-white font-semibold"
-                >
-                  Start Free Trial
-                </motion.button>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/get-started-free")}
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 h-[52px] rounded-xl bg-[linear-gradient(90deg,#303D98,#24A5E4)] text-white font-semibold text-sm sm:text-[15px] shadow-md shadow-[#24A5E4]/20 whitespace-nowrap"
+                  >
+                    Start 1-Month Free Trial
+                  </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => navigate("/book-demo")}
-                  className="w-full sm:w-[230px] h-[48px] rounded-lg border-2 border-[#24A5E4] text-[#303D98] font-semibold bg-white"
-                >
-                  Book A Demo
-                </motion.button>
-              </div>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/book-demo")}
+                    className="w-full sm:w-[240px] h-[52px] rounded-xl border-2 border-[#24A5E4] text-[#303D98] font-semibold text-[15px] bg-white shadow-sm hover:bg-[#24A5E4]/5 transition-colors"
+                  >
+                    Book a Demo
+                  </motion.button>
+                </div>
 
-              <p className="text-sm text-gray-600 font-medium">
-                No Credit Card Required | Cancel Anytime
-              </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0 text-sm text-gray-600 font-medium">
+                  <span>No Credit Card Required</span>
+                  <span className="hidden sm:inline mx-2">|</span>
+                  <span>Cancel Anytime</span>
+                </div>
               </div>
             </motion.div>
           </div>
         </section>
 
         {/* ── Footer ── */}
-        <footer id="contactus" className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pb-6">
-          <div className="max-w-7xl mx-auto">
+        <footer id="contactus" className="relative z-10 w-full pb-6 pt-12 border-t border-gray-100 bg-white">
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
-          {/* Top row */}
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-6">
+            {/* Top Row: Flex */}
+            <div className="flex flex-col lg:flex-row justify-between w-full mb-10 gap-8 lg:gap-0 items-start">
+              
+              {/* Col 1: Logo & Text */}
+              <div className="flex flex-col items-start lg:pl-6">
+                <img src="/Logo.png" alt="OpsNav" className="w-[140px] mb-6" />
+                <div className="text-gray-600 font-medium space-y-1">
+                  <p>Structured operations.</p>
+                  <p>Clear visibility.</p>
+                  <p>Better execution.</p>
+                </div>
+              </div>
 
-            {/* Logo */}
-            <img src="/Logo.png" className="w-[160px]" />
+              {/* Col 2: Get in touch */}
+              <div className="flex flex-col lg:items-center lg:pl-12">
+                <div className="flex flex-col w-full lg:w-fit">
+                  <h4 className="text-lg font-bold text-gray-900 mb-6">Get in touch</h4>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4 text-gray-600 font-medium">
+                      <div className="w-10 h-10 rounded-lg bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                        <Phone size={18} className="text-[#2E3D99]" />
+                      </div>
+                      <span>(03) 9111 5776 / 0435 332 279</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-gray-600 font-medium">
+                      <div className="w-10 h-10 rounded-lg bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                        <Mail size={18} className="text-[#2E3D99]" />
+                      </div>
+                      <span>support@opsnav.com</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-gray-600 font-medium">
+                      <div className="w-10 h-10 rounded-lg bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin size={18} className="text-[#2E3D99]" />
+                      </div>
+                      <span>Melbourne, Australia</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            {/* Contact */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 text-lg">
-              <span className="font-semibold text-black">Connect with us</span>
+              {/* Col 3: Follow us */}
+              <div className="flex flex-col lg:items-end">
+                <div className="flex flex-col w-full lg:w-fit">
+                  <h4 className="text-lg font-bold text-gray-900 mb-6 lg:text-right">Follow us</h4>
+                  <div className="flex gap-4 lg:justify-end">
+                    {[
+                      { Icon: FaFacebookF, href: "https://www.facebook.com/opsnav", color: "text-[#1877F2]" },
+                      { Icon: FaXTwitter, href: "https://x.com/opsnav_official", color: "text-gray-900" },
+                      { Icon: FaLinkedinIn, href: "https://www.linkedin.com/company/opsnav/posts/?feedView=all", color: "text-[#0A66C2]" },
+                      { Icon: FaInstagram, href: "https://www.instagram.com/opsnav.official", color: "text-[#E4405F]" },
+                      { Icon: FaYoutube, href: "https://www.youtube.com/@OpsNav_Official", color: "text-[#FF0000]" }
+                    ].map(({ Icon, href, color }, i) => (
+                      <motion.a
+                        key={i}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center transition-all duration-300 hover:shadow-md bg-white"
+                      >
+                        <Icon className={`text-lg ${color}`} />
+                      </motion.a>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-              <a href="#" className="flex items-center gap-2 text-gray-700">
-                <Phone size={15} className="text-[#303D98]" />
-                0435 332 279
-              </a>
-
-              <a href="#" className="flex items-center gap-2 text-gray-700">
-                <Mail size={15} className="text-[#303D98]" />
-                support@opsnav.com
-              </a>
             </div>
 
-            {/* Social */}
-            <div className="flex gap-4">
-              {[
-                { Icon: FaFacebookF, href: "https://www.facebook.com/opsnav" },
-                { Icon: FaXTwitter, href: "#" },
-                { Icon: FaLinkedinIn, href: "https://www.linkedin.com/company/opsnav/posts/?feedView=all" },
-                { Icon: FaInstagram, href: "#" }
-              ].map(({ Icon, href }, i) => (
-                <motion.a
-                  key={i}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ 
-                    scale: 1.15,
-                    boxShadow: "0 0 20px rgba(36, 165, 228, 0.4)"
-                  }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-10 h-10 bg-gradient-to-r from-[#303D98] to-[#24A5E4] rounded-full flex items-center justify-center transition-all duration-300 shadow-md"
-                >
-                  <Icon className="text-white text-lg" />
-                </motion.a>
-              ))}
+            {/* Middle Row: Divider line */}
+            <div className="h-px bg-gray-200 mb-8" />
+
+            {/* Middle Row: Security Features Flex */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 lg:gap-0 mb-8">
+              
+              <div className="flex items-center gap-4 justify-start">
+                <div className="w-12 h-12 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <Lock size={20} className="text-[#2E3D99]" />
+                </div>
+                <span className="text-gray-700 font-medium text-sm leading-snug">Securely hosted<br/>in Australia</span>
+              </div>
+              
+              <div className="hidden lg:block w-px h-12 bg-gray-200" />
+              
+              <div className="flex items-center gap-4 justify-center">
+                <div className="w-12 h-12 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck size={20} className="text-[#2E3D99]" />
+                </div>
+                <span className="text-gray-700 font-medium text-sm leading-snug">Aligned with Australian<br/>data privacy laws</span>
+              </div>
+              
+              <div className="hidden lg:block w-px h-12 bg-gray-200" />
+              
+              <div className="flex items-center gap-4 justify-center">
+                <div className="w-12 h-12 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <User size={20} className="text-[#2E3D99]" />
+                </div>
+                <span className="text-gray-700 font-medium text-sm leading-snug">You retain complete<br/>control of your data</span>
+              </div>
+              
+              <div className="hidden lg:block w-px h-12 bg-gray-200" />
+              
+              <div className="flex items-center gap-4 justify-end">
+                <div className="w-12 h-12 rounded-xl bg-[#2E3D99]/10 flex items-center justify-center flex-shrink-0">
+                  <EyeOff size={20} className="text-[#2E3D99]" />
+                </div>
+                <span className="text-gray-700 font-medium text-sm leading-snug">No third-party<br/>data sharing</span>
+              </div>
+              
             </div>
-          </div>
 
-          {/* Divider */}
-          <div className="h-[2px] bg-[#2EA4E6]/80 mb-4 rounded-2xl" />
+            {/* Bottom Row: Divider line */}
+            <div className="h-px bg-gray-200 mb-6" />
 
-          {/* Bottom */}
-          <div className="flex flex-col md:flex-row justify-between text-sm text-gray-600 gap-2">
-            <div>
-              <p>Registered In Australia</p>
-              <div className="flex gap-2 flex-wrap">
-                <Link to="/release-notes">Release Notes</Link>|
-                <Link to="/terms">Terms Of Service</Link>|
-                <Link to="/cookie-policy">Cookie Policy</Link>
+            {/* Bottom Row: Links, Flag, Copyright */}
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4 text-sm font-medium text-gray-500 pb-4">
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                <Link to="/terms" className="hover:text-gray-800 transition-colors">Terms of Service</Link>
+                {/* <span className="hidden lg:block text-gray-300">|</span>
+                <Link to="/privacy-policy" className="hover:text-gray-800 transition-colors">Privacy Policy</Link> */}
+                {/* <span className="hidden lg:block text-gray-300">|</span>
+                <Link to="/cookie-policy" className="hover:text-gray-800 transition-colors">Cookie Policy</Link> */}
+                <span className="hidden lg:block text-gray-300">|</span>
+                <Link to="/release-notes" className="hover:text-gray-800 transition-colors">Release Notes</Link>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span>Proudly built and hosted in Australia</span>
+                <img src="https://flagcdn.com/au.svg" alt="Australia Flag" className="w-6 h-auto rounded-sm shadow-sm" />
+              </div>
+
+              <div>
+                © 2026 OpsNav. All rights reserved.
               </div>
             </div>
 
-            <p>© 2026 OpsNav | All rights reserved</p>
           </div>
-        </div>
-      </footer>
+        </footer>
+
+        {/* Scroll to Top */}
+        <AnimatePresence>
+          {scrolled && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 z-40"
+            >
+              <ArrowUp className="w-4 h-4 md:w-5 md:h-5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+        
       </div>
-    </>
+    </div>
   );
 }
