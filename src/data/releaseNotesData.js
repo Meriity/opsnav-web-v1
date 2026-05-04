@@ -35,6 +35,40 @@ export const monthlyReleaseNotes = {
       May: [
         {
           date: "2026-05-04",
+          version: "v7.8.14",
+          type: "minor",
+          category: "feature",
+          title: "Wills Form Validation & Smart Tips Restoration",
+          description: "Enhanced user guidance and data integrity with a new validation popup for incomplete forms and the restoration of context-aware Smart Tips.",
+          updates: [
+            {
+              type: "feature",
+              title: "Incomplete Form Validation Popup",
+              description: "Implemented a blocking validation check before form submission.",
+              details: "Users are now prompted with a professional popup if they attempt to submit a Will without completing required fields, ensuring document accuracy and reducing administrative follow-ups.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "feature",
+              title: "Smart Tips UI Restoration",
+              description: "Re-integrated the context-aware sidebar for helpful legal guidance.",
+              details: "Restored the WillsSmartTips component to provide real-time estimates and step-by-step advice directly within the form interface.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Deep State Persistence",
+              description: "Enhanced form state merging for existing matters.",
+              details: "Refined the data fetching logic to ensure nested objects like properties, bank accounts, and executors are correctly merged with local state during reloads.",
+              icon: Database,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-05-04",
           version: "v7.7.14",
           type: "patch",
           category: "improvement",
