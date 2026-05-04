@@ -450,6 +450,9 @@ const ViewClients = () => {
     if (currentModule === "print media" && filterAllocatedUser) {
       data = data.filter((client) => {
         const clientUser = client.allocatedUser || "";
+        if (filterAllocatedUser === "N/A") {
+          return !clientUser || clientUser.trim() === "" || clientUser.trim() === "N/A";
+        }
         return clientUser.trim().toLowerCase() === filterAllocatedUser.trim().toLowerCase();
       });
 
@@ -961,6 +964,7 @@ const ViewClients = () => {
                       onChange={(e) => setallocatedUser(e.target.value)}
                     >
                       <option value="">All Users</option>
+                      <option value="N/A">N/A</option>
                       {user.map((user) => (
                         <option value={user.name}>{user.name}</option>
                       ))}
@@ -1256,6 +1260,7 @@ const ViewClients = () => {
                         onChange={(e) => setFilterAllocatedUser(e.target.value)}
                       >
                         <option value="">All Users</option>
+                        <option value="N/A">N/A</option>
                         {user.map((u, index) => (
                           <option
                             key={u.id || `${u.name}-${index}`}
