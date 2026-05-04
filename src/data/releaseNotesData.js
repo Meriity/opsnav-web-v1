@@ -32,6 +32,49 @@ import {
 
 export const monthlyReleaseNotes = {
     2026: {
+      May: [
+        {
+          date: "2026-05-04",
+          version: "v7.7.14",
+          type: "patch",
+          category: "improvement",
+          title: "Multi-Module Optimization & Report Enhancements",
+          description: "A comprehensive update refining the Wills authentication flow, adding critical data fields to Task Reports, and optimizing Print Media administrative workflows.",
+          updates: [
+            {
+              type: "improvement",
+              title: "Wills Sign-up & Sign-in Refinement",
+              description: "Removed the phone number field from the Wills authentication UI while maintaining backend compatibility.",
+              details: "Streamlined the signup and sign-in experience for Wills by removing the phone field from the interface. Added backend fallbacks to ensure existing API requirements are met without user friction.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "feature",
+              title: "Task Report Unit Numbers",
+              description: "Integrated 'Unit Number' into the Task Allocation Report PDF.",
+              details: "Updated the Task Allocation Report to include a dedicated Unit column, optimized column widths for high-density data, and ensured accurate mapping for all modules.",
+              icon: FileText,
+            },
+            {
+              type: "feature",
+              title: "Print Media 'N/A' Filter",
+              description: "New 'N/A' option in user sorting to identify unallocated jobs.",
+              details: "Enhanced the Print Media View Orders filter with an 'N/A' selection, allowing administrators to instantly isolate and manage unallocated jobs in the production queue.",
+              icon: Search,
+            },
+            {
+              type: "improvement",
+              title: "Optional ABN for Print Media",
+              description: "Removed the mandatory requirement for ABN during client creation.",
+              details: "Reduced friction in the Print Media onboarding flow by making the ABN field optional in the Create Client modal.",
+              icon: Edit,
+            },
+          ],
+          module: "Wills, Print Media, Reporting",
+          severity: "Medium",
+          status: "Released"
+        },
+      ],
       April: [
         {
           date: "2026-04-30",

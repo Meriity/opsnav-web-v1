@@ -841,7 +841,6 @@ useEffect(() => {
             "billingAddress",
             "state",
             "postcode",
-            "abn",
           ];
           console.log(formData);
           if (requiredFields.some((field) => !formData[field])) {
