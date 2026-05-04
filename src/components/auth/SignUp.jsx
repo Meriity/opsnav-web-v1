@@ -272,26 +272,6 @@ function SignUp() {
         </div>
       </div>
 
-      {/* Phone Field */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Phone Number
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Phone className="h-4 w-4 text-gray-400" />
-          </div>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99] transition-all"
-            placeholder="+61 400 000 000"
-          />
-        </div>
-      </div>
-
       {/* State Field */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
