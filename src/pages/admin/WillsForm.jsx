@@ -223,15 +223,15 @@ const WillsForm = () => {
                   matterReferenceNumber: actualData.matterReferenceNumber || finalRefNumber || prev.matterReferenceNumber
                 };
 
-                // Registration data pre-fill fallback
-                if (!merged.personal.fullName) {
-                   merged.personal.fullName = localStorage.getItem("clientName") || "";
+                // Registration data pre-fill fallback - Source of truth should be API or Signup state
+                if (!merged.personal.fullName && signUpData?.name) {
+                   merged.personal.fullName = signUpData.name;
                 }
-                if (!merged.email) {
-                   merged.email = localStorage.getItem("clientEmail") || "";
+                if (!merged.email && signUpData?.email) {
+                   merged.email = signUpData.email;
                 }
-                if (!merged.personal.email) {
-                   merged.personal.email = localStorage.getItem("clientEmail") || "";
+                if (!merged.personal.email && signUpData?.email) {
+                   merged.personal.email = signUpData.email;
                 }
 
                 return merged;
@@ -251,9 +251,9 @@ const WillsForm = () => {
   }, [location.search, finalRefNumber, isFromReference]);
 
   const INITIAL_STATE = {
-    firmId: localStorage.getItem("userID") || "",
+    firmId: "", // Should be populated from URL or signup
     email: "",
-    matterReferenceNumber: "", // New explicit identifier field
+    matterReferenceNumber: "", 
     personal: {
       fullName: "",
       occupation: "",
@@ -713,7 +713,7 @@ const WillsForm = () => {
   }
 
   if (!isSignedUp) {
-    return <WillsSignUp onSignUp={handleSignUp} />;
+    return <WillsSignUp onSignUp={handleSignUp} firmId={formData.firmId} />;
   }
 
   return (
