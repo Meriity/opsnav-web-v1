@@ -28,10 +28,176 @@ import {
   Layout,
   Lock,
   Phone,
+  Lightbulb,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
+      May: [
+        {
+          date: "2026-05-05",
+          version: "v7.8.17",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Form Content & UI Enhancements",
+          description: "Updated the Wills preparation form to include step-specific descriptions and interactive tooltips to better guide clients through the document generation process.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Step-Specific Descriptions",
+              description: "Replaced the generic step description with customized helper text for every step.",
+              details: "Previously, all steps displayed the same description meant for Step 1. We have now implemented an intelligent content map that provides highly contextual instructions and expectations for each specific section of the Wills form, including Executors, Beneficiaries, Real Estate, Banking, and Guardianship.",
+              icon: FileText,
+            },
+            {
+              type: "feature",
+              title: "Volume & Folio Smart Tooltip",
+              description: "Added a hover-activated tooltip to clarify property identification requirements.",
+              details: "Introduced an interactive HelpCircle tooltip strictly on the 'Volume & Folio' input in the Real Estate step. This tooltip provides clients with immediate, context-aware guidance on where to find their property reference numbers, while utilizing a localized group hover mechanism to ensure it isn't accidentally triggered by the parent property card.",
+              icon: Lightbulb,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-05-05",
+          version: "v7.8.16",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Nested Notes & IDG Portal Optimization",
+          description: "Resolved state management issues in the Wills form for independent step notes and optimized the IDG client dashboard order creation flow.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills Step-Specific Note Isolation",
+              description: "Fixed an issue where notes were globally shared across all form steps.",
+              details: "Updated the Wills form component to dynamically map the StepCommentBox fields to their respective nested object paths (e.g. personal.notes, guardian.notes), ensuring strict data isolation per step.",
+              icon: Database,
+            },
+            {
+              type: "ui_ux",
+              title: "IDG Client Dashboard Flow",
+              description: "Hidden the Delivery Date field from the client portal order creation flow.",
+              details: "Conditionally removed the Delivery Date field from the UI, validation arrays, and payload specifically when creating an order via the IDG Client Dashboard to streamline the user experience.",
+              icon: Eye,
+            },
+          ],
+          module: "Wills Form, Print Media",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-05-05",
+          version: "v7.8.15",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Authentication & UI Polish",
+          description: "Refined Wills sign-up process, error handling, and UI consistency.",
+          updates: [
+            {
+              type: "improvement",
+              title: "Wills Sign-up Flow",
+              description: "Improved firmId handling and removed unnecessary phone field.",
+              details: "Prioritized firmId from request payload and removed the phone field from the signup form to improve data integrity and user experience.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "improvement",
+              title: "Enhanced Error Feedback",
+              description: "Added proactive password strength checks and context-aware error messages.",
+              details: "Implemented pre-flight password validation and mapped backend error responses to user-friendly messages for a clearer authentication flow.",
+              icon: Info,
+            },
+            {
+              type: "ui_ux",
+              title: "Privacy & UI Updates",
+              description: "Refreshed sign-up copy and added navigable privacy policy.",
+              details: "Updated text copy for better clarity, made the 'terms of privacy' link functional, and improved forgot-password error messaging for a more professional and helpful user journey.",
+              icon: Layout,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-05-04",
+          version: "v7.8.14",
+          type: "minor",
+          category: "feature",
+          title: "Wills Form Validation & Smart Tips Restoration",
+          description: "Enhanced user guidance and data integrity with a new validation popup for incomplete forms and the restoration of context-aware Smart Tips.",
+          updates: [
+            {
+              type: "feature",
+              title: "Incomplete Form Validation Popup",
+              description: "Implemented a blocking validation check before form submission.",
+              details: "Users are now prompted with a professional popup if they attempt to submit a Will without completing required fields, ensuring document accuracy and reducing administrative follow-ups.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "feature",
+              title: "Smart Tips UI Restoration",
+              description: "Re-integrated the context-aware sidebar for helpful legal guidance.",
+              details: "Restored the WillsSmartTips component to provide real-time estimates and step-by-step advice directly within the form interface.",
+              icon: Sparkles,
+            },
+            {
+              type: "improvement",
+              title: "Deep State Persistence",
+              description: "Enhanced form state merging for existing matters.",
+              details: "Refined the data fetching logic to ensure nested objects like properties, bank accounts, and executors are correctly merged with local state during reloads.",
+              icon: Database,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-05-04",
+          version: "v7.7.14",
+          type: "patch",
+          category: "improvement",
+          title: "Multi-Module Optimization & Report Enhancements",
+          description: "A comprehensive update refining the Wills authentication flow, adding critical data fields to Task Reports, and optimizing Print Media administrative workflows.",
+          updates: [
+            {
+              type: "improvement",
+              title: "Wills Sign-up & Sign-in Refinement",
+              description: "Removed the phone number field from the Wills authentication UI while maintaining backend compatibility.",
+              details: "Streamlined the signup and sign-in experience for Wills by removing the phone field from the interface. Added backend fallbacks to ensure existing API requirements are met without user friction.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "feature",
+              title: "Task Report Unit Numbers",
+              description: "Integrated 'Unit Number' into the Task Allocation Report PDF.",
+              details: "Updated the Task Allocation Report to include a dedicated Unit column, optimized column widths for high-density data, and ensured accurate mapping for all modules.",
+              icon: FileText,
+            },
+            {
+              type: "feature",
+              title: "Print Media 'N/A' Filter",
+              description: "New 'N/A' option in user sorting to identify unallocated jobs.",
+              details: "Enhanced the Print Media View Orders filter with an 'N/A' selection, allowing administrators to instantly isolate and manage unallocated jobs in the production queue.",
+              icon: Search,
+            },
+            {
+              type: "improvement",
+              title: "Optional ABN for Print Media",
+              description: "Removed the mandatory requirement for ABN during client creation.",
+              details: "Reduced friction in the Print Media onboarding flow by making the ABN field optional in the Create Client modal.",
+              icon: Edit,
+            },
+          ],
+          module: "Wills, Print Media, Reporting",
+          severity: "Medium",
+          status: "Released"
+        },
+      ],
       April: [
         {
           date: "2026-04-30",
@@ -1310,7 +1476,7 @@ export const monthlyReleaseNotes = {
               type: "bugfix",
               title: "Commentary Display Separation",
               description: "Split system note and client comment into separate, clearly labeled sections.",
-              details: "The VOCAT client portal previously displayed both the system note and client comment together on a single line under a generic 'Notes' label. Commentary is now split by the hyphen separator into two distinct UI cards — 'System Note' card and 'Client Comment' card — for improved readability and clarity.",
+              details: "The VOCAT client portal previously displayed both the system note and client comment together on a single line under a generic 'Notes' label. Commentary is now split by the hyphen separator into two distinct UI cards - 'System Note' card and 'Client Comment' card - for improved readability and clarity.",
               icon: Bug,
             }
           ],

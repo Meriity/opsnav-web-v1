@@ -14,20 +14,18 @@ import {
   EyeOff,
   History,
   ListChecks,
-  Lightbulb,
-  Phone
+  Lightbulb
 } from "lucide-react";
 import { APP_VERSION } from "../../config/version";
 import WillsAPI from "../../api/willsAPI";
 import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
 import WillsForgotPasswordModal from "./WillsForgotPasswordModal";
 
-const WillsSignUp = ({ onSignUp }) => {
+const WillsSignUp = ({ onSignUp, firmId }) => {
   const [isLoginForm, setIsLoginForm] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    phone: "",
     password: "",
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -98,9 +96,8 @@ const WillsSignUp = ({ onSignUp }) => {
     try {
       if (isLoginForm) {
         console.log("[WillsSignUp] Initiating LOGIN flow for:", formData.email);
-        if (!formData.email.trim() || !formData.password.trim()) {
-          throw new Error("Email and password are required");
-        }
+        if (!formData.email.trim()) throw new Error("Email is required");
+        if (!formData.password.trim()) throw new Error("Password is required");
 
         const response = await api.current.login({
           email: formData.email,
@@ -110,20 +107,25 @@ const WillsSignUp = ({ onSignUp }) => {
         await handleLoginSuccess(response, formData.email);
       } else {
         console.log("[WillsSignUp] Initiating SIGNUP flow for:", formData.email);
+        
+        // 1. Basic validation
+        if (!formData.fullName.trim()) throw new Error("Full name is required");
         if (!formData.email.trim()) throw new Error("Email is required");
+        if (!formData.password.trim()) throw new Error("Password is required");
 
-        // Attempt Signup
+        // 2. Password Strength Check (Pre-flight)
+        if (passwordStrength < 3) {
+          throw new Error("Password requirement not met.");
+        }
+
+        // 3. Attempt Signup
         try {
-          // 1. Basic validation
-          if (!formData.fullName.trim()) throw new Error("Full name is required");
-          
-          // 2. Attempt Signup API Call
           console.log("[WillsSignUp] Calling SIGNUP API...");
           const response = await api.current.signup({
             fullName: formData.fullName,
             email: formData.email,
-            phone: formData.phone,
-            password: formData.password
+            password: formData.password,
+            firmId: firmId // Passed from parent
           });
           
           console.log("[WillsSignUp] Signup successful");
@@ -157,19 +159,36 @@ const WillsSignUp = ({ onSignUp }) => {
             return;
           }
 
-          // If not an "already exists" error, check password strength before showing other errors
-          if (passwordStrength < 3) {
-            console.warn("[WillsSignUp] Signup blocked: Password strength too low");
-            throw new Error("Password is too weak. Please meet the requirements.");
-          }
-
           // Otherwise re-throw the actual signup error
           throw signupErr;
         }
       }
     } catch (err) {
       console.error("[WillsSignUp] Auth error:", err);
-      setError(err.message || "An unexpected error occurred");
+      
+      // Improved error message mapping
+      let displayError = err.message || "An unexpected error occurred";
+      
+      // Map common backend error strings to user-friendly messages
+      const errorMap = {
+        "Missing required fields": "Registration failed. Please ensure Name, Email, and Password are all filled out.",
+        "Email already exists": "This email is already registered. Please sign in instead.",
+        "Invalid credentials": "The email or password you entered is incorrect.",
+        "Internal server error": "Our server is having trouble. Please try again in a few minutes.",
+        "Firm not found": "Law firm identity missing. Please use the link provided by your solicitor.",
+        "Failed to fetch": "Connection lost. Please check your internet and try again.",
+        "Unauthorized": "Your session has expired or is invalid. Please sign in again."
+      };
+
+      // Check for partial matches or exact matches in the map
+      for (const [key, value] of Object.entries(errorMap)) {
+        if (displayError.toLowerCase().includes(key.toLowerCase())) {
+          displayError = value;
+          break;
+        }
+      }
+
+      setError(displayError);
     } finally {
       setIsLoading(false);
     }
@@ -262,10 +281,10 @@ const WillsSignUp = ({ onSignUp }) => {
               </span>
             </h1>
 
-            <p className="text-lg text-gray-600 mb-8 max-w-xl">
+            <p className="text-sm text-gray-600 mb-8 max-w-xl">
               {isLoginForm 
-                ? "Sign in to resume your Will preparation exactly where you left off. Your data remains encrypted and protected."
-                : "Initialise your secure session to start preparing your Will. Your data is protected with enterprise-grade security."}
+                ? "Sign in to seamlessly continue your Will preparation. Your information remains securely stored and protected at all times."
+                : "Create your account to start preparing your Will. You’ll be guided through a structured, step-by-step process designed to make completion simple and straightforward. Your progress is saved automatically, so you can return at any time."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 hidden lg:grid max-w-2xl mt-4">
               {[
@@ -425,23 +444,7 @@ const WillsSignUp = ({ onSignUp }) => {
                         </div>
                       </div>
 
-                      {/* Phone Field */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Phone className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 transition-all"
-                            placeholder="+61 400 000 000"
-                          />
-                        </div>
-                      </div>
+
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -521,9 +524,8 @@ const WillsSignUp = ({ onSignUp }) => {
                       />
                     </div>
                     <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer select-none">
-                      I agree to the <span className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">terms of privacy</span> of collecting and processing my data.
-                    </label>
-                  </div>
+                    I agree to the <a href="/terms" className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">Terms of Privacy</a> of collecting and processing my data.
+                    </label>                  </div>
                 )}
 
                 {/* Red Error Message */}
@@ -580,7 +582,7 @@ const WillsSignUp = ({ onSignUp }) => {
                 </p>
                 <div className="mt-4">
                    <p className="text-[11px] text-gray-400">
-                     Please read our <span className="text-[#2E3D99] font-medium border-b border-[#2E3D99]/40 hover:border-[#2E3D99] cursor-pointer transition-all">Privacy Policy</span> before proceeding.
+                     Please read our <a href="/terms" className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">Terms of Privacy</a> before proceeding.
                    </p>
                 </div>
               </div>

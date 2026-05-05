@@ -147,6 +147,8 @@ export default function CreateClientModal({
   onClose,
   preselectedClientId = null,
   isClientView = false,
+  companyName,
+  module,
 }) {
   // --- STATE MANAGEMENT ---
   const [isLoading, setIsLoading] = useState(false);
@@ -164,7 +166,7 @@ const conveyancingPropertyAddressRef = useRef(null);
 const commercialBusinessAddressRef = useRef(null);
 
   const user = localStorage.getItem("user") || "";
-  const currentModule = localStorage.getItem("currentModule");
+  const currentModule = module || companyName || localStorage.getItem("currentModule");
 
   // --- DERIVED STATE & CONSTANTS ---
   const isCommercial = currentModule === "commercial";
@@ -841,7 +843,6 @@ useEffect(() => {
             "billingAddress",
             "state",
             "postcode",
-            "abn",
           ];
           console.log(formData);
           if (requiredFields.some((field) => !formData[field])) {
@@ -874,7 +875,7 @@ useEffect(() => {
             "priority",
             "deliveryAddress",
             "orderDate",
-            "deliveryDate",
+            !isClientView && "deliveryDate",
             "order_details",
           ].filter(Boolean);
 
@@ -900,7 +901,7 @@ useEffect(() => {
             state: formData.state || "",
             postCode: formData.postcode || "",
             orderDate: formData.orderDate,
-            deliveryDate: formData.deliveryDate,
+            ...(isClientView ? {} : { deliveryDate: formData.deliveryDate }),
             order_details: formData.order_details,
             distance: formData.distance || "",
             dataEntryBy: isClientView ? "Client" : (localStorage.getItem("user") || "Admin"),
@@ -1751,6 +1752,7 @@ useEffect(() => {
                         className="w-full px-4 py-2 rounded-md border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-500"
                       />
                     </div>
+                    {!isClientView && (
                     <div>
                       <label className="block mb-1 font-medium">
                         Delivery Date*
@@ -1764,6 +1766,7 @@ useEffect(() => {
                         required
                       />
                     </div>
+                    )}
                   </div>
                   <div>
                     <div>

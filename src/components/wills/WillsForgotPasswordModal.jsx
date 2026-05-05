@@ -25,7 +25,13 @@ const WillsForgotPasswordModal = ({ isOpen, onClose }) => {
       setStatus("success");
     } catch (err) {
       console.error("Forgot password error:", err);
-      setError(err.message || "Failed to send recovery email. Please try again.");
+      
+      const msg = err.message || "";
+      if (msg.includes("404") || msg.toLowerCase().includes("not found")) {
+        setError("We couldn't find an account with that email. Please check your email or contact support.");
+      } else {
+        setError("Failed to send recovery email. Please try again later.");
+      }
       setStatus("error");
     } finally {
       setIsLoading(false);

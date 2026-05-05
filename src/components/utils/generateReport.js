@@ -51,6 +51,7 @@ const createTaskAllocationPDFDoc = (Allocated) => {
     const headers = [
         [
             "Order ID",
+            "Unit",
             "Client Name",
             "Billing Address",
             "Order Date",
@@ -64,6 +65,7 @@ const createTaskAllocationPDFDoc = (Allocated) => {
     // 🔹 Prepare rows from sorted data
     const rows = sortedTasks.map((task) => [
         task.orderId || "N/A",
+        task.unitNumber || "N/A",
         task.client_name || "N/A",
         task.billing_address || "N/A",
         task.order_date || "N/A",
@@ -76,7 +78,7 @@ const createTaskAllocationPDFDoc = (Allocated) => {
     // 🔹 Optional: filter by allocated user
     let finalRows = rows;
     if (Allocated && Allocated.trim() !== "") {
-        finalRows = rows.filter((row) => row[7] === Allocated);
+        finalRows = rows.filter((row) => row[8] === Allocated);
     }
 
     // 🔹 Table rendering
@@ -89,12 +91,24 @@ const createTaskAllocationPDFDoc = (Allocated) => {
             row[3],
             row[4],
             row[5],
-            renderStageProgress(row[6]),
-            row[7],
+            row[6],
+            renderStageProgress(row[7]),
+            row[8],
         ]),
         startY: 25,
         theme: "grid",
-        styles: { fontSize: 9, cellPadding: 2, minCellHeight: 10 },
+        styles: { fontSize: 8, cellPadding: 2, minCellHeight: 10 },
+        columnStyles: {
+            0: { cellWidth: 15 }, // Order ID
+            1: { cellWidth: 12 }, // Unit
+            2: { cellWidth: 20 }, // Client Name
+            3: { cellWidth: 35 }, // Billing Address
+            4: { cellWidth: 20 }, // Order Date
+            5: { cellWidth: 20 }, // Delivery Date
+            6: { cellWidth: 25 }, // Order Details
+            7: { cellWidth: 25 }, // Stage Progress
+            8: { cellWidth: 20 }, // Allocated User
+        },
         headStyles: {
             fillColor: [41, 128, 185], // 🔹 Header background color (blue tone)
             textColor: [255, 255, 255], // 🔹 Header text color (white)

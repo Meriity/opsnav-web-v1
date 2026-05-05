@@ -503,8 +503,8 @@ class WillsAPI {
 
   async signup(payload) {
     try {
-      // firmId is retrieved from localStorage("userID") as requested
-      const firmId = localStorage.getItem("userID");
+      // Prioritize firmId from payload if provided, fallback to localStorage("userID")
+      const firmId = payload.firmId || localStorage.getItem("userID");
       const fullPayload = { ...payload, firmId };
       
       const response = await fetch(`${this.baseUrl}${WILLS_ENDPOINTS.SIGNUP}`, {

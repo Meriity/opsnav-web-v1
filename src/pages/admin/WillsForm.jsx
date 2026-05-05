@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Lightbulb, Info, Shield, X, CheckCircle2, Clock, Circle, RotateCw, AlertCircle, MinusCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, FileText, LogOut, Save, Info, Shield, X, CheckCircle2, Clock, Circle, RotateCw, AlertCircle, MinusCircle } from "lucide-react";
 // Header replaced with custom Wills header inline
 import WillsStepForm from "../../components/wills/WillsStepForm";
 import WillsPreview from "../../components/wills/WillsPreview";
@@ -9,12 +9,14 @@ import SimplifiedReview from "../../components/wills/SimplifiedReview";
 import WillsAPI from "../../api/willsAPI";
 import { generateWillsDocx } from "../../components/utils/generateWillsDocx";
 import { toast } from "react-toastify";
-import WillsSignUp from "../../components/wills/WillsSignUp";
+import { validateWillsForm } from "../../utils/willsValidation";
+import IncompleteFormModal from "../../components/wills/IncompleteFormModal";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
+
+import WillsSignUp from "../../components/wills/WillsSignUp";
 import WillsSuccess from "../../components/wills/WillsSuccess";
-import WillsSmartTips from "../../components/wills/WillsSmartTips";
 import { WILLS_TIPS } from "../../data/willsTipsData";
-import { Lock } from "lucide-react";
+import WillsSmartTips from "../../components/wills/WillsSmartTips";
 
 
 // Helper function to load Google Maps script
@@ -77,9 +79,10 @@ const WillsForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSignedUp, setIsSignedUp] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [error, setError] = useState("");
   const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
+  const [isIncompleteModalOpen, setIsIncompleteModalOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const api = useRef(new WillsAPI());
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GMAPS_APIKEY;
@@ -184,21 +187,54 @@ const WillsForm = () => {
                     ...(prev.personal || {}), 
                     ...(actualData.personal || {}) 
                   },
+                  properties: {
+                    ...INITIAL_STATE.properties,
+                    ...(prev.properties || {}),
+                    ...(actualData.properties || {})
+                  },
+                  bankAccounts: {
+                    ...INITIAL_STATE.bankAccounts,
+                    ...(prev.bankAccounts || {}),
+                    ...(actualData.bankAccounts || {})
+                  },
+                  guardian: {
+                    ...INITIAL_STATE.guardian,
+                    ...(prev.guardian || {}),
+                    ...(actualData.guardian || {})
+                  },
+                  funeral: {
+                    ...INITIAL_STATE.funeral,
+                    ...(prev.funeral || {}),
+                    ...(actualData.funeral || {})
+                  },
+                  personalAssets: {
+                    ...INITIAL_STATE.personalAssets,
+                    ...(prev.personalAssets || {}),
+                    ...(actualData.personalAssets || {})
+                  },
+                  other: {
+                    ...INITIAL_STATE.other,
+                    ...(prev.other || {}),
+                    ...(actualData.other || {})
+                  },
                   executors: (actualData.executors && actualData.executors.length > 0) ? actualData.executors : (prev.executors || INITIAL_STATE.executors),
                   beneficiaries: (actualData.beneficiaries && actualData.beneficiaries.length > 0) ? actualData.beneficiaries : (prev.beneficiaries || INITIAL_STATE.beneficiaries),
                   // Ensure ID is explicitly kept
                   matterReferenceNumber: actualData.matterReferenceNumber || finalRefNumber || prev.matterReferenceNumber
                 };
 
-                // Registration data pre-fill fallback
-                if (!merged.personal.fullName) {
-                   merged.personal.fullName = localStorage.getItem("clientName") || "";
+                // Registration data pre-fill fallback - Use localStorage if available
+                const storedClientEmail = localStorage.getItem("clientEmail");
+                const storedClientName = localStorage.getItem("clientName");
+
+                if (!merged.personal.fullName && storedClientName) {
+                   merged.personal.fullName = storedClientName;
                 }
-                if (!merged.email) {
-                   merged.email = localStorage.getItem("clientEmail") || "";
+                if (!merged.email && storedClientEmail) {
+                   merged.email = storedClientEmail;
                 }
-                if (!merged.personal.email) {
-                   merged.personal.email = localStorage.getItem("clientEmail") || "";
+                if (!merged.personal.email && storedClientEmail) {
+                   merged.personal.email = storedClientEmail;
                 }
 
                 return merged;
@@ -218,9 +254,9 @@ const WillsForm = () => {
   }, [location.search, finalRefNumber, isFromReference]);
 
   const INITIAL_STATE = {
-    firmId: localStorage.getItem("userID") || "",
+    firmId: "", // Should be populated from URL or signup
     email: "",
-    matterReferenceNumber: "", // New explicit identifier field
+    matterReferenceNumber: "", 
     personal: {
       fullName: "",
       occupation: "",
@@ -229,6 +265,7 @@ const WillsForm = () => {
       existingWill: null,
       existingWillFiles: [],
     },
+    hasSecondExecutor: null,
     executors: [
       {
         name: "",
@@ -246,13 +283,18 @@ const WillsForm = () => {
     ],
     properties: {
       joint: [],
-      sole: []
+      sole: [],
+      hasJoint: null,
+      hasSole: null,
     },
     bankAccounts: {
       joint: [],
-      single: []
+      single: [],
+      hasJoint: null,
+      hasSingle: null,
     },
     guardian: {
+      hasChoice: null,
       isExecutor: null,
       name: "",
       relation: { category: null, customValue: "" },
@@ -265,7 +307,9 @@ const WillsForm = () => {
     },
     personalAssets: {
       joint: [],
-      sole: []
+      sole: [],
+      hasJoint: null,
+      hasSole: null,
     },
     other: {
       promisedBenefit: null,
@@ -275,7 +319,8 @@ const WillsForm = () => {
     },
     status: "draft",
     numSingleBanks: "0",
-    numJointBanks: "0"
+    numJointBanks: "0",
+    notes: ""
   };
 
   const [formData, setFormData] = useState(INITIAL_STATE);
@@ -566,6 +611,16 @@ const WillsForm = () => {
     }
   };
 
+  const handleFinalSubmitAttempt = () => {
+    const errors = validateWillsForm(formData);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setIsIncompleteModalOpen(true);
+    } else {
+      setIsSubmitModalOpen(true);
+    }
+  };
+
   const nextStep = async () => {
     if (currentStep < 10) {
       setIsSaving(true);
@@ -662,7 +717,7 @@ const WillsForm = () => {
   }
 
   if (!isSignedUp) {
-    return <WillsSignUp onSignUp={handleSignUp} />;
+    return <WillsSignUp onSignUp={handleSignUp} firmId={formData.firmId} />;
   }
 
   return (
@@ -876,12 +931,12 @@ const WillsForm = () => {
             <div className="flex items-center gap-3 md:gap-6 w-full sm:w-auto">
               <div className="flex items-center gap-2 md:gap-4 flex-1 sm:flex-initial">
                 <span className="text-[12px] md:text-[13px] font-bold text-gray-800">
-                  Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 — {steps[currentStep-1]}
+                  Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 - {steps[currentStep-1]}
                 </span>
                 <div className="h-4 w-[1px] bg-gray-100 hidden sm:block" />
                 <div className="hidden sm:flex items-center gap-2 text-gray-400 text-[12px] font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                  {WILLS_TIPS[currentStep]?.estimate || "3-5 mins"}
+                  ~5 mins estimate
                 </div>
               </div>
 
@@ -938,12 +993,28 @@ const WillsForm = () => {
                   {currentStep}
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-[#1E293B] tracking-tight">
-                  {WILLS_TIPS[currentStep]?.title}
+                  {steps[currentStep-1]}
                 </h2>
               </div>
-              <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
-                {WILLS_TIPS[currentStep]?.description}
-              </p>
+              {(() => {
+                const descriptions = {
+                  1: "These details relate to the individual for whom this Will is being prepared.",
+                  2: "These details relate to the individual(s) you appoint to administer your estate and carry out your wishes after your passing.",
+                  3: "These details relate to the individual(s) who will receive your assets in accordance with your Will.",
+                  4: "These details relate to any property you own and how it is held, including ownership type and how it will be distributed under your Will.",
+                  5: "These details relate to your bank accounts and financial holdings, and how they will form part of your estate.",
+                  6: "These details relate to the individual(s) you appoint to care for your minor children in the event of your passing. They will be responsible for your children if both parents pass away.",
+                  7: "These details relate to your personal preferences for funeral arrangements, which can guide your family when the time comes.",
+                  8: "These details relate to your personal belongings, including any items you wish to gift to specific individuals under your Will.",
+                  9: "These details relate to any matters that may affect how your Will is prepared or carried out.",
+                  10: "Please carefully review the information you have provided before submitting. To make any changes, simply return to the relevant step, update your details, and continue back to this review page."
+                };
+                return descriptions[currentStep] ? (
+                  <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
+                    {descriptions[currentStep]}
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             {/* 2. Content Body Section (Two Columns Inside Card) */}
@@ -984,7 +1055,6 @@ const WillsForm = () => {
                         onFileUpload={handleFileUpload}
                         onFileDelete={handleFileDelete}
                         isUploading={isUploading}
-                        toggleTips={() => setIsSidebarOpen(!isSidebarOpen)}
                       />
                     )}
                   </motion.div>
@@ -1024,7 +1094,7 @@ const WillsForm = () => {
                     </button>
 
                     <button
-                      onClick={currentStep === 10 ? () => setIsSubmitModalOpen(true) : nextStep}
+                      onClick={currentStep === 10 ? handleFinalSubmitAttempt : nextStep}
                       disabled={isSaving}
                       className="flex-[1.5] flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:brightness-110 transition-all disabled:opacity-70 text-[14px]"
                     >
@@ -1078,13 +1148,16 @@ const WillsForm = () => {
         }}
       />
 
-      {/* Mobile Tips Overlay */}
-      <WillsSmartTips 
-        tips={WILLS_TIPS[currentStep]?.tips || []} 
-        isMobile={true}
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(false)}
+      <IncompleteFormModal
+        isOpen={isIncompleteModalOpen}
+        onClose={() => setIsIncompleteModalOpen(false)}
+        errors={validationErrors}
+        onJumpToStep={(step) => {
+          setCurrentStep(step);
+          setIsIncompleteModalOpen(false);
+        }}
       />
+
     </div>
   );
 };
