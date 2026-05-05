@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WILLS_TIPS } from "../../data/willsTipsData";
-import { Info, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity } from "lucide-react";
+import { Info, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity, MessageSquare } from "lucide-react";
 
 /**
  * Helper Components for Step Layouts
@@ -211,6 +211,7 @@ const WillsStepForm = ({
             </p>
           </div>
         </div>
+        <StepCommentBox name="personal.notes" value={formData.personal?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "personal.notes", value: e.target.value } })} step={1} />
       </div>
     );
   }
@@ -334,6 +335,7 @@ const WillsStepForm = ({
             )}
           </div>
         )}
+        <StepCommentBox name="executors.0.notes" value={formData.executors?.[0]?.notes ?? ""} onChange={(e) => handleArrayChange("executors", 0, "notes", e.target.value)} step={2} />
       </div>
     );
   }
@@ -443,6 +445,7 @@ const WillsStepForm = ({
             </div>
           ))}
         </div>
+        <StepCommentBox name="beneficiaries.0.notes" value={formData.beneficiaries?.[0]?.notes ?? ""} onChange={(e) => handleArrayChange("beneficiaries", 0, "notes", e.target.value)} step={3} />
       </div>
     );
   }
@@ -493,6 +496,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="properties.notes" value={formData.properties?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "properties.notes", value: e.target.value } })} step={4} />
       </div>
     );
   }
@@ -543,6 +547,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="bankAccounts.notes" value={formData.bankAccounts?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "bankAccounts.notes", value: e.target.value } })} step={5} />
       </div>
     );
   }
@@ -561,6 +566,7 @@ const WillsStepForm = ({
           relationshipOptions={relationshipOptions}
           residentialAddress={personal.address}
         />
+        <StepCommentBox name="guardian.notes" value={formData.guardian?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "guardian.notes", value: e.target.value } })} step={6} />
       </div>
     );
   }
@@ -611,6 +617,7 @@ const WillsStepForm = ({
             </div>
           ) : null}
         </div>
+        <StepCommentBox name="funeral.notes" value={formData.funeral?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "funeral.notes", value: e.target.value } })} step={7} />
       </div>
     );
   }
@@ -657,6 +664,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="personalAssets.notes" value={formData.personalAssets?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "personalAssets.notes", value: e.target.value } })} step={8} />
       </div>
     );
   }
@@ -684,6 +692,7 @@ const WillsStepForm = ({
           placeholder="e.g. Spouse / Name of Beneficiary" 
           icon={<Shield className="w-4 h-4" />} 
         />
+        <StepCommentBox name="other.notes" value={formData.other?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "other.notes", value: e.target.value } })} step={9} />
       </div>
     );
   }
@@ -1424,5 +1433,31 @@ const FileUploadSection = ({ files, onFileUpload, onFileDelete, isUploading }) =
     </div>
   );
 };
+
+const StepCommentBox = ({ name, value, onChange, step }) => (
+  <div className="pt-8 mt-8 border-t border-gray-100/60 animate-in fade-in duration-500">
+    <div className="bg-[#2E3D99]/[0.02] p-5 md:p-6 rounded-[24px] border border-[#2E3D99]/5 space-y-4 relative overflow-hidden group">
+      <div className="space-y-1.5 relative z-10">
+        <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-white border border-gray-100 shadow-sm text-[#2E3D99]">
+            <MessageSquare size={14} />
+          </div>
+          Notes & Comments (Optional)
+        </label>
+        <p className="text-[12px] text-gray-500 font-medium leading-relaxed pl-[34px]">
+          Use this space to share any additional information for our team. These notes are for review purposes only and will not be included in your Will.
+        </p>
+      </div>
+      <textarea
+        name={name || "notes"}
+        value={value}
+        onChange={onChange}
+        placeholder={`Add any specific instructions or notes here...`}
+        rows={3}
+        className="w-full p-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99]/30 transition-all shadow-sm outline-none text-sm placeholder:text-gray-300 resize-y relative z-10"
+      />
+    </div>
+  </div>
+);
 
 export default WillsStepForm;
