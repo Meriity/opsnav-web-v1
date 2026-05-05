@@ -36,7 +36,7 @@ export const WILLS_TIPS = {
     description: "Detail any land or property you own. This includes your family home and investment properties.",
     tips: [
       "Specify if the property is owned solely or jointly",
-      "Volume & Folio are reference numbers found on your Certificate of Title — they uniquely identify your property on the land register",
+      "Volume & Folio are reference numbers found on your Certificate of Title - they uniquely identify your property on the land register",
       "Check if mortgage details need to be considered",
       "You can gift specific properties to specific people"
     ]

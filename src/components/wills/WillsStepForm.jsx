@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WILLS_TIPS } from "../../data/willsTipsData";
-import { Info, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity, MessageSquare } from "lucide-react";
+import { Info, HelpCircle, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity, MessageSquare } from "lucide-react";
 
 /**
  * Helper Components for Step Layouts
@@ -282,7 +282,7 @@ const WillsStepForm = ({
                 <div className="w-8 h-8 rounded-full bg-[#2E3D99]/5 border border-[#2E3D99]/20 text-[#2E3D99] flex items-center justify-center font-bold text-[13px] shadow-sm">
                   2
                 </div>
-                <h4 className="text-sm font-bold text-gray-800">Second Executor {executors[1]?.name && `— ${executors[1].name}`}</h4>
+                <h4 className="text-sm font-bold text-gray-800">Second Executor {executors[1]?.name && `- ${executors[1].name}`}</h4>
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("executors", 1) ? "rotate-180" : ""}`} />
             </button>
@@ -391,7 +391,7 @@ const WillsStepForm = ({
                   {index + 1}
                 </div>
                 {beneficiary.name && !isItemExpanded("beneficiaries", index) && (
-                  <span className="text-sm font-bold text-gray-800 animate-in fade-in slide-in-from-left-2">— {beneficiary.name}</span>
+                  <span className="text-sm font-bold text-gray-800 animate-in fade-in slide-in-from-left-2">- {beneficiary.name}</span>
                 )}
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("beneficiaries", index) ? "rotate-180" : ""}`} />
@@ -753,7 +753,7 @@ const StepPropertySection = ({
                   </div>
                   {prop.address && !isItemExpanded(arrayName, idx) && (
                     <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                      — {prop.address}
+                      - {prop.address}
                     </span>
                   )}
                 </div>
@@ -804,7 +804,7 @@ const StepPropertySection = ({
                   residentialAddress={residentialAddress}
                   showUseResidential={true}
                 />
-                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} />
+                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} tooltip="Identifies your property and can be found on your title or rates notice. If unsure, enter “N/A” and leave a note." />
                 <SelectGroup label="Who do you want to give this property to *" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
                 <div className="space-y-3">
                   <label className="text-[13px] font-bold text-gray-700">Gift ratio *</label>
@@ -933,7 +933,7 @@ const StepBankSection = ({
                     </div>
                     {acc.bankName && !isItemExpanded(arrayName, idx) && (
                       <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                        — {acc.bankName} {acc.last4 ? `(xxxx ${acc.last4})` : ""}
+                        - {acc.bankName} {acc.last4 ? `(xxxx ${acc.last4})` : ""}
                       </span>
                     )}
                   </div>
@@ -1117,7 +1117,7 @@ const StepPersonalPropertySection = ({
                   </div>
                   {prop.type && !isItemExpanded(arrayName, idx) && (
                     <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                      — {prop.type}
+                      - {prop.type}
                     </span>
                   )}
                 </div>
@@ -1203,12 +1203,23 @@ const StepPersonalPropertySection = ({
 
 // --- Standard Input Groups ---
 
-const InputGroup = ({ label, name, value, onChange, placeholder, type = "text", icon, maxLength }) => (
+const InputGroup = ({ label, name, value, onChange, placeholder, type = "text", icon, maxLength, tooltip }) => (
   <div className="space-y-3">
-    <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
-      {icon && <span className="text-gray-400">{icon}</span>}
-      {label}
-    </label>
+    <div className="flex items-center gap-2">
+      <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
+        {icon && <span className="text-gray-400">{icon}</span>}
+        {label}
+      </label>
+      {tooltip && (
+        <div className="relative group/tooltip flex items-center">
+          <HelpCircle size={14} className="text-gray-400 cursor-help" />
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:block w-56 sm:w-64 p-2.5 bg-gray-900 text-white text-[11px] font-normal rounded-lg shadow-xl z-50 whitespace-normal leading-relaxed text-center pointer-events-none transition-opacity">
+            {tooltip}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full border-[5px] border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
     <input 
       type={type} 
       name={name} 
