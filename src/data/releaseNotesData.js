@@ -28,11 +28,39 @@ import {
   Layout,
   Lock,
   Phone,
+  Lightbulb,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       May: [
+        {
+          date: "2026-05-05",
+          version: "v7.8.17",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Form Content & UI Enhancements",
+          description: "Updated the Wills preparation form to include step-specific descriptions and interactive tooltips to better guide clients through the document generation process.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Step-Specific Descriptions",
+              description: "Replaced the generic step description with customized helper text for every step.",
+              details: "Previously, all steps displayed the same description meant for Step 1. We have now implemented an intelligent content map that provides highly contextual instructions and expectations for each specific section of the Wills form, including Executors, Beneficiaries, Real Estate, Banking, and Guardianship.",
+              icon: FileText,
+            },
+            {
+              type: "feature",
+              title: "Volume & Folio Smart Tooltip",
+              description: "Added a hover-activated tooltip to clarify property identification requirements.",
+              details: "Introduced an interactive HelpCircle tooltip strictly on the 'Volume & Folio' input in the Real Estate step. This tooltip provides clients with immediate, context-aware guidance on where to find their property reference numbers, while utilizing a localized group hover mechanism to ensure it isn't accidentally triggered by the parent property card.",
+              icon: Lightbulb,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Low",
+          status: "Released"
+        },
         {
           date: "2026-05-05",
           version: "v7.8.16",
@@ -1448,7 +1476,7 @@ export const monthlyReleaseNotes = {
               type: "bugfix",
               title: "Commentary Display Separation",
               description: "Split system note and client comment into separate, clearly labeled sections.",
-              details: "The VOCAT client portal previously displayed both the system note and client comment together on a single line under a generic 'Notes' label. Commentary is now split by the hyphen separator into two distinct UI cards — 'System Note' card and 'Client Comment' card — for improved readability and clarity.",
+              details: "The VOCAT client portal previously displayed both the system note and client comment together on a single line under a generic 'Notes' label. Commentary is now split by the hyphen separator into two distinct UI cards - 'System Note' card and 'Client Comment' card - for improved readability and clarity.",
               icon: Bug,
             }
           ],
