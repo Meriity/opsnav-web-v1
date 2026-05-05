@@ -34,6 +34,40 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-05",
+          version: "v7.8.15",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Authentication & UI Polish",
+          description: "Refined Wills sign-up process, error handling, and UI consistency.",
+          updates: [
+            {
+              type: "improvement",
+              title: "Wills Sign-up Flow",
+              description: "Improved firmId handling and removed unnecessary phone field.",
+              details: "Prioritized firmId from request payload and removed the phone field from the signup form to improve data integrity and user experience.",
+              icon: ShieldCheck,
+            },
+            {
+              type: "improvement",
+              title: "Enhanced Error Feedback",
+              description: "Added proactive password strength checks and context-aware error messages.",
+              details: "Implemented pre-flight password validation and mapped backend error responses to user-friendly messages for a clearer authentication flow.",
+              icon: Info,
+            },
+            {
+              type: "ui_ux",
+              title: "Privacy & UI Updates",
+              description: "Refreshed sign-up copy and added navigable privacy policy.",
+              details: "Updated text copy for better clarity, made the 'terms of privacy' link functional, and improved forgot-password error messaging for a more professional and helpful user journey.",
+              icon: Layout,
+            },
+          ],
+          module: "Wills Form",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-05-04",
           version: "v7.8.14",
           type: "minor",
