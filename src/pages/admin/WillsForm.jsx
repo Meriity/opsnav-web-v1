@@ -223,15 +223,18 @@ const WillsForm = () => {
                   matterReferenceNumber: actualData.matterReferenceNumber || finalRefNumber || prev.matterReferenceNumber
                 };
 
-                // Registration data pre-fill fallback - Source of truth should be API or Signup state
-                if (!merged.personal.fullName && signUpData?.name) {
-                   merged.personal.fullName = signUpData.name;
+                // Registration data pre-fill fallback - Use localStorage if available
+                const storedClientEmail = localStorage.getItem("clientEmail");
+                const storedClientName = localStorage.getItem("clientName");
+
+                if (!merged.personal.fullName && storedClientName) {
+                   merged.personal.fullName = storedClientName;
                 }
-                if (!merged.email && signUpData?.email) {
-                   merged.email = signUpData.email;
+                if (!merged.email && storedClientEmail) {
+                   merged.email = storedClientEmail;
                 }
-                if (!merged.personal.email && signUpData?.email) {
-                   merged.personal.email = signUpData.email;
+                if (!merged.personal.email && storedClientEmail) {
+                   merged.personal.email = storedClientEmail;
                 }
 
                 return merged;
@@ -316,7 +319,8 @@ const WillsForm = () => {
     },
     status: "draft",
     numSingleBanks: "0",
-    numJointBanks: "0"
+    numJointBanks: "0",
+    notes: ""
   };
 
   const [formData, setFormData] = useState(INITIAL_STATE);
@@ -927,7 +931,7 @@ const WillsForm = () => {
             <div className="flex items-center gap-3 md:gap-6 w-full sm:w-auto">
               <div className="flex items-center gap-2 md:gap-4 flex-1 sm:flex-initial">
                 <span className="text-[12px] md:text-[13px] font-bold text-gray-800">
-                  Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 — {steps[currentStep-1]}
+                  Step <span className="text-[#2E3D99]">{currentStep}</span> of 10 - {steps[currentStep-1]}
                 </span>
                 <div className="h-4 w-[1px] bg-gray-100 hidden sm:block" />
                 <div className="hidden sm:flex items-center gap-2 text-gray-400 text-[12px] font-medium">
@@ -992,9 +996,25 @@ const WillsForm = () => {
                   {steps[currentStep-1]}
                 </h2>
               </div>
-              <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
-                Please provide the required information below to continue your Will preparation.
-              </p>
+              {(() => {
+                const descriptions = {
+                  1: "These details relate to the individual for whom this Will is being prepared.",
+                  2: "These details relate to the individual(s) you appoint to administer your estate and carry out your wishes after your passing.",
+                  3: "These details relate to the individual(s) who will receive your assets in accordance with your Will.",
+                  4: "These details relate to any property you own and how it is held, including ownership type and how it will be distributed under your Will.",
+                  5: "These details relate to your bank accounts and financial holdings, and how they will form part of your estate.",
+                  6: "These details relate to the individual(s) you appoint to care for your minor children in the event of your passing. They will be responsible for your children if both parents pass away.",
+                  7: "These details relate to your personal preferences for funeral arrangements, which can guide your family when the time comes.",
+                  8: "These details relate to your personal belongings, including any items you wish to gift to specific individuals under your Will.",
+                  9: "These details relate to any matters that may affect how your Will is prepared or carried out.",
+                  10: "Please carefully review the information you have provided before submitting. To make any changes, simply return to the relevant step, update your details, and continue back to this review page."
+                };
+                return descriptions[currentStep] ? (
+                  <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
+                    {descriptions[currentStep]}
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             {/* 2. Content Body Section (Two Columns Inside Card) */}

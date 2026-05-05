@@ -130,7 +130,7 @@ export default function Stages({ stageName, data }) {
                           Comment for Client
                         </p>
                         <p className="text-[14px] text-gray-700">
-                          {row.noteText || "—"}
+                          {row.noteText || "-"}
                         </p>
                       </div>
                     )}

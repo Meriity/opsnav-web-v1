@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WILLS_TIPS } from "../../data/willsTipsData";
-import { Info, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity } from "lucide-react";
+import { Info, HelpCircle, Lightbulb, ChevronRight, ChevronDown, Check, User, Phone, Mail, Home, Briefcase, FileText, Plus, Trash2, Users, Shield, Archive, Landmark, Heart, Flower, Flame, Activity, MessageSquare } from "lucide-react";
 
 /**
  * Helper Components for Step Layouts
@@ -211,6 +211,7 @@ const WillsStepForm = ({
             </p>
           </div>
         </div>
+        <StepCommentBox name="personal.notes" value={formData.personal?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "personal.notes", value: e.target.value } })} step={1} />
       </div>
     );
   }
@@ -281,7 +282,7 @@ const WillsStepForm = ({
                 <div className="w-8 h-8 rounded-full bg-[#2E3D99]/5 border border-[#2E3D99]/20 text-[#2E3D99] flex items-center justify-center font-bold text-[13px] shadow-sm">
                   2
                 </div>
-                <h4 className="text-sm font-bold text-gray-800">Second Executor {executors[1]?.name && `— ${executors[1].name}`}</h4>
+                <h4 className="text-sm font-bold text-gray-800">Second Executor {executors[1]?.name && `- ${executors[1].name}`}</h4>
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("executors", 1) ? "rotate-180" : ""}`} />
             </button>
@@ -334,6 +335,7 @@ const WillsStepForm = ({
             )}
           </div>
         )}
+        <StepCommentBox name="executors.0.notes" value={formData.executors?.[0]?.notes ?? ""} onChange={(e) => handleArrayChange("executors", 0, "notes", e.target.value)} step={2} />
       </div>
     );
   }
@@ -389,7 +391,7 @@ const WillsStepForm = ({
                   {index + 1}
                 </div>
                 {beneficiary.name && !isItemExpanded("beneficiaries", index) && (
-                  <span className="text-sm font-bold text-gray-800 animate-in fade-in slide-in-from-left-2">— {beneficiary.name}</span>
+                  <span className="text-sm font-bold text-gray-800 animate-in fade-in slide-in-from-left-2">- {beneficiary.name}</span>
                 )}
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isItemExpanded("beneficiaries", index) ? "rotate-180" : ""}`} />
@@ -443,6 +445,7 @@ const WillsStepForm = ({
             </div>
           ))}
         </div>
+        <StepCommentBox name="beneficiaries.0.notes" value={formData.beneficiaries?.[0]?.notes ?? ""} onChange={(e) => handleArrayChange("beneficiaries", 0, "notes", e.target.value)} step={3} />
       </div>
     );
   }
@@ -493,6 +496,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="properties.notes" value={formData.properties?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "properties.notes", value: e.target.value } })} step={4} />
       </div>
     );
   }
@@ -543,6 +547,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="bankAccounts.notes" value={formData.bankAccounts?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "bankAccounts.notes", value: e.target.value } })} step={5} />
       </div>
     );
   }
@@ -561,6 +566,7 @@ const WillsStepForm = ({
           relationshipOptions={relationshipOptions}
           residentialAddress={personal.address}
         />
+        <StepCommentBox name="guardian.notes" value={formData.guardian?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "guardian.notes", value: e.target.value } })} step={6} />
       </div>
     );
   }
@@ -611,6 +617,7 @@ const WillsStepForm = ({
             </div>
           ) : null}
         </div>
+        <StepCommentBox name="funeral.notes" value={formData.funeral?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "funeral.notes", value: e.target.value } })} step={7} />
       </div>
     );
   }
@@ -657,6 +664,7 @@ const WillsStepForm = ({
           onToggleExpand={toggleExpand}
           isDesktop={isDesktop}
         />
+        <StepCommentBox name="personalAssets.notes" value={formData.personalAssets?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "personalAssets.notes", value: e.target.value } })} step={8} />
       </div>
     );
   }
@@ -684,6 +692,7 @@ const WillsStepForm = ({
           placeholder="e.g. Spouse / Name of Beneficiary" 
           icon={<Shield className="w-4 h-4" />} 
         />
+        <StepCommentBox name="other.notes" value={formData.other?.notes ?? ""} onChange={(e) => handleInputChange({ target: { name: "other.notes", value: e.target.value } })} step={9} />
       </div>
     );
   }
@@ -744,7 +753,7 @@ const StepPropertySection = ({
                   </div>
                   {prop.address && !isItemExpanded(arrayName, idx) && (
                     <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                      — {prop.address}
+                      - {prop.address}
                     </span>
                   )}
                 </div>
@@ -795,7 +804,7 @@ const StepPropertySection = ({
                   residentialAddress={residentialAddress}
                   showUseResidential={true}
                 />
-                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} />
+                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} tooltip="Identifies your property and can be found on your title or rates notice. If unsure, enter “N/A” and leave a note." />
                 <SelectGroup label="Who do you want to give this property to *" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
                 <div className="space-y-3">
                   <label className="text-[13px] font-bold text-gray-700">Gift ratio *</label>
@@ -924,7 +933,7 @@ const StepBankSection = ({
                     </div>
                     {acc.bankName && !isItemExpanded(arrayName, idx) && (
                       <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                        — {acc.bankName} {acc.last4 ? `(xxxx ${acc.last4})` : ""}
+                        - {acc.bankName} {acc.last4 ? `(xxxx ${acc.last4})` : ""}
                       </span>
                     )}
                   </div>
@@ -1108,7 +1117,7 @@ const StepPersonalPropertySection = ({
                   </div>
                   {prop.type && !isItemExpanded(arrayName, idx) && (
                     <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] md:max-w-md animate-in fade-in slide-in-from-left-2">
-                      — {prop.type}
+                      - {prop.type}
                     </span>
                   )}
                 </div>
@@ -1194,12 +1203,23 @@ const StepPersonalPropertySection = ({
 
 // --- Standard Input Groups ---
 
-const InputGroup = ({ label, name, value, onChange, placeholder, type = "text", icon, maxLength }) => (
+const InputGroup = ({ label, name, value, onChange, placeholder, type = "text", icon, maxLength, tooltip }) => (
   <div className="space-y-3">
-    <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
-      {icon && <span className="text-gray-400">{icon}</span>}
-      {label}
-    </label>
+    <div className="flex items-center gap-2">
+      <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
+        {icon && <span className="text-gray-400">{icon}</span>}
+        {label}
+      </label>
+      {tooltip && (
+        <div className="relative group/tooltip flex items-center">
+          <HelpCircle size={14} className="text-gray-400 cursor-help" />
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:block w-56 sm:w-64 p-2.5 bg-gray-900 text-white text-[11px] font-normal rounded-lg shadow-xl z-50 whitespace-normal leading-relaxed text-center pointer-events-none transition-opacity">
+            {tooltip}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full border-[5px] border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
     <input 
       type={type} 
       name={name} 
@@ -1424,5 +1444,31 @@ const FileUploadSection = ({ files, onFileUpload, onFileDelete, isUploading }) =
     </div>
   );
 };
+
+const StepCommentBox = ({ name, value, onChange, step }) => (
+  <div className="pt-8 mt-8 border-t border-gray-100/60 animate-in fade-in duration-500">
+    <div className="bg-[#2E3D99]/[0.02] p-5 md:p-6 rounded-[24px] border border-[#2E3D99]/5 space-y-4 relative overflow-hidden group">
+      <div className="space-y-1.5 relative z-10">
+        <label className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-white border border-gray-100 shadow-sm text-[#2E3D99]">
+            <MessageSquare size={14} />
+          </div>
+          Notes & Comments (Optional)
+        </label>
+        <p className="text-[12px] text-gray-500 font-medium leading-relaxed pl-[34px]">
+          Use this space to share any additional information for our team. These notes are for review purposes only and will not be included in your Will.
+        </p>
+      </div>
+      <textarea
+        name={name || "notes"}
+        value={value}
+        onChange={onChange}
+        placeholder={`Add any specific instructions or notes here...`}
+        rows={3}
+        className="w-full p-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99]/30 transition-all shadow-sm outline-none text-sm placeholder:text-gray-300 resize-y relative z-10"
+      />
+    </div>
+  </div>
+);
 
 export default WillsStepForm;

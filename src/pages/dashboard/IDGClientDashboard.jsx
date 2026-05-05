@@ -623,6 +623,7 @@ export default function IDGClientDashboard() {
         isOpen={isModalOpen}
         setIsOpen={setIsModalOpen}
         createType="order"
+        companyName="print media"
         isClientView={true}
         preselectedClientId={clientId}
         onClose={() => {

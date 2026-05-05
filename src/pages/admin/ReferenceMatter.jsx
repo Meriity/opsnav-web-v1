@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { formatDate } from "../../utils/formatters";
 import { Search } from "lucide-react";
 import ConfirmationModal from "../../components/ui/ConfirmationModal";
+import { motion } from "framer-motion";
 
 export default function ReferenceMatter() {
   const [data, setData] = useState([]);
@@ -163,9 +164,52 @@ export default function ReferenceMatter() {
     }
   };
 
+  const FloatingElement = ({ top, left, delay, size = 60 }) => (
+    <motion.div
+      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+      style={{
+        width: size,
+        height: size,
+        top: `${top}%`,
+        left: `${left}%`,
+      }}
+      animate={{
+        y: [0, -20, 0],
+        x: [0, 10, 0],
+      }}
+      transition={{
+        duration: 3 + delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
-      <Header />
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden flex flex-col">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <FloatingElement top={10} left={10} delay={0} />
+        <FloatingElement top={20} left={85} delay={1} size={80} />
+        <FloatingElement top={70} left={5} delay={2} size={40} />
+        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.06]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
+                               linear-gradient(to bottom, #000 1px, transparent 1px)`,
+              backgroundSize: "30px 30px",
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="relative z-10 w-full">
+        <Header />
+      </div>
 
       <main className="flex-1 space-y-4 p-2 relative z-10">
         <div className="flex flex-col gap-3 p-5">
