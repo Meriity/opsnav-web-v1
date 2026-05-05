@@ -223,15 +223,18 @@ const WillsForm = () => {
                   matterReferenceNumber: actualData.matterReferenceNumber || finalRefNumber || prev.matterReferenceNumber
                 };
 
-                // Registration data pre-fill fallback - Source of truth should be API or Signup state
-                if (!merged.personal.fullName && signUpData?.name) {
-                   merged.personal.fullName = signUpData.name;
+                // Registration data pre-fill fallback - Use localStorage if available
+                const storedClientEmail = localStorage.getItem("clientEmail");
+                const storedClientName = localStorage.getItem("clientName");
+
+                if (!merged.personal.fullName && storedClientName) {
+                   merged.personal.fullName = storedClientName;
                 }
-                if (!merged.email && signUpData?.email) {
-                   merged.email = signUpData.email;
+                if (!merged.email && storedClientEmail) {
+                   merged.email = storedClientEmail;
                 }
-                if (!merged.personal.email && signUpData?.email) {
-                   merged.personal.email = signUpData.email;
+                if (!merged.personal.email && storedClientEmail) {
+                   merged.personal.email = storedClientEmail;
                 }
 
                 return merged;
@@ -316,7 +319,8 @@ const WillsForm = () => {
     },
     status: "draft",
     numSingleBanks: "0",
-    numJointBanks: "0"
+    numJointBanks: "0",
+    notes: ""
   };
 
   const [formData, setFormData] = useState(INITIAL_STATE);
@@ -993,7 +997,7 @@ const WillsForm = () => {
                 </h2>
               </div>
               <p className="text-[12px] md:text-[15px] text-gray-500 max-w-4xl leading-relaxed font-medium">
-                Please provide the required information below to continue your Will preparation.
+                These details relate to the individual for whom this Will is being prepared.
               </p>
             </div>
 

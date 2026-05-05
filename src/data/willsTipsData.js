@@ -4,9 +4,10 @@ export const WILLS_TIPS = {
     estimate: "2-3 mins",
     description: "Let's begin by collecting your details as the owner of the Will. This information ensures your Will is prepared accurately and meets legal requirements.",
     tips: [
-      "Use your full legal name as per official documents",
-      "Ensure your contact details are current",
-      "Provide your primary residential address (no PO Boxes)"
+      "Enter your full legal name exactly as it appears on official documents (e.g. First name, Middle name, Last name)",
+      "If you are known by any other name, include this in the notes section to avoid confusion",
+      "Ensure your contact details are current and accurate",
+      "Provide your primary residential address (PO Boxes are not accepted)"
     ]
   },
   2: {

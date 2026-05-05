@@ -524,7 +524,7 @@ const WillsSignUp = ({ onSignUp, firmId }) => {
                       />
                     </div>
                     <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer select-none">
-                    I agree to the <a href="/terms" className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">terms of privacy</a> of collecting and processing my data.
+                    I agree to the <a href="/terms" className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">Terms of Privacy</a> of collecting and processing my data.
                     </label>                  </div>
                 )}
 
@@ -582,7 +582,7 @@ const WillsSignUp = ({ onSignUp, firmId }) => {
                 </p>
                 <div className="mt-4">
                    <p className="text-[11px] text-gray-400">
-                     Please read our <span className="text-[#2E3D99] font-medium border-b border-[#2E3D99]/40 hover:border-[#2E3D99] cursor-pointer transition-all">Privacy Policy</span> before proceeding.
+                     Please read our <a href="/terms" className="text-[#2E3D99] font-semibold border-b border-[#2E3D99]/30 hover:border-[#2E3D99] transition-all">Terms of Privacy</a> before proceeding.
                    </p>
                 </div>
               </div>

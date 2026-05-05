@@ -35,6 +35,33 @@ export const monthlyReleaseNotes = {
       May: [
         {
           date: "2026-05-05",
+          version: "v7.8.16",
+          type: "patch",
+          category: "improvement",
+          title: "Wills Nested Notes & IDG Portal Optimization",
+          description: "Resolved state management issues in the Wills form for independent step notes and optimized the IDG client dashboard order creation flow.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Wills Step-Specific Note Isolation",
+              description: "Fixed an issue where notes were globally shared across all form steps.",
+              details: "Updated the Wills form component to dynamically map the StepCommentBox fields to their respective nested object paths (e.g. personal.notes, guardian.notes), ensuring strict data isolation per step.",
+              icon: Database,
+            },
+            {
+              type: "ui_ux",
+              title: "IDG Client Dashboard Flow",
+              description: "Hidden the Delivery Date field from the client portal order creation flow.",
+              details: "Conditionally removed the Delivery Date field from the UI, validation arrays, and payload specifically when creating an order via the IDG Client Dashboard to streamline the user experience.",
+              icon: Eye,
+            },
+          ],
+          module: "Wills Form, Print Media",
+          severity: "Low",
+          status: "Released"
+        },
+        {
+          date: "2026-05-05",
           version: "v7.8.15",
           type: "patch",
           category: "improvement",
