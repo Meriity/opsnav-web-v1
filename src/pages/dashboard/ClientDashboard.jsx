@@ -277,7 +277,7 @@ export default function ClientDashboard() {
       state: apiResponse.data[0].orderDetails.state,
       postcode: apiResponse.data[0].orderDetails.postcode || "",
       type: apiResponse.data[0].orderDetails.orderType,
-      delivery_date: formatDate(apiResponse.data[0].orderDetails.orderDate),
+      delivery_date: apiResponse.data[0].orderDetails.deliveryDate ? formatDate(apiResponse.data[0].orderDetails.deliveryDate) : "",
     };
   }
 

@@ -35,6 +35,26 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-07",
+          version: "v7.8.18",
+          type: "patch",
+          category: "bugfix",
+          title: "Print Media Delivery Date Fix",
+          description: "Resolved an issue where a phantom delivery date was appearing for Print Media orders missing a delivery date.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Corrected Delivery Date Mapping",
+              description: "Removed hardcoded fallback dates and corrected frontend mapping.",
+              details: "Fixed the client store which previously defaulted missing delivery dates to a hardcoded date. Additionally, corrected the IDG Client Dashboard to appropriately handle missing delivery dates without falling back to the order date. Missing dates now correctly display as '—'.",
+              icon: Bug,
+            },
+          ],
+          module: "Print Media, IDG Client Dashboard",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-05-05",
           version: "v7.8.17",
           type: "patch",
