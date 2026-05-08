@@ -35,6 +35,47 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-08",
+          version: "v7.8.19",
+          type: "patch",
+          category: "improvement",
+          title: "Streamlined Project Closure & State Sync",
+          description: "Optimized the project and matter closure workflow with automated navigation and enhanced real-time data synchronization.",
+          updates: [
+            {
+              type: "ui_ux",
+              title: "Automated 'Save & Redirect' Flow",
+              description: "Selecting a closure status now triggers an automatic save and returns the user to the list view.",
+              details: "Streamlined the multi-step interaction by allowing the 'Save & Continue' modal action to automatically perform the backend save and redirect users back to 'View Orders' or 'View Clients' immediately, significantly reducing clicks during final project archiving.",
+              icon: Zap,
+            },
+            {
+              type: "improvement",
+              title: "Real-time Archived Data Sync",
+              description: "Ensured that archived matters appear instantly without requiring a page refresh.",
+              details: "Implemented proactive React Query cache invalidation and Zustand store state resets across all stage modules. This ensures that when a matter is closed, it is immediately visible in the 'Archived Clients' table upon landing.",
+              icon: RefreshCw,
+            },
+            {
+              type: "ui_ux",
+              title: "Conditional Navigation Controls",
+              description: "Cleaned up the stage footer by hiding the 'Next' button in final stages.",
+              details: "Implemented module-aware logic to suppress the 'Next' navigation button when a user is on the final stage of a project (e.g., Stage 4 for Print Media, Stage 6 for Conveyancing), preventing invalid transitions.",
+              icon: Eye,
+            },
+            {
+              type: "ui_ux",
+              title: "Field Layout Optimization",
+              description: "Repositioned critical fields for better logical flow.",
+              details: "Swapped positions of 'Image Uploaded Correctly' and 'Capture Proof of Completion' in Print Media Stage 4 to better align with the physical proofing workflow.",
+              icon: Layout,
+            },
+          ],
+          module: "Print Media, Conveyancing, Wills, VOCAT, Global Workflow",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
           date: "2026-05-07",
           version: "v7.8.18",
           type: "patch",
