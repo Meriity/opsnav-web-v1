@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import PropTypes from "prop-types";
@@ -238,6 +238,7 @@ export default function Stage6({
   setHasChanges,
 }) {
   const { matterNumber } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const api = new ClientAPI();
@@ -434,22 +435,23 @@ export default function Stage6({
     return formChanged || clientNoteChanged;
   };
 
-  const performSave = async () => {
+  const performSave = async (overrideFormState) => {
     setIsSaving(true);
 
     const systemNote = generateSystemNote("main");
     // Calculate color status
     const allCompleted = currentConfig.fields.every(
-      (field) => getStatus(formState[field.name]) === "Completed"
+      (field) => getStatus((overrideFormState || formState)[field.name]) === "Completed"
     );
     const colorStatus = allCompleted ? "green" : "amber";
 
     let payload = {};
+    const baseForm = overrideFormState || formState;
 
     if (currentModule === "commercial") {
       const filteredPayload = {};
       currentConfig.fields.forEach((f) => {
-        const val = formState[f.name];
+        const val = baseForm[f.name];
         filteredPayload[f.name] = val === undefined || val === null ? "" : val;
       });
 
@@ -470,7 +472,7 @@ export default function Stage6({
 
       payload = filteredPayload;
     } else {
-      payload = { ...formState };
+      payload = { ...baseForm };
       
       if (!isSuperAdmin) {
         if (normalizeValue(payload.closeMatter) === "open") payload.closeMatter = "";
@@ -541,16 +543,17 @@ export default function Stage6({
       if (typeof reloadArchivedClients === "function") reloadArchivedClients();
       if (onStageUpdate) onStageUpdate({ ...safePayload }, 6);
 
-      // Invalidate queries if commercial
-      if (currentModule === "commercial") {
-        queryClient.invalidateQueries({
-          queryKey: ["archivedClients", "commercial"],
-        });
-      }
+      // Invalidate queries to ensure fresh data in Archived Clients
+      queryClient.invalidateQueries({
+        queryKey: ["archivedClients"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["archivedClientsVocat"],
+      });
 
       // Update original ref
       originalData.current = {
-        formData: { ...formState },
+        formData: { ...baseForm },
         noteForClient:
           currentModule === "commercial" ? noteForClient : undefined,
         noteForSystem: systemNote,
@@ -724,12 +727,14 @@ export default function Stage6({
             onClick={handleSave}
             disabled={isSaving}
           />
-          <Button
+          {currentModule !== "conveyancing" && currentModule !== "commercial" && (
+            <Button
             label="Next"
             width="w-[70px] md:w-[100px]"
             bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stageNumber + 1)}
           />
+          )}
         </div>
       </div>
 
@@ -739,14 +744,28 @@ export default function Stage6({
             setIsModalOpen(false);
             setPendingCloseMatter(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
             if (pendingCloseMatter) {
+                const processed = normalizeValue(pendingCloseMatter);
+                
                 // Apply the pending value
                 setFormState((prev) => ({ ...prev, closeMatter: pendingCloseMatter }));
                 setStatusState((prev) => ({ ...prev, closeMatter: getStatus(pendingCloseMatter) }));
                 setHasChanges(true);
-                setIsModalOpen(false);
-                setPendingCloseMatter(null);
+                
+                if (processed === "completed" || processed === "cancelled" || processed === "closed") {
+                    // Save and Redirect
+                    const newFormState = { ...formState, closeMatter: pendingCloseMatter };
+                    await performSave(newFormState);
+                    
+                    const role = (localStorage.getItem("role") || "").toLowerCase();
+                    const isAdmin = ["admin", "superadmin"].includes(role);
+                    navigate(isAdmin ? "/admin/view-clients" : "/user/view-clients");
+                    localStorage.removeItem("client-storage");
+                } else {
+                    setIsModalOpen(false);
+                    setPendingCloseMatter(null);
+                }
             }
         }}
         title={pendingCloseMatter === "Open" ? "Confirm Matter Reopen" : "Confirm Matter Closure"}

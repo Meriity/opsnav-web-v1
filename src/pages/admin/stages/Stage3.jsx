@@ -4,11 +4,13 @@ import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import WillsAPI from "@/api/willsAPI";
 import VocatFasAPI from "@/api/vocatFasAPI";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formConfig = {
   conveyancing: {
@@ -97,6 +99,9 @@ export default function Stage3({
   setHasChanges,
 }) {
   const { matterNumber } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
 
   const api = new ClientAPI();
   const commercialApi = new CommercialAPI();
@@ -240,12 +245,12 @@ export default function Stage3({
   const isChanged = () =>
     JSON.stringify(formState) !== JSON.stringify(originalData.current);
 
-  const handleSave = async () => {
-    if (isSaving || !isChanged()) return;
+  const handleSave = async (overrideFormState) => {
+    if (isSaving || (!overrideFormState && !isChanged())) return;
 
     setIsSaving(true);
 
-    let payload = { ...formState };
+    let payload = { ...(overrideFormState || formState) };
     const systemNote = generateSystemNote();
 
     const allCompleted = fields.every(
@@ -293,6 +298,11 @@ export default function Stage3({
       }
 
       toast.success("Stage 3 Saved Successfully!");
+
+      // Invalidate queries to ensure fresh data in Archived Clients
+      if (typeof reloadArchivedClients === "function") reloadArchivedClients();
+      queryClient.invalidateQueries({ queryKey: ["archivedClients"] });
+      queryClient.invalidateQueries({ queryKey: ["archivedClientsVocat"] });
 
       setReloadTrigger((p) => p + 1);
 
@@ -458,12 +468,14 @@ export default function Stage3({
               disabled={isSaving}
             />
           )}
-          <Button
+          {currentModule !== "wills" && (
+            <Button
             label="Next"
             width="w-[70px]  md:w-[100px]"
             bg="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]"
             onClick={() => changeStage(stageNumber + 1)}
           />
+          )}
         </div>
       </div>
 
@@ -473,14 +485,28 @@ export default function Stage3({
           setIsModalOpen(false);
           setPendingCloseMatter(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (pendingCloseMatter) {
             const processed = normalizeValue(pendingCloseMatter);
+            
+            // Update state for UI
             setFormState((prev) => ({ ...prev, closeMatter: processed }));
             setStatusState((prev) => ({ ...prev, closeMatter: getStatus(processed) }));
             setHasChanges(true);
-            setIsModalOpen(false);
-            setPendingCloseMatter(null);
+            
+            if (processed === "completed" || processed === "cancelled" || processed === "closed") {
+              // Save and Redirect
+              const newFormState = { ...formState, closeMatter: processed };
+              await handleSave(newFormState);
+              
+              const role = (localStorage.getItem("role") || "").toLowerCase();
+              const isAdmin = ["admin", "superadmin"].includes(role);
+              navigate(isAdmin ? "/admin/view-clients" : "/user/view-clients");
+              localStorage.removeItem("client-storage");
+            } else {
+              setIsModalOpen(false);
+              setPendingCloseMatter(null);
+            }
           }
         }}
         title={pendingCloseMatter === "Open" ? "Confirm Matter Reopen" : "Confirm Matter Closure"}

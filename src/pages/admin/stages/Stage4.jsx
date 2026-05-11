@@ -3,7 +3,7 @@ import Button from "@/components/ui/Button";
 import ClientAPI from "@/api/clientAPI";
 import CommercialAPI from "@/api/commercialAPI";
 import VocatFasAPI from "@/api/vocatFasAPI";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline/index.js";
@@ -11,6 +11,7 @@ import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useArchivedClientStore } from "../../ArchivedClientStore/UseArchivedClientStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formConfig = {
   conveyancing: {
@@ -36,14 +37,14 @@ const formConfig = {
   "print media": {
     fields: [
       {
-        name: "uploadImageConfirmation",
-        label: "Image Uploaded Correctly",
-        type: "radio",
-      },
-      {
         name: "completionPhotos",
         label: "Capture Proof of Completion (Image/PDF)",
         type: "image",
+      },
+      {
+        name: "uploadImageConfirmation",
+        label: "Image Uploaded Correctly",
+        type: "radio",
       },
       { 
         name: "closeOrder", 
@@ -188,6 +189,9 @@ export default function Stage4({
   setHasChanges,
 }) {
   const { matterNumber } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const reloadArchivedClients = useArchivedClientStore((s) => s.reloadArchivedClients);
 
   const originalData = useRef({});
   const hasLoadedData = useRef(false);
@@ -222,9 +226,7 @@ export default function Stage4({
     return formConfig[currentModule] || formConfig.conveyancing;
   }, [currentModule]);
 
-  const reloadArchivedClients = useArchivedClientStore(
-    (s) => s.reloadArchivedClients
-  );
+
 
   const generateSystemNote = useCallback(
     (noteGroupId) => {
@@ -544,13 +546,13 @@ export default function Stage4({
   };
 
   // ---------- SAVE ----------
-  async function performSave() {
-    if (!isChanged() || isSaving) return;
+  async function performSave(overrideFormData) {
+    if ((!overrideFormData && !isChanged()) || isSaving) return;
 
     setIsSaving(true);
 
     const systemNote = generateSystemNote("main");
-    let payload = JSON.parse(JSON.stringify(formData || {}));
+    let payload = JSON.parse(JSON.stringify(overrideFormData || formData || {}));
 
     // normalize fields
     currentConfig.fields.forEach((field) => {
@@ -658,6 +660,11 @@ export default function Stage4({
       if (onStageUpdate) {
         onStageUpdate({ ...payload, colorStatus: computedColorStatus }, 4);
       }
+
+      // Invalidate queries to ensure fresh data in Archived Clients
+      if (typeof reloadArchivedClients === "function") reloadArchivedClients();
+      queryClient.invalidateQueries({ queryKey: ["archivedClients"] });
+      queryClient.invalidateQueries({ queryKey: ["archivedClientsVocat"] });
     } catch (err) {
       console.error(err);
       let errorMessage = "Failed to save Stage 4. Please try again.";
@@ -972,6 +979,7 @@ export default function Stage4({
               disabled={isSaving}
             />
           )}
+          {currentModule !== "print media" && currentModule !== "vocat" && (
             <Button
               label="Next"
               width="w-[70px]  md:w-[100px]"
@@ -984,6 +992,7 @@ export default function Stage4({
                 }
               }}
             />
+          )}
         </div>
       </div>
 
@@ -1002,15 +1011,30 @@ export default function Stage4({
             setCloseOrderModalOpen(false);
             setPendingCloseOrder(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
             if (pendingCloseOrder) {
                 const { field, value } = pendingCloseOrder;
                 const processed = normalizeValue(value);
+                
+                // Update state for UI consistency
                 setFormData((prev) => ({ ...prev, [field]: processed }));
                 setStatuses((prev) => ({ ...prev, [field]: getStatus(processed) }));
                 setHasChanges(true);
-                setCloseOrderModalOpen(false);
-                setPendingCloseOrder(null);
+                
+                if (value === "Completed" || value === "Cancelled" || value === "Closed") {
+                    // Save and Redirect
+                    const newFormData = { ...formData, [field]: processed };
+                    await performSave(newFormData);
+                    
+                    const role = (localStorage.getItem("role") || "").toLowerCase();
+                    const isAdmin = ["admin", "superadmin"].includes(role);
+                    navigate(isAdmin ? "/admin/view-clients" : "/user/view-clients");
+                    localStorage.removeItem("client-storage");
+                } else {
+                    // Just close modal if it's "Open" or other
+                    setCloseOrderModalOpen(false);
+                    setPendingCloseOrder(null);
+                }
             }
         }}
         title={pendingCloseOrder?.value === "Open" ? "Confirm Reopen" : "Confirm Closure"}
