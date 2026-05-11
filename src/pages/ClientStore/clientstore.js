@@ -100,7 +100,7 @@ export const useClientStore = create(
                 : "N/A",
               delivery_date: client.deliveryDate
                 ? client.deliveryDate.split("T")[0]
-                : "2025-09-25",
+                : "",
               priority: client.priority || "N/A",
               postcode: client.postCode || "N/A",
               orderDetails: client.order_details || "N/A",
