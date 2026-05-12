@@ -29,11 +29,39 @@ import {
   Lock,
   Phone,
   Lightbulb,
+  MessageSquare,
 } from "lucide-react";
 
 export const monthlyReleaseNotes = {
     2026: {
       May: [
+        {
+          date: "2026-05-12",
+          version: "v7.9.0",
+          type: "minor",
+          category: "feature",
+          title: "Client Dashboard Visibility Enhancements",
+          description: "Improved the active orders and order history views by providing direct visibility into job delivery addresses and associated comments for a more transparent client experience.",
+          updates: [
+            {
+              type: "feature",
+              title: "Job Address & Comment Visibility",
+              description: "Job addresses and order notes are now immediately visible on active and completed order cards.",
+              details: "Previously, clients could not easily tell the job address or read comments directly from the dashboard listing. Now, both the 'Active Orders' and 'Order History' views display the delivery address and any corresponding order notes in a clean, easily scannable format.",
+              icon: Eye,
+            },
+            {
+              type: "ui_ux",
+              title: "Intuitive Messaging Icons",
+              description: "Updated the iconography for comments to use a message-style icon.",
+              details: "Replaced the standard document icon (FileText) with a message bubble icon (MessageSquare) next to order notes, providing a more intuitive and conversational user experience for reading updates.",
+              icon: MessageSquare,
+            },
+          ],
+          module: "Print Media, IDG Client Dashboard",
+          severity: "Low",
+          status: "Released"
+        },
         {
           date: "2026-05-08",
           version: "v7.8.19",
