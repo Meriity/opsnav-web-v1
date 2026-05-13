@@ -36,6 +36,26 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-13",
+          version: "v7.9.1",
+          type: "patch",
+          category: "bugfix",
+          title: "Stage 3 Save Fix",
+          description: "Resolved an issue in the Stage 3 module where clicking the save button resulted in an immediate error without triggering any API calls.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Fixed Save Button Circular Reference Error",
+              description: "Prevented a crash caused by synthetic events being processed as form state payloads.",
+              details: "The 'Save' button in Stage 3 was incorrectly passing the React click event directly into the payload builder. This resulted in JSON.stringify throwing a circular structure error, which caused an immediate failure. The save handler has been refactored to gracefully ignore event arguments and correctly submit the actual form state.",
+              icon: Bug,
+            },
+          ],
+          module: "Stage 3 (Global)",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-05-12",
           version: "v7.9.0",
           type: "minor",
