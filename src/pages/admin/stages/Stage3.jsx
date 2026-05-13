@@ -246,11 +246,14 @@ export default function Stage3({
     JSON.stringify(formState) !== JSON.stringify(originalData.current);
 
   const handleSave = async (overrideFormState) => {
-    if (isSaving || (!overrideFormState && !isChanged())) return;
+    const isEvent = overrideFormState && !!overrideFormState.nativeEvent;
+    const actualOverride = isEvent ? null : overrideFormState;
+
+    if (isSaving || (!actualOverride && !isChanged())) return;
 
     setIsSaving(true);
 
-    let payload = { ...(overrideFormState || formState) };
+    let payload = { ...(actualOverride || formState) };
     const systemNote = generateSystemNote();
 
     const allCompleted = fields.every(
@@ -312,8 +315,9 @@ export default function Stage3({
         noteForClient,
       };
       setHasChanges(false);
-    } catch {
-      toast.error("Failed to save Stage 3.");
+    } catch (error) {
+      console.error("Stage 3 Save Error:", error);
+      toast.error(`Failed to save Stage 3: ${error.message || "Unknown error"}`);
     }
 
     setIsSaving(false);
