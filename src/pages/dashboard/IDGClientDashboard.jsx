@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Info,
   FileText,
+  MessageSquare,
   Power,
   PlusCircle,
 } from "lucide-react";
@@ -97,6 +98,26 @@ export default function IDGClientDashboard() {
     if (stageIndex < currentIndex) return "complete";
     if (stageIndex === currentIndex) return "current";
     return "pending";
+  };
+
+  const getLatestComment = (job) => {
+    if (job.notes) return job.notes;
+    if (job.comments) return job.comments;
+    if (job.comment) return job.comment;
+    
+    const stages = [job.s6, job.s5, job.s4, job.s3, job.s2, job.s1].filter(Boolean);
+    for (const stage of stages) {
+      const raw = stage.noteForClient || stage.commentary;
+      if (raw) {
+         if (raw.includes(" - ")) {
+            const comment = raw.split(" - ").slice(1).join(" - ").trim();
+            if (comment) return comment;
+         } else {
+            return raw;
+         }
+      }
+    }
+    return "";
   };
 
   const formatDate = (dateString) => {
@@ -242,7 +263,7 @@ export default function IDGClientDashboard() {
              Hello, <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">{localStorage.getItem("name") || "Client"}</span> <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
            </h1>
            <p className="text-lg text-gray-600 max-w-2xl">
-             Create new orders, track progress in real time, and view your complete order history — all in one place.
+             Create new orders, track progress in real time, and view your complete order history - all in one place.
            </p>
         </div>
 
@@ -514,7 +535,17 @@ export default function IDGClientDashboard() {
                                   </div>
                                   <div>
                                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#2E3D99] transition-colors">{job.orderId}</h3>
-                                     <p className="text-sm text-gray-500 truncate max-w-[200px]">{job.order_details}</p>
+                                     <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 mb-1">
+                                        <MapPin size={12} className="flex-shrink-0" />
+                                        <span className="truncate w-full max-w-[200px]">{job.deliveryAddress || "No address provided"}</span>
+                                     </div>
+                                     <p className="text-sm text-gray-500 truncate max-w-[200px] mb-1">{job.order_details}</p>
+                                     {getLatestComment(job) && (
+                                       <div className="flex items-start gap-1.5 text-xs text-gray-500 mt-1.5 bg-gray-50 p-2 rounded-lg border border-gray-100 max-w-[200px]">
+                                          <MessageSquare size={12} className="flex-shrink-0 mt-0.5 text-[#2E3D99]" />
+                                          <span className="line-clamp-2 w-full italic">{getLatestComment(job)}</span>
+                                       </div>
+                                     )}
                                   </div>
                                </div>
 
@@ -577,11 +608,17 @@ export default function IDGClientDashboard() {
                                    <span className="text-xs font-medium text-gray-500 bg-white/50 px-2 py-1 rounded-md backdrop-blur-sm border border-white/50">{job.deliveryDate ? formatDate(job.deliveryDate) : "Completed"}</span>
                                 </div>
                                 <h3 className="font-bold text-gray-900 mb-1 truncate">{job.orderId}</h3>
-                                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
                                    <MapPin size={12} className="flex-shrink-0" />
                                    <span className="truncate w-full">{job.deliveryAddress || "No address provided"}</span>
                                 </div>
-                                <p className="text-sm text-gray-500 line-clamp-2">{job.order_details}</p>
+                                <p className="text-sm text-gray-500 line-clamp-2 mb-2">{job.order_details}</p>
+                                {getLatestComment(job) && (
+                                  <div className="flex items-start gap-1.5 text-xs text-gray-500 mt-2 bg-white/50 p-2 rounded-lg border border-gray-100/50">
+                                     <MessageSquare size={12} className="flex-shrink-0 mt-0.5 text-[#2E3D99]" />
+                                     <span className="line-clamp-2 w-full italic">{getLatestComment(job)}</span>
+                                  </div>
+                                )}
                                 <div className="mt-4 pt-4 border-t border-gray-100/50 flex items-center text-xs font-medium text-[#2E3D99] opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all transform translate-y-0 lg:translate-y-2 lg:group-hover:translate-y-0 duration-300">
                                    View Details <ChevronRight size={14} className="ml-1" />
                                 </div>
