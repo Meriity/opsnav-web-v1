@@ -324,8 +324,6 @@ class WillsAPI {
     delete cleaned.updatedAt;
     delete cleaned.willsUrl;
     delete cleaned.converted;
-    delete cleaned.isCompleted;
-    // Exact match for requested payload
     delete cleaned.numSingleBanks;
     delete cleaned.numJointBanks;
 

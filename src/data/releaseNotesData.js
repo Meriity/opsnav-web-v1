@@ -36,6 +36,33 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-14",
+          version: "v7.9.2",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Form Submission Completion Fix",
+          description: "Resolved a critical issue where the Wills form submission was not marking the form as completed, preventing downstream workflows from recognising submitted forms.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Fixed Form Completion Flag Not Being Sent",
+              description: "The isCompleted field was being stripped from the API payload during form submission, causing all submitted forms to remain marked as incomplete.",
+              details: "The cleanPayload() method in willsAPI.js was explicitly deleting the isCompleted field before sending the PATCH request to the backend. This meant that even when a client fully completed and submitted their Wills form, the backend never received isCompleted: true, leaving the form in an incomplete state. The fix removes the deletion of isCompleted from cleanPayload and explicitly sets isCompleted to true in the submitForm handler when the form status is 'submitted', and false for draft saves.",
+              icon: Bug,
+            },
+            {
+              type: "improvement",
+              title: "Submission Payload Integrity",
+              description: "Ensured the form submission payload accurately reflects the completed state of the form.",
+              details: "Both API paths — updateFormByReferenceNumber (PATCH by reference) and updateWillsForm (general PATCH) — now correctly include the isCompleted flag. This clears the form submission problem in Wills where submitted forms were not being distinguished from drafts in the admin dashboard and downstream processing.",
+              icon: CheckCircle2,
+            },
+          ],
+          module: "Wills Form",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-05-13",
           version: "v7.9.1",
           type: "patch",
