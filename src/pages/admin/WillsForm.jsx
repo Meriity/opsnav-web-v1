@@ -536,7 +536,8 @@ const WillsForm = () => {
     // Always use the latest data from the Ref
     const updatedData = { 
       ...formDataRef.current, 
-      status
+      status,
+      isCompleted: status === "submitted"
     };
     
     try {
