@@ -1,6 +1,6 @@
 import React from "react";
 
-const WillsPreview = ({ formData = {} }) => {
+const WillsPreview = ({ formData = {}, onClauseClick, isMinimap = false }) => {
   const {
     personal = {},
     executors = [],
@@ -26,8 +26,16 @@ const WillsPreview = ({ formData = {} }) => {
     return romans[n - 1] || n.toString();
   };
 
+  const baseSizeClass = isMinimap ? "text-[15pt]" : "text-[12pt]";
+  const footerSizeClass = isMinimap ? "text-[12pt]" : "text-[10pt]";
+  const smSizeClass = isMinimap ? "text-[12pt]" : "text-sm";
+  const xlSizeClass = isMinimap ? "text-2xl" : "text-xl";
+  const titleSizeClass = isMinimap ? "text-5xl" : "text-4xl";
+  const midSizeClass = isMinimap ? "text-[13pt]" : "text-[11pt]";
+  const witnessSizeClass = isMinimap ? "text-[12pt]" : "text-[10pt]";
+
   const PageFooter = ({ pageNum, totalPages }) => (
-    <div className="absolute bottom-8 left-0 right-0 text-center text-[10pt] text-gray-500 font-serif border-t border-gray-200 pt-4 mx-12">
+    <div className={`absolute bottom-8 left-0 right-0 text-center ${footerSizeClass} text-gray-500 font-serif border-t border-gray-200 pt-4 mx-12`}>
       Page {pageNum} of {totalPages}
     </div>
   );
@@ -37,6 +45,34 @@ const WillsPreview = ({ formData = {} }) => {
   );
 
   const TOTAL_PAGES = 4;
+
+  // Maps document clause numbers to form steps
+  const CLAUSE_TO_STEP = {
+    5: 2,   // Executors
+    8: 4,   // Properties
+    9: 9,   // Other / Digital
+    11: 3,  // Beneficiaries
+    12: 8,  // Personal Assets
+    15: 6,  // Guardian
+    16: 7,  // Funeral
+  };
+
+  // Renders clause numbers — clickable when onClauseClick is provided and clause has a step mapping
+  const ClauseNumber = ({ num }) => {
+    const step = CLAUSE_TO_STEP[num];
+    if (onClauseClick && step) {
+      return (
+        <div
+          onClick={(e) => { e.stopPropagation(); onClauseClick(step); }}
+          className="font-bold cursor-pointer text-[#2E3D99] hover:bg-[#2E3D99]/10 rounded-md px-1 -ml-1 transition-all select-none"
+          title={`Go to Step ${step}`}
+        >
+          {num}.
+        </div>
+      );
+    }
+    return <div className="font-bold">{num}.</div>;
+  };
 
   const trusteePowers = [
     "Exercise any powers given to them by law and have all the powers, authorities and discretions of a natural person, including but not limited to the power to invest and change investments freely as if they were beneficially entitled to them;",
@@ -60,10 +96,10 @@ const WillsPreview = ({ formData = {} }) => {
     <div id="wills-preview-doc" className="bg-white min-h-full text-[#000] leading-[1.5] font-serif" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
       
       {/* PAGE 1: TITLE PAGE */}
-      <div className="pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm flex flex-col justify-between text-[12pt]">
+      <div className={`pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm flex flex-col justify-between ${baseSizeClass}`}>
         <div className="flex-1 flex flex-col justify-center">
           <div className="text-center border-t-2 border-b-2 border-black py-8 space-y-6">
-            <h1 className="text-4xl font-bold tracking-[0.2em] leading-tight">
+            <h1 className={`${titleSizeClass} font-bold tracking-[0.2em] leading-tight`}>
               WILL<br />OF<br />
               {(personal.fullName || "INPUT FIELD 1").toUpperCase()}
             </h1>
@@ -71,18 +107,18 @@ const WillsPreview = ({ formData = {} }) => {
         </div>
         
         <div className="text-center pb-16 space-y-2">
-          <p className="text-xl font-bold">VK Lawyers Pty Ltd</p>
-          <p className="text-sm">PO Box 4001, Narre Warren South VIC 3805</p>
-          <p className="text-sm">Phone: (03) 5996 0691</p>
-          <p className="text-sm">Email: communication@vklawyers.com.au</p>
-          <p className="text-sm font-bold pt-2">Ref: {matterReferenceNumber}</p>
+          <p className={`${xlSizeClass} font-bold`}>VK Lawyers Pty Ltd</p>
+          <p className={smSizeClass}>PO Box 4001, Narre Warren South VIC 3805</p>
+          <p className={smSizeClass}>Phone: (03) 5996 0691</p>
+          <p className={smSizeClass}>Email: communication@vklawyers.com.au</p>
+          <p className={`${smSizeClass} font-bold pt-2`}>Ref: {matterReferenceNumber}</p>
         </div>
 
         <PageFooter pageNum={1} totalPages={TOTAL_PAGES} />
       </div>
 
       {/* PAGE 2: CLAUSES 1-7 */}
-      <div className="pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-6 text-[12pt]">
+      <div className={`pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-6 ${baseSizeClass}`}>
         <div className="space-y-6 text-justify">
           <p>
             <span className="font-bold uppercase">THIS IS THE LAST WILL AND TESTAMENT</span> of me <BoldValue>{personal.fullName}</BoldValue>, of <BoldValue>{personal.address}</BoldValue>, <BoldValue>{personal.occupation}</BoldValue>
@@ -117,7 +153,7 @@ const WillsPreview = ({ formData = {} }) => {
           </div>
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">5.</div>
+            <ClauseNumber num={5} />
             <div>
               <span className="font-bold uppercase">I APPOINT</span> as my executor and trustee my <BoldValue>{getRelationText(executors[0]?.relation)}</BoldValue> <BoldValue>{executors[0]?.name}</BoldValue> 
               {executors.length > 1 && (
@@ -146,10 +182,10 @@ const WillsPreview = ({ formData = {} }) => {
       </div>
 
       {/* PAGE 3: CLAUSES 8-14 */}
-      <div className="pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-8 text-[12pt]">
+      <div className={`pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-8 ${baseSizeClass}`}>
         <div className="space-y-6 text-justify">
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">8.</div>
+            <ClauseNumber num={8} />
             <div>My executors and trustees hold my estate:</div>
           </div>
 
@@ -189,7 +225,7 @@ const WillsPreview = ({ formData = {} }) => {
           </div>
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">9.</div>
+            <ClauseNumber num={9} />
             <div>To do all things necessary to enable <BoldValue>{other.digitalBeneficiary}</BoldValue> to have the use and enjoyment of all digital rights, accounts, assets, and device content;</div>
           </div>
 
@@ -199,13 +235,23 @@ const WillsPreview = ({ formData = {} }) => {
           </div>
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">11.</div>
+            <ClauseNumber num={11} />
             <div>
               <div>In the event that my spouse does not survive me, then to hold the rest and residue of my estate (real and personal) on trust:</div>
               <div className="pl-10 space-y-6 pt-4">
                 {beneficiaries.map((ben, bIdx) => {
-                  const benSoleProps = properties.sole.filter(p => p.beneficiary === ben.name);
-                  const benSingleBanks = bankAccounts.single.filter(a => a.beneficiary === ben.name);
+                  const benSoleProps = (properties.sole || []).filter(p => {
+                    if (p.distributionType === "equal" || p.distributionType === "custom") {
+                      return (p.allocations || []).some(a => a.beneficiary === ben.name);
+                    }
+                    return p.beneficiary === ben.name;
+                  });
+                   const benSingleBanks = bankAccounts.single.filter(a => {
+                    if (a.distributionType === "equal" || a.distributionType === "custom") {
+                      return (a.allocations || []).some(alloc => alloc.beneficiary === ben.name);
+                    }
+                    return a.beneficiary === ben.name;
+                  });
                   
                   if (benSoleProps.length === 0 && benSingleBanks.length === 0) return null;
 
@@ -221,12 +267,16 @@ const WillsPreview = ({ formData = {} }) => {
                             </div>
                           </div>
                           <div className="pl-10 space-y-2">
-                            {benSoleProps.map((p, i) => (
-                              <div key={i} className="grid grid-cols-[40px_1fr] gap-2 items-start text-[#000]">
-                                <div className="font-bold">({toRoman(i+1)})</div>
-                                <div>{p.address}, {p.volumeFolio}</div>
-                              </div>
-                            ))}
+                            {benSoleProps.map((p, i) => {
+                              const alloc = (p.allocations || []).find(a => a.beneficiary === ben.name);
+                              const ratioSuffix = p.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : p.distributionType === "equal" ? " (shared equally)" : "";
+                              return (
+                                <div key={i} className="grid grid-cols-[40px_1fr] gap-2 items-start text-[#000]">
+                                  <div className="font-bold">({toRoman(i+1)})</div>
+                                  <div>{p.address}, {p.volumeFolio}{ratioSuffix}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -241,12 +291,16 @@ const WillsPreview = ({ formData = {} }) => {
                             </div>
                           </div>
                           <div className="pl-10 space-y-2">
-                            {benSingleBanks.map((acc, i) => (
-                              <div key={i} className="grid grid-cols-[40px_1fr] gap-2 items-start text-[#000]">
-                                <div className="font-bold">({toRoman(i+1)})</div>
-                                <div>{acc.bankName}, with account ending in {acc.last4}</div>
-                              </div>
-                            ))}
+                            {benSingleBanks.map((acc, i) => {
+                              const alloc = (acc.allocations || []).find(a => a.beneficiary === ben.name);
+                              const ratioSuffix = acc.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : acc.distributionType === "equal" ? " (shared equally)" : "";
+                              return (
+                                <div key={i} className="grid grid-cols-[40px_1fr] gap-2 items-start text-[#000]">
+                                  <div className="font-bold">({toRoman(i+1)})</div>
+                                  <div>{acc.bankName}, with account ending in {acc.last4}{ratioSuffix}</div>
+                                </div>
+                              );
+                            })}
                             <div className="grid grid-cols-[40px_1fr] gap-2 items-start text-[#000]">
                               <div className="font-bold">({toRoman(benSingleBanks.length + 1)})</div>
                               <div>All contents from the safe deposit (if any)</div>
@@ -265,10 +319,15 @@ const WillsPreview = ({ formData = {} }) => {
           </div>
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">12.</div>
+            <ClauseNumber num={12} />
             <div className="space-y-4">
               {beneficiaries.map((ben, bIdx) => {
-                const benAssets = [...personalAssets.joint, ...personalAssets.sole].filter(a => a.beneficiary === ben.name);
+                const benAssets = [...personalAssets.joint, ...personalAssets.sole].filter(a => {
+                  if (a.distributionType === "equal" || a.distributionType === "custom") {
+                    return (a.allocations || []).some(alloc => alloc.beneficiary === ben.name);
+                  }
+                  return a.beneficiary === ben.name;
+                });
                 if (benAssets.length === 0) return null;
                 return (
                   <div key={bIdx} className="space-y-4">
@@ -276,12 +335,16 @@ const WillsPreview = ({ formData = {} }) => {
                       To give to my <BoldValue>{getRelationText(ben.relation)}</BoldValue> <BoldValue>{ben.name}</BoldValue> my share in the proceeds of sale of the below items provided she/he survives me and if not, this gift shall form part of the rest and residue of my estate;
                     </p>
                     <div className="pl-10 space-y-2">
-                      {benAssets.map((a, i) => (
-                        <div key={i} className={`grid grid-cols-[40px_1fr] gap-2 items-start ${i === 0 ? "font-bold text-[#000]" : ""}`}>
-                          <div className="font-bold">{String.fromCharCode(97 + i)}.</div>
-                          <div>{a.type}{a.description ? `: ${a.description}` : ""}</div>
-                        </div>
-                      ))}
+                      {benAssets.map((a, i) => {
+                        const alloc = (a.allocations || []).find(alloc => alloc.beneficiary === ben.name);
+                        const ratioSuffix = a.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : a.distributionType === "equal" ? " (shared equally)" : "";
+                        return (
+                          <div key={i} className={`grid grid-cols-[40px_1fr] gap-2 items-start ${i === 0 ? "font-bold text-[#000]" : ""}`}>
+                            <div className="font-bold">{String.fromCharCode(97 + i)}.</div>
+                            <div>{a.type}{a.description ? `: ${a.description}` : ""}{ratioSuffix}</div>
+                          </div>
+                        );
+                      })}
                       <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
                         <div className="font-bold">{String.fromCharCode(97 + benAssets.length)}.</div>
                         <div>Any motor vehicle registered under my name;</div>
@@ -324,11 +387,11 @@ const WillsPreview = ({ formData = {} }) => {
       </div>
 
       {/* PAGE 4: CLAUSES 15-17 & EXECUTION */}
-      <div className="pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-8 text-[12pt]">
+      <div className={`pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-8 ${baseSizeClass}`}>
         <div className="space-y-6 text-justify">
           {(guardian.name || guardian.isExecutor) && (
             <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-              <div className="font-bold">15.</div>
+              <ClauseNumber num={15} />
               <div>
                 If the other parent of any of my children has not survived me then I <span className="font-bold uppercase tracking-tight">APPOINT</span> my <BoldValue>{guardian.isExecutor ? getRelationText(executors[0]?.relation) : getRelationText(guardian.relation)}</BoldValue> <BoldValue>{guardian.isExecutor ? executors[0]?.name : guardian.name}</BoldValue> {executors.length > 1 && executors[1] && <>unless unable or unwilling to act or continue to act in which event <span className="font-bold uppercase tracking-tight">I APPOINT</span> my <BoldValue>{getRelationText(executors[1]?.relation)}</BoldValue> <BoldValue>{executors[1]?.name}</BoldValue></>} as guardian of my minor children.
               </div>
@@ -336,7 +399,7 @@ const WillsPreview = ({ formData = {} }) => {
           )}
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">
-            <div className="font-bold">16.</div>
+            <ClauseNumber num={16} />
             <div>
               <span className="font-bold uppercase">I DIRECT</span> my executor to arrange for <BoldValue>{funeral.details || "[funeral details]"}</BoldValue> . OR <span className="font-bold uppercase">I WISH</span> to be cremated and my funeral arrangements be carried out according to the wishes of my surviving family.
             </div>
@@ -361,7 +424,7 @@ const WillsPreview = ({ formData = {} }) => {
           </p>
 
           <div className="pt-8 grid grid-cols-[1.5fr_0.2fr_2fr] gap-4 items-start">
-            <div className="text-[11pt]">
+            <div className={midSizeClass}>
               <span className="font-bold uppercase">SIGNED</span> by <BoldValue>{personal.fullName}</BoldValue> as her/his last Will and Testament in the presence of us both present at the same time who at her/his request and in her/his presence and in the presence of each other have hereunto subscribed our names as witnesses:
             </div>
             <div className="flex justify-center h-full pt-1">
@@ -373,7 +436,7 @@ const WillsPreview = ({ formData = {} }) => {
             </div>
           </div>
 
-          <div className="pt-12 grid grid-cols-2 gap-16 text-[10pt]">
+          <div className={`pt-12 grid grid-cols-2 gap-16 ${witnessSizeClass}`}>
             {[1, 2].map(i => (
               <div key={i} className="space-y-8">
                 <div className="space-y-1"><div className="border-b border-black border-dotted h-8 w-full"></div><p className="italic">Signature of Witness</p></div>

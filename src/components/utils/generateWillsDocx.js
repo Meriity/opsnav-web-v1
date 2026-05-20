@@ -303,11 +303,21 @@ export const generateWillsDocx = async (formData, fileName = "Will.docx") => {
           }),
 
           ...beneficiaries.flatMap(ben => {
-            const benSoleProps = properties.sole.filter(p => p.beneficiary === ben.name);
-            const benSingleBanks = bankAccounts.single.filter(a => a.beneficiary === ben.name);
+            const benSoleProps = (properties.sole || []).filter(p => {
+              if (p.distributionType === "equal" || p.distributionType === "custom") {
+                return (p.allocations || []).some(a => a.beneficiary === ben.name);
+              }
+              return p.beneficiary === ben.name;
+            });
+            const benSingleBanks = bankAccounts.single.filter(a => {
+              if (a.distributionType === "equal" || a.distributionType === "custom") {
+                return (a.allocations || []).some(alloc => alloc.beneficiary === ben.name);
+              }
+              return a.beneficiary === ben.name;
+            });
             
             if (benSoleProps.length === 0 && benSingleBanks.length === 0) return [];
-
+ 
             return [
               // Sub-clause a: Properties
               ...(benSoleProps.length > 0 ? [
@@ -322,10 +332,14 @@ export const generateWillsDocx = async (formData, fileName = "Will.docx") => {
                     new TextRun({ text: " my following Properties transferred as a sole proprietor provided she/he survives me and if not this gift shall form part of the rest and residue of my estate;", font: FONTS.body }),
                   ]
                 }),
-                ...benSoleProps.map((p, i) => new Paragraph({
-                  indent: { left: 2160, hanging: 720 },
-                  children: [new TextRun({ text: `(${toRoman(i + 1)})\t${p.address}, ${p.volumeFolio}`, bold: true, font: FONTS.body })]
-                })),
+                ...benSoleProps.map((p, i) => {
+                  const alloc = (p.allocations || []).find(a => a.beneficiary === ben.name);
+                  const ratioSuffix = p.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : p.distributionType === "equal" ? " (shared equally)" : "";
+                  return new Paragraph({
+                    indent: { left: 2160, hanging: 720 },
+                    children: [new TextRun({ text: `(${toRoman(i + 1)})\t${p.address}, ${p.volumeFolio}${ratioSuffix}`, bold: true, font: FONTS.body })]
+                  });
+                }),
               ] : []),
 
               // Sub-clause b: Bank Accounts
@@ -342,10 +356,14 @@ export const generateWillsDocx = async (formData, fileName = "Will.docx") => {
                     new TextRun({ text: " my share of the monies held in:", font: FONTS.body }),
                   ]
                 }),
-                ...benSingleBanks.map((acc, i) => new Paragraph({
-                  indent: { left: 2160, hanging: 720 },
-                  children: [new TextRun({ text: `(${toRoman(i + 1)})\t${acc.bankName}, with account ending in ${acc.last4}`, bold: true, font: FONTS.body })]
-                })),
+                ...benSingleBanks.map((acc, i) => {
+                  const alloc = (acc.allocations || []).find(a => a.beneficiary === ben.name);
+                  const ratioSuffix = acc.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : acc.distributionType === "equal" ? " (shared equally)" : "";
+                  return new Paragraph({
+                    indent: { left: 2160, hanging: 720 },
+                    children: [new TextRun({ text: `(${toRoman(i + 1)})\t${acc.bankName}, with account ending in ${acc.last4}${ratioSuffix}`, bold: true, font: FONTS.body })]
+                  });
+                }),
                 new Paragraph({
                   indent: { left: 2160, hanging: 720 },
                   children: [new TextRun({ text: `(${toRoman(benSingleBanks.length + 1)})\tAll contents from the safe deposit (if any)`, bold: true, font: FONTS.body })]
@@ -369,8 +387,18 @@ export const generateWillsDocx = async (formData, fileName = "Will.docx") => {
           }),
 
           ...beneficiaries.flatMap(ben => {
-            const benJointAssets = personalAssets.joint.filter(a => a.beneficiary === ben.name);
-            const benSoleAssets = personalAssets.sole.filter(a => a.beneficiary === ben.name);
+            const benJointAssets = personalAssets.joint.filter(a => {
+              if (a.distributionType === "equal" || a.distributionType === "custom") {
+                return (a.allocations || []).some(alloc => alloc.beneficiary === ben.name);
+              }
+              return a.beneficiary === ben.name;
+            });
+            const benSoleAssets = personalAssets.sole.filter(a => {
+              if (a.distributionType === "equal" || a.distributionType === "custom") {
+                return (a.allocations || []).some(alloc => alloc.beneficiary === ben.name);
+              }
+              return a.beneficiary === ben.name;
+            });
             if (benJointAssets.length === 0 && benSoleAssets.length === 0) return [];
 
             const allAssets = [...benJointAssets, ...benSoleAssets];
@@ -386,13 +414,17 @@ export const generateWillsDocx = async (formData, fileName = "Will.docx") => {
                   new TextRun({ text: " my share in the proceeds of sale of the below items provided she/he survives me and if not, this gift shall form part of the rest and residue of my estate;", font: FONTS.body }),
                 ]
               }),
-              ...allAssets.map((a, i) => new Paragraph({
-                indent: { left: 2160, hanging: 720 },
-                children: [
-                  new TextRun({ text: `${String.fromCharCode(97 + i)}.\t`, bold: true, font: FONTS.body }),
-                  new TextRun({ text: `${a.type}${a.description ? `: ${a.description}` : ""}`, bold: i === 0, font: FONTS.body })
-                ]
-              })),
+              ...allAssets.map((a, i) => {
+                const alloc = (a.allocations || []).find(alloc => alloc.beneficiary === ben.name);
+                const ratioSuffix = a.distributionType === "custom" && alloc?.ratio ? ` (with a ${alloc.ratio}% share)` : a.distributionType === "equal" ? " (shared equally)" : "";
+                return new Paragraph({
+                  indent: { left: 2160, hanging: 720 },
+                  children: [
+                    new TextRun({ text: `${String.fromCharCode(97 + i)}.\t`, bold: true, font: FONTS.body }),
+                    new TextRun({ text: `${a.type}${a.description ? `: ${a.description}` : ""}${ratioSuffix}`, bold: i === 0, font: FONTS.body })
+                  ]
+                });
+              }),
               new Paragraph({ indent: { left: 2160, hanging: 720 }, children: [new TextRun({ text: `${String.fromCharCode(97 + allAssets.length)}.\t`, bold: true, font: FONTS.body }), new TextRun({ text: "Any motor vehicle registered under my name;", font: FONTS.body })] }),
               new Paragraph({ indent: { left: 2160, hanging: 720 }, children: [new TextRun({ text: `${String.fromCharCode(97 + allAssets.length + 1)}.\t`, bold: true, font: FONTS.body }), new TextRun({ text: `Home furnishings and personal chattels situated at the personal place of residence property known as ${personal.address};`, font: FONTS.body })] }),
               new Paragraph({ indent: { left: 2160, hanging: 720 }, children: [new TextRun({ text: `${String.fromCharCode(97 + allAssets.length + 2)}.\t`, bold: true, font: FONTS.body }), new TextRun({ text: "All collectables, jewellery, watches, book collections and articles of personal adornment owned by me at my death; and", font: FONTS.body })] }),
