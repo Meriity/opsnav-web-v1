@@ -37,6 +37,47 @@ export const monthlyReleaseNotes = {
       May: [
         {
           date: "2026-05-20",
+          version: "v7.10.0",
+          type: "feature",
+          category: "feature",
+          title: "Wills Form Allocation Updates & Minimap Enhancements",
+          description: "Implemented equal and custom beneficiary distributions for properties, bank accounts, and personal assets, resolved validation constraints, restored the live document minimap, and added collapsible sidebars.",
+          updates: [
+            {
+              type: "feature",
+              title: "Equal/Custom Distributions",
+              description: "Introduced equal and custom distribution toggles for Step 4 (Real Estate), Step 5 (Bank Accounts), and Step 8 (Personal Assets).",
+              details: "Configured allocation ratios that automatically check and require custom inputs to sum to exactly 100% before allowing users to save or proceed to next steps.",
+              icon: Sparkles
+            },
+            {
+              type: "improvement",
+              title: "Wills Form Validation Sync",
+              description: "Updated the step-level validations to check distributionType and allocations arrays instead of the legacy single beneficiary field.",
+              details: "Fixes the form submission block where the validation engine was incorrectly complaining about missing beneficiaries despite allocations being complete.",
+              icon: ShieldCheck
+            },
+            {
+              type: "feature",
+              title: "Restored & Enhanced Document Minimap",
+              description: "Re-integrated the live document minimap in the sidebar when accessed from reference matter.",
+              details: "Developed dynamic responsive scaling with a ResizeObserver to prevent preview cutoff, support 60/40 layouts, and increased the base preview text font size by 25% for legibility.",
+              icon: Eye
+            },
+            {
+              type: "feature",
+              title: "Collapsible Smart Tips",
+              description: "Converted the Smart Tips sidebar card to be fully collapsible with height animation transitions.",
+              details: "Added rotation toggle icons and smooth height transitions, collapsing cleanly to the header without leaving blank container padding.",
+              icon: Lightbulb
+            }
+          ],
+          module: "Wills Form",
+          severity: "Medium",
+          status: "Released"
+        },
+        {
+          date: "2026-05-20",
           version: "v7.9.3",
           type: "patch",
           category: "bugfix",

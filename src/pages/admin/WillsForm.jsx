@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { validateWillsForm } from "../../utils/willsValidation";
 import IncompleteFormModal from "../../components/wills/IncompleteFormModal";
 import SubmitConfirmationModal from "../../components/wills/SubmitConfirmationModal";
+import WillsDocumentMinimap from "../../components/wills/WillsDocumentMinimap";
 
 import WillsSignUp from "../../components/wills/WillsSignUp";
 import WillsSuccess from "../../components/wills/WillsSuccess";
@@ -109,6 +110,7 @@ const WillsForm = () => {
     const hasUrlParam = params.has("matterNumber") || params.has("referenceNumber") || window.location.pathname.includes("get-by-reference-number");
     return hasUrlParam || !!referenceNumber;
   }, [location.search, referenceNumber, location.pathname]);
+
 
   useEffect(() => {
     if (isFromReference || localStorage.getItem("matterReferenceNumber")) {
@@ -326,6 +328,44 @@ const WillsForm = () => {
   };
 
   const [formData, setFormData] = useState(INITIAL_STATE);
+
+  const isAllocationInvalid = useMemo(() => {
+    if (currentStep === 4) {
+      const joint = formData.properties?.hasJoint ? (formData.properties.joint || []) : [];
+      const sole = formData.properties?.hasSole ? (formData.properties.sole || []) : [];
+      const all = [...joint, ...sole];
+      for (const p of all) {
+        if (p.distributionType === "custom") {
+          const total = (p.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+          if (total !== 100) return true;
+        }
+      }
+    }
+    if (currentStep === 5) {
+      const joint = formData.bankAccounts?.hasJoint ? (formData.bankAccounts.joint || []) : [];
+      const single = formData.bankAccounts?.hasSingle ? (formData.bankAccounts.single || []) : [];
+      const all = [...joint, ...single];
+      for (const a of all) {
+        if (a.distributionType === "custom") {
+          const total = (a.allocations || []).reduce((sum, alloc) => sum + (Number(alloc.ratio) || 0), 0);
+          if (total !== 100) return true;
+        }
+      }
+    }
+    if (currentStep === 8) {
+      const joint = formData.personalAssets?.hasJoint ? (formData.personalAssets.joint || []) : [];
+      const sole = formData.personalAssets?.hasSole ? (formData.personalAssets.sole || []) : [];
+      const all = [...joint, ...sole];
+      for (const a of all) {
+        if (a.distributionType === "custom") {
+          const total = (a.allocations || []).reduce((sum, alloc) => sum + (Number(alloc.ratio) || 0), 0);
+          if (total !== 100) return true;
+        }
+      }
+    }
+    return false;
+  }, [formData, currentStep]);
+
   const formDataRef = useRef(INITIAL_STATE);
   
   // Sync Ref with State to ensure async handlers (like submit) always have the latest data
@@ -801,10 +841,10 @@ const WillsForm = () => {
       <FloatingElement top={10} left={95} delay={0.5} size={30} />
 
       <main className="flex-1 flex flex-col py-4 px-3 md:py-10 md:px-16 lg:px-24 relative z-10 transition-all duration-500 print:p-0 print:m-0 print:max-w-none print:w-full">
-        <div className="max-w-6xl mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block">
+        <div className={`${isFromReference ? "max-w-[1700px]" : "max-w-6xl"} mx-auto w-full flex flex-col h-full print:max-w-none print:m-0 print:block transition-all duration-300`}>
           
           {/* Premium Phase Navigation Stepper - 10 Stages */}
-          <div className="hidden md:block mb-10 max-w-6xl mx-auto w-full">
+          <div className={`hidden md:block mb-10 ${isFromReference ? "max-w-[1700px]" : "max-w-6xl"} mx-auto w-full transition-all duration-300`}>
             <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-6 pb-4 border border-white/50 shadow-xl shadow-blue-900/5 relative overflow-hidden group">
               
               {/* Continuous Track — background gray line */}
@@ -930,7 +970,7 @@ const WillsForm = () => {
           </div>
 
           {/* Top Progress Bar - Now outside the main box as per reference */}
-          <div className="bg-white rounded-2xl md:rounded-full shadow-sm border border-gray-100 p-2.5 px-4 md:p-3 md:pl-8 md:pr-8 mb-4 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between print:hidden max-w-5xl mx-auto w-full transition-all gap-2 sm:gap-0">
+          <div className={`bg-white rounded-2xl md:rounded-full shadow-sm border border-gray-100 p-2.5 px-4 md:p-3 md:pl-8 md:pr-8 mb-4 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between print:hidden ${isFromReference ? "max-w-[1700px]" : "max-w-5xl"} mx-auto w-full transition-all gap-2 sm:gap-0`}>
             <div className="flex items-center gap-3 md:gap-6 w-full sm:w-auto">
               <div className="flex items-center gap-2 md:gap-4 flex-1 sm:flex-initial">
                 <span className="text-[12px] md:text-[13px] font-bold text-gray-800">
@@ -1024,7 +1064,7 @@ const WillsForm = () => {
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 grow">
               
               {/* Left Column: Form Section */}
-              <div className="flex-1 min-w-0">
+              <div className={`w-full ${isFromReference ? "lg:w-[60%]" : "flex-1"} min-w-0 transition-all duration-300`}>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStep}
@@ -1065,7 +1105,15 @@ const WillsForm = () => {
               </div>
 
               {/* Right Column: Tips & Navigation */}
-              <div className="lg:w-[380px] flex flex-col gap-8">
+              <div className={`w-full ${isFromReference ? "lg:w-[40%]" : "lg:w-[380px]"} flex flex-col gap-8 transition-all duration-300`}>
+                {isFromReference && (
+                  <WillsDocumentMinimap 
+                    formData={formData} 
+                    currentStep={currentStep} 
+                    onNavigateToStep={goToStep} 
+                  />
+                )}
+
                 {/* Smart Tips Card */}
                 <div className="bg-[#F1F5F9] rounded-[32px] overflow-hidden border border-gray-100/50">
                   <WillsSmartTips 
@@ -1090,7 +1138,7 @@ const WillsForm = () => {
                   <div className="flex items-center gap-3 flex-1">
                     <button
                       onClick={handleSave}
-                      disabled={isSaving}
+                      disabled={isSaving || isAllocationInvalid}
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-white text-[#2E3D99] border-2 border-[#2E3D99]/10 rounded-2xl font-bold hover:bg-[#2E3D99]/5 transition-all disabled:opacity-50 text-[14px]"
                     >
                       <Save size={16} /> Save
@@ -1098,7 +1146,7 @@ const WillsForm = () => {
 
                     <button
                       onClick={currentStep === 10 ? handleFinalSubmitAttempt : nextStep}
-                      disabled={isSaving}
+                      disabled={isSaving || isAllocationInvalid}
                       className="flex-[1.5] flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:brightness-110 transition-all disabled:opacity-70 text-[14px]"
                     >
                       {currentStep === 10 ? "Submit Will" : "Next"}
