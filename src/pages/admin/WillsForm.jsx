@@ -174,7 +174,9 @@ const WillsForm = () => {
             
           if (response) {
             // Extract the actual form data from the response
-            const actualData = response.data || response;
+            // Backend returns data as an array, so extract the first element
+            const rawData = response.data || response;
+            const actualData = Array.isArray(rawData) ? rawData[0] : rawData;
             
               setFormData(prev => {
                 // Deep merge strategy to ensure all fields are captured

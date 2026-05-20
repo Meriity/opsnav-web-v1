@@ -85,7 +85,7 @@ const WillsPreview = ({ formData = {} }) => {
       <div className="pdf-page relative p-16 min-h-[297mm] w-[210mm] mx-auto shadow-sm space-y-6 text-[12pt]">
         <div className="space-y-6 text-justify">
           <p>
-            <span className="font-bold uppercase">THIS IS THE LAST WILL AND TESTAMENT</span> of me <BoldValue>{personal.fullName}</BoldValue>, of <BoldValue>{personal.address}</BoldValue>
+            <span className="font-bold uppercase">THIS IS THE LAST WILL AND TESTAMENT</span> of me <BoldValue>{personal.fullName}</BoldValue>, of <BoldValue>{personal.address}</BoldValue>, <BoldValue>{personal.occupation}</BoldValue>
           </p>
 
           <div className="grid grid-cols-[40px_1fr] gap-2 items-start">

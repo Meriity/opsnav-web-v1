@@ -36,6 +36,40 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-20",
+          version: "v7.9.3",
+          type: "patch",
+          category: "bugfix",
+          title: "Wills Review Empty Dashes Fix",
+          description: "Resolved a critical bug where the Wills document preview (Step 10 - Review) displayed empty dashes for all fields despite the backend returning complete form data.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Fixed Backend Array Response Handling",
+              description: "The form data was not populating because the API response structure was mishandled during state extraction.",
+              details: "The backend GET /wills/form/v1/get-by-reference-number endpoint returns the form data wrapped in an array (data: [{...}]). The frontend was assigning this array directly to the merge logic, causing all property accesses like actualData.personal and actualData.executors to return undefined. Added an Array.isArray() guard to correctly extract the first element from the array before merging into form state.",
+              icon: Bug,
+            },
+            {
+              type: "bugfix",
+              title: "Fixed DOCX Download Array Handling",
+              description: "Applied the same array extraction fix to the DOCX download function.",
+              details: "The downloadDocx() method in willsAPI.js suffered from the identical array-vs-object mismatch, causing generated DOCX files to contain placeholder text instead of actual form data. The fix ensures consistent data extraction across both preview and download paths.",
+              icon: Bug,
+            },
+            {
+              type: "improvement",
+              title: "Added Occupation to Document Preview",
+              description: "The introductory clause now includes the client's occupation as per the legal document template.",
+              details: "Updated WillsPreview.jsx to render personal.occupation in the opening paragraph: 'THIS IS THE LAST WILL AND TESTAMENT of me [fullName], of [address], [occupation]', aligning the preview with the expected legal document format.",
+              icon: FileText,
+            },
+          ],
+          module: "Wills Form",
+          severity: "High",
+          status: "Released"
+        },
+        {
           date: "2026-05-14",
           version: "v7.9.2",
           type: "patch",
