@@ -727,7 +727,7 @@ const StepPropertySection = ({
                   for(let i=properties.length-1; i>=0; i--) removeArrayItem(arrayName, i);
                 } else if (opt.val === true && properties.length === 0) {
                   // If switching to Yes and empty, add one item
-                  addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" });
+                  addArrayItem(arrayName, { address: "", volumeFolio: "", distributionType: null, allocations: [] });
                 }
               }} 
               className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${choice === opt.val ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
@@ -804,37 +804,167 @@ const StepPropertySection = ({
                   residentialAddress={residentialAddress}
                   showUseResidential={true}
                 />
-                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} tooltip="Identifies your property and can be found on your title or rates notice. If unsure, enter “N/A” and leave a note." />
-                <SelectGroup label="Who do you want to give this property to *" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
-                <div className="space-y-3">
-                  <label className="text-[13px] font-bold text-gray-700">Gift ratio *</label>
-                  <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm">
-                    {["Equally", "Other"].map(r => (
-                      <button 
-                        key={r} 
-                        type="button"
-                        onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                        className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                <InputGroup label="Volume & Folio *" value={prop.volumeFolio} onChange={(e) => handleArrayChange(arrayName, idx, "volumeFolio", e.target.value)} placeholder="e.g. 12345/678" icon={<Archive size={14} />} tooltip="Identifies your property and can be found on your title or rates notice. If unsure, enter 'N/A' and leave a note." />
+                
+                {/* Equal Share Toggle */}
+                <div className="md:col-span-2 space-y-4">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <label className="text-[13px] font-bold text-gray-700">Do you want to distribute this property equally among all beneficiaries? *</label>
+                    <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm h-fit flex-shrink-0">
+                      {[{ label: "YES", val: "equal" }, { label: "No", val: "custom" }].map(opt => (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => {
+                            handleArrayChange(arrayName, idx, "distributionType", opt.val);
+                            if (opt.val === "equal") {
+                              const equalAllocations = beneficiaries
+                                .filter(b => b.name)
+                                .map(b => ({ beneficiary: b.name }));
+                              handleArrayChange(arrayName, idx, "allocations", equalAllocations.length > 0 ? equalAllocations : []);
+                            } else {
+                              handleArrayChange(arrayName, idx, "allocations", [{ beneficiary: "", ratio: "" }]);
+                            }
+                          }}
+                          className={`px-6 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${prop.distributionType === opt.val ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  {(prop.ratio !== "Equally" && prop.ratio !== undefined) && (
-                      <input 
-                        placeholder="Enter custom ratio" 
-                        value={prop.ratio === "Other" ? "" : prop.ratio} 
-                        onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                        className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
-                      />
+
+                  {prop.distributionType === "equal" && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-3 px-5 py-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <Check size={16} className="text-emerald-600" strokeWidth={3} />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-emerald-800">Equal Distribution Applied</p>
+                          <p className="text-[11px] text-emerald-600 mt-0.5">This property will be distributed equally among all your listed beneficiaries.</p>
+                        </div>
+                      </div>
+                      {(prop.allocations || []).length > 0 && (
+                        <div className="flex flex-wrap gap-2 pl-1">
+                          {(prop.allocations || []).map((alloc, aIdx) => (
+                            <span key={aIdx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 rounded-full text-[11px] font-bold text-emerald-700">
+                              <Users size={11} /> {alloc.beneficiary}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  </div>
+
+                  {prop.distributionType === "custom" && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <p className="text-[12px] text-gray-500 font-medium">Assign each beneficiary their share (ratio must total 100%).</p>
+                      
+                      {(prop.allocations || []).map((alloc, aIdx) => {
+                        const selectedNames = (prop.allocations || [])
+                          .filter((_, i) => i !== aIdx)
+                          .map(a => a.beneficiary)
+                          .filter(Boolean);
+                        const availableOptions = beneficiaries
+                          .map(b => b.name || "Untitled Beneficiary")
+                          .filter(name => !selectedNames.includes(name));
+                        
+                        const currentTotalExcludingThis = (prop.allocations || [])
+                          .filter((_, i) => i !== aIdx)
+                          .reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                        const suggestedRatio = Math.max(0, 100 - currentTotalExcludingThis);
+                        
+                        return (
+                          <div key={aIdx} className="flex items-end gap-3 bg-gray-50/60 p-4 rounded-2xl border border-gray-100">
+                            <div className="flex-1 space-y-1.5">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Beneficiary</label>
+                              <select
+                                value={alloc.beneficiary}
+                                onChange={(e) => {
+                                  const newAllocations = [...(prop.allocations || [])];
+                                  newAllocations[aIdx] = { ...newAllocations[aIdx], beneficiary: e.target.value };
+                                  handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                }}
+                                className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-medium appearance-none cursor-pointer"
+                              >
+                                <option value="">Select beneficiary</option>
+                                {availableOptions.map(name => (
+                                  <option key={name} value={name}>{name}</option>
+                                ))}
+                                {alloc.beneficiary && !availableOptions.includes(alloc.beneficiary) && (
+                                  <option value={alloc.beneficiary}>{alloc.beneficiary}</option>
+                                )}
+                              </select>
+                            </div>
+                            <div className="w-28 space-y-1.5">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Ratio %</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder={suggestedRatio > 0 ? `e.g. ${suggestedRatio}` : "e.g. 50"}
+                                value={alloc.ratio ?? ""}
+                                onChange={(e) => {
+                                  const newAllocations = [...(prop.allocations || [])];
+                                  newAllocations[aIdx] = { ...newAllocations[aIdx], ratio: e.target.value ? Number(e.target.value) : "" };
+                                  handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                }}
+                                className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-bold text-center"
+                              />
+                            </div>
+                            {(prop.allocations || []).length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newAllocations = (prop.allocations || []).filter((_, i) => i !== aIdx);
+                                  handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                }}
+                                className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex-shrink-0"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {
+                        (() => {
+                          const total = (prop.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                          const isValid = total === 100;
+                          return (
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold ${isValid ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
+                              <div className={`w-2 h-2 rounded-full ${isValid ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+                              Total: {total}% {isValid ? "✓" : "(must equal 100%)"}
+                            </div>
+                          );
+                        })()
+                      }
+
+                      {(prop.allocations || []).length < beneficiaries.filter(b => b.name).length && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentTotal = (prop.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                            const remaining = Math.max(0, 100 - currentTotal);
+                            const newAllocations = [...(prop.allocations || []), { beneficiary: "", ratio: remaining > 0 ? remaining : "" }];
+                            handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                          }}
+                          className="w-full py-3 border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/30 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider"
+                        >
+                          <Plus size={14} /> Add Another Beneficiary
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 </motion.div>
               )}
             </div>
           ))}
           <button 
-            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", beneficiary: "", ratio: "Equally" })} 
+            onClick={() => addArrayItem(arrayName, { address: "", volumeFolio: "", distributionType: null, allocations: [] })}
             className="w-full py-6 border-2 border-dashed border-gray-100 rounded-3xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/40 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-3 group"
           >
             <div className="p-2 rounded-full bg-gray-50 text-gray-300 group-hover:bg-[#2E3D99]/10 group-hover:text-[#2E3D99] transition-all">
@@ -857,7 +987,7 @@ const StepBankSection = ({
     const n = parseInt(num) || 0;
     const current = accounts.length;
     if (n > current) {
-      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", last4: "", beneficiary: "", ratio: "Equally" });
+      for(let i=0; i<n-current; i++) addArrayItem(arrayName, { bankName: "", last4: "", distributionType: null, allocations: [] });
     } else if (n < current) {
       for(let i=0; i<current-n; i++) removeArrayItem(arrayName, accounts.length - 1 - i);
     }
@@ -955,38 +1085,169 @@ const StepBankSection = ({
                     className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-50"
                   >
                      <InputGroup label="Bank *" value={acc.bankName} onChange={(e) => handleArrayChange(arrayName, idx, "bankName", e.target.value)} placeholder="e.g. CBA" icon={<Landmark size={14} />} />
-                   <InputGroup label="Last four digits *" value={acc.last4} onChange={(e) => handleArrayChange(arrayName, idx, "last4", e.target.value)} maxLength={4} placeholder="e.g. 1234" icon={<Shield size={14} />} />
-                   <SelectGroup 
-                      label="Who should inherit this account *" 
-                      value={acc.beneficiary} 
-                      onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} 
-                      options={beneficiaries.map(b => b.name).filter(Boolean)} 
-                      icon={<Heart size={14} />} 
-                    />
-                   <div className="space-y-3">
-                     <label className="text-[13px] font-bold text-gray-700">Gift ratio *</label>
-                     <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm">
-                        {["Equally", "Other"].map(r => (
-                          <button 
-                            key={r} 
-                            type="button"
-                            onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                           className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${acc.ratio === r || (r === "Other" && acc.ratio !== "Equally" && acc.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
-                          >
-                            {r}
-                          </button>
-                        ))}
+                     <InputGroup label="Last four digits *" value={acc.last4} onChange={(e) => handleArrayChange(arrayName, idx, "last4", e.target.value)} maxLength={4} placeholder="e.g. 1234" icon={<Shield size={14} />} />
+                     
+                     <div className="md:col-span-2 space-y-4 pt-4 border-t border-gray-50">
+                       <label className="text-[13px] font-bold text-gray-700 block">
+                         Do you want to distribute this bank account equally among all beneficiaries? *
+                       </label>
+                       <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm w-fit">
+                         {[
+                           { label: "YES", val: "equal" },
+                           { label: "No", val: "custom" }
+                         ].map(opt => (
+                           <button
+                             key={opt.val}
+                             type="button"
+                             onClick={() => {
+                               handleArrayChange(arrayName, idx, "distributionType", opt.val);
+                               if (opt.val === "equal") {
+                                 const equalAllocations = beneficiaries
+                                   .map(b => b.name)
+                                   .filter(Boolean)
+                                   .map(name => ({ beneficiary: name }));
+                                 handleArrayChange(arrayName, idx, "allocations", equalAllocations);
+                               } else {
+                                 handleArrayChange(arrayName, idx, "allocations", [{ beneficiary: "", ratio: "" }]);
+                               }
+                             }}
+                             className={`px-8 py-2.5 text-[11px] font-bold rounded-xl transition-all tracking-wider ${
+                               acc.distributionType === opt.val 
+                                 ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" 
+                                 : "text-gray-400 hover:text-gray-600"
+                             }`}
+                           >
+                             {opt.label}
+                           </button>
+                         ))}
+                       </div>
                      </div>
-                     {(acc.ratio !== "Equally" && acc.ratio !== undefined) && (
-                        <input 
-                          placeholder="Enter custom ratio" 
-                          value={acc.ratio === "Other" ? "" : acc.ratio} 
-                          onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                          className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
-                        />
+
+                     {acc.distributionType && (
+                       <div className="md:col-span-2 space-y-6 pt-4 border-t border-gray-100">
+                         {acc.distributionType === "equal" && (
+                           <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                             <p className="text-[12px] font-bold text-emerald-800 flex items-center gap-2">
+                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                               Equal Distribution Applied
+                             </p>
+                             <p className="text-xs text-emerald-600 leading-relaxed font-medium">
+                               This bank account will be split in equal shares among the following beneficiaries:
+                             </p>
+                             <div className="flex flex-wrap gap-2 pt-1">
+                               {(acc.allocations || []).map((alloc, aIdx) => (
+                                 <span key={aIdx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 rounded-full text-[11px] font-bold text-emerald-700">
+                                   <Users size={11} /> {alloc.beneficiary}
+                                 </span>
+                               ))}
+                             </div>
+                           </div>
+                         )}
+
+                         {acc.distributionType === "custom" && (
+                           <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                             <p className="text-[12px] text-gray-500 font-medium">Assign each beneficiary their share (ratio must total 100%).</p>
+                             
+                             {(acc.allocations || []).map((alloc, aIdx) => {
+                               const selectedNames = (acc.allocations || [])
+                                 .filter((_, i) => i !== aIdx)
+                                 .map(a => a.beneficiary)
+                                 .filter(Boolean);
+                               const availableOptions = beneficiaries
+                                 .map(b => b.name || "Untitled Beneficiary")
+                                 .filter(name => !selectedNames.includes(name));
+                               
+                               const currentTotalExcludingThis = (acc.allocations || [])
+                                 .filter((_, i) => i !== aIdx)
+                                 .reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                               const suggestedRatio = Math.max(0, 100 - currentTotalExcludingThis);
+                               
+                               return (
+                                 <div key={aIdx} className="flex items-end gap-3 bg-gray-50/60 p-4 rounded-2xl border border-gray-100">
+                                   <div className="flex-1 space-y-1.5">
+                                     <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Beneficiary</label>
+                                     <select
+                                       value={alloc.beneficiary}
+                                       onChange={(e) => {
+                                         const newAllocations = [...(acc.allocations || [])];
+                                         newAllocations[aIdx] = { ...newAllocations[aIdx], beneficiary: e.target.value };
+                                         handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                       }}
+                                       className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-medium appearance-none cursor-pointer"
+                                     >
+                                       <option value="">Select beneficiary</option>
+                                       {availableOptions.map(name => (
+                                         <option key={name} value={name}>{name}</option>
+                                       ))}
+                                       {alloc.beneficiary && !availableOptions.includes(alloc.beneficiary) && (
+                                         <option value={alloc.beneficiary}>{alloc.beneficiary}</option>
+                                       )}
+                                     </select>
+                                   </div>
+                                   <div className="w-28 space-y-1.5">
+                                     <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Ratio %</label>
+                                     <input
+                                       type="number"
+                                       min="0"
+                                       max="100"
+                                       placeholder={suggestedRatio > 0 ? `e.g. ${suggestedRatio}` : "e.g. 50"}
+                                       value={alloc.ratio ?? ""}
+                                       onChange={(e) => {
+                                         const newAllocations = [...(acc.allocations || [])];
+                                         newAllocations[aIdx] = { ...newAllocations[aIdx], ratio: e.target.value ? Number(e.target.value) : "" };
+                                         handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                       }}
+                                       className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-bold text-center"
+                                     />
+                                   </div>
+                                   {(acc.allocations || []).length > 1 && (
+                                     <button
+                                       type="button"
+                                       onClick={() => {
+                                         const newAllocations = (acc.allocations || []).filter((_, i) => i !== aIdx);
+                                         handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                       }}
+                                       className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex-shrink-0"
+                                     >
+                                       <Trash2 size={16} />
+                                     </button>
+                                   )}
+                                 </div>
+                               );
+                             })}
+
+                             {
+                               (() => {
+                                 const total = (acc.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                                 const isValid = total === 100;
+                                 return (
+                                   <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold ${isValid ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
+                                     <div className={`w-2 h-2 rounded-full ${isValid ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+                                     Total: {total}% {isValid ? "✓" : "(must equal 100%)"}
+                                   </div>
+                                 );
+                               })()
+                             }
+
+                             {(acc.allocations || []).length < beneficiaries.filter(b => b.name).length && (
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   const currentTotal = (acc.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                                   const remaining = Math.max(0, 100 - currentTotal);
+                                   const newAllocations = [...(acc.allocations || []), { beneficiary: "", ratio: remaining > 0 ? remaining : "" }];
+                                   handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                 }}
+                                 className="w-full py-3 border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/30 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider"
+                               >
+                                 <Plus size={14} /> Add Another Beneficiary
+                               </button>
+                             )}
+                           </div>
+                         )}
+                       </div>
                      )}
-                   </div>
-                </motion.div>
+                 </motion.div>
                 )}
               </div>
             ))}
@@ -1082,7 +1343,10 @@ const StepPersonalPropertySection = ({
           <p className="text-[11px] text-gray-400 uppercase tracking-widest leading-relaxed">{description}</p>
         </div>
         <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm h-fit flex-shrink-0">
-          {[ { label: "YES", val: true }, { label: "No", val: false } ].map(opt => (
+          {[
+            { label: "YES", val: true },
+            { label: "NO", val: false }
+          ].map(opt => (
             <button 
               key={opt.label} 
               type="button" 
@@ -1091,7 +1355,7 @@ const StepPersonalPropertySection = ({
                 if (opt.val === false) {
                   for(let i=properties.length-1; i>=0; i--) removeArrayItem(arrayName, i);
                 } else if (opt.val === true && properties.length === 0) {
-                  addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" });
+                  addArrayItem(arrayName, { type: "", distributionType: null, allocations: [] });
                 }
               }} 
               className={`px-8 py-2 text-[11px] font-bold rounded-xl transition-all tracking-wider ${choice === opt.val ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
@@ -1158,36 +1422,173 @@ const StepPersonalPropertySection = ({
                   className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 pt-8 border-t border-gray-50"
                 >
                   <InputGroup label="Property type *" value={prop.type} onChange={(e) => handleArrayChange(arrayName, idx, "type", e.target.value)} placeholder="e.g. Motor Vehicle" icon={<Archive size={14} />} />
-                <SelectGroup label="Who do you want to give this property to *" value={prop.beneficiary} onChange={(e) => handleArrayChange(arrayName, idx, "beneficiary", e.target.value)} options={beneficiaries.map(b => b.name || "Untitled Beneficiary")} icon={<Heart size={14} />} />
-                <div className="space-y-3">
-                  <label className="text-[13px] font-bold text-gray-700">Gift ratio *</label>
-                  <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm">
-                    {["Equally", "Other"].map(r => (
-                      <button 
-                        key={r} 
-                        type="button"
-                        onClick={() => handleArrayChange(arrayName, idx, "ratio", r === "Equally" ? "Equally" : "Other")} 
-                        className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${prop.ratio === r || (r === "Other" && prop.ratio !== "Equally" && prop.ratio !== undefined) ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" : "text-gray-400 hover:text-gray-600"}`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                  
+                  <div className="md:col-span-2 space-y-4 pt-4 border-t border-gray-50">
+                    <label className="text-[13px] font-bold text-gray-700 block">
+                      Do you want to distribute this personal property equally among all beneficiaries? *
+                    </label>
+                    <div className="flex bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-sm w-fit">
+                      {[
+                        { label: "YES", val: "equal" },
+                        { label: "No", val: "custom" }
+                      ].map(opt => (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          onClick={() => {
+                            handleArrayChange(arrayName, idx, "distributionType", opt.val);
+                            if (opt.val === "equal") {
+                              const equalAllocations = beneficiaries
+                                .map(b => b.name)
+                                .filter(Boolean)
+                                .map(name => ({ beneficiary: name }));
+                              handleArrayChange(arrayName, idx, "allocations", equalAllocations);
+                            } else {
+                              handleArrayChange(arrayName, idx, "allocations", [{ beneficiary: "", ratio: "" }]);
+                            }
+                          }}
+                          className={`px-8 py-2.5 text-[11px] font-bold rounded-xl transition-all tracking-wider ${
+                            prop.distributionType === opt.val 
+                              ? "bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-blue-900/20" 
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  {(prop.ratio !== "Equally" && prop.ratio !== undefined) && (
-                      <input 
-                        placeholder="Enter custom ratio" 
-                        value={prop.ratio === "Other" ? "" : prop.ratio} 
-                        onChange={(e) => handleArrayChange(arrayName, idx, "ratio", e.target.value)} 
-                        className="w-full mt-4 p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#2E3D99]/5 focus:border-[#2E3D99] transition-all shadow-sm outline-none text-sm placeholder:text-gray-400 animate-in slide-in-from-top-2" 
-                      />
+
+                  {prop.distributionType && (
+                    <div className="md:col-span-2 space-y-6 pt-4 border-t border-gray-100">
+                      {prop.distributionType === "equal" && (
+                        <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <p className="text-[12px] font-bold text-emerald-800 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Equal Distribution Applied
+                          </p>
+                          <p className="text-xs text-emerald-600 leading-relaxed font-medium">
+                            This personal property will be split in equal shares among the following beneficiaries:
+                          </p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {(prop.allocations || []).map((alloc, aIdx) => (
+                              <span key={aIdx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 rounded-full text-[11px] font-bold text-emerald-700">
+                                <Users size={11} /> {alloc.beneficiary}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {prop.distributionType === "custom" && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <p className="text-[12px] text-gray-500 font-medium">Assign each beneficiary their share (ratio must total 100%).</p>
+                          
+                          {(prop.allocations || []).map((alloc, aIdx) => {
+                            const selectedNames = (prop.allocations || [])
+                              .filter((_, i) => i !== aIdx)
+                              .map(a => a.beneficiary)
+                              .filter(Boolean);
+                            const availableOptions = beneficiaries
+                              .map(b => b.name || "Untitled Beneficiary")
+                              .filter(name => !selectedNames.includes(name));
+                            
+                            const currentTotalExcludingThis = (prop.allocations || [])
+                              .filter((_, i) => i !== aIdx)
+                              .reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                            const suggestedRatio = Math.max(0, 100 - currentTotalExcludingThis);
+                            
+                            return (
+                              <div key={aIdx} className="flex items-end gap-3 bg-gray-50/60 p-4 rounded-2xl border border-gray-100">
+                                <div className="flex-1 space-y-1.5">
+                                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Beneficiary</label>
+                                  <select
+                                    value={alloc.beneficiary}
+                                    onChange={(e) => {
+                                      const newAllocations = [...(prop.allocations || [])];
+                                      newAllocations[aIdx] = { ...newAllocations[aIdx], beneficiary: e.target.value };
+                                      handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                    }}
+                                    className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-medium appearance-none cursor-pointer"
+                                  >
+                                    <option value="">Select beneficiary</option>
+                                    {availableOptions.map(name => (
+                                      <option key={name} value={name}>{name}</option>
+                                    ))}
+                                    {alloc.beneficiary && !availableOptions.includes(alloc.beneficiary) && (
+                                      <option value={alloc.beneficiary}>{alloc.beneficiary}</option>
+                                    )}
+                                  </select>
+                                </div>
+                                <div className="w-28 space-y-1.5">
+                                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Ratio %</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    placeholder={suggestedRatio > 0 ? `e.g. ${suggestedRatio}` : "e.g. 50"}
+                                    value={alloc.ratio ?? ""}
+                                    onChange={(e) => {
+                                      const newAllocations = [...(prop.allocations || [])];
+                                      newAllocations[aIdx] = { ...newAllocations[aIdx], ratio: e.target.value ? Number(e.target.value) : "" };
+                                      handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                    }}
+                                    className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2E3D99]/10 focus:border-[#2E3D99] outline-none text-sm font-bold text-center"
+                                  />
+                                </div>
+                                {(prop.allocations || []).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newAllocations = (prop.allocations || []).filter((_, i) => i !== aIdx);
+                                      handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                                    }}
+                                    className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex-shrink-0"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {
+                            (() => {
+                              const total = (prop.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                              const isValid = total === 100;
+                              return (
+                                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold ${isValid ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
+                                  <div className={`w-2 h-2 rounded-full ${isValid ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+                                  Total: {total}% {isValid ? "✓" : "(must equal 100%)"}
+                                </div>
+                              );
+                            })()
+                          }
+
+                          {(prop.allocations || []).length < beneficiaries.filter(b => b.name).length && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentTotal = (prop.allocations || []).reduce((sum, a) => sum + (Number(a.ratio) || 0), 0);
+                                const remaining = Math.max(0, 100 - currentTotal);
+                                const newAllocations = [...(prop.allocations || []), { beneficiary: "", ratio: remaining > 0 ? remaining : "" }];
+                                handleArrayChange(arrayName, idx, "allocations", newAllocations);
+                              }}
+                              className="w-full py-3 border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/30 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider"
+                            >
+                              <Plus size={14} /> Add Another Beneficiary
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  </div>
                 </motion.div>
               )}
             </div>
           ))}
           <button 
-            onClick={() => addArrayItem(arrayName, { type: "", beneficiary: "", ratio: "Equally" })} 
+            onClick={() => addArrayItem(arrayName, { type: "", distributionType: null, allocations: [] })} 
             className="w-full py-6 border-2 border-dashed border-gray-100 rounded-3xl text-gray-400 hover:text-[#2E3D99] hover:border-[#2E3D99]/40 hover:bg-[#2E3D99]/[0.02] transition-all flex items-center justify-center gap-3 group"
           >
             <div className="p-2 rounded-full bg-gray-50 text-gray-300 group-hover:bg-[#2E3D99]/10 group-hover:text-[#2E3D99] transition-all">
