@@ -59,7 +59,28 @@ export const validateWillsForm = (formData) => {
       formData.properties.joint.forEach((p, i) => {
         if (!p.address?.trim()) addError(4, `Joint Property ${i + 1} address is required`);
         if (!p.volumeFolio?.trim()) addError(4, `Joint Property ${i + 1} Volume/Folio is required`);
-        if (!p.beneficiary) addError(4, `Joint Property ${i + 1} beneficiary is required`);
+        if (!p.distributionType) {
+          addError(4, `Joint Property ${i + 1} distribution option is required`);
+        } else {
+          if (!p.allocations || p.allocations.length === 0) {
+            addError(4, `Joint Property ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            p.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(4, `Joint Property ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (p.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(4, `Joint Property ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (p.distributionType === "custom" && totalRatio !== 100) {
+              addError(4, `Joint Property ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
@@ -72,7 +93,28 @@ export const validateWillsForm = (formData) => {
       formData.properties.sole.forEach((p, i) => {
         if (!p.address?.trim()) addError(4, `Sole Property ${i + 1} address is required`);
         if (!p.volumeFolio?.trim()) addError(4, `Sole Property ${i + 1} Volume/Folio is required`);
-        if (!p.beneficiary) addError(4, `Sole Property ${i + 1} beneficiary is required`);
+        if (!p.distributionType) {
+          addError(4, `Sole Property ${i + 1} distribution option is required`);
+        } else {
+          if (!p.allocations || p.allocations.length === 0) {
+            addError(4, `Sole Property ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            p.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(4, `Sole Property ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (p.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(4, `Sole Property ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (p.distributionType === "custom" && totalRatio !== 100) {
+              addError(4, `Sole Property ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
@@ -86,7 +128,28 @@ export const validateWillsForm = (formData) => {
       formData.bankAccounts.joint.forEach((a, i) => {
         if (!a.bankName?.trim()) addError(5, `Joint Bank ${i + 1} name is required`);
         if (!a.last4?.trim()) addError(5, `Joint Bank ${i + 1} last 4 digits are required`);
-        if (!a.beneficiary) addError(5, `Joint Bank ${i + 1} beneficiary is required`);
+        if (!a.distributionType) {
+          addError(5, `Joint Bank ${i + 1} distribution option is required`);
+        } else {
+          if (!a.allocations || a.allocations.length === 0) {
+            addError(5, `Joint Bank ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            a.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(5, `Joint Bank ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (a.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(5, `Joint Bank ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (a.distributionType === "custom" && totalRatio !== 100) {
+              addError(5, `Joint Bank ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
@@ -99,7 +162,28 @@ export const validateWillsForm = (formData) => {
       formData.bankAccounts.single.forEach((a, i) => {
         if (!a.bankName?.trim()) addError(5, `Single Bank ${i + 1} name is required`);
         if (!a.last4?.trim()) addError(5, `Single Bank ${i + 1} last 4 digits are required`);
-        if (!a.beneficiary) addError(5, `Single Bank ${i + 1} beneficiary is required`);
+        if (!a.distributionType) {
+          addError(5, `Single Bank ${i + 1} distribution option is required`);
+        } else {
+          if (!a.allocations || a.allocations.length === 0) {
+            addError(5, `Single Bank ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            a.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(5, `Single Bank ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (a.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(5, `Single Bank ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (a.distributionType === "custom" && totalRatio !== 100) {
+              addError(5, `Single Bank ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
@@ -129,7 +213,28 @@ export const validateWillsForm = (formData) => {
     } else {
       formData.personalAssets.joint.forEach((a, i) => {
         if (!a.type?.trim()) addError(8, `Joint Asset ${i + 1} type is required`);
-        if (!a.beneficiary) addError(8, `Joint Asset ${i + 1} beneficiary is required`);
+        if (!a.distributionType) {
+          addError(8, `Joint Asset ${i + 1} distribution option is required`);
+        } else {
+          if (!a.allocations || a.allocations.length === 0) {
+            addError(8, `Joint Asset ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            a.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(8, `Joint Asset ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (a.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(8, `Joint Asset ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (a.distributionType === "custom" && totalRatio !== 100) {
+              addError(8, `Joint Asset ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
@@ -141,7 +246,28 @@ export const validateWillsForm = (formData) => {
     } else {
       formData.personalAssets.sole.forEach((a, i) => {
         if (!a.type?.trim()) addError(8, `Sole Asset ${i + 1} type is required`);
-        if (!a.beneficiary) addError(8, `Sole Asset ${i + 1} beneficiary is required`);
+        if (!a.distributionType) {
+          addError(8, `Sole Asset ${i + 1} distribution option is required`);
+        } else {
+          if (!a.allocations || a.allocations.length === 0) {
+            addError(8, `Sole Asset ${i + 1} must have at least one beneficiary selected`);
+          } else {
+            let totalRatio = 0;
+            a.allocations.forEach((alloc, aIdx) => {
+              if (!alloc.beneficiary) addError(8, `Sole Asset ${i + 1}, Beneficiary ${aIdx + 1} must be selected`);
+              if (a.distributionType === "custom") {
+                if (alloc.ratio == null || alloc.ratio === "") {
+                  addError(8, `Sole Asset ${i + 1}, Beneficiary ${aIdx + 1} ratio is required`);
+                } else {
+                  totalRatio += Number(alloc.ratio);
+                }
+              }
+            });
+            if (a.distributionType === "custom" && totalRatio !== 100) {
+              addError(8, `Sole Asset ${i + 1} custom ratios must sum to exactly 100% (currently ${totalRatio}%)`);
+            }
+          }
+        }
       });
     }
   }
