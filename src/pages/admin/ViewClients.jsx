@@ -587,14 +587,14 @@ const ViewClients = () => {
         { key: "orderId", title: "Order ID", width: "8%" },
         { key: "orderType", title: "Type", width: "10%" },
         { key: "status", title: "Status", width: "8%" },
-        { key: "unitNumber", title: "Unit", width: "6%" },
         { key: "orderSubType", title: "Work Type", width: "10%" },
-        {key: "deliveryAddress", title: "Delivery Address", width: "12%"},
-        {key: "state", title: "State", width: "5%"},
-        {key: "distance", title: "Distance", width: "7%"},
-        {key: "orderDate", title: "Order Date", width: "9%"},
-        {key: "order_details", title: "Order Details", width: "12%"},
-        {key: "notes", title: "Notes", width: "9%"},
+        { key: "orderDate", title: "Order Date", width: "9%" },
+        { key: "order_details", title: "Order Details", width: "12%" },
+        { key: "unitNumber", title: "Unit", width: "6%" },
+        { key: "deliveryAddress", title: "Delivery Address", width: "12%" },
+        { key: "state", title: "State", width: "5%" },
+        { key: "distance", title: "Distance", width: "7%" },
+        { key: "notes", title: "Notes", width: "9%" },
       ];
     } else {
       columns = [
@@ -603,11 +603,11 @@ const ViewClients = () => {
         { key: "client_name", title: "Client Name", width: "8.5%" },
         { key: "client_type", title: "Type", width: "7.5%" },
         { key: "orderSubType", title: "Work Type", width: "8%" },
-        { key: "unitNumber", title: "Unit", width: "4%" },
         { key: "allocatedUser", title: "Allocated User", width: "10%" },
         { key: "order_date", title: "Order Date", width: "9%" },
         { key: "delivery_date", title: "Delivery Date", width: "9%" },
         {key: "orderDetails", title: "Order Details", width: "8%"},
+        { key: "unitNumber", title: "Unit", width: "4%" },
         {key: "billing_address", title: "Delivery Address", width: "7.5%"},
         {key: "distance", title: "Distance", width: "6%"},
         {key: "postcode", title: "Post Code", width: "4.5%"},
@@ -617,7 +617,7 @@ const ViewClients = () => {
 
   const FloatingElement = ({ top, left, delay, size = 60 }) => (
     <motion.div
-      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+      className="absolute rounded-full bg-linear-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
       style={{
         width: size,
         height: size,
@@ -780,7 +780,7 @@ const ViewClients = () => {
     (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialLoading : loading;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
       {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <FloatingElement top={10} left={10} delay={0} />
@@ -879,7 +879,7 @@ const ViewClients = () => {
           <Dialog
             open={showShareDialog}
             onClose={handelShareEmailModalClose}
-            className="relative z-[1000]"
+            className="relative z-1000"
           >
             <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
             <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
@@ -941,7 +941,7 @@ const ViewClients = () => {
           <Dialog
             open={showTAR}
             onClose={() => setShowTar(false)}
-            className="relative z-[1000]"
+            className="relative z-1000"
           >
             <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
             <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
@@ -988,7 +988,7 @@ const ViewClients = () => {
                     Preview
                   </button>
                   <button
-                    className="flex-1 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition"
+                    className="flex-1 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white font-semibold py-2 rounded-md hover:bg-sky-600 active:bg-sky-700 transition"
                     onClick={() => {
                       generateTaskAllocationPDF(allocatedUser);
                       setShowTar(false);
@@ -1012,7 +1012,7 @@ const ViewClients = () => {
                 setPdfPreviewUrl(null);
               }
             }}
-            className="relative z-[1100]"
+            className="relative z-1100"
           >
             <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
             <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
@@ -1066,7 +1066,7 @@ const ViewClients = () => {
 
             {/* <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 p-5">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">
-            <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
               {getPageTitle()}
             </span>
           </h1> */}
@@ -1074,7 +1074,7 @@ const ViewClients = () => {
             <div className="flex flex-col gap-3 p-5">
               <div className="max-w-3xl">
                 <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
-                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     {getPageTitle()}
                   </span>
                 </h1>
@@ -1121,7 +1121,7 @@ const ViewClients = () => {
                   {/* Mobile Menu */}
                   <div className="flex lg:hidden items-center gap-2">
                     <Menu as="div" className="relative">
-                      <Menu.Button className="h-[40px] w-[40px] flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                      <Menu.Button className="h-10 w-10 flex items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         <EllipsisVerticalIcon
                           className="h-5 w-5 text-gray-600"
                           aria-hidden="true"
@@ -1367,7 +1367,7 @@ const ViewClients = () => {
                                     ? setCreateProject(true)
                                     : setcreateuser(true)
                                 }
-                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                               >
                                 <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
                                 {currentModule === "commercial"
@@ -1381,7 +1381,7 @@ const ViewClients = () => {
                               whileTap={{ scale: 0.95 }}
                               label="Outstanding Tasks"
                               onClick={() => setShowOutstandingTask(true)}
-                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                             >
                               <Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />
                               Outstanding Tasks
@@ -1391,7 +1391,7 @@ const ViewClients = () => {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => setShowFilterModal(true)}
-                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                             >
                               <Filter className="w-3 h-3 sm:w-5 sm:h-5" />
                               Filter
@@ -1402,7 +1402,7 @@ const ViewClients = () => {
                               whileTap={{ scale: 0.95 }}
                               label="Select Date Range"
                               onClick={() => setShowDateRange(true)}
-                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                              className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                             >
                               <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
                               Date Range
@@ -1418,7 +1418,7 @@ const ViewClients = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setcreateuser(true)}
-                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                               >
                                 <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
                                 Create Client
@@ -1428,7 +1428,7 @@ const ViewClients = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setcreateOrder(true)}
-                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                                className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                               >
                                 <FolderPlus className="w-3 h-3 sm:w-5 sm:h-5" />
                                 Create Order
@@ -1441,7 +1441,7 @@ const ViewClients = () => {
                             whileTap={{ scale: 0.95 }}
                             label="Select Date Range"
                             onClick={() => setShowDateRange(true)}
-                            className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                            className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                           >
                             <FilterIcon className="w-3 h-3 sm:w-5 sm:h-5" />
                             Date Range
@@ -1451,7 +1451,7 @@ const ViewClients = () => {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowTar(true)}
-                            className="flex items-center gap-1.5 lg:gap-1.5 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
+                            className="flex items-center gap-1.5 lg:gap-1.5 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                           >
                             <SheetIcon className="w-3 h-3 sm:w-5 sm:h-5" />
                             Task Report
@@ -1576,7 +1576,7 @@ const ViewClients = () => {
               <button
                 onClick={saveAllocations}
                 disabled={isSavingAllocations}
-                className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer group"
+                className="flex items-center gap-2.5 px-5 py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer group"
                 style={{
                   boxShadow: "0 4px 20px rgba(46, 61, 153, 0.35)",
                 }}
