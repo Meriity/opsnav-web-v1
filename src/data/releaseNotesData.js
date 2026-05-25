@@ -36,6 +36,40 @@ export const monthlyReleaseNotes = {
     2026: {
       May: [
         {
+          date: "2026-05-25",
+          version: "v7.9.4",
+          type: "patch",
+          category: "bugfix",
+          title: "Print Media Column Reordering",
+          description: "Improved the layout of the Print Media module by reordering columns to display the Unit Number near the Address for better visibility and workflow efficiency.",
+          updates: [
+            {
+              type: "bugfix",
+              title: "Print Media UI Column Reorder",
+              description: "Moved the 'Unit Number' column to appear immediately after 'Order Details' and before the 'Address' in both standard and My Jobs views.",
+              details: "This change ensures that delivery-critical information (Unit and Address) is grouped together following the order specifics, reducing eye strain and navigation time for dispatchers.",
+              icon: Layout
+            },
+            {
+              type: "bugfix",
+              title: "Task Report PDF Alignment",
+              description: "Synchronized the Task Allocation Report (PDF) with the UI changes.",
+              details: "Reordered the PDF table columns to match the web interface, ensuring consistency between the digital view and printed reports.",
+              icon: FileText
+            },
+            {
+              type: "bugfix",
+              title: "Client Dashboard Email Fix",
+              description: "Resolved email delivery issues when creating orders via the Print Media client dashboard.",
+              details: "Fixed a bug where the email notification trigger was failing during order creation from the client portal, ensuring both administrators and clients receive immediate confirmation of new orders.",
+              icon: MessageSquare
+            }
+          ],
+          module: "Print Media",
+          severity: "Low",
+          status: "Released"
+        },
+        {
           date: "2026-05-20",
           version: "v7.10.0",
           type: "feature",
