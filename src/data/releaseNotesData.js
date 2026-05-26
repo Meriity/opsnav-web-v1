@@ -30,11 +30,51 @@ import {
   Phone,
   Lightbulb,
   MessageSquare,
-} from "lucide-react";
-
-export const monthlyReleaseNotes = {
+  Activity,
+} from "lucide-react";export const monthlyReleaseNotes = {
     2026: {
       May: [
+        {
+          date: "2026-05-26",
+          version: "v8.0.0",
+          type: "major",
+          category: "feature",
+          title: "Infrastructure Update: Introducing CRM Module",
+          description: "A major infrastructure update introducing the new CRM module, bringing powerful tools for pipeline tracking, lead management, and team goal setting directly into OpsNav.",
+          updates: [
+            {
+              type: "feature",
+              title: "CRM Dashboard & KPIs",
+              description: "New real-time dashboard tracking crucial metrics.",
+              details: "Introduced a dedicated CRM Dashboard featuring real-time KPI tracking for Total Leads, New Leads, Converted Leads, and Pending Tasks. The data dynamically updates based on active pipeline activity.",
+              icon: BarChart3,
+            },
+            {
+              type: "feature",
+              title: "Interactive Pipeline Funnel",
+              description: "Visual analysis of deal stages and pipeline values.",
+              details: "A comprehensive Pipeline Funnel Analysis chart provides deep visibility into the active pipeline, breaking down conversion volume and total deal values per stage.",
+              icon: TrendingUp,
+            },
+            {
+              type: "feature",
+              title: "Recent Activities Feed",
+              description: "Audit log of all CRM system actions and updates.",
+              details: "A chronological timeline tracking lead assignments, deal updates, and system activity with clean icons and timestamp tracking, fully equipped with an integrated scrollbar for infinite tracking without layout distortion.",
+              icon: Activity,
+            },
+            {
+              type: "feature",
+              title: "Configurable Target Meter",
+              description: "Dynamic dial gauge for custom performance goal setting.",
+              details: "Added an interactive dial gauge component that allows users to set and track custom targets (e.g., Leads, Deals, Revenue) across different durations (This Week, This Month, This Quarter, This Year) for Entire Org, My Team, or Individually. The widget automatically pulls current counts from the backend to deliver an accurate live preview of progress.",
+              icon: Sparkles,
+            },
+          ],
+          module: "CRM",
+          severity: "High",
+          status: "Released"
+        },
         {
           date: "2026-05-14",
           version: "v7.9.2",

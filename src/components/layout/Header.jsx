@@ -598,7 +598,9 @@ export default function Header({ simplified = false }) {
                         ref={inputRef}
                         type="text"
                         placeholder={
-                          currentModule === "print media"
+                          currentModule === "crm"
+                            ? "Search deals..."
+                            : currentModule === "print media"
                             ? "Search..."
                             : "Search Matter # or Client..."
                         }

@@ -157,6 +157,8 @@ const Table = ({
   isClients = false,
   compact = false,
   hideDeleteForSuperadmin,
+  hideActionLabels = false,
+  isLoading = false,
 }) => {
   const [currentData, setCurrentData] = useState([]);
   const navigate = useNavigate();
@@ -266,7 +268,23 @@ const Table = ({
             </tr>
           </thead>
           <tbody>
-            {currentData.map((item, index) => (
+            {isLoading && (
+              <tr>
+                <td colSpan={columns.length + (showActions ? 1 : 0)} className="text-center py-12">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2E3D99]"></div>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!isLoading && currentData.length === 0 && (
+              <tr>
+                <td colSpan={columns.length + (showActions ? 1 : 0)} className="text-center py-12 text-gray-500 font-medium">
+                  No data available
+                </td>
+              </tr>
+            )}
+            {!isLoading && currentData.length > 0 && currentData.map((item, index) => (
               <tr
                 key={item.id || item._id || item.orderId || item.matterNumber || item.email || index}
                 className={`bg-white rounded-2xl transition-all ${
@@ -339,7 +357,9 @@ const Table = ({
                            title="Edit"
                          >
                            <Edit className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
-                           <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                           {!hideActionLabels && (
+                             <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                           )}
                          </button>
                       )}
                       {onDelete &&
@@ -352,7 +372,9 @@ const Table = ({
                             title="Delete"
                           >
                             <Trash2 className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
-                            <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Delete</span>
+                            {!hideActionLabels && (
+                              <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Delete</span>
+                            )}
                           </button>
                         )}
                       {!isClients &&
@@ -390,13 +412,15 @@ const Table = ({
                             ) : (
                               <RefreshCw className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
                             )}
-                            <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">
-                              {resetLoadingEmail === item.email
-                                ? "Sending…"
-                                : resetSuccessEmail === item.email
-                                ? "Sent"
-                                : "Reset"}
-                            </span>
+                            {!hideActionLabels && (
+                              <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">
+                                {resetLoadingEmail === item.email
+                                  ? "Sending…"
+                                  : resetSuccessEmail === item.email
+                                  ? "Sent"
+                                  : "Reset"}
+                              </span>
+                            )}
                           </button>
                         )}
                       {OnEye && (
@@ -409,7 +433,9 @@ const Table = ({
                            title="View Details"
                          >
                            <img src={Eye} alt="View" className="h-3 lg:h-3 xl:h-4 2xl:h-5 " />
-                           <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs text-[#2E3D99]">View</span>
+                           {!hideActionLabels && (
+                             <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs text-[#2E3D99]">View</span>
+                           )}
                          </button>
                       )}
                       {EditOrder &&
@@ -445,7 +471,9 @@ const Table = ({
                              title="Edit"
                            >
                              <Edit className="w-3 h-3 lg:w-3 lg:h-3 xl:w-3.5 xl:h-3.5 2xl:w-4 2xl:h-4" />
-                             <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                             {!hideActionLabels && (
+                               <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
+                             )}
                            </button>
                         )}
                     </div>

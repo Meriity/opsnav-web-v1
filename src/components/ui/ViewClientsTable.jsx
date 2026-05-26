@@ -570,7 +570,11 @@ const ViewClientsTable = ({
                                   className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" || currentModule === "print media" ? "text-[#2E3D99] hover:bg-blue-50" : "text-black hover:text-gray-700 hover:bg-gray-100"}`}
                                   title={editTooltip || "Edit"}
                                 >
-                                  <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {editIcon ? (
+                                    editIcon
+                                  ) : (
+                                    <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  )}
                                   {!(currentModule === "print media" || (currentModule === "wills" && onConvert)) && <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>}
                                 </button>
                               ) : (
@@ -583,7 +587,11 @@ const ViewClientsTable = ({
                                   className={`flex flex-col items-center space-y-1 p-1.5 rounded-lg transition-all duration-200 cursor-pointer ${currentModule === "wills" || currentModule === "print media" ? "text-[#2E3D99] hover:bg-blue-50" : "text-black hover:text-gray-700 hover:bg-gray-100"}`}
                                   title={editTooltip || "Edit"}
                                 >
-                                  <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  {editIcon ? (
+                                    editIcon
+                                  ) : (
+                                    <Edit size={currentModule === "print media" || (currentModule === "wills" && onConvert) ? 18 : 10} className={currentModule === "print media" || (currentModule === "wills" && onConvert) ? "" : "lg:size-[10px] xl:size-3"} />
+                                  )}
                                   {!(currentModule === "print media" || (currentModule === "wills" && onConvert)) && <span className="text-[9px] lg:text-[9px] xl:text-xs">{editText || "Edit"}</span>}
                                 </button>
                               )}
@@ -824,9 +832,9 @@ const ViewClientsTable = ({
                   <button
                     onClick={() => onEdit(item)}
                     className="p-1 text-black hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                    title="Review"
+                    title={editTooltip || "Edit"}
                   >
-                    <Edit size={16} className="text-blue-600" />
+                    {editIcon ? editIcon : <Edit size={16} className="text-blue-600" />}
                   </button>
                 )}
                 {onConvert && (

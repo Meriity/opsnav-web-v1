@@ -1,4 +1,4 @@
-import { WILLS_ENDPOINTS } from "../willsEndpoints";
+import { WILLS_ENDPOINTS } from "./endpoints/willsEndpoints";
 import { getApiBaseUrl } from "../utils/apiConfig";
 
 class WillsAPI {

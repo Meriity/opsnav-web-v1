@@ -1640,48 +1640,63 @@ export default function StagesLayout() {
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${isStagesCollapsed ? "max-h-0" : "max-h-96"
                       }`}
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 flex-shrink-0 px-0.5">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 flex-shrink-0 px-2 pt-2.5 pb-2">
                       {stages.map((stage, index) => {
                         const stageStatus = stageStatuses[`status${stage.id}`];
+                        const isCompleted = stageStatus === "Completed" || stageStatus === "green";
+                        const isInProgress = stageStatus === "In Progress" || stageStatus === "amber";
+                        const isSelected = selectedStage === stage.id;
+
+                        // Unselected cards use beautiful status gradients as main highlighters
+                        let bgClass = "bg-gradient-to-br from-rose-500 to-rose-600 text-white border-transparent overflow-hidden";
+                        let stageNumClass = "text-rose-100";
+                        let titleClass = "text-white font-semibold";
+                        let badgeClass = "bg-white/20 text-white border-white/30";
+
+                        if (isCompleted) {
+                          bgClass = "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-transparent overflow-hidden";
+                          stageNumClass = "text-emerald-100";
+                          titleClass = "text-white font-semibold";
+                          badgeClass = "bg-white/20 text-white border-white/30";
+                        } else if (isInProgress) {
+                          bgClass = "bg-gradient-to-br from-amber-100 to-amber-200 text-amber-950 border-amber-200/40 overflow-hidden";
+                          stageNumClass = "text-amber-800";
+                          titleClass = "text-amber-950 font-semibold";
+                          badgeClass = "bg-amber-500/20 text-amber-800 border-amber-300/30";
+                        }
+
+                        // Selected cards use white background with branding highlights and overflow-visible for the ring
+                        if (isSelected) {
+                          bgClass = "bg-white ring-2 ring-[#2E3D99] ring-offset-2 z-20 shadow-md overflow-visible border-transparent";
+                          stageNumClass = "text-[#2E3D99]";
+                          titleClass = "text-gray-900 font-bold";
+                          badgeClass = isCompleted
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : isInProgress
+                              ? "bg-amber-50 text-amber-700 border-amber-100"
+                              : "bg-rose-50 text-rose-700 border-rose-100";
+                        }
+
                         return (
                           <div
                             key={stage.id}
                             onClick={() => RenderStage(stage.id)}
-                            className={`cursor-pointer p-2 rounded-xl shadow-sm transition-all duration-200 h-[70px] border flex flex-col justify-center relative overflow-hidden ${selectedStage === stage.id
-                                ? "bg-white ring-2 ring-[#2E3D99] ring-offset-1 border-transparent z-10"
-                                : `${bgcolor(
-                                  stageStatus
-                                )} border-transparent opacity-90 hover:opacity-100`
-                              }`}
+                            className={`cursor-pointer p-2.5 rounded-xl shadow-sm transition-all duration-200 h-[72px] border flex flex-col justify-center relative ${bgClass}`}
                           >
-                            {selectedStage === stage.id && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2E3D99] to-[#1D97D7]" />
-                            )}
+
 
                             <div className="flex justify-between items-start mb-1 pl-1">
-                              <p
-                                className={`font-bold font-poppins text-xs ${selectedStage === stage.id
-                                    ? "text-[#2E3D99]"
-                                    : "text-gray-800"
-                                  }`}
-                              >
+                              <p className={`font-bold font-poppins text-xs ${stageNumClass}`}>
                                 Stage {index + 1}
                               </p>
                               <div
-                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${stageStatus === "In Progress" ||
-                                    stageStatus === "amber"
-                                    ? "bg-amber-100 text-amber-700"
-                                    : stageStatus === "Completed" ||
-                                      stageStatus === "green"
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-red-100 text-red-700"
-                                  }`}
+                                className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${badgeClass}`}
                               >
                                 {getStatusDisplayText(stageStatus)}
                               </div>
                             </div>
                             <div className="pl-1">
-                              <p className="text-[11px] font-medium leading-tight truncate text-gray-700">
+                              <p className={`text-[11px] leading-tight truncate ${titleClass}`}>
                                 {stage.title}
                               </p>
                             </div>

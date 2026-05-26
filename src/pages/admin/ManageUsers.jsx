@@ -225,7 +225,7 @@ function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
       <label className="block font-medium mb-3 text-gray-700">
         Access Modules
       </label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {availableModules.map((module) => {
           const checked = selectedAccess.includes(module.value);
           const isDisabled = hasSingleAccess; // Disable if only one module available
@@ -258,14 +258,14 @@ function AccessModulesCheckbox({ selectedAccess, onAccessChange }) {
                     );
                   }
                 }}
-                className={`form-checkbox h-5 w-5 rounded ${
+                className={`form-checkbox h-5 w-5 shrink-0 rounded ${
                   isDisabled
                     ? "text-gray-400 border-gray-300 cursor-not-allowed"
                     : "text-[#2E3D99] border-gray-300 focus:ring-[#2E3D99]"
                 }`}
               />
               <div
-                className={`w-8 h-8 rounded-lg ${
+                className={`w-8 h-8 rounded-lg shrink-0 ${
                   module.color
                 } flex items-center justify-center ${
                   isDisabled ? "opacity-70" : ""
@@ -375,7 +375,7 @@ function MobileAccessModulesDisplay({ access = [] }) {
           <button
             key={module.value}
             onClick={() => handleModuleClick(module)}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${module.color} text-white hover:scale-110 transition-transform cursor-pointer shadow-sm`}
+            className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${module.color} text-white hover:scale-110 transition-transform cursor-pointer shadow-sm`}
             title={`Switch to ${module.label}`}
           >
             <module.icon className="w-4 h-4" strokeWidth={2.5} />
@@ -764,7 +764,7 @@ export default function ManageUsers() {
                     User Management
                   </span>
                 </h1>
-                <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
+                <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1">
                   Manage user accounts, permissions, and access modules
                 </p>
               </div>
@@ -928,12 +928,12 @@ export default function ManageUsers() {
 
                     <div className="mt-4 pt-4 border-t border-gray-100/50">
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="space-y-1">
+                        <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-500">
                             Status:
                           </span>
                           <div
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               user.status === "active"
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-gray-100 text-gray-700"
@@ -942,12 +942,12 @@ export default function ManageUsers() {
                             {user.status}
                           </div>
                         </div>
-                        <div className="space-y-1">
+                        <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-500">
                             Role:
                           </span>
                           <div
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               user.role === "admin"
                                 ? "bg-purple-100 text-purple-700"
                                 : ["readonly", "read-only"].includes(user.role)
@@ -959,15 +959,15 @@ export default function ManageUsers() {
                           </div>
                         </div>
                         {currentModule !== "print media" && (
-                          <div className="space-y-1 col-span-2">
-                            <span className="font-semibold text-gray-500">
+                          <div className="space-y-2 col-span-2 mt-2">
+                            <span className="font-semibold text-gray-500 block">
                               Access Modules:
                             </span>
                             <MobileAccessModulesDisplay access={user.access} />
                           </div>
                         )}
-                        <div className="space-y-1 col-span-2">
-                          <span className="font-semibold text-gray-500">
+                        <div className="space-y-1.5 col-span-2 mt-2">
+                          <span className="font-semibold text-gray-500 block">
                             Created:
                           </span>
                           <div className="flex items-center gap-1 text-gray-600">

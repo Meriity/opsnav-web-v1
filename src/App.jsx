@@ -2,6 +2,9 @@ import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import WillsForm from "./pages/admin/WillsForm";
 import ReferenceMatter from "./pages/admin/ReferenceMatter";
 import WillsResetPassword from "./pages/wills/WillsResetPassword";
+import DealsBoard from "./pages/crm/DealsBoard";
+import Leads from "./pages/crm/Leads";
+import CrmDashboard from "./pages/crm/CrmDashboard";
 
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -105,6 +108,10 @@ function App() {
             path="client/stages/:matterNumber/:stageNo?"
             element={<StagesLayout />}
           />
+          <Route path="crm/deals" element={<DealsBoard />} />
+          <Route path="crm/leads" element={<Leads />} />
+          <Route path="crm/contacts" element={<Navigate to="/admin/crm/leads" replace />} />
+          <Route path="crm/dashboard" element={<CrmDashboard />} />
         </Route>
 
         {/* Work Selection Route — Protected but no AppLayout */}
