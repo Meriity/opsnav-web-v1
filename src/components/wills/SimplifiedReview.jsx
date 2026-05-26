@@ -91,22 +91,39 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
               <div key={i} className="pl-4 border-l-2 border-amber-100 space-y-1">
                 <Row label="Address" value={p.address} isList />
                 <Row label="Volume/Folio" value={p.volumeFolio} isList />
-                <Row label="Gift To" value={p.beneficiary} isList />
-                <Row label="Ratio" value={p.ratio} isList />
+                <Row label="Distribution" value={p.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {p.allocations && p.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {p.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
         {properties.sole.length > 0 && (
           <div className="space-y-4 pt-4">
-            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Sole Ownership Properties
-            </p>
+            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Sole Ownership Properties</p>
             {properties.sole.map((p, i) => (
               <div key={i} className="pl-4 border-l-2 border-emerald-100 space-y-1">
                 <Row label="Address" value={p.address} isList />
                 <Row label="Volume/Folio" value={p.volumeFolio} isList />
-                <Row label="Gift To" value={p.beneficiary} isList />
-                <Row label="Ratio" value={p.ratio} isList />
+                <Row label="Distribution" value={p.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {p.allocations && p.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {p.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -121,8 +138,17 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
               <div key={i} className="pl-4 border-l-2 border-amber-100 space-y-1">
                 <Row label="Bank Name" value={acc.bankName} isList />
                 <Row label="Account (Last 4)" value={acc.last4} isList />
-                <Row label="Gift To" value={acc.beneficiary} isList />
-                <Row label="Ratio" value={acc.ratio} isList />
+                <Row label="Distribution" value={acc.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {acc.allocations && acc.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {acc.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -134,8 +160,17 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
               <div key={i} className="pl-4 border-l-2 border-emerald-100 space-y-1">
                 <Row label="Bank Name" value={acc.bankName} isList />
                 <Row label="Account (Last 4)" value={acc.last4} isList />
-                <Row label="Gift To" value={acc.beneficiary} isList />
-                <Row label="Ratio" value={acc.ratio} isList />
+                <Row label="Distribution" value={acc.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {acc.allocations && acc.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {acc.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -167,7 +202,17 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
               <div key={i} className="pl-4 border-l-2 border-amber-100 space-y-1">
                 <Row label="Asset Type" value={a.type} isList />
                 <Row label="Description" value={a.description} isList />
-                <Row label="Gift To" value={a.beneficiary} isList />
+                <Row label="Distribution" value={a.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {a.allocations && a.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {a.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -179,7 +224,17 @@ const SimplifiedReview = ({ formData = {}, onEdit }) => {
               <div key={i} className="pl-4 border-l-2 border-emerald-100 space-y-1">
                 <Row label="Asset Type" value={a.type} isList />
                 <Row label="Description" value={a.description} isList />
-                <Row label="Gift To" value={a.beneficiary} isList />
+                <Row label="Distribution" value={a.distributionType === "equal" ? "Shared Equally" : "Custom Ratios"} isList />
+                {a.allocations && a.allocations.length > 0 && (
+                  <div className="pl-4 py-1.5 space-y-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block">Allocations</span>
+                    {a.allocations.map((alloc, aIdx) => (
+                      <div key={aIdx} className="text-xs font-semibold text-gray-700">
+                        • {alloc.beneficiary} {alloc.ratio ? `(${alloc.ratio}%)` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

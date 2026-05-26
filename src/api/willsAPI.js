@@ -402,8 +402,9 @@ class WillsAPI {
 
       const result = await response.json();
       
-      // The API returns { message: "...", data: { ... } }
-      const formData = result.data || result;
+      // The API returns { message: "...", data: [ { ... } ] }
+      const rawData = result.data || result;
+      const formData = Array.isArray(rawData) ? rawData[0] : rawData;
 
       await generateWillsDocx(formData, `Will_${referenceNumber}.docx`);
     } catch (error) {
