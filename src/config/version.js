@@ -2,4 +2,4 @@
  * Application Version Configuration
  * Update this file to change the version number across the entire application.
  */
-export const APP_VERSION = "v7.9.4";
+export const APP_VERSION = "v8.0.0";

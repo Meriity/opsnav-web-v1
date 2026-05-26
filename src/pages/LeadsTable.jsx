@@ -6,10 +6,14 @@ import {
   FileText, 
   Newspaper, 
   Scale, 
+  Eye
 } from "lucide-react";
 import ViewClientsTable from "../components/ui/ViewClientsTable";
 import Header from "../components/layout/Header";
-import { getApiBaseUrl } from "../utils/apiConfig";
+import CrmAPI from "../api/crmAPI";
+import LeadDetailsDrawer from "../components/ui/LeadDetailsDrawer";
+import moment from "moment";
+import AdminAPI from "../api/adminAPI";
 
 const MODULE_ICONS = {
   "conveyancing": {
@@ -41,21 +45,26 @@ const MODULE_ICONS = {
 
 const LeadsTable = () => {
   const [leads, setLeads] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const fetchLeads = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${getApiBaseUrl()}/lead/`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch leads");
-        }
-        const data = await response.json();
-        const leadsData = Array.isArray(data) ? data : data.data || data.leads || [];
+        const adminApi = new AdminAPI();
+        const [leadsDataJson, usersResponse] = await Promise.all([
+          CrmAPI.getAllLeads(),
+          adminApi.getAllUsers().catch(() => ({ users: [] }))
+        ]);
+        
+        const leadsData = leadsDataJson.data || [];
         setLeads(leadsData);
+        setUsers(usersResponse.users || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -63,23 +72,49 @@ const LeadsTable = () => {
       }
     };
 
-    fetchLeads();
+    fetchData();
   }, []);
+
+  const handleViewLead = (lead) => {
+    setSelectedLead(lead);
+    setIsDrawerOpen(true);
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status?.toLowerCase()) {
+      case "converted":
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      case "qualified":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "new":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "lost":
+        return "bg-rose-100 text-rose-700 border-rose-200";
+      default:
+        return "bg-slate-100 text-slate-700 border-slate-200";
+    }
+  };
 
   const filteredLeads = leads.filter(
     (lead) =>
       lead.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.state?.toLowerCase().includes(searchTerm.toLowerCase())
+      lead.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formattedLeads = filteredLeads.map((lead) => ({
-    ...lead,
-    id: lead._id || lead.id || Math.random().toString(36).substr(2, 9),
-    // Keep modulesRequested as an array for rendering icons
-    modulesRequestedRaw: Array.isArray(lead.modulesRequested) ? lead.modulesRequested : [],
-  }));
+  const formattedLeads = filteredLeads.map((lead) => {
+    const assignedUser = users.find(u => (u.id || u._id) === lead.assignedTo);
+    return {
+      ...lead,
+      id: lead._id || lead.id || Math.random().toString(36).substr(2, 9),
+      assignedToName: assignedUser ? (assignedUser.display_name || assignedUser.email) : "Unassigned",
+      source: lead.source || "N/A",
+      // Keep modulesRequested as an array for rendering icons
+      modulesRequestedRaw: Array.isArray(lead.modulesRequested) ? lead.modulesRequested : [],
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden font-sans">
@@ -158,16 +193,40 @@ const LeadsTable = () => {
             <ViewClientsTable
               data={formattedLeads}
               columns={[
-                { key: "fullName", title: "Full Name", width: "15%" },
-                { key: "email", title: "Email", width: "15%" },
-                { key: "phone", title: "Phone", width: "10%" },
-                { key: "companyName", title: "Company", width: "15%" },
-                { key: "state", title: "State", width: "10%" },
-                { key: "address", title: "Address", width: "15%" },
+                { key: "fullName", title: "Full Name", width: "10%" },
+                { key: "title", title: "Inquiry/Title", width: "12%" },
+                { key: "email", title: "Email", width: "10%" },
+                { key: "phone", title: "Phone", width: "8%" },
+                { key: "companyName", title: "Company", width: "8%" },
+                { 
+                  key: "status", 
+                  title: "Status", 
+                  width: "8%",
+                  render: (item) => (
+                    <div className="flex justify-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusStyle(item.status)}`}>
+                        {item.status || "New"}
+                      </span>
+                    </div>
+                  )
+                },
+                { key: "assignedToName", title: "Assigned To", width: "8%" },
+                { key: "source", title: "Source", width: "8%" },
+                { 
+                  key: "createdAt", 
+                  title: "Created At", 
+                  width: "10%",
+                  render: (item) => (
+                    <div className="text-center text-gray-600">
+                      {moment(item.createdAt).format("DD MMM YYYY")}
+                    </div>
+                  )
+                },
+                { key: "state", title: "State", width: "8%" },
                 { 
                   key: "modulesRequested", 
                   title: "Modules", 
-                  width: "15%",
+                  width: "10%",
                   render: (item) => {
                     const modules = item.modulesRequestedRaw || [];
                     if (modules.length === 0) return <span className="text-gray-400">—</span>;
@@ -181,10 +240,10 @@ const LeadsTable = () => {
                           return (
                             <div
                               key={idx}
-                              className={`w-7 h-7 shrink-0 rounded-lg flex items-center justify-center ${config.color} text-white shadow-sm transition-transform hover:scale-110`}
+                              className={`w-6 h-6 shrink-0 rounded-lg flex items-center justify-center ${config.color} text-white shadow-sm transition-transform hover:scale-110`}
                               title={config.label}
                             >
-                              <Icon className="w-4 h-4" strokeWidth={2.5} />
+                              <Icon className="w-3.5 h-3.5" strokeWidth={2.5} />
                             </div>
                           );
                         })}
@@ -192,17 +251,28 @@ const LeadsTable = () => {
                     );
                   }
                 },
-                { key: "comments", title: "Comments", width: "15%" }
               ]}
               currentModule="leads"
               showStages={false}
               showTasks={false}
-              showActions={false}
+              showActions={true}
+              onEdit={handleViewLead}
+              editIcon={<Eye size={16} />}
+              editText="View"
+              editTooltip="View Lead Details"
               itemsPerPage={itemsPerPage}
             />
           )}
         </div>
       </div>
+
+      {/* Lead Details Drawer */}
+      <LeadDetailsDrawer 
+        lead={selectedLead} 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        MODULE_ICONS={MODULE_ICONS}
+      />
     </div>
   );
 };

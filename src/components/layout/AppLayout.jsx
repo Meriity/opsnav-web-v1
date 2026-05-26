@@ -45,10 +45,10 @@ const DashboardLayout = () => {
       )}
 
       {/* Mobile Sidebar with backdrop */}
-      <div className="md:hidden inset-0 z-30">
+      <div className={`md:hidden fixed inset-0 z-[9999] ${sidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
         {/* Backdrop - only visible when sidebar is open */}
         {sidebarOpen && (
-          <div className="absolute inset-0 bg-black bg-opacity-50" />
+          <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-auto" />
         )}
 
         {/* Sidebar */}
@@ -56,7 +56,7 @@ const DashboardLayout = () => {
           ref={sidebarRef}
           className={`absolute left-0 top-0 h-full w-64 bg-white transform ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } transition-transform duration-300 ease-in-out`}
+          } transition-transform duration-300 ease-in-out pointer-events-auto`}
         >
           <Sidebar setSidebarOpen={setSidebarOpen} />
         </div>
