@@ -28,7 +28,7 @@ class CrmAPI {
       } catch {
         errorData = { message: "Internal server error" };
       }
-      const message = errorData.error || errorData.message || "Internal server error";
+      const message = errorData.message || errorData.error || "Internal server error";
       console.error(`[CrmAPI] Backend 500 Error: ${message}`, {
         url: response.url,
         data: errorData
@@ -56,7 +56,7 @@ class CrmAPI {
 
     if (!response.ok) {
       const error = new Error(
-        data.error || data.message || `HTTP error! status: ${response.status}`
+        data.message || data.error || `HTTP error! status: ${response.status}`
       );
       error.response = { status: response.status, data };
       throw error;
@@ -107,7 +107,7 @@ class CrmAPI {
   // Update lead status
   async updateLeadStatus(leadId, status) {
     try {
-      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/status`, {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/update`, {
         method: "PATCH",
         headers: this.getHeaders(),
         body: JSON.stringify({ status }),
@@ -174,6 +174,64 @@ class CrmAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error updating CRM lead:", error);
+      throw error;
+    }
+  }
+
+  // Create task for lead
+  async createTask(leadId, taskData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.TASKS}/${encodeURIComponent(leadId)}/new-task`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(taskData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating CRM task:", error);
+      throw error;
+    }
+  }
+
+  // Edit a task
+  async editTask(taskId, updatedData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.TASKS}/${encodeURIComponent(taskId)}`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify(updatedData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error editing CRM task:", error);
+      throw error;
+    }
+  }
+
+  // Get all tasks
+  async getAllTasks() {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.TASKS}/`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching all CRM tasks:", error);
+      throw error;
+    }
+  }
+
+  // Get all tasks under a specific lead
+  async getTasksForLead(leadId) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.TASKS}/lead/${encodeURIComponent(leadId)}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching tasks for lead:", error);
       throw error;
     }
   }

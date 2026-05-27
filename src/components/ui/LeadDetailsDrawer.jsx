@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 
-const LeadDetailsDrawer = ({ lead, isOpen, onClose, MODULE_ICONS }) => {
+const LeadDetailsDrawer = ({ lead, isOpen, onClose, MODULE_ICONS, onTaskClick }) => {
   if (!lead) return null;
 
   const formatDate = (date) => {
@@ -242,7 +242,16 @@ const LeadDetailsDrawer = ({ lead, isOpen, onClose, MODULE_ICONS }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-slate-100 px-6 py-4 bg-slate-50">
+                <div className="border-t border-slate-100 px-6 py-4 bg-slate-50 flex flex-col gap-3">
+                  <div className="flex gap-3 w-full">
+                    <button 
+                      onClick={() => { onClose(); onTaskClick?.(lead); }}
+                      className="flex-1 bg-amber-50 border border-amber-200 text-amber-700 font-semibold py-2.5 rounded-xl hover:bg-amber-100 transition-colors shadow-sm text-sm flex items-center justify-center gap-1.5"
+                    >
+                      <Clock size={14} />
+                      New Task
+                    </button>
+                  </div>
                   <button 
                     onClick={onClose}
                     className="w-full bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white font-bold py-3 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-[#2E3D99]/20 text-sm"

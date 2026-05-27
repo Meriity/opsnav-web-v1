@@ -3,4 +3,6 @@ export const CRM_ENDPOINTS = {
   LEADS: "/crm/leads",
   // Dashboard
   DASHBOARD: "/crm/dashboard",
+  // Tasks
+  TASKS: "/crm/tasks",
 };
