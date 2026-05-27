@@ -116,7 +116,49 @@ const StatCard = ({
 };
 
 // --- LEAD DRAWER COMPONENT ---
-function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick }) {
+function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick, onTaskClick, onEditTaskClick }) {
+  const [tasks, setTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+
+  useEffect(() => {
+    if (lead) {
+      const loadTasks = async () => {
+        setLoadingTasks(true);
+        try {
+          const response = await crmAPI.getTasksForLead(lead.id || lead._id);
+          const tasksData = Array.isArray(response) ? response : (response.data || response.tasks || []);
+          setTasks(tasksData);
+        } catch (error) {
+          console.error("Failed to load tasks", error);
+        } finally {
+          setLoadingTasks(false);
+        }
+      };
+      loadTasks();
+    } else {
+      setTasks([]);
+    }
+  }, [lead]);
+
+  const handleToggleTask = async (taskId) => {
+    const task = tasks.find(t => (t._id || t.id) === taskId);
+    if (!task) return;
+    
+    const isCompleted = task.status === "Completed" || task.status === "Done";
+    const newStatus = isCompleted ? "Pending" : "Completed";
+
+    // Optimistic update
+    setTasks(prev => prev.map(t => ((t._id || t.id) === taskId ? { ...t, status: newStatus } : t)));
+
+    try {
+      await crmAPI.editTask(taskId, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to toggle task status", error);
+      // Revert on failure
+      setTasks(prev => prev.map(t => ((t._id || t.id) === taskId ? { ...t, status: task.status } : t)));
+    }
+  };
+
   if (!lead) return null;
   const initials = `${lead.firstName[0] || ''}${lead.lastName[0] || ''}`.toUpperCase();
 
@@ -215,6 +257,58 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick 
                       </p>
                     </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <Clock size={14} />
+                      Pending Tasks
+                    </h3>
+                    {loadingTasks ? (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="w-5 h-5 text-[#2E3D99] animate-spin" />
+                      </div>
+                    ) : tasks.length > 0 ? (
+                      <div className="space-y-3">
+                        {tasks.map((task) => {
+                          const isCompleted = task.status === "Completed" || task.status === "Done";
+                          return (
+                          <div key={task._id || task.id} className={`p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-start justify-between gap-3 transition-colors ${isCompleted ? 'opacity-60' : 'hover:border-[#1D97D7]/30'}`}>
+                            <div className="pt-0.5">
+                              <input
+                                type="checkbox"
+                                checked={isCompleted}
+                                onChange={() => handleToggleTask(task._id || task.id)}
+                                className="h-4 w-4 rounded border-slate-300 text-[#2E3D99] focus:ring-[#2E3D99] cursor-pointer"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <p className={`text-sm font-bold leading-tight ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>{task.title}</p>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{task.description || "No description."}</p>
+                              <div className="flex items-center gap-3 mt-3 text-[10px] font-semibold text-slate-400">
+                                {task.dueDate && (
+                                  <span className="flex items-center gap-1 text-rose-500">
+                                    <Clock size={12} />
+                                    Due: {moment(task.dueDate).format("MMM DD, hh:mm A")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => { onClose(); onEditTaskClick?.(lead, task); }}
+                              className="p-1.5 text-slate-400 hover:text-[#1D97D7] hover:bg-[#1D97D7]/10 rounded-lg transition-colors"
+                              title="Edit Task"
+                            >
+                              <Edit size={14} />
+                            </button>
+                          </div>
+                        )})}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center">
+                        <p className="text-xs text-slate-400">No tasks created yet.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Footer */}
@@ -248,7 +342,14 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick 
                         className="flex-1 bg-violet-50 border border-violet-200 text-violet-700 font-semibold py-2.5 rounded-xl hover:bg-violet-100 transition-colors shadow-sm text-sm flex items-center justify-center gap-1.5"
                       >
                         <UserCheck size={14} />
-                        Assign Lead
+                        Assign
+                      </button>
+                      <button
+                        onClick={() => { onClose(); onTaskClick?.(lead); }}
+                        className="flex-1 bg-amber-50 border border-amber-200 text-amber-700 font-semibold py-2.5 rounded-xl hover:bg-amber-100 transition-colors shadow-sm text-sm flex items-center justify-center gap-1.5"
+                      >
+                        <Clock size={14} />
+                        Task
                       </button>
                     </div>
                   )}
@@ -268,10 +369,12 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     firstName: '', lastName: '', company: '', role: '', email: '', phone: '', notes: '', status: 'New'
   });
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
+      setIsSubmitting(false);
       if (initialData) {
         setFormData({ ...initialData });
       } else {
@@ -282,13 +385,18 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     }
   }, [isOpen, initialData]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.firstName || !formData.lastName || !formData.company) return;
-    onSave({
-      ...(initialData || {}),
-      ...formData
-    });
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        ...(initialData || {}),
+        ...formData
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const modalTitle = initialData ? 'Edit Lead' : 'Create New Lead';
@@ -350,7 +458,6 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                           <option value="Open">Open</option>
                           <option value="Contacted">Contacted</option>
                           <option value="Qualified">Qualified</option>
-                          <option value="Converted">Converted</option>
                           <option value="Closed">Closed</option>
                           <option value="Unqualified">Unqualified</option>
                         </select>
@@ -392,8 +499,20 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   Next Step
                 </button>
               ) : (
-                <button type="submit" form="lead-form" className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 sm:ml-3 sm:w-auto transition-opacity">
-                  {initialData ? 'Save Changes' : 'Create Lead'}
+                <button 
+                  type="submit" 
+                  form="lead-form" 
+                  disabled={isSubmitting}
+                  className="inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 disabled:opacity-50 sm:ml-3 sm:w-auto transition-opacity"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    initialData ? 'Save Changes' : 'Create Lead'
+                  )}
                 </button>
               )}
 
@@ -677,6 +796,112 @@ function AssignLeadModal({ isOpen, onClose, onAssign, lead }) {
     </Dialog>
   );
 }
+// --- TASK FORM MODAL ---
+function TaskFormModal({ isOpen, onClose, onSave, users, initialData }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [reminderDate, setReminderDate] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setTitle(initialData.title || "");
+        setDescription(initialData.description || "");
+        setAssignedTo(initialData.assignedTo || "");
+        setDueDate(initialData.dueDate ? moment(initialData.dueDate).format("YYYY-MM-DDTHH:mm") : "");
+        setReminderDate(initialData.reminderDate ? moment(initialData.reminderDate).format("YYYY-MM-DDTHH:mm") : "");
+      } else {
+        setTitle("");
+        setDescription("");
+        setAssignedTo("");
+        setDueDate("");
+        setReminderDate("");
+      }
+      setIsSubmitting(false);
+    }
+  }, [isOpen, initialData]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !dueDate) return;
+    setIsSubmitting(true);
+    await onSave({ 
+      id: initialData?._id || initialData?.id,
+      title, 
+      description, 
+      assignedTo, 
+      dueDate, 
+      reminderDate 
+    });
+    setIsSubmitting(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[9999]">
+      <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" />
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-white/80" />
+                {initialData ? "Edit Task" : "Create New Task"}
+              </h2>
+              <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <form id="task-form" onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Task Title *</label>
+                  <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99]/50" placeholder="e.g. Presentation with customer" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
+                  <textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99]/50" placeholder="Additional details..." rows={3}></textarea>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Assign To</label>
+                  <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99]/50">
+                    <option value="">Unassigned</option>
+                    {users.map(u => (
+                      <option key={u._id || u.id} value={u._id || u.id}>
+                        {u.displayName || u.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Due Date *</label>
+                    <input required type="datetime-local" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99]/50" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Reminder</label>
+                    <input type="datetime-local" value={reminderDate} onChange={e => setReminderDate(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 focus:border-[#2E3D99]/50" />
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex gap-3 justify-end border-t border-slate-100">
+              <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-white text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" form="task-form" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60">
+                {isSubmitting ? "Saving..." : (initialData ? "Save Changes" : "Create Task")}
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
 
 // --- MAIN LEADS PAGE ---
 export default function Leads() {
@@ -691,6 +916,7 @@ export default function Leads() {
   const [deleteState, setDeleteState] = useState({ isOpen: false, lead: null });
   const [convertState, setConvertState] = useState({ isOpen: false, lead: null });
   const [assignState, setAssignState] = useState({ isOpen: false, lead: null });
+  const [taskState, setTaskState] = useState({ isOpen: false, lead: null, task: null });
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentMobilePageData, setCurrentMobilePageData] = useState([]);
@@ -869,7 +1095,6 @@ export default function Leads() {
             <option value="Open">Open</option>
             <option value="Contacted">Contacted</option>
             <option value="Qualified">Qualified</option>
-            <option value="Converted">Converted</option>
             <option value="Closed">Closed</option>
             <option value="Unqualified">Unqualified</option>
           </select>
@@ -929,6 +1154,15 @@ export default function Leads() {
                   title="Assign Lead"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Task */}
+                <button
+                  onClick={() => setTaskState({ isOpen: true, lead, task: null })}
+                  className="p-1 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition-colors"
+                  title="New Task"
+                >
+                  <Clock className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
@@ -1070,6 +1304,36 @@ export default function Leads() {
     }
   };
 
+  // --- CREATE/EDIT TASK HANDLER ---
+  const handleSaveTask = async (taskData) => {
+    if (!taskState.lead) return;
+    try {
+      const payload = {
+        ...taskData,
+        superadminId: localStorage.getItem("userId") || ""
+      };
+      
+      // Convert to UTC ISO format for backend
+      if (payload.dueDate) payload.dueDate = new Date(payload.dueDate).toISOString();
+      if (payload.reminderDate) payload.reminderDate = new Date(payload.reminderDate).toISOString();
+      
+      if (taskState.task) {
+        await crmAPI.editTask(taskState.task._id || taskState.task.id, payload);
+        toast.success("Task updated successfully!");
+      } else {
+        await crmAPI.createTask(taskState.lead.id, payload);
+        toast.success("Task created successfully!");
+      }
+      
+      setTaskState({ isOpen: false, lead: null, task: null });
+      fetchLeads(); // refresh to show task count if tracked
+
+    } catch (error) {
+      console.error("Error creating task", error);
+      toast.error(error.message || "Failed to create task.");
+    }
+  };
+
   const handleSort = (key) => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -1205,7 +1469,6 @@ export default function Leads() {
                           <option value="Open">Open</option>
                           <option value="Contacted">Contacted</option>
                           <option value="Qualified">Qualified</option>
-                          <option value="Converted">Converted</option>
                           <option value="Closed">Closed</option>
                           <option value="Unqualified">Unqualified</option>
                         </select>
@@ -1330,7 +1593,6 @@ export default function Leads() {
                             <option value="Open">Open</option>
                             <option value="Contacted">Contacted</option>
                             <option value="Qualified">Qualified</option>
-                            <option value="Converted">Converted</option>
                             <option value="Closed">Closed</option>
                             <option value="Unqualified">Unqualified</option>
                           </select>
@@ -1426,6 +1688,8 @@ export default function Leads() {
         onEditClick={handleLeadClick}
         onConvertClick={(lead) => setConvertState({ isOpen: true, lead })}
         onAssignClick={(lead) => setAssignState({ isOpen: true, lead })}
+        onTaskClick={(lead) => setTaskState({ isOpen: true, lead, task: null })}
+        onEditTaskClick={(lead, task) => setTaskState({ isOpen: true, lead, task })}
       />
       <LeadFormModal isOpen={formState.isOpen} onClose={() => setFormState({ isOpen: false, lead: null })} onSave={handleSaveLead} initialData={formState.lead} />
       <ConvertLeadModal
@@ -1439,6 +1703,13 @@ export default function Leads() {
         onClose={() => setAssignState({ isOpen: false, lead: null })}
         onAssign={handleAssignLead}
         lead={assignState.lead}
+      />
+      <TaskFormModal
+        isOpen={taskState.isOpen}
+        onClose={() => setTaskState({ isOpen: false, lead: null, task: null })}
+        onSave={handleSaveTask}
+        users={usersList}
+        initialData={taskState.task}
       />
 
       {/* Custom Delete Dialog */}

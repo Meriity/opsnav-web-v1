@@ -34,6 +34,7 @@ import {
 } from "recharts";
 import Header from "../../components/layout/Header";
 import crmAPI from "../../api/crmAPI";
+import TaskDetailsDrawer from "../../components/ui/TaskDetailsDrawer";
 
 // --- BACKGROUND FLOATING ELEMENTS ---
 const FloatingElement = ({ top, left, delay, size = 60 }) => (
@@ -221,6 +222,7 @@ export default function CrmDashboard() {
   });
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -234,15 +236,22 @@ export default function CrmDashboard() {
         if (data.recentActivities) {
           setActivities(data.recentActivities);
         }
-        if (data.upcomingTasks) {
-          const mappedTasks = data.upcomingTasks.map(t => ({
-            id: t._id,
+        // Fetch Real Tasks
+        try {
+          const tasksRes = await crmAPI.getAllTasks();
+          const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.data || tasksRes.tasks || []);
+          const mappedTasks = tasksList.map(t => ({
+            id: t._id || t.id,
             text: t.title,
-            due: new Date(t.dueDate).toLocaleDateString(),
-            completed: t.status === "Completed",
-            category: "Task"
-          }));
+            due: t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "No Date",
+            dueDateObj: t.dueDate ? new Date(t.dueDate).getTime() : Infinity,
+            completed: t.status === "Completed" || t.status === "Done",
+            category: "Task",
+            raw: t
+          })).sort((a, b) => a.dueDateObj - b.dueDateObj);
           setTasks(mappedTasks);
+        } catch (tasksErr) {
+          console.error("Failed to fetch tasks for dashboard:", tasksErr);
         }
         if (data.totalLeads !== undefined) {
            setGaugeSettings(prev => ({ ...prev, current: data.totalLeads }));
@@ -283,23 +292,34 @@ export default function CrmDashboard() {
     ];
   }, [dashboardData]);
 
-  const handleToggleTask = (taskId) => {
+  const handleToggleTask = async (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    // Optimistic update
     setTasks(prev =>
       prev.map(t => (t.id === taskId ? { ...t, completed: !t.completed } : t))
     );
+
+    try {
+      await crmAPI.editTask(taskId, {
+        status: !task.completed ? "Completed" : "Pending"
+      });
+    } catch (error) {
+      console.error("Failed to toggle task status", error);
+      // Revert on failure
+      setTasks(prev =>
+        prev.map(t => (t.id === taskId ? { ...t, completed: task.completed } : t))
+      );
+    }
   };
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (!newTaskText.trim()) return;
-    const newTask = {
-      id: Date.now(),
-      text: newTaskText.trim(),
-      due: "Today",
-      completed: false,
-      category: "Task"
-    };
-    setTasks(prev => [newTask, ...prev]);
+    // We cannot create a task without a lead ID on the backend
+    // So we'll prompt the user to use the Leads dashboard
+    alert("Please navigate to the Leads page to create new tasks, as they must be attached to a specific lead.");
     setNewTaskText("");
   };
 
@@ -515,7 +535,7 @@ export default function CrmDashboard() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="bg-white/90 backdrop-blur-lg border border-slate-200 rounded-2xl shadow-lg p-5 sm:p-6 flex flex-col justify-between"
+            className="bg-white/90 backdrop-blur-lg border border-slate-200 rounded-2xl shadow-lg p-5 sm:p-6 flex flex-col justify-start"
           >
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -529,23 +549,24 @@ export default function CrmDashboard() {
               </div>
 
               {/* Tasks List */}
-              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                 {tasks.length === 0 ? (
                   <div className="text-center py-6 text-slate-400 text-xs font-semibold">No pending tasks!</div>
                 ) : (
                   tasks.map((task) => (
                     <div
                       key={task.id}
-                      className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                      onClick={() => setSelectedTask(task.raw)}
+                      className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 cursor-pointer ${
                         task.completed
                           ? "bg-slate-50/50 border-slate-100 opacity-60"
-                          : "bg-white border-slate-200 hover:border-slate-300"
+                          : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={task.completed}
-                        onChange={() => handleToggleTask(task.id)}
+                        onChange={(e) => { e.stopPropagation(); handleToggleTask(task.id); }}
                         className="mt-1 h-4.5 w-4.5 rounded border-slate-350 text-[#2E3D99] focus:ring-[#2E3D99] cursor-pointer"
                       />
                       <div className="flex-1 min-w-0">
@@ -867,6 +888,11 @@ export default function CrmDashboard() {
           </Dialog>
         </div>
       </main>
+      <TaskDetailsDrawer 
+        task={selectedTask} 
+        isOpen={!!selectedTask} 
+        onClose={() => setSelectedTask(null)} 
+      />
     </div>
   );
 }

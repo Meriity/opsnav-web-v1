@@ -35,6 +35,54 @@ import {
   2026: {
     May: [
       {
+        date: "2026-05-27",
+        version: "v8.0.1",
+        type: "patch",
+        category: "bugfix",
+        title: "CRM Enhancements & Lead Management Fixes",
+        description: "Addressed several UI/UX issues in the Lead Management and Task Details interfaces and resolved endpoint synchronization errors for CRM actions.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "Lead Status API Synchronization",
+            description: "Fixed 404 and 500 errors when updating lead statuses.",
+            details: "Updated the lead status modification endpoints to accurately align with the backend router requirements, ensuring reliable status updates.",
+            icon: RefreshCw,
+          },
+          {
+            type: "feature",
+            title: "Task Assignee Editing",
+            description: "Interactive task assignee updates directly from the Task Details Drawer.",
+            details: "Converted the static Assignee display inside the Task Details Drawer into a fully functioning dropdown, allowing quick reassignments without needing a full edit screen.",
+            icon: Edit,
+          },
+          {
+            type: "feature",
+            title: "Form Submission Feedback",
+            description: "Visual loaders added to lead creation and modification forms.",
+            details: "Implemented 'Saving...' loading indicators and disabled states on form submission buttons to prevent accidental multiple clicks and clarify background processing status.",
+            icon: Sparkles,
+          },
+          {
+            type: "bugfix",
+            title: "Detailed API Error Toasts",
+            description: "Surfaced specific backend validation messages to the UI.",
+            details: "Enhanced the API error handling to prioritize granular backend response messages (e.g., 'Lead with the same email already exists') over generic internal server error alerts.",
+            icon: Bug,
+          },
+          {
+            type: "bugfix",
+            title: "Removed Converted Status from Dropdowns",
+            description: "Prevented invalid state changes by removing terminal status.",
+            details: "Removed 'Converted' from manual status selection dropdowns to prevent sync issues and force proper progression through the dedicated conversion workflow.",
+            icon: Trash2,
+          }
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
 
         date: "2026-05-26",
         version: "v8.0.0",
