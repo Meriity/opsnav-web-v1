@@ -35,6 +35,7 @@ export default function ArchivedFilterModal({
       state: "",
       clientType: "",
       closeMatter: "",
+      clientName: "",
     };
     setLocalFilters(emptyFilters);
     onReset();
@@ -78,6 +79,23 @@ export default function ArchivedFilterModal({
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
                 />
               </div>
+
+              {/* Client Name Filter for Print Media */}
+              {currentModule === "print media" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Client Name
+                  </label>
+                  <input
+                    type="text"
+                    name="clientName"
+                    value={localFilters.clientName || ""}
+                    onChange={handleChange}
+                    placeholder="e.g. John Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all"
+                  />
+                </div>
+              )}
 
               {/* Client/Order Type Filter */}
               <div>

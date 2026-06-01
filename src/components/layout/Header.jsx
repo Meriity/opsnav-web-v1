@@ -545,9 +545,11 @@ export default function Header({ simplified = false }) {
               </motion.button>
             ) : (
               <>
-                <div className="hidden md:block scale-90 origin-right">
-                  <SidebarModuleSwitcher />
-                </div>
+                {currentModule !== "crm" && (
+                  <div className="hidden md:block scale-90 origin-right">
+                    <SidebarModuleSwitcher />
+                  </div>
+                )}
 
                 <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto relative z-20">
                   <button
@@ -653,7 +655,7 @@ export default function Header({ simplified = false }) {
                       </AnimatePresence>
                     </div>
                   </div>
-                  {!isPrintMedia && currentModule !== "wills" && <NotificationBell />}
+                  {!isPrintMedia && currentModule !== "wills" && currentModule !== "crm" && <NotificationBell />}
                 </div>
               </>
             )}

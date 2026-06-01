@@ -31,8 +31,38 @@ import {
   Lightbulb,
   MessageSquare,
   Activity,
-} from "lucide-react"; export const monthlyReleaseNotes = {
+} from "lucide-react"; 
+export const monthlyReleaseNotes = {
   2026: {
+    June: [
+      {
+        date: "2026-06-01",
+        version: "v8.1.0",
+        type: "minor",
+        category: "feature",
+        title: "Print Media Tracking Enhancements",
+        description: "Added new filtering capabilities and updated the Completed Orders table to include Unit and Order Details for Print Media.",
+        updates: [
+          {
+            type: "feature",
+            title: "Client Name Filter",
+            description: "Added filter by client name option in Print Media.",
+            details: "Users can now filter the Completed Orders by Client Name specifically within the Print Media module.",
+            icon: Search,
+          },
+          {
+            type: "feature",
+            title: "Completed Orders Columns",
+            description: "Added Unit and Order Details column in completed orders for signage and print.",
+            details: "Expanded the table view to show Unit and Order Details to provide more comprehensive context at a glance.",
+            icon: Layout,
+          }
+        ],
+        module: "Print Media",
+        severity: "Low",
+        status: "Released"
+      }
+    ],
     May: [
       {
         date: "2026-05-27",
