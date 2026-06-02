@@ -108,6 +108,7 @@ export default function ArchivedClients() {
     state: "",
     clientType: "",
     closeMatter: "",
+    clientName: "",
   });
 
   // Client details modal state
@@ -427,12 +428,20 @@ export default function ArchivedClients() {
       });
     }
 
-    // Apply strict filters (State, Client Type, Close Matter)
-    if (activeFilters.state || activeFilters.clientType || activeFilters.closeMatter) {
+    // Apply strict filters (State, Client Type, Close Matter, Client Name)
+    if (activeFilters.state || activeFilters.clientType || activeFilters.closeMatter || activeFilters.clientName) {
       filteredData = filteredData.filter((client) => {
         // State Filter
         if (activeFilters.state) {
           if (!client.state || !client.state.toLowerCase().includes(activeFilters.state.toLowerCase())) {
+            return false;
+          }
+        }
+
+        // Client Name Filter
+        if (activeFilters.clientName) {
+          const cName = client.client_name || client.clientName;
+          if (!cName || !cName.toLowerCase().includes(activeFilters.clientName.toLowerCase())) {
             return false;
           }
         }
@@ -548,9 +557,11 @@ export default function ArchivedClients() {
       return [
         { key: "orderId", title: "Order ID" },
         { key: "clientName", title: "Client Name" },
+        { key: "unitNumber", title: "Unit" },
         { key: "propertyAddress", title: "Billing Address" },
         { key: "state", title: "State" },
         { key: "ordertype", title: "Client Type" },
+        { key: "order_details", title: "Order Details" },
         { key: "orderDate", title: "Order Date" },
         { key: "deliveryDate", title: "Delivery Date" },
         { key: "status", title: "Status" },
@@ -767,9 +778,11 @@ export default function ArchivedClients() {
            exportData = rawData.map((item) => ({
             "Order ID": item.orderId || item.id,
             "Client Name": item.clientName || item.client_name,
+            "Unit": item.unitNumber || "N/A",
             "Billing Address": item.propertyAddress || item.deliveryAddress,
             "State": item.state,
             "Order Type": item.ordertype || item.orderType,
+            "Order Details": item.order_details || "N/A",
             "Total Cost": getCostValue(item, "totalCosts") || getCostValue(item, "TOTAL_COSTS") || "",
             "Invoice Amount": getCostValue(item, "invoiceAmount") || getCostValue(item, "INVOICE_AMOUNT") || "",
             "Order Date": item.orderDate ? moment(item.orderDate).format("DD/MM/YYYY") : "",
@@ -1207,6 +1220,7 @@ export default function ArchivedClients() {
                     sortedColumn={sortedColumn}
                     sortDirection={sortDirection}
                     handleSort={handleSort}
+                    hideActionLabels={true}
                   />
                 </div>
 

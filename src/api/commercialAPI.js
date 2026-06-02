@@ -1,4 +1,4 @@
-import { COMMERCIAL_ENDPOINTS } from "../commercialEndpoints";
+import { COMMERCIAL_ENDPOINTS } from "./endpoints/commercialEndpoints";
 import { getApiBaseUrl, getApiHeaders } from "../utils/apiConfig";
 
 class CommercialAPI {

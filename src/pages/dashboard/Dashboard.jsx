@@ -342,7 +342,7 @@ const CustomAgendaEvent = ({ event, onClick }) => {
         )}
       </div>
       <div className="text-sm font-semibold text-gray-800 line-clamp-1">
-        {event.title}
+        {identifier ? `[${identifier}] - ` : ""}{event.title || eventTypeLabel}
       </div>
     </div>
   );
@@ -960,6 +960,14 @@ const PerformanceTrendChart = ({
 
 function Dashboard() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const currentModule = localStorage.getItem("currentModule");
+    if (currentModule === "crm") {
+      navigate("/admin/crm/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
   const {
     totalusers,
     totalactive,
@@ -1171,13 +1179,21 @@ function Dashboard() {
   };
 
   const dayPropGetter = useCallback(
-    (date) => ({
-      className:
-        moment(date).month() !== moment(calendarDate).month()
-          ? "off-month-day"
-          : "",
-    }),
-    [calendarDate]
+    (date) => {
+      const isSelected = moment(date).isSame(selectedCalendarDate, 'day');
+      const isToday = moment(date).isSame(moment(), 'day');
+      const isOffMonth = moment(date).month() !== moment(calendarDate).month();
+      
+      const classes = [];
+      if (isOffMonth) classes.push("off-month-day");
+      if (isSelected) classes.push("calendar-selected-day");
+      if (isToday) classes.push("calendar-today");
+      
+      return {
+        className: classes.join(" ")
+      };
+    },
+    [calendarDate, selectedCalendarDate]
   );
 
   const handleNavigate = (newDate) => setCalendarDate(newDate);
@@ -1557,7 +1573,7 @@ function Dashboard() {
                             className="bg-orange-50 text-orange-800 text-xs px-3 rounded-lg border border-orange-200 shadow-sm"
                           >
                             <div className="py-2">
-                              <p><strong>Tip:</strong> The colored dot represents the first event of the day. Tap a date to see all events below.</p>
+                              <p><strong>Tip:</strong> The colored dot represents the first event of the day. Press and hold a date to see all events below.</p>
                             </div>
                           </motion.div>
                         )}
@@ -1582,8 +1598,15 @@ function Dashboard() {
                     .rbc-calendar, .rbc-btn-group {
                       overflow: visible !important;
                     }
-                    .rbc-month-row {
-                      min-height: 100px !important;
+                    @media (min-width: 1024px) {
+                      .rbc-month-row {
+                        min-height: 100px !important;
+                      }
+                    }
+                    @media (max-width: 1023px) {
+                      .rbc-month-row {
+                        min-height: 45px !important;
+                      }
                     }
                     .rbc-event {
                       min-height: 20px !important;
@@ -1629,6 +1652,18 @@ function Dashboard() {
                       selectable={true}
                       longPressThreshold={10} // Reduced threshold for mobile responsiveness
                       onSelectSlot={handleSelectSlot}
+                      formats={{
+                        weekdayFormat: (date, culture, localizer) => {
+                          const dayStr = localizer.format(date, 'dddd', culture);
+                          if (window.innerWidth < 400) {
+                            return dayStr.substring(0, 1); // S, M, T, W, T, F, S
+                          }
+                          if (window.innerWidth < 768) {
+                            return dayStr.substring(0, 3); // Sun, Mon, Tue, etc.
+                          }
+                          return dayStr;
+                        }
+                      }}
                       components={{
                         event: isMobile 
                           ? MobileMonthEvent 
