@@ -10,6 +10,7 @@ import {
   Cpu,
   LayoutGrid,
   Scale,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { APP_VERSION } from "../../config/version";
@@ -31,7 +32,12 @@ function WorkSelection() {
       "vocat",
       "commercial",
       "print media",
+      "crm",
     ];
+
+    if (!rawList.includes("crm")) {
+      rawList.push("crm");
+    }
 
     return rawList.sort((a, b) => {
       const indexA = preferredOrder.indexOf(a.toLowerCase());
@@ -50,8 +56,9 @@ function WorkSelection() {
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("role");
 
+    let moduleKey = "";
     if (moduleType) {
-      const moduleKey = moduleType.toLowerCase();
+      moduleKey = moduleType.toLowerCase();
       localStorage.setItem("currentModule", moduleKey);
       localStorage.setItem("workType", moduleType.toUpperCase());
     }
@@ -59,6 +66,8 @@ function WorkSelection() {
     try {
       if (!token) {
         navigate("/admin/login");
+      } else if (moduleKey === "crm") {
+        navigate("/admin/crm/dashboard");
       } else if (role === "admin" || role === "superadmin") {
         navigate("/admin/dashboard");
       } else if (role === "user" || role === "readonly" || role === "read-only") {
@@ -80,7 +89,8 @@ function WorkSelection() {
     if (accessList.length === 1) {
       setIsAutoNavigating(true);
       const singleModule = accessList[0];
-      localStorage.setItem("currentModule", singleModule.toLowerCase());
+      const singleModuleKey = singleModule.toLowerCase();
+      localStorage.setItem("currentModule", singleModuleKey);
       localStorage.setItem("workType", singleModule.toUpperCase());
 
       const timer = setTimeout(() => {
@@ -88,7 +98,9 @@ function WorkSelection() {
         const role = localStorage.getItem("role");
 
         if (token) {
-          if (role === "admin" || role === "superadmin") {
+          if (singleModuleKey === "crm") {
+            navigate("/admin/crm/dashboard");
+          } else if (role === "admin" || role === "superadmin") {
             navigate("/admin/dashboard");
           } else if (role === "user" || role === "readonly" || role === "read-only") {
             navigate("/user/dashboard");
@@ -109,6 +121,7 @@ function WorkSelection() {
       "print media": "Signage & Print",
       commercial: "Commercial Law",
       vocat: "VOCAT - FAS",
+      crm: "CRM Module",
       default: module.charAt(0).toUpperCase() + module.slice(1),
     };
     return moduleMap[module.toLowerCase()] || moduleMap.default;
@@ -124,6 +137,7 @@ function WorkSelection() {
     if (key.includes("print")) return <Printer {...iconProps} />;
     if (key.includes("commercial")) return <Briefcase {...iconProps} />;
     if (key.includes("vocat")) return <Scale {...iconProps} />;
+    if (key.includes("crm")) return <Users {...iconProps} />;
 
     return <LayoutGrid {...iconProps} />;
   };

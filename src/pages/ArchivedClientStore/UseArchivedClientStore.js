@@ -81,6 +81,8 @@ export const useArchivedClientStore = create((set, get) => ({
         mapped = sourceArray.map((client, index) => ({
           orderId: client.orderId || client.id || `idg-${index}`,
           clientName: client.client_name || client.clientName || "N/A",
+          unitNumber: client.unitNumber || "N/A",
+          order_details: client.order_details || "N/A",
           dataEntryBy: client.dataEntryBy || "N/A",
           orderType: client.orderType || client.ordertype || "N/A",
           propertyAddress:

@@ -416,7 +416,7 @@ export default function ManageUsers() {
                 {getPageTitle()}
               </span>
             </h1>
-            <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
+            <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1">
               Manage {currentModule === "commercial" ? "project" : "client"}{" "}
               accounts, permissions, and access modules
             </p>

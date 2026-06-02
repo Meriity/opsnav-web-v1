@@ -17,6 +17,7 @@ import {
   Users,
   BookOpen,
   Briefcase,
+  Network,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -57,54 +58,78 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", handleResize);
   }, [isCollapsed, onCollapseToggle]);
 
-  const menuItems = [
+  const baseMenuItems = [
     {
       label: "Dashboard",
       icon: DashboardIcon,
-      to: isAdminRoute ? "/admin/dashboard" : "/user/dashboard",
-    },
-    {
-      label:
-        currentModule === "print media"
-          ? "View Orders"
-          : currentModule === "commercial"
-          ? "View Projects"
-          : "View Clients",
-      icon: ViewClientsIcon,
-      to:
-        currentModule === "commercial"
-          ? "/admin/view-clients"
-          : isAdminRoute
-          ? "/admin/view-clients"
-          : "/user/view-clients",
-    },
-    ...(currentModule === "wills"
-      ? [
-          {
-            label: "Reference Matter",
-            icon: BookOpen,
-            to: isAdminRoute
-              ? "/admin/reference-matter"
-              : "/user/reference-matter",
-          },
-        ]
-      : []),
-    {
-      label:
-        currentModule === "print media"
-          ? "Completed Orders"
-          : currentModule === "commercial"
-          ? "Archived Projects"
-          : "Archived Clients",
-      icon: ArchivedChatsIcon,
-      to:
-        currentModule === "commercial"
-          ? "/admin/archived-clients"
-          : isAdminRoute
-          ? "/admin/archived-clients"
-          : "/user/archived-clients",
-    },
+      to: currentModule === "crm" 
+        ? "/admin/crm/dashboard" 
+        : (isAdminRoute ? "/admin/dashboard" : "/user/dashboard"),
+    }
   ];
+
+  let moduleSpecificItems = [];
+
+  if (currentModule === "crm") {
+    moduleSpecificItems = [
+      {
+        label: "Deals",
+        icon: Briefcase,
+        to: "/admin/crm/deals",
+      },
+      {
+        label: "Leads",
+        icon: Network,
+        to: "/admin/crm/leads",
+      },
+    ];
+  } else {
+    moduleSpecificItems = [
+      {
+        label:
+          currentModule === "print media"
+            ? "View Orders"
+            : currentModule === "commercial"
+            ? "View Projects"
+            : "View Clients",
+        icon: ViewClientsIcon,
+        to:
+          currentModule === "commercial"
+            ? "/admin/view-clients"
+            : isAdminRoute
+            ? "/admin/view-clients"
+            : "/user/view-clients",
+      },
+      ...(currentModule === "wills"
+        ? [
+            {
+              label: "Reference Matter",
+              icon: BookOpen,
+              to: isAdminRoute
+                ? "/admin/reference-matter"
+                : "/user/reference-matter",
+            },
+          ]
+        : []),
+      {
+        label:
+          currentModule === "print media"
+            ? "Completed Orders"
+            : currentModule === "commercial"
+            ? "Archived Projects"
+            : "Archived Clients",
+        icon: ArchivedChatsIcon,
+        to:
+          currentModule === "commercial"
+            ? "/admin/archived-clients"
+            : isAdminRoute
+            ? "/admin/archived-clients"
+            : "/user/archived-clients",
+      },
+    ];
+  }
+
+  const menuItems = [...baseMenuItems, ...moduleSpecificItems];
 
   // Add My Jobs for Print Media
   if (currentModule === "print media") {
@@ -168,7 +193,10 @@ export default function Sidebar({
       case "Reference Matter":
         return BookOpen;
       case "My Jobs":
+      case "Deals":
         return Briefcase;
+      case "Leads":
+        return Network;
       default:
         return LayoutDashboard;
     }
@@ -241,7 +269,7 @@ export default function Sidebar({
         initial={isCollapsed ? "collapsed" : "expanded"}
         animate={isCollapsed ? "collapsed" : "expanded"}
         variants={sidebarVariants}
-        className="fixed top-0 left-0 bottom-0 h-screen md:sticky md:top-0 flex flex-col justify-between py-6 bg-gradient-to-b from-white via-gray-50/50 to-white border-r border-gray-200/50 z-[100] shadow-2xl md:shadow-none overflow-visible"
+        className="fixed top-0 left-0 bottom-0 h-dvh md:h-screen md:sticky md:top-0 flex flex-col justify-between pt-6 pb-6 md:py-6 bg-gradient-to-b from-white via-gray-50/50 to-white border-r border-gray-200/50 z-[100] shadow-2xl md:shadow-none overflow-visible"
       >
         <ConfirmationModal
           isOpen={showUnsavedModal}
