@@ -24,7 +24,9 @@ import {
   CheckCircle2,
   Eye,
   Clock,
-  Tag
+  Tag,
+  StickyNote,
+  Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
@@ -35,6 +37,7 @@ import { useSearchStore } from "../SearchStore/searchStore.js";
 import { toast } from "react-toastify";
 import crmAPI from "../../api/crmAPI";
 import AdminApi from "../../api/adminAPI";
+import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import moment from "moment";
 
 
@@ -119,6 +122,14 @@ const StatCard = ({
 function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick, onTaskClick, onEditTaskClick }) {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const [newNoteVisibility, setNewNoteVisibility] = useState("Team");
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editingNoteContent, setEditingNoteContent] = useState("");
 
   useEffect(() => {
     if (lead) {
@@ -134,11 +145,90 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
           setLoadingTasks(false);
         }
       };
+
+      const loadNotes = async () => {
+        setLoadingNotes(true);
+        try {
+          const response = await crmAPI.getNotes(lead.id || lead._id);
+          const notesData = response.data || [];
+          setNotes(notesData);
+        } catch (error) {
+          console.error("Failed to load notes", error);
+        } finally {
+          setLoadingNotes(false);
+        }
+      };
+
       loadTasks();
+      loadNotes();
     } else {
       setTasks([]);
+      setNotes([]);
+      setNewNoteContent("");
     }
   }, [lead]);
+
+  const handleAddNote = async (e) => {
+    e.preventDefault();
+    if (!newNoteContent.trim()) return;
+    setIsSubmittingNote(true);
+    try {
+      const noteData = {
+        relatedLeadId: lead.id || lead._id,
+        note: newNoteContent,
+        visibility: newNoteVisibility,
+      };
+      const response = await crmAPI.createNote(noteData);
+      setNotes([response.data, ...notes]);
+      setNewNoteContent("");
+      setNewNoteVisibility("Team");
+      toast.success("Note added successfully");
+    } catch (error) {
+      console.error("Failed to add note", error);
+      toast.error("Failed to add note");
+    } finally {
+      setIsSubmittingNote(false);
+    }
+  };
+
+  const handleUpdateNoteVisibility = async (noteId, newVisibility) => {
+    try {
+      const response = await crmAPI.updateNote(noteId, { visibility: newVisibility });
+      setNotes(prevNotes => prevNotes.map(n => n._id === noteId ? { ...n, visibility: newVisibility } : n));
+      toast.success("Note visibility updated");
+    } catch (error) {
+      console.error("Failed to update note visibility", error);
+      toast.error(error.message || "Failed to update note visibility");
+    }
+  };
+
+  const confirmDeleteNote = async () => {
+    if (!noteToDelete) return;
+    try {
+      await crmAPI.deleteNote(noteToDelete);
+      setNotes(prevNotes => prevNotes.filter(n => n._id !== noteToDelete));
+      toast.success("Note deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete note", error);
+      toast.error(error.message || "Failed to delete note");
+    } finally {
+      setNoteToDelete(null);
+    }
+  };
+
+  const handleUpdateNoteContent = async () => {
+    if (!editingNoteContent.trim() || !editingNoteId) return;
+    try {
+      const response = await crmAPI.updateNote(editingNoteId, { note: editingNoteContent });
+      setNotes(prevNotes => prevNotes.map(n => n._id === editingNoteId ? { ...n, note: editingNoteContent } : n));
+      toast.success("Note updated successfully");
+      setEditingNoteId(null);
+      setEditingNoteContent("");
+    } catch (error) {
+      console.error("Failed to update note", error);
+      toast.error(error.message || "Failed to update note");
+    }
+  };
 
   const handleToggleTask = async (taskId) => {
     const task = tasks.find(t => (t._id || t.id) === taskId);
@@ -250,11 +340,125 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Notes & Details</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lead Description</h3>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
                       <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
                         {lead.notes || 'No description provided.'}
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <StickyNote size={14} />
+                      Team Notes
+                    </h3>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-4">
+                      {/* Notes List */}
+                      {loadingNotes ? (
+                        <div className="flex justify-center p-2">
+                          <Loader2 className="w-5 h-5 text-[#2E3D99] animate-spin" />
+                        </div>
+                      ) : notes.length > 0 ? (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                          {notes.map((note) => (
+                            <div key={note._id} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                              {editingNoteId === note._id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editingNoteContent}
+                                    onChange={(e) => setEditingNoteContent(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none bg-white"
+                                    rows="3"
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      onClick={() => setEditingNoteId(null)}
+                                      className="px-2 py-1 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={handleUpdateNoteContent}
+                                      className="px-2 py-1 text-xs font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-md transition-opacity hover:opacity-90"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-slate-700 whitespace-pre-wrap">{note.note}</p>
+                              )}
+                              
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-[10px] text-slate-400 font-semibold">
+                                  {note.createdBy?.displayName || 'User'} • {moment(note.createdAt).format("MMM DD, hh:mm A")}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <select 
+                                    value={note.visibility}
+                                    onChange={(e) => handleUpdateNoteVisibility(note._id, e.target.value)}
+                                    className={`text-xs px-2 py-1 rounded-md font-bold cursor-pointer appearance-none border-none focus:outline-none focus:ring-2 focus:ring-offset-1 transition-colors ${note.visibility === 'Private' ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 focus:ring-amber-400' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 focus:ring-emerald-400'}`}
+                                  >
+                                    <option value="Team">Team</option>
+                                    <option value="Private">Private</option>
+                                  </select>
+                                  {editingNoteId !== note._id && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingNoteId(note._id);
+                                        setEditingNoteContent(note.note);
+                                      }}
+                                      className="p-1.5 text-slate-400 hover:text-[#1D97D7] hover:bg-[#1D97D7]/10 rounded-lg transition-colors"
+                                      title="Edit Note"
+                                    >
+                                      <Edit size={14} />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => setNoteToDelete(note._id)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                    title="Delete Note"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 text-center py-2">No notes added yet.</p>
+                      )}
+
+                      {/* Add Note Form */}
+                      <form onSubmit={handleAddNote} className="relative">
+                        <textarea
+                          rows="2"
+                          value={newNoteContent}
+                          onChange={(e) => setNewNoteContent(e.target.value)}
+                          placeholder="Write a note..."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none bg-white mb-2"
+                        />
+                        <div className="flex items-center justify-between">
+                          <select
+                            value={newNoteVisibility}
+                            onChange={(e) => setNewNoteVisibility(e.target.value)}
+                            className="text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30"
+                          >
+                            <option value="Team">Team (Visible to all)</option>
+                            <option value="Private">Private (Only me)</option>
+                          </select>
+                          <button
+                            type="submit"
+                            disabled={!newNoteContent.trim() || isSubmittingNote}
+                            className="px-3 py-1.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-xs font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            {isSubmittingNote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Save
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   </div>
 
@@ -359,6 +563,16 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!noteToDelete}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={confirmDeleteNote}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmLabel="Delete Note"
+        cancelLabel="Cancel"
+      />
     </Dialog>
   );
 }
@@ -479,7 +693,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Description / Notes</label>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
                       <textarea rows="3" value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none" placeholder="Provide extra background..."></textarea>
                     </div>
                   </motion.div>
