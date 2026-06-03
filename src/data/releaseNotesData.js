@@ -36,6 +36,40 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-06-03",
+        version: "v8.2.0",
+        type: "minor",
+        category: "feature",
+        title: "CRM Notes Integration",
+        description: "Introduced a comprehensive Notes feature within the CRM Lead Management module to enhance team communication and lead tracking.",
+        updates: [
+          {
+            type: "feature",
+            title: "Lead-Specific Team Notes",
+            description: "Added a dynamic notes section within the Lead Details Drawer.",
+            details: "Users can now create, view, edit, and delete notes specific to individual leads. Notes are displayed chronologically with timestamps and creator identification.",
+            icon: MessageSquare,
+          },
+          {
+            type: "feature",
+            title: "Note Visibility Controls",
+            description: "Implemented privacy controls for sensitive information.",
+            details: "Notes can be marked as 'Team' (visible to all users with lead access) or 'Private' (visible only to the note creator). This visibility can be toggled interactively even after creation.",
+            icon: Shield,
+          },
+          {
+            type: "ui_ux",
+            title: "Inline Editing & Action Menus",
+            description: "Streamlined note modification with inline editing.",
+            details: "Added interactive Edit and Delete actions directly to note cards. Used the custom confirmation modal for safe deletions, avoiding jarring browser alerts.",
+            icon: Edit,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-06-01",
         version: "v8.1.0",
         type: "minor",

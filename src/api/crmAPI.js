@@ -249,6 +249,62 @@ class CrmAPI {
       throw error;
     }
   }
+
+  // --- Notes API ---
+  
+  async createNote(noteData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.NOTES}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(noteData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating note:", error);
+      throw error;
+    }
+  }
+
+  async getNotes(leadId) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.NOTES}/${encodeURIComponent(leadId)}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting notes:", error);
+      throw error;
+    }
+  }
+
+  async updateNote(noteId, updateData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.NOTES}/${encodeURIComponent(noteId)}`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify(updateData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating note:", error);
+      throw error;
+    }
+  }
+
+  async deleteNote(noteId) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.NOTES}/${encodeURIComponent(noteId)}`, {
+        method: "DELETE",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      throw error;
+    }
+  }
 }
 
 export default new CrmAPI();

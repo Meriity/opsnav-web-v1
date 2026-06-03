@@ -5,4 +5,6 @@ export const CRM_ENDPOINTS = {
   DASHBOARD: "/crm/dashboard",
   // Tasks
   TASKS: "/crm/tasks",
+  // Notes
+  NOTES: "/crm/notes",
 };
