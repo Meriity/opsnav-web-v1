@@ -36,6 +36,26 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-06-22",
+        version: "v8.2.1",
+        type: "patch",
+        category: "bugfix",
+        title: "CRM Module Visibility Fix",
+        description: "Fixed an issue where the CRM module was visible to users without proper access permissions.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "Access Control Fix for Work Selection",
+            description: "Removed hardcoded CRM access from the workspace selection view.",
+            details: "Previously, the CRM module was hardcoded to always be injected into the user's available modules list regardless of their actual permissions. The system now strictly respects the user's assigned access permissions from the server.",
+            icon: Lock,
+          }
+        ],
+        module: "Work Selection",
+        severity: "High",
+        status: "Released"
+      },
+      {
         date: "2026-06-03",
         version: "v8.2.0",
         type: "minor",
