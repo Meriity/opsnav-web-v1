@@ -35,10 +35,6 @@ function WorkSelection() {
       "crm",
     ];
 
-    if (!rawList.includes("crm")) {
-      rawList.push("crm");
-    }
-
     return rawList.sort((a, b) => {
       const indexA = preferredOrder.indexOf(a.toLowerCase());
       const indexB = preferredOrder.indexOf(b.toLowerCase());
