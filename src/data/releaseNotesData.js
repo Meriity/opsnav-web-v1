@@ -36,6 +36,87 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-06-23",
+        version: "v8.2.2",
+        type: "patch",
+        category: "bugfix",
+        title: "Print Media Filters & User Management Permissions",
+        description: "Introduced an Order Type filter for Print Media and fortified user management access controls.",
+        updates: [
+          {
+            type: "feature",
+            title: "Print Media Order Type Filter",
+            description: "Added a dynamic Order Type filter to the My Jobs view.",
+            details: "Users can now filter their Print Media jobs by specific order types (e.g., Real Estate, Vehicle, Commercial, Banners) alongside the client filter, enhancing job discovery and management.",
+            icon: Search,
+          },
+          {
+            type: "bugfix",
+            title: "Strict Superadmin Profile Protection",
+            description: "Prevented non-superadmins from modifying superadmin accounts.",
+            details: "Updated the User Management interface and global Table component to selectively hide the Edit option when regular admins attempt to edit a superadmin profile, displaying a placeholder dash instead to enforce strict role hierarchy.",
+            icon: ShieldCheck,
+          }
+        ],
+        module: "Print Media, Admin",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
+        date: "2026-06-22",
+        version: "v8.2.1",
+        type: "patch",
+        category: "bugfix",
+        title: "CRM Module Visibility Fix",
+        description: "Fixed an issue where the CRM module was visible to users without proper access permissions.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "Access Control Fix for Work Selection",
+            description: "Removed hardcoded CRM access from the workspace selection view.",
+            details: "Previously, the CRM module was hardcoded to always be injected into the user's available modules list regardless of their actual permissions. The system now strictly respects the user's assigned access permissions from the server.",
+            icon: Lock,
+          }
+        ],
+        module: "Work Selection",
+        severity: "High",
+        status: "Released"
+      },
+      {
+        date: "2026-06-03",
+        version: "v8.2.0",
+        type: "minor",
+        category: "feature",
+        title: "CRM Notes Integration",
+        description: "Introduced a comprehensive Notes feature within the CRM Lead Management module to enhance team communication and lead tracking.",
+        updates: [
+          {
+            type: "feature",
+            title: "Lead-Specific Team Notes",
+            description: "Added a dynamic notes section within the Lead Details Drawer.",
+            details: "Users can now create, view, edit, and delete notes specific to individual leads. Notes are displayed chronologically with timestamps and creator identification.",
+            icon: MessageSquare,
+          },
+          {
+            type: "feature",
+            title: "Note Visibility Controls",
+            description: "Implemented privacy controls for sensitive information.",
+            details: "Notes can be marked as 'Team' (visible to all users with lead access) or 'Private' (visible only to the note creator). This visibility can be toggled interactively even after creation.",
+            icon: Shield,
+          },
+          {
+            type: "ui_ux",
+            title: "Inline Editing & Action Menus",
+            description: "Streamlined note modification with inline editing.",
+            details: "Added interactive Edit and Delete actions directly to note cards. Used the custom confirmation modal for safe deletions, avoiding jarring browser alerts.",
+            icon: Edit,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-06-01",
         version: "v8.1.0",
         type: "minor",
