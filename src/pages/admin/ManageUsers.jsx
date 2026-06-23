@@ -850,6 +850,7 @@ export default function ManageUsers() {
                     }}
                     headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
                     hideDeleteForSuperadmin={hideDeleteForSuperadmin}
+                    hideEditForSuperadmin={(user) => user.role === "superadmin" && currentUserRole !== "superadmin"}
                     itemsPerPage={usersPerPage}
                     cellWrappingClass="whitespace-normal"
                     compact={true}
@@ -901,15 +902,19 @@ export default function ManageUsers() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 shrink-0">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleEditClick(user)}
-                          title="Edit"
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Edit size={18} />
-                        </motion.button>
+                        {user.role === "superadmin" && currentUserRole !== "superadmin" ? (
+                          <span className="text-gray-500 font-bold px-2 text-xl">&mdash;</span>
+                        ) : (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleEditClick(user)}
+                            title="Edit"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Edit size={18} />
+                          </motion.button>
+                        )}
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}

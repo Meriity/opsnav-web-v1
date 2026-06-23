@@ -157,6 +157,7 @@ const Table = ({
   isClients = false,
   compact = false,
   hideDeleteForSuperadmin,
+  hideEditForSuperadmin,
   hideActionLabels = false,
   isLoading = false,
 }) => {
@@ -350,7 +351,9 @@ const Table = ({
                     className={`px-1 lg:px-1 xl:px-2 ${cellPadding} rounded-r-2xl align-middle`}
                   >
                     <div className="flex flex-row items-center justify-center space-x-2">
-                      {onEdit && !["readonly", "read-only"].includes(localStorage.getItem("role")) && (
+                      {onEdit && (
+                        (!["readonly", "read-only"].includes(localStorage.getItem("role")) && 
+                         (!hideEditForSuperadmin || !hideEditForSuperadmin(item))) ? (
                           <button
                            onClick={() => onEdit(item)}
                            className="flex flex-col items-center p-1 text-[#2E3D99] hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
@@ -361,6 +364,7 @@ const Table = ({
                              <span className="text-[10px] lg:text-[9px] xl:text-[10px] 2xl:text-xs">Edit</span>
                            )}
                          </button>
+                        ) : (hideEditForSuperadmin && hideEditForSuperadmin(item) ? <span className="text-gray-500 font-bold px-2 text-lg">&mdash;</span> : null)
                       )}
                       {onDelete &&
                         !["readonly", "read-only"].includes(localStorage.getItem("role")) &&
