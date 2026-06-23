@@ -262,9 +262,17 @@ class ClientAPI {
     }
   }
 
-  async getMyJobs() {
+  async getMyJobs(clientId = null, orderType = null) {
     try {
-      const response = await fetch(`${this.baseUrl}/idg/orders/my-jobs`, {
+      const params = new URLSearchParams();
+      if (clientId) params.append("clientId", clientId);
+      if (orderType) params.append("orderType", orderType);
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `${this.baseUrl}/idg/orders/my-jobs?${queryString}`
+        : `${this.baseUrl}/idg/orders/my-jobs`;
+      const response = await fetch(url, {
         method: "GET",
         headers: this.getHeaders(),
       });

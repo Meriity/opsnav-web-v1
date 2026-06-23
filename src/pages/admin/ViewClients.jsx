@@ -99,10 +99,12 @@ const ViewClients = () => {
   const [commercialLoading, setCommercialLoading] = useState(false);
   const [commercialClients, setCommercialClients] = useState([]);
   const [selectedClientName, setSelectedClientName] = useState("");
+  const [selectedOrderType, setSelectedOrderType] = useState("");
   const [filterAllocatedUser, setFilterAllocatedUser] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const [myJobsClientList, setMyJobsClientList] = useState([]);
 
   // Drag and Drop State
   const [isDraggingMode, setIsDraggingMode] = useState(false);
@@ -312,28 +314,7 @@ const ViewClients = () => {
         }
       } else {
         if (currentModule === "print media" && isMyJobsView) {
-          setCommercialLoading(true);
-          setCommercialClients([]); // Clear old data before fetching new
-          try {
-            const response = await api.getMyJobs();
-            console.log("My Jobs response:", response);
-
-            const data = response?.orders || (Array.isArray(response) ? response : []);
-            
-            const transformedData = data.map((order) => ({
-              ...order,
-              id: order._id || order.orderId,
-              // Map some common keys if needed but we'll update column keys to match response
-              stages: [{ S1: "default" }]
-            }));
-
-            setCommercialClients(transformedData);
-          } catch (error) {
-            console.error("Error fetching my jobs:", error);
-            setCommercialClients([]);
-          } finally {
-            setCommercialLoading(false);
-          }
+          // Handled in a separate useEffect
         } else {
           fetchClients();
         }
@@ -344,6 +325,55 @@ const ViewClients = () => {
 
     fetchData();
   }, [currentModule, api, fetchClients, isMyJobsView]);
+
+  useEffect(() => {
+    if (currentModule === "print media" && isMyJobsView) {
+      const fetchDropdownClients = async () => {
+        try {
+          const response = await api.getIDGClients();
+          setMyJobsClientList(response);
+        } catch (error) {
+          console.error("Error fetching client list for my jobs:", error);
+        }
+      };
+      fetchDropdownClients();
+    }
+  }, [currentModule, isMyJobsView, api]);
+
+  useEffect(() => {
+    if (currentModule === "print media" && isMyJobsView) {
+      const fetchFilteredJobs = async () => {
+        setCommercialLoading(true);
+        try {
+          let clientId = null;
+          if (selectedClientName) {
+             const selectedClientObj = myJobsClientList.find(c => c.name === selectedClientName || c.clientName === selectedClientName || c.client_name === selectedClientName);
+             clientId = selectedClientObj ? (selectedClientObj._id || selectedClientObj.id || selectedClientObj.clientId) : null;
+          }
+          
+          const response = await api.getMyJobs(clientId, selectedOrderType);
+          console.log("My Jobs response:", response);
+
+          const data = response?.orders || (Array.isArray(response) ? response : []);
+          
+          const transformedData = data.map((order) => ({
+            ...order,
+            id: order._id || order.orderId,
+            stages: [{ S1: "default" }]
+          }));
+
+          setCommercialClients(transformedData);
+        } catch (error) {
+          console.error("Error fetching my jobs:", error);
+          setCommercialClients([]);
+        } finally {
+          setCommercialLoading(false);
+        }
+      };
+      
+      fetchFilteredJobs();
+    }
+  }, [currentModule, isMyJobsView, selectedClientName, selectedOrderType, api, myJobsClientList]);
 
   const filteredClients = useMemo(() => {
     let data = (currentModule === "commercial" || currentModule === "wills" || currentModule === "vocat" || isMyJobsView) ? commercialClients : Clients;
@@ -1231,8 +1261,8 @@ const ViewClients = () => {
                     </Menu>
                   </div>
 
-                  {/* Print Media Dropdowns - Admin Only */}
-                  {currentModule === "print media" && ["admin", "superadmin"].includes(userRole) && (
+                  {/* Print Media Dropdowns - Admin Only or My Jobs */}
+                  {currentModule === "print media" && (["admin", "superadmin"].includes(userRole) || isMyJobsView) && (
                     <div className="flex items-center gap-2">
                       <select
                         name="Client"
@@ -1241,35 +1271,53 @@ const ViewClients = () => {
                         onChange={(e) => handleClientFilterChange(e.target.value)}
                       >
                         <option value="">All Clients</option>
-                        {list.map((client, index) => (
+                        {(isMyJobsView ? myJobsClientList : list).map((client, index) => (
                           <option
                             key={
-                              client._id || client.id || `${client.name}-${index}`
+                              client._id || client.id || client.clientId || `${client.name || client.clientName || client.client_name}-${index}`
                             }
-                            value={client.name}
+                            value={client.name || client.clientName || client.client_name}
                           >
-                            {client.name}
+                            {client.name || client.clientName || client.client_name}
                           </option>
                         ))}
                       </select>
 
-                      <select
-                        name="AllocatedUser"
-                        className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
-                        value={filterAllocatedUser}
-                        onChange={(e) => setFilterAllocatedUser(e.target.value)}
-                      >
-                        <option value="">All Users</option>
-                        <option value="N/A">N/A</option>
-                        {user.map((u, index) => (
-                          <option
-                            key={u.id || `${u.name}-${index}`}
-                            value={u.name}
-                          >
-                            {u.name}
-                          </option>
-                        ))}
-                      </select>
+                      {isMyJobsView && (
+                        <select
+                          name="OrderType"
+                          className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
+                          value={selectedOrderType}
+                          onChange={(e) => setSelectedOrderType(e.target.value)}
+                        >
+                          <option value="">All Types</option>
+                          <option value="Real Estate">Real Estate</option>
+                          <option value="Vehicle">Vehicle</option>
+                          <option value="Commercial">Commercial</option>
+                          <option value="Banners">Banners</option>
+                          <option value="Others">Others</option>
+                        </select>
+                      )}
+
+                      {!isMyJobsView && ["admin", "superadmin"].includes(userRole) && (
+                        <select
+                          name="AllocatedUser"
+                          className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
+                          value={filterAllocatedUser}
+                          onChange={(e) => setFilterAllocatedUser(e.target.value)}
+                        >
+                          <option value="">All Users</option>
+                          <option value="N/A">N/A</option>
+                          {user.map((u, index) => (
+                            <option
+                              key={u.id || `${u.name}-${index}`}
+                              value={u.name}
+                            >
+                              {u.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   )}
                 </div>

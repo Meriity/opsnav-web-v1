@@ -36,6 +36,33 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-06-23",
+        version: "v8.2.2",
+        type: "patch",
+        category: "bugfix",
+        title: "Print Media Filters & User Management Permissions",
+        description: "Introduced an Order Type filter for Print Media and fortified user management access controls.",
+        updates: [
+          {
+            type: "feature",
+            title: "Print Media Order Type Filter",
+            description: "Added a dynamic Order Type filter to the My Jobs view.",
+            details: "Users can now filter their Print Media jobs by specific order types (e.g., Real Estate, Vehicle, Commercial, Banners) alongside the client filter, enhancing job discovery and management.",
+            icon: Search,
+          },
+          {
+            type: "bugfix",
+            title: "Strict Superadmin Profile Protection",
+            description: "Prevented non-superadmins from modifying superadmin accounts.",
+            details: "Updated the User Management interface and global Table component to selectively hide the Edit option when regular admins attempt to edit a superadmin profile, displaying a placeholder dash instead to enforce strict role hierarchy.",
+            icon: ShieldCheck,
+          }
+        ],
+        module: "Print Media, Admin",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-06-22",
         version: "v8.2.1",
         type: "patch",
