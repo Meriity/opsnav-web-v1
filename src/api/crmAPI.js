@@ -104,6 +104,20 @@ class CrmAPI {
     }
   }
 
+  // Get single lead by ID
+  async getLeadById(leadId) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching CRM lead by ID:", error);
+      throw error;
+    }
+  }
+
   // Update lead status
   async updateLeadStatus(leadId, status) {
     try {
@@ -232,6 +246,255 @@ class CrmAPI {
       return await this.handleResponse(response);
     } catch (error) {
       console.error("Error fetching tasks for lead:", error);
+      throw error;
+    }
+  }
+
+  // --- Contacts API ---
+
+  async getAllContacts(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParams.append(key, value);
+        }
+      });
+      const qs  = queryParams.toString();
+      const url = `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}${qs ? `?${qs}` : ""}`;
+      const response = await fetch(url, { method: "GET", headers: this.getHeaders() });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting CRM contacts:", error);
+      throw error;
+    }
+  }
+
+  async getContactById(contactId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}/${encodeURIComponent(contactId)}`,
+        { method: "GET", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching CRM contact by ID:", error);
+      throw error;
+    }
+  }
+
+  async createContact(contactData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(contactData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating CRM contact:", error);
+      throw error;
+    }
+  }
+
+  // PATCH /crm/contacts/:id  (no /update suffix — matches the API spec)
+  async updateContact(contactId, updatedFields) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}/${encodeURIComponent(contactId)}`,
+        {
+          method: "PATCH",
+          headers: this.getHeaders(),
+          body: JSON.stringify(updatedFields),
+        }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating CRM contact:", error);
+      throw error;
+    }
+  }
+
+  // DELETE /crm/contacts/:id  (no /delete suffix — matches the API spec)
+  async deleteContact(contactId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}/${encodeURIComponent(contactId)}`,
+        { method: "DELETE", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error deleting CRM contact:", error);
+      throw error;
+    }
+  }
+
+  // PATCH /crm/contacts/:id/restore
+  async restoreContact(contactId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}/${encodeURIComponent(contactId)}/restore`,
+        { method: "PATCH", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error restoring CRM contact:", error);
+      throw error;
+    }
+  }
+
+  // GET /crm/contacts/duplicate-check?email=&phone=&name=
+  async duplicateCheck({ email = "", phone = "", name = "" } = {}) {
+    try {
+      const qs = new URLSearchParams({ email, phone, name }).toString();
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.CONTACTS}/duplicate-check?${qs}`,
+        { method: "GET", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error checking contact duplicate:", error);
+      throw error;
+    }
+  }
+
+  // --- Companies API ---
+
+  async getAllCompanies(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParams.append(key, value);
+        }
+      });
+      const qs  = queryParams.toString();
+      const url = `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}${qs ? `?${qs}` : ""}`;
+      const response = await fetch(url, { method: "GET", headers: this.getHeaders() });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting CRM companies:", error);
+      throw error;
+    }
+  }
+
+  async getCompanyById(companyId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}`,
+        { method: "GET", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching CRM company by ID:", error);
+      throw error;
+    }
+  }
+
+  async createCompany(companyData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(companyData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating CRM company:", error);
+      throw error;
+    }
+  }
+
+  async updateCompany(companyId, updatedFields) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}`,
+        {
+          method: "PATCH",
+          headers: this.getHeaders(),
+          body: JSON.stringify(updatedFields),
+        }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating CRM company:", error);
+      throw error;
+    }
+  }
+
+  async deleteCompany(companyId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}`,
+        { method: "DELETE", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error deleting CRM company:", error);
+      throw error;
+    }
+  }
+
+  // GET /crm/companies/:id/contacts
+  async getCompanyContacts(companyId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}/contacts`,
+        { method: "GET", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error fetching company contacts:", error);
+      throw error;
+    }
+  }
+
+  // POST /crm/companies/:id/contacts/new  — creates a new contact AND links it
+  async createAndLinkContact(companyId, contactData) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}/contacts/new`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(contactData),
+        }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating and linking contact:", error);
+      throw error;
+    }
+  }
+
+  // POST /crm/companies/:id/contacts/link  — body: { contactId }
+  async linkContactToCompany(companyId, contactId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}/contacts/link`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify({ contactId }),
+        }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error linking contact to company:", error);
+      throw error;
+    }
+  }
+
+  // DELETE /crm/companies/:id/contacts/:contactId
+  async unlinkContactFromCompany(companyId, contactId) {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${CRM_ENDPOINTS.COMPANIES}/${encodeURIComponent(companyId)}/contacts/${encodeURIComponent(contactId)}`,
+        { method: "DELETE", headers: this.getHeaders() }
+      );
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error unlinking contact from company:", error);
       throw error;
     }
   }

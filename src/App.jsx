@@ -4,6 +4,11 @@ import ReferenceMatter from "./pages/admin/ReferenceMatter";
 import WillsResetPassword from "./pages/wills/WillsResetPassword";
 import DealsBoard from "./pages/crm/DealsBoard";
 import Leads from "./pages/crm/Leads";
+import LeadDetailPage from "./pages/crm/LeadDetailPage";
+import Contacts from "./pages/crm/Contacts";
+import Companies from "./pages/crm/Companies";
+import CompanyDetailPage from "./pages/crm/CompanyDetailPage";
+import ContactDetailPage from "./pages/crm/ContactDetailPage";
 import CrmDashboard from "./pages/crm/CrmDashboard";
 
 import AppLayout from "./components/layout/AppLayout";
@@ -110,7 +115,11 @@ function App() {
           />
           <Route path="crm/deals" element={<DealsBoard />} />
           <Route path="crm/leads" element={<Leads />} />
-          <Route path="crm/contacts" element={<Navigate to="/admin/crm/leads" replace />} />
+          <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
+          <Route path="crm/contacts" element={<Contacts />} />
+          <Route path="crm/contacts/:contactId" element={<ContactDetailPage />} />
+          <Route path="crm/companies" element={<Companies />} />
+          <Route path="crm/companies/:companyId" element={<CompanyDetailPage />} />
           <Route path="crm/dashboard" element={<CrmDashboard />} />
         </Route>
 
