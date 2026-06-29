@@ -7,4 +7,8 @@ export const CRM_ENDPOINTS = {
   TASKS: "/crm/tasks",
   // Notes
   NOTES: "/crm/notes",
+  // Contacts
+  CONTACTS: "/crm/contacts",
+  // Companies
+  COMPANIES: "/crm/companies",
 };
