@@ -156,6 +156,7 @@ function EditCompanyModal({ company, onClose, onSaved }) {
   const [form, setForm]     = useState({
     companyName:  company.companyName ?? "",
     industry:     company.industry    ?? "",
+    companySize:  company.companySize ?? "",
     email:        company.email       ?? "",
     phone:        company.phone       ?? "",
     website:      company.website     ?? "",
@@ -214,8 +215,8 @@ function EditCompanyModal({ company, onClose, onSaved }) {
             />
           </div>
 
-          {/* Industry + Company Type */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Industry + Company Type + Company Size */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">Industry</label>
               <select
@@ -225,6 +226,21 @@ function EditCompanyModal({ company, onClose, onSaved }) {
               >
                 <option value="">Select industry</option>
                 {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Company Size</label>
+              <select
+                value={form.companySize}
+                onChange={(e) => set("companySize", e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99]/60 bg-white"
+              >
+                <option value="">Select size</option>
+                <option value="1-10">1-10</option>
+                <option value="11-50">11-50</option>
+                <option value="51-200">51-200</option>
+                <option value="201-500">201-500</option>
+                <option value="500+">500+</option>
               </select>
             </div>
             <div>
@@ -246,7 +262,7 @@ function EditCompanyModal({ company, onClose, onSaved }) {
             <input
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
-              placeholder="+61 2 1234 5678"
+              placeholder="+61 4xx xxx xxx"
               className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99]/60"
             />
           </div>
@@ -1031,6 +1047,7 @@ export default function CompanyDetailPage() {
                     <InfoRow label="Company Name"  value={companyName} />
                     <InfoRow label="Industry"      value={company.industry} />
                     <InfoRow label="Company Type"  value={company.companyType} />
+                    <InfoRow label="Company Size"  value={company.companySize} />
                     <InfoRow label="ABN"           value={company.abn} />
                     <InfoRow label="Phone"         value={company.phone} />
                     <InfoRow label="Email"         value={

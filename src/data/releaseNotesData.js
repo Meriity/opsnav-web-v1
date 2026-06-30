@@ -41,6 +41,40 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-06-30",
+        version: "v8.3.1",
+        type: "patch",
+        category: "improvement",
+        title: "Company Size Field & UX Enhancements",
+        description: "Added a new Company Size field across the CRM module and improved form validations for website and phone inputs.",
+        updates: [
+          {
+            type: "feature",
+            title: "Company Size Tracking",
+            description: "Introduced a Company Size field to track company scales.",
+            details: "Added a 'Company Size' dropdown to the Add and Edit Company modals with ranges from '1-10' to '500+'. This field is also now visible on the main Companies table and within the Key Information section on the Company Detail page.",
+            icon: Building2,
+          },
+          {
+            type: "ui_ux",
+            title: "Relaxed Website Validation",
+            description: "Website URLs no longer strictly require 'https://' to be entered.",
+            details: "Changed the input type of the Website field from 'url' to 'text' to prevent browser blocking. The system now seamlessly accepts standard domains (like 'opsnav.com') and automatically prepends 'https://' behind the scenes for redirection.",
+            icon: Sparkles,
+          },
+          {
+            type: "ui_ux",
+            title: "Standardized Phone Placeholders",
+            description: "Updated all phone input placeholders to reflect Australian formatting.",
+            details: "Standardized phone placeholders across the 'New Contact', 'Add Company', and 'Edit Company' modals to consistently use the '+61 4xx xxx xxx' format.",
+            icon: Phone,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-06-25",
         version: "v8.3.0",
         type: "minor",
