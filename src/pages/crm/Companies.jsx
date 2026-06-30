@@ -109,6 +109,7 @@ const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50];
 const TABLE_COLS = [
   { key: "companyName",   label: "Company Name",    sortable: true,  center: false },
   { key: "industry",      label: "Industry",         sortable: true,  center: false },
+  { key: "companySize",   label: "Company Size",     sortable: true,  center: false },
   { key: "health",        label: "Company Health",   sortable: false, center: false },
   { key: "contacts",      label: "Contacts",         sortable: true,  center: true  },
   { key: "openLeads",     label: "Open Leads",       sortable: true,  center: true  },
@@ -235,7 +236,7 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
 
 const CompanyFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
   const [form, setForm] = useState({
-    companyName: "", industry: "", email: "",
+    companyName: "", industry: "", companySize: "", email: "",
     phone: "", website: "", address: "", companyType: "Client", tags: [],
   });
   const [saving, setSaving] = useState(false);
@@ -245,13 +246,14 @@ const CompanyFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
       setForm(initialData ? {
         companyName: initialData.companyName || "",
         industry:    initialData.industry    || "",
+        companySize: initialData.companySize || "",
         email:       initialData.email       || "",
         phone:       initialData.phone       || "",
         website:     initialData.website     || "",
         address:     initialData.address     || "",
         companyType: initialData.companyType || "Client",
         tags:        initialData.tags        || [],
-      } : { companyName: "", industry: "", email: "", phone: "", website: "", address: "", companyType: "Client", tags: [] });
+      } : { companyName: "", industry: "", companySize: "", email: "", phone: "", website: "", address: "", companyType: "Client", tags: [] });
     }
   }, [isOpen, initialData]);
 
@@ -317,7 +319,7 @@ const CompanyFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {/* Industry */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1.5">Industry</label>
@@ -328,6 +330,22 @@ const CompanyFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                       >
                         <option value="">Select industry</option>
                         {INDUSTRIES.filter(i => i !== "All").map(i => <option key={i}>{i}</option>)}
+                      </select>
+                    </div>
+                    {/* Company Size */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">Company Size</label>
+                      <select
+                        value={form.companySize}
+                        onChange={e => setForm(p => ({ ...p, companySize: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99] transition-all bg-white"
+                      >
+                        <option value="">Select size</option>
+                        <option value="1-10">1-10</option>
+                        <option value="11-50">11-50</option>
+                        <option value="51-200">51-200</option>
+                        <option value="201-500">201-500</option>
+                        <option value="500+">500+</option>
                       </select>
                     </div>
                     {/* Company Type */}
@@ -345,10 +363,10 @@ const CompanyFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
 
                   <div className="grid grid-cols-2 gap-3">
                     {field("Email", "email", "email", "info@company.com")}
-                    {field("Phone", "phone", "tel",   "+61 2 0000 0000")}
+                    {field("Phone", "phone", "tel",   "+61 4xx xxx xxx")}
                   </div>
 
-                  {field("Website", "website", "url", "https://company.com")}
+                  {field("Website", "website", "text", "https://company.com")}
                   {field("Address", "address", "text", "Street, City, State, Postcode")}
 
                   <div className="flex gap-3 pt-2">
@@ -805,6 +823,13 @@ export default function Companies() {
                             <Briefcase size={11} className="text-slate-400 shrink-0" />
                             <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{company.industry}</span>
                           </div>
+                        ) : <span className="text-slate-300">—</span>}
+                      </td>
+
+                      {/* Company Size */}
+                      <td className={cell}>
+                        {company.companySize ? (
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{company.companySize}</span>
                         ) : <span className="text-slate-300">—</span>}
                       </td>
 

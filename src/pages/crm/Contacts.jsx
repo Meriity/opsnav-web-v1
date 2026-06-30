@@ -210,7 +210,7 @@ const ContactFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                       <input
                         type="tel" value={form.phone}
                         onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="+61 4xx xxx xxx"
                         className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99] transition-all"
                       />
                     </div>
