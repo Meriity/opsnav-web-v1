@@ -340,10 +340,253 @@ export default function ContactDetailPage() {
   const activities    = contact.activities || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
+    <div className="min-h-screen bg-slate-50 md:bg-slate-50">
+      
+      {/* ── Mobile Layout ── */}
+      <div className="block md:hidden pb-24 bg-[#F8FAFC]">
+        {/* Top Navigation */}
+        <div className="h-16 bg-white px-6 flex items-center justify-between border-b border-[#E5E7EB]">
+          <button onClick={() => navigate("/admin/crm/contacts")} className="flex items-center gap-1.5 text-[15px] font-medium text-[#0F172A]">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex items-center gap-5">
+            <Phone size={18} className="text-[#0F172A]" />
+            <Mail size={18} className="text-[#0F172A]" />
+          </div>
+        </div>
 
-      <main className="px-6 py-5 max-w-[1600px] mx-auto">
+        {/* Profile Hero */}
+        <div className="pt-8 pb-6 px-5 flex flex-col items-center">
+          <Avatar name={fullName} size="xl" className="w-20 h-20 text-3xl mb-4" />
+          <h2 className="text-[22px] font-semibold text-[#0F172A]">{fullName}</h2>
+          <span className="mt-2 bg-[#22C55E]/10 text-[#22C55E] px-3 py-1 rounded-full text-[13px] font-medium">
+            {contact.type || "Lead"}
+          </span>
+          <p className="text-[15px] font-medium text-[#1D97D7] mt-2">{contact.company || "—"}</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-5 grid grid-cols-4 gap-4 mb-6">
+          {[
+            { icon: Phone, label: "Call" },
+            { icon: Mail, label: "Email" },
+            { icon: Edit, label: "Edit" },
+            { icon: MoreVertical, label: "More" },
+          ].map(a => (
+            <button key={a.label} className="bg-white h-[72px] rounded-[16px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] flex flex-col items-center justify-center gap-2 border border-[#E5E7EB]/50">
+              <a.icon size={18} className="text-[#0F172A]" />
+              <span className="text-[13px] font-medium text-[#0F172A]">{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="px-5 space-y-4">
+          {/* Contact Health Card */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Contact Health</h3>
+              <span className="bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full text-[13px] font-medium">{healthLabel}</span>
+            </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                <div className="h-full bg-[#22C55E] rounded-full" style={{ width: `${healthScore}%` }} />
+              </div>
+              <span className="text-[13px] font-semibold text-[#0F172A]">{healthScore} / 100</span>
+            </div>
+            <div className="space-y-3">
+              {(contact.healthChecks || [
+                { label: "Recent interaction: 2 days ago" },
+                { label: "No overdue tasks" },
+                { label: `${leads.length || 2} active leads` },
+              ]).map((chk, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <CheckCircle2 size={16} className="text-[#22C55E]" />
+                  <span className="text-[13px] font-medium text-[#0F172A]">{chk.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Key Information */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Key Information</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Mail size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{contact.email || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Email</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Phone size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{contact.phone || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Mobile</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pb-1">
+                <User size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{contact.type || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Status</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Company Information */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Company Information</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Building2 size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{contact.companyId?.companyName || contact.company || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">{contact.companyId?.companyType || "Client"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Tag size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[11px] font-semibold text-[#64748B]">Industry</p>
+                  <p className="text-[13px] font-medium text-[#64748B]">{contact.companyId?.industry || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pb-1">
+                <Globe size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[11px] font-semibold text-[#64748B]">Website</p>
+                  <p className="text-[13px] font-medium text-[#64748B] truncate ml-4">{contact.companyId?.website || "—"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Recent Activity</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{activities.length} recent events</p>
+            
+            <div className="space-y-4">
+              {activities.slice(0, 3).map((act, i) => {
+                const IconC = ACTIVITY_ICON_CONFIG[act.type]?.icon || MessageSquare;
+                return (
+                  <div key={i} className="flex gap-3 items-center">
+                    <div className="w-8 h-8 rounded-full bg-[#F8FAFC] flex items-center justify-center shrink-0">
+                      <IconC size={14} className="text-[#22C55E]" />
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-semibold text-[#0F172A]">{act.type}</p>
+                      <p className="text-[13px] font-medium text-[#64748B]">{fmtDate(act.date)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Leads */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Leads</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{leads.length} open leads</p>
+            <div className="space-y-4">
+              {leads.slice(0, 2).map((lead, i) => (
+                <div key={i} className="flex gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                  <div className="w-8 h-8 rounded-full bg-[#22C55E]/10 flex items-center justify-center shrink-0">
+                    <Zap size={14} className="text-[#22C55E]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[15px] font-semibold text-[#0F172A]">{lead.title}</p>
+                    <div className="flex gap-2 items-center mt-1">
+                      <span className="text-[#64748B] text-[13px] font-medium">{lead.value ? `$${Number(lead.value).toLocaleString()}` : "—"}</span>
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${LEAD_STAGE_STYLES[lead.status] || "bg-slate-100 text-slate-500"}`}>{lead.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tasks */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Tasks</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{tasks.length} tasks</p>
+            {tasks.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-[15px] font-semibold text-[#0F172A]">No tasks yet</p>
+                <p className="text-[13px] text-[#64748B] mt-1 mb-4">Create a task to follow up with this contact.</p>
+                <button className="text-[#1D97D7] text-[13px] font-semibold flex items-center gap-1 justify-center w-full">
+                  <Plus size={14} /> Add New Task
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tasks.slice(0, 2).map((task, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#F8FAFC] flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckSquare size={14} className="text-[#64748B]" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[15px] font-semibold text-[#0F172A]">{task.title}</p>
+                      <p className="text-[13px] font-medium text-[#64748B] mt-0.5">{fmtDate(task.dueDate)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Notes */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Notes</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{notes.length} notes</p>
+            <div className="space-y-4">
+              {notes.slice(0, 3).map((note, i) => (
+                <div key={i} className="flex gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                  <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText size={14} className="text-amber-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[13px] font-medium text-[#0F172A] line-clamp-2">{note.content}</p>
+                    <p className="text-[11px] font-medium text-[#64748B] mt-1.5">{fmtDate(note.createdAt)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky Bottom CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F8FAFC]/90 backdrop-blur-md z-50 pb-safe">
+          <button className="w-full h-[56px] bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-[20px] font-semibold text-[15px] shadow-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+            <Plus size={18} /> Create Lead
+          </button>
+        </div>
+      </div>
+
+      {/* ── Desktop Layout ── */}
+      <div className="hidden md:block">
+        <Header />
+        <main className="px-6 py-5 max-w-[1600px] mx-auto">
 
         {/* ── Breadcrumb / Actions ─────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-5">
@@ -356,43 +599,44 @@ export default function ContactDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate("/admin/crm/contacts")}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]"
             >
               <ArrowLeft size={13} />
-              Back to Contacts
+              <span className="hidden xl:inline">Back to Contacts</span>
+              <span className="inline xl:hidden">Back</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+            <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]">
               <Edit size={13} />
-              Edit Contact
+              Edit<span className="hidden xl:inline">&nbsp;Contact</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+            <button className="hidden xl:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]">
               <Plus size={13} />
               Add Note
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+            <button className="hidden xl:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]">
               <Zap size={13} />
               Create Lead
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm">
+            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-[0.98]">
               <Phone size={13} />
               Call
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm">
+            <button className="hidden xl:flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-[0.98]">
               <Mail size={13} />
               Email
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:bg-white hover:border hover:border-slate-200 transition-all shadow-sm">
+            <button className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:bg-white hover:border hover:border-slate-200 transition-all shadow-sm active:scale-[0.98]">
               <MoreVertical size={15} />
             </button>
           </div>
         </div>
 
         {/* ── Profile Header Card ──────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
-          <div className="flex items-start gap-8">
-
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.08)] p-5 mb-5 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] xl:grid-cols-[auto_1fr_auto] items-start gap-6 md:gap-8">
+            
             {/* Avatar + Name */}
-            <div className="flex items-center gap-4 min-w-[220px]">
+            <div className="flex items-center gap-4 min-w-[200px] xl:min-w-[220px]">
               <Avatar name={fullName} size="xl" />
               <div>
                 <h2 className="text-xl font-bold text-slate-900">{fullName}</h2>
@@ -406,11 +650,8 @@ export default function ContactDetailPage() {
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="w-px self-stretch bg-slate-100 mx-2" />
-
             {/* Contact quick-info */}
-            <div className="flex-1 grid grid-cols-2 gap-x-12 gap-y-3">
+            <div className="flex-1 grid grid-cols-2 gap-x-4 md:gap-x-6 gap-y-4 md:border-l md:border-slate-100 md:pl-6 xl:border-none xl:pl-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <Phone size={14} className="text-slate-500" />
@@ -425,7 +666,7 @@ export default function ContactDetailPage() {
                   <User size={14} className="text-slate-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-0.5">Preferred Contact Method</p>
+                  <p className="text-xs text-slate-500 mb-0.5">Preferred Contact</p>
                   <p className="text-xs font-bold text-slate-800">{contact.preferredContact || "Email"}</p>
                 </div>
               </div>
@@ -447,7 +688,7 @@ export default function ContactDetailPage() {
                   <p className="text-xs font-bold text-slate-800">{contact.localTime || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 md:col-span-2 xl:col-span-1 xl:mt-2">
                 <Avatar name={contact.assignedToName || "Unassigned"} size="sm" />
                 <div>
                   <p className="text-xs text-slate-500 mb-0.5">Owner</p>
@@ -456,11 +697,8 @@ export default function ContactDetailPage() {
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="w-px self-stretch bg-slate-100 mx-2" />
-
-            {/* Contact Health */}
-            <div className="min-w-[200px]">
+            {/* Contact Health (Desktop Only) */}
+            <div className="hidden xl:block min-w-[200px] border-l border-slate-100 pl-8">
               <div className="flex items-center gap-2 mb-2">
                 <p className="text-xs font-bold text-slate-700">Contact Health</p>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -494,8 +732,8 @@ export default function ContactDetailPage() {
           </div>
         </div>
 
-        {/* ── Row 2: Key Info | Company Info | Leads ───────────────────── */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* ── Responsive Content Grid ───────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-[20px] xl:gap-4 mb-4 pb-12">
 
           {/* Key Information */}
           <SectionCard
@@ -617,6 +855,35 @@ export default function ContactDetailPage() {
             })()}
           </SectionCard>
 
+          {/* Contact Health (Tablet Only) */}
+          <div className="block xl:hidden">
+            <SectionCard title="Contact Health">
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${healthBg}`}
+                      style={{ width: `${healthScore}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-600">{healthScore} / 100</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {(contact.healthChecks || [
+                    { label: "Recent interaction: 2 days ago", ok: true },
+                    { label: "No overdue tasks",               ok: true },
+                    { label: `${leads.length || 2} active leads`, ok: true },
+                  ]).map((chk, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-[11px] text-slate-600 font-medium leading-snug">{chk.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+
           {/* Leads */}
           <SectionCard
             title={`Leads (${leads.length})`}
@@ -663,10 +930,6 @@ export default function ContactDetailPage() {
               </button>
             </div>
           </SectionCard>
-        </div>
-
-        {/* ── Row 3: Interactions | Tasks | Notes ───────────────────────── */}
-        <div className="grid grid-cols-3 gap-4">
 
           {/* Interactions & Activity */}
           <SectionCard
@@ -766,7 +1029,8 @@ export default function ContactDetailPage() {
           </SectionCard>
 
           {/* Notes */}
-          <SectionCard
+          <div className="md:col-span-2 xl:col-span-1">
+            <SectionCard
             title={`Notes (${notes.length})`}
             action={
               <div className="flex items-center gap-2">
@@ -799,8 +1063,10 @@ export default function ContactDetailPage() {
               </button>
             </div>
           </SectionCard>
+          </div>
         </div>
       </main>
+      </div>
 
       {/* ── Link Company Modal ───────────────────────────────────────── */}
       <AnimatePresence>

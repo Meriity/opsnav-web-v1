@@ -478,15 +478,15 @@ export default function Contacts() {
   const cellR = `${cell} rounded-r-xl border-r`;
 
   const TABLE_COLS = [
-    { key: "contactId",      label: "Contact ID",    sortable: true,  center: false },
+    { key: "contactId",      label: "Contact ID",    sortable: true,  center: false, hideOn: "lg" },
     { key: "firstName",      label: "Contact Name",  sortable: true,  center: false },
     { key: "company",        label: "Company",       sortable: true,  center: false },
-    { key: "email",          label: "Email",         sortable: false, center: false },
+    { key: "email",          label: "Email",         sortable: false, center: false, hideOn: "lg" },
     { key: "phone",          label: "Phone",         sortable: false, center: true  },
     { key: "type",           label: "Type",          sortable: false, center: true  },
-    { key: "openLeads",      label: "Open Leads",    sortable: false, center: true  },
-    { key: "assignedToName", label: "Owner",         sortable: false, center: true  },
-    { key: "lastActivity",   label: "Last Activity", sortable: false, center: true  },
+    { key: "openLeads",      label: "Open Leads",    sortable: false, center: true,  hideOn: "lg" },
+    { key: "assignedToName", label: "Owner",         sortable: false, center: true,  hideOn: "xl" },
+    { key: "lastActivity",   label: "Last Activity", sortable: false, center: true,  hideOn: "xl" },
     { key: "actions",        label: "Actions",       sortable: false, center: true  },
   ];
 
@@ -497,25 +497,25 @@ export default function Contacts() {
       <main className="px-6 py-6 max-w-[1600px] mx-auto">
 
         {/* ── Page Header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Contacts</h1>
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-slate-900 truncate">Contacts</h1>
             <p className="text-sm text-slate-500 mt-0.5">
               Manage people, customer relationships, and lead contacts in one place.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
               <Filter size={15} />
               Filter
             </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
               <SlidersHorizontal size={15} />
               Sort
             </button>
             <button
               onClick={() => setFormState({ isOpen: true, contact: null })}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
               <Plus size={16} />
               New Contact
@@ -563,16 +563,16 @@ export default function Contacts() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
 
           {/* Table header bar */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-4 border-b border-slate-100 gap-3 sm:gap-0">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-bold text-slate-800">All Contacts</h2>
-              <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+              <h2 className="text-sm font-bold text-slate-800 whitespace-nowrap">All Contacts</h2>
+              <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 whitespace-nowrap">
                 {filtered.length.toLocaleString()} results
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Eye size={13} className="text-slate-300" />
-              Click a contact to view full profile
+              <Eye size={13} className="text-slate-300 shrink-0" />
+              <span className="truncate">Click a contact to view full profile</span>
             </div>
           </div>
 
@@ -593,23 +593,24 @@ export default function Contacts() {
             ))}
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto px-3 pb-3">
+          {/* Table (Hidden on Mobile) */}
+          <div className="hidden md:block overflow-x-auto px-3 pb-3">
             <table className="w-full text-sm border-separate border-spacing-y-1.5">
               <thead>
                 <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
                   {TABLE_COLS.map((col, idx, arr) => (
-                    <th
-                      key={col.key}
-                      onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                      className={[
-                        "px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/90 whitespace-nowrap",
-                        col.center ? "text-center" : "text-left",
-                        col.sortable ? "cursor-pointer hover:text-white select-none" : "",
-                        idx === 0 ? "rounded-l-xl" : "",
-                        idx === arr.length - 1 ? "rounded-r-xl" : "",
-                      ].join(" ")}
-                    >
+                      <th
+                        key={col.key}
+                        onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                        className={[
+                          "px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/90 whitespace-nowrap",
+                          col.center ? "text-center" : "text-left",
+                          col.sortable ? "cursor-pointer hover:text-white select-none" : "",
+                          idx === 0 ? "rounded-l-xl" : "",
+                          idx === arr.length - 1 ? "rounded-r-xl" : "",
+                          col.hideOn === "lg" ? "hidden lg:table-cell" : col.hideOn === "xl" ? "hidden xl:table-cell" : "",
+                        ].join(" ")}
+                      >
                       <div className={`flex items-center gap-1.5 ${col.center ? "justify-center" : ""}`}>
                         {col.label}
                         {col.sortable && <SortIcon col={col.key} sortConfig={sortConfig} />}
@@ -624,12 +625,14 @@ export default function Contacts() {
                   Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       {TABLE_COLS.map((col, j) => (
-                        <td
-                          key={j}
-                          className={`px-4 py-3 bg-white border-y border-slate-100 ${
-                            j === 0 ? "rounded-l-xl border-l" : ""
-                          } ${j === TABLE_COLS.length - 1 ? "rounded-r-xl border-r" : ""}`}
-                        >
+                          <td
+                            key={j}
+                            className={`px-4 py-3 bg-white border-y border-slate-100 ${
+                              j === 0 ? "rounded-l-xl border-l" : ""
+                            } ${j === TABLE_COLS.length - 1 ? "rounded-r-xl border-r" : ""} ${
+                              col.hideOn === "lg" ? "hidden lg:table-cell" : col.hideOn === "xl" ? "hidden xl:table-cell" : ""
+                            }`}
+                          >
                           <div className="h-4 bg-slate-100 rounded w-full" />
                         </td>
                       ))}
@@ -676,7 +679,7 @@ export default function Contacts() {
                     >
 
                       {/* Contact ID */}
-                      <td className={cellL} onClick={e => e.stopPropagation()}>
+                      <td className={`${cellL} ${TABLE_COLS[0].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[0].hideOn === "xl" ? "hidden xl:table-cell" : ""}`} onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => navigate(`/admin/crm/contacts/${contact._id ?? contact.id}`, { state: { contact } })}
                           className="text-[#1D97D7] font-bold text-xs whitespace-nowrap hover:underline"
@@ -706,7 +709,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Email */}
-                      <td className={cell}>
+                      <td className={`${cell} ${TABLE_COLS[3].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[3].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         <a
                           href={`mailto:${contact.email}`}
                           onClick={e => e.stopPropagation()}
@@ -735,7 +738,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Open Leads — centered */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[6].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[6].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         <span className={`text-xs font-bold ${
                           (contact.openLeads || 0) > 0 ? "text-[#2E3D99]" : "text-slate-300"
                         }`}>
@@ -744,7 +747,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Owner — centered */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[7].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[7].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         {contact.assignedToName ? (
                           <div className="flex items-center justify-center">
                             <Avatar name={contact.assignedToName} size="sm" />
@@ -755,7 +758,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Last Activity — centered */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[8].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[8].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         {activity ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
@@ -797,6 +800,77 @@ export default function Contacts() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="block md:hidden px-4 pb-4 mt-2">
+            {loading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-2xl" />
+                ))}
+              </div>
+            ) : paginated.length === 0 ? (
+              <div className="py-12 text-center bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-sm font-semibold text-slate-600 mb-1">No contacts found</p>
+                <p className="text-xs text-slate-400">
+                  {searchQuery ? "Try adjusting your search" : "Add your first contact"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paginated.map((contact) => {
+                  const fullName  = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
+                  const displayId = contact.contactId || `CT-${(contact.id || "").slice(-4).toUpperCase()}`;
+                  const typeStyle = TYPE_STYLES[contact.type] || "bg-slate-100 text-slate-500 border border-slate-200";
+
+                  return (
+                    <div
+                      key={contact.id}
+                      onClick={() => navigate(`/admin/crm/contacts/${contact._id ?? contact.id}`, { state: { contact } })}
+                      className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={fullName} size="md" />
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm leading-snug">{fullName || "—"}</p>
+                            <p className="text-[11px] text-[#1D97D7] font-bold mt-0.5">{displayId}</p>
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap ${typeStyle}`}>
+                          {contact.type}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-y-3 gap-x-2 mt-4 pt-3 border-t border-slate-50/50">
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Company</p>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                            <Building2 size={12} className="text-slate-400" />
+                            <span className="truncate">{contact.company || "—"}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Phone</p>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                            <Phone size={12} className="text-slate-400" />
+                            <span className="truncate">{contact.phone || "—"}</span>
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Email</p>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                            <Mail size={12} className="text-slate-400" />
+                            <span className="truncate">{contact.email || "—"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* ── Pagination ────────────────────────────────────────────── */}
