@@ -108,15 +108,15 @@ const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50];
 
 const TABLE_COLS = [
   { key: "companyName",   label: "Company Name",    sortable: true,  center: false },
-  { key: "industry",      label: "Industry",         sortable: true,  center: false },
-  { key: "companySize",   label: "Company Size",     sortable: true,  center: false },
+  { key: "industry",      label: "Industry",         sortable: true,  center: false, hideOn: "lg" },
+  { key: "companySize",   label: "Company Size",     sortable: true,  center: false, hideOn: "lg" },
   { key: "health",        label: "Company Health",   sortable: false, center: false },
   { key: "contacts",      label: "Contacts",         sortable: true,  center: true  },
-  { key: "openLeads",     label: "Open Leads",       sortable: true,  center: true  },
-  { key: "openDeals",     label: "Open Deals",       sortable: true,  center: true  },
-  { key: "pipelineValue", label: "Pipeline Value",   sortable: true,  center: true  },
-  { key: "lastActivity",  label: "Last Activity",    sortable: true,  center: true  },
-  { key: "assignedTo",    label: "Assigned To",      sortable: false, center: true  },
+  { key: "openLeads",     label: "Open Leads",       sortable: true,  center: true,  hideOn: "xl" },
+  { key: "openDeals",     label: "Open Deals",       sortable: true,  center: true,  hideOn: "xl" },
+  { key: "pipelineValue", label: "Pipeline Value",   sortable: true,  center: true,  hideOn: "xl" },
+  { key: "lastActivity",  label: "Last Activity",    sortable: true,  center: true,  hideOn: "xl" },
+  { key: "assignedTo",    label: "Assigned To",      sortable: false, center: true,  hideOn: "lg" },
   { key: "actions",       label: "Actions",          sortable: false, center: true  },
 ];
 
@@ -131,13 +131,13 @@ const Avatar = ({ name = "", size = "md", className = "" }) => {
   );
 };
 
-const StatCard = ({ icon: Icon, title, value, sub, iconBg, iconColor, barColor, barWidth, loading }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-shadow">
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-      <Icon className={`w-6 h-6 ${iconColor}`} />
+const StatCard = ({ icon: Icon, title, value, sub, iconBg, iconColor, barColor, barWidth, loading, className = "" }) => (
+  <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow h-full ${className}`}>
+    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+      <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${iconColor}`} />
     </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-xs font-medium text-slate-500">{title}</p>
+    <div className="flex-1 min-w-0 w-full">
+      <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">{title}</p>
       {loading
         ? <div className="h-7 w-16 bg-slate-100 animate-pulse rounded mt-1" />
         : <p className="text-2xl font-bold text-slate-900 mt-0.5">{value}</p>
@@ -149,7 +149,7 @@ const StatCard = ({ icon: Icon, title, value, sub, iconBg, iconColor, barColor, 
               <div className={`h-full rounded-full ${barColor}`} style={{ width: barWidth ?? "0%" }} />
             </div>
           )}
-          <p className={`text-[11px] font-medium mt-1 ${barColor ? "text-slate-500" : "text-emerald-600"}`}>{sub}</p>
+          <p className={`text-[10px] sm:text-[11px] font-medium mt-1 truncate ${barColor ? "text-slate-500" : "text-emerald-600"}`}>{sub}</p>
         </div>
       )}
     </div>
@@ -596,25 +596,25 @@ export default function Companies() {
       <main className="px-6 py-6 max-w-[1600px] mx-auto">
 
         {/* ── Page Header ─────────────────────────────────────── */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2 truncate">
               Companies
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">Manage all companies and their contacts</p>
+            <p className="text-sm text-slate-500 mt-0.5 truncate md:whitespace-normal">Manage all companies and their contacts</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
               <Filter size={14} />
               Filters
             </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+            <button className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
               <Download size={14} />
               Export
             </button>
             <button
               onClick={() => setFormState({ isOpen: true, company: null })}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm"
             >
               <Plus size={16} />
               Add Company
@@ -623,7 +623,7 @@ export default function Companies() {
         </div>
 
         {/* ── Stat Cards ──────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-6">
           <StatCard
             icon={Building2} title="Total Companies"
             value={stats.total.toLocaleString()}
@@ -658,6 +658,7 @@ export default function Companies() {
             loading={loading}
           />
           <StatCard
+            className="col-span-2 lg:col-span-2 xl:col-span-1"
             icon={Users} title="Total Contacts"
             value={stats.totalContacts.toLocaleString()}
             sub="Across all companies"
@@ -670,9 +671,9 @@ export default function Companies() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
 
           {/* Search + Filter bar */}
-          <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 px-5 py-4 border-b border-slate-100">
             {/* Search */}
-            <div className="relative flex-1 min-w-[220px] max-w-sm">
+            <div className="relative flex-1 w-full sm:min-w-[220px] sm:max-w-sm">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text" value={search}
@@ -681,9 +682,12 @@ export default function Companies() {
                 className="w-full pl-8 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] bg-slate-50 transition-all"
               />
             </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
 
             <FilterDropdown label="Company Health" value={healthFilter}   options={HEALTH_OPTIONS} onChange={v => { setHealthFilter(v);   setCurrentPage(1); }} />
             <FilterDropdown label="Industry"       value={industryFilter} options={INDUSTRIES}     onChange={v => { setIndustryFilter(v); setCurrentPage(1); }} />
+            </div>
 
             {hasFilter && (
               <button onClick={clearFilters}
@@ -700,8 +704,8 @@ export default function Companies() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto px-3 pb-3">
+          {/* Table (Hidden on Mobile) */}
+          <div className="hidden md:block overflow-x-auto px-3 pb-3">
             <table className="w-full text-sm border-separate border-spacing-y-1.5">
               <thead>
                 <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]">
@@ -713,23 +717,27 @@ export default function Companies() {
                       className="w-3.5 h-3.5 accent-white cursor-pointer"
                     />
                   </th>
-                  {TABLE_COLS.map((col, idx) => (
-                    <th
-                      key={col.key}
-                      onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                      className={[
-                        "px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/90 whitespace-nowrap",
-                        col.center ? "text-center" : "text-left",
-                        col.sortable ? "cursor-pointer hover:text-white select-none" : "",
-                        idx === TABLE_COLS.length - 1 ? "rounded-r-xl" : "",
-                      ].join(" ")}
-                    >
-                      <div className={`flex items-center gap-1.5 ${col.center ? "justify-center" : ""}`}>
-                        {col.label}
-                        {col.sortable && <SortIcon col={col.key} sortConfig={sortConfig} />}
-                      </div>
-                    </th>
-                  ))}
+                  {TABLE_COLS.map((col, idx) => {
+                    const hiddenClass = col.hideOn ? `hidden ${col.hideOn}:table-cell` : "";
+                    return (
+                      <th
+                        key={col.key}
+                        onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                        className={[
+                          "px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/90 whitespace-nowrap",
+                          col.center ? "text-center" : "text-left",
+                          col.sortable ? "cursor-pointer hover:text-white select-none" : "",
+                          idx === TABLE_COLS.length - 1 ? "rounded-r-xl" : "",
+                          hiddenClass
+                        ].filter(Boolean).join(" ")}
+                      >
+                        <div className={`flex items-center gap-1.5 ${col.center ? "justify-center" : ""}`}>
+                          {col.label}
+                          {col.sortable && <SortIcon col={col.key} sortConfig={sortConfig} />}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
 
@@ -740,11 +748,14 @@ export default function Companies() {
                       <td className="pl-4 pr-2 py-3 bg-white border-y border-l border-slate-100 rounded-l-xl w-8">
                         <div className="h-3.5 w-3.5 bg-slate-100 rounded" />
                       </td>
-                      {TABLE_COLS.map((col, j) => (
-                        <td key={j} className={`px-4 py-3 bg-white border-y border-slate-100 ${j === TABLE_COLS.length - 1 ? "rounded-r-xl border-r" : ""}`}>
-                          <div className="h-4 bg-slate-100 rounded w-full" />
-                        </td>
-                      ))}
+                      {TABLE_COLS.map((col, j) => {
+                        const hiddenClass = col.hideOn ? `hidden ${col.hideOn}:table-cell` : "";
+                        return (
+                          <td key={j} className={`px-4 py-3 bg-white border-y border-slate-100 ${j === TABLE_COLS.length - 1 ? "rounded-r-xl border-r" : ""} ${hiddenClass}`}>
+                            <div className="h-4 bg-slate-100 rounded w-full" />
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))
                 ) : paginated.length === 0 ? (
@@ -817,7 +828,7 @@ export default function Companies() {
                       </td>
 
                       {/* Industry */}
-                      <td className={cell}>
+                      <td className={`${cell} hidden lg:table-cell`}>
                         {company.industry ? (
                           <div className="flex items-center gap-1.5">
                             <Briefcase size={11} className="text-slate-400 shrink-0" />
@@ -827,7 +838,7 @@ export default function Companies() {
                       </td>
 
                       {/* Company Size */}
-                      <td className={cell}>
+                      <td className={`${cell} hidden lg:table-cell`}>
                         {company.companySize ? (
                           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{company.companySize}</span>
                         ) : <span className="text-slate-300">—</span>}
@@ -844,21 +855,21 @@ export default function Companies() {
                       </td>
 
                       {/* Open Leads */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center hidden xl:table-cell`}>
                         <span className={`text-xs font-bold ${(company.openLeads ?? 0) > 0 ? "text-[#2E3D99]" : "text-slate-300"}`}>
                           {company.openLeads ?? 0}
                         </span>
                       </td>
 
                       {/* Open Deals */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center hidden xl:table-cell`}>
                         <span className={`text-xs font-bold ${(company.openDeals ?? 0) > 0 ? "text-[#2E3D99]" : "text-slate-300"}`}>
                           {company.openDeals ?? 0}
                         </span>
                       </td>
 
                       {/* Pipeline Value */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center hidden xl:table-cell`}>
                         <span className="text-xs font-bold text-slate-700">
                           {company.pipelineValue
                             ? `$${Number(company.pipelineValue).toLocaleString()}`
@@ -867,7 +878,7 @@ export default function Companies() {
                       </td>
 
                       {/* Last Activity */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center hidden xl:table-cell`}>
                         {company.lastActivity ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -882,7 +893,7 @@ export default function Companies() {
                       </td>
 
                       {/* Assigned To */}
-                      <td className={`${cell} text-center`}>
+                      <td className={`${cell} text-center hidden lg:table-cell`}>
                         {company.assignedToName ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <div className={`w-6 h-6 rounded-full ${avatarColor(company.assignedToName)} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
@@ -918,6 +929,88 @@ export default function Companies() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Mobile Card View ── */}
+          <div className="block md:hidden border-t border-slate-100 bg-slate-50/50">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 border-b border-slate-100 bg-white animate-pulse">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 bg-slate-200 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-1/2" />
+                      <div className="h-3 bg-slate-200 rounded w-1/3" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : paginated.length === 0 ? (
+              <div className="p-8 text-center bg-white">
+                <p className="text-sm font-semibold text-slate-600">No companies found</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {paginated.map((company) => {
+                  const days = daysAgo(company.lastActivity);
+                  return (
+                    <div 
+                      key={company.id}
+                      onClick={() => navigate(`/admin/crm/companies/${company.id}`)}
+                      className="p-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={company.companyName} size="md" className="rounded-xl" />
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-800">{company.companyName || "—"}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              {company.industry && (
+                                <span className="text-[11px] font-medium text-slate-500">{company.industry}</span>
+                              )}
+                              {company.isVip && (
+                                <span className="px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-600 text-[9px] font-black rounded-md tracking-wide">VIP</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="text-slate-400 hover:text-[#2E3D99]">
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-slate-50 rounded-lg p-2.5">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Health</p>
+                          <HealthBadge health={company.health} lastActivity={company.lastActivity} />
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-2.5">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Contacts & Leads</p>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <span className="flex items-center gap-1"><Users size={12} className="text-slate-400"/> {company.contacts ?? 0}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="flex items-center gap-1"><TrendingUp size={12} className="text-[#2E3D99]"/> {company.openLeads ?? 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-medium">Owner:</span>
+                          <span className="font-bold text-slate-700">{company.assignedToName || "Unassigned"}</span>
+                        </div>
+                        {company.lastActivity && (
+                          <div className="flex items-center gap-1 text-slate-500 font-medium">
+                            <Clock size={12} />
+                            {timeAgo(company.lastActivity)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* ── Pagination ─────────────────────────────────────── */}
