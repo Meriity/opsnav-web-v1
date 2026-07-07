@@ -39,6 +39,42 @@ import {
 } from "lucide-react";
 export const monthlyReleaseNotes = {
   2026: {
+    July: [
+      {
+        date: "2026-07-07",
+        version: "v8.4.1",
+        type: "patch",
+        category: "improvement",
+        title: "CRM Leads & Contacts API Parity & UI Optimization",
+        description: "Synchronized CRM lead tracking fields with backend updates and optimized tables for readability.",
+        updates: [
+          {
+            type: "feature",
+            title: "Lead Fields Parity",
+            description: "Mapped new backend properties to the frontend Lead forms and tables.",
+            details: "Added Priority, Proposal Status, Source, and Commercial Value mappings to correctly sync with the updated API payload structure. Conditionally rendered Referrer fields based on the chosen Enquiry Source.",
+            icon: Database,
+          },
+          {
+            type: "ui_ux",
+            title: "Strict Phone Validation",
+            description: "Implemented a strict 10-digit numeric constraint on CRM phone fields.",
+            details: "Phone fields in both the Create Lead and Create Contact modals now strip out alphabetic keystrokes and enforce a maximum 10-digit limit to prevent backend validation errors.",
+            icon: ShieldCheck,
+          },
+          {
+            type: "ui_ux",
+            title: "Cleaner Table Interfaces",
+            description: "Removed raw backend IDs from the Leads and Contacts tables.",
+            details: "Removed the auto-generated Lead ID and Contact ID columns from the main tables, shifting focus to the primary fields like Name and Title. Reconfigured the underlying responsive logic and skeleton loaders to support the updated layout.",
+            icon: Layout,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      }
+    ],
     June: [
       {
         date: "2026-07-03",

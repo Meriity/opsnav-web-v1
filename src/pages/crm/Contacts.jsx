@@ -181,7 +181,7 @@ const ContactFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                       <input
                         type="text" value={form.firstName}
                         onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))}
-                        placeholder="John"
+                        placeholder="Lachlan"
                         className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99] transition-all"
                       />
                     </div>
@@ -201,16 +201,21 @@ const ContactFormModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                       <input
                         type="email" value={form.email}
                         onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                        placeholder="john@example.com"
+                        placeholder="lachlan@example.com.au"
                         className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99] transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1.5">Phone</label>
                       <input
-                        type="tel" value={form.phone}
-                        onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                        placeholder="+61 4xx xxx xxx"
+                        type="tel"
+                        maxLength={10}
+                        value={form.phone}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setForm(p => ({ ...p, phone: val }));
+                        }}
+                        placeholder="0412345678"
                         className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 focus:border-[#2E3D99] transition-all"
                       />
                     </div>
@@ -478,7 +483,6 @@ export default function Contacts() {
   const cellR = `${cell} rounded-r-xl border-r`;
 
   const TABLE_COLS = [
-    { key: "contactId",      label: "Contact ID",    sortable: true,  center: false, hideOn: "lg" },
     { key: "firstName",      label: "Contact Name",  sortable: true,  center: false },
     { key: "company",        label: "Company",       sortable: true,  center: false },
     { key: "email",          label: "Email",         sortable: false, center: false, hideOn: "lg" },
@@ -678,18 +682,8 @@ export default function Contacts() {
                       onClick={() => navigate(`/admin/crm/contacts/${contact._id ?? contact.id}`, { state: { contact } })}
                     >
 
-                      {/* Contact ID */}
-                      <td className={`${cellL} ${TABLE_COLS[0].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[0].hideOn === "xl" ? "hidden xl:table-cell" : ""}`} onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => navigate(`/admin/crm/contacts/${contact._id ?? contact.id}`, { state: { contact } })}
-                          className="text-[#1D97D7] font-bold text-xs whitespace-nowrap hover:underline"
-                        >
-                          {displayId}
-                        </button>
-                      </td>
-
                       {/* Contact Name */}
-                      <td className={cell}>
+                      <td className={cellL}>
                         <div className="flex items-center gap-2.5">
                           <Avatar name={fullName} size="sm" />
                           <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">{fullName || "—"}</span>
@@ -709,7 +703,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Email */}
-                      <td className={`${cell} ${TABLE_COLS[3].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[3].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
+                      <td className={`${cell} ${TABLE_COLS[2].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[2].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         <a
                           href={`mailto:${contact.email}`}
                           onClick={e => e.stopPropagation()}
@@ -738,7 +732,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Open Leads — centered */}
-                      <td className={`${cell} text-center ${TABLE_COLS[6].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[6].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[5].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[5].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         <span className={`text-xs font-bold ${
                           (contact.openLeads || 0) > 0 ? "text-[#2E3D99]" : "text-slate-300"
                         }`}>
@@ -747,7 +741,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Owner — centered */}
-                      <td className={`${cell} text-center ${TABLE_COLS[7].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[7].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[6].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[6].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         {contact.assignedToName ? (
                           <div className="flex items-center justify-center">
                             <Avatar name={contact.assignedToName} size="sm" />
@@ -758,7 +752,7 @@ export default function Contacts() {
                       </td>
 
                       {/* Last Activity — centered */}
-                      <td className={`${cell} text-center ${TABLE_COLS[8].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[8].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
+                      <td className={`${cell} text-center ${TABLE_COLS[7].hideOn === "lg" ? "hidden lg:table-cell" : TABLE_COLS[7].hideOn === "xl" ? "hidden xl:table-cell" : ""}`}>
                         {activity ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />

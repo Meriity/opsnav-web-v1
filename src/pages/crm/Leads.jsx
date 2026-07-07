@@ -567,7 +567,8 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
 // --- LEAD FORM MODAL ---
 function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', company: '', role: '', email: '', phone: '', notes: '', status: 'New'
+    firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
+    serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium'
   });
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -580,7 +581,8 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         setFormData({ ...initialData });
       } else {
         setFormData({
-          firstName: '', lastName: '', company: '', role: '', email: '', phone: '', notes: '', status: 'New'
+          firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
+          serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium'
         });
       }
     }
@@ -636,20 +638,30 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">First Name</label>
-                        <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Jane" />
+                        <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Lachlan" />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">Last Name</label>
-                        <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Doe" />
+                        <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Smith" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 mb-1">Company</label>
-                      <input required type="text" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Tutur" />
+                      <input required type="text" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Acme Pty Ltd" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Enquiry Title</label>
-                      <input required type="text" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Conveyancing module enquiry" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Enquiry Title</label>
+                        <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Conveyancing module enquiry" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Priority</label>
+                        <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
+                          <option value="High">High</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Low">Low</option>
+                        </select>
+                      </div>
                     </div>
                     {initialData && (
                       <div>
@@ -672,16 +684,50 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-                        <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="jane@example.com" />
+                        <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="lachlan@example.com.au" />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
-                        <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="8122970891" />
+                        <input type="tel" maxLength={10} value={formData.phone} onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData({ ...formData, phone: val });
+                        }} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="0412345678" />
                       </div>
                     </div>
                     <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Enquiry Source</label>
+                      <select value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
+                        <option value="Website">Website</option>
+                        <option value="Referral">Referral</option>
+                        <option value="Walk-in">Walk-in</option>
+                        <option value="Cold Call">Cold Call</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    {formData.enquirySource === 'Referral' && (
+                      <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl mt-3">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Name</label>
+                          <input type="text" value={formData.referrerName} onChange={e => setFormData({ ...formData, referrerName: e.target.value })} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Jack Smith" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Email</label>
+                          <input type="email" value={formData.referrerEmail} onChange={e => setFormData({ ...formData, referrerEmail: e.target.value })} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="jack@example.com.au" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Phone</label>
+                          <input type="tel" maxLength={10} value={formData.referrerPhone} onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            setFormData({ ...formData, referrerPhone: val });
+                          }} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="0412345678" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4">
                       <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
-                      <textarea rows="3" value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none" placeholder="Provide extra background..."></textarea>
+                      <textarea rows="3" value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none" placeholder="Provide extra background..."></textarea>
                     </div>
                   </motion.div>
                 )}
@@ -812,9 +858,13 @@ function ConvertLeadModal({ isOpen, onClose, onConvert, lead }) {
                       required
                       type="tel"
                       value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      maxLength={10}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData({ ...formData, phone: val });
+                      }}
                       className="w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300"
-                      placeholder="8122970891"
+                      placeholder="0412345678"
                     />
                   </div>
                 </div>
@@ -1149,24 +1199,28 @@ export default function Leads() {
       }
 
       const transformed = leadsList.map(lead => {
-        const nameParts = lead.fullName ? lead.fullName.trim().split(/\s+/) : [""];
-        const firstName = nameParts[0] || "";
-        const lastName = nameParts.slice(1).join(" ") || "";
+        const firstName = lead.contactId?.firstName || lead.firstName || (lead.fullName ? lead.fullName.trim().split(/\s+/)[0] : "");
+        const lastName = lead.contactId?.lastName || lead.lastName || (lead.fullName ? lead.fullName.trim().split(/\s+/).slice(1).join(" ") : "");
         const assignedUser = allUsers.find(u => (u.id || u._id) === lead.assignedTo);
         return {
           id: lead._id,
           firstName,
           lastName,
           company: lead.companyName || "",
-          role: lead.title || "",
-          email: lead.email || "",
-          phone: lead.phone || "",
-          notes: lead.description || "",
+          title: lead.title || "",
+          email: lead.contactId?.email || lead.email || "",
+          phone: lead.contactId?.phone || lead.phone || "",
+          description: lead.description || "",
           status: lead.status || "New",
           address: lead.address || "",
           assignedTo: lead.assignedTo || "",
           assignedToName: assignedUser ? (assignedUser.displayName || assignedUser.email) : "Unassigned",
-          source: lead.source || "Manual",
+          source: lead.enquirySource || lead.source || "Manual",
+          enquirySource: lead.enquirySource || "Website",
+          priority: lead.priority || "Medium",
+          commercialValue: lead.commercialValue || 0,
+          proposalStatus: lead.proposalStatus || "Not Required",
+          nextFollowUpDate: lead.nextFollowUpDate || null,
           createdAt: lead.createdAt
         };
       });
@@ -1197,7 +1251,7 @@ export default function Leads() {
             </div>
             <div className="text-left">
               <p className="font-bold text-slate-800 text-xs sm:text-sm leading-tight">{lead.firstName} {lead.lastName}</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">{lead.role}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">{lead.title}</p>
             </div>
           </div>
         );
@@ -1418,14 +1472,14 @@ export default function Leads() {
           updatedFields.fullName = newFullName;
         }
 
-        const originalTitle = original.role || "";
-        const newTitle = leadData.role || "";
+        const originalTitle = original.title || "";
+        const newTitle = leadData.title || "";
         if (newTitle !== originalTitle) {
           updatedFields.title = newTitle;
         }
 
-        const originalDesc = original.notes || "";
-        const newDesc = leadData.notes || "";
+        const originalDesc = original.description || "";
+        const newDesc = leadData.description || "";
         if (newDesc !== originalDesc) {
           updatedFields.description = newDesc;
         }
@@ -1464,12 +1518,19 @@ export default function Leads() {
         }
       } else {
         const leadPayload = {
-          title: leadData.role || "Lead Enquiry",
-          description: leadData.notes || "",
-          fullName: `${leadData.firstName} ${leadData.lastName}`.trim(),
+          title: leadData.title || "Lead Enquiry",
+          description: leadData.description || "",
+          serviceTypes: leadData.serviceTypes || [],
+          enquirySource: leadData.enquirySource || "Website",
+          referrerName: leadData.referrerName || "",
+          referrerEmail: leadData.referrerEmail || "",
+          referrerPhone: leadData.referrerPhone || "",
+          priority: leadData.priority || "Medium",
           email: leadData.email || "",
+          firstName: leadData.firstName || "",
+          lastName: leadData.lastName || "",
+          company: leadData.company || "",
           phone: leadData.phone || "",
-          companyName: leadData.company || "",
           assignedTo: leadData.assignedTo || ""
         };
 
@@ -1547,7 +1608,7 @@ export default function Leads() {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesSearch = searchQuery
-        ? `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.email} ${lead.role || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
+        ? `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.email} ${lead.title || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
       const matchesStatus = filters.status === 'All' || lead.status === filters.status;
       const displayStage  = getDisplayStage(lead.status);
@@ -1782,8 +1843,7 @@ export default function Leads() {
                 <thead>
                   <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
                     {[
-                      { key: 'leadId',         label: 'Lead ID',         sortable: true,  center: false },
-                      { key: 'role',           label: 'Lead Title',      sortable: true,  center: false },
+                      { key: 'title',          label: 'Lead Title',      sortable: true,  center: false },
                       { key: 'displayName',    label: 'Contact',         sortable: true,  center: false },
                       { key: 'company',        label: 'Company',         sortable: true,  center: false },
                       { key: 'status',         label: 'Stage',           sortable: false, center: false },
@@ -1818,10 +1878,10 @@ export default function Leads() {
                   {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="animate-pulse bg-white rounded-xl">
-                        {Array.from({ length: 12 }).map((_, j) => (
+                        {Array.from({ length: 11 }).map((_, j) => (
                           <td
                             key={j}
-                            className={`px-4 py-3.5 bg-white border-y border-slate-100 ${j === 0 ? 'rounded-l-xl border-l' : ''} ${j === 11 ? 'rounded-r-xl border-r' : ''}`}
+                            className={`px-4 py-3.5 bg-white border-y border-slate-100 ${j === 0 ? 'rounded-l-xl border-l' : ''} ${j === 10 ? 'rounded-r-xl border-r' : ''}`}
                           >
                             <div className="h-4 bg-slate-100 rounded w-full" />
                           </td>
@@ -1830,7 +1890,7 @@ export default function Leads() {
                     ))
                   ) : paginatedLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="text-center py-16 text-slate-400">
+                      <td colSpan={11} className="text-center py-16 text-slate-400">
                         <Users size={32} className="mx-auto mb-3 text-slate-200" />
                         <p className="text-sm font-semibold">No leads found</p>
                         <p className="text-xs text-slate-300 mt-1">Try adjusting your filters or add a new lead</p>
@@ -1855,19 +1915,9 @@ export default function Leads() {
                         className="cursor-pointer group"
                         onClick={() => handleLeadClick(lead, false)}
                       >
-                        {/* Lead ID */}
-                        <td className={cellL} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleLeadClick(lead, false)}
-                            className="text-[#1D97D7] font-bold text-xs hover:underline whitespace-nowrap"
-                          >
-                            {displayId}
-                          </button>
-                        </td>
-
                         {/* Lead Title */}
-                        <td className={`${cell} max-w-[160px]`}>
-                          <span className="text-xs font-semibold text-slate-800 line-clamp-2">{lead.role || "—"}</span>
+                        <td className={`${cellL} max-w-[160px]`}>
+                          <span className="text-xs font-semibold text-slate-800 line-clamp-2">{lead.title || "—"}</span>
                         </td>
 
                         {/* Contact */}
