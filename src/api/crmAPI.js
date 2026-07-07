@@ -133,6 +133,21 @@ class CrmAPI {
     }
   }
 
+  // Update proposal status
+  async updateProposalStatus(leadId, proposalStatus) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/proposal-status`, {
+        method: "PATCH",
+        headers: this.getHeaders(),
+        body: JSON.stringify({ proposalStatus }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error updating CRM lead proposal status:", error);
+      throw error;
+    }
+  }
+
   // Delete lead
   async deleteLead(leadId) {
     try {
