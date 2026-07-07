@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../ui/Sidebar";
 import Footer from "./Footer";
 import { useState, useRef, useEffect } from "react";
@@ -31,16 +31,21 @@ const DashboardLayout = () => {
     setIsCollapsed((prev) => !prev);
   };
 
+  const location = useLocation();
+  
+  // Hide mobile hamburger menu on CRM detail pages because they have their own navigation
+  const isCrmViewPage = location.pathname.match(/\/admin\/crm\/(contacts|companies|leads)\/[a-zA-Z0-9_-]+/);
+
   return (
     <div className="flex h-screen w-full bg-gray-100">
-      {/* Mobile Menu Button - Only shows when sidebar is closed */}
-      {!sidebarOpen && (
+      {/* Mobile Menu Button - Only shows when sidebar is closed and not on CRM Detail View page */}
+      {!sidebarOpen && !isCrmViewPage && (
         <button
           ref={menuButtonRef}
           onClick={() => setSidebarOpen(true)}
-          className="md:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-white shadow-md"
+          className="md:hidden fixed top-2.5 right-4 z-50 p-1.5 rounded-md bg-white shadow-md border border-gray-100"
         >
-          <FiMenu className="w-6 h-6" />
+          <FiMenu className="w-6 h-6 text-gray-700" />
         </button>
       )}
 

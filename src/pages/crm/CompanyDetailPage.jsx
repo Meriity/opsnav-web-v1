@@ -101,8 +101,8 @@ const SectionCard = ({ title, action, children, className = "" }) => (
 
 const InfoRow = ({ label, value }) => (
   <div className="flex items-start gap-2 py-2 border-b border-slate-50 last:border-0">
-    <span className="text-xs font-medium text-slate-400 w-36 shrink-0">{label}</span>
-    <span className="text-xs font-semibold text-slate-700 flex-1">{value || "—"}</span>
+    <span className="text-xs font-medium text-slate-400 w-24 md:w-28 xl:w-36 shrink-0">{label}</span>
+    <span className="text-xs font-semibold text-slate-700 flex-1 break-words min-w-0">{value || "—"}</span>
   </div>
 );
 
@@ -805,59 +805,257 @@ export default function CompanyDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
+    <div className="min-h-screen bg-[#F8FAFC] md:bg-slate-50">
+      
+      {/* ── Mobile Layout ── */}
+      <div className="block md:hidden pb-24">
+        {/* Mobile Header */}
+        <div className="bg-[#F8FAFC] px-5 py-4 flex items-center justify-between sticky top-0 z-10">
+          <button onClick={() => navigate("/admin/crm/companies")} className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-[0_4px_20px_rgba(15,23,42,0.08)] text-[#0F172A] border border-[#E5E7EB]/50">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex items-center gap-5">
+            <Phone size={18} className="text-[#0F172A]" />
+            <Mail size={18} className="text-[#0F172A]" />
+          </div>
+        </div>
 
-      <main className="px-6 py-5 max-w-[1600px] mx-auto">
+        {/* Profile Hero */}
+        <div className="pt-8 pb-6 px-5 flex flex-col items-center">
+          <Avatar name={companyName} size="xl" className="w-20 h-20 text-3xl mb-4" />
+          <h2 className="text-[22px] font-semibold text-[#0F172A] text-center">{companyName}</h2>
+          <span className={`mt-2 px-3 py-1 rounded-full text-[13px] font-medium ${healthCfg.badge}`}>
+            {health}
+          </span>
+          <p className="text-[15px] font-medium text-[#1D97D7] mt-2 text-center">{company.industry || "—"}</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-5 grid grid-cols-4 gap-4 mb-6">
+          {[
+            { icon: Phone, label: "Call" },
+            { icon: Mail, label: "Email" },
+            { icon: Edit, label: "Edit", onClick: () => setShowEdit(true) },
+            { icon: MoreVertical, label: "More" },
+          ].map(a => (
+            <button key={a.label} onClick={a.onClick} className="bg-white h-[72px] rounded-[16px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] flex flex-col items-center justify-center gap-2 border border-[#E5E7EB]/50">
+              <a.icon size={18} className="text-[#0F172A]" />
+              <span className="text-[13px] font-medium text-[#0F172A]">{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="px-5 space-y-4">
+          {/* Company Health Card */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Company Health</h3>
+              <span className={`px-2.5 py-0.5 rounded-full text-[13px] font-medium ${healthCfg.badge}`}>{health}</span>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: `Last activity: ${timeAgo(lastActivity) || "—"}` },
+                { label: `${contactsList.length} linked contacts` },
+                { label: `${leadsList.length} open leads` },
+              ].map((chk, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <HealthIcon size={16} className={healthCfg.iconColor} />
+                  <span className="text-[13px] font-medium text-[#0F172A]">{chk.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Key Information */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Key Information</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Mail size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B] truncate max-w-[150px]">{company.email || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Email</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Phone size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{company.phone || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Phone</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Globe size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[11px] font-semibold text-[#64748B]">Website</p>
+                  <p className="text-[13px] font-medium text-[#64748B] truncate max-w-[150px]">{company.website || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pb-1">
+                <MapPin size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B] truncate max-w-[150px]">{company.address || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Address</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Assigned To & Details */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Company Details</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Building2 size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{company.companyType || "Client"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Type</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Users size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{company.companySize || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Size</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pb-1">
+                <User size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-5 h-5 rounded-full ${avatarBg(assignedName)} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
+                      {initials(assignedName)}
+                    </div>
+                    <p className="text-[13px] font-medium text-[#64748B]">{assignedName}</p>
+                  </div>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Owner</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Recent Activity</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{activities.length} recent events</p>
+            
+            <div className="space-y-4">
+              {activities.slice(0, 3).map((act, i) => {
+                const IconC = ACTIVITY_ICON_CONFIG[act.type]?.icon || MessageSquare;
+                return (
+                  <div key={i} className="flex gap-3 items-center">
+                    <div className="w-8 h-8 rounded-full bg-[#F8FAFC] flex items-center justify-center shrink-0">
+                      <IconC size={14} className="text-[#1D97D7]" />
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-semibold text-[#0F172A]">{act.type}</p>
+                      <p className="text-[13px] font-medium text-[#64748B]">{fmtDate(act.date)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Leads */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 cursor-pointer">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Leads & Deals</h3>
+              <ChevronRight size={18} className="text-[#64748B]" />
+            </div>
+            <p className="text-[13px] font-medium text-[#64748B] mb-5">{leadsList.length + dealsList.length} active opportunities</p>
+            <div className="space-y-4">
+              {[...leadsList, ...dealsList].slice(0, 3).map((item, i) => (
+                <div key={i} className="flex gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                  <div className="w-8 h-8 rounded-full bg-[#1D97D7]/10 flex items-center justify-center shrink-0">
+                    <Zap size={14} className="text-[#1D97D7]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[15px] font-semibold text-[#0F172A]">{item.title}</p>
+                    <div className="flex gap-2 items-center mt-1">
+                      <span className="text-[#64748B] text-[13px] font-medium">{item.value ? `$${Number(item.value).toLocaleString()}` : "—"}</span>
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${LEAD_STAGE_STYLES[item.status] || "bg-slate-100 text-slate-500"}`}>{item.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Sticky Bottom CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F8FAFC]/90 backdrop-blur-md z-50 pb-safe">
+          <button className="w-full h-[56px] bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-[20px] font-semibold text-[15px] shadow-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+            <Plus size={18} /> Add Contact
+          </button>
+        </div>
+      </div>
+
+      {/* ── Desktop Layout ── */}
+      <div className="hidden md:block">
+        <Header />
+        <main className="px-6 py-5 max-w-[1600px] mx-auto">
 
         {/* ── Page Title + Actions ─────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Company Profile</h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+          <div className="flex-1 min-w-0 pr-4">
+            <h1 className="text-xl font-bold text-slate-900 truncate">Company Profile</h1>
+            <p className="text-xs text-slate-400 mt-0.5 truncate xl:whitespace-normal">
               View company details, contacts, leads, deals, and activity history.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate("/admin/crm/companies")}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]"
             >
               <ArrowLeft size={13} />
-              Back to Companies
+              <span className="hidden xl:inline">Back to Companies</span>
+              <span className="inline xl:hidden">Back</span>
             </button>
             <button
               onClick={() => setShowEdit(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]"
             >
               <Edit size={13} />
-              Edit Company
+              <span className="hidden xl:inline">Edit Company</span>
+              <span className="inline xl:hidden">Edit</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+            <button className="hidden xl:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]">
               <Plus size={13} />
               Add Note
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm">
+            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-[0.98]">
               <Phone size={13} />
               Call
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm">
+            <button className="hidden lg:flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-all shadow-sm active:scale-[0.98]">
               <Mail size={13} />
               Email
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:bg-white hover:border hover:border-slate-200 transition-all shadow-sm">
+            <button className="hidden lg:flex w-8 h-8 items-center justify-center rounded-xl text-slate-500 hover:bg-white hover:border hover:border-slate-200 transition-all shadow-sm active:scale-[0.98]">
               <MoreVertical size={15} />
             </button>
           </div>
         </div>
 
         {/* ── Profile Header Card ──────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
-          <div className="flex items-start gap-8">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.08)] p-5 mb-5 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] xl:grid-cols-[auto_1fr_auto] items-start gap-6 md:gap-8">
 
             {/* Logo / Avatar + Name */}
-            <div className="flex items-center gap-4 min-w-[240px]">
-              <div className={`w-20 h-20 ${avatarBg(companyName)} rounded-2xl flex items-center justify-center text-white font-bold text-3xl shrink-0`}>
+            <div className="flex items-center gap-4 min-w-[200px] xl:min-w-[240px]">
+              <div className={`w-16 h-16 md:w-20 md:h-20 ${avatarBg(companyName)} rounded-2xl flex items-center justify-center text-white font-bold text-2xl md:text-3xl shrink-0`}>
                 {initials(companyName) || <Building2 size={32} />}
               </div>
               <div>
@@ -886,47 +1084,44 @@ export default function CompanyDetailPage() {
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="w-px self-stretch bg-slate-100 mx-1" />
-
             {/* Quick Info */}
-            <div className="flex-1 grid grid-cols-2 gap-x-10 gap-y-3">
+            <div className="flex-1 grid grid-cols-2 gap-x-4 md:gap-x-6 gap-y-4 md:border-l md:border-slate-100 md:pl-6 xl:border-x xl:px-6">
               {/* Phone */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <Phone size={13} className="text-slate-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">{company.phone || "—"}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{company.phone || "—"}</p>
                   <p className="text-[10px] text-slate-400">Phone</p>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <Mail size={13} className="text-slate-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800 truncate max-w-[150px]">{company.email || "—"}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{company.email || "—"}</p>
                   <p className="text-[10px] text-slate-400">Email</p>
                 </div>
               </div>
 
               {/* Website */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <Globe size={13} className="text-slate-500" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   {company.website ? (
                     <a
                       href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
                       target="_blank" rel="noreferrer"
-                      className="text-xs font-bold text-[#1D97D7] hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-[#1D97D7] hover:underline flex items-center gap-1 truncate"
                     >
-                      {company.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      <ExternalLink size={10} />
+                      <span className="truncate">{company.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
+                      <ExternalLink size={10} className="shrink-0" />
                     </a>
                   ) : (
                     <p className="text-xs font-bold text-slate-800">—</p>
@@ -936,42 +1131,39 @@ export default function CompanyDetailPage() {
               </div>
 
               {/* Address */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <MapPin size={13} className="text-slate-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800 truncate max-w-[150px]">{company.address || "—"}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{company.address || "—"}</p>
                   <p className="text-[10px] text-slate-400">Address</p>
                 </div>
               </div>
 
               {/* Assigned To */}
-              <div className="flex items-center gap-2.5">
-                <Avatar name={assignedName} size="sm" />
-                <div>
-                  <p className="text-xs text-slate-500 mb-0.5">Account Owner</p>
-                  <p className="text-xs font-bold text-slate-800">{assignedName}</p>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Avatar name={assignedName} size="sm" className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-slate-500 mb-0.5">Owner</p>
+                  <p className="text-xs font-bold text-slate-800 truncate">{assignedName}</p>
                 </div>
               </div>
 
               {/* Last Activity */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center shrink-0">
                   <Activity size={13} className="text-slate-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">{timeAgo(lastActivity) || "—"}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{timeAgo(lastActivity) || "—"}</p>
                   <p className="text-[10px] text-slate-400">Last Activity</p>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="w-px self-stretch bg-slate-100 mx-1" />
-
             {/* Stats Pills */}
-            <div className="min-w-[200px] flex flex-col justify-center">
+            <div className="min-w-[200px] flex flex-col justify-center mt-6 xl:mt-0 xl:pl-2 md:col-span-2 xl:col-span-1">
               <p className="text-xs font-bold text-slate-500 mb-3 text-center uppercase tracking-wider">Account Summary</p>
               <div className="grid grid-cols-2 gap-y-4">
                 <StatPill
@@ -1028,7 +1220,7 @@ export default function CompanyDetailPage() {
 
             {/* ════════════════ OVERVIEW TAB ════════════════ */}
             {activeTab === "overview" && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 xl:gap-4 pb-12">
 
                 {/* Key Information */}
                 <SectionCard
@@ -1500,6 +1692,7 @@ export default function CompanyDetailPage() {
           </motion.div>
         </AnimatePresence>
       </main>
+      </div>
 
       {/* ── Edit Modal ────────────────────────────────────────────────── */}
       <AnimatePresence>

@@ -161,6 +161,12 @@ const formConfig = {
         type: "radio",
       },
       {
+        name: "headsOfAgreement",
+        label: "Heads of Agreement",
+        type: "radio",
+        options: ["Yes", "No", "N/R"],
+      },
+      {
         name: "contractOfSale",
         label: "Contract of Sale",
         type: "radio",
@@ -174,7 +180,7 @@ const formConfig = {
         systemNoteKey: "systemNote",
         clientCommentKey: "clientComment",
         noteForClientKey: "noteForClient",
-        fieldsForNote: ["voi", "leaseTransfer", "contractOfSale"],
+        fieldsForNote: ["voi", "leaseTransfer", "contractOfSale", "headsOfAgreement"],
       },
     ],
   },
@@ -497,6 +503,7 @@ export default function Stage2({
         "voi",
         "leaseTransfer",
         "contractOfSale",
+        "headsOfAgreement",
         "noteForSystem",
         "noteForClient",
       ];

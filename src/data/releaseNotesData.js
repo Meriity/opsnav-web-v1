@@ -41,6 +41,40 @@ export const monthlyReleaseNotes = {
   2026: {
     June: [
       {
+        date: "2026-07-03",
+        version: "v8.4.0",
+        type: "minor",
+        category: "feature",
+        title: "Commercial Stage 2 Field & CRM Responsive Overhaul",
+        description: "Added the Heads of Agreement field to the Commercial module's Stage 2, and completed a full responsive layout overhaul for the CRM Contacts and Companies pages.",
+        updates: [
+          {
+            type: "feature",
+            title: "Heads of Agreement Field — Commercial Stage 2",
+            description: "New Yes / No / N/R radio field added to Stage 2 of the Commercial workflow.",
+            details: "Introduced a 'Heads of Agreement' radio field (options: Yes, No, N/R) exclusively in the Commercial module's Stage 2 form. The field is positioned between Lease Transfer and Contract of Sale, is included in the auto-generated system note logic, and is persisted correctly to the backend via the commercial save payload.",
+            icon: FileText,
+          },
+          {
+            type: "ui_ux",
+            title: "CRM Contacts — Responsive Layout",
+            description: "Full mobile and tablet responsive overhaul of the Contacts list page.",
+            details: "Redesigned the Contacts table page for mobile-first accessibility, eliminating horizontal overflow on small screens. Applied proper column visibility rules so that only essential columns appear on mobile, with progressive disclosure of additional columns on tablet and desktop. Navigation and header elements now behave consistently across all screen sizes.",
+            icon: Smartphone,
+          },
+          {
+            type: "ui_ux",
+            title: "CRM Companies — Responsive Layout",
+            description: "Full mobile and tablet responsive overhaul of the Companies list and detail pages.",
+            details: "Completed the responsive overhaul for the Companies table page, fixing horizontal overflow and scaling issues from mobile to tablet. Resolved text truncation, element overlap, and alignment problems on the Company Detail page for tablet viewports. Ensured uniform hamburger menu visibility and consistent navigation behaviour across all CRM sub-modules.",
+            icon: Building2,
+          },
+        ],
+        module: "Commercial, CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-06-30",
         version: "v8.3.1",
         type: "patch",
