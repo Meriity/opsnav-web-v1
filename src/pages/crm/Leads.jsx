@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -10,6 +11,8 @@ import {
   X,
   MoreHorizontal,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   UserPlus,
   UserX,
   Briefcase,
@@ -26,7 +29,14 @@ import {
   Clock,
   Tag,
   StickyNote,
-  Send
+  Send,
+  Trophy,
+  FileText,
+  ArrowUpDown,
+  SlidersHorizontal,
+  ListFilter,
+  CalendarDays,
+  SquarePlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
@@ -42,80 +52,57 @@ import moment from "moment";
 
 
 // --- STAT CARD COMPONENT ---
-const StatCard = ({
-  icon: Icon,
-  title,
-  value,
-  color = "blue",
-  loading = false,
-}) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className="relative overflow-hidden rounded-2xl p-3 lg:p-3 xl:p-5 bg-white/90 backdrop-blur-lg border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300"
-    >
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${color === "blue"
-            ? "from-[#2E3D99]/5 to-[#1D97D7]/10"
-            : color === "green"
-              ? "from-emerald-500/5 to-teal-500/10"
-              : color === "purple"
-                ? "from-violet-500/5 to-purple-500/10"
-                : "from-amber-500/5 to-orange-500/10"
-          }`}
-      />
-      <div
-        className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8 opacity-10 bg-gradient-to-r ${color === "blue"
-            ? "from-[#2E3D99] to-[#1D97D7]"
-            : color === "green"
-              ? "from-emerald-500 to-teal-500"
-              : color === "purple"
-                ? "from-violet-500 to-purple-500"
-                : "from-amber-500 to-orange-500"
-          }`}
-      />
+const StatCard = ({ icon: Icon, title, value, iconBg, iconColor, loading = false }) => (
+  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+      <Icon className={`w-6 h-6 ${iconColor}`} />
+    </div>
+    <div>
+      <p className="text-xs font-medium text-slate-500">{title}</p>
+      {loading
+        ? <div className="h-7 w-12 bg-slate-100 animate-pulse rounded mt-1" />
+        : <p className="text-2xl font-bold text-slate-900 mt-0.5">{value}</p>
+      }
+    </div>
+  </div>
+);
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            className={`p-2 lg:p-2 xl:p-3 rounded-xl bg-gradient-to-br ${color === "blue"
-                ? "from-[#2E3D99]/20 to-[#1D97D7]/30"
-                : color === "green"
-                  ? "from-emerald-500/20 to-teal-500/30"
-                  : color === "purple"
-                    ? "from-violet-500/20 to-purple-500/30"
-                    : "from-amber-500/20 to-orange-500/30"
-              }`}
-          >
-            <Icon
-              className={`w-4 h-4 lg:w-4 lg:h-4 xl:w-5 xl:h-6 ${color === "blue"
-                  ? "text-[#2E3D99]"
-                  : color === "green"
-                    ? "text-emerald-600"
-                    : color === "purple"
-                      ? "text-violet-600"
-                      : "text-amber-600"
-                }`}
-            />
-          </motion.div>
-        </div>
+// --- STAGE CONFIG ---
+const STAGE_DISPLAY = {
+  "New Lead":     { label: "New Lead",     badge: "bg-blue-50 text-blue-700 border border-blue-200" },
+  "Qualified":    { label: "Qualified",    badge: "bg-teal-50 text-teal-700 border border-teal-200" },
+  "Opportunity":  { label: "Opportunity",  badge: "bg-violet-50 text-violet-700 border border-violet-200" },
+  "Proposal":     { label: "Proposal",     badge: "bg-indigo-50 text-indigo-700 border border-indigo-200" },
+  "Negotiation":  { label: "Negotiation",  badge: "bg-amber-50 text-amber-700 border border-amber-200" },
+  "Won":          { label: "Won",          badge: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  "Lost":         { label: "Lost",         badge: "bg-rose-50 text-rose-700 border border-rose-200" },
+};
 
-        <div className="space-y-0.5 lg:space-y-0.5 xl:space-y-1">
-          <h3 className="text-[10px] lg:text-[10px] xl:text-sm font-medium text-gray-500 uppercase tracking-wide">
-            {title}
-          </h3>
-          {loading ? (
-            <div className="h-6 lg:h-6 xl:h-8 w-16 lg:w-16 xl:w-20 bg-gray-200 animate-pulse rounded-lg" />
-          ) : (
-            <p className="text-lg lg:text-lg xl:text-2xl font-bold text-gray-900">{value}</p>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
+const STAGE_NORMALIZE = {
+  "new": "New Lead", "open": "New Lead", "new lead": "New Lead",
+  "contacted": "Qualified", "qualified": "Qualified", "qualified lead": "Qualified",
+  "opportunity": "Opportunity",
+  "proposal": "Proposal",
+  "negotiation": "Negotiation",
+  "won": "Won", "converted": "Won",
+  "lost": "Lost", "closed": "Lost", "unqualified": "Lost",
+};
+
+const getDisplayStage = (status = "") =>
+  STAGE_NORMALIZE[status.toLowerCase()] ?? "New Lead";
+
+const PROPOSAL_STATUS_STYLES = {
+  "Sent":                "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  "Follow-up Required":  "bg-amber-50 text-amber-700 border border-amber-200",
+  "Accepted":            "bg-blue-50 text-blue-700 border border-blue-200",
+  "Draft":               "bg-slate-100 text-slate-600 border border-slate-200",
+  "Rejected":            "bg-rose-50 text-rose-700 border border-rose-200",
+};
+
+const PRIORITY_STYLES = {
+  "High":   "bg-rose-50 text-rose-700 border border-rose-200",
+  "Medium": "bg-amber-50 text-amber-700 border border-amber-200",
+  "Low":    "bg-emerald-50 text-emerald-700 border border-emerald-200",
 };
 
 // --- LEAD DRAWER COMPONENT ---
@@ -1119,6 +1106,7 @@ function TaskFormModal({ isOpen, onClose, onSave, users, initialData }) {
 
 // --- MAIN LEADS PAGE ---
 export default function Leads() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1132,8 +1120,11 @@ export default function Leads() {
   const [assignState, setAssignState] = useState({ isOpen: false, lead: null });
   const [taskState, setTaskState] = useState({ isOpen: false, lead: null, task: null });
 
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const [currentMobilePageData, setCurrentMobilePageData] = useState([]);
+  const [stageFilter, setStageFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const fetchLeads = async () => {
     try {
@@ -1391,7 +1382,8 @@ export default function Leads() {
       setFormState({ isOpen: true, lead });
       setSelectedLead(null);
     } else {
-      setSelectedLead(lead);
+      // Navigate to full-page lead detail view
+      navigate(`/admin/crm/leads/${lead.id}`, { state: { lead } });
     }
   };
 
@@ -1548,27 +1540,24 @@ export default function Leads() {
     }
   };
 
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
+  // handleSort defined later with new pagination-aware version
+
+  const currentUserId = localStorage.getItem("userId") || "";
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
-      // Search Match
       const matchesSearch = searchQuery
-        ? `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.email}`.toLowerCase().includes(searchQuery.toLowerCase())
+        ? `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.email} ${lead.role || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
-
-      // Status Filter
       const matchesStatus = filters.status === 'All' || lead.status === filters.status;
-
-      return matchesSearch && matchesStatus;
+      const displayStage  = getDisplayStage(lead.status);
+      const matchesStage  =
+        stageFilter === 'All' ? true :
+        stageFilter === 'Mine' ? lead.assignedTo === currentUserId :
+        displayStage === stageFilter;
+      return matchesSearch && matchesStatus && matchesStage;
     });
-  }, [leads, searchQuery, filters]);
+  }, [leads, searchQuery, filters, stageFilter]);
 
   const sortedLeads = useMemo(() => {
     const list = [...filteredLeads];
@@ -1591,311 +1580,479 @@ export default function Leads() {
     return list;
   }, [filteredLeads, sortConfig]);
 
-  // Floating circles background helper
+  // kept for compat — unused in new design
   const FloatingElement = ({ top, left, delay, size = 60 }) => (
     <motion.div
-      className="absolute rounded-full bg-gradient-to-r from-[#2E3D99]/10 to-[#1D97D7]/20 opacity-20 hidden sm:block"
+      className="hidden"
       style={{ width: size, height: size, top: `${top}%`, left: `${left}%` }}
       animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
       transition={{ duration: 3 + delay, repeat: Infinity, ease: "easeInOut" }}
     />
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#2E3D99]/5 to-[#1D97D7]/10 relative overflow-hidden">
-      {/* Background floating elements and grid from ManageUsers */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <FloatingElement top={10} left={10} delay={0} />
-        <FloatingElement top={20} left={85} delay={1} size={80} />
-        <FloatingElement top={70} left={5} delay={2} size={40} />
-        <FloatingElement top={80} left={90} delay={1.5} size={100} />
+  // ── Pagination ────────────────────────────────────────────────────────────
+  const totalPages    = Math.ceil(sortedLeads.length / ITEMS_PER_PAGE);
+  const paginatedLeads = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedLeads.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedLeads, currentPage]);
 
-        <div className="absolute inset-0 opacity-[0.06]">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `linear-gradient(to right, #000 1px, transparent 1px),
-                                linear-gradient(to bottom, #000 1px, transparent 1px)`,
-              backgroundSize: "30px 30px",
-            }}
-          />
-        </div>
+  const handleSort = (key) => {
+    setSortConfig(prev =>
+      prev.key === key
+        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: 'asc' }
+    );
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortConfig.key !== col) return <ArrowUpDown size={12} className="text-slate-300" />;
+    return sortConfig.direction === 'asc'
+      ? <ChevronUp size={12} className="text-white" />
+      : <ChevronDown size={12} className="text-white" />;
+  };
+
+  // Avatar helper
+  const Avatar = ({ name = "", size = "sm" }) => {
+    const initials = name.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
+    const colors   = ["bg-[#2E3D99]","bg-teal-600","bg-violet-600","bg-amber-600","bg-rose-600","bg-emerald-600","bg-indigo-600"];
+    const color    = colors[initials.charCodeAt(0) % colors.length];
+    const dim      = size === "sm" ? "w-6 h-6 text-[9px]" : "w-8 h-8 text-xs";
+    return (
+      <div className={`${dim} ${color} rounded-full flex items-center justify-center text-white font-bold shrink-0`}>
+        {initials}
       </div>
+    );
+  };
 
-      <div className="relative z-10 max-w-full">
+  const STAGE_PILLS = ['All','Mine','New Lead','Qualified','Opportunity','Proposal','Negotiation','Won','Lost'];
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-full">
         <Header />
 
-        <main className="p-3 sm:p-4 md:p-6 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 w-full max-w-full">
+        <main className="px-6 py-6 max-w-[1600px] mx-auto">
 
-          {/* Top Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 lg:mb-4 xl:mb-8"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-base sm:text-lg lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-gray-900 truncate">
-                  <span className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
-                    Lead Management
-                  </span>
-                </h1>
-                <p className="text-gray-600 text-[10px] sm:text-xs lg:text-xs xl:text-sm mt-1 truncate">
-                  Manage and track your business leads and potential partners
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                {/* Filters Button */}
-                <div className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-3 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 rounded-xl text-[10px] lg:text-[9px] xl:text-sm font-bold transition-all border shadow-sm ${filters.status !== 'All'
-                        ? 'bg-[#2E3D99]/10 border-[#2E3D99] text-[#2E3D99]'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                  >
-                    <Filter size={15} />
-                    <span>Filters</span>
-                    {filters.status !== 'All' && (
-                      <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                    )}
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {showFilters && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute left-0 lg:left-auto lg:right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50"
-                      >
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Filter by Status</h4>
-                        <select
-                          value={filters.status}
-                          onChange={e => setFilters({ ...filters, status: e.target.value })}
-                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white"
-                        >
-                          <option value="All">All</option>
-                          <option value="New">New</option>
-                          <option value="Open">Open</option>
-                          <option value="Contacted">Contacted</option>
-                          <option value="Qualified">Qualified</option>
-                          <option value="Closed">Closed</option>
-                          <option value="Unqualified">Unqualified</option>
-                        </select>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Add Lead Button */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFormState({ isOpen: true, lead: null })}
-                  className="flex items-center gap-1 lg:gap-1 sm:gap-2 px-3 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-xl font-semibold text-[10px] lg:text-[9px] xl:text-sm shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Lead</span>
-                </motion.button>
-              </div>
+          {/* ── Page Header ─────────────────────────────────────────────────── */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
+              <p className="text-sm text-slate-400 mt-1">Track, manage, and action all leads in one place.</p>
             </div>
-          </motion.div>
+            <div className="flex items-center gap-2">
+              {/* Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border shadow-sm transition-all ${
+                    filters.status !== 'All'
+                      ? 'bg-[#2E3D99]/10 border-[#2E3D99]/30 text-[#2E3D99]'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <ListFilter size={16} />
+                  Filter
+                  {filters.status !== 'All' && <span className="w-2 h-2 bg-rose-500 rounded-full" />}
+                </button>
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50"
+                    >
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filter by Status</p>
+                      <select
+                        value={filters.status}
+                        onChange={e => { setFilters({ ...filters, status: e.target.value }); setCurrentPage(1); }}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 bg-white"
+                      >
+                        {['All','New','Open','Contacted','Qualified','Closed','Unqualified','Converted'].map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-          {/* STATS SECTION */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 w-full">
-            <StatCard icon={Users} title="Total Leads" value={leads.length} color="blue" loading={loading} />
-            <StatCard icon={UserPlus} title="Active / Open" value={leads.filter(c => ["New", "Open", "Contacted", "Qualified"].includes(c.status)).length} color="green" loading={loading} />
-            <StatCard icon={UserX} title="Converted / Won" value={leads.filter(c => c.status === 'Converted').length} color="purple" loading={loading} />
-            <StatCard icon={Building2} title="Companies" value={new Set(leads.map(c => c.company).filter(Boolean)).size} color="orange" loading={loading} />
+              {/* Sort */}
+              <button
+                onClick={() => handleSort('createdAt')}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl shadow-sm transition-all"
+              >
+                <ArrowUpDown size={16} />
+                Sort
+              </button>
+
+              {/* New Lead */}
+              <button
+                onClick={() => setFormState({ isOpen: true, lead: null })}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:opacity-95 transition-all"
+              >
+                <Plus size={16} />
+                New Lead
+              </button>
+            </div>
           </div>
 
-              {/* DESKTOP TABLE SECTION */}
-              <div className="hidden lg:block bg-white/90 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 w-full max-w-full">
-                <div className="p-4 lg:p-5 xl:p-8">
-                  <Table
-                    data={sortedLeads}
-                    columns={columns}
-                    showActions={false}
-                    onEdit={(lead) => handleLeadClick(lead, true)}
-                    onDelete={handleDeleteLead}
-                    OnEye={(lead) => handleLeadClick(lead, false)}
-                    showReset={false}
-                    sortedColumn={sortConfig.key}
-                    sortDirection={sortConfig.direction}
-                    handleSort={handleSort}
-                    headerBgColor="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white"
-                    itemsPerPage={5}
-                    compact={true}
-                    hideActionLabels={true}
-                    isLoading={loading}
-                  />
-                </div>
+          {/* ── Stat Cards ───────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              icon={Users}
+              title="New Leads"
+              value={leads.filter(l => getDisplayStage(l.status) === 'New Lead').length}
+              iconBg="bg-blue-50"
+              iconColor="text-[#2E3D99]"
+              loading={loading}
+            />
+            <StatCard
+              icon={UserCheck}
+              title="Qualified Leads"
+              value={leads.filter(l => getDisplayStage(l.status) === 'Qualified').length}
+              iconBg="bg-teal-50"
+              iconColor="text-teal-600"
+              loading={loading}
+            />
+            <StatCard
+              icon={FileText}
+              title="Open Proposals"
+              value={leads.filter(l => getDisplayStage(l.status) === 'Proposal').length}
+              iconBg="bg-violet-50"
+              iconColor="text-violet-600"
+              loading={loading}
+            />
+            <StatCard
+              icon={Trophy}
+              title="Won This Month"
+              value={leads.filter(l => {
+                const d = getDisplayStage(l.status);
+                const isWon = d === 'Won';
+                const isThisMonth = l.createdAt
+                  ? new Date(l.createdAt).getMonth() === new Date().getMonth() &&
+                    new Date(l.createdAt).getFullYear() === new Date().getFullYear()
+                  : false;
+                return isWon;
+              }).length}
+              iconBg="bg-amber-50"
+              iconColor="text-amber-600"
+              loading={loading}
+            />
+          </div>
+
+          {/* ── Table Card ────────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+
+            {/* Table header bar */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <h2 className="text-sm font-bold text-slate-800">All Leads</h2>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+                  {filteredLeads.length} results
+                </span>
               </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <Eye size={13} className="text-slate-300" />
+                Click a lead to view full details
+              </div>
+            </div>
 
-              {/* MOBILE/TABLET CARD SECTION */}
-              <div className="lg:hidden space-y-4 w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {loading ? (
-                    <div className="col-span-full flex justify-center items-center h-32">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2E3D99]"></div>
-                    </div>
-                  ) : currentMobilePageData.length === 0 ? (
-                    <div className="col-span-full text-center py-8 text-gray-500 font-medium">
-                      No leads available
-                    </div>
-                  ) : currentMobilePageData.map((lead) => {
-                    const initials = `${lead.firstName[0] || ''}${lead.lastName[0] || ''}`.toUpperCase();
-                    return (
-                      <motion.div
-                        key={lead.id}
-                        whileHover={{ y: -4 }}
-                        className="bg-white/90 backdrop-blur-lg border border-white/50 rounded-2xl p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden"
+            {/* Stage filter pills */}
+            <div className="flex items-center gap-1.5 px-5 py-3 border-b border-slate-50 overflow-x-auto">
+              {STAGE_PILLS.map(pill => (
+                <button
+                  key={pill}
+                  onClick={() => { setStageFilter(pill); setCurrentPage(1); }}
+                  className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    stageFilter === pill
+                      ? 'bg-[#2E3D99] text-white border-[#2E3D99] shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {pill}
+                </button>
+              ))}
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto px-3 pb-3">
+              <table className="w-full text-sm border-separate border-spacing-y-1.5">
+                <thead>
+                  <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
+                    {[
+                      { key: 'leadId',         label: 'Lead ID',         sortable: true,  center: false },
+                      { key: 'role',           label: 'Lead Title',      sortable: true,  center: false },
+                      { key: 'displayName',    label: 'Contact',         sortable: true,  center: false },
+                      { key: 'company',        label: 'Company',         sortable: true,  center: false },
+                      { key: 'status',         label: 'Stage',           sortable: false, center: false },
+                      { key: 'proposalStatus', label: 'Proposal Status', sortable: false, center: true  },
+                      { key: 'assignedToName', label: 'Owner',           sortable: true,  center: false },
+                      { key: 'source',         label: 'Source',          sortable: false, center: true  },
+                      { key: 'value',          label: 'Value',           sortable: false, center: true  },
+                      { key: 'nextFollowUp',   label: 'Next Follow-Up',  sortable: false, center: true  },
+                      { key: 'priority',       label: 'Priority',        sortable: false, center: true  },
+                      { key: 'actions',        label: 'Actions',         sortable: false, center: true  },
+                    ].map((col, colIdx, arr) => (
+                      <th
+                        key={col.key}
+                        className={[
+                          'px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-white/90 whitespace-nowrap',
+                          col.center ? 'text-center' : 'text-left',
+                          col.sortable ? 'cursor-pointer hover:text-white select-none' : '',
+                          colIdx === 0 ? 'rounded-l-xl' : '',
+                          colIdx === arr.length - 1 ? 'rounded-r-xl' : '',
+                        ].join(' ')}
+                        onClick={col.sortable ? () => handleSort(col.key) : undefined}
                       >
-                        <div className="flex justify-between items-start space-x-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-[#2E3D99]/10 text-[#2E3D99] flex items-center justify-center font-bold text-sm border border-[#2E3D99]/20 shrink-0">
-                              {initials}
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="text-sm font-bold text-gray-800 truncate">
-                                {lead.firstName} {lead.lastName}
-                              </h3>
-                              <p className="text-[11px] text-gray-400 font-semibold truncate">
-                                {lead.role || "No Role"}
-                              </p>
-                            </div>
-                          </div>
-                          <select
-                            value={lead.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              if (newStatus === lead.status) return;
-
-                              // Optimistically update
-                              setLeads(prev => prev.map(c => c.id === lead.id ? { ...c, status: newStatus } : c));
-
-                              try {
-                                await crmAPI.updateLeadStatus(lead.id, newStatus);
-                                toast.success(`Lead status updated to ${newStatus}`);
-                                fetchLeads();
-                              } catch (err) {
-                                console.error("Failed to update status", err);
-                                toast.error(err.message || "Failed to update status");
-                                fetchLeads();
-                              }
-                            }}
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2E3D99]/40 pr-5 appearance-none bg-no-repeat ${lead.status === 'New' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                                lead.status === 'Open' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
-                                  lead.status === 'Contacted' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                                    lead.status === 'Qualified' ? 'bg-teal-100 text-teal-800 border border-teal-200' :
-                                      lead.status === 'Converted' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                                        lead.status === 'Closed' ? 'bg-slate-100 text-slate-800 border border-slate-200' :
-                                          'bg-rose-100 text-rose-800 border border-rose-200'
-                              }`}
-                            style={{
-                              backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%234B5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                              backgroundPosition: 'right 0.15rem center',
-                              backgroundSize: '1em 1em',
-                              paddingRight: '1.2rem'
-                            }}
+                        <div className={`flex items-center gap-1.5 ${col.center ? 'justify-center' : ''}`}>
+                          {col.label}
+                          {col.sortable && <SortIcon col={col.key} />}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse bg-white rounded-xl">
+                        {Array.from({ length: 12 }).map((_, j) => (
+                          <td
+                            key={j}
+                            className={`px-4 py-3.5 bg-white border-y border-slate-100 ${j === 0 ? 'rounded-l-xl border-l' : ''} ${j === 11 ? 'rounded-r-xl border-r' : ''}`}
                           >
-                            <option value="New">New</option>
-                            <option value="Open">Open</option>
-                            <option value="Contacted">Contacted</option>
-                            <option value="Qualified">Qualified</option>
-                            <option value="Closed">Closed</option>
-                            <option value="Unqualified">Unqualified</option>
-                          </select>
-                        </div>
+                            <div className="h-4 bg-slate-100 rounded w-full" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : paginatedLeads.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="text-center py-16 text-slate-400">
+                        <Users size={32} className="mx-auto mb-3 text-slate-200" />
+                        <p className="text-sm font-semibold">No leads found</p>
+                        <p className="text-xs text-slate-300 mt-1">Try adjusting your filters or add a new lead</p>
+                      </td>
+                    </tr>
+                  ) : paginatedLeads.map((lead) => {
+                    const displayStage  = getDisplayStage(lead.status);
+                    const stageStyle    = STAGE_DISPLAY[displayStage]?.badge || "bg-slate-100 text-slate-500";
+                    const proposalStyle = PROPOSAL_STATUS_STYLES[lead.proposalStatus] || null;
+                    const priorityStyle = PRIORITY_STYLES[lead.priority] || null;
+                    const displayId     = lead.leadId || `LD-${(lead.id || "").slice(-4).toUpperCase()}`;
+                    const fullName      = `${lead.firstName} ${lead.lastName}`.trim();
 
-                        <div className="mt-4 pt-4 border-t border-gray-100/50 space-y-2.5">
-                          <div className="flex items-center gap-2.5 text-xs text-gray-600">
-                            <Building2 size={14} className="text-[#2E3D99]/70 shrink-0" />
-                            <span className="font-semibold text-gray-700 truncate">{lead.company}</span>
-                          </div>
-                          <div className="flex items-center gap-2.5 text-xs text-gray-600">
-                            <Mail size={14} className="text-[#1D97D7] shrink-0" />
-                            <a href={`mailto:${lead.email}`} className="hover:underline text-gray-700 font-medium truncate">
-                              {lead.email}
-                            </a>
-                          </div>
-                          <div className="flex items-center gap-2.5 text-xs text-gray-600">
-                            <Phone size={14} className="text-[#1D97D7] shrink-0" />
-                            <a href={`tel:${lead.phone}`} className="hover:underline text-gray-700 font-medium truncate">
-                              {lead.phone}
-                            </a>
-                          </div>
-                        </div>
+                    // shared cell base classes
+                    const cell  = 'px-4 py-3 bg-white border-y border-slate-100 transition-colors group-hover:bg-blue-50/40';
+                    const cellL = `${cell} rounded-l-xl border-l`;
+                    const cellR = `${cell} rounded-r-xl border-r`;
 
-                        <div className="mt-4 pt-3 border-t border-gray-100/50 flex justify-end items-center gap-2 flex-wrap">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                    return (
+                      <tr
+                        key={lead.id}
+                        className="cursor-pointer group"
+                        onClick={() => handleLeadClick(lead, false)}
+                      >
+                        {/* Lead ID */}
+                        <td className={cellL} onClick={e => e.stopPropagation()}>
+                          <button
                             onClick={() => handleLeadClick(lead, false)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2E3D99]/5 text-[#2E3D99] rounded-lg font-bold text-xs hover:bg-[#2E3D99]/10 transition-colors"
+                            className="text-[#1D97D7] font-bold text-xs hover:underline whitespace-nowrap"
                           >
-                            <span>View</span>
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleLeadClick(lead, true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-bold text-xs hover:bg-blue-100 transition-colors"
-                          >
-                            <Edit size={12} />
-                            <span>Edit</span>
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleDeleteLead(lead)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg font-bold text-xs hover:bg-rose-100 transition-colors"
-                          >
-                            <Trash2 size={12} />
-                            <span>Delete</span>
-                          </motion.button>
-                          {lead.status !== 'Converted' && (
-                            <>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setConvertState({ isOpen: true, lead })}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-xs hover:bg-emerald-100 transition-colors"
-                              >
-                                <ArrowRightLeft size={12} />
-                                <span>Convert</span>
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setAssignState({ isOpen: true, lead })}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-lg font-bold text-xs hover:bg-violet-100 transition-colors"
-                              >
-                                <UserCheck size={12} />
-                                <span>Assign</span>
-                              </motion.button>
-                            </>
+                            {displayId}
+                          </button>
+                        </td>
+
+                        {/* Lead Title */}
+                        <td className={`${cell} max-w-[160px]`}>
+                          <span className="text-xs font-semibold text-slate-800 line-clamp-2">{lead.role || "—"}</span>
+                        </td>
+
+                        {/* Contact */}
+                        <td className={cell}>
+                          <div className="flex items-center gap-2">
+                            <Avatar name={fullName} size="sm" />
+                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">{fullName}</span>
+                          </div>
+                        </td>
+
+                        {/* Company */}
+                        <td className={cell}>
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.company || "—"}</span>
+                        </td>
+
+                        {/* Stage */}
+                        <td className={cell}>
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${stageStyle}`}>
+                            {displayStage}
+                          </span>
+                        </td>
+
+                        {/* Proposal Status — centered */}
+                        <td className={`${cell} text-center`}>
+                          {proposalStyle ? (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${proposalStyle}`}>
+                              {lead.proposalStatus}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-medium">—</span>
                           )}
-                        </div>
-                      </motion.div>
+                        </td>
+
+                        {/* Owner */}
+                        <td className={cell}>
+                          <div className="flex items-center gap-2">
+                            <Avatar name={lead.assignedToName} size="sm" />
+                            <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.assignedToName || "Unassigned"}</span>
+                          </div>
+                        </td>
+
+                        {/* Source — centered */}
+                        <td className={`${cell} text-center`}>
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.source || <span className="text-slate-300 font-medium">—</span>}</span>
+                        </td>
+
+                        {/* Value — centered */}
+                        <td className={`${cell} text-center`}>
+                          <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                            {lead.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : <span className="text-slate-300 font-medium">—</span>}
+                          </span>
+                        </td>
+
+                        {/* Next Follow-Up — centered */}
+                        <td className={`${cell} text-center`}>
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
+                            {lead.nextFollowUpDate
+                              ? new Date(lead.nextFollowUpDate).toLocaleDateString("en-GB")
+                              : <span className="text-slate-300 font-medium">—</span>}
+                          </span>
+                        </td>
+
+                        {/* Priority — centered */}
+                        <td className={`${cell} text-center`}>
+                          {priorityStyle ? (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${priorityStyle}`}>
+                              {lead.priority}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-medium">—</span>
+                          )}
+                        </td>
+
+                        {/* Actions — centered */}
+                        <td className={`${cellR} text-center`} onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-0.5">
+                            {/* View */}
+                            <button
+                              onClick={() => handleLeadClick(lead, false)}
+                              title="View Details"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#2E3D99] hover:bg-[#2E3D99]/10 transition-colors"
+                            >
+                              <Eye size={13} />
+                            </button>
+                            {/* Edit */}
+                            <button
+                              onClick={() => handleLeadClick(lead, true)}
+                              title="Edit Lead"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              <Edit size={13} />
+                            </button>
+                            {/* Add Task */}
+                            <button
+                              onClick={() => setTaskState({ isOpen: true, lead, task: null })}
+                              title="Add Task"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            >
+                              <SquarePlus size={13} />
+                            </button>
+                            {/* Divider */}
+                            <span className="w-px h-4 bg-slate-200 mx-0.5" />
+                            {/* Assign */}
+                            <button
+                              onClick={() => setAssignState({ isOpen: true, lead })}
+                              title="Assign Lead"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                            >
+                              <UserPlus size={13} />
+                            </button>
+                            {/* Delete */}
+                            <button
+                              onClick={() => setDeleteState({ isOpen: true, lead })}
+                              title="Delete Lead"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
-                </div>
+                </tbody>
+              </table>
+            </div>
 
-                <Pagination
-                  data={sortedLeads}
-                  itemsPerPage={5}
-                  setCurrentData={setCurrentMobilePageData}
-                />
+            {/* ── Pagination ────────────────────────────────────────────── */}
+            {!loading && filteredLeads.length > 0 && (
+              <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
+                <p className="text-xs font-medium text-slate-400">
+                  Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredLeads.length)} to{" "}
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredLeads.length)} of{" "}
+                  {filteredLeads.length} results
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Prev
+                  </button>
+                  {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-8 h-8 text-xs font-bold rounded-lg transition-colors ${
+                        currentPage === p
+                          ? 'bg-[#2E3D99] text-white'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  {totalPages > 4 && <span className="text-slate-300 px-1">…</span>}
+                  {totalPages > 3 && (
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      className={`w-8 h-8 text-xs font-bold rounded-lg transition-colors ${
+                        currentPage === totalPages
+                          ? 'bg-[#2E3D99] text-white'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {totalPages}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
+            )}
+          </div>
 
         </main>
       </div>
 
+      {/* ── Modals ───────────────────────────────────────────────────────── */}
       <LeadDrawer
         lead={selectedLead}
         onClose={() => setSelectedLead(null)}
@@ -1925,8 +2082,6 @@ export default function Leads() {
         users={usersList}
         initialData={taskState.task}
       />
-
-      {/* Custom Delete Dialog */}
       <Dialog
         open={deleteState.isOpen}
         onClose={() => setDeleteState({ isOpen: false, lead: null })}
@@ -1935,40 +2090,32 @@ export default function Leads() {
         <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-md"
-            >
-              <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/50 relative">
-                <button
-                  onClick={() => setDeleteState({ isOpen: false, lead: null })}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-all font-semibold"
-                >
-                  &times;
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+              <div className="bg-white rounded-2xl p-6 shadow-2xl border border-slate-100 relative">
+                <button onClick={() => setDeleteState({ isOpen: false, lead: null })}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-all">
+                  <X size={18} />
                 </button>
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
-                    <Trash2 className="w-8 h-8 text-white" />
+                  <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
+                    <Trash2 className="w-7 h-7 text-rose-500" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    Delete Lead
-                  </h2>
-                  <p className="text-gray-600 text-sm">
-                    Are you sure you want to delete <span className="font-bold text-gray-900">{deleteState.lead ? `${deleteState.lead.firstName} ${deleteState.lead.lastName}` : ''}</span>? This action cannot be undone.
+                  <h2 className="text-lg font-bold text-slate-800 mb-2">Delete Lead</h2>
+                  <p className="text-sm text-slate-500">
+                    Are you sure you want to delete{" "}
+                    <span className="font-bold text-slate-800">
+                      {deleteState.lead ? `${deleteState.lead.firstName} ${deleteState.lead.lastName}` : ''}
+                    </span>?
+                    This action cannot be undone.
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteState({ isOpen: false, lead: null })}
-                    className="flex-1 bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl hover:bg-slate-200 transition-all cursor-pointer text-sm"
-                  >
+                  <button onClick={() => setDeleteState({ isOpen: false, lead: null })}
+                    className="flex-1 bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl hover:bg-slate-200 transition-all text-sm">
                     Cancel
                   </button>
-                  <button
-                    onClick={handleConfirmDelete}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold py-2.5 rounded-xl hover:shadow-lg transition-all cursor-pointer text-sm"
-                  >
+                  <button onClick={handleConfirmDelete}
+                    className="flex-1 bg-rose-500 text-white font-semibold py-2.5 rounded-xl hover:bg-rose-600 transition-all text-sm">
                     Delete Lead
                   </button>
                 </div>

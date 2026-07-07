@@ -18,6 +18,8 @@ import {
   BookOpen,
   Briefcase,
   Network,
+  Building2,
+  UserRound,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -73,14 +75,24 @@ export default function Sidebar({
   if (currentModule === "crm") {
     moduleSpecificItems = [
       {
-        label: "Deals",
-        icon: Briefcase,
-        to: "/admin/crm/deals",
-      },
-      {
         label: "Leads",
         icon: Network,
         to: "/admin/crm/leads",
+      },
+      {
+        label: "Contacts",
+        icon: UserRound,
+        to: "/admin/crm/contacts",
+      },
+      {
+        label: "Companies",
+        icon: Building2,
+        to: "/admin/crm/companies",
+      },
+      {
+        label: "Deals",
+        icon: Briefcase,
+        to: "/admin/crm/deals",
       },
     ];
   } else {
@@ -197,6 +209,10 @@ export default function Sidebar({
         return Briefcase;
       case "Leads":
         return Network;
+      case "Contacts":
+        return UserRound;
+      case "Companies":
+        return Building2;
       default:
         return LayoutDashboard;
     }
@@ -342,7 +358,7 @@ export default function Sidebar({
           {/* Navigation Menu */}
           <nav className="flex flex-col space-y-2 mt-2 flex-1 overflow-y-auto overflow-x-hidden">
             {menuItems.map(({ label, icon, to }) => {
-              const isActive = location.pathname === to;
+              const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
               const handleClick = getClickHandler(label, to);
               const IconComponent = getIconForLabel(label);
 

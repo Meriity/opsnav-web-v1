@@ -31,10 +31,159 @@ import {
   Lightbulb,
   MessageSquare,
   Activity,
-} from "lucide-react"; 
+  Building2,
+  Users,
+  Link2,
+  UserPlus,
+  ToggleRight,
+} from "lucide-react";
 export const monthlyReleaseNotes = {
   2026: {
     June: [
+      {
+        date: "2026-07-03",
+        version: "v8.4.0",
+        type: "minor",
+        category: "feature",
+        title: "Commercial Stage 2 Field & CRM Responsive Overhaul",
+        description: "Added the Heads of Agreement field to the Commercial module's Stage 2, and completed a full responsive layout overhaul for the CRM Contacts and Companies pages.",
+        updates: [
+          {
+            type: "feature",
+            title: "Heads of Agreement Field — Commercial Stage 2",
+            description: "New Yes / No / N/R radio field added to Stage 2 of the Commercial workflow.",
+            details: "Introduced a 'Heads of Agreement' radio field (options: Yes, No, N/R) exclusively in the Commercial module's Stage 2 form. The field is positioned between Lease Transfer and Contract of Sale, is included in the auto-generated system note logic, and is persisted correctly to the backend via the commercial save payload.",
+            icon: FileText,
+          },
+          {
+            type: "ui_ux",
+            title: "CRM Contacts — Responsive Layout",
+            description: "Full mobile and tablet responsive overhaul of the Contacts list page.",
+            details: "Redesigned the Contacts table page for mobile-first accessibility, eliminating horizontal overflow on small screens. Applied proper column visibility rules so that only essential columns appear on mobile, with progressive disclosure of additional columns on tablet and desktop. Navigation and header elements now behave consistently across all screen sizes.",
+            icon: Smartphone,
+          },
+          {
+            type: "ui_ux",
+            title: "CRM Companies — Responsive Layout",
+            description: "Full mobile and tablet responsive overhaul of the Companies list and detail pages.",
+            details: "Completed the responsive overhaul for the Companies table page, fixing horizontal overflow and scaling issues from mobile to tablet. Resolved text truncation, element overlap, and alignment problems on the Company Detail page for tablet viewports. Ensured uniform hamburger menu visibility and consistent navigation behaviour across all CRM sub-modules.",
+            icon: Building2,
+          },
+        ],
+        module: "Commercial, CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
+        date: "2026-06-30",
+        version: "v8.3.1",
+        type: "patch",
+        category: "improvement",
+        title: "Company Size Field & UX Enhancements",
+        description: "Added a new Company Size field across the CRM module and improved form validations for website and phone inputs.",
+        updates: [
+          {
+            type: "feature",
+            title: "Company Size Tracking",
+            description: "Introduced a Company Size field to track company scales.",
+            details: "Added a 'Company Size' dropdown to the Add and Edit Company modals with ranges from '1-10' to '500+'. This field is also now visible on the main Companies table and within the Key Information section on the Company Detail page.",
+            icon: Building2,
+          },
+          {
+            type: "ui_ux",
+            title: "Relaxed Website Validation",
+            description: "Website URLs no longer strictly require 'https://' to be entered.",
+            details: "Changed the input type of the Website field from 'url' to 'text' to prevent browser blocking. The system now seamlessly accepts standard domains (like 'opsnav.com') and automatically prepends 'https://' behind the scenes for redirection.",
+            icon: Sparkles,
+          },
+          {
+            type: "ui_ux",
+            title: "Standardized Phone Placeholders",
+            description: "Updated all phone input placeholders to reflect Australian formatting.",
+            details: "Standardized phone placeholders across the 'New Contact', 'Add Company', and 'Edit Company' modals to consistently use the '+61 4xx xxx xxx' format.",
+            icon: Phone,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
+        date: "2026-06-25",
+        version: "v8.3.0",
+        type: "minor",
+        category: "feature",
+        title: "CRM Companies Module & Contact Linking",
+        description: "Launched the full Companies module within CRM, including a rich company detail page, bidirectional contact-company linking, and inline contact creation — all integrated with the live backend API.",
+        updates: [
+          {
+            type: "feature",
+            title: "Companies Module Launch",
+            description: "New dedicated Companies section now live in the CRM sidebar.",
+            details: "Wired the Companies route in App.jsx replacing the previous redirect placeholder. The Companies list page displays all companies from the live API with search, filtering by company type and industry, and pagination. Fields aligned with the API spec: companyName, companyType (Client, Builder, Developer, Law Firm, Bank, Vendor, Referral Partner, Other), website, email, phone, address, industry, and tags. Removed legacy ABN and isVip fields from both the create and edit forms.",
+            icon: Building2,
+          },
+          {
+            type: "feature",
+            title: "Company Detail Page",
+            description: "Full-featured company profile page with tabbed layout.",
+            details: "Built CompanyDetailPage.jsx with a rich profile header showing health status, account owner, quick-info grid, and account summary stats. Four tabs: Overview (key info, recent contacts, recent leads), Contacts (full contacts table), Leads, and Activity & Notes. Data loaded in parallel using Promise.allSettled for company details and linked contacts simultaneously. Page navigable from the companies list and from contact detail pages.",
+            icon: Building2,
+          },
+          {
+            type: "feature",
+            title: "Link Existing Contacts to Company",
+            description: "Multi-select modal to link already-existing CRM contacts to a company.",
+            details: "Added 'Link Existing' button on the company detail page (Overview tab empty state and Contacts tab header). Opens a searchable modal showing all unlinked contacts with checkboxes. Calls POST /crm/companies/:id/contacts/link for each selected contact. Contacts list refreshes automatically after linking.",
+            icon: Link2,
+          },
+          {
+            type: "feature",
+            title: "Create New Contact & Link in One Step",
+            description: "New 'New Contact' button on company page creates and links a contact simultaneously.",
+            details: "Implemented the POST /crm/companies/:id/contacts/new API integration. The modal accepts all required fields: firstName, lastName, contactType, email, phone, jobTitle, and customerFlag. On submit, the contact is created in the CRM and immediately linked to the company — no separate linking step required. Added createAndLinkContact() method to crmAPI.js.",
+            icon: UserPlus,
+          },
+          {
+            type: "feature",
+            title: "Unlink Contact from Company",
+            description: "Added contact unlinking from both the Overview and Contacts tab.",
+            details: "In the Overview tab, hovering over a linked contact reveals an × button that calls DELETE /crm/companies/:id/contacts/:contactId. In the Contacts tab, a 'View | Unlink' actions column provides the same capability. Both update local state instantly without a full page reload. A per-contact spinner shows during the unlink operation.",
+            icon: Users,
+          },
+          {
+            type: "feature",
+            title: "Link Company from Contact Detail Page",
+            description: "Contacts can now be linked to a company directly from the contact's own profile.",
+            details: "Added a 'Link to Company' button in the Company Information section of ContactDetailPage. Opens a searchable modal listing all companies with single-select. If the contact is already linked to a company, the modal shows 'Change Company' and automatically unlinks from the current company before linking to the new one, handling the backend constraint that rejects duplicate links without prior unlinking.",
+            icon: Link2,
+          },
+          {
+            type: "ui_ux",
+            title: "Button Loading Spinners on Save & Submit",
+            description: "All save and submit buttons now show inline loading feedback.",
+            details: "Added saving state with inline spinner and disabled state to: Create Contact modal (Creating…), Edit Contact modal (Saving…), Create Company modal (Adding…), Edit Company modal (Saving…), and CompanyDetailPage edit modal (Saving…). Prevents duplicate submissions and gives users clear confirmation their action was registered.",
+            icon: Zap,
+          },
+          {
+            type: "ui_ux",
+            title: "Improved Customer Flag Toggle",
+            description: "Replaced the invisible checkbox with a clear toggle switch row.",
+            details: "The 'Mark as Customer' control in the Create Contact modal was redesigned from a plain checkbox (which blended into the white background) to a full-width interactive row with a pill toggle switch. The row border and background change colour when active, the label dynamically reads 'tagged as Customer' or 'tagged as Lead', and a check badge appears in the corner — making the state immediately obvious at a glance.",
+            icon: ToggleRight,
+          },
+          {
+            type: "improvement",
+            title: "API Response Normalization",
+            description: "Correctly unwrapped nested API response shapes across CRM endpoints.",
+            details: "Fixed contacts not displaying after linking by correctly reading the contactLists.contacts path from the GET /crm/companies/:id/contacts response. Updated getAllContacts and getAllCompanies unwrap logic to handle varying response envelopes gracefully across the Contacts and Companies list pages.",
+            icon: Database,
+          },
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
       {
         date: "2026-06-23",
         version: "v8.2.2",

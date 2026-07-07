@@ -115,6 +115,7 @@ export const useClientStore = create(
 
             clients = filteredResponse.clients.map((client) => ({
               name: client.name,
+              id: client._id || client.id || client.clientId,
             }));
 
             users = filteredResponse.users.map((user) => ({
