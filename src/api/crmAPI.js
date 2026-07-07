@@ -121,7 +121,7 @@ class CrmAPI {
   // Update lead status
   async updateLeadStatus(leadId, status) {
     try {
-      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/update`, {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}`, {
         method: "PATCH",
         headers: this.getHeaders(),
         body: JSON.stringify({ status }),
@@ -180,7 +180,7 @@ class CrmAPI {
   // Update lead
   async updateLead(leadId, updatedFields) {
     try {
-      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/update`, {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}`, {
         method: "PATCH",
         headers: this.getHeaders(),
         body: JSON.stringify(updatedFields),

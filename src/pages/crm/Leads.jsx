@@ -737,12 +737,11 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
               {step === 1 ? (
                 <button type="button" onClick={(e) => {
                   e.preventDefault();
-                  if (!formData.firstName || !formData.lastName || !formData.company) {
-                    alert("Please fill in first name, last name, and company.");
-                    return;
+                  const form = document.getElementById("lead-form");
+                  if (form && form.reportValidity()) {
+                    setStep(2);
                   }
-                  setStep(2);
-                }} className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 sm:ml-3 sm:w-auto transition-opacity">
+                }} className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 sm:ml-3 sm:w-auto transition-opacity">
                   Next Step
                 </button>
               ) : (
@@ -1529,7 +1528,7 @@ export default function Leads() {
           email: leadData.email || "",
           firstName: leadData.firstName || "",
           lastName: leadData.lastName || "",
-          company: leadData.company || "",
+          companyName: leadData.company || "",
           phone: leadData.phone || "",
           assignedTo: leadData.assignedTo || ""
         };
