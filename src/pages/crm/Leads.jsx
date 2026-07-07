@@ -568,7 +568,7 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
 function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
-    serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium'
+    serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required'
   });
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -582,7 +582,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
       } else {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
-          serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium'
+          serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required'
         });
       }
     }
@@ -664,16 +664,29 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                       </div>
                     </div>
                     {initialData && (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                        <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
-                          <option value="New">New</option>
-                          <option value="Open">Open</option>
-                          <option value="Contacted">Contacted</option>
-                          <option value="Qualified">Qualified</option>
-                          <option value="Closed">Closed</option>
-                          <option value="Unqualified">Unqualified</option>
-                        </select>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                          <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
+                            <option value="New">New</option>
+                            <option value="Open">Open</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Qualified">Qualified</option>
+                            <option value="Closed">Closed</option>
+                            <option value="Unqualified">Unqualified</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Proposal Status</label>
+                          <select value={formData.proposalStatus} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
+                            <option value="Not Required">Not Required</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Sent">Sent</option>
+                            <option value="Follow-up Required">Follow-up Required</option>
+                            <option value="Accepted">Accepted</option>
+                            <option value="Rejected">Rejected</option>
+                          </select>
+                        </div>
                       </div>
                     )}
                   </motion.div>
@@ -1507,9 +1520,18 @@ export default function Leads() {
           updatedFields.assignedTo = newAssignedTo || null;
         }
 
-        // Only call update API if there's at least one updated field
-        if (Object.keys(updatedFields).length > 0) {
-          await crmAPI.updateLead(original.id, updatedFields);
+        // Proposal Status Handling (API expects specific route)
+        const originalProposalStatus = original.proposalStatus || "Not Required";
+        const newProposalStatus = leadData.proposalStatus || "Not Required";
+        if (newProposalStatus !== originalProposalStatus) {
+          await crmAPI.updateProposalStatus(original.id, newProposalStatus);
+        }
+
+        // Only call update API if there's at least one updated field in the main body
+        if (Object.keys(updatedFields).length > 0 || newProposalStatus !== originalProposalStatus) {
+          if (Object.keys(updatedFields).length > 0) {
+            await crmAPI.updateLead(original.id, updatedFields);
+          }
           toast.success("Lead updated successfully!");
           fetchLeads();
         } else {

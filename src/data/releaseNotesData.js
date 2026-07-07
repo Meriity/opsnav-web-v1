@@ -42,6 +42,47 @@ export const monthlyReleaseNotes = {
     July: [
       {
         date: "2026-07-07",
+        version: "v8.4.2",
+        type: "patch",
+        category: "bugfix",
+        title: "CRM Leads API Fixes & Proposal Status",
+        description: "Resolved Lead saving issues and integrated the Proposal Status field for editing.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "API Endpoint Correction",
+            description: "Fixed a bug where lead updates appended an incorrect /update path.",
+            details: "Removed the non-standard /update suffix in the crmAPI logic, ensuring that PATCH requests for both updating leads and updating lead statuses map exactly to the standard REST route (PATCH /crm/leads/:id).",
+            icon: Database,
+          },
+          {
+            type: "bugfix",
+            title: "Lead Creation Company Mapping",
+            description: "Resolved an issue where Company names were ignored during lead creation.",
+            details: "Updated the lead creation payload in the frontend to send the input under 'companyName' instead of 'company', matching the new backend schema so the company data is persisted correctly.",
+            icon: Database,
+          },
+          {
+            type: "ui_ux",
+            title: "Inline Form Validation",
+            description: "Replaced disruptive browser alerts with smooth inline validation.",
+            details: "Removed the window.alert() popups from the Lead Creation modal's step progression. We now utilize standard HTML5 reportValidity() to dynamically point to any required fields directly in the UI.",
+            icon: Layout,
+          },
+          {
+            type: "feature",
+            title: "Proposal Status Integration",
+            description: "Added a new Proposal Status dropdown to the Edit Lead workflow.",
+            details: "You can now track the proposal lifecycle (Draft, Sent, Follow-up Required, Accepted, Rejected) in the Edit Lead modal. This field is wired into a dedicated PATCH endpoint (/crm/leads/:id/proposal-status).",
+            icon: Layout,
+          }
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
+        date: "2026-07-07",
         version: "v8.4.1",
         type: "patch",
         category: "improvement",
