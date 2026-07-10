@@ -1717,12 +1717,12 @@ export default function Leads() {
         <main className="px-6 py-6 max-w-[1600px] mx-auto">
 
           {/* ── Page Header ─────────────────────────────────────────────────── */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
-              <p className="text-sm text-slate-400 mt-1">Track, manage, and action all leads in one place.</p>
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-slate-900 truncate">Leads</h1>
+              <p className="text-sm text-slate-500 mt-0.5 truncate md:whitespace-normal">Track, manage, and action all leads in one place.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
               {/* Filter */}
               <div className="relative">
                 <button
@@ -1859,7 +1859,7 @@ export default function Leads() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto px-3 pb-3">
+            <div className="hidden md:block overflow-x-auto px-3 pb-3">
               <table className="w-full text-sm border-separate border-spacing-y-1.5">
                 <thead>
                   <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
@@ -2064,6 +2064,82 @@ export default function Leads() {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="block md:hidden px-4 pb-4 mt-2">
+              {loading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-2xl" />
+                  ))}
+                </div>
+              ) : paginatedLeads.length === 0 ? (
+                <div className="py-12 text-center bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-sm font-semibold text-slate-600 mb-1">No leads found</p>
+                  <p className="text-xs text-slate-400">
+                    {searchQuery ? "Try adjusting your filters" : "Add your first lead"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {paginatedLeads.map((lead) => {
+                    const displayStage  = getDisplayStage(lead.status);
+                    const stageStyle    = STAGE_DISPLAY[displayStage]?.badge || "bg-slate-100 text-slate-500";
+                    const fullName      = `${lead.firstName} ${lead.lastName}`.trim();
+
+                    return (
+                      <div
+                        key={lead.id}
+                        onClick={() => handleLeadClick(lead, false)}
+                        className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={fullName} size="md" />
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm leading-snug line-clamp-1">{lead.title || fullName}</p>
+                              <p className="text-[11px] text-[#1D97D7] font-bold mt-0.5">{fullName}</p>
+                            </div>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap ${stageStyle}`}>
+                            {displayStage}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-2 mt-4 pt-3 border-t border-slate-50/50">
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Company</p>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                              <Building2 size={12} className="text-slate-400" />
+                              <span className="truncate">{lead.company || "—"}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Owner</p>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                              <User size={12} className="text-slate-400" />
+                              <span className="truncate">{lead.assignedToName || "Unassigned"}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Value</p>
+                            <span className="text-xs font-bold text-slate-700">
+                              {lead.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Next Follow-Up</p>
+                            <span className="text-xs font-bold text-slate-700 block">
+                              {lead.nextFollowUpDate ? new Date(lead.nextFollowUpDate).toLocaleDateString("en-GB") : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* ── Pagination ────────────────────────────────────────────── */}

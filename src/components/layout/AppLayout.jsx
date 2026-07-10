@@ -43,14 +43,14 @@ const DashboardLayout = () => {
         <button
           ref={menuButtonRef}
           onClick={() => setSidebarOpen(true)}
-          className="md:hidden fixed top-2.5 right-4 z-50 p-1.5 rounded-md bg-white shadow-md border border-gray-100"
+          className="lg:hidden fixed top-2.5 right-4 z-50 p-1.5 rounded-md bg-white shadow-md border border-gray-100"
         >
           <FiMenu className="w-6 h-6 text-gray-700" />
         </button>
       )}
 
       {/* Mobile Sidebar with backdrop */}
-      <div className={`md:hidden fixed inset-0 z-[9999] ${sidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
+      <div className={`lg:hidden fixed inset-0 z-[9999] ${sidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
         {/* Backdrop - only visible when sidebar is open */}
         {sidebarOpen && (
           <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-auto" />
@@ -69,8 +69,8 @@ const DashboardLayout = () => {
 
       {/* Desktop Sidebar (always visible) */}
       <div
-        className={`hidden md:block h-full bg-white transition-all duration-300 ease-in-out shadow-lg ${
-          isCollapsed ? "md:w-20" : "md:w-64"
+        className={`hidden lg:block h-full bg-white transition-all duration-300 ease-in-out shadow-lg ${
+          isCollapsed ? "lg:w-20" : "lg:w-64"
         }`}
       >
         <Sidebar

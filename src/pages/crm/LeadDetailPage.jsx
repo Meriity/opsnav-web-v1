@@ -5,7 +5,7 @@ import {
   Tag, Building2, User, Phone, Mail, ExternalLink, CheckCircle2,
   Plus, Send, Loader2, StickyNote, Trash2,
   Activity, ListTodo, Paperclip, MapPin, ChevronRight,
-  Link2, LayoutGrid, GitBranch, ArrowRightLeft, MoveRight
+  Link2, LayoutGrid, GitBranch, ArrowRightLeft, MoveRight, AlertCircle
 } from "lucide-react";
 import Header from "../../components/layout/Header";
 import crmAPI from "../../api/crmAPI";
@@ -127,23 +127,26 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
         </span>
       </div>
 
-      {/* Value labels row */}
-      <div className="flex items-center justify-between mb-1 px-0">
-        {PIPELINE_STAGES.map((stage) => (
-          <div key={stage.key + "-val"} className="flex-1 flex flex-col items-center">
-            {stage.hasValue ? (
-              <div className="text-center">
-                <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">
-                  {stage.label} Value
-                </p>
-                <p className={`text-xs font-bold mt-0.5 ${activeIdx >= PIPELINE_STAGES.findIndex(s => s.key === stage.key) ? "text-slate-700" : "text-slate-200"}`}>
-                  {VALUE_LABELS[stage.key] || "—"}
-                </p>
+      {/* Pipeline Container (Scrollable on mobile) */}
+      <div className="overflow-x-auto pb-4">
+        <div className="min-w-[600px]">
+          {/* Value labels row */}
+          <div className="flex items-center justify-between mb-1 px-0">
+            {PIPELINE_STAGES.map((stage) => (
+              <div key={stage.key + "-val"} className="flex-1 flex flex-col items-center">
+                {stage.hasValue ? (
+                  <div className="text-center">
+                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">
+                      {stage.label} Value
+                    </p>
+                    <p className={`text-xs font-bold mt-0.5 ${activeIdx >= PIPELINE_STAGES.findIndex(s => s.key === stage.key) ? "text-slate-700" : "text-slate-200"}`}>
+                      {VALUE_LABELS[stage.key] || "—"}
+                    </p>
+                  </div>
+                ) : <div />}
               </div>
-            ) : <div />}
+            ))}
           </div>
-        ))}
-      </div>
 
       {/* Stepper */}
       <div className="relative flex items-center justify-between mt-3">
@@ -184,12 +187,14 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
           );
         })}
       </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ─── Deal Tracker ─────────────────────────────────────────────────────────────
-function DealTracker({ isTracked, currentStage, lead, onToggle }) {
+function DealTracker({ isTracked, currentStage, lead, onToggle, className }) {
   const DEAL_COLS = [
     { key: "Proposal",    label: "Proposal",    color: "bg-indigo-500", border: "border-indigo-300",  light: "bg-indigo-50/60" },
     { key: "Negotiation", label: "Negotiation", color: "bg-amber-500",  border: "border-amber-300",   light: "bg-amber-50/60" },
@@ -213,29 +218,30 @@ function DealTracker({ isTracked, currentStage, lead, onToggle }) {
   const estClose  = lead?.expectedCloseDate ? moment(lead.expectedCloseDate).format("DD/MM/YYYY") : "—";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div className={className || "bg-white rounded-2xl border border-slate-100 shadow-sm p-5"}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-slate-800">Deal Tracker</h3>
-          <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] cursor-help" title="This lead is optionally tracked as a deal in the sales pipeline.">i</span>
-          <span className="text-xs text-slate-400">This lead is optionally tracked as a deal in the sales pipeline.</span>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+        <div className="flex items-start md:items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-800 shrink-0">Deal Tracker</h3>
+          <span className="hidden md:flex w-4 h-4 rounded-full bg-slate-100 text-slate-400 items-center justify-center text-[10px] cursor-help shrink-0" title="This lead is optionally tracked as a deal in the sales pipeline.">i</span>
+          <span className="text-xs text-slate-400 leading-snug">This lead is optionally tracked as a deal in the sales pipeline.</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Tracked as Deal:</span>
             <button
               onClick={onToggle}
-              className={`relative w-10 h-5 rounded-full transition-colors ${isTracked ? "bg-emerald-500" : "bg-slate-200"}`}
+              className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${isTracked ? "bg-emerald-500" : "bg-slate-200"}`}
             >
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isTracked ? "translate-x-5" : ""}`} />
             </button>
-            <span className={`text-xs font-bold ${isTracked ? "text-emerald-600" : "text-slate-400"}`}>
+            <span className={`text-xs font-bold shrink-0 ${isTracked ? "text-emerald-600" : "text-slate-400"}`}>
               {isTracked ? "Yes" : "No"}
             </span>
           </div>
           {isTracked && (
-            <span className="text-xs text-slate-400">Deal stages sync with lead stages automatically.</span>
+            <span className="text-xs text-slate-400 hidden sm:block">Deal stages sync with lead stages automatically.</span>
           )}
         </div>
       </div>
@@ -247,9 +253,9 @@ function DealTracker({ isTracked, currentStage, lead, onToggle }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            className="overflow-x-auto hide-scrollbar pb-2"
           >
-            <div className="grid grid-cols-4 gap-0 border border-slate-200 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-4 gap-0 border border-slate-200 rounded-xl overflow-hidden min-w-[650px]">
               {DEAL_COLS.map((col, i) => {
                 const isActive = col.key === dealColKey && isTracked;
                 return (
@@ -393,7 +399,7 @@ function OverviewTab({ lead, leadId, users, taskCount, onTaskCountChange, onSwit
   return (
     <div className="space-y-0">
       {/* Lead Info + Proposal Info */}
-      <div className="grid grid-cols-2 gap-6 pb-5 border-b border-slate-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-5 border-b border-slate-100">
         {/* Lead Information */}
         <div>
           <h4 className="text-sm font-bold text-slate-800 mb-3">Lead Information</h4>
@@ -943,14 +949,14 @@ function FilesTab({ onCountChange }) {
 }
 
 // ─── Contact Card ─────────────────────────────────────────────────────────────
-function ContactCard({ lead }) {
+function ContactCard({ lead, className }) {
   const name = lead ? `${lead.firstName || ""} ${lead.lastName || ""}`.trim() : "";
   const initials = name
     ? name.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase()
     : "?";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className={className || "bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"}>
       <div className="px-4 py-3 border-b border-slate-50">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           <User size={13} className="text-[#2E3D99]" />
@@ -1001,14 +1007,14 @@ function ContactCard({ lead }) {
 }
 
 // ─── Company Card ─────────────────────────────────────────────────────────────
-function CompanyCard({ lead }) {
+function CompanyCard({ lead, className }) {
   const company = lead?.company;
   if (!company) return null;
 
   const initials = company.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className={className || "bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"}>
       <div className="px-4 py-3 border-b border-slate-50">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           <Building2 size={13} className="text-[#2E3D99]" />
@@ -1157,14 +1163,258 @@ export default function LeadDetailPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-50">
-      <Header />
+    <div className="min-h-screen bg-[#F8FAFC] md:bg-slate-50">
+      
+      {/* ── Mobile Layout ── */}
+      <div className="block md:hidden pb-24">
+        {/* Mobile Header */}
+        <div className="bg-[#F8FAFC] px-5 py-4 flex items-center justify-between sticky top-0 z-10">
+          <button onClick={() => navigate("/admin/crm/leads")} className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-[0_4px_20px_rgba(15,23,42,0.08)] text-[#0F172A] border border-[#E5E7EB]/50">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex items-center gap-5">
+            <Phone size={18} className="text-[#0F172A]" />
+            <Mail size={18} className="text-[#0F172A]" />
+          </div>
+        </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Profile Hero */}
+        <div className="pt-8 pb-6 px-5 flex flex-col items-center">
+          <div className="w-20 h-20 bg-[#2E3D99]/10 rounded-full flex items-center justify-center text-[#2E3D99] text-3xl font-bold mb-4">
+            {(lead?.firstName?.[0] || "") + (lead?.lastName?.[0] || "") || "LD"}
+          </div>
+          <h2 className="text-[22px] font-semibold text-[#0F172A] text-center px-4">{lead?.role || displayId}</h2>
+          <span className="mt-2 bg-[#22C55E]/10 text-[#22C55E] px-3 py-1 rounded-full text-[13px] font-medium">
+            {currentStage || "Lead"}
+          </span>
+          <p className="text-[15px] font-medium text-[#1D97D7] mt-2 text-center">{displayName || "—"}</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-5 grid grid-cols-4 gap-4 mb-6">
+          {[
+            { icon: Phone, label: "Call" },
+            { icon: Mail, label: "Email" },
+            { icon: Edit, label: "Edit" },
+            { icon: GitBranch, label: "Stage" },
+          ].map(a => (
+            <button key={a.label} className="bg-white h-[72px] rounded-[16px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] flex flex-col items-center justify-center gap-2 border border-[#E5E7EB]/50">
+              <a.icon size={18} className="text-[#0F172A]" />
+              <span className="text-[13px] font-medium text-[#0F172A]">{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="px-5 space-y-4">
+          
+          {/* Pipeline Card */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Lead Pipeline</h3>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${proposalBadge || "bg-slate-100 text-slate-500"}`}>
+                {lead?.proposalStatus || "Draft"}
+              </span>
+            </div>
+            
+            {/* Value */}
+            <div className="mb-6 text-center">
+               <p className="text-[11px] font-medium text-[#64748B] mb-1 uppercase tracking-wider">Commercial Value</p>
+               <p className="text-[24px] font-bold text-[#0F172A]">{lead?.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : "$0"}</p>
+            </div>
+
+            {/* Stepper Mobile */}
+            <div className="relative">
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-slate-100" />
+              <div className="space-y-4 relative z-10">
+                {PIPELINE_STAGES.map((stage, idx) => {
+                  const activeIdx = getStageIndex(currentStage);
+                  const isPast    = idx < activeIdx;
+                  const isCurrent = idx === activeIdx;
+                  return (
+                    <div key={stage.key} className="flex items-center gap-4">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all shrink-0 ${
+                        isCurrent
+                          ? `${stage.dot} border-white shadow-md scale-110`
+                          : isPast
+                            ? `${stage.dot} border-white opacity-90`
+                            : "bg-white border-slate-200"
+                      }`}>
+                        {isPast && <CheckCircle2 size={12} className="text-white" />}
+                        {isCurrent && <span className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      <div className="flex-1 flex justify-between items-center">
+                        <p className={`text-[13px] font-bold ${isCurrent ? "text-slate-800" : isPast ? "text-slate-500" : "text-slate-400"}`}>
+                          {stage.label}
+                        </p>
+                        {stage.hasValue && isCurrent && lead?.commercialValue && (
+                          <span className="text-[11px] font-bold text-slate-400">
+                            ${Number(lead.commercialValue).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Key Information */}
+          <div className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-[15px] font-semibold text-[#0F172A]">Key Information</h3>
+            </div>
+            <div className="space-y-4">
+              {/* Contact */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <User size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{displayName || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Contact</p>
+                </div>
+              </div>
+              {/* Company */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Building2 size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{lead?.company || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Company</p>
+                </div>
+              </div>
+              {/* Source */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Tag size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{lead?.source || "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Source</p>
+                </div>
+              </div>
+              {/* Priority */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <AlertCircle size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  {lead?.priority ? (
+                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${priorityBadge}`}>
+                      {lead.priority}
+                    </span>
+                  ) : <span className="text-[13px] font-medium text-[#64748B]">—</span>}
+                  <p className="text-[11px] font-semibold text-[#64748B]">Priority</p>
+                </div>
+              </div>
+              {/* Expected Close */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Calendar size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{lead?.expectedCloseDate ? moment(lead.expectedCloseDate).format("DD/MM/YYYY") : "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Expected Close</p>
+                </div>
+              </div>
+              {/* Next Follow-up */}
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
+                <Clock size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{lead?.nextFollowUpDate ? moment(lead.nextFollowUpDate).format("DD/MM/YYYY") : "—"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Next Follow-up</p>
+                </div>
+              </div>
+              {/* Owner */}
+              <div className="flex items-center gap-3 pb-1">
+                <UserCheck size={16} className="text-[#64748B]" />
+                <div className="flex-1 flex justify-between items-center">
+                  <p className="text-[13px] font-medium text-[#64748B]">{lead?.assignedToName || "Unassigned"}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B]">Owner</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Missing Components (Deal Tracker, Tabs Panel, Contact/Company Cards) */}
+        <div className="px-5 space-y-4 pb-8 mt-4">
+          <DealTracker
+            isTracked={isDealTracked}
+            currentStage={currentStage}
+            lead={lead}
+            onToggle={() => setIsDealTracked(v => !v)}
+            className="bg-white rounded-[20px] p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50"
+          />
+
+          <div className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 overflow-hidden">
+            {/* Tab headers */}
+            <div className="flex overflow-x-auto border-b border-slate-100 px-2 hide-scrollbar">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-1.5 px-4 py-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+                      activeTab === tab.key
+                        ? "border-[#2E3D99] text-[#2E3D99]"
+                        : "border-transparent text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <Icon size={13} />
+                    {tab.label}
+                    {tab.count != null && tab.count > 0 && (
+                      <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                        activeTab === tab.key ? "bg-[#2E3D99] text-white" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab content */}
+            <div className="p-5">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {activeTab === "overview" && (
+                    <OverviewTab
+                      lead={lead}
+                      leadId={lead?.id}
+                      users={users}
+                      taskCount={taskCount}
+                      onTaskCountChange={setTaskCount}
+                    />
+                  )}
+                  {activeTab === "tasks"    && <TasksTab leadId={lead?.id} users={users} onCountChange={setTaskCount} />}
+                  {activeTab === "notes"    && <NotesActivityTab leadId={lead?.id} lead={lead} onCountChange={setNoteCount} />}
+                  {activeTab === "files"    && <FilesTab onCountChange={setFileCount} />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+          
+          <ContactCard lead={lead} className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 overflow-hidden" />
+          <CompanyCard lead={lead} className="bg-white rounded-[20px] shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-[#E5E7EB]/50 overflow-hidden" />
+        </div>
+
+        {/* Sticky Bottom CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F8FAFC]/90 backdrop-blur-md z-50 pb-safe">
+          <button className="w-full h-[56px] bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-[20px] font-semibold text-[15px] shadow-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-[0.98]">
+            <Plus size={18} /> Convert to Workflow
+          </button>
+        </div>
+      </div>
+
+      {/* ── Desktop Layout ── */}
+      <div className="hidden md:flex flex-1 flex-col min-h-0 bg-slate-50">
+        <Header />
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-5">
 
           {/* ── Page Header ────────────────────────────────────────────── */}
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-2">
                 <button onClick={() => navigate("/admin/crm/leads")} className="hover:text-[#2E3D99] transition-colors">
@@ -1188,14 +1438,9 @@ export default function LeadDetailPage() {
           </div>
 
           {/* ── Info Grid ──────────────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            {/* Row 1 */}
-            <div className="grid grid-cols-6 divide-x divide-slate-50 border-b border-slate-50">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {[
-                {
-                  label: "Lead ID",
-                  content: <span className="text-sm font-bold text-[#2E3D99]">{displayId}</span>,
-                },
                 {
                   label: "Lead Title",
                   content: <span className="text-sm font-semibold text-slate-800 line-clamp-2">{lead?.role || "—"}</span>,
@@ -1232,17 +1477,6 @@ export default function LeadDetailPage() {
                     </div>
                   ),
                 },
-              ].map(({ label, content }) => (
-                <div key={label} className="px-5 py-4">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{label}</p>
-                  {content}
-                </div>
-              ))}
-            </div>
-
-            {/* Row 2 */}
-            <div className="grid grid-cols-6 divide-x divide-slate-50">
-              {[
                 { label: "Assigned To",      icon: UserCheck,    value: lead?.assignedToName || "Unassigned" },
                 { label: "Lead Source",      icon: Tag,          value: lead?.source || "Manual" },
                 {
@@ -1257,12 +1491,12 @@ export default function LeadDetailPage() {
                 { label: "Expected Close",     icon: Calendar,   value: lead?.expectedCloseDate ? moment(lead.expectedCloseDate).format("DD/MM/YYYY") : null },
                 { label: "Next Follow-Up",     icon: Clock,      value: lead?.nextFollowUpDate ? moment(lead.nextFollowUpDate).format("DD/MM/YYYY") : null },
               ].map(({ label, icon: Icon, value, content }) => (
-                <div key={label} className="px-5 py-4">
+                <div key={label} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col justify-center">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{label}</p>
                   {content ?? (
                     <div className="flex items-center gap-1.5">
                       {Icon && <Icon size={13} className="text-slate-400 shrink-0" />}
-                      <span className="text-sm font-semibold text-slate-800">
+                      <span className="text-sm font-semibold text-slate-800 truncate">
                         {value || <span className="text-slate-300 font-normal">—</span>}
                       </span>
                     </div>
@@ -1296,7 +1530,7 @@ export default function LeadDetailPage() {
               {/* Tabs panel */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 {/* Tab headers */}
-                <div className="flex border-b border-slate-100 px-2">
+                <div className="flex overflow-x-auto border-b border-slate-100 px-2 hide-scrollbar">
                   {TABS.map(tab => {
                     const Icon = tab.icon;
                     return (
@@ -1402,6 +1636,7 @@ export default function LeadDetailPage() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
