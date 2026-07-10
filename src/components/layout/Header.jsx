@@ -490,8 +490,8 @@ export default function Header({ simplified = false }) {
         <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#2E3D99]/20 to-transparent" />
 
-        <div className="relative px-4 py-2 md:px-6 md:py-2 flex flex-col md:flex-row justify-between items-center gap-2 lg:gap-3">
-          <div className="flex flex-row md:flex-col lg:flex-row items-center md:items-start lg:items-center gap-4 md:gap-1 lg:gap-4 w-full md:flex md:w-auto lg:flex lg:w-auto lg:min-w-[200px]">
+        <div className="relative px-4 py-2 lg:px-6 lg:py-2 flex flex-col lg:flex-row justify-between items-center gap-3 lg:gap-3">
+          <div className="flex flex-row items-center justify-between lg:justify-start gap-4 w-full lg:w-auto lg:min-w-[200px]">
             <div 
               className="flex flex-col items-end cursor-pointer"
               onClick={() => navigate("/")}
@@ -502,10 +502,9 @@ export default function Header({ simplified = false }) {
                 alt="Logo"
               />
             </div>
-            {/* <img src="../public/Logo_vk.png" alt="Logo" className="h-auto object-contain w-14 transition-all duration-300 ease-in-out"/> */}
             
             {!simplified && (
-              <div className="flex flex-col items-start gap-1">
+              <div className="flex flex-col items-start gap-1 flex-1 lg:flex-none">
                 <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -514,7 +513,7 @@ export default function Header({ simplified = false }) {
                   <h1 className="text-lg font-bold bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] bg-clip-text text-transparent">
                     Hello, {localStorage.getItem("user") || "Admin"}
                   </h1>
-                  <span className="animate-pulse hidden md:block">👋</span>
+                  <span className="animate-pulse hidden lg:block">👋</span>
                 </motion.div>
 
                 <div className="hidden lg:flex items-center gap-3 text-xs font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded-md border border-gray-100">
@@ -532,7 +531,7 @@ export default function Header({ simplified = false }) {
             )}
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end mt-1 lg:mt-0">
             {simplified ? (
               <motion.button
                 whileHover={{ scale: 1.05 }}

@@ -41,6 +41,47 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-10",
+        version: "v8.4.3",
+        type: "minor",
+        category: "feature",
+        title: "CRM Leads & Global Tablet Responsive Overhaul",
+        description: "Completed a full mobile-first overhaul for the CRM Leads Detail Page and fixed layout constraints across tablet devices.",
+        updates: [
+          {
+            type: "ui_ux",
+            title: "CRM Leads Detail Mobile Overhaul",
+            description: "Completely refactored the Lead Detail page for mobile and touch-friendly devices.",
+            details: "Built a dedicated mobile view for the Lead Details page (LeadDetailPage.jsx). Introduced a mobile Profile Hero, iOS-style stacked data cards, and a sticky bottom CTA for primary actions. The pipeline and deal trackers now support horizontal scrolling, preventing any layout squishing on small screens.",
+            icon: Smartphone,
+          },
+          {
+            type: "ui_ux",
+            title: "Info Grid Fluid Responsiveness",
+            description: "Rebuilt the Desktop Info Grid to gracefully wrap across all screen sizes.",
+            details: "Removed rigid row structures and divide-x borders from the desktop Info Grid. The data now flows into a flexible grid (bento-box style) that smoothly transitions from 2 columns on small screens to 6 columns on large desktops without line-break rendering issues.",
+            icon: Layout,
+          },
+          {
+            type: "ui_ux",
+            title: "Global Sidebar Tablet Mode",
+            description: "Hid the persistent left sidebar on tablets to free up screen space.",
+            details: "Shifted the sidebar's responsive breakpoint from 'md' to 'lg', forcing the application to use the mobile off-canvas drawer on tablet portrait views (768px). This prevents the main content area from being squished into the remaining 500px width.",
+            icon: Layout,
+          },
+          {
+            type: "ui_ux",
+            title: "Header Layout & Search Wrap",
+            description: "Ensured the global Header correctly drops the search bar to a second row on tablets.",
+            details: "Updated the flex wrapper logic in the global Header component so that the Logo, Greeting, and hamburger menu occupy the top row, and the 380px Search bar spans full-width below them on iPad Portrait screens, exactly mimicking the mobile view layout.",
+            icon: Search,
+          }
+        ],
+        module: "CRM, Global, Admin",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-07-07",
         version: "v8.4.2",
         type: "patch",
