@@ -36,7 +36,9 @@ import {
   SlidersHorizontal,
   ListFilter,
   CalendarDays,
-  SquarePlus
+  SquarePlus,
+  Globe,
+  MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
@@ -568,223 +570,356 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
 function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
-    serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required'
+    serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
+    leadTemperature: '', assignedTo: ''
   });
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveAnother, setSaveAnother] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [enquiryTypes, setEnquiryTypes] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
-      setStep(1);
       setIsSubmitting(false);
       if (initialData) {
-        setFormData({ ...initialData });
+        setFormData({ ...initialData, leadTemperature: initialData.leadTemperature || '', assignedTo: initialData.assignedTo || '' });
       } else {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
-          serviceTypes: [], enquirySource: 'Website', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required'
+          serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
+          leadTemperature: '', assignedTo: ''
         });
       }
+      const fetchUsersList = async () => {
+        try {
+          const api = new AdminApi();
+          const res = await api.getAllUsers();
+          const usersArray = Array.isArray(res) ? res : (res.users || res.data || []);
+          setUsers(usersArray);
+        } catch (err) {
+          console.error("Failed to load users for Lead Modal", err);
+        }
+      };
+      
+      const fetchEnquiryTypes = async () => {
+        try {
+          const types = await crmAPI.getEnquiryTypes();
+          setEnquiryTypes(Array.isArray(types) ? types : (types?.data || types?.enquiryTypes || []));
+        } catch (err) {
+          console.error("Failed to load enquiry types for Lead Modal", err);
+        }
+      };
+
+      fetchUsersList();
+      fetchEnquiryTypes();
     }
   }, [isOpen, initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.firstName || !formData.lastName || !formData.company) return;
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.title || !formData.enquirySource || !formData.leadTemperature) return;
     setIsSubmitting(true);
     try {
       await onSave({
         ...(initialData || {}),
         ...formData
       });
+      if (saveAnother && !initialData) {
+        setFormData({
+          firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
+          serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
+          leadTemperature: '', assignedTo: ''
+        });
+      } else {
+        onClose();
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const modalTitle = initialData ? 'Edit Lead' : 'Create New Lead';
+  const modalTitle = initialData ? 'Edit Lead' : 'Create Lead';
+  const modalSub = initialData ? 'Update lead details' : 'Capture a new lead quickly';
+  const currentUser = localStorage.getItem("user") || "OpsNav Admin";
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-[9999]">
       <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-          <DialogPanel transition className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 sm:my-8 sm:w-full sm:max-w-lg">
-            <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 border-b border-slate-100">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-slate-900">{modalTitle}</h3>
-                <button type="button" onClick={onClose} className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 p-1.5 rounded-lg transition-colors"><X size={18} /></button>
+          <DialogPanel transition className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 sm:my-8 w-full max-w-4xl">
+            
+            {/* Header */}
+            <div className="bg-white px-6 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center border border-blue-100">
+                  <User className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">{modalTitle}</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">{modalSub}</p>
+                </div>
               </div>
-              <form id="lead-form" onSubmit={handleSubmit} className="space-y-4">
+              <button type="button" onClick={onClose} className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 p-2 rounded-xl transition-colors">
+                <X size={20} />
+              </button>
+            </div>
 
-                {/* STEP INDICATOR */}
-                <div className="flex items-center justify-center mb-6">
-                  {/* Step 1 */}
-                  <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 1 ? 'bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-[#2E3D99]/30' : 'bg-slate-200 text-slate-500'}`}>1</div>
-                    <span className={`text-[11px] mt-1.5 font-semibold ${step >= 1 ? 'text-[#1D97D7]' : 'text-slate-400'}`}>Basic Info</span>
+            <form id="lead-form" onSubmit={handleSubmit} className="px-6 pt-4 pb-6 space-y-4 bg-slate-50/50">
+              
+              {/* SECTION 1: Contact Information */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="mb-4 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                      <Globe className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-sm font-bold text-slate-800">1. Contact Information</h4>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Provided by enquirer</span>
+                    </div>
                   </div>
-                  {/* Connector */}
-                  <div className={`h-0.5 w-20 mx-2 mb-5 rounded-full transition-colors ${step >= 2 ? 'bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]' : 'bg-slate-200'}`}></div>
-                  {/* Step 2 */}
-                  <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 2 ? 'bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white shadow-md shadow-[#2E3D99]/30' : 'bg-slate-200 text-slate-500'}`}>2</div>
-                    <span className={`text-[11px] mt-1.5 font-semibold ${step >= 2 ? 'text-[#1D97D7]' : 'text-slate-400'}`}>Lead Details</span>
+                  <p className="text-xs text-slate-500 ml-11">Information entered by the enquirer (website form, QR code, API, etc.)</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">First Name <span className="text-rose-500">*</span></label>
+                    <div className="relative">
+                      <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. John" />
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Last Name <span className="text-rose-500">*</span></label>
+                    <div className="relative">
+                      <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. Smith" />
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Email <span className="text-rose-500">*</span></label>
+                    <div className="relative">
+                      <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. john@abc.com" />
+                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Company</label>
+                    <div className="relative">
+                      <input type="text" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. ABC Pty Ltd" />
+                      <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone</label>
+                    <div className="relative">
+                      <input type="tel" maxLength={10} value={formData.phone} onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData({ ...formData, phone: val });
+                      }} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. 0412 345 678" />
+                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: Enquiry Information */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="mb-4 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <MessageCircle className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-sm font-bold text-slate-800">2. Enquiry Information</h4>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Provided by enquirer</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 ml-11">Details about the enquiry entered by the enquirer.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Type <span className="text-rose-500">*</span></label>
+                    <select required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                      <option value="" disabled>Select enquiry type</option>
+                      {enquiryTypes.length > 0 ? (
+                        enquiryTypes.map((type, idx) => {
+                          const typeName = typeof type === "string" ? type : (type.name || type.enquiryType);
+                          const typeKey = typeof type === "string" ? type : (type.id || type._id || idx);
+                          return (
+                            <option key={typeKey} value={typeName}>{typeName}</option>
+                          );
+                        })
+                      ) : (
+                        <>
+                          <option value="Conveyancing">Conveyancing</option>
+                          <option value="Wills">Wills</option>
+                          <option value="Commercial">Commercial</option>
+                          <option value="VOCAT">VOCAT</option>
+                          <option value="Print Media">Print Media</option>
+                          <option value="General Enquiry">General Enquiry</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Details</label>
+                    <p className="text-[11px] text-slate-500 mb-2 mt-0.5">Tell us more about your enquiry (optional)</p>
+                    <div className="relative">
+                      <textarea maxLength={1000} rows="4" value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all resize-none bg-white" placeholder="e.g. I would like to prepare a Will for myself and my wife."></textarea>
+                      <div className="absolute bottom-2 right-2 text-[10px] font-medium text-slate-400 bg-white px-1">
+                        {(formData.description || '').length} / 1000 
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: Internal Information */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="mb-4 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-sm font-bold text-slate-800">3. Internal Information</h4>
+                      <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">For internal use only</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 ml-11">Information added by your team (only shown when creating lead inside OpsNav).</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Source <span className="text-rose-500">*</span></label>
+                    <select required value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                      <option value="" disabled>Select source</option>
+                      <option value="Website">Website</option>
+                      <option value="Referral">Referral</option>
+                      <option value="Walk-in">Walk-in</option>
+                      <option value="Cold Call">Cold Call</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Temperature <span className="text-rose-500">*</span></label>
+                    <select required value={formData.leadTemperature} onChange={e => setFormData({ ...formData, leadTemperature: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white font-medium">
+                      <option value="" disabled>Select temp</option>
+                      <option value="Hot">🔥 Hot</option>
+                      <option value="Warm">☀️ Warm</option>
+                      <option value="Cold">❄️ Cold</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Priority</label>
+                    <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                      <option value="High">🔴 High</option>
+                      <option value="Medium">🟡 Medium</option>
+                      <option value="Low">🟢 Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Assigned To</label>
+                    <select value={formData.assignedTo} onChange={e => setFormData({ ...formData, assignedTo: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                      <option value="">Select user</option>
+                      {users.map(u => (
+                        <option key={u.id || u._id} value={u.id || u._id}>{u.displayName || u.display_name || u.email || 'Unknown User'}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                {step === 1 && (
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">First Name</label>
-                        <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Lachlan" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Last Name</label>
-                        <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Smith" />
-                      </div>
+                <div className="mt-4 p-4 bg-orange-100/80 rounded-lg">
+                  <p className="text-xs font-medium text-slate-600 mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Lead Temperature helps you prioritise follow-ups. You can update this later.
+                  </p>
+                  <div className="flex flex-wrap gap-x-8 gap-y-2 text-[11px] font-medium ml-1">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></div>
+                      <div><span className="font-bold text-slate-700">Hot</span> – Ready to buy / Immediate need</div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Company</label>
-                      <input required type="text" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Acme Pty Ltd" />
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
+                      <div><span className="font-bold text-slate-700">Warm</span> – Interested / Needs follow-up</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Enquiry Title</label>
-                        <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="e.g. Conveyancing module enquiry" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Priority</label>
-                        <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
-                          <option value="High">High</option>
-                          <option value="Medium">Medium</option>
-                          <option value="Low">Low</option>
-                        </select>
-                      </div>
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
+                      <div><span className="font-bold text-slate-700">Cold</span> – Just exploring / Future need</div>
                     </div>
-                    {initialData && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                          <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
-                            <option value="New">New</option>
-                            <option value="Open">Open</option>
-                            <option value="Contacted">Contacted</option>
-                            <option value="Qualified">Qualified</option>
-                            <option value="Closed">Closed</option>
-                            <option value="Unqualified">Unqualified</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">Proposal Status</label>
-                          <select value={formData.proposalStatus} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
-                            <option value="Not Required">Not Required</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Sent">Sent</option>
-                            <option value="Follow-up Required">Follow-up Required</option>
-                            <option value="Accepted">Accepted</option>
-                            <option value="Rejected">Rejected</option>
-                          </select>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
+                  </div>
+                </div>
+              </div>
 
-                {step === 2 && (
-                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-                        <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="lachlan@example.com.au" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
-                        <input type="tel" maxLength={10} value={formData.phone} onChange={e => {
-                          const val = e.target.value.replace(/[^0-9]/g, '');
-                          setFormData({ ...formData, phone: val });
-                        }} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="0412345678" />
-                      </div>
+              {/* SECTION 4: Lead Created By */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="mb-4 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                      <User className="w-5 h-5 text-slate-600" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Enquiry Source</label>
-                      <select value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 bg-white">
-                        <option value="Website">Website</option>
-                        <option value="Referral">Referral</option>
-                        <option value="Walk-in">Walk-in</option>
-                        <option value="Cold Call">Cold Call</option>
-                        <option value="Other">Other</option>
-                      </select>
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-sm font-bold text-slate-800">4. Lead Created By</h4>
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">System</span>
                     </div>
+                  </div>
+                  <p className="text-xs text-slate-500 ml-11">The user who is creating this lead.</p>
+                </div>
 
-                    {formData.enquirySource === 'Referral' && (
-                      <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl mt-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Name</label>
-                          <input type="text" value={formData.referrerName} onChange={e => setFormData({ ...formData, referrerName: e.target.value })} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="Jack Smith" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Email</label>
-                          <input type="email" value={formData.referrerEmail} onChange={e => setFormData({ ...formData, referrerEmail: e.target.value })} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="jack@example.com.au" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-500 mb-1">Referrer Phone</label>
-                          <input type="tel" maxLength={10} value={formData.referrerPhone} onChange={e => {
-                            const val = e.target.value.replace(/[^0-9]/g, '');
-                            setFormData({ ...formData, referrerPhone: val });
-                          }} className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50" placeholder="0412345678" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="mt-4">
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
-                      <textarea rows="3" value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/50 resize-none" placeholder="Provide extra background..."></textarea>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Created By</label>
+                  <div className="relative flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg opacity-80 cursor-not-allowed w-full md:w-1/3">
+                    <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden">
+                       <User className="w-4 h-4 text-slate-50" />
                     </div>
-                  </motion.div>
-                )}
-              </form>
-            </div>
-            <div className="bg-slate-50 px-4 py-4 sm:flex sm:flex-row-reverse sm:px-6">
-              {step === 1 ? (
-                <button type="button" onClick={(e) => {
-                  e.preventDefault();
-                  const form = document.getElementById("lead-form");
-                  if (form && form.reportValidity()) {
-                    setStep(2);
-                  }
-                }} className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 sm:ml-3 sm:w-auto transition-opacity">
-                  Next Step
+                    <span className="text-sm font-medium text-slate-700">{currentUser} (You)</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+
+            <div className="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative flex items-center justify-center">
+                  <input type="checkbox" checked={saveAnother} onChange={(e) => setSaveAnother(e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-slate-300 rounded cursor-pointer checked:bg-blue-600 checked:border-blue-600 transition-colors" />
+                  <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Save and create another</span>
+              </label>
+
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={onClose} className="px-5 py-2.5 text-[#2E3D99] border border-[#2E3D99] rounded-xl hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] text-sm font-bold transition-all duration-300">
+                  Cancel
                 </button>
-              ) : (
                 <button 
                   type="submit" 
                   form="lead-form" 
                   disabled={isSubmitting}
-                  className="inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#2E3D99]/20 hover:opacity-90 disabled:opacity-50 sm:ml-3 sm:w-auto transition-opacity"
+                  className="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:opacity-95 disabled:opacity-50 transition-all"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Saving...</span>
                     </>
                   ) : (
                     initialData ? 'Save Changes' : 'Create Lead'
                   )}
                 </button>
-              )}
-
-              {step === 2 && (
-                <button type="button" onClick={() => setStep(1)} className="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:ml-3 sm:w-auto transition-colors">
-                  Back
-                </button>
-              )}
-
-              <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-colors">
-                Cancel
-              </button>
+              </div>
             </div>
+
           </DialogPanel>
         </div>
       </div>
@@ -1543,6 +1678,8 @@ export default function Leads() {
           description: leadData.description || "",
           serviceTypes: leadData.serviceTypes || [],
           enquirySource: leadData.enquirySource || "Website",
+          leadSource: leadData.enquirySource || "Website",
+          leadTemperature: leadData.leadTemperature || "Warm",
           referrerName: leadData.referrerName || "",
           referrerEmail: leadData.referrerEmail || "",
           referrerPhone: leadData.referrerPhone || "",

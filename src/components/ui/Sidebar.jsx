@@ -20,6 +20,7 @@ import {
   Network,
   Building2,
   UserRound,
+  Settings,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -93,6 +94,11 @@ export default function Sidebar({
         label: "Deals",
         icon: Briefcase,
         to: "/admin/crm/deals",
+      },
+      {
+        label: "Settings",
+        icon: Settings,
+        to: "/admin/crm/settings",
       },
     ];
   } else {
@@ -213,6 +219,8 @@ export default function Sidebar({
         return UserRound;
       case "Companies":
         return Building2;
+      case "Settings":
+        return Settings;
       default:
         return LayoutDashboard;
     }

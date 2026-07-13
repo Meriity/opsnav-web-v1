@@ -583,6 +583,48 @@ class CrmAPI {
       throw error;
     }
   }
+
+  // --- Settings API ---
+
+  async getEnquiryTypes() {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/enquiry-types`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error getting enquiry types:", error);
+      throw error;
+    }
+  }
+
+  async createEnquiryType(typeData) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/enquiry-type`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(typeData),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error creating enquiry type:", error);
+      throw error;
+    }
+  }
+
+  async deleteEnquiryType(typeId) {
+    try {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/enquiry-type/${encodeURIComponent(typeId)}`, {
+        method: "DELETE",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Error deleting enquiry type:", error);
+      throw error;
+    }
+  }
 }
 
 export default new CrmAPI();

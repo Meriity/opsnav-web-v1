@@ -3,6 +3,7 @@ import WillsForm from "./pages/admin/WillsForm";
 import ReferenceMatter from "./pages/admin/ReferenceMatter";
 import WillsResetPassword from "./pages/wills/WillsResetPassword";
 import DealsBoard from "./pages/crm/DealsBoard";
+import CrmSettings from "./pages/crm/CrmSettings";
 import Leads from "./pages/crm/Leads";
 import LeadDetailPage from "./pages/crm/LeadDetailPage";
 import Contacts from "./pages/crm/Contacts";
@@ -114,6 +115,7 @@ function App() {
             element={<StagesLayout />}
           />
           <Route path="crm/deals" element={<DealsBoard />} />
+          <Route path="crm/settings" element={<CrmSettings />} />
           <Route path="crm/leads" element={<Leads />} />
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
           <Route path="crm/contacts" element={<Contacts />} />
