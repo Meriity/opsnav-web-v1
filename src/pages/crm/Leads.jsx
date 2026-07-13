@@ -860,21 +860,16 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
 
               {/* SECTION 4: Lead Created By */}
               <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="mb-4 border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
+                <div className="mb-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
                       <User className="w-5 h-5 text-slate-600" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-bold text-slate-800">4. Lead Created By</h4>
-                      <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">System</span>
-                    </div>
+                    <h4 className="text-sm font-bold text-slate-800">4. Lead Created By</h4>
                   </div>
-                  <p className="text-xs text-slate-500 ml-11">The user who is creating this lead.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Created By</label>
                   <div className="relative flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg opacity-80 cursor-not-allowed w-full md:w-1/3">
                     <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden">
                        <User className="w-4 h-4 text-slate-50" />

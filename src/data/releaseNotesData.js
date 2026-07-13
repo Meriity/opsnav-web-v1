@@ -42,6 +42,30 @@ export const monthlyReleaseNotes = {
     July: [
       {
         date: "2026-07-13",
+        version: "v8.4.5",
+        type: "patch",
+        category: "ui_ux",
+        title: "CRM Form Refinements & Safety Guards",
+        description: "Implemented a safety mechanism for Enquiry Types and cleaned up the Lead Creation form layout.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "Settings Data Integrity Lock",
+            description: "Added a deletion guard in CRM Settings to prevent admins from deleting the very last Enquiry Type, ensuring the Lead form always has valid options.",
+            details: "Disabled the delete button when only one item remains and added a toast notification to inform users that at least one enquiry type must exist.",
+            icon: ShieldCheck,
+          },
+          {
+            type: "ui_ux",
+            title: "Lead Form Layout Clean-up",
+            description: "Streamlined the 'Lead Created By' section for a tighter, cleaner interface.",
+            details: "Removed redundant labels, descriptive text, and the system badge. Optimized the spacing around the user profile input by reducing unnecessary margins and border separators.",
+            icon: Layout,
+          },
+        ],
+      },
+      {
+        date: "2026-07-13",
         version: "v8.4.4",
         type: "minor",
         category: "feature",

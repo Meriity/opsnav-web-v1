@@ -57,6 +57,11 @@ export default function CrmSettings() {
   };
 
   const handleDeleteType = async (id) => {
+    if (enquiryTypes.length <= 1) {
+      toast.error("You must have at least one enquiry type.");
+      return;
+    }
+
     try {
       await crmAPI.deleteEnquiryType(id);
       await fetchEnquiryTypes();
@@ -171,8 +176,13 @@ export default function CrmSettings() {
                             </span>
                             <button
                               onClick={() => handleDeleteType(typeKey)}
-                              className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Delete Type"
+                              disabled={enquiryTypes.length <= 1}
+                              className={`p-1.5 rounded-lg transition-colors ${
+                                enquiryTypes.length <= 1
+                                  ? "text-slate-200 cursor-not-allowed"
+                                  : "text-slate-400 hover:text-rose-500 hover:bg-rose-50"
+                              }`}
+                              title={enquiryTypes.length <= 1 ? "Cannot delete the last item" : "Delete Type"}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
