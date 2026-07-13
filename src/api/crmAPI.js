@@ -615,9 +615,10 @@ class CrmAPI {
 
   async deleteEnquiryType(typeId) {
     try {
-      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/enquiry-type/${encodeURIComponent(typeId)}`, {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/enquiry-type`, {
         method: "DELETE",
         headers: this.getHeaders(),
+        body: JSON.stringify({ enquiryType: typeId })
       });
       return await this.handleResponse(response);
     } catch (error) {
