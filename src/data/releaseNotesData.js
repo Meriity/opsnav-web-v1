@@ -41,6 +41,37 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-13",
+        version: "v8.4.4",
+        type: "minor",
+        category: "feature",
+        title: "Dynamic CRM Settings & Lead Creation Refinements",
+        description: "Introduced a dedicated Settings page for the CRM module and updated Lead Creation APIs to properly handle backend-driven dynamic form fields.",
+        updates: [
+          {
+            type: "ui_ux",
+            title: "Dynamic Enquiry Types via CRM Settings",
+            description: "Admins can now configure Enquiry Types directly within a new CRM Settings page.",
+            details: "Built the CrmSettings.jsx page wrapped with native OpsNav layouts (background grids, blurred cards, and standard headers). Integrated POST/GET endpoints so new Enquiry Types dynamically update the Create Lead modal dropdown.",
+            icon: Sparkles,
+          },
+          {
+            type: "backend_integration",
+            title: "Lead Creation API Synchronization",
+            description: "Synchronized the Lead Form payload to match strict backend validation requirements.",
+            details: "Updated the createLead payload in Leads.jsx to map `enquirySource` properly to `leadSource` and included the required `leadTemperature` to prevent 400 Bad Request API errors upon lead creation.",
+            icon: Server,
+          },
+          {
+            type: "bugfix",
+            title: "Lead Assignment User List Fix",
+            description: "Fixed an issue where the Assigned To dropdown in the lead creation modal appeared empty.",
+            details: "Removed overly strict status filters on user retrieval and updated the user mapping to dynamically display the correct `displayName` or `email` fields returned by the backend, ensuring the complete user list is available for assignment.",
+            icon: Bug,
+          },
+        ],
+      },
+      {
         date: "2026-07-10",
         version: "v8.4.3",
         type: "minor",

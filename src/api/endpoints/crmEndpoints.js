@@ -11,4 +11,6 @@ export const CRM_ENDPOINTS = {
   CONTACTS: "/crm/contacts",
   // Companies
   COMPANIES: "/crm/companies",
+  // Settings
+  SETTINGS: "/crm/settings",
 };
