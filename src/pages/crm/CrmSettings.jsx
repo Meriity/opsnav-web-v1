@@ -44,9 +44,8 @@ export default function CrmSettings() {
 
     try {
       setIsSubmitting(true);
-      const added = await crmAPI.createEnquiryType({ enquiryType: newType.trim() });
-      const newItem = added?.data || added?.enquiryType || added;
-      setEnquiryTypes((prev) => [...prev, newItem]);
+      await crmAPI.createEnquiryType({ enquiryType: newType.trim() });
+      await fetchEnquiryTypes();
       setNewType("");
       toast.success("Enquiry type added successfully!");
     } catch (error) {
@@ -60,7 +59,7 @@ export default function CrmSettings() {
   const handleDeleteType = async (id) => {
     try {
       await crmAPI.deleteEnquiryType(id);
-      setEnquiryTypes((prev) => prev.filter((t) => (t.id || t._id) !== id));
+      await fetchEnquiryTypes();
       toast.success("Enquiry type deleted successfully!");
     } catch (error) {
       console.error("Failed to delete enquiry type", error);
