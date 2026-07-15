@@ -526,7 +526,7 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
                       <button
                         onClick={() => { onClose(); onConvertClick?.(lead); }}
                         className="flex-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold py-2.5 rounded-xl hover:bg-emerald-100 transition-colors shadow-sm text-sm flex items-center justify-center gap-1.5"
-                      >
+                      > 
                         <ArrowRightLeft size={14} />
                         Convert to Client
                       </button>
@@ -577,18 +577,35 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [saveAnother, setSaveAnother] = useState(false);
   const [users, setUsers] = useState([]);
   const [enquiryTypes, setEnquiryTypes] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const companyDropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setShowCompanyDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setIsSubmitting(false);
       if (initialData) {
         setFormData({ ...initialData, leadTemperature: initialData.leadTemperature || '', assignedTo: initialData.assignedTo || '' });
+        setCompanySearch(initialData.company || '');
       } else {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
           leadTemperature: '', assignedTo: ''
         });
+        setCompanySearch('');
       }
       const fetchUsersList = async () => {
         try {
@@ -610,10 +627,59 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         }
       };
 
+      const fetchCompaniesList = async () => {
+        try {
+          const res = await crmAPI.getAllCompanies();
+          let companiesArray = [];
+          if (Array.isArray(res)) companiesArray = res;
+          else if (res && Array.isArray(res.companies)) companiesArray = res.companies;
+          else if (res && Array.isArray(res.data)) companiesArray = res.data;
+          else if (res?.data && Array.isArray(res.data.companies)) companiesArray = res.data.companies;
+          setCompanies(companiesArray);
+        } catch (err) {
+          console.error("Failed to load companies for Lead Modal", err);
+          setCompanies([]);
+        }
+      };
+
       fetchUsersList();
       fetchEnquiryTypes();
+      fetchCompaniesList();
     }
   }, [isOpen, initialData]);
+
+  const handleCreateCompanyInline = async () => {
+    if (!companySearch.trim() || isCreatingCompany) return;
+    
+    if (!formData.email || !formData.phone) {
+      toast.error("Please fill in both Email and Phone before creating a company.");
+      return;
+    }
+
+    setIsCreatingCompany(true);
+    try {
+      const res = await crmAPI.createCompany({
+        companyName: companySearch,
+        companyType: "Client",
+        email: formData.email,
+        phone: formData.phone
+      });
+      const newCompany = res.company || res.data || res;
+      setCompanies(prev => [...prev, newCompany]);
+      setFormData({ ...formData, company: newCompany.companyName || companySearch });
+      setCompanySearch(newCompany.companyName || companySearch);
+      setShowCompanyDropdown(false);
+      toast.success(`Company "${companySearch}" created successfully!`);
+    } catch (err) {
+      console.error("Failed to create company inline", err);
+      // Fallback: Just set the string locally if API fails
+      setFormData({ ...formData, company: companySearch });
+      setShowCompanyDropdown(false);
+      toast.error(err?.message || "Failed to create company via API, using text only.");
+    } finally {
+      setIsCreatingCompany(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -630,6 +696,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
           leadTemperature: '', assignedTo: ''
         });
+        setCompanySearch('');
       } else {
         onClose();
       }
@@ -643,7 +710,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const currentUser = localStorage.getItem("user") || "OpsNav Admin";
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-[9999]">
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
       <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
@@ -706,11 +773,57 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div>
+                  <div ref={companyDropdownRef}>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">Company</label>
                     <div className="relative">
-                      <input type="text" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. ABC Pty Ltd" />
+                      <input 
+                        type="text" 
+                        value={companySearch} 
+                        onChange={e => {
+                          setCompanySearch(e.target.value);
+                          setFormData({ ...formData, company: e.target.value });
+                          setShowCompanyDropdown(true);
+                        }} 
+                        onFocus={() => setShowCompanyDropdown(true)}
+                        className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" 
+                        placeholder="Search or enter company..." 
+                      />
                       <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      
+                      <AnimatePresence>
+                        {showCompanyDropdown && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
+                          >
+                            {(Array.isArray(companies) ? companies : []).filter(c => (c.companyName || c.name || '').toLowerCase().includes((companySearch || '').toLowerCase())).map(company => (
+                              <div 
+                                key={company._id || company.id} 
+                                className="px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                onClick={() => {
+                                  const name = company.companyName || company.name || '';
+                                  setFormData({ ...formData, company: name });
+                                  setCompanySearch(name);
+                                  setShowCompanyDropdown(false);
+                                }}
+                              >
+                                {company.companyName || company.name || ''}
+                              </div>
+                            ))}
+                            {companySearch && !(Array.isArray(companies) ? companies : []).some(c => (c.companyName || c.name || '').toLowerCase() === (companySearch || '').toLowerCase()) && (
+                              <div 
+                                className={`px-4 py-2.5 text-sm font-semibold border-t border-slate-100 flex items-center gap-2 transition-colors sticky bottom-0 bg-white ${isCreatingCompany ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 cursor-pointer'}`}
+                                onClick={isCreatingCompany ? undefined : handleCreateCompanyInline}
+                              >
+                                {isCreatingCompany ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} 
+                                {isCreatingCompany ? 'Creating...' : `Create "${companySearch}"`}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                   <div>
@@ -794,7 +907,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   <p className="text-xs text-slate-500 ml-11">Information added by your team (only shown when creating lead inside OpsNav).</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Source <span className="text-rose-500">*</span></label>
                     <select required value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
@@ -832,6 +945,29 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                       ))}
                     </select>
                   </div>
+                  {initialData && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Proposal Status</label>
+                        <select value={formData.proposalStatus || 'Not Required'} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                          <option value="Not Required">Not Required</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Sent">Sent</option>
+                          <option value="Accepted">Accepted</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Next Follow Up</label>
+                        <input 
+                          type="date" 
+                          value={formData.nextFollowUpDate ? formData.nextFollowUpDate.split('T')[0] : ''} 
+                          onChange={e => setFormData({ ...formData, nextFollowUpDate: e.target.value })} 
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" 
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-4 p-4 bg-orange-100/80 rounded-lg">
@@ -1108,7 +1244,7 @@ function AssignLeadModal({ isOpen, onClose, onAssign, lead }) {
   if (!lead) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-[9999]">
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
       <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
@@ -1233,7 +1369,7 @@ function TaskFormModal({ isOpen, onClose, onSave, users, initialData }) {
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-[9999]">
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
       <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
@@ -1343,23 +1479,30 @@ export default function Leads() {
       const transformed = leadsList.map(lead => {
         const firstName = lead.contactId?.firstName || lead.firstName || (lead.fullName ? lead.fullName.trim().split(/\s+/)[0] : "");
         const lastName = lead.contactId?.lastName || lead.lastName || (lead.fullName ? lead.fullName.trim().split(/\s+/).slice(1).join(" ") : "");
-        const assignedUser = allUsers.find(u => (u.id || u._id) === lead.assignedTo);
+        const assignedUserId = typeof lead.assignedTo === 'object' ? lead.assignedTo?._id : lead.assignedTo;
+        const assignedUser = allUsers.find(u => (u.id || u._id) === assignedUserId);
         return {
           id: lead._id,
           firstName,
           lastName,
-          company: lead.companyName || "",
+          company: lead.companyId?.companyName || lead.companyId?.name || lead.companyName || "",
           title: lead.title || "",
           email: lead.contactId?.email || lead.email || "",
           phone: lead.contactId?.phone || lead.phone || "",
           description: lead.description || "",
           status: lead.status || "New",
           address: lead.address || "",
-          assignedTo: lead.assignedTo || "",
-          assignedToName: assignedUser ? (assignedUser.displayName || assignedUser.email) : "Unassigned",
-          source: lead.enquirySource || lead.source || "Manual",
-          enquirySource: lead.enquirySource || "Website",
+          assignedTo: assignedUserId || "",
+          assignedToName: assignedUser ? (assignedUser.displayName || assignedUser.email) : (typeof lead.assignedTo === 'object' ? lead.assignedTo?.displayName : "Unassigned"),
+          source: lead.leadSource || lead.enquirySource || lead.source || "Manual",
+          leadSource: lead.leadSource || lead.enquirySource || lead.source || "Manual",
+          enquirySource: lead.enquirySource || lead.leadSource || "Website",
           priority: lead.priority || "Medium",
+          leadTemperature: lead.leadTemperature || "",
+          serviceTypes: lead.serviceTypes || [],
+          referrerName: lead.referrerName || "",
+          referrerEmail: lead.referrerEmail || "",
+          referrerPhone: lead.referrerPhone || "",
           commercialValue: lead.commercialValue || 0,
           proposalStatus: lead.proposalStatus || "Not Required",
           nextFollowUpDate: lead.nextFollowUpDate || null,
@@ -1648,6 +1791,12 @@ export default function Leads() {
         const newAssignedTo = leadData.assignedTo || "";
         if (newAssignedTo !== originalAssignedTo) {
           updatedFields.assignedTo = newAssignedTo || null;
+        }
+
+        const originalNextFollowUpDate = original.nextFollowUpDate ? original.nextFollowUpDate.split('T')[0] : "";
+        const newNextFollowUpDate = leadData.nextFollowUpDate ? leadData.nextFollowUpDate.split('T')[0] : "";
+        if (newNextFollowUpDate !== originalNextFollowUpDate) {
+          updatedFields.nextFollowUpDate = newNextFollowUpDate || null;
         }
 
         // Proposal Status Handling (API expects specific route)
@@ -1996,7 +2145,7 @@ export default function Leads() {
                 <thead>
                   <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
                     {[
-                      { key: 'title',          label: 'Lead Title',      sortable: true,  center: false },
+                      { key: 'title',          label: 'Enquiry Type',      sortable: true,  center: false },
                       { key: 'displayName',    label: 'Contact',         sortable: true,  center: false },
                       { key: 'company',        label: 'Company',         sortable: true,  center: false },
                       { key: 'status',         label: 'Stage',           sortable: false, center: false },
@@ -2114,7 +2263,7 @@ export default function Leads() {
 
                         {/* Source — centered */}
                         <td className={`${cell} text-center`}>
-                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.source || <span className="text-slate-300 font-medium">—</span>}</span>
+                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.leadSource || lead.source || <span className="text-slate-300 font-medium">—</span>}</span>
                         </td>
 
                         {/* Value — centered */}

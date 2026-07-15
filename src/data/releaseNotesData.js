@@ -41,6 +41,47 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-15",
+        version: "v8.4.6",
+        type: "minor",
+        category: "feature",
+        title: "CRM Lead Form Enhancements & Dynamic Company Selection",
+        description: "Streamlined the Lead creation and editing experience with an integrated company search, inline company creation, and improved data syncing.",
+        updates: [
+          {
+            type: "feature",
+            title: "Dynamic Company Autocomplete",
+            description: "Replaced the static company text input with a dynamic autocomplete combobox.",
+            details: "Users can now instantly search and select existing companies from the backend while filling out a lead. This prevents duplicate company entries and keeps data clean.",
+            icon: Sparkles,
+          },
+          {
+            type: "feature",
+            title: "Inline Company Creation",
+            description: "Create brand new companies directly from the Lead Form dropdown.",
+            details: "Added a '+ Add Company' option that captures the typed name, email, and phone number from the form, creates the company via the API, and automatically selects it without ever leaving the lead creation flow.",
+            icon: Building2,
+          },
+          {
+            type: "feature",
+            title: "Conditional Edit-Mode Fields",
+            description: "Introduced administrative fields specifically for editing leads.",
+            details: "Added 'Proposal Status' and 'Next Follow Up Date' fields that exclusively render when a lead is being edited. Connected these fields directly to the save payload to ensure seamless data persistence.",
+            icon: Layout,
+          },
+          {
+            type: "bugfix",
+            title: "Modal UI & Data Layering Fixes",
+            description: "Fixed z-index layering issues and company name data mapping.",
+            details: "Adjusted modal z-indexes so that success/error toasts appear correctly on top, while keeping the modal strictly above the main sidebar. Additionally fixed a bug where company names were occasionally missing from the Leads table.",
+            icon: Bug,
+          },
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-07-13",
         version: "v8.4.5",
         type: "patch",

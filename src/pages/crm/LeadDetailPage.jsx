@@ -1088,23 +1088,30 @@ export default function LeadDetailPage() {
       const raw = res.lead || res.data || res;
 
       const nameParts = (raw.fullName || "").trim().split(/\s+/);
-      setLead({
-        id:              raw._id,
-        firstName:       nameParts[0] || "",
-        lastName:        nameParts.slice(1).join(" ") || "",
-        company:         raw.companyName || "",
-        role:            raw.title || raw.serviceType || "",
-        email:           raw.email || "",
-        phone:           raw.phone || "",
-        notes:           raw.description || "",
-        status:          raw.status || "New",
-        address:         raw.address || "",
-        assignedTo:      raw.assignedTo || "",
-        assignedToName:  raw.assignedToName || "—",
-        source:          raw.source || "Manual",
-        priority:        raw.priority || "",
-        commercialValue: raw.commercialValue || "",
-        expectedCloseDate:  raw.expectedCloseDate || "",
+      const contactFirst = raw.contactId?.firstName || raw.firstName || nameParts[0] || "";
+      const contactLast = raw.contactId?.lastName || raw.lastName || nameParts.slice(1).join(" ") || "";
+      const prevLead = location.state?.lead || {};
+      setLead(current => {
+        const fallback = current || prevLead;
+        return {
+          id:              raw._id || fallback.id,
+          firstName:       contactFirst || fallback.firstName || "",
+          lastName:        contactLast || fallback.lastName || "",
+          company:         raw.companyName || fallback.company || "",
+          role:            raw.title || raw.serviceType || fallback.role || "",
+          title:           raw.title || fallback.title || "",
+          email:           raw.contactId?.email || raw.email || fallback.email || "",
+          phone:           raw.contactId?.phone || raw.phone || fallback.phone || "",
+          notes:           raw.description || fallback.notes || "",
+          status:          raw.status || fallback.status || "New",
+          address:         raw.address || fallback.address || "",
+          assignedTo:      raw.assignedTo?._id || raw.assignedTo || fallback.assignedTo || "",
+          assignedToName:  raw.assignedTo?.displayName || raw.assignedToName || fallback.assignedToName || "—",
+          source:          raw.leadSource || raw.enquirySource || raw.source || fallback.source || "Manual",
+          leadSource:      raw.leadSource || raw.enquirySource || raw.source || fallback.leadSource || "Manual",
+          priority:        raw.priority || fallback.priority || "",
+          commercialValue: raw.commercialValue || fallback.commercialValue || "",
+          expectedCloseDate:  raw.expectedCloseDate || fallback.expectedCloseDate || "",
         nextFollowUpDate:   raw.nextFollowUpDate || "",
         proposalStatus:     raw.proposalStatus || "",
         proposalSentDate:   raw.proposalSentDate || "",
@@ -1114,6 +1121,7 @@ export default function LeadDetailPage() {
         isCustomer:      raw.isCustomer || false,
         website:         raw.website || "",
         industry:        raw.industry || "",
+        };
       });
     } catch {
       if (!lead) toast.error("Failed to load lead details");
@@ -1442,8 +1450,8 @@ export default function LeadDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {[
                 {
-                  label: "Lead Title",
-                  content: <span className="text-sm font-semibold text-slate-800 line-clamp-2">{lead?.role || "—"}</span>,
+                  label: "Enquiry Type",
+                  content: <span className="text-sm font-semibold text-slate-800 line-clamp-2">{lead?.title || "—"}</span>,
                 },
                 {
                   label: "Current Stage",
@@ -1478,7 +1486,7 @@ export default function LeadDetailPage() {
                   ),
                 },
                 { label: "Assigned To",      icon: UserCheck,    value: lead?.assignedToName || "Unassigned" },
-                { label: "Lead Source",      icon: Tag,          value: lead?.source || "Manual" },
+                { label: "Lead Source",      icon: Tag,          value: lead?.leadSource || lead?.source || "Manual" },
                 {
                   label: "Priority",
                   content: lead?.priority ? (
