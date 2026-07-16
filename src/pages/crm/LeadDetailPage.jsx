@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import moment from "moment";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmationModal from "../../components/ui/ConfirmationModal";
+import { LeadFormModal } from "./Leads";
 
 // ─── Stage Config ─────────────────────────────────────────────────────────────
 const PIPELINE_STAGES = [
@@ -33,7 +34,7 @@ const PIPELINE_STAGES = [
     key: "Opportunity", label: "Opportunity",
     dot: "bg-violet-500",
     badge: "bg-violet-100 text-violet-700 border border-violet-200",
-    hasValue: true,
+    hasValue: false,
   },
   {
     key: "Proposal", label: "Proposal",
@@ -57,7 +58,7 @@ const PIPELINE_STAGES = [
     key: "Lost", label: "Lost",
     dot: "bg-rose-500",
     badge: "bg-rose-100 text-rose-700 border border-rose-200",
-    hasValue: true,
+    hasValue: false,
   },
 ];
 
@@ -83,7 +84,7 @@ const normalizeStage = (status = "") => {
     "proposal": "Proposal",
     "negotiation": "Negotiation",
     "won": "Won", "converted": "Won",
-    "lost": "Lost", "closed": "Lost", "unqualified": "Lost",
+    "lost": "Lost", "closed": "Lost", "unqualified": "Lost", "unqualified lead": "Lost",
   };
   return map[status.toLowerCase()] ?? "New Lead";
 };
@@ -122,9 +123,6 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
           <GitBranch size={15} className="text-[#2E3D99]" />
           Lead Pipeline
         </h3>
-        <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-          Click a stage to update
-        </span>
       </div>
 
       {/* Pipeline Container (Scrollable on mobile) */}
@@ -155,19 +153,27 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
           const isPast    = idx < activeIdx;
           const isCurrent = idx === activeIdx;
           const isFuture  = idx > activeIdx;
+          
+          let dotColor = "bg-amber-500";
+          if (isPast) dotColor = "bg-emerald-500";
+          else if (isCurrent) {
+            if (stage.key === "Lost") dotColor = "bg-rose-500";
+            else if (stage.key === "Won") dotColor = "bg-emerald-500";
+            else dotColor = "bg-amber-500";
+          }
+
           return (
             <div
               key={stage.key}
-              className="relative z-10 flex flex-col items-center gap-2 flex-1 cursor-pointer group"
-              onClick={() => onStageClick?.(stage.key)}
+              className="relative z-10 flex flex-col items-center gap-2 flex-1"
             >
               <div className={`
                 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-200
                 ${isCurrent
-                  ? `${stage.dot} border-white shadow-lg ring-2 ring-offset-2 ring-opacity-40 scale-110`
+                  ? `${dotColor} border-white shadow-lg ring-2 ring-offset-2 ring-opacity-40 scale-110`
                   : isPast
-                    ? `${stage.dot} border-white opacity-90`
-                    : "bg-white border-slate-200 group-hover:border-slate-300"
+                    ? `${dotColor} border-white opacity-90`
+                    : "bg-white border-slate-200"
                 }
               `}>
                 {isPast && (
@@ -176,10 +182,10 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
                   </svg>
                 )}
                 {isCurrent && <span className="w-2.5 h-2.5 rounded-full bg-white" />}
-                {isFuture && <span className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-slate-300" />}
+                {isFuture && <span className="w-2 h-2 rounded-full bg-slate-200" />}
               </div>
               <span className={`text-[10px] font-bold text-center leading-tight ${
-                isCurrent ? "text-slate-800" : isPast ? "text-slate-500" : "text-slate-300 group-hover:text-slate-400"
+                isCurrent ? "text-slate-800" : isPast ? "text-slate-500" : "text-slate-300"
               }`}>
                 {stage.label}
               </span>
@@ -335,9 +341,13 @@ function DealTracker({ isTracked, currentStage, lead, onToggle, className }) {
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 function OverviewTab({ lead, leadId, users, taskCount, onTaskCountChange, onSwitchToTasks }) {
-  const leadAge = lead?.createdAt
-    ? `${moment().diff(moment(lead.createdAt), "days")} days`
-    : "—";
+  let leadAge = "—";
+  if (lead?.createdAt) {
+    const diffDays = moment().startOf("day").diff(moment(lead.createdAt).startOf("day"), "days");
+    if (diffDays === 0) leadAge = "Today";
+    else if (diffDays === 1) leadAge = "1 day";
+    else leadAge = `${diffDays} days`;
+  }
 
   const [tasks, setTasks]           = useState([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -438,7 +448,8 @@ function OverviewTab({ lead, leadId, users, taskCount, onTaskCountChange, onSwit
         </div>
       </div>
 
-      {/* ── Tasks & Follow-ups section ───────────────────────────────── */}
+      {/* ── Tasks & Follow-ups section (HIDDEN) ───────────────────────────────── */}
+      {false && (
       <div className="pt-5">
         {/* Section header */}
         <div className="flex items-center justify-between mb-4">
@@ -568,6 +579,7 @@ function OverviewTab({ lead, leadId, users, taskCount, onTaskCountChange, onSwit
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -1067,6 +1079,7 @@ export default function LeadDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [users, setUsers]         = useState([]);
   const [isDealTracked, setIsDealTracked] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Tab counts
   const [taskCount, setTaskCount] = useState(0);
@@ -1145,6 +1158,43 @@ export default function LeadDetailPage() {
     }
   };
 
+  const handleUpdateLead = async (formData) => {
+    try {
+      const payload = {
+        fullName: `${formData.firstName || ""} ${formData.lastName || ""}`.trim(),
+        title: formData.title,
+        description: formData.description,
+        email: formData.email,
+        phone: formData.phone,
+        companyName: formData.company,
+        assignedTo: formData.assignedTo || null,
+        nextFollowUpDate: formData.nextFollowUpDate || null,
+        status: formData.status,
+        enquirySource: formData.enquirySource,
+        leadSource: formData.enquirySource,
+        leadTemperature: formData.leadTemperature,
+        priority: formData.priority,
+        referrerName: formData.referrerName,
+        referrerEmail: formData.referrerEmail,
+        referrerPhone: formData.referrerPhone,
+        unqualifiedReason: formData.unqualifiedReason,
+        unqualifiedReasonOther: formData.unqualifiedReasonOther,
+        commercialValue: formData.commercialValue || null,
+        lostReason: formData.lostReason,
+      };
+      await crmAPI.updateLead(lead.id, payload);
+      if (formData.proposalStatus !== lead.proposalStatus) {
+        await crmAPI.updateProposalStatus(lead.id, formData.proposalStatus || "Not Required");
+      }
+      toast.success("Lead updated successfully!");
+      setIsEditModalOpen(false);
+      fetchLead();
+    } catch (error) {
+      toast.error("Failed to update lead");
+      throw error;
+    }
+  };
+
   const currentStage  = lead?.status || "New";
   const displayId     = lead?.leadId || (lead?.id ? `LD-${lead.id.slice(-4).toUpperCase()}` : "—");
   const displayName   = lead ? `${lead.firstName} ${lead.lastName}`.trim() : "—";
@@ -1154,7 +1204,7 @@ export default function LeadDetailPage() {
   // ── Tabs config ──────────────────────────────────────────────────────────
   const TABS = [
     { key: "overview", label: "Overview",          icon: LayoutGrid,   count: null },
-    { key: "tasks",    label: "Tasks & Follow-ups", icon: ListTodo,     count: taskCount },
+    // { key: "tasks",    label: "Tasks & Follow-ups", icon: ListTodo,     count: taskCount },
     { key: "notes",    label: "Notes & Activity",   icon: StickyNote,   count: noteCount },
     { key: "files",    label: "Files",              icon: Paperclip,    count: fileCount },
   ];
@@ -1238,13 +1288,22 @@ export default function LeadDetailPage() {
                   const activeIdx = getStageIndex(currentStage);
                   const isPast    = idx < activeIdx;
                   const isCurrent = idx === activeIdx;
+                  
+                  let dotColor = "bg-amber-500";
+                  if (isPast) dotColor = "bg-emerald-500";
+                  else if (isCurrent) {
+                    if (stage.key === "Lost") dotColor = "bg-rose-500";
+                    else if (stage.key === "Won") dotColor = "bg-emerald-500";
+                    else dotColor = "bg-amber-500";
+                  }
+
                   return (
                     <div key={stage.key} className="flex items-center gap-4">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all shrink-0 ${
                         isCurrent
-                          ? `${stage.dot} border-white shadow-md scale-110`
+                          ? `${dotColor} border-white shadow-md scale-110`
                           : isPast
-                            ? `${stage.dot} border-white opacity-90`
+                            ? `${dotColor} border-white opacity-90`
                             : "bg-white border-slate-200"
                       }`}>
                         {isPast && <CheckCircle2 size={12} className="text-white" />}
@@ -1495,7 +1554,7 @@ export default function LeadDetailPage() {
                     </span>
                   ) : <span className="text-sm text-slate-300">—</span>,
                 },
-                { label: "Commercial Value",   icon: DollarSign, value: lead?.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : null },
+                { label: "Commercial Value",   value: lead?.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : null },
                 { label: "Expected Close",     icon: Calendar,   value: lead?.expectedCloseDate ? moment(lead.expectedCloseDate).format("DD/MM/YYYY") : null },
                 { label: "Next Follow-Up",     icon: Clock,      value: lead?.nextFollowUpDate ? moment(lead.nextFollowUpDate).format("DD/MM/YYYY") : null },
               ].map(({ label, icon: Icon, value, content }) => (
@@ -1603,7 +1662,7 @@ export default function LeadDetailPage() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</p>
                 <div className="space-y-1">
                   {[
-                    { label: "Edit Lead",            icon: Edit,           action: () => navigate("/admin/crm/leads"), color: "text-slate-600" },
+                    { label: "Edit Lead",            icon: Edit,           action: () => setIsEditModalOpen(true), color: "text-slate-600" },
                     { label: "Add Task",             icon: ListTodo,       action: () => setActiveTab("tasks"),   color: "text-emerald-600" },
                     { label: "Add Note",             icon: StickyNote,     action: () => setActiveTab("notes"),   color: "text-amber-600" },
                     { label: "Convert to Workflow",  icon: ArrowRightLeft, action: () => {},                       color: "text-violet-600" },
@@ -1647,6 +1706,12 @@ export default function LeadDetailPage() {
         </div>
         </div>
       </div>
+      <LeadFormModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        onSave={handleUpdateLead} 
+        initialData={lead} 
+      />
     </div>
   );
 }

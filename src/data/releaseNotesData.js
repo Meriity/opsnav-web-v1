@@ -42,6 +42,46 @@ export const monthlyReleaseNotes = {
     July: [
       {
         date: "2026-07-16",
+        version: "v8.4.8",
+        type: "patch",
+        category: "improvement",
+        title: "CRM Leads Inline Editing & UX Enhancements",
+        description: "Refined the lead management experience with seamless inline editing on the details page, intelligent input handling for specific stages, and a cleaner pipeline visual.",
+        updates: [
+          {
+            type: "improvement",
+            title: "Seamless Inline Editing on Detail Page",
+            description: "The Edit Lead quick action now opens a modal directly over the details page instead of forcing a navigation back to the main table, providing a much smoother workflow.",
+            icon: Edit,
+          },
+          {
+            type: "feature",
+            title: "Contextual Commercial Value Tracking",
+            description: "A new 'Commercial Value ($)' input field now dynamically appears only when a lead reaches the Proposal, Negotiation, or Won stages.",
+            icon: Sparkles,
+          },
+          {
+            type: "improvement",
+            title: "Pipeline UI Decluttering",
+            description: "Removed the generic $0 labels from the Opportunity and Lost stages in the pipeline stepper to present a cleaner and more focused financial view.",
+            icon: Eye,
+          },
+          {
+            type: "feature",
+            title: "Mandatory Lost Reason Workflow",
+            description: "Just like the Unqualified status, selecting the 'Lost' status now triggers a mandatory text input field requiring the user to specify the exact reason the deal was lost before saving.",
+            icon: Info,
+          },
+          {
+            type: "improvement",
+            title: "Smart 'Save and Create Another' Handling",
+            description: "The 'Save and create another' checkbox has been intelligently hidden when editing an existing lead to prevent UI confusion, as it is only applicable during initial lead creation.",
+            icon: CheckCircle2,
+          }
+        ],
+      },
+      {
+        date: "2026-07-16",
         version: "v8.4.7",
         type: "minor",
         category: "feature",
