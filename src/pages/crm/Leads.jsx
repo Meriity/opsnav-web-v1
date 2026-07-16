@@ -87,7 +87,7 @@ const STAGE_NORMALIZE = {
   "proposal": "Proposal",
   "negotiation": "Negotiation",
   "won": "Won", "converted": "Won",
-  "lost": "Lost", "closed": "Lost", "unqualified": "Lost",
+  "lost": "Lost", "closed": "Lost", "unqualified": "Lost", "unqualified lead": "Lost",
 };
 
 const getDisplayStage = (status = "") =>
@@ -597,13 +597,14 @@ const getAvailableStatuses = (current) => {
 };
 
 // --- LEAD FORM MODAL ---
-function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
+export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
     serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-    leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: ''
+    leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: '', commercialValue: '', lostReason: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusConfirmState, setStatusConfirmState] = useState(false);
   const [saveAnother, setSaveAnother] = useState(false);
   const [users, setUsers] = useState([]);
   const [enquiryTypes, setEnquiryTypes] = useState([]);
@@ -633,7 +634,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-          leadTemperature: '', assignedTo: ''
+          leadTemperature: '', assignedTo: '', commercialValue: '', lostReason: ''
         });
         setCompanySearch('');
       }
@@ -711,10 +712,9 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.title || !formData.enquirySource || !formData.leadTemperature) return;
+  const handleFinalSave = async () => {
     setIsSubmitting(true);
+    setStatusConfirmState(false);
     try {
       await onSave({
         ...(initialData || {}),
@@ -724,7 +724,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-          leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: ''
+          leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: '', commercialValue: '', lostReason: ''
         });
         setCompanySearch('');
       } else {
@@ -735,12 +735,26 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.title || !formData.enquirySource || !formData.leadTemperature) return;
+    
+    // Check if status changed in edit mode, prompt for confirmation
+    if (initialData && initialData.status !== formData.status) {
+      setStatusConfirmState(true);
+      return;
+    }
+
+    handleFinalSave();
+  };
+
   const modalTitle = initialData ? 'Edit Lead' : 'Create Lead';
   const modalSub = initialData ? 'Update lead details' : 'Capture a new lead quickly';
   const currentUser = localStorage.getItem("user") || "OpsNav Admin";
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
+    <>
+      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
       <DialogBackdrop transition className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
@@ -1001,6 +1015,20 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                         </select>
                       </div>
                   )}
+                  {['Proposal', 'Negotiation', 'Won'].includes(formData.status) && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Commercial Value ($)</label>
+                        <input 
+                          type="number" 
+                          min="0"
+                          step="0.01"
+                          value={formData.commercialValue || ''} 
+                          onChange={e => setFormData({ ...formData, commercialValue: e.target.value })} 
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" 
+                          placeholder="e.g. 5000"
+                        />
+                      </div>
+                  )}
                   {initialData && (
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">Next Follow Up</label>
@@ -1032,6 +1060,12 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                     <div className="md:col-span-2">
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details <span className="text-rose-500">*</span></label>
                       <input required type="text" value={formData.unqualifiedReasonOther || ''} onChange={e => setFormData({ ...formData, unqualifiedReasonOther: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" placeholder="Please specify the reason" />
+                    </div>
+                  )}
+                  {formData.status === 'Lost' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Lost Reason <span className="text-rose-500">*</span></label>
+                      <input required type="text" value={formData.lostReason || ''} onChange={e => setFormData({ ...formData, lostReason: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" placeholder="Please specify why this deal was lost" />
                     </div>
                   )}
                 </div>
@@ -1087,13 +1121,17 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
             </form>
 
             <div className="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center">
-                  <input type="checkbox" checked={saveAnother} onChange={(e) => setSaveAnother(e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-slate-300 rounded cursor-pointer checked:bg-blue-600 checked:border-blue-600 transition-colors" />
-                  <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                </div>
-                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Save and create another</span>
-              </label>
+              {initialData ? (
+                <div /> // Empty spacer for flex layout
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input type="checkbox" checked={saveAnother} onChange={(e) => setSaveAnother(e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-slate-300 rounded cursor-pointer checked:bg-blue-600 checked:border-blue-600 transition-colors" />
+                    <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Save and create another</span>
+                </label>
+              )}
 
               <div className="flex items-center gap-3">
                 <button type="button" onClick={onClose} className="px-5 py-2.5 text-[#2E3D99] border border-[#2E3D99] rounded-xl hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] text-sm font-bold transition-all duration-300">
@@ -1121,6 +1159,16 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         </div>
       </div>
     </Dialog>
+      <ConfirmationModal
+        isOpen={statusConfirmState}
+        onClose={() => setStatusConfirmState(false)}
+        onConfirm={handleFinalSave}
+        title="Confirm Status Change"
+        message={`Are you sure you want to change the lead status from "${initialData?.status}" to "${formData.status}"?`}
+        confirmLabel="Update Status"
+        cancelLabel="Cancel"
+      />
+    </>
   );
 }
 
@@ -1891,11 +1939,21 @@ export default function Leads() {
           if (leadData.unqualifiedReasonOther !== original.unqualifiedReasonOther) updatedFields.unqualifiedReasonOther = leadData.unqualifiedReasonOther;
         }
 
+        if (leadData.status === "Lost") {
+          if (leadData.lostReason !== original.lostReason) updatedFields.lostReason = leadData.lostReason;
+        }
+
         // Proposal Status Handling (API expects specific route)
         const originalProposalStatus = original.proposalStatus || "Not Required";
         const newProposalStatus = leadData.proposalStatus || "Not Required";
         if (newProposalStatus !== originalProposalStatus) {
           await crmAPI.updateProposalStatus(original.id, newProposalStatus);
+        }
+
+        const originalCommercialValue = original.commercialValue || "";
+        const newCommercialValue = leadData.commercialValue || "";
+        if (newCommercialValue !== originalCommercialValue) {
+          updatedFields.commercialValue = newCommercialValue;
         }
 
         // Only call update API if there's at least one updated field in the main body
@@ -1925,7 +1983,9 @@ export default function Leads() {
           lastName: leadData.lastName || "",
           companyName: leadData.company || "",
           phone: leadData.phone || "",
-          assignedTo: leadData.assignedTo || ""
+          assignedTo: leadData.assignedTo || "",
+          commercialValue: leadData.commercialValue || null,
+          lostReason: leadData.lostReason || null
         };
 
         await crmAPI.createLead(leadPayload);
