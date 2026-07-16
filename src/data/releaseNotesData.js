@@ -41,6 +41,47 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-16",
+        version: "v8.4.7",
+        type: "minor",
+        category: "feature",
+        title: "CRM Lead Pipeline Controls & Unqualified Workflow",
+        description: "Introduced advanced Lead Status progression controls, strictly mapped Proposal Status visibility, and implemented a mandatory Unqualified Reason workflow.",
+        updates: [
+          {
+            type: "feature",
+            title: "Dynamic Lead Status Progression",
+            description: "Lead status dropdown now intelligently adapts to the lead's current stage.",
+            details: "When creating a new lead, the status is strictly locked to 'New Lead'. During editing, the dropdown dynamically calculates the allowed forward progression stages based on the current status (e.g., 'New Lead' can only move to 'Qualified' or 'Unqualified'), enforcing strict pipeline integrity.",
+            icon: RefreshCw,
+          },
+          {
+            type: "feature",
+            title: "Mandatory Unqualified Workflow",
+            description: "Added a structured workflow for unqualified leads to capture drop-off reasons.",
+            details: "Changing a lead's status to 'Unqualified Lead' instantly triggers a mandatory 'Unqualified Reason' dropdown (e.g., 'No Budget', 'Not Interested'). Selecting 'Others' dynamically reveals an additional mandatory 'Reason Details' text input, ensuring comprehensive data capture for churned leads.",
+            icon: ShieldCheck,
+          },
+          {
+            type: "ui_ux",
+            title: "Contextual Proposal Status",
+            description: "Proposal Status is now strictly contextual and hidden during early stages.",
+            details: "The 'Proposal Status' field is completely hidden from the Lead Form unless the Lead Status is exactly at the 'Proposal' stage. This declutters the interface for leads in stages where a formal proposal isn't relevant.",
+            icon: Eye,
+          },
+          {
+            type: "bugfix",
+            title: "Internal Fields Data Synchronization",
+            description: "Fixed a bug where internal tracking fields failed to trigger a backend save.",
+            details: "Expanded the form's change-detection engine in Leads.jsx to actively monitor all newly added internal fields (Lead Status, Lead Temperature, Priority, Enquiry Source, and Unqualified Reasons). Modifying any of these fields will now successfully trigger a 'Save Changes' API payload instead of halting with a 'No changes were made' warning.",
+            icon: Bug,
+          },
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-07-15",
         version: "v8.4.6",
         type: "minor",

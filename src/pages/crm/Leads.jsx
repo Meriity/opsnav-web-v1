@@ -566,12 +566,42 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
   );
 }
 
+const getAvailableStatuses = (current) => {
+  switch (current) {
+    case "New Lead":
+    case "New":
+    case undefined:
+    case null:
+    case "":
+      return ["New Lead", "Qualified Lead", "Unqualified Lead"];
+    case "Qualified Lead":
+      return ["Qualified Lead", "Opportunity", "Unqualified Lead"];
+    case "Opportunity":
+      return ["Opportunity", "Proposal", "Unqualified Lead"];
+    case "Proposal":
+      return ["Proposal", "Negotiation", "Unqualified Lead"];
+    case "Negotiation":
+      return ["Negotiation", "Won", "Lost", "Unqualified Lead"];
+    case "Won":
+      return ["Won"];
+    case "Lost":
+      return ["Lost"];
+    case "Unqualified Lead":
+      return ["Unqualified Lead"];
+    default:
+      return [
+        "New Lead", "Qualified Lead", "Unqualified Lead",
+        "Opportunity", "Proposal", "Negotiation", "Won", "Lost"
+      ];
+  }
+};
+
 // --- LEAD FORM MODAL ---
 function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
+    firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
     serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-    leadTemperature: '', assignedTo: ''
+    leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveAnother, setSaveAnother] = useState(false);
@@ -692,9 +722,9 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
       });
       if (saveAnother && !initialData) {
         setFormData({
-          firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New',
+          firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-          leadTemperature: '', assignedTo: ''
+          leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: ''
         });
         setCompanySearch('');
       } else {
@@ -909,6 +939,20 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Status <span className="text-rose-500">*</span></label>
+                    <select 
+                      required 
+                      value={formData.status || 'New Lead'} 
+                      onChange={e => setFormData({ ...formData, status: e.target.value })} 
+                      className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium ${!initialData ? 'bg-slate-50 cursor-not-allowed' : 'bg-white'}`}
+                      disabled={!initialData}
+                    >
+                      {(!initialData ? ["New Lead"] : Array.from(new Set([initialData.status, ...getAvailableStatuses(formData.status)]))).map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Source <span className="text-rose-500">*</span></label>
                     <select required value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
                       <option value="" disabled>Select source</option>
@@ -945,8 +989,7 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                       ))}
                     </select>
                   </div>
-                  {initialData && (
-                    <>
+                  {initialData && formData.status === "Proposal" && (
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">Proposal Status</label>
                         <select value={formData.proposalStatus || 'Not Required'} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
@@ -957,6 +1000,8 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                           <option value="Rejected">Rejected</option>
                         </select>
                       </div>
+                  )}
+                  {initialData && (
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">Next Follow Up</label>
                         <input 
@@ -966,7 +1011,28 @@ function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                           className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" 
                         />
                       </div>
-                    </>
+                  )}
+                  {formData.status === 'Unqualified Lead' && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Unqualified Reason <span className="text-rose-500">*</span></label>
+                      <select required value={formData.unqualifiedReason || ''} onChange={e => setFormData({ ...formData, unqualifiedReason: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white font-medium">
+                        <option value="" disabled>Select reason</option>
+                        <option value="No Budget">No Budget</option>
+                        <option value="Not Interested">Not Interested</option>
+                        <option value="Duplicate Enquiry">Duplicate Enquiry</option>
+                        <option value="Wrong Contact">Wrong Contact</option>
+                        <option value="Outside Service Area">Outside Service Area</option>
+                        <option value="Lost to Competitor">Lost to Competitor</option>
+                        <option value="No Response">No Response</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    </div>
+                  )}
+                  {formData.status === 'Unqualified Lead' && formData.unqualifiedReason === 'Others' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details <span className="text-rose-500">*</span></label>
+                      <input required type="text" value={formData.unqualifiedReasonOther || ''} onChange={e => setFormData({ ...formData, unqualifiedReasonOther: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" placeholder="Please specify the reason" />
+                    </div>
                   )}
                 </div>
 
@@ -1797,6 +1863,32 @@ export default function Leads() {
         const newNextFollowUpDate = leadData.nextFollowUpDate ? leadData.nextFollowUpDate.split('T')[0] : "";
         if (newNextFollowUpDate !== originalNextFollowUpDate) {
           updatedFields.nextFollowUpDate = newNextFollowUpDate || null;
+        }
+
+        // New Dropdown Fields Handling
+        if (leadData.status && leadData.status !== original.status) {
+          updatedFields.status = leadData.status;
+        }
+        if (leadData.enquirySource && leadData.enquirySource !== original.enquirySource) {
+          updatedFields.enquirySource = leadData.enquirySource;
+          updatedFields.leadSource = leadData.enquirySource; // Backend requires this for some endpoints
+        }
+        if (leadData.leadTemperature && leadData.leadTemperature !== original.leadTemperature) {
+          updatedFields.leadTemperature = leadData.leadTemperature;
+        }
+        if (leadData.priority && leadData.priority !== original.priority) {
+          updatedFields.priority = leadData.priority;
+        }
+        
+        // Referrer Fields
+        if (leadData.referrerName !== original.referrerName) updatedFields.referrerName = leadData.referrerName;
+        if (leadData.referrerEmail !== original.referrerEmail) updatedFields.referrerEmail = leadData.referrerEmail;
+        if (leadData.referrerPhone !== original.referrerPhone) updatedFields.referrerPhone = leadData.referrerPhone;
+
+        // Unqualified Reasons
+        if (leadData.status === "Unqualified Lead") {
+          if (leadData.unqualifiedReason !== original.unqualifiedReason) updatedFields.unqualifiedReason = leadData.unqualifiedReason;
+          if (leadData.unqualifiedReasonOther !== original.unqualifiedReasonOther) updatedFields.unqualifiedReasonOther = leadData.unqualifiedReasonOther;
         }
 
         // Proposal Status Handling (API expects specific route)
