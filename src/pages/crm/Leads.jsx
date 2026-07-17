@@ -566,7 +566,7 @@ function LeadDrawer({ lead, onClose, onEditClick, onConvertClick, onAssignClick,
   );
 }
 
-const getAvailableStatuses = (current) => {
+export const getAvailableStatuses = (current) => {
   switch (current) {
     case "New Lead":
     case "New":
@@ -601,7 +601,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
     serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-    leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: '', commercialValue: '', lostReason: ''
+    leadTemperature: '', assignedTo: '', unqualifiedReason: '', customReason: '', commercialValue: '', lostReason: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusConfirmState, setStatusConfirmState] = useState(false);
@@ -724,7 +724,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
         setFormData({
           firstName: '', lastName: '', company: '', title: '', email: '', phone: '', description: '', status: 'New Lead',
           serviceTypes: [], enquirySource: '', referrerName: '', referrerEmail: '', referrerPhone: '', priority: 'Medium', proposalStatus: 'Not Required',
-          leadTemperature: '', assignedTo: '', unqualifiedReason: '', unqualifiedReasonOther: '', commercialValue: '', lostReason: ''
+          leadTemperature: '', assignedTo: '', unqualifiedReason: '', customReason: '', commercialValue: '', lostReason: ''
         });
         setCompanySearch('');
       } else {
@@ -1042,8 +1042,8 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   )}
                   {formData.status === 'Unqualified Lead' && (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Unqualified Reason <span className="text-rose-500">*</span></label>
-                      <select required value={formData.unqualifiedReason || ''} onChange={e => setFormData({ ...formData, unqualifiedReason: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white font-medium">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Unqualified Reason {(!initialData || !initialData.unqualifiedReason) && <span className="text-rose-500">*</span>}</label>
+                      <select required disabled={!!(initialData && initialData.unqualifiedReason)} value={formData.unqualifiedReason || ''} onChange={e => setFormData({ ...formData, unqualifiedReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium ${initialData && initialData.unqualifiedReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`}>
                         <option value="" disabled>Select reason</option>
                         <option value="No Budget">No Budget</option>
                         <option value="Not Interested">Not Interested</option>
@@ -1058,14 +1058,14 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   )}
                   {formData.status === 'Unqualified Lead' && formData.unqualifiedReason === 'Others' && (
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details <span className="text-rose-500">*</span></label>
-                      <input required type="text" value={formData.unqualifiedReasonOther || ''} onChange={e => setFormData({ ...formData, unqualifiedReasonOther: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" placeholder="Please specify the reason" />
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details {(!initialData || !initialData.customReason) && <span className="text-rose-500">*</span>}</label>
+                      <input required type="text" readOnly={!!(initialData && initialData.customReason)} value={formData.customReason || ''} onChange={e => setFormData({ ...formData, customReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.customReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify the reason" />
                     </div>
                   )}
                   {formData.status === 'Lost' && (
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Lost Reason <span className="text-rose-500">*</span></label>
-                      <input required type="text" value={formData.lostReason || ''} onChange={e => setFormData({ ...formData, lostReason: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" placeholder="Please specify why this deal was lost" />
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Lost Reason {(!initialData || !initialData.lostReason) && <span className="text-rose-500">*</span>}</label>
+                      <input required type="text" readOnly={!!(initialData && initialData.lostReason)} value={formData.lostReason || ''} onChange={e => setFormData({ ...formData, lostReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.lostReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify why this deal was lost" />
                     </div>
                   )}
                 </div>
@@ -1936,11 +1936,12 @@ export default function Leads() {
         // Unqualified Reasons
         if (leadData.status === "Unqualified Lead") {
           if (leadData.unqualifiedReason !== original.unqualifiedReason) updatedFields.unqualifiedReason = leadData.unqualifiedReason;
-          if (leadData.unqualifiedReasonOther !== original.unqualifiedReasonOther) updatedFields.unqualifiedReasonOther = leadData.unqualifiedReasonOther;
+          if (leadData.customReason !== original.customReason) updatedFields.customReason = leadData.customReason;
         }
 
         if (leadData.status === "Lost") {
           if (leadData.lostReason !== original.lostReason) updatedFields.lostReason = leadData.lostReason;
+          if (leadData.lostReason !== original.customReason) updatedFields.customReason = leadData.lostReason;
         }
 
         // Proposal Status Handling (API expects specific route)

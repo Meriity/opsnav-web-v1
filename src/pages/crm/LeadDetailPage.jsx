@@ -105,24 +105,63 @@ function StageBadge({ stage }) {
 }
 
 // ─── Lead Pipeline Stepper ────────────────────────────────────────────────────
-function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
-  const activeIdx = getStageIndex(currentStage);
+function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onStageClick, isSaving }) {
+  const activeIdx = PIPELINE_STAGES.findIndex(s => s.key === currentStage);
+
+  const getLostTooltip = () => {
+    if (lead?.status === 'Unqualified Lead') {
+      return lead?.unqualifiedReason === 'Others' ? lead?.customReason : lead?.unqualifiedReason;
+    }
+    if (lead?.status === 'Lost' || currentStage === 'Lost') {
+      return lead?.customReason || lead?.lostReason;
+    }
+    return null;
+  };
+
+  const lostTooltipText = getLostTooltip();
+
+  // Find highest stage reached based on timestamps
+  let maxReachedIdx = activeIdx;
+  if (currentStage === "Lost" || currentStage === "Unqualified Lead") {
+    let highest = 0;
+    if (lead?.createdAt) highest = 0; // New Lead
+    if (lead?.qualifiedDate || lead?.qualifiedAt) highest = Math.max(highest, PIPELINE_STAGES.findIndex(s => s.key === "Qualified Lead"));
+    if (lead?.opportunityDate) highest = Math.max(highest, PIPELINE_STAGES.findIndex(s => s.key === "Opportunity"));
+    if (lead?.proposalDate) highest = Math.max(highest, PIPELINE_STAGES.findIndex(s => s.key === "Proposal"));
+    if (lead?.negotiationStartDate) highest = Math.max(highest, PIPELINE_STAGES.findIndex(s => s.key === "Negotiation"));
+    maxReachedIdx = highest;
+  }
+
+  const formatVal = (val, extra) => {
+    let s = val ? `$${Number(val).toLocaleString()}` : "$0";
+    if (extra && extra !== "Not Required") s += ` • ${extra}`;
+    return s;
+  };
 
   const VALUE_LABELS = {
-    "Opportunity": commercialValue ? `$${Number(commercialValue).toLocaleString()}` : "$0",
-    "Proposal":    commercialValue ? `$${Number(commercialValue).toLocaleString()}` : "$0",
-    "Negotiation": commercialValue ? `$${Number(commercialValue).toLocaleString()}` : "$0",
-    "Won":         commercialValue ? `$${Number(commercialValue).toLocaleString()}` : "$0",
+    "Opportunity": formatVal(commercialValue),
+    "Proposal":    formatVal(commercialValue, proposalStatus),
+    "Negotiation": formatVal(commercialValue),
+    "Won":         formatVal(commercialValue),
     "Lost":        "$0",
   };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <GitBranch size={15} className="text-[#2E3D99]" />
-          Lead Pipeline
-        </h3>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 shrink-0">
+            <GitBranch size={15} className="text-[#2E3D99]" />
+            Lead Pipeline
+          </h3>
+          <div className="group relative">
+            <span className="flex w-4 h-4 rounded-full bg-slate-100 text-slate-400 items-center justify-center text-[10px] cursor-help shrink-0 ml-1">i</span>
+            <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none whitespace-normal break-words">
+              Click or drag stages to update the lead's progress through the pipeline.
+            </div>
+          </div>
+          <span className="text-xs text-slate-400 leading-snug">Click or drag stages to update progress.</span>
+        </div>
       </div>
 
       {/* Pipeline Container (Scrollable on mobile) */}
@@ -130,69 +169,138 @@ function LeadPipeline({ currentStage, commercialValue, onStageClick }) {
         <div className="min-w-[600px]">
           {/* Value labels row */}
           <div className="flex items-center justify-between mb-1 px-0">
-            {PIPELINE_STAGES.map((stage) => (
-              <div key={stage.key + "-val"} className="flex-1 flex flex-col items-center">
-                {stage.hasValue ? (
-                  <div className="text-center">
-                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">
-                      {stage.label} Value
-                    </p>
-                    <p className={`text-xs font-bold mt-0.5 ${activeIdx >= PIPELINE_STAGES.findIndex(s => s.key === stage.key) ? "text-slate-700" : "text-slate-200"}`}>
-                      {VALUE_LABELS[stage.key] || "—"}
-                    </p>
-                  </div>
-                ) : <div />}
-              </div>
-            ))}
+            {PIPELINE_STAGES.map((stage, idx) => {
+              let isValueActive = false;
+              if (currentStage === "Lost" || currentStage === "Unqualified Lead") {
+                isValueActive = idx <= maxReachedIdx && stage.key !== "Won";
+              } else {
+                isValueActive = idx <= activeIdx;
+              }
+              return (
+                <div key={stage.key + "-val"} className="flex-1 flex flex-col items-center">
+                  {stage.hasValue ? (
+                    <div className="text-center">
+                      <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">
+                        {stage.label} Value
+                      </p>
+                      <p className={`text-xs font-bold mt-0.5 ${isValueActive ? "text-slate-700" : "text-slate-200"}`}>
+                        {VALUE_LABELS[stage.key] || "—"}
+                      </p>
+                    </div>
+                  ) : <div />}
+                </div>
+              );
+            })}
           </div>
 
-      {/* Stepper */}
-      <div className="relative flex items-center justify-between mt-3">
-        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
-        {PIPELINE_STAGES.map((stage, idx) => {
-          const isPast    = idx < activeIdx;
-          const isCurrent = idx === activeIdx;
-          const isFuture  = idx > activeIdx;
-          
-          let dotColor = "bg-amber-500";
-          if (isPast) dotColor = "bg-emerald-500";
-          else if (isCurrent) {
-            if (stage.key === "Lost") dotColor = "bg-rose-500";
-            else if (stage.key === "Won") dotColor = "bg-emerald-500";
-            else dotColor = "bg-amber-500";
-          }
+          {/* Stepper */}
+          <div className="relative flex items-center justify-between mt-3">
+            <div className="absolute top-1/2 left-0 right-0 h-[3px] bg-slate-200 -translate-y-1/2 z-0" />
+            {PIPELINE_STAGES.map((stage, idx) => {
+              let isPast = false;
+              let isCurrent = false;
+              let isFuture = false;
 
-          return (
-            <div
-              key={stage.key}
-              className="relative z-10 flex flex-col items-center gap-2 flex-1"
-            >
-              <div className={`
-                w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-200
-                ${isCurrent
-                  ? `${dotColor} border-white shadow-lg ring-2 ring-offset-2 ring-opacity-40 scale-110`
-                  : isPast
-                    ? `${dotColor} border-white opacity-90`
-                    : "bg-white border-slate-200"
+              if (currentStage === "Lost" || currentStage === "Unqualified Lead") {
+                if (stage.key === currentStage) {
+                  isCurrent = true;
+                } else if (idx <= maxReachedIdx) {
+                  isPast = true;
+                } else {
+                  isFuture = true;
                 }
-              `}>
-                {isPast && (
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-                {isCurrent && <span className="w-2.5 h-2.5 rounded-full bg-white" />}
-                {isFuture && <span className="w-2 h-2 rounded-full bg-slate-200" />}
-              </div>
-              <span className={`text-[10px] font-bold text-center leading-tight ${
-                isCurrent ? "text-slate-800" : isPast ? "text-slate-500" : "text-slate-300"
-              }`}>
-                {stage.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+              } else {
+                isPast    = idx < activeIdx;
+                isCurrent = idx === activeIdx;
+                isFuture  = idx > activeIdx;
+              }
+              
+              let dotColor = "bg-amber-500";
+              if (isPast) dotColor = "bg-emerald-500";
+              else if (isCurrent) {
+                if (stage.key === "Lost" || stage.key === "Unqualified Lead") dotColor = "bg-rose-500";
+                else if (stage.key === "Won") dotColor = "bg-emerald-500";
+                else dotColor = "bg-amber-500";
+              }
+
+              return (
+                <div
+                  key={stage.key}
+                  className="relative z-10 flex flex-col items-center gap-2 flex-1 group"
+                >
+                  <div
+                    draggable={isCurrent && !isSaving}
+                    onDragStart={(e) => {
+                      if (!isSaving) {
+                        e.dataTransfer.setData("text/plain", stage.key);
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (isSaving) return;
+                      const fromStage = e.dataTransfer.getData("text/plain");
+                      if (fromStage && fromStage !== stage.key && onStageClick) {
+                        onStageClick(stage.key);
+                      }
+                    }}
+                    onClick={() => {
+                      if (!isSaving && onStageClick && stage.key !== currentStage) {
+                        onStageClick(stage.key);
+                      }
+                    }}
+                    className={`
+                    w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-200
+                    ${(currentStage !== 'Lost' && currentStage !== 'Unqualified Lead') ? 'cursor-pointer hover:ring-4 hover:ring-slate-100' : ''}
+                    ${isCurrent
+                      ? `${dotColor} border-white shadow-lg ring-2 ring-offset-2 ring-opacity-40 scale-110`
+                      : isPast
+                        ? `${dotColor} border-white opacity-90`
+                        : "bg-white border-slate-200"
+                    }
+                  `}>
+                    {isPast && (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {isCurrent && (stage.key === 'Lost' || stage.key === 'Unqualified Lead') && lostTooltipText && (
+                      <div title={lostTooltipText} className="absolute bottom-full mb-2 bg-rose-600 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-md shadow-lg z-20 flex flex-col items-center max-w-[200px] w-max">
+                        <span className="w-full text-center whitespace-normal break-words leading-tight">{lostTooltipText}</span>
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-rose-600 rotate-45" />
+                      </div>
+                    )}
+                    {isCurrent && isSaving ? <Loader2 size={12} className="animate-spin text-white" /> : isCurrent && <span className="w-2.5 h-2.5 rounded-full bg-white pointer-events-none" />}
+                    {isFuture && <span className="w-2 h-2 rounded-full bg-slate-200" />}
+                  </div>
+                  <span className={`text-[10px] font-bold text-center leading-tight transition-colors ${
+                    isCurrent ? "text-slate-800" : isPast ? "text-slate-500 group-hover:text-slate-600" : "text-slate-300 group-hover:text-slate-400"
+                  }`}>
+                    {stage.label}
+                  </span>
+                  {(() => {
+                    let dateStr = null;
+                    if (lead) {
+                      if (stage.key === "New Lead") dateStr = lead.createdAt;
+                      else if (stage.key === "Qualified Lead") dateStr = lead.qualifiedDate || lead.qualifiedAt;
+                      else if (stage.key === "Opportunity") dateStr = lead.opportunityDate;
+                      else if (stage.key === "Proposal") dateStr = lead.proposalDate;
+                      else if (stage.key === "Negotiation") dateStr = lead.negotiationStartDate;
+                      else if (stage.key === "Won") dateStr = lead.wonDate || lead.convertedAt;
+                      else if (stage.key === "Lost") dateStr = lead.lostDate || lead.lostAt;
+                    }
+                    return dateStr && (isPast || isCurrent) ? (
+                      <span className="text-[8px] font-semibold text-slate-400 mt-0.5">
+                        {moment(dateStr).format('MMM D, h:mm A')}
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -1080,6 +1188,9 @@ export default function LeadDetailPage() {
   const [users, setUsers]         = useState([]);
   const [isDealTracked, setIsDealTracked] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [pendingStage, setPendingStage] = useState(null);
+  const [isSavingInline, setIsSavingInline] = useState(false);
+  const [inlineFormData, setInlineFormData] = useState({});
 
   // Tab counts
   const [taskCount, setTaskCount] = useState(0);
@@ -1147,14 +1258,56 @@ export default function LeadDetailPage() {
 
   const handleStageChange = async (newStage) => {
     if (!lead) return;
+    if (newStage === currentStage) return;
+    
+    setPendingStage(newStage);
+    setInlineFormData({
+      status: newStage,
+      unqualifiedReason: lead.unqualifiedReason || "",
+      customReason: lead.customReason || "",
+      lostReason: lead.lostReason || lead.customReason || "",
+      proposalStatus: lead.proposalStatus || "",
+      proposalSentDate: lead.proposalSentDate ? lead.proposalSentDate.split('T')[0] : "",
+      commercialValue: lead.commercialValue || ""
+    });
+  };
+
+  const handleInlineStageSave = async () => {
+    if (!lead || !pendingStage) return;
+
+    if (pendingStage === 'Lost' && !inlineFormData.lostReason?.trim()) {
+      toast.error("Please provide a reason for losing the lead.");
+      return;
+    }
+    if (pendingStage === 'Unqualified Lead') {
+      if (!inlineFormData.unqualifiedReason) {
+        toast.error("Please select an unqualified reason.");
+        return;
+      }
+      if (inlineFormData.unqualifiedReason === 'Others' && !inlineFormData.customReason?.trim()) {
+        toast.error("Please specify the custom reason.");
+        return;
+      }
+    }
+
+    setIsSavingInline(true);
     const prev = lead.status;
-    setLead(l => ({ ...l, status: newStage }));
+    setLead(l => ({ ...l, status: pendingStage }));
     try {
-      await crmAPI.updateLeadStatus(lead.id, newStage);
-      toast.success(`Stage updated to ${newStage}`);
+      const payload = {
+        ...inlineFormData,
+        lostReason: pendingStage === 'Lost' ? inlineFormData.lostReason : lead.lostReason,
+        customReason: pendingStage === 'Lost' ? inlineFormData.lostReason : inlineFormData.customReason,
+      };
+      await crmAPI.updateLead(lead.id, payload);
+      toast.success(`Stage updated to ${pendingStage}`);
+      setPendingStage(null);
+      fetchLead();
     } catch {
       setLead(l => ({ ...l, status: prev }));
       toast.error("Failed to update stage");
+    } finally {
+      setIsSavingInline(false);
     }
   };
 
@@ -1577,8 +1730,121 @@ export default function LeadDetailPage() {
           <LeadPipeline
             currentStage={currentStage}
             commercialValue={lead?.commercialValue}
+            proposalStatus={lead?.proposalStatus}
+            lead={lead}
             onStageClick={handleStageChange}
+            isSaving={isSavingInline}
           />
+
+          {/* ── Conditional Inline Stage Details (Tree Branch Style) ── */}
+          {pendingStage && (
+            <div className="relative mt-3 mb-6">
+              {/* Branch indicator */}
+              <div 
+                className="absolute -top-4 w-px h-6 bg-[#2E3D99] -translate-x-1/2 transition-all duration-300" 
+                style={{ left: `calc(${((2 * PIPELINE_STAGES.findIndex(s => s.key === (PIPELINE_STAGES.some(p => p.key === pendingStage) ? pendingStage : currentStage)) + 1) / (2 * PIPELINE_STAGES.length)) * 100}%)` }}
+              />
+              <div 
+                className="absolute -top-1 w-2 h-2 rounded-full bg-[#2E3D99] -translate-x-1/2 transition-all duration-300"
+                style={{ left: `calc(${((2 * PIPELINE_STAGES.findIndex(s => s.key === (PIPELINE_STAGES.some(p => p.key === pendingStage) ? pendingStage : currentStage)) + 1) / (2 * PIPELINE_STAGES.length)) * 100}%)` }}
+              />
+              
+              <div className="bg-white rounded-2xl border border-[#2E3D99]/20 shadow-[0_4px_20px_rgba(46,61,153,0.08)] p-5 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7]" />
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-[#2E3D99]/10 text-[#2E3D99] flex items-center justify-center">
+                      <GitBranch size={13} />
+                    </span>
+                    Update to {pendingStage}
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(pendingStage === 'Proposal' || pendingStage === 'Negotiation') && (
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Commercial Value</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">$</span>
+                        <input type="number" value={inlineFormData.commercialValue} onChange={e => setInlineFormData({...inlineFormData, commercialValue: e.target.value})} className="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white" placeholder="0.00" />
+                      </div>
+                    </div>
+                  )}
+
+                  {pendingStage === 'Proposal' && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Proposal Status</label>
+                        <select value={inlineFormData.proposalStatus} onChange={e => setInlineFormData({...inlineFormData, proposalStatus: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white">
+                          <option value="Draft">Draft</option>
+                          <option value="Sent">Sent</option>
+                          <option value="Reviewed">Reviewed</option>
+                          <option value="Accepted">Accepted</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Sent Date</label>
+                        <input type="date" value={inlineFormData.proposalSentDate} onChange={e => setInlineFormData({...inlineFormData, proposalSentDate: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white" />
+                      </div>
+                    </>
+                  )}
+
+                  {pendingStage === 'Lost' && (
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Lost Reason <span className="text-rose-500">*</span></label>
+                      <textarea required rows={2} value={inlineFormData.lostReason} onChange={e => setInlineFormData({...inlineFormData, lostReason: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white resize-none" placeholder="Why was this lead lost?" />
+                    </div>
+                  )}
+                  
+                  {pendingStage === 'Unqualified Lead' && (
+                    <>
+                      <div className={`space-y-1.5 ${inlineFormData.unqualifiedReason === 'Others' ? 'sm:col-span-1' : 'sm:col-span-2'}`}>
+                        <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Unqualified Reason <span className="text-rose-500">*</span></label>
+                        <select 
+                          required 
+                          value={inlineFormData.unqualifiedReason} 
+                          onChange={e => setInlineFormData({...inlineFormData, unqualifiedReason: e.target.value})} 
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white"
+                        >
+                          <option value="">Select reason</option>
+                          <option value="No Budget">No Budget</option>
+                          <option value="Not Interested">Not Interested</option>
+                          <option value="Duplicate Enquiry">Duplicate Enquiry</option>
+                          <option value="Wrong Contact">Wrong Contact</option>
+                          <option value="Outside Service Area">Outside Service Area</option>
+                          <option value="Lost to Competitor">Lost to Competitor</option>
+                          <option value="No Response">No Response</option>
+                          <option value="Others">Others</option>
+                        </select>
+                      </div>
+                      {inlineFormData.unqualifiedReason === 'Others' && (
+                        <div className="space-y-1.5 sm:col-span-1">
+                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Specify Reason <span className="text-rose-500">*</span></label>
+                          <input 
+                            type="text" 
+                            required 
+                            value={inlineFormData.customReason || ""} 
+                            onChange={e => setInlineFormData({...inlineFormData, customReason: e.target.value})} 
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white" 
+                            placeholder="Please specify..." 
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-5 flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button onClick={() => setPendingStage(null)} disabled={isSavingInline} className="px-5 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleInlineStageSave} disabled={isSavingInline} className="inline-flex items-center justify-center min-w-[120px] gap-2 px-6 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 shadow-md">
+                    {isSavingInline ? <Loader2 size={16} className="animate-spin" /> : "Confirm Stage"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── Two-column layout ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-5">
@@ -1708,9 +1974,12 @@ export default function LeadDetailPage() {
       </div>
       <LeadFormModal 
         isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setPendingStage(null);
+        }} 
         onSave={handleUpdateLead} 
-        initialData={lead} 
+        initialData={pendingStage ? { ...lead, status: pendingStage } : lead} 
       />
     </div>
   );

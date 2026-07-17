@@ -41,6 +41,54 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-17",
+        version: "v8.5.0",
+        type: "patch",
+        category: "bugfix",
+        title: "CRM Leads Details Pipeline UI Fixes",
+        description: "Restored and fixed the Lead Pipeline stepper interactions to accurately reflect the Lead status and handle terminal stages logic.",
+        updates: [
+          {
+            type: "bugfix",
+            title: "Restored Inline Pipeline Form",
+            description: "The inline editing form that appears below the pipeline when changing to terminal stages (Lost or Unqualified) has been completely restored.",
+            details: "Terminal stage changes correctly prompt for the lost or unqualified reasons before saving the transition.",
+            icon: Edit,
+          },
+          {
+            type: "ui_ux",
+            title: "Accurate Terminal Stage Grey Out",
+            description: "When a lead is marked as Lost or Unqualified, subsequent stages like 'Won' are greyed out.",
+            details: "The 'Won' stage checkmark and value label are removed to prevent confusion when a deal is no longer active.",
+            icon: Layout,
+          },
+          {
+            type: "feature",
+            title: "Native Pipeline Tooltips",
+            description: "The 'Lost' and 'Unqualified' nodes in the pipeline stepper now display interactive tooltips with the captured reasons.",
+            details: "Hovering over terminal stage dots provides quick context directly within the UI.",
+            icon: MessageSquare,
+          },
+          {
+            type: "feature",
+            title: "Drag and Drop Pipeline Stages",
+            description: "Interact with the Lead Pipeline using intuitive drag and drop mechanics to quickly update lead stages.",
+            details: "Users can now drag the active stage dot and drop it onto a new pipeline stage to initiate a transition, enhancing the CRM workflow speed.",
+            icon: ArrowUpDown,
+          },
+          {
+            type: "improvement",
+            title: "Dynamic Branch Indicators",
+            description: "Introduced visual branch indicators and dynamic branch lines for terminal state selections.",
+            details: "The UI now dynamically adjusts its layout to visually branch out when dealing with Unqualified or Lost workflows, neatly separating them from the main active pipeline.",
+            icon: Sparkles,
+          }
+        ],
+        module: "CRM",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-07-16",
         version: "v8.4.8",
         type: "patch",
