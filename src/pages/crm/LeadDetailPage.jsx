@@ -5,7 +5,7 @@ import {
   Tag, Building2, User, Phone, Mail, ExternalLink, CheckCircle2,
   Plus, Send, Loader2, StickyNote, Trash2,
   Activity, ListTodo, Paperclip, MapPin, ChevronRight,
-  Link2, LayoutGrid, GitBranch, ArrowRightLeft, MoveRight, AlertCircle
+  Link2, LayoutGrid, GitBranch, ArrowRightLeft, MoveRight, AlertCircle, XCircle, Info
 } from "lucide-react";
 import Header from "../../components/layout/Header";
 import crmAPI from "../../api/crmAPI";
@@ -63,11 +63,11 @@ const PIPELINE_STAGES = [
 ];
 
 const PROPOSAL_STATUS_BADGE = {
-  Draft:               "bg-slate-100 text-slate-600 border border-slate-200",
-  Sent:                "bg-emerald-100 text-emerald-700 border border-emerald-200",
-  "Follow-up Required":"bg-amber-100 text-amber-700 border border-amber-200",
-  Accepted:            "bg-blue-100 text-blue-700 border border-blue-200",
-  Rejected:            "bg-rose-100 text-rose-700 border border-rose-200",
+  "Not Required": "bg-slate-100 text-slate-600 border border-slate-200",
+  "Pending":      "bg-amber-100 text-amber-700 border border-amber-200",
+  "Sent":         "bg-blue-100 text-blue-700 border border-blue-200",
+  "Accepted":     "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  "Rejected":     "bg-rose-100 text-rose-700 border border-rose-200",
 };
 
 const PRIORITY_BADGE = {
@@ -105,15 +105,18 @@ function StageBadge({ stage }) {
 }
 
 // ─── Lead Pipeline Stepper ────────────────────────────────────────────────────
-function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onStageClick, isSaving }) {
-  const activeIdx = PIPELINE_STAGES.findIndex(s => s.key === currentStage);
+function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onStageClick, isSaving, onUnqualifiedClick }) {
+  const normalizedCurrentStage = PIPELINE_STAGES.find(s => s.key === currentStage)?.key || 
+    (currentStage?.toLowerCase().includes("unqualified") ? "Lost" : currentStage);
+  
+  const activeIdx = PIPELINE_STAGES.findIndex(s => s.key === normalizedCurrentStage);
 
   const getLostTooltip = () => {
     if (lead?.status === 'Unqualified Lead') {
       return lead?.unqualifiedReason === 'Others' ? lead?.customReason : lead?.unqualifiedReason;
     }
-    if (lead?.status === 'Lost' || currentStage === 'Lost') {
-      return lead?.customReason || lead?.lostReason;
+    if (lead?.status === 'Lost' || normalizedCurrentStage === 'Lost') {
+      return lead?.customReason || lead?.lostReason || lead?.unqualifiedReason;
     }
     return null;
   };
@@ -146,6 +149,18 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
     "Lost":        "$0",
   };
 
+  const getStageDate = (key) => {
+    if (!lead) return null;
+    if (key === 'New Lead') return lead.createdAt;
+    if (key === 'Qualified Lead') return lead.qualifiedDate || lead.qualifiedAt;
+    if (key === 'Opportunity') return lead.opportunityDate;
+    if (key === 'Proposal') return lead.proposalDate;
+    if (key === 'Negotiation') return lead.negotiationStartDate;
+    if (key === 'Won') return lead.wonDate;
+    if (key === 'Lost') return lead.lostDate;
+    return null;
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
@@ -162,6 +177,11 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
           </div>
           <span className="text-xs text-slate-400 leading-snug">Click or drag stages to update progress.</span>
         </div>
+        {lead?.status !== 'Unqualified Lead' && lead?.status !== 'Lost' && lead?.status !== 'Won' && lead?.status !== 'Converted' && (
+          <button onClick={onUnqualifiedClick} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 text-[11px] font-bold uppercase tracking-wider rounded-lg hover:bg-rose-50 shadow-sm transition-colors">
+            <XCircle size={14} /> Unqualified
+          </button>
+        )}
       </div>
 
       {/* Pipeline Container (Scrollable on mobile) */}
@@ -171,7 +191,7 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
           <div className="flex items-center justify-between mb-1 px-0">
             {PIPELINE_STAGES.map((stage, idx) => {
               let isValueActive = false;
-              if (currentStage === "Lost" || currentStage === "Unqualified Lead") {
+              if (normalizedCurrentStage === "Lost") {
                 isValueActive = idx <= maxReachedIdx && stage.key !== "Won";
               } else {
                 isValueActive = idx <= activeIdx;
@@ -183,8 +203,8 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
                       <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">
                         {stage.label} Value
                       </p>
-                      <p className={`text-xs font-bold mt-0.5 ${isValueActive ? "text-slate-700" : "text-slate-200"}`}>
-                        {VALUE_LABELS[stage.key] || "—"}
+                      <p className={`text-xs font-bold mt-0.5 flex items-center justify-center gap-1.5 ${isValueActive ? "text-slate-700" : "text-slate-200"}`}>
+                        <span>{VALUE_LABELS[stage.key] || "—"}</span>
                       </p>
                     </div>
                   ) : <div />}
@@ -194,19 +214,19 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
           </div>
 
           {/* Stepper */}
-          <div className="relative flex items-center justify-between mt-3">
-            <div className="absolute top-1/2 left-0 right-0 h-[3px] bg-slate-200 -translate-y-1/2 z-0" />
+          <div className="relative flex items-start justify-between mt-3">
+            <div className="absolute top-[13px] left-0 right-0 h-[3px] bg-slate-200 z-0" />
             {PIPELINE_STAGES.map((stage, idx) => {
               let isPast = false;
               let isCurrent = false;
               let isFuture = false;
 
-              if (currentStage === "Lost" || currentStage === "Unqualified Lead") {
-                if (stage.key === currentStage) {
+              if (normalizedCurrentStage === "Lost") {
+                if (stage.key === "Lost") {
                   isCurrent = true;
-                } else if (idx <= maxReachedIdx) {
-                  isPast = true;
                 } else {
+                  // No past green checkmarks for lost leads
+                  isPast = false;
                   isFuture = true;
                 }
               } else {
@@ -223,6 +243,19 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
                 else dotColor = "bg-amber-500";
               }
 
+              let isAllowedTransition = false;
+              if (normalizedCurrentStage !== "Won" && normalizedCurrentStage !== "Lost" && !isSaving) {
+                if (isCurrent && stage.key === "Proposal") {
+                  isAllowedTransition = true;
+                } else if (!isCurrent) {
+                  if (stage.key === "Won" || stage.key === "Lost") {
+                    isAllowedTransition = true;
+                  } else if (idx === activeIdx + 1) {
+                    isAllowedTransition = true;
+                  }
+                }
+              }
+
               return (
                 <div
                   key={stage.key}
@@ -236,24 +269,27 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
                       }
                     }}
                     onDragOver={(e) => {
-                      e.preventDefault();
+                      if (isAllowedTransition) {
+                        e.preventDefault();
+                      }
                     }}
                     onDrop={(e) => {
-                      e.preventDefault();
-                      if (isSaving) return;
-                      const fromStage = e.dataTransfer.getData("text/plain");
-                      if (fromStage && fromStage !== stage.key && onStageClick) {
-                        onStageClick(stage.key);
+                      if (isAllowedTransition) {
+                        e.preventDefault();
+                        const fromStage = e.dataTransfer.getData("text/plain");
+                        if (fromStage && fromStage !== stage.key && onStageClick) {
+                          onStageClick(stage.key);
+                        }
                       }
                     }}
                     onClick={() => {
-                      if (!isSaving && onStageClick && stage.key !== currentStage) {
+                      if (isAllowedTransition && onStageClick) {
                         onStageClick(stage.key);
                       }
                     }}
                     className={`
                     w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-200
-                    ${(currentStage !== 'Lost' && currentStage !== 'Unqualified Lead') ? 'cursor-pointer hover:ring-4 hover:ring-slate-100' : ''}
+                    ${isAllowedTransition ? 'cursor-pointer hover:ring-4 hover:ring-slate-100' : isCurrent ? 'cursor-grab' : 'cursor-not-allowed'}
                     ${isCurrent
                       ? `${dotColor} border-white shadow-lg ring-2 ring-offset-2 ring-opacity-40 scale-110`
                       : isPast
@@ -275,28 +311,33 @@ function LeadPipeline({ currentStage, commercialValue, proposalStatus, lead, onS
                     {isCurrent && isSaving ? <Loader2 size={12} className="animate-spin text-white" /> : isCurrent && <span className="w-2.5 h-2.5 rounded-full bg-white pointer-events-none" />}
                     {isFuture && <span className="w-2 h-2 rounded-full bg-slate-200" />}
                   </div>
-                  <span className={`text-[10px] font-bold text-center leading-tight transition-colors ${
-                    isCurrent ? "text-slate-800" : isPast ? "text-slate-500 group-hover:text-slate-600" : "text-slate-300 group-hover:text-slate-400"
-                  }`}>
-                    {stage.label}
-                  </span>
-                  {(() => {
-                    let dateStr = null;
-                    if (lead) {
-                      if (stage.key === "New Lead") dateStr = lead.createdAt;
-                      else if (stage.key === "Qualified Lead") dateStr = lead.qualifiedDate || lead.qualifiedAt;
-                      else if (stage.key === "Opportunity") dateStr = lead.opportunityDate;
-                      else if (stage.key === "Proposal") dateStr = lead.proposalDate;
-                      else if (stage.key === "Negotiation") dateStr = lead.negotiationStartDate;
-                      else if (stage.key === "Won") dateStr = lead.wonDate || lead.convertedAt;
-                      else if (stage.key === "Lost") dateStr = lead.lostDate || lead.lostAt;
-                    }
-                    return dateStr && (isPast || isCurrent) ? (
-                      <span className="text-[8px] font-semibold text-slate-400 mt-0.5">
-                        {moment(dateStr).format('MMM D, h:mm A')}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1">
+                      <span className={`text-[10px] font-bold text-center leading-tight transition-colors ${
+                        isCurrent ? "text-slate-800" : isPast ? "text-slate-500 group-hover:text-slate-600" : "text-slate-300 group-hover:text-slate-400"
+                      }`}>
+                        {stage.label}
                       </span>
-                    ) : null;
-                  })()}
+                      {isCurrent && stage.key === 'Proposal' && (
+                        <div title="Click again to update proposal status" className="text-blue-500 hover:text-blue-600 cursor-pointer">
+                          <Info size={12} strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </div>
+                    {(() => {
+                      let dateStr = getStageDate(stage.key);
+                      if (!dateStr && isCurrent) dateStr = lead?.updatedAt;
+                      
+                      if (dateStr) {
+                        return (
+                          <span className="text-[8px] text-slate-400 mt-0.5 font-medium text-center">
+                            {moment(dateStr).format("MMM DD, h:mm A")}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                 </div>
               );
             })}
@@ -1234,6 +1275,7 @@ export default function LeadDetailPage() {
           source:          raw.leadSource || raw.enquirySource || raw.source || fallback.source || "Manual",
           leadSource:      raw.leadSource || raw.enquirySource || raw.source || fallback.leadSource || "Manual",
           priority:        raw.priority || fallback.priority || "",
+          leadTemperature: raw.leadTemperature || fallback.leadTemperature || "",
           commercialValue: raw.commercialValue || fallback.commercialValue || "",
           expectedCloseDate:  raw.expectedCloseDate || fallback.expectedCloseDate || "",
         nextFollowUpDate:   raw.nextFollowUpDate || "",
@@ -1242,9 +1284,18 @@ export default function LeadDetailPage() {
         leadId:          raw.leadId || `LD-${raw._id?.slice(-4).toUpperCase()}`,
         createdAt:       raw.createdAt,
         updatedAt:       raw.updatedAt,
+        qualifiedDate:   raw.qualifiedDate || raw.qualifiedAt || "",
+        opportunityDate: raw.opportunityDate || "",
+        proposalDate:    raw.proposalDate || "",
+        negotiationStartDate: raw.negotiationStartDate || "",
+        wonDate:         raw.wonDate || raw.convertedAt || "",
+        lostDate:        raw.lostDate || raw.lostAt || "",
         isCustomer:      raw.isCustomer || false,
         website:         raw.website || "",
         industry:        raw.industry || "",
+        unqualifiedReason: raw.unqualifiedReason || fallback.unqualifiedReason || "",
+        customReason:    raw.customReason || raw.unqualifiedReasonOther || raw.lostReason || fallback.customReason || "",
+        lostReason:      raw.lostReason || raw.customReason || raw.unqualifiedReasonOther || fallback.lostReason || "",
         };
       });
     } catch {
@@ -1258,18 +1309,47 @@ export default function LeadDetailPage() {
 
   const handleStageChange = async (newStage) => {
     if (!lead) return;
-    if (newStage === currentStage) return;
+    if (newStage === currentStage && newStage !== 'Proposal') return;
     
-    setPendingStage(newStage);
-    setInlineFormData({
-      status: newStage,
-      unqualifiedReason: lead.unqualifiedReason || "",
-      customReason: lead.customReason || "",
-      lostReason: lead.lostReason || lead.customReason || "",
-      proposalStatus: lead.proposalStatus || "",
-      proposalSentDate: lead.proposalSentDate ? lead.proposalSentDate.split('T')[0] : "",
-      commercialValue: lead.commercialValue || ""
-    });
+    const requiresInput = ['Proposal', 'Negotiation', 'Lost', 'Unqualified Lead'].includes(newStage);
+    
+    if (requiresInput) {
+      setPendingStage(newStage);
+      setInlineFormData({
+        status: newStage,
+        unqualifiedReason: lead.unqualifiedReason || "",
+        customReason: lead.customReason || "",
+        lostReason: lead.lostReason || lead.customReason || "",
+        proposalStatus: lead.proposalStatus || "",
+        proposalSentDate: lead.proposalSentDate ? lead.proposalSentDate.split('T')[0] : "",
+        commercialValue: lead.commercialValue || ""
+      });
+    } else {
+      // Instant save for stages that don't need additional input
+      const prev = lead.status;
+      setLead(l => ({ ...l, status: newStage }));
+      try {
+        const fieldMap = {
+          "Qualified Lead": "qualifiedDate",
+          "Opportunity": "opportunityDate",
+          "Proposal": "proposalDate",
+          "Negotiation": "negotiationStartDate",
+          "Won": "wonDate",
+          "Lost": "lostDate",
+          "Unqualified Lead": "lostDate"
+        };
+        const dateField = fieldMap[newStage];
+        const payload = { status: newStage };
+        if (dateField) payload[dateField] = new Date().toISOString();
+
+        await crmAPI.updateLead(lead.id, payload);
+        toast.success(`Stage updated to ${newStage}`);
+        fetchLead();
+      } catch {
+        setLead(l => ({ ...l, status: prev }));
+        toast.error("Failed to update stage");
+      }
+    }
   };
 
   const handleInlineStageSave = async () => {
@@ -1294,11 +1374,23 @@ export default function LeadDetailPage() {
     const prev = lead.status;
     setLead(l => ({ ...l, status: pendingStage }));
     try {
+      const fieldMap = {
+        "Qualified Lead": "qualifiedDate",
+        "Opportunity": "opportunityDate",
+        "Proposal": "proposalDate",
+        "Negotiation": "negotiationStartDate",
+        "Won": "wonDate",
+        "Lost": "lostDate",
+        "Unqualified Lead": "lostDate"
+      };
+      const dateField = fieldMap[pendingStage];
       const payload = {
         ...inlineFormData,
         lostReason: pendingStage === 'Lost' ? inlineFormData.lostReason : lead.lostReason,
         customReason: pendingStage === 'Lost' ? inlineFormData.lostReason : inlineFormData.customReason,
       };
+      if (dateField && pendingStage !== prev) payload[dateField] = new Date().toISOString();
+
       await crmAPI.updateLead(lead.id, payload);
       toast.success(`Stage updated to ${pendingStage}`);
       setPendingStage(null);
@@ -1331,7 +1423,7 @@ export default function LeadDetailPage() {
         referrerEmail: formData.referrerEmail,
         referrerPhone: formData.referrerPhone,
         unqualifiedReason: formData.unqualifiedReason,
-        unqualifiedReasonOther: formData.unqualifiedReasonOther,
+        customReason: formData.status === 'Lost' ? formData.lostReason : formData.customReason,
         commercialValue: formData.commercialValue || null,
         lostReason: formData.lostReason,
       };
@@ -1648,13 +1740,24 @@ export default function LeadDetailPage() {
                 Track lead progress, proposal status, and deal activity.
               </p>
             </div>
-            <button
-              onClick={() => navigate("/admin/crm/leads")}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 shadow-sm transition-colors"
-            >
-              <ArrowLeft size={15} />
-              Back to Leads
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setIsEditModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-semibold rounded-xl hover:opacity-90 shadow-sm transition-opacity">
+                <Edit size={15} /> Edit Lead
+              </button>
+              <button onClick={() => {
+                setActiveTab("notes");
+                document.getElementById('tabs-panel')?.scrollIntoView({ behavior: 'smooth' });
+              }} className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 shadow-sm transition-colors">
+                <StickyNote size={15} className="text-amber-500" /> Add Note
+              </button>
+              <button
+                onClick={() => navigate("/admin/crm/leads")}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 shadow-sm transition-colors"
+              >
+                <ArrowLeft size={15} />
+                Back to Leads
+              </button>
+            </div>
           </div>
 
           {/* ── Info Grid ──────────────────────────────────────────────── */}
@@ -1734,6 +1837,18 @@ export default function LeadDetailPage() {
             lead={lead}
             onStageClick={handleStageChange}
             isSaving={isSavingInline}
+            onUnqualifiedClick={() => {
+              setPendingStage("Unqualified Lead");
+              setInlineFormData({
+                status: "Unqualified Lead",
+                unqualifiedReason: lead?.unqualifiedReason || "",
+                customReason: lead?.customReason || "",
+                lostReason: lead?.lostReason || lead?.customReason || "",
+                proposalStatus: lead?.proposalStatus || "",
+                proposalSentDate: lead?.proposalSentDate ? lead.proposalSentDate.split('T')[0] : "",
+                commercialValue: lead?.commercialValue || ""
+              });
+            }}
           />
 
           {/* ── Conditional Inline Stage Details (Tree Branch Style) ── */}
@@ -1776,10 +1891,11 @@ export default function LeadDetailPage() {
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Proposal Status</label>
                         <select value={inlineFormData.proposalStatus} onChange={e => setInlineFormData({...inlineFormData, proposalStatus: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/30 transition-all bg-slate-50 focus:bg-white">
-                          <option value="Draft">Draft</option>
+                          <option value="Not Required">Not Required</option>
+                          <option value="Pending">Pending</option>
                           <option value="Sent">Sent</option>
-                          <option value="Reviewed">Reviewed</option>
                           <option value="Accepted">Accepted</option>
+                          <option value="Rejected">Rejected</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
@@ -1861,7 +1977,7 @@ export default function LeadDetailPage() {
               />
 
               {/* Tabs panel */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div id="tabs-panel" className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden scroll-mt-24">
                 {/* Tab headers */}
                 <div className="flex overflow-x-auto border-b border-slate-100 px-2 hide-scrollbar">
                   {TABS.map(tab => {
@@ -1922,26 +2038,6 @@ export default function LeadDetailPage() {
             <div className="space-y-4">
               <ContactCard lead={lead} />
               <CompanyCard lead={lead} />
-
-              {/* Quick Actions */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</p>
-                <div className="space-y-1">
-                  {[
-                    { label: "Edit Lead",            icon: Edit,           action: () => setIsEditModalOpen(true), color: "text-slate-600" },
-                    { label: "Add Task",             icon: ListTodo,       action: () => setActiveTab("tasks"),   color: "text-emerald-600" },
-                    { label: "Add Note",             icon: StickyNote,     action: () => setActiveTab("notes"),   color: "text-amber-600" },
-                    { label: "Convert to Workflow",  icon: ArrowRightLeft, action: () => {},                       color: "text-violet-600" },
-                    { label: "Move Stage",           icon: MoveRight,      action: () => {},                       color: "text-[#1D97D7]" },
-                  ].map(({ label, icon: Icon, action, color }) => (
-                    <button key={label} onClick={action}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors text-left">
-                      <Icon size={13} className={color} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Record info */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
