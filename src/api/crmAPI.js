@@ -151,7 +151,7 @@ class CrmAPI {
   // Delete lead
   async deleteLead(leadId) {
     try {
-      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}/delete`, {
+      const response = await fetch(`${this.baseUrl}${CRM_ENDPOINTS.LEADS}/${encodeURIComponent(leadId)}`, {
         method: "DELETE",
         headers: this.getHeaders(),
       });

@@ -94,11 +94,11 @@ const getDisplayStage = (status = "") =>
   STAGE_NORMALIZE[status.toLowerCase()] ?? "New Lead";
 
 const PROPOSAL_STATUS_STYLES = {
-  "Sent":                "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  "Follow-up Required":  "bg-amber-50 text-amber-700 border border-amber-200",
-  "Accepted":            "bg-blue-50 text-blue-700 border border-blue-200",
-  "Draft":               "bg-slate-100 text-slate-600 border border-slate-200",
-  "Rejected":            "bg-rose-50 text-rose-700 border border-rose-200",
+  "Not Required": "bg-slate-50 text-slate-600 border border-slate-200",
+  "Pending":      "bg-amber-50 text-amber-700 border border-amber-200",
+  "Sent":         "bg-blue-50 text-blue-700 border border-blue-200",
+  "Accepted":     "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  "Rejected":     "bg-rose-50 text-rose-700 border border-rose-200",
 };
 
 const PRIORITY_STYLES = {
@@ -628,7 +628,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     if (isOpen) {
       setIsSubmitting(false);
       if (initialData) {
-        setFormData({ ...initialData, leadTemperature: initialData.leadTemperature || '', assignedTo: initialData.assignedTo || '' });
+        setFormData({ ...initialData, leadTemperature: initialData.leadTemperature || '', assignedTo: initialData.assignedTo || '', enquirySource: initialData.enquirySource || initialData.leadSource || initialData.source || 'Website', title: initialData.title || initialData.enquiryType || '' });
         setCompanySearch(initialData.company || '');
       } else {
         setFormData({
@@ -737,7 +737,19 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.title || !formData.enquirySource || !formData.leadTemperature) return;
+    
+    const missingFields = [];
+    if (!formData.firstName) missingFields.push("First Name");
+    if (!formData.lastName) missingFields.push("Last Name");
+    if (!formData.email) missingFields.push("Email");
+    if (!formData.title) missingFields.push("Enquiry Type");
+    if (!formData.enquirySource) missingFields.push("Lead Source");
+    if (!formData.leadTemperature) missingFields.push("Lead Temperature");
+
+    if (missingFields.length > 0) {
+      toast.error(`Please complete required fields: ${missingFields.join(', ')}`);
+      return;
+    }
     
     // Check if status changed in edit mode, prompt for confirmation
     if (initialData && initialData.status !== formData.status) {
@@ -830,7 +842,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                         }} 
                         onFocus={() => setShowCompanyDropdown(true)}
                         className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" 
-                        placeholder="Search or enter company..." 
+                        placeholder="Search or add company" 
                       />
                       <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       
@@ -842,6 +854,15 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                             exit={{ opacity: 0, y: -5 }}
                             className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
                           >
+                            {companySearch && !(Array.isArray(companies) ? companies : []).some(c => (c.companyName || c.name || '').toLowerCase() === (companySearch || '').toLowerCase()) && (
+                              <div 
+                                className={`px-4 py-2.5 text-sm font-semibold border-b border-slate-100 flex items-center gap-2 transition-colors sticky top-0 z-10 bg-white ${isCreatingCompany ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 cursor-pointer'}`}
+                                onClick={isCreatingCompany ? undefined : handleCreateCompanyInline}
+                              >
+                                {isCreatingCompany ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} 
+                                {isCreatingCompany ? 'Creating...' : `Create "${companySearch}"`}
+                              </div>
+                            )}
                             {(Array.isArray(companies) ? companies : []).filter(c => (c.companyName || c.name || '').toLowerCase().includes((companySearch || '').toLowerCase())).map(company => (
                               <div 
                                 key={company._id || company.id} 
@@ -856,15 +877,6 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                                 {company.companyName || company.name || ''}
                               </div>
                             ))}
-                            {companySearch && !(Array.isArray(companies) ? companies : []).some(c => (c.companyName || c.name || '').toLowerCase() === (companySearch || '').toLowerCase()) && (
-                              <div 
-                                className={`px-4 py-2.5 text-sm font-semibold border-t border-slate-100 flex items-center gap-2 transition-colors sticky bottom-0 bg-white ${isCreatingCompany ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 cursor-pointer'}`}
-                                onClick={isCreatingCompany ? undefined : handleCreateCompanyInline}
-                              >
-                                {isCreatingCompany ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} 
-                                {isCreatingCompany ? 'Creating...' : `Create "${companySearch}"`}
-                              </div>
-                            )}
                           </motion.div>
                         )}
                       </AnimatePresence>
