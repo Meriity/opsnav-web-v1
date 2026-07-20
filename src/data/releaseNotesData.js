@@ -41,6 +41,47 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-20",
+        version: "v8.5.1",
+        type: "patch",
+        category: "feature",
+        title: "CRM Leads Dashboard & Inline Editing",
+        description: "Optimized the Leads table layout, introduced interactive stat cards for instant filtering, and implemented seamless inline date editing for follow-ups.",
+        updates: [
+          {
+            type: "feature",
+            title: "Interactive Filtering Stat Cards",
+            description: "Clickable dashboard stat cards act as table filters.",
+            details: "The stat cards (New Leads, Needs Follow-up, Qualified, Converted) are now fully interactive. Clicking on one automatically filters the leads list to show only those specific items, highlighted by an active border. Clicking again or changing stages safely resets the view.",
+            icon: Activity,
+          },
+          {
+            type: "ui_ux",
+            title: "Table Layout & Standardization",
+            description: "Reordered and renamed table columns for better readability.",
+            details: "Standardized naming by converting 'Contact' to 'Leads' and 'Stage' to 'Status'. Reordered columns to exactly match workflow priority (Leads, Enquiry Type, Company, Status, Owner, Source, Value, Next Follow-Up, Priority, Actions). Removed unused clutter like the Proposal Status column and the 'View' eye icon from the table overview.",
+            icon: Layout,
+          },
+          {
+            type: "feature",
+            title: "Inline Next Follow-up Controls",
+            description: "Edit follow-up dates directly from the table without opening details.",
+            details: "Introduced a new inline FollowUpCell component that allows users to quickly change the next follow-up date right from the table row. Incorporates local state management so premature auto-saving is avoided—users must explicitly confirm the new date via Save and Cancel buttons.",
+            icon: Edit,
+          },
+          {
+            type: "bugfix",
+            title: "Follow-up Timezone & Native Picker Fixes",
+            description: "Resolved timezone conversion issues and improved the date picker experience.",
+            details: "Dates are now correctly normalized to ISO format on save to ensure users across different timezones see accurate times. The UI now programmaticially triggers the browser's native datetime-local picker for a more seamless mobile and desktop scheduling experience.",
+            icon: Sparkles,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-07-17",
         version: "v8.5.0",
         type: "patch",
