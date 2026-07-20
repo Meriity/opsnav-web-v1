@@ -1885,7 +1885,6 @@ export default function LeadDetailPage() {
                       </div>
                     </div>
                   )}
-
                   {pendingStage === 'Proposal' && (
                     <>
                       <div className="space-y-1.5">

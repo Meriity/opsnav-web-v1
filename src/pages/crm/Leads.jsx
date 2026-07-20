@@ -54,8 +54,15 @@ import moment from "moment";
 
 
 // --- STAT CARD COMPONENT ---
-const StatCard = ({ icon: Icon, title, value, iconBg, iconColor, loading = false }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+const StatCard = ({ icon: Icon, title, value, subtitle, iconBg, iconColor, loading = false, onClick, isActive = false }) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white rounded-2xl border p-5 flex items-center gap-4 transition-all ${
+      onClick ? 'cursor-pointer hover:shadow-md' : 'hover:shadow-md transition-shadow'
+    } ${
+      isActive ? 'border-blue-500 shadow-md ring-1 ring-blue-500' : 'border-slate-100 shadow-sm'
+    }`}
+  >
     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
       <Icon className={`w-6 h-6 ${iconColor}`} />
     </div>
@@ -63,11 +70,146 @@ const StatCard = ({ icon: Icon, title, value, iconBg, iconColor, loading = false
       <p className="text-xs font-medium text-slate-500">{title}</p>
       {loading
         ? <div className="h-7 w-12 bg-slate-100 animate-pulse rounded mt-1" />
-        : <p className="text-2xl font-bold text-slate-900 mt-0.5">{value}</p>
+        : (
+          <>
+            <p className="text-2xl font-bold text-slate-900 mt-0.5">{value}</p>
+            {subtitle && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{subtitle}</p>}
+          </>
+        )
       }
     </div>
   </div>
 );
+
+// --- FOLLOW UP CELL COMPONENT ---
+const FollowUpCell = ({ lead, fetchLeads }) => {
+  const [loading, setLoading] = useState(false);
+  const originalDate = lead.nextFollowUpDate ? moment(lead.nextFollowUpDate).format('YYYY-MM-DDTHH:mm') : '';
+  const [localDate, setLocalDate] = useState(originalDate);
+  const inputRef = React.useRef(null);
+
+  useEffect(() => {
+    setLocalDate(lead.nextFollowUpDate ? moment(lead.nextFollowUpDate).format('YYYY-MM-DDTHH:mm') : '');
+  }, [lead.nextFollowUpDate]);
+
+  const handleDateChange = (e) => {
+    setLocalDate(e.target.value);
+  };
+
+  const handleSave = async (e) => {
+    if (e) e.stopPropagation();
+    if (localDate === originalDate) return;
+
+    setLoading(true);
+    try {
+      const isoDate = localDate ? moment(localDate).toISOString() : null;
+      await crmAPI.updateLead(lead.id, { nextFollowUpDate: isoDate });
+      toast.success("Follow-up date updated!");
+      fetchLeads();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update follow-up date");
+      setLocalDate(originalDate);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = (e) => {
+    if (e) e.stopPropagation();
+    setLocalDate(originalDate);
+  };
+
+  const openPicker = (e) => {
+    e.stopPropagation();
+    if (inputRef.current) {
+      try {
+        inputRef.current.showPicker();
+      } catch (err) {
+        inputRef.current.focus();
+      }
+    }
+  };
+
+  const getFormat = () => {
+    if (!localDate) return null;
+    const m = moment(localDate);
+    const now = moment();
+    
+    let dateText = m.format('MMM D');
+    let color = 'text-blue-600';
+    
+    if (m.isSame(now, 'day')) {
+      dateText = 'Today';
+      color = 'text-red-500';
+    } else if (m.isSame(now.clone().add(1, 'day'), 'day')) {
+      dateText = 'Tomorrow';
+      color = 'text-orange-500';
+    } else if (m.isBefore(now, 'day')) {
+      color = 'text-red-500';
+    } else if (m.isBefore(now.clone().add(7, 'days'))) {
+      color = 'text-orange-500';
+    }
+
+    return { dateText, timeText: m.format('h:mm A'), color };
+  };
+
+  const format = getFormat();
+  const isDirty = localDate !== originalDate;
+
+  return (
+    <div className="relative flex flex-col items-center justify-center gap-1 w-full">
+      <div 
+        className={`relative group flex flex-row items-center justify-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg transition-colors w-full ${isDirty ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+        onClick={openPicker}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 text-slate-400 animate-spin mx-auto" />
+        ) : format ? (
+          <>
+            <CalendarDays className={`w-4 h-4 ${format.color} shrink-0`} />
+            <div className="flex flex-col text-left justify-center leading-tight">
+              <span className={`text-[12px] font-bold ${format.color}`}>{format.dateText}</span>
+              <span className={`text-[10px] font-semibold ${format.color} opacity-80`}>{format.timeText}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <CalendarDays className="w-4 h-4 text-slate-300 group-hover:text-slate-400 shrink-0" />
+            <span className="text-xs font-medium text-slate-400 group-hover:text-slate-500">Set Date</span>
+          </>
+        )}
+        <input 
+          ref={inputRef}
+          type="datetime-local"
+          onClick={e => e.stopPropagation()}
+          onChange={handleDateChange}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: -1 }}
+          value={localDate}
+        />
+      </div>
+      
+      {isDirty && !loading && (
+        <div className="flex items-center gap-1 mt-0.5">
+          <button 
+            onClick={handleSave} 
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors shadow-sm"
+            title="Save Date"
+          >
+            <CheckCircle2 size={14} />
+          </button>
+          <button 
+            onClick={handleCancel} 
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors shadow-sm"
+            title="Cancel"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // --- STAGE CONFIG ---
 const STAGE_DISPLAY = {
@@ -1577,6 +1719,7 @@ export default function Leads() {
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const [currentMobilePageData, setCurrentMobilePageData] = useState([]);
   const [stageFilter, setStageFilter] = useState('All');
+  const [statFilter, setStatFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -2083,9 +2226,21 @@ export default function Leads() {
         stageFilter === 'All' ? true :
         stageFilter === 'Mine' ? lead.assignedTo === currentUserId :
         displayStage === stageFilter;
-      return matchesSearch && matchesStatus && matchesStage;
+        
+      let matchesStat = true;
+      if (statFilter === 'new') {
+        matchesStat = lead.createdAt && moment(lead.createdAt).isSame(moment(), 'week');
+      } else if (statFilter === 'followup') {
+        matchesStat = lead.nextFollowUpDate && moment(lead.nextFollowUpDate).isSameOrBefore(moment(), 'day') && !['Won', 'Lost'].includes(getDisplayStage(lead.status));
+      } else if (statFilter === 'qualified') {
+        matchesStat = (lead.qualifiedDate && moment(lead.qualifiedDate).isSame(moment(), 'month')) || (!lead.qualifiedDate && getDisplayStage(lead.status) === 'Qualified' && lead.createdAt && moment(lead.createdAt).isSame(moment(), 'month'));
+      } else if (statFilter === 'converted') {
+        matchesStat = getDisplayStage(lead.status) === 'Won' && ((lead.wonDate && moment(lead.wonDate).isSame(moment(), 'month')) || (!lead.wonDate && lead.createdAt && moment(lead.createdAt).isSame(moment(), 'month')));
+      }
+
+      return matchesSearch && matchesStatus && matchesStage && matchesStat;
     });
-  }, [leads, searchQuery, filters, stageFilter]);
+  }, [leads, searchQuery, filters, stageFilter, statFilter]);
 
   const sortedLeads = useMemo(() => {
     const list = [...filteredLeads];
@@ -2229,44 +2384,48 @@ export default function Leads() {
           {/* ── Stat Cards ───────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatCard
-              icon={Users}
+              icon={User}
               title="New Leads"
-              value={leads.filter(l => getDisplayStage(l.status) === 'New Lead').length}
+              value={leads.filter(l => l.createdAt && moment(l.createdAt).isSame(moment(), 'week')).length}
+              subtitle="This week"
               iconBg="bg-blue-50"
-              iconColor="text-[#2E3D99]"
+              iconColor="text-blue-600"
               loading={loading}
+              onClick={() => { setStatFilter(statFilter === 'new' ? null : 'new'); setCurrentPage(1); }}
+              isActive={statFilter === 'new'}
             />
             <StatCard
-              icon={UserCheck}
-              title="Qualified Leads"
-              value={leads.filter(l => getDisplayStage(l.status) === 'Qualified').length}
-              iconBg="bg-teal-50"
-              iconColor="text-teal-600"
+              icon={Clock}
+              title="Needs Follow-up"
+              value={leads.filter(l => l.nextFollowUpDate && moment(l.nextFollowUpDate).isSameOrBefore(moment(), 'day') && !['Won', 'Lost'].includes(getDisplayStage(l.status))).length}
+              subtitle="Overdue or today"
+              iconBg="bg-orange-50"
+              iconColor="text-orange-500"
               loading={loading}
+              onClick={() => { setStatFilter(statFilter === 'followup' ? null : 'followup'); setCurrentPage(1); }}
+              isActive={statFilter === 'followup'}
             />
             <StatCard
-              icon={FileText}
-              title="Open Proposals"
-              value={leads.filter(l => getDisplayStage(l.status) === 'Proposal').length}
-              iconBg="bg-violet-50"
-              iconColor="text-violet-600"
+              icon={CheckCircle2}
+              title="Qualified"
+              value={leads.filter(l => (l.qualifiedDate && moment(l.qualifiedDate).isSame(moment(), 'month')) || (!l.qualifiedDate && getDisplayStage(l.status) === 'Qualified' && l.createdAt && moment(l.createdAt).isSame(moment(), 'month'))).length}
+              subtitle="This month"
+              iconBg="bg-emerald-50"
+              iconColor="text-emerald-600"
               loading={loading}
+              onClick={() => { setStatFilter(statFilter === 'qualified' ? null : 'qualified'); setCurrentPage(1); }}
+              isActive={statFilter === 'qualified'}
             />
             <StatCard
-              icon={Trophy}
-              title="Won This Month"
-              value={leads.filter(l => {
-                const d = getDisplayStage(l.status);
-                const isWon = d === 'Won';
-                const isThisMonth = l.createdAt
-                  ? new Date(l.createdAt).getMonth() === new Date().getMonth() &&
-                    new Date(l.createdAt).getFullYear() === new Date().getFullYear()
-                  : false;
-                return isWon;
-              }).length}
-              iconBg="bg-amber-50"
-              iconColor="text-amber-600"
+              icon={TrendingUp}
+              title="Converted"
+              value={leads.filter(l => getDisplayStage(l.status) === 'Won' && ((l.wonDate && moment(l.wonDate).isSame(moment(), 'month')) || (!l.wonDate && l.createdAt && moment(l.createdAt).isSame(moment(), 'month')))).length}
+              subtitle="This month"
+              iconBg="bg-purple-50"
+              iconColor="text-purple-600"
               loading={loading}
+              onClick={() => { setStatFilter(statFilter === 'converted' ? null : 'converted'); setCurrentPage(1); }}
+              isActive={statFilter === 'converted'}
             />
           </div>
 
@@ -2287,21 +2446,46 @@ export default function Leads() {
               </div>
             </div>
 
-            {/* Stage filter pills */}
-            <div className="flex items-center gap-1.5 px-5 py-3 border-b border-slate-50 overflow-x-auto">
-              {STAGE_PILLS.map(pill => (
-                <button
-                  key={pill}
-                  onClick={() => { setStageFilter(pill); setCurrentPage(1); }}
-                  className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                    stageFilter === pill
-                      ? 'bg-[#2E3D99] text-white border-[#2E3D99] shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {pill}
-                </button>
-              ))}
+            {/* Stage filter tabs */}
+            <div className="flex items-center gap-6 px-5 border-b border-slate-200 overflow-x-auto hide-scrollbar">
+              {[
+                { id: 'All', label: 'All Leads' },
+                { id: 'Mine', label: 'Mine' },
+                { id: 'New Lead', label: 'New' },
+                { id: 'Qualified', label: 'Qualified' },
+                { id: 'Opportunity', label: 'Opportunity' },
+                { id: 'Proposal', label: 'Proposal' },
+                { id: 'Negotiation', label: 'Negotiation' },
+                { id: 'Won', label: 'Won' },
+                { id: 'Lost', label: 'Lost' }
+              ].map(tab => {
+                const isActive = stageFilter === tab.id;
+                const count = leads.filter(lead => {
+                  const displayStage = getDisplayStage(lead.status);
+                  return tab.id === 'All' ? true :
+                         tab.id === 'Mine' ? lead.assignedTo === currentUserId :
+                         displayStage === tab.id;
+                }).length;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setStageFilter(tab.id); setStatFilter(null); setCurrentPage(1); }}
+                    className={`relative flex items-center gap-2 py-4 text-[13px] font-bold transition-colors shrink-0 ${
+                      isActive ? 'text-blue-600' : 'text-slate-600 hover:text-slate-800'
+                    }`}
+                  >
+                    {tab.label}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {count}
+                    </span>
+                    {isActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Table */}
@@ -2310,11 +2494,10 @@ export default function Leads() {
                 <thead>
                   <tr className="bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white">
                     {[
+                      { key: 'displayName',    label: 'Leads',           sortable: true,  center: false },
                       { key: 'title',          label: 'Enquiry Type',      sortable: true,  center: false },
-                      { key: 'displayName',    label: 'Contact',         sortable: true,  center: false },
                       { key: 'company',        label: 'Company',         sortable: true,  center: false },
-                      { key: 'status',         label: 'Stage',           sortable: false, center: false },
-                      { key: 'proposalStatus', label: 'Proposal Status', sortable: false, center: true  },
+                      { key: 'status',         label: 'Status',           sortable: false, center: false },
                       { key: 'assignedToName', label: 'Owner',           sortable: true,  center: false },
                       { key: 'source',         label: 'Source',          sortable: false, center: true  },
                       { key: 'value',          label: 'Value',           sortable: false, center: true  },
@@ -2382,17 +2565,17 @@ export default function Leads() {
                         className="cursor-pointer group"
                         onClick={() => handleLeadClick(lead, false)}
                       >
-                        {/* Lead Title */}
-                        <td className={`${cellL} max-w-[160px]`}>
-                          <span className="text-xs font-semibold text-slate-800 line-clamp-2">{lead.title || "—"}</span>
-                        </td>
-
-                        {/* Contact */}
-                        <td className={cell}>
+                        {/* Leads (Contact) */}
+                        <td className={`${cellL} max-w-[200px]`}>
                           <div className="flex items-center gap-2">
                             <Avatar name={fullName} size="sm" />
-                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">{fullName}</span>
+                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap truncate">{fullName}</span>
                           </div>
+                        </td>
+
+                        {/* Enquiry Type */}
+                        <td className={`${cell} max-w-[160px]`}>
+                          <span className="text-xs font-semibold text-slate-800 line-clamp-2">{lead.title || "—"}</span>
                         </td>
 
                         {/* Company */}
@@ -2400,22 +2583,11 @@ export default function Leads() {
                           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.company || "—"}</span>
                         </td>
 
-                        {/* Stage */}
+                        {/* Status (Stage) */}
                         <td className={cell}>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${stageStyle}`}>
                             {displayStage}
                           </span>
-                        </td>
-
-                        {/* Proposal Status — centered */}
-                        <td className={`${cell} text-center`}>
-                          {proposalStyle ? (
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${proposalStyle}`}>
-                              {lead.proposalStatus}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 font-medium">—</span>
-                          )}
                         </td>
 
                         {/* Owner */}
@@ -2439,12 +2611,10 @@ export default function Leads() {
                         </td>
 
                         {/* Next Follow-Up — centered */}
-                        <td className={`${cell} text-center`}>
-                          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
-                            {lead.nextFollowUpDate
-                              ? new Date(lead.nextFollowUpDate).toLocaleDateString("en-GB")
-                              : <span className="text-slate-300 font-medium">—</span>}
-                          </span>
+                        <td className={`${cell}`} onClick={e => e.stopPropagation()}>
+                          <div className="w-[120px] mx-auto">
+                            <FollowUpCell lead={lead} fetchLeads={fetchLeads} />
+                          </div>
                         </td>
 
                         {/* Priority — centered */}
@@ -2461,14 +2631,6 @@ export default function Leads() {
                         {/* Actions — centered */}
                         <td className={`${cellR} text-center`} onClick={e => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-0.5">
-                            {/* View */}
-                            <button
-                              onClick={() => handleLeadClick(lead, false)}
-                              title="View Details"
-                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#2E3D99] hover:bg-[#2E3D99]/10 transition-colors"
-                            >
-                              <Eye size={13} />
-                            </button>
                             {/* Edit */}
                             <button
                               onClick={() => handleLeadClick(lead, true)}
@@ -2574,11 +2736,9 @@ export default function Leads() {
                               {lead.commercialValue ? `$${Number(lead.commercialValue).toLocaleString()}` : "—"}
                             </span>
                           </div>
-                          <div>
-                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Next Follow-Up</p>
-                            <span className="text-xs font-bold text-slate-700 block">
-                              {lead.nextFollowUpDate ? new Date(lead.nextFollowUpDate).toLocaleDateString("en-GB") : "—"}
-                            </span>
+                          <div onClick={e => e.stopPropagation()}>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 px-2">Next Follow-Up</p>
+                            <FollowUpCell lead={lead} fetchLeads={fetchLeads} />
                           </div>
                         </div>
                       </div>
