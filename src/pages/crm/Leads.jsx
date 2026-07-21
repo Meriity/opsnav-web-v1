@@ -158,9 +158,9 @@ const FollowUpCell = ({ lead, fetchLeads }) => {
   const isDirty = localDate !== originalDate;
 
   return (
-    <div className="relative flex flex-col items-center justify-center gap-1 w-full">
+    <div className={`relative flex items-center justify-center gap-1.5 w-full ${isDirty ? 'flex-row' : 'flex-col'}`}>
       <div 
-        className={`relative group flex flex-row items-center justify-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg transition-colors w-full ${isDirty ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+        className={`relative group flex flex-row items-center justify-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg transition-colors flex-1 ${isDirty ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
         onClick={openPicker}
       >
         {loading ? (
@@ -169,14 +169,14 @@ const FollowUpCell = ({ lead, fetchLeads }) => {
           <>
             <CalendarDays className={`w-4 h-4 ${format.color} shrink-0`} />
             <div className="flex flex-col text-left justify-center leading-tight">
-              <span className={`text-[12px] font-bold ${format.color}`}>{format.dateText}</span>
-              <span className={`text-[10px] font-semibold ${format.color} opacity-80`}>{format.timeText}</span>
+              <span className={`text-[12px] font-bold ${format.color} whitespace-nowrap`}>{format.dateText}</span>
+              <span className={`text-[10px] font-semibold ${format.color} opacity-80 whitespace-nowrap`}>{format.timeText}</span>
             </div>
           </>
         ) : (
           <>
             <CalendarDays className="w-4 h-4 text-slate-300 group-hover:text-slate-400 shrink-0" />
-            <span className="text-xs font-medium text-slate-400 group-hover:text-slate-500">Set Date</span>
+            <span className="text-xs font-medium text-slate-400 group-hover:text-slate-500 whitespace-nowrap">Set Date</span>
           </>
         )}
         <input 
@@ -190,17 +190,17 @@ const FollowUpCell = ({ lead, fetchLeads }) => {
       </div>
       
       {isDirty && !loading && (
-        <div className="flex items-center gap-1 mt-0.5">
+        <div className="flex items-center gap-1 shrink-0">
           <button 
             onClick={handleSave} 
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors shadow-sm"
+            className="w-7 h-7 flex items-center justify-center rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors shadow-sm"
             title="Save Date"
           >
             <CheckCircle2 size={14} />
           </button>
           <button 
             onClick={handleCancel} 
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors shadow-sm"
+            className="w-7 h-7 flex items-center justify-center rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors shadow-sm"
             title="Cancel"
           >
             <X size={14} />
@@ -247,6 +247,12 @@ const PRIORITY_STYLES = {
   "High":   "bg-rose-50 text-rose-700 border border-rose-200",
   "Medium": "bg-amber-50 text-amber-700 border border-amber-200",
   "Low":    "bg-emerald-50 text-emerald-700 border border-emerald-200",
+};
+
+const TEMPERATURE_STYLES = {
+  "Hot":  "bg-rose-50 text-rose-700 border border-rose-200",
+  "Warm": "bg-orange-50 text-orange-700 border border-orange-200",
+  "Cold": "bg-blue-50 text-blue-700 border border-blue-200",
 };
 
 // --- LEAD DRAWER COMPONENT ---
@@ -2497,6 +2503,7 @@ export default function Leads() {
                       { key: 'displayName',    label: 'Leads',           sortable: true,  center: false },
                       { key: 'title',          label: 'Enquiry Type',      sortable: true,  center: false },
                       { key: 'company',        label: 'Company',         sortable: true,  center: false },
+                      { key: 'leadTemperature',label: 'Temperature',     sortable: true,  center: true  },
                       { key: 'status',         label: 'Status',           sortable: false, center: false },
                       { key: 'assignedToName', label: 'Owner',           sortable: true,  center: false },
                       { key: 'source',         label: 'Source',          sortable: false, center: true  },
@@ -2551,6 +2558,7 @@ export default function Leads() {
                     const stageStyle    = STAGE_DISPLAY[displayStage]?.badge || "bg-slate-100 text-slate-500";
                     const proposalStyle = PROPOSAL_STATUS_STYLES[lead.proposalStatus] || null;
                     const priorityStyle = PRIORITY_STYLES[lead.priority] || null;
+                    const tempStyle     = TEMPERATURE_STYLES[lead.leadTemperature] || null;
                     const displayId     = lead.leadId || `LD-${(lead.id || "").slice(-4).toUpperCase()}`;
                     const fullName      = `${lead.firstName} ${lead.lastName}`.trim();
 
@@ -2583,6 +2591,17 @@ export default function Leads() {
                           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.company || "—"}</span>
                         </td>
 
+                        {/* Temperature */}
+                        <td className={`${cell} text-center`}>
+                          {tempStyle ? (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${tempStyle}`}>
+                              {lead.leadTemperature}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-medium">—</span>
+                          )}
+                        </td>
+
                         {/* Status (Stage) */}
                         <td className={cell}>
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${stageStyle}`}>
@@ -2612,7 +2631,7 @@ export default function Leads() {
 
                         {/* Next Follow-Up — centered */}
                         <td className={`${cell}`} onClick={e => e.stopPropagation()}>
-                          <div className="w-[120px] mx-auto">
+                          <div className="w-[145px] mx-auto">
                             <FollowUpCell lead={lead} fetchLeads={fetchLeads} />
                           </div>
                         </td>
