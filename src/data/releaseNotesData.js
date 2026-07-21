@@ -41,6 +41,33 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-21",
+        version: "v8.5.2",
+        type: "patch",
+        category: "ui_ux",
+        title: "CRM Leads Table Updates & Follow-up UX",
+        description: "Added a new Temperature column to the Leads table and improved the UX of the inline Follow-up date picker to prevent button obscurity.",
+        updates: [
+          {
+            type: "feature",
+            title: "Lead Temperature Column",
+            description: "A new 'Temperature' column was added between Company and Status.",
+            details: "Lead temperature is now directly visible on the Leads dashboard, complete with Hot, Warm, and Cold color-coded badges to help quickly prioritize engagement.",
+            icon: Sparkles,
+          },
+          {
+            type: "ui_ux",
+            title: "Follow-up Picker Layout Fix",
+            description: "Save and Cancel buttons are no longer hidden by the native browser date picker.",
+            details: "We've reorganized the inline Next Follow-Up cell. The Save and Cancel buttons now appear side-by-side with the date text when editing, ensuring the browser's native popup calendar never covers them.",
+            icon: Layout,
+          }
+        ],
+        module: "CRM",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-07-20",
         version: "v8.5.1",
         type: "patch",
