@@ -467,8 +467,11 @@ const ViewClientsTable = ({
                                 }
                               >
                                 <option value="">
-                                  {item?.allocatedUser || "Select User"}
+                                  {item?.allocatedUser && item.allocatedUser !== "N/A"
+                                    ? item.allocatedUser
+                                    : "Select User"}
                                 </option>
+                                <option value="N/A">N/A</option>
 
                                 {users.map((user) => (
                                   <option
@@ -756,12 +759,6 @@ const ViewClientsTable = ({
             </div>
             <div className="flex justify-between items-start">
               <div>
-                {currentModule === "print media" && (
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500">Unit Number</p>
-                    <p className="text-sm font-semibold text-gray-900 break-words">{item.unitNumber || item.unit || "-"}</p>
-                  </div>
-                )}
                 <p className="text-xs text-gray-500">
                   {currentModule === "commercial"
                     ? "Business Address"
@@ -770,32 +767,29 @@ const ViewClientsTable = ({
                     : "Property Address"}
                 </p>
                 <p className="text-sm break-words">
-                  {item.businessAddress ||
-                  item.property_address ||
-                  item.deliveryAddress ||
-                  item.billing_address ? (
-                    <a
-                      href={`https://www.google.com/maps?q=${encodeURIComponent(
-                        item.businessAddress ||
-                          item.property_address ||
-                          item.deliveryAddress ||
-                          item.billing_address
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {item.businessAddress ||
-                        item.property_address ||
-                        item.deliveryAddress ||
-                        item.billing_address}
-                    </a>
-                  ) : (
-                    item.businessAddress ||
-                    item.property_address ||
-                    item.deliveryAddress ||
-                    item.billing_address
-                  )}
+                  {(() => {
+                    const address =
+                      item.businessAddress ||
+                      item.property_address ||
+                      item.deliveryAddress ||
+                      item.billing_address;
+                    if (!address) return "-";
+                    const unit = item.unitNumber || item.unit;
+                    const combined =
+                      currentModule === "print media" && unit && unit !== "-" && unit !== "N/A"
+                        ? `${unit}/ ${address}`
+                        : address;
+                    return (
+                      <a
+                        href={`https://www.google.com/maps?q=${encodeURIComponent(address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {combined}
+                      </a>
+                    );
+                  })()}
                 </p>
 
               </div>

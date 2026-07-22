@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -38,7 +39,9 @@ import {
   CalendarDays,
   SquarePlus,
   Globe,
-  MessageCircle
+  MessageCircle,
+  Check,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
@@ -211,6 +214,316 @@ const FollowUpCell = ({ lead, fetchLeads }) => {
   );
 };
 
+// --- NOTES CELL COMPONENT ---
+// Compact icon+count button that opens a floating popover (rendered via portal so it
+// never gets clipped by the table's overflow-x-auto wrapper or widens the column).
+const NotesCell = ({ lead }) => {
+  const leadId = lead.id || lead._id;
+  const [notes, setNotes] = useState([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const btnRef = React.useRef(null);
+  const popoverRef = React.useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadNotes = async () => {
+      setLoadingNotes(true);
+      try {
+        const response = await crmAPI.getNotes(leadId);
+        if (!cancelled) setNotes(response.data || []);
+      } catch (error) {
+        console.error("Failed to load notes for lead", leadId, error);
+      } finally {
+        if (!cancelled) setLoadingNotes(false);
+      }
+    };
+    if (leadId) loadNotes();
+    return () => { cancelled = true; };
+  }, [leadId]);
+
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    setOpen(o => !o);
+  };
+
+  // Position the popover using its *actual* rendered height (measured after it mounts)
+  // rather than a guessed constant — a guess is wrong as soon as the note count or
+  // loading state changes the content height, and sends the popover to the wrong spot.
+  React.useLayoutEffect(() => {
+    if (!open || !btnRef.current || !popoverRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const popoverWidth = 300;
+    const popoverHeight = popoverRef.current.offsetHeight;
+    const gap = 8;
+    let left = rect.left + rect.width / 2 - popoverWidth / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - popoverWidth - 12));
+    let top = rect.bottom + gap;
+    if (top + popoverHeight > window.innerHeight - 12) {
+      const above = rect.top - popoverHeight - gap;
+      top = above >= 12 ? above : Math.max(12, window.innerHeight - popoverHeight - 12);
+    }
+    setCoords({ top, left });
+  }, [open, loadingNotes, notes.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e) => {
+      if (
+        popoverRef.current && !popoverRef.current.contains(e.target) &&
+        btnRef.current && !btnRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    const handleDismiss = () => setOpen(false);
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleDismiss, true);
+    window.addEventListener("resize", handleDismiss);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleDismiss, true);
+      window.removeEventListener("resize", handleDismiss);
+    };
+  }, [open]);
+
+  const handleAddNote = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!newNote.trim()) return;
+    setSubmitting(true);
+    try {
+      const response = await crmAPI.createNote({
+        relatedLeadId: leadId,
+        note: newNote,
+        visibility: "Team",
+      });
+      setNotes(prev => [response.data, ...prev]);
+      setNewNote("");
+      toast.success("Note added");
+    } catch (error) {
+      console.error("Failed to add note", error);
+      toast.error(error.message || "Failed to add note");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const count = notes.length;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        title={count > 0 ? `${count} note${count > 1 ? 's' : ''}` : "Add note"}
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-bold transition-colors ${
+          count > 0
+            ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+        }`}
+      >
+        <StickyNote size={12} />
+        {loadingNotes ? <Loader2 size={11} className="animate-spin" /> : (count > 0 ? count : <Plus size={11} />)}
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={popoverRef}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: coords ? coords.top : -9999,
+            left: coords ? coords.left : -9999,
+            width: 300,
+            zIndex: 10000,
+            visibility: coords ? 'visible' : 'hidden',
+          }}
+          className="bg-white rounded-xl border border-slate-200 shadow-2xl p-3 space-y-2.5"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <StickyNote size={13} className="text-[#1D97D7]" />
+              Notes {count > 0 && `(${count})`}
+            </p>
+            <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded p-0.5 transition-colors">
+              <X size={14} />
+            </button>
+          </div>
+
+          {loadingNotes ? (
+            <div className="flex justify-center py-3">
+              <Loader2 size={16} className="animate-spin text-slate-400" />
+            </div>
+          ) : notes.length > 0 ? (
+            <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+              {notes.map((n) => (
+                <div key={n._id} className="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5">
+                  <p className="text-xs text-slate-700 whitespace-pre-wrap line-clamp-3">{n.note}</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    {n.createdBy?.displayName || 'User'} • {moment(n.createdAt).format("MMM D, h:mm A")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 text-center py-1.5">No notes yet.</p>
+          )}
+
+          <form onSubmit={handleAddNote} className="pt-1.5 border-t border-slate-100 space-y-1.5">
+            <textarea
+              rows={2}
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAddNote(e);
+                }
+              }}
+              placeholder="Write a quick note... (Enter to add, Shift+Enter for new line)"
+              autoFocus
+              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#2E3D99]/40 resize-none"
+            />
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={!newNote.trim() || submitting}
+                className="px-2.5 py-1 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-[11px] font-bold rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
+              >
+                {submitting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                Add
+              </button>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
+
+// --- AVATAR HELPER ---
+// Module-level so it's usable both inside the main Leads component and in the
+// standalone table-cell components below (NotesCell, LeadQuickInfoCell, etc.).
+const Avatar = ({ name = "", size = "sm" }) => {
+  const initials = name.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
+  const colors   = ["bg-[#2E3D99]","bg-teal-600","bg-violet-600","bg-amber-600","bg-rose-600","bg-emerald-600","bg-indigo-600"];
+  const color    = colors[initials.charCodeAt(0) % colors.length];
+  const dim      = size === "sm" ? "w-6 h-6 text-[9px]" : "w-8 h-8 text-xs";
+  return (
+    <div className={`${dim} ${color} rounded-full flex items-center justify-center text-white font-bold shrink-0`}>
+      {initials}
+    </div>
+  );
+};
+
+// --- LEAD QUICK-INFO HOVER CARD ---
+// Hovering the Leads (name) cell surfaces the fields that don't get their own column
+// (email, phone, created date, enquiry description) without a click or page navigation.
+const LeadQuickInfoCell = ({ lead, fullName }) => {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const wrapRef = React.useRef(null);
+  const cardRef = React.useRef(null);
+  const closeTimer = React.useRef(null);
+
+  const handleEnter = () => {
+    clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+
+  const handleLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  // Measure the card's real height once it's mounted — a guessed height sends the
+  // card to the wrong spot as soon as the description block is (or isn't) present.
+  React.useLayoutEffect(() => {
+    if (!open || !wrapRef.current || !cardRef.current) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    const cardWidth = 260;
+    const cardHeight = cardRef.current.offsetHeight;
+    const gap = 8;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - cardWidth - 12));
+    let top = rect.bottom + gap;
+    if (top + cardHeight > window.innerHeight - 12) {
+      const above = rect.top - cardHeight - gap;
+      top = above >= 12 ? above : Math.max(12, window.innerHeight - cardHeight - 12);
+    }
+    setCoords({ top, left });
+  }, [open, lead]);
+
+  return (
+    <div
+      ref={wrapRef}
+      className="flex items-center gap-2"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      <Avatar name={fullName} size="sm" />
+      <span className="text-xs font-semibold text-slate-700 whitespace-nowrap truncate">{fullName}</span>
+
+      {open && createPortal(
+        <div
+          ref={cardRef}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          style={{
+            position: 'fixed',
+            top: coords ? coords.top : -9999,
+            left: coords ? coords.left : -9999,
+            width: 260,
+            zIndex: 10000,
+            visibility: coords ? 'visible' : 'hidden',
+          }}
+          className="bg-white rounded-xl border border-slate-200 shadow-2xl p-3 space-y-2"
+        >
+          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+            <Avatar name={fullName} size="sm" />
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-800 truncate">{fullName}</p>
+              <p className="text-[10px] text-slate-400 font-medium truncate">{lead.title || 'Lead'}</p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <Mail size={12} className="text-[#1D97D7] shrink-0" />
+              <span className="truncate">{lead.email || '—'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <Phone size={12} className="text-[#1D97D7] shrink-0" />
+              <span className="truncate">{lead.phone || '—'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <Clock size={12} className="text-slate-400 shrink-0" />
+              <span className="truncate">
+                {lead.createdAt ? moment(lead.createdAt).format('DD MMM YYYY, hh:mm A') : '—'}
+              </span>
+            </div>
+            {lead.description && (
+              <div className="pt-1.5 mt-1.5 border-t border-slate-100">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <FileText size={11} className="text-slate-400 shrink-0" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Enquiry Description</span>
+                </div>
+                <p className="text-xs text-slate-600 line-clamp-3 pl-[18px]">{lead.description}</p>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
 // --- STAGE CONFIG ---
 const STAGE_DISPLAY = {
   "New Lead":     { label: "New Lead",     badge: "bg-blue-50 text-blue-700 border border-blue-200" },
@@ -253,6 +566,270 @@ const TEMPERATURE_STYLES = {
   "Hot":  "bg-rose-50 text-rose-700 border border-rose-200",
   "Warm": "bg-orange-50 text-orange-700 border border-orange-200",
   "Cold": "bg-blue-50 text-blue-700 border border-blue-200",
+};
+
+// Column view shows only the emoji (keeps the Temperature column narrow); the
+// dropdown menu still spells out Hot/Warm/Cold as text. See TemperatureLegendInfo
+// for the legend shown above the table.
+const TEMPERATURE_EMOJI = {
+  "Hot":  "🔥",
+  "Warm": "🌤️",
+  "Cold": "❄️",
+};
+
+const TEMPERATURE_LEGEND = [
+  { emoji: "🔥", label: "Hot",  hint: "Ready to close" },
+  { emoji: "🌤️", label: "Warm", hint: "Interested, needs nurturing" },
+  { emoji: "❄️", label: "Cold", hint: "Early stage, low engagement" },
+];
+
+// --- TEMPERATURE EMOJI LEGEND ---
+// Small (i) button shown above the table — hovering explains what the Hot/Warm/Cold
+// emojis in the Temperature column mean, since the column itself now only shows the emoji.
+const TemperatureLegendInfo = () => {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const btnRef = React.useRef(null);
+  const cardRef = React.useRef(null);
+  const closeTimer = React.useRef(null);
+
+  const handleEnter = () => {
+    clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+
+  const handleLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  React.useLayoutEffect(() => {
+    if (!open || !btnRef.current || !cardRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const width = 230;
+    const height = cardRef.current.offsetHeight;
+    const gap = 8;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    let top = rect.bottom + gap;
+    if (top + height > window.innerHeight - 12) {
+      const above = rect.top - height - gap;
+      top = above >= 12 ? above : Math.max(12, window.innerHeight - height - 12);
+    }
+    setCoords({ top, left });
+  }, [open]);
+
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={(e) => { e.stopPropagation(); handleEnter(); }}
+        className="w-4 h-4 flex items-center justify-center rounded-full text-slate-300 hover:text-[#1D97D7] hover:bg-[#1D97D7]/10 transition-colors"
+        title="What do the temperature emojis mean?"
+      >
+        <Info size={13} />
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={cardRef}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          style={{
+            position: 'fixed',
+            top: coords ? coords.top : -9999,
+            left: coords ? coords.left : -9999,
+            width: 230,
+            zIndex: 10000,
+            visibility: coords ? 'visible' : 'hidden',
+          }}
+          className="bg-white rounded-xl border border-slate-200 shadow-2xl p-3 space-y-2"
+        >
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Temperature legend</p>
+          <div className="space-y-1.5">
+            {TEMPERATURE_LEGEND.map((t) => (
+              <div key={t.label} className="flex items-start gap-2">
+                <span className="text-sm leading-tight">{t.emoji}</span>
+                <div className="leading-tight">
+                  <span className="text-xs font-bold text-slate-700">{t.label}</span>
+                  <p className="text-[10px] text-slate-400">{t.hint}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </span>
+  );
+};
+
+// Pulls a solid dot color out of a "bg-x-50 text-x-700 border border-x-200" badge
+// class string so the dropdown menu rows can show a small color swatch that matches
+// the closed pill, without hardcoding a second color map per field.
+const swatchFromBadgeStyle = (styleClasses = "") => {
+  const match = styleClasses.match(/bg-([a-z]+)-\d+/);
+  return match ? `bg-${match[1]}-500` : "bg-slate-300";
+};
+
+// Custom floating menu shared by every quick-edit dropdown in the table (Temperature,
+// Status, Priority). Rendered via portal so it always sits above the table and never
+// gets clipped by the horizontal scroll wrapper, and is styled to match the rest of
+// the app's popovers (Notes, lead hover card) instead of the browser's native <select>.
+const DropdownMenuPortal = ({ anchorRef, onClose, width = 168, children }) => {
+  const menuRef = React.useRef(null);
+  const [coords, setCoords] = useState(null);
+
+  // Measure the menu's *actual* rendered height before deciding whether it fits below
+  // the trigger — guessing a fixed height here was what caused short menus (like a
+  // 3-option Temperature/Priority list) to flip and land far from their anchor.
+  React.useLayoutEffect(() => {
+    if (!anchorRef.current || !menuRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current.offsetHeight;
+    const gap = 6;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    let top = rect.bottom + gap;
+    if (top + menuHeight > window.innerHeight - 8) {
+      const above = rect.top - menuHeight - gap;
+      top = above >= 8 ? above : Math.max(8, window.innerHeight - menuHeight - 8);
+    }
+    setCoords({ top, left });
+  }, [anchorRef, width, children]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        anchorRef.current && !anchorRef.current.contains(e.target)
+      ) {
+        onClose();
+      }
+    };
+    const handleDismiss = () => onClose();
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleDismiss, true);
+    window.addEventListener("resize", handleDismiss);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleDismiss, true);
+      window.removeEventListener("resize", handleDismiss);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: 'fixed',
+        top: coords ? coords.top : -9999,
+        left: coords ? coords.left : -9999,
+        width,
+        zIndex: 10000,
+        visibility: coords ? 'visible' : 'hidden',
+      }}
+      className="bg-white rounded-xl border border-slate-200 shadow-2xl py-1.5 overflow-hidden"
+    >
+      {children}
+    </div>,
+    document.body
+  );
+};
+
+// A single selectable row inside a DropdownMenuPortal — color swatch, label, checkmark
+// on the current value.
+const DropdownMenuOption = ({ label, badgeStyle, selected, onSelect }) => (
+  <button
+    type="button"
+    onClick={onSelect}
+    className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-left transition-colors ${
+      selected ? 'bg-slate-50 text-slate-800' : 'text-slate-600 hover:bg-slate-50'
+    }`}
+  >
+    <span className={`w-2 h-2 rounded-full shrink-0 ${swatchFromBadgeStyle(badgeStyle)}`} />
+    <span className="flex-1 truncate">{label}</span>
+    {selected && <Check size={13} className="text-[#1D97D7] shrink-0" />}
+  </button>
+);
+
+// --- BADGE-DROPDOWN CELL (Temperature / Priority quick edit) ---
+// Custom pill + floating menu (not a native <select>) so every quick-edit dropdown in
+// the table shares one consistent look. When `emojiMap` is passed (Temperature), the
+// closed pill shows only the emoji to keep the column narrow — the open menu still
+// spells out the words.
+const BadgeSelectCell = ({ lead, fetchLeads, field, options, styleMap, label, emojiMap }) => {
+  const currentValue = lead[field] || "";
+  const [saving, setSaving] = useState(false);
+  const [localValue, setLocalValue] = useState(currentValue);
+  const [open, setOpen] = useState(false);
+  const btnRef = React.useRef(null);
+
+  useEffect(() => { setLocalValue(currentValue); }, [currentValue]);
+
+  const commitChange = async (newValue) => {
+    setOpen(false);
+    if (newValue === localValue) return;
+    const prev = localValue;
+    setLocalValue(newValue);
+    setSaving(true);
+    try {
+      await crmAPI.updateLead(lead.id, { [field]: newValue });
+      toast.success(`${label} updated to ${newValue}`);
+      fetchLeads();
+    } catch (error) {
+      console.error(`Failed to update ${field}`, error);
+      toast.error(error.message || `Failed to update ${label.toLowerCase()}`);
+      setLocalValue(prev);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const style = styleMap[localValue] || "bg-slate-50 text-slate-400 border border-slate-200";
+
+  return (
+    <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => !saving && setOpen((o) => !o)}
+        disabled={saving}
+        title={localValue ? `${label}: ${localValue} — click to change` : `Set ${label.toLowerCase()}`}
+        className={`inline-flex items-center rounded-lg transition-colors ${
+          emojiMap
+            ? `gap-0.5 px-1.5 py-1 border ${localValue ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 border-dashed border-slate-200'} ${saving ? '' : 'hover:bg-slate-100'}`
+            : `gap-1.5 pl-2.5 pr-2 py-1 text-[11px] font-bold whitespace-nowrap ${style} ${saving ? '' : 'hover:brightness-95'}`
+        } ${saving ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
+      >
+        {emojiMap ? (
+          <span className="text-sm leading-none">{localValue ? emojiMap[localValue] : '➕'}</span>
+        ) : (
+          localValue || `Set ${label}`
+        )}
+        {saving ? <Loader2 size={11} className="animate-spin" /> : <ChevronDown size={emojiMap ? 10 : 11} className={`opacity-50 transition-transform ${open ? 'rotate-180' : ''}`} />}
+      </button>
+
+      {open && (
+        <DropdownMenuPortal anchorRef={btnRef} onClose={() => setOpen(false)}>
+          {options.map((opt) => (
+            <DropdownMenuOption
+              key={opt}
+              label={emojiMap ? `${emojiMap[opt]}  ${opt}` : opt}
+              badgeStyle={styleMap[opt]}
+              selected={opt === localValue}
+              onSelect={() => commitChange(opt)}
+            />
+          ))}
+        </DropdownMenuPortal>
+      )}
+    </div>
+  );
 };
 
 // --- LEAD DRAWER COMPONENT ---
@@ -754,6 +1331,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusConfirmState, setStatusConfirmState] = useState(false);
   const [saveAnother, setSaveAnother] = useState(false);
+  const [step, setStep] = useState(1); // 1 = Contact & Enquiry, 2 = Internal Information
   const [users, setUsers] = useState([]);
   const [enquiryTypes, setEnquiryTypes] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -775,6 +1353,7 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
   useEffect(() => {
     if (isOpen) {
       setIsSubmitting(false);
+      setStep(1);
       if (initialData) {
         setFormData({ ...initialData, leadTemperature: initialData.leadTemperature || '', assignedTo: initialData.assignedTo || '', enquirySource: initialData.enquirySource || initialData.leadSource || initialData.source || 'Website', title: initialData.title || initialData.enquiryType || '' });
         setCompanySearch(initialData.company || '');
@@ -875,30 +1454,55 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
           leadTemperature: '', assignedTo: '', unqualifiedReason: '', customReason: '', commercialValue: '', lostReason: ''
         });
         setCompanySearch('');
+        setStep(1);
       } else {
         onClose();
       }
+    } catch (error) {
+      // onSave (handleSaveLead) already surfaces a toast — just make sure a failed
+      // save keeps the modal open with the entered data instead of silently closing.
+      console.error("Lead save failed, keeping modal open", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const missingFields = [];
-    if (!formData.firstName) missingFields.push("First Name");
-    if (!formData.lastName) missingFields.push("Last Name");
-    if (!formData.email) missingFields.push("Email");
-    if (!formData.title) missingFields.push("Enquiry Type");
-    if (!formData.enquirySource) missingFields.push("Lead Source");
-    if (!formData.leadTemperature) missingFields.push("Lead Temperature");
+  // Only First Name, Last Name, Email, and Enquiry Type are required — everything else
+  // on either step is optional.
+  const getStep1MissingFields = () => {
+    const missing = [];
+    if (!formData.firstName) missing.push("First Name");
+    if (!formData.lastName) missing.push("Last Name");
+    if (!formData.email) missing.push("Email");
+    if (!formData.title) missing.push("Enquiry Type");
+    return missing;
+  };
 
+  const handleNextStep = () => {
+    const missingFields = getStep1MissingFields();
     if (missingFields.length > 0) {
       toast.error(`Please complete required fields: ${missingFields.join(', ')}`);
       return;
     }
-    
+    setStep(2);
+  };
+
+  // The actual "save" logic, callable directly from the button's onClick. Deliberately
+  // NOT wired up as a native form submit (type="submit"): the Next/Save button share the
+  // same footer slot, and React reuses that DOM node across renders. If the Save button
+  // were type="submit", clicking Next (type="button") could get its `type` attribute
+  // flipped to "submit" mid-click by the very re-render that click triggers, causing the
+  // browser to submit the form immediately — before step 2 is even shown. Driving this
+  // via onClick sidesteps the native submission machinery entirely.
+  const runSubmit = () => {
+    // Defensive re-check in case step 2 was somehow reached with step-1 fields empty.
+    const missingFields = getStep1MissingFields();
+    if (missingFields.length > 0) {
+      toast.error(`Please complete required fields: ${missingFields.join(', ')}`);
+      setStep(1);
+      return;
+    }
+
     // Check if status changed in edit mode, prompt for confirmation
     if (initialData && initialData.status !== formData.status) {
       setStatusConfirmState(true);
@@ -908,8 +1512,12 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
     handleFinalSave();
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    runSubmit();
+  };
+
   const modalTitle = initialData ? 'Edit Lead' : 'Create Lead';
-  const modalSub = initialData ? 'Update lead details' : 'Capture a new lead quickly';
   const currentUser = localStorage.getItem("user") || "OpsNav Admin";
 
   return (
@@ -928,362 +1536,386 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{modalTitle}</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">{modalSub}</p>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Step {step} of 2 · {step === 1 ? 'Contact & Enquiry' : 'Internal Details'}
+                  </p>
                 </div>
               </div>
-              <button type="button" onClick={onClose} className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 p-2 rounded-xl transition-colors">
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:flex items-center gap-1.5">
+                  <span className={`w-6 h-1.5 rounded-full transition-colors ${step === 1 ? 'bg-[#2E3D99]' : 'bg-[#2E3D99]/30'}`} />
+                  <span className={`w-6 h-1.5 rounded-full transition-colors ${step === 2 ? 'bg-[#2E3D99]' : 'bg-[#2E3D99]/30'}`} />
+                </div>
+                <button type="button" onClick={onClose} className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 p-2 rounded-xl transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <form id="lead-form" onSubmit={handleSubmit} className="px-6 pt-4 pb-6 space-y-4 bg-slate-50/50">
               
-              {/* SECTION 1: Contact Information */}
-              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="mb-4 border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                      <Globe className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-bold text-slate-800">1. Contact Information</h4>
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Provided by enquirer</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-11">Information entered by the enquirer (website form, QR code, API, etc.)</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">First Name <span className="text-rose-500">*</span></label>
-                    <div className="relative">
-                      <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. John" />
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Last Name <span className="text-rose-500">*</span></label>
-                    <div className="relative">
-                      <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. Smith" />
-                      <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Email <span className="text-rose-500">*</span></label>
-                    <div className="relative">
-                      <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. john@abc.com" />
-                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div ref={companyDropdownRef}>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Company</label>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        value={companySearch} 
-                        onChange={e => {
-                          setCompanySearch(e.target.value);
-                          setFormData({ ...formData, company: e.target.value });
-                          setShowCompanyDropdown(true);
-                        }} 
-                        onFocus={() => setShowCompanyDropdown(true)}
-                        className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" 
-                        placeholder="Search or add company" 
-                      />
-                      <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      
-                      <AnimatePresence>
-                        {showCompanyDropdown && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -5 }}
-                            className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
-                          >
-                            {companySearch && !(Array.isArray(companies) ? companies : []).some(c => (c.companyName || c.name || '').toLowerCase() === (companySearch || '').toLowerCase()) && (
-                              <div 
-                                className={`px-4 py-2.5 text-sm font-semibold border-b border-slate-100 flex items-center gap-2 transition-colors sticky top-0 z-10 bg-white ${isCreatingCompany ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 cursor-pointer'}`}
-                                onClick={isCreatingCompany ? undefined : handleCreateCompanyInline}
-                              >
-                                {isCreatingCompany ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} 
-                                {isCreatingCompany ? 'Creating...' : `Create "${companySearch}"`}
-                              </div>
-                            )}
-                            {(Array.isArray(companies) ? companies : []).filter(c => (c.companyName || c.name || '').toLowerCase().includes((companySearch || '').toLowerCase())).map(company => (
-                              <div 
-                                key={company._id || company.id} 
-                                className="px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
-                                onClick={() => {
-                                  const name = company.companyName || company.name || '';
-                                  setFormData({ ...formData, company: name });
-                                  setCompanySearch(name);
-                                  setShowCompanyDropdown(false);
-                                }}
-                              >
-                                {company.companyName || company.name || ''}
-                              </div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone</label>
-                    <div className="relative">
-                      <input type="tel" maxLength={10} value={formData.phone} onChange={e => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData({ ...formData, phone: val });
-                      }} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. 0412 345 678" />
-                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: Enquiry Information */}
-              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="mb-4 border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                      <MessageCircle className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-bold text-slate-800">2. Enquiry Information</h4>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Provided by enquirer</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-11">Details about the enquiry entered by the enquirer.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="col-span-1">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Type <span className="text-rose-500">*</span></label>
-                    <select required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
-                      <option value="" disabled>Select enquiry type</option>
-                      {enquiryTypes.length > 0 ? (
-                        enquiryTypes.map((type, idx) => {
-                          const typeName = typeof type === "string" ? type : (type.name || type.enquiryType);
-                          const typeKey = typeof type === "string" ? type : (type.id || type._id || idx);
-                          return (
-                            <option key={typeKey} value={typeName}>{typeName}</option>
-                          );
-                        })
-                      ) : (
-                        <>
-                          <option value="Conveyancing">Conveyancing</option>
-                          <option value="Wills">Wills</option>
-                          <option value="Commercial">Commercial</option>
-                          <option value="VOCAT">VOCAT</option>
-                          <option value="Print Media">Print Media</option>
-                          <option value="General Enquiry">General Enquiry</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Details</label>
-                    <p className="text-[11px] text-slate-500 mb-2 mt-0.5">Tell us more about your enquiry (optional)</p>
-                    <div className="relative">
-                      <textarea maxLength={1000} rows="4" value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all resize-none bg-white" placeholder="e.g. I would like to prepare a Will for myself and my wife."></textarea>
-                      <div className="absolute bottom-2 right-2 text-[10px] font-medium text-slate-400 bg-white px-1">
-                        {(formData.description || '').length} / 1000 
+              {step === 1 && (
+                <>
+                  {/* SECTION 1: Contact & Enquiry Information (merged) */}
+                  <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="mb-4 border-b border-slate-100 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                          <Globe className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <h4 className="text-sm font-bold text-slate-800">1. Contact &amp; Enquiry Information</h4>
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Provided by enquirer</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* SECTION 3: Internal Information */}
-              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="mb-4 border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                      <Users className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-bold text-slate-800">3. Internal Information</h4>
-                      <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">For internal use only</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-11">Information added by your team (only shown when creating lead inside OpsNav).</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Status <span className="text-rose-500">*</span></label>
-                    <select 
-                      required 
-                      value={formData.status || 'New Lead'} 
-                      onChange={e => setFormData({ ...formData, status: e.target.value })} 
-                      className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium ${!initialData ? 'bg-slate-50 cursor-not-allowed' : 'bg-white'}`}
-                      disabled={!initialData}
-                    >
-                      {(!initialData ? ["New Lead"] : Array.from(new Set([initialData.status, ...getAvailableStatuses(formData.status)]))).map(status => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Source <span className="text-rose-500">*</span></label>
-                    <select required value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
-                      <option value="" disabled>Select source</option>
-                      <option value="Website">Website</option>
-                      <option value="Referral">Referral</option>
-                      <option value="Walk-in">Walk-in</option>
-                      <option value="Cold Call">Cold Call</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Temperature <span className="text-rose-500">*</span></label>
-                    <select required value={formData.leadTemperature} onChange={e => setFormData({ ...formData, leadTemperature: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white font-medium">
-                      <option value="" disabled>Select temp</option>
-                      <option value="Hot">🔥 Hot</option>
-                      <option value="Warm">☀️ Warm</option>
-                      <option value="Cold">❄️ Cold</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Priority</label>
-                    <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
-                      <option value="High">🔴 High</option>
-                      <option value="Medium">🟡 Medium</option>
-                      <option value="Low">🟢 Low</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Assigned To</label>
-                    <select value={formData.assignedTo} onChange={e => setFormData({ ...formData, assignedTo: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
-                      <option value="">Select user</option>
-                      {users.map(u => (
-                        <option key={u.id || u._id} value={u.id || u._id}>{u.displayName || u.display_name || u.email || 'Unknown User'}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {initialData && formData.status === "Proposal" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Proposal Status</label>
-                        <select value={formData.proposalStatus || 'Not Required'} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
-                          <option value="Not Required">Not Required</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Sent">Sent</option>
-                          <option value="Accepted">Accepted</option>
-                          <option value="Rejected">Rejected</option>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">First Name <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <input required type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. John" />
+                          <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Last Name <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <input required type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. Smith" />
+                          <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Email <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                          <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. john@abc.com" />
+                          <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div ref={companyDropdownRef}>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Company</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={companySearch}
+                            onChange={e => {
+                              setCompanySearch(e.target.value);
+                              setFormData({ ...formData, company: e.target.value });
+                              setShowCompanyDropdown(true);
+                            }}
+                            onFocus={() => setShowCompanyDropdown(true)}
+                            className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            placeholder="Search or add company"
+                          />
+                          <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+
+                          <AnimatePresence>
+                            {showCompanyDropdown && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto"
+                              >
+                                {companySearch && !(Array.isArray(companies) ? companies : []).some(c => (c.companyName || c.name || '').toLowerCase() === (companySearch || '').toLowerCase()) && (
+                                  <div
+                                    className={`px-4 py-2.5 text-sm font-semibold border-b border-slate-100 flex items-center gap-2 transition-colors sticky top-0 z-10 bg-white ${isCreatingCompany ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 cursor-pointer'}`}
+                                    onClick={isCreatingCompany ? undefined : handleCreateCompanyInline}
+                                  >
+                                    {isCreatingCompany ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                    {isCreatingCompany ? 'Creating...' : `Create "${companySearch}"`}
+                                  </div>
+                                )}
+                                {(Array.isArray(companies) ? companies : []).filter(c => (c.companyName || c.name || '').toLowerCase().includes((companySearch || '').toLowerCase())).map(company => (
+                                  <div
+                                    key={company._id || company.id}
+                                    className="px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                    onClick={() => {
+                                      const name = company.companyName || company.name || '';
+                                      setFormData({ ...formData, company: name });
+                                      setCompanySearch(name);
+                                      setShowCompanyDropdown(false);
+                                    }}
+                                  >
+                                    {company.companyName || company.name || ''}
+                                  </div>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone</label>
+                        <div className="relative">
+                          <input type="tel" maxLength={10} value={formData.phone} onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            setFormData({ ...formData, phone: val });
+                          }} className="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="e.g. 0412 345 678" />
+                          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Type <span className="text-rose-500">*</span></label>
+                        <select required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                          <option value="" disabled>Select enquiry type</option>
+                          {enquiryTypes.length > 0 ? (
+                            enquiryTypes.map((type, idx) => {
+                              const typeName = typeof type === "string" ? type : (type.name || type.enquiryType);
+                              const typeKey = typeof type === "string" ? type : (type.id || type._id || idx);
+                              return (
+                                <option key={typeKey} value={typeName}>{typeName}</option>
+                              );
+                            })
+                          ) : (
+                            <>
+                              <option value="Conveyancing">Conveyancing</option>
+                              <option value="Wills">Wills</option>
+                              <option value="Commercial">Commercial</option>
+                              <option value="VOCAT">VOCAT</option>
+                              <option value="Print Media">Print Media</option>
+                              <option value="General Enquiry">General Enquiry</option>
+                            </>
+                          )}
                         </select>
                       </div>
-                  )}
-                  {['Proposal', 'Negotiation', 'Won'].includes(formData.status) && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Commercial Value ($)</label>
-                        <input 
-                          type="number" 
-                          min="0"
-                          step="0.01"
-                          value={formData.commercialValue || ''} 
-                          onChange={e => setFormData({ ...formData, commercialValue: e.target.value })} 
-                          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" 
-                          placeholder="e.g. 5000"
-                        />
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Enquiry Details</label>
+                      <div className="relative">
+                        <textarea maxLength={1000} rows="3" value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all resize-none bg-white" placeholder="e.g. I would like to prepare a Will for myself and my wife."></textarea>
+                        <div className="absolute bottom-2 right-2 text-[10px] font-medium text-slate-400 bg-white px-1">
+                          {(formData.description || '').length} / 1000
+                        </div>
                       </div>
-                  )}
-                  {initialData && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Next Follow Up</label>
-                        <input 
-                          type="date" 
-                          value={formData.nextFollowUpDate ? formData.nextFollowUpDate.split('T')[0] : ''} 
-                          onChange={e => setFormData({ ...formData, nextFollowUpDate: e.target.value })} 
-                          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white" 
-                        />
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: Lead Created By */}
+                  <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                          <User className="w-5 h-5 text-slate-600" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800">2. Lead Created By</h4>
                       </div>
-                  )}
-                  {formData.status === 'Unqualified Lead' && (
+                    </div>
+
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Unqualified Reason {(!initialData || !initialData.unqualifiedReason) && <span className="text-rose-500">*</span>}</label>
-                      <select required disabled={!!(initialData && initialData.unqualifiedReason)} value={formData.unqualifiedReason || ''} onChange={e => setFormData({ ...formData, unqualifiedReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium ${initialData && initialData.unqualifiedReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`}>
-                        <option value="" disabled>Select reason</option>
-                        <option value="No Budget">No Budget</option>
-                        <option value="Not Interested">Not Interested</option>
-                        <option value="Duplicate Enquiry">Duplicate Enquiry</option>
-                        <option value="Wrong Contact">Wrong Contact</option>
-                        <option value="Outside Service Area">Outside Service Area</option>
-                        <option value="Lost to Competitor">Lost to Competitor</option>
-                        <option value="No Response">No Response</option>
-                        <option value="Others">Others</option>
-                      </select>
-                    </div>
-                  )}
-                  {formData.status === 'Unqualified Lead' && formData.unqualifiedReason === 'Others' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details {(!initialData || !initialData.customReason) && <span className="text-rose-500">*</span>}</label>
-                      <input required type="text" readOnly={!!(initialData && initialData.customReason)} value={formData.customReason || ''} onChange={e => setFormData({ ...formData, customReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.customReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify the reason" />
-                    </div>
-                  )}
-                  {formData.status === 'Lost' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Lost Reason {(!initialData || !initialData.lostReason) && <span className="text-rose-500">*</span>}</label>
-                      <input required type="text" readOnly={!!(initialData && initialData.lostReason)} value={formData.lostReason || ''} onChange={e => setFormData({ ...formData, lostReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.lostReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify why this deal was lost" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 p-4 bg-orange-100/80 rounded-lg">
-                  <p className="text-xs font-medium text-slate-600 mb-3 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Lead Temperature helps you prioritise follow-ups. You can update this later.
-                  </p>
-                  <div className="flex flex-wrap gap-x-8 gap-y-2 text-[11px] font-medium ml-1">
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></div>
-                      <div><span className="font-bold text-slate-700">Hot</span> – Ready to buy / Immediate need</div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
-                      <div><span className="font-bold text-slate-700">Warm</span> – Interested / Needs follow-up</div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
-                      <div><span className="font-bold text-slate-700">Cold</span> – Just exploring / Future need</div>
+                      <div className="relative flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg opacity-80 cursor-not-allowed w-full md:w-1/3">
+                        <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden">
+                           <User className="w-4 h-4 text-slate-50" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-700">{currentUser} (You)</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              {/* SECTION 4: Lead Created By */}
-              <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                      <User className="w-5 h-5 text-slate-600" />
+              {step === 2 && (
+                <>
+                  {/* SECTION 3: Internal Information */}
+                  <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="mb-4 border-b border-slate-100 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                          <Users className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <h4 className="text-sm font-bold text-slate-800">3. Internal Information</h4>
+                          <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">For internal use only</span>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-800">4. Lead Created By</h4>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="relative flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg opacity-80 cursor-not-allowed w-full md:w-1/3">
-                    <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden">
-                       <User className="w-4 h-4 text-slate-50" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Status</label>
+                        {initialData ? (
+                          <select
+                            value={formData.status || 'New Lead'}
+                            onChange={e => setFormData({ ...formData, status: e.target.value })}
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium bg-white"
+                          >
+                            {Array.from(new Set([initialData.status, ...getAvailableStatuses(formData.status)])).map(status => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          // New leads always start as "New Lead" — there's nothing to choose yet,
+                          // so this is shown as plain text instead of a (non-functional) dropdown.
+                          <div className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium bg-slate-50 text-slate-500">
+                            New Lead
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Source</label>
+                        <select value={formData.enquirySource} onChange={e => setFormData({ ...formData, enquirySource: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                          <option value="">Select source</option>
+                          <option value="Website">Website</option>
+                          <option value="Referral">Referral</option>
+                          <option value="Walk-in">Walk-in</option>
+                          <option value="Cold Call">Cold Call</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Lead Temperature</label>
+                        <select value={formData.leadTemperature} onChange={e => setFormData({ ...formData, leadTemperature: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white font-medium">
+                          <option value="">Select temp</option>
+                          <option value="Hot">🔥 Hot</option>
+                          <option value="Warm">☀️ Warm</option>
+                          <option value="Cold">❄️ Cold</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Priority</label>
+                        <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                          <option value="High">🔴 High</option>
+                          <option value="Medium">🟡 Medium</option>
+                          <option value="Low">🟢 Low</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Assigned To</label>
+                        <select value={formData.assignedTo} onChange={e => setFormData({ ...formData, assignedTo: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                          <option value="">Select user</option>
+                          {users.map(u => (
+                            <option key={u.id || u._id} value={u.id || u._id}>{u.displayName || u.display_name || u.email || 'Unknown User'}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {initialData && formData.status === "Proposal" && (
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1.5">Proposal Status</label>
+                            <select value={formData.proposalStatus || 'Not Required'} onChange={e => setFormData({ ...formData, proposalStatus: e.target.value })} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white">
+                              <option value="Not Required">Not Required</option>
+                              <option value="Pending">Pending</option>
+                              <option value="Sent">Sent</option>
+                              <option value="Accepted">Accepted</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+                          </div>
+                      )}
+                      {['Proposal', 'Negotiation', 'Won'].includes(formData.status) && (
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1.5">Commercial Value ($)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={formData.commercialValue || ''}
+                              onChange={e => setFormData({ ...formData, commercialValue: e.target.value })}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white"
+                              placeholder="e.g. 5000"
+                            />
+                          </div>
+                      )}
+                      {initialData && (
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1.5">Next Follow Up</label>
+                            <input
+                              type="date"
+                              value={formData.nextFollowUpDate ? formData.nextFollowUpDate.split('T')[0] : ''}
+                              onChange={e => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all bg-white"
+                            />
+                          </div>
+                      )}
+                      {formData.status === 'Unqualified Lead' && (
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1.5">Unqualified Reason</label>
+                          <select disabled={!!(initialData && initialData.unqualifiedReason)} value={formData.unqualifiedReason || ''} onChange={e => setFormData({ ...formData, unqualifiedReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all font-medium ${initialData && initialData.unqualifiedReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`}>
+                            <option value="">Select reason</option>
+                            <option value="No Budget">No Budget</option>
+                            <option value="Not Interested">Not Interested</option>
+                            <option value="Duplicate Enquiry">Duplicate Enquiry</option>
+                            <option value="Wrong Contact">Wrong Contact</option>
+                            <option value="Outside Service Area">Outside Service Area</option>
+                            <option value="Lost to Competitor">Lost to Competitor</option>
+                            <option value="No Response">No Response</option>
+                            <option value="Others">Others</option>
+                          </select>
+                        </div>
+                      )}
+                      {formData.status === 'Unqualified Lead' && formData.unqualifiedReason === 'Others' && (
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-bold text-slate-700 mb-1.5">Reason Details</label>
+                          <input type="text" readOnly={!!(initialData && initialData.customReason)} value={formData.customReason || ''} onChange={e => setFormData({ ...formData, customReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.customReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify the reason" />
+                        </div>
+                      )}
+                      {formData.status === 'Lost' && (
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-bold text-slate-700 mb-1.5">Lost Reason</label>
+                          <input type="text" readOnly={!!(initialData && initialData.lostReason)} value={formData.lostReason || ''} onChange={e => setFormData({ ...formData, lostReason: e.target.value })} className={`w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all ${initialData && initialData.lostReason ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white'}`} placeholder="Please specify why this deal was lost" />
+                        </div>
+                      )}
                     </div>
-                    <span className="text-sm font-medium text-slate-700">{currentUser} (You)</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+
+                    <div className="mt-4 p-4 bg-orange-100/80 rounded-lg">
+                      <p className="text-xs font-medium text-slate-600 mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Lead Temperature helps you prioritise follow-ups. You can update this later.
+                      </p>
+                      <div className="flex flex-wrap gap-x-8 gap-y-2 text-[11px] font-medium ml-1">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></div>
+                          <div><span className="font-bold text-slate-700">Hot</span> – Ready to buy / Immediate need</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
+                          <div><span className="font-bold text-slate-700">Warm</span> – Interested / Needs follow-up</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></div>
+                          <div><span className="font-bold text-slate-700">Cold</span> – Just exploring / Future need</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  {/* SECTION 4: Lead Created By (shown again, so it's visible on both steps) */}
+                  <div className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                          <User className="w-5 h-5 text-slate-600" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800">4. Lead Created By</h4>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="relative flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg opacity-80 cursor-not-allowed w-full md:w-1/3">
+                        <div className="w-6 h-6 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden">
+                           <User className="w-4 h-4 text-slate-50" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-700">{currentUser} (You)</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
             </form>
 
             <div className="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-              {initialData ? (
-                <div /> // Empty spacer for flex layout
-              ) : (
+              {step === 2 && !initialData ? (
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <div className="relative flex items-center justify-center">
                     <input type="checkbox" checked={saveAnother} onChange={(e) => setSaveAnother(e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-slate-300 rounded cursor-pointer checked:bg-blue-600 checked:border-blue-600 transition-colors" />
@@ -1291,27 +1923,45 @@ export function LeadFormModal({ isOpen, onClose, onSave, initialData }) {
                   </div>
                   <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Save and create another</span>
                 </label>
+              ) : (
+                <div /> // Empty spacer for flex layout
               )}
 
               <div className="flex items-center gap-3">
+                {step === 2 && (
+                  <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm font-bold transition-all duration-300">
+                    Back
+                  </button>
+                )}
                 <button type="button" onClick={onClose} className="px-5 py-2.5 text-[#2E3D99] border border-[#2E3D99] rounded-xl hover:text-white hover:border-[#FB4A50] hover:bg-[#FB4A50] text-sm font-bold transition-all duration-300">
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  form="lead-form" 
-                  disabled={isSubmitting}
-                  className="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:opacity-95 disabled:opacity-50 transition-all"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    initialData ? 'Save Changes' : 'Create Lead'
-                  )}
-                </button>
+                {step === 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:opacity-95 transition-all"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={runSubmit}
+                    disabled={isSubmitting}
+                    className="inline-flex justify-center items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#2E3D99] to-[#1D97D7] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:opacity-95 disabled:opacity-50 transition-all"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      initialData ? 'Save Changes' : 'Create Lead'
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2157,8 +2807,13 @@ export default function Leads() {
     } catch (error) {
       console.error("Error saving lead", error);
       toast.error(error.message || "Failed to save lead.");
+      // Re-throw so LeadFormModal knows the save failed and keeps the modal open
+      // with the entered data intact, instead of closing/resetting as if it succeeded.
+      throw error;
     }
-    setFormState({ isOpen: false, lead: null });
+    // Closing (or staying open for "save and create another") is entirely up to
+    // LeadFormModal's own onClose/onSave flow now — this used to force-close the
+    // modal unconditionally here, which silently overrode "save and create another".
   };
 
   // --- CONVERT LEAD HANDLER ---
@@ -2301,19 +2956,6 @@ export default function Leads() {
       : <ChevronDown size={12} className="text-white" />;
   };
 
-  // Avatar helper
-  const Avatar = ({ name = "", size = "sm" }) => {
-    const initials = name.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
-    const colors   = ["bg-[#2E3D99]","bg-teal-600","bg-violet-600","bg-amber-600","bg-rose-600","bg-emerald-600","bg-indigo-600"];
-    const color    = colors[initials.charCodeAt(0) % colors.length];
-    const dim      = size === "sm" ? "w-6 h-6 text-[9px]" : "w-8 h-8 text-xs";
-    return (
-      <div className={`${dim} ${color} rounded-full flex items-center justify-center text-white font-bold shrink-0`}>
-        {initials}
-      </div>
-    );
-  };
-
   const STAGE_PILLS = ['All','Mine','New Lead','Qualified','Opportunity','Proposal','Negotiation','Won','Lost'];
 
   return (
@@ -2446,9 +3088,15 @@ export default function Leads() {
                   {filteredLeads.length} results
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Eye size={13} className="text-slate-300" />
-                Click a lead to view full details
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <Eye size={13} className="text-slate-300" />
+                  Click a lead to view full details
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-400 border-l border-slate-200 pl-4">
+                  Temperature emojis
+                  <TemperatureLegendInfo />
+                </div>
               </div>
             </div>
 
@@ -2509,6 +3157,7 @@ export default function Leads() {
                       { key: 'source',         label: 'Source',          sortable: false, center: true  },
                       { key: 'value',          label: 'Value',           sortable: false, center: true  },
                       { key: 'nextFollowUp',   label: 'Next Follow-Up',  sortable: false, center: true  },
+                      { key: 'notes',          label: 'Notes',           sortable: false, center: true  },
                       { key: 'priority',       label: 'Priority',        sortable: false, center: true  },
                       { key: 'actions',        label: 'Actions',         sortable: false, center: true  },
                     ].map((col, colIdx, arr) => (
@@ -2535,10 +3184,10 @@ export default function Leads() {
                   {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="animate-pulse bg-white rounded-xl">
-                        {Array.from({ length: 11 }).map((_, j) => (
+                        {Array.from({ length: 12 }).map((_, j) => (
                           <td
                             key={j}
-                            className={`px-4 py-3.5 bg-white border-y border-slate-100 ${j === 0 ? 'rounded-l-xl border-l' : ''} ${j === 10 ? 'rounded-r-xl border-r' : ''}`}
+                            className={`px-4 py-3.5 bg-white border-y border-slate-100 ${j === 0 ? 'rounded-l-xl border-l' : ''} ${j === 11 ? 'rounded-r-xl border-r' : ''}`}
                           >
                             <div className="h-4 bg-slate-100 rounded w-full" />
                           </td>
@@ -2547,7 +3196,7 @@ export default function Leads() {
                     ))
                   ) : paginatedLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="text-center py-16 text-slate-400">
+                      <td colSpan={12} className="text-center py-16 text-slate-400">
                         <Users size={32} className="mx-auto mb-3 text-slate-200" />
                         <p className="text-sm font-semibold">No leads found</p>
                         <p className="text-xs text-slate-300 mt-1">Try adjusting your filters or add a new lead</p>
@@ -2557,8 +3206,6 @@ export default function Leads() {
                     const displayStage  = getDisplayStage(lead.status);
                     const stageStyle    = STAGE_DISPLAY[displayStage]?.badge || "bg-slate-100 text-slate-500";
                     const proposalStyle = PROPOSAL_STATUS_STYLES[lead.proposalStatus] || null;
-                    const priorityStyle = PRIORITY_STYLES[lead.priority] || null;
-                    const tempStyle     = TEMPERATURE_STYLES[lead.leadTemperature] || null;
                     const displayId     = lead.leadId || `LD-${(lead.id || "").slice(-4).toUpperCase()}`;
                     const fullName      = `${lead.firstName} ${lead.lastName}`.trim();
 
@@ -2574,10 +3221,9 @@ export default function Leads() {
                         onClick={() => handleLeadClick(lead, false)}
                       >
                         {/* Leads (Contact) */}
-                        <td className={`${cellL} max-w-[200px]`}>
-                          <div className="flex items-center gap-2">
-                            <Avatar name={fullName} size="sm" />
-                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap truncate">{fullName}</span>
+                        <td className={`${cellL} max-w-[200px]`} onClick={e => e.stopPropagation()}>
+                          <div className="cursor-pointer" onClick={() => handleLeadClick(lead, false)}>
+                            <LeadQuickInfoCell lead={lead} fullName={fullName} />
                           </div>
                         </td>
 
@@ -2591,15 +3237,17 @@ export default function Leads() {
                           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">{lead.company || "—"}</span>
                         </td>
 
-                        {/* Temperature */}
-                        <td className={`${cell} text-center`}>
-                          {tempStyle ? (
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${tempStyle}`}>
-                              {lead.leadTemperature}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 font-medium">—</span>
-                          )}
+                        {/* Temperature — quick-edit dropdown */}
+                        <td className={`${cell} text-center`} onClick={e => e.stopPropagation()}>
+                          <BadgeSelectCell
+                            lead={lead}
+                            fetchLeads={fetchLeads}
+                            field="leadTemperature"
+                            label="Temperature"
+                            options={["Hot", "Warm", "Cold"]}
+                            styleMap={TEMPERATURE_STYLES}
+                            emojiMap={TEMPERATURE_EMOJI}
+                          />
                         </td>
 
                         {/* Status (Stage) */}
@@ -2636,15 +3284,21 @@ export default function Leads() {
                           </div>
                         </td>
 
-                        {/* Priority — centered */}
-                        <td className={`${cell} text-center`}>
-                          {priorityStyle ? (
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${priorityStyle}`}>
-                              {lead.priority}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 font-medium">—</span>
-                          )}
+                        {/* Notes — centered, quick add/view without leaving the table */}
+                        <td className={`${cell} text-center`} onClick={e => e.stopPropagation()}>
+                          <NotesCell lead={lead} />
+                        </td>
+
+                        {/* Priority — quick-edit dropdown */}
+                        <td className={`${cell} text-center`} onClick={e => e.stopPropagation()}>
+                          <BadgeSelectCell
+                            lead={lead}
+                            fetchLeads={fetchLeads}
+                            field="priority"
+                            label="Priority"
+                            options={["High", "Medium", "Low"]}
+                            styleMap={PRIORITY_STYLES}
+                          />
                         </td>
 
                         {/* Actions — centered */}
@@ -2758,6 +3412,10 @@ export default function Leads() {
                           <div onClick={e => e.stopPropagation()}>
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 px-2">Next Follow-Up</p>
                             <FollowUpCell lead={lead} fetchLeads={fetchLeads} />
+                          </div>
+                          <div onClick={e => e.stopPropagation()}>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Notes</p>
+                            <NotesCell lead={lead} />
                           </div>
                         </div>
                       </div>

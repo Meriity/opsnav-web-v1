@@ -874,6 +874,7 @@ export default function ArchivedClients() {
   const getPageTitle = () => {
     if (currentModule === "commercial") return "Archived Projects";
     if (currentModule === "print media") return "Completed Orders";
+    if (currentModule === "conveyancing") return "Archived Matters";
     return "Archived Clients";
   };
 
@@ -971,6 +972,8 @@ export default function ArchivedClients() {
                     ? "archived projects"
                     : currentModule === "print media"
                     ? "completed orders"
+                    : currentModule === "conveyancing"
+                    ? "archived matters"
                     : "archived clients"}
                 </p>
               </div>
@@ -994,6 +997,8 @@ export default function ArchivedClients() {
                       ? "Archived Projects"
                       : currentModule === "print media"
                       ? "Completed Orders"
+                      : currentModule === "conveyancing"
+                      ? "Archived Matters"
                       : "Archived Clients"}
                   </h3>
                 </div>

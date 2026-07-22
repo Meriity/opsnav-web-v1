@@ -109,6 +109,8 @@ export default function Sidebar({
             ? "View Orders"
             : currentModule === "commercial"
             ? "View Projects"
+            : currentModule === "conveyancing"
+            ? "View Matters"
             : "View Clients",
         icon: ViewClientsIcon,
         to:
@@ -135,6 +137,8 @@ export default function Sidebar({
             ? "Completed Orders"
             : currentModule === "commercial"
             ? "Archived Projects"
+            : currentModule === "conveyancing"
+            ? "Archived Matters"
             : "Archived Clients",
         icon: ArchivedChatsIcon,
         to:
@@ -201,11 +205,13 @@ export default function Sidebar({
       case "View Clients":
       case "View Orders":
       case "View Projects":
+      case "View Matters":
       case "View":
         return FolderOpen;
       case "Archived Clients":
       case "Completed Orders":
       case "Archived Projects":
+      case "Archived Matters":
       case "Completed/Archived":
         return FolderArchive;
       case "Reference Matter":

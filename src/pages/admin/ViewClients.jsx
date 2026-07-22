@@ -628,17 +628,35 @@ const ViewClients = () => {
       ];
     } else {
       columns = [
-        { key: "clientId", title: "Client ID", width: "5%" },
-        { key: "orderId", title: "Order ID", width: "6%" },
-        { key: "client_name", title: "Client Name", width: "8.5%" },
-        { key: "client_type", title: "Type", width: "7.5%" },
-        { key: "orderSubType", title: "Work Type", width: "8%" },
-        { key: "allocatedUser", title: "Allocated User", width: "10%" },
-        { key: "order_date", title: "Order Date", width: "9%" },
-        { key: "delivery_date", title: "Delivery Date", width: "9%" },
-        {key: "orderDetails", title: "Order Details", width: "8%"},
-        { key: "unitNumber", title: "Unit", width: "4%" },
-        {key: "billing_address", title: "Delivery Address", width: "7.5%"},
+        { key: "orderId", title: "Order ID", width: "7%" },
+        { key: "client_name", title: "Client Name", width: "9%" },
+        { key: "client_type", title: "Order Type", width: "8%" },
+        { key: "orderSubType", title: "Work Type", width: "8.5%" },
+        { key: "allocatedUser", title: "Allocated User", width: "10.5%" },
+        { key: "order_date", title: "Order Date", width: "9.5%" },
+        { key: "delivery_date", title: "Delivery Date", width: "9.5%" },
+        {key: "orderDetails", title: "Order Details", width: "8.5%"},
+        {
+          key: "unitDeliveryAddress",
+          title: "Delivery Address",
+          width: "11%",
+          render: (item) => {
+            const address = item.billing_address || item.deliveryAddress || item.businessAddress;
+            const unit = item.unitNumber || item.unit;
+            if (!address) return <span className="font-bold text-gray-500">—</span>;
+            const combined = unit && unit !== "-" && unit !== "N/A" ? `${unit}/ ${address}` : address;
+            return (
+              <a
+                href={`https://www.google.com/maps?q=${encodeURIComponent(address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {combined}
+              </a>
+            );
+          },
+        },
         {key: "distance", title: "Distance", width: "6%"},
         {key: "postcode", title: "Post Code", width: "4.5%"},
       ];
@@ -771,6 +789,7 @@ const ViewClients = () => {
     if (queryParams.get("view") === "my-jobs" || location.pathname === "/idg/orders/my-jobs") return "My Jobs";
     if (currentModule === "commercial") return "View Projects";
     if (currentModule === "print media") return "View Orders";
+    if (currentModule === "conveyancing") return "View Matters";
     return "View Clients";
   };
 
