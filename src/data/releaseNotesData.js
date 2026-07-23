@@ -41,6 +41,26 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-23",
+        version: "v8.6.1",
+        type: "patch",
+        category: "feature",
+        title: "Print Media Completed Orders Client Filter",
+        description: "Added a client filter to the Print Media Completed Orders table for faster order lookup.",
+        updates: [
+          {
+            type: "feature",
+            title: "'All Clients' Filter on Completed Orders",
+            description: "Added the same 'All Clients' filter from View Orders to the Completed Orders table, for Print Media only.",
+            details: "Staff can now narrow the Completed Orders list down to a specific client directly from the table header, matching the filtering workflow already available on View Orders.",
+            icon: Search,
+          },
+        ],
+        module: "Print Media",
+        severity: "Low",
+        status: "Released"
+      },
+      {
         date: "2026-07-22",
         version: "v8.6.0",
         type: "minor",
