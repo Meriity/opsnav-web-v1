@@ -391,6 +391,17 @@ export default function ArchivedClients() {
     }));
   }, [activeData, currentModule]);
 
+  // Unique client names for the Print Media "All Clients" filter dropdown
+  const printMediaClientList = useMemo(() => {
+    if (currentModule !== "print media") return [];
+    const names = new Set();
+    (normalizedActiveData || []).forEach((client) => {
+      const name = client.client_name || client.clientName;
+      if (name) names.add(name);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [normalizedActiveData, currentModule]);
+
   // Apply date & search filters using useMemo
   const filteredClientList = useMemo(() => {
     let filteredData = normalizedActiveData;
@@ -1028,6 +1039,29 @@ export default function ArchivedClients() {
                       <option>500</option>
                     </select>
                   </div>
+
+                  {currentModule === "print media" && (
+                    <div className="flex items-center gap-2">
+                      <select
+                        name="Client"
+                        className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
+                        value={activeFilters.clientName}
+                        onChange={(e) =>
+                          setActiveFilters((prev) => ({
+                            ...prev,
+                            clientName: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">All Clients</option>
+                        {printMediaClientList.map((name, index) => (
+                          <option key={`${name}-${index}`} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div className="hidden lg:flex items-center gap-2">
                     <motion.button
