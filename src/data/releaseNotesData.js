@@ -41,6 +41,40 @@ export const monthlyReleaseNotes = {
   2026: {
     July: [
       {
+        date: "2026-07-24",
+        version: "v8.7.0",
+        type: "minor",
+        category: "feature",
+        title: "Smokeball Sync Integration & UI Refinements",
+        description: "Added read-only protection for Smokeball-synced matters, a custom interactive badge, and terminology updates.",
+        updates: [
+          {
+            type: "ui_ux",
+            title: "Smokeball Sync Lock",
+            description: "Matters created via Smokeball are now locked from manual edits to preserve data integrity.",
+            details: "If a matter is synced from Smokeball, all matter details fields (including Settlement Date) are locked and made read-only. The Notes/Comments field remains editable.",
+            icon: ShieldCheck,
+          },
+          {
+            type: "ui_ux",
+            title: "Interactive Smokeball Badge",
+            description: "A custom interactive badge now appears next to the Matter Details header for Smokeball-synced matters.",
+            details: "Clicking the badge toggles a styled floating tooltip indicating the matter's creation source, providing clear context without relying on hover states.",
+            icon: Info,
+          },
+          {
+            type: "ui_ux",
+            title: "Conveyancing Terminology Alignment",
+            description: "Replaced 'Client' terminology with 'Matter' in the Conveyancing module.",
+            details: "The 'Create Client' button and 'Client Type' inputs now read as 'Create Matter' and 'Matter Type' exclusively for the Conveyancing workflow.",
+            icon: Layout,
+          },
+        ],
+        module: "Conveyancing",
+        severity: "Medium",
+        status: "Released"
+      },
+      {
         date: "2026-07-23",
         version: "v8.6.1",
         type: "patch",

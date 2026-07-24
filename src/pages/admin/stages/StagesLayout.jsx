@@ -122,7 +122,6 @@ export default function StagesLayout() {
   const currentModule = localStorage.getItem("currentModule");
   const isAnyAdmin = role === "superadmin" || role === "admin";
   const isSuperAdmin = role === "superadmin";
-  const canEditMatterDetails = isAnyAdmin;
 
   useEffect(() => {
     const onStorage = (e) => {
@@ -173,6 +172,8 @@ export default function StagesLayout() {
   const [reloadStage, setReloadStage] = useState(false);
   const [selectedStage, setSelectedStage] = useState(Number(stageNo) || 1);
   const [clientData, setClientData] = useState(null);
+  const canEditMatterDetails = isAnyAdmin && !clientData?.isSmokeballSynced;
+  const canEditSettlement = isAnyAdmin || (currentModule !== "commercial" && currentModule !== "print media");
   const [originalClientData, setOriginalClientData] = useState(null);
   const [stageDirty, setStageDirty] = useState(false);
   const [matterDirty, setMatterDirty] = useState(false);
@@ -185,6 +186,7 @@ export default function StagesLayout() {
   const [_isUpdating, setIsUpdating] = useState(false);
   const [isStagesCollapsed, setIsStagesCollapsed] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState("stage");
+  const [showSmokeballTooltip, setShowSmokeballTooltip] = useState(false);
 
   // IDG Client Search State
   const [idgClients, setIdgClients] = useState([]);
@@ -1854,13 +1856,31 @@ export default function StagesLayout() {
                 <div className="hidden lg:block w-[430px] xl:w-[500px] flex-shrink-0">
                   <div className="w-full bg-white rounded shadow border border-gray-200 p-4 lg:h-[calc(100vh-180px)] lg:overflow-y-auto">
                     <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
-                      <h2 className="text-base lg:text-base xl:text-lg font-bold">
-                        {currentModule === "commercial"
-                          ? "Project Details"
-                          : currentModule === "print media"
-                            ? "Order Details"
-                            : "Matter Details"}
-                      </h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base lg:text-base xl:text-lg font-bold">
+                          {currentModule === "commercial"
+                            ? "Project Details"
+                            : currentModule === "print media"
+                              ? "Order Details"
+                              : "Matter Details"}
+                        </h2>
+                        {clientData?.syncSource === "smokeball" && (
+                          <div className="relative inline-flex items-center">
+                            <span
+                              className="text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full border border-orange-200 cursor-pointer"
+                              onClick={() => setShowSmokeballTooltip(!showSmokeballTooltip)}
+                            >
+                              Smokeball
+                            </span>
+                            {showSmokeballTooltip && (
+                              <div className="absolute top-full left-0 mt-1.5 w-max z-50 bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-xl border border-gray-700 animate-in fade-in zoom-in duration-200">
+                                This matter is created using Smokeball
+                                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45 border-l border-t border-gray-700"></div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       {isAnyAdmin && currentModule !== "print media" && (
                         <button
                           onClick={handleSendReminder}
@@ -2075,6 +2095,35 @@ export default function StagesLayout() {
                         />
                       </div>
 
+                      {/* Client Phone Field */}
+                      <div className="md:col-span-1">
+                        <label className="block text-xs md:text-sm font-semibold mb-0.5">
+                          Client Phone
+                        </label>
+                        <input
+                          id="clientPhone"
+                          name="clientPhone"
+                          type="tel"
+                          value={
+                            clientData?.clientPhone ||
+                            clientData?.phone ||
+                            clientData?.data?.clientPhone ||
+                            ""
+                          }
+                          onChange={(e) => {
+                            if (!canEditMatterDetails) return;
+                            const val = e.target.value;
+                            setClientData((prev) => ({
+                              ...(prev || {}),
+                              clientPhone: val,
+                            }));
+                          }}
+                          className={`w-full rounded px-2 py-2 text-xs xl:text-sm border border-gray-200 ${!canEditMatterDetails ? "bg-gray-100" : ""
+                            }`}
+                          disabled={!canEditMatterDetails}
+                        />
+                      </div>
+
 
                       {/* Business Name */}
                       {currentModule === "commercial" && (
@@ -2260,7 +2309,7 @@ export default function StagesLayout() {
                               ? "Client Type"
                               : currentModule === "print media"
                                 ? "Order Type"
-                                : "Client Type"}
+                                : (currentModule === "vocat" || currentModule === "wills") ? "Client Type" : "Matter Type"}
                           </label>
                           {canEditMatterDetails ? (
                             currentModule === "wills" ? (
@@ -2300,7 +2349,7 @@ export default function StagesLayout() {
                                 }
                                 className="w-full rounded px-2 py-[8px] text-xs md:text-sm border border-gray-200"
                               >
-                                <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                                <option value="">Select {currentModule === "print media" ? "Order" : (currentModule === "vocat" || currentModule === "wills" || currentModule === "commercial") ? "Client" : "Matter"} Type</option>
                                 {(currentModule === "vocat"
                                   ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
                                   : CLIENT_TYPE_OPTIONS
@@ -2578,7 +2627,6 @@ export default function StagesLayout() {
                                     : ""
                             }
                             onChange={(e) => {
-                              const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
                               if (!canEditSettlement) return;
                               const dateValue = e.target.value;
                               if (currentModule === "commercial") {
@@ -2601,9 +2649,9 @@ export default function StagesLayout() {
                                 }));
                               }
                             }}
-                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-100" : ""
+                            className={`w-full rounded px-2 py-2 text-xs md:text-sm border border-gray-200 ${!canEditSettlement ? "bg-gray-100" : ""
                               }`}
-                            disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
+                            disabled={!canEditSettlement}
                           />
                         </div>
 
@@ -2886,13 +2934,31 @@ export default function StagesLayout() {
               {/* Mobile Details */}
               {isSmallScreen && activeMobileTab === "details" && (
                 <div className="w-full mt-4 bg-white rounded-xl shadow-lg shadow-gray-200/50 border border-gray-100 p-5 overflow-y-auto">
-                  <h2 className="text-lg font-bold mb-4 text-gray-800 border-b pb-2">
-                    {currentModule === "commercial"
-                      ? "Project Details"
-                      : currentModule === "print media"
-                        ? "Order Details"
-                        : "Matter Details"}
-                  </h2>
+                  <div className="flex items-center gap-2 border-b pb-2 mb-4">
+                    <h2 className="text-lg font-bold text-gray-800">
+                      {currentModule === "commercial"
+                        ? "Project Details"
+                        : currentModule === "print media"
+                          ? "Order Details"
+                          : "Matter Details"}
+                    </h2>
+                    {clientData?.syncSource === "smokeball" && (
+                      <div className="relative inline-flex items-center">
+                        <span
+                          className="text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full border border-orange-200 cursor-pointer"
+                          onClick={() => setShowSmokeballTooltip(!showSmokeballTooltip)}
+                        >
+                          Smokeball
+                        </span>
+                        {showSmokeballTooltip && (
+                          <div className="absolute top-full left-0 mt-1.5 w-max z-50 bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-xl border border-gray-700 animate-in fade-in zoom-in duration-200">
+                            This matter is created using Smokeball
+                            <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45 border-l border-t border-gray-700"></div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <form
                     className="grid grid-cols-1 gap-y-4"
                     onSubmit={handleupdate}
@@ -3028,6 +3094,37 @@ export default function StagesLayout() {
                           setClientData((prev) => ({
                             ...(prev || {}),
                             clientEmail: val,
+                          }));
+                        }}
+                        className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
+                            ? "bg-gray-50 text-gray-500"
+                            : "bg-white"
+                          }`}
+                        disabled={!canEditMatterDetails}
+                      />
+                    </div>
+
+                    {/* Client Phone Field (Mobile) */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Client Phone
+                      </label>
+                      <input
+                        id="clientPhoneMobile"
+                        name="clientPhoneMobile"
+                        type="tel"
+                        value={
+                          clientData?.clientPhone ||
+                          clientData?.phone ||
+                          clientData?.data?.clientPhone ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          if (!canEditMatterDetails) return;
+                          const val = e.target.value;
+                          setClientData((prev) => ({
+                            ...(prev || {}),
+                            clientPhone: val,
                           }));
                         }}
                         className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditMatterDetails
@@ -3248,7 +3345,7 @@ export default function StagesLayout() {
                           ? "Client Type"
                           : currentModule === "print media"
                             ? "Order Type"
-                            : "Client Type"}
+                            : (currentModule === "vocat" || currentModule === "wills") ? "Client Type" : "Matter Type"}
                       </label>
                       {canEditMatterDetails ? (
                         currentModule === "wills" ? (
@@ -3288,7 +3385,7 @@ export default function StagesLayout() {
                             }
                             className="w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none bg-white"
                           >
-                            <option value="">Select {currentModule === "print media" ? "Order" : "Client"} Type</option>
+                            <option value="">Select {currentModule === "print media" ? "Order" : (currentModule === "vocat" || currentModule === "wills" || currentModule === "commercial") ? "Client" : "Matter"} Type</option>
                             {(currentModule === "vocat"
                               ? ["Primary Victim", "Related Victim", "Funeral Expenses"]
                               : CLIENT_TYPE_OPTIONS
@@ -3481,7 +3578,6 @@ export default function StagesLayout() {
                                   : ""
                           }
                           onChange={(e) => {
-                            const canEditSettlement = canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media");
                             if (!canEditSettlement) return;
                             const dateValue = e.target.value;
                             if (currentModule === "commercial") {
@@ -3504,9 +3600,9 @@ export default function StagesLayout() {
                               }));
                             }
                           }}
-                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media")) ? "bg-gray-50 text-gray-500" : "bg-white"
+                          className={`w-full rounded-lg px-3 py-3 text-sm border border-gray-200 focus:ring-2 focus:ring-[#2E3D99]/20 focus:border-[#2E3D99] transition-all outline-none ${!canEditSettlement ? "bg-gray-50 text-gray-500" : "bg-white"
                             }`}
-                          disabled={!(canEditMatterDetails || (currentModule !== "commercial" && currentModule !== "print media"))}
+                          disabled={!canEditSettlement}
                         />
                       </div>
                     )}

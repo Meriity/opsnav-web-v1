@@ -1014,6 +1014,7 @@ useEffect(() => {
   // Get the appropriate title based on module and create type
   const getModalTitle = () => {
     if (isCommercial) return "Create Project";
+    if (isConveyancing) return "Create Matter";
     if (createType === "order") return "Create Order";
     if (createType === "order") return "Create Order";
     if (isWills) return "Create Wills Client";
@@ -1145,7 +1146,9 @@ useEffect(() => {
 
                     {(isCommercial || isConveyancing || isWills) && (
                     <div>
-                      <label className="block mb-1 font-medium">Client Type*</label>
+                      <label className="block mb-1 font-medium">
+                        {isConveyancing ? "Matter Type*" : "Client Type*"}
+                      </label>
                       <div className="flex gap-4 mt-2">
                         {(isWills ? ["Single", "Mirror"] : ["Seller", "Buyer", "General"]).map((type) => (
                           <label key={type} className="flex items-center gap-2">
