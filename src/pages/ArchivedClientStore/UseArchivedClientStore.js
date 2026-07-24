@@ -88,6 +88,13 @@ export const useArchivedClientStore = create((set, get) => ({
           propertyAddress:
             client.deliveryAddress || client.propertyAddress || "N/A",
           ordertype: client.orderType || client.ordertype || "N/A",
+          client_type: client.orderType || client.ordertype || "N/A",
+          orderSubType: client.orderSubType || client.work || "N/A",
+          distance: client.distance || "N/A",
+          postcode: client.postcode || client.postCode || "N/A",
+          allocatedUser: client?.allocatedUserID
+            ? client.allocatedUserID.substring(client.allocatedUserID.indexOf("-") + 1).trim() || "N/A"
+            : "N/A",
           status: client.closeOrder || client.status || "N/A",
           state: client.state || "N/A",
           orderDate: client.orderDate ? client.orderDate.slice(0, 10) : "N/A",

@@ -36,10 +36,49 @@ import {
   Link2,
   UserPlus,
   ToggleRight,
+  Filter,
 } from "lucide-react";
 export const monthlyReleaseNotes = {
   2026: {
     July: [
+      {
+        date: "2026-07-24",
+        version: "v8.7.1",
+        type: "patch",
+        category: "ui_ux",
+        title: "Completed Orders Table Overhaul for Print Media",
+        description: "Synchronized the Print Media 'Completed Orders' table layout with the 'View Orders' dashboard.",
+        updates: [
+          {
+            type: "ui_ux",
+            title: "Column Synchronization",
+            description: "Restructured the Completed Orders table columns to perfectly match the View Orders dashboard.",
+            details: "Restored missing columns (Work Type, Allocated User, Distance, Post Code) and updated header terminology (Order Type).",
+            icon: Layout,
+          },
+          {
+            type: "ui_ux",
+            title: "Address Layout Enhancement",
+            description: "Merged Unit and Billing Address for a cleaner display.",
+            details: "The Unit and Billing Address fields are now combined (Unit/ Address) and directly link to Google Maps.",
+            icon: Sparkles,
+          },
+          {
+            type: "feature",
+            title: "Interactive Overall Status Badges",
+            description: "Replaced raw text status with styled badges.",
+            details: "Statuses like 'Completed', 'In Progress', and 'Not Completed' now render as distinct, color-coded badges to improve readability.",
+            icon: ToggleRight,
+          },
+          {
+            type: "feature",
+            title: "Allocated User Filtering",
+            description: "Added a new filter dropdown for Allocated Users.",
+            details: "You can now filter completed orders by specific allocated users, just like in the View Orders dashboard.",
+            icon: Filter,
+          },
+        ],
+      },
       {
         date: "2026-07-24",
         version: "v8.7.0",

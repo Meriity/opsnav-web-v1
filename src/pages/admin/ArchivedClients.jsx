@@ -109,6 +109,7 @@ export default function ArchivedClients() {
     clientType: "",
     closeMatter: "",
     clientName: "",
+    allocatedUser: "",
   });
 
   // Client details modal state
@@ -402,6 +403,17 @@ export default function ArchivedClients() {
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [normalizedActiveData, currentModule]);
 
+  // Unique user names for the Print Media "All Users" filter dropdown
+  const printMediaUserList = useMemo(() => {
+    if (currentModule !== "print media") return [];
+    const names = new Set();
+    (normalizedActiveData || []).forEach((client) => {
+      const name = client.allocatedUser || client.dataEntryBy;
+      if (name && name !== "N/A" && name !== "-") names.add(name);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [normalizedActiveData, currentModule]);
+
   // Apply date & search filters using useMemo
   const filteredClientList = useMemo(() => {
     let filteredData = normalizedActiveData;
@@ -439,8 +451,8 @@ export default function ArchivedClients() {
       });
     }
 
-    // Apply strict filters (State, Client Type, Close Matter, Client Name)
-    if (activeFilters.state || activeFilters.clientType || activeFilters.closeMatter || activeFilters.clientName) {
+    // Apply strict filters (State, Client Type, Close Matter, Client Name, Allocated User)
+    if (activeFilters.state || activeFilters.clientType || activeFilters.closeMatter || activeFilters.clientName || activeFilters.allocatedUser) {
       filteredData = filteredData.filter((client) => {
         // State Filter
         if (activeFilters.state) {
@@ -489,6 +501,14 @@ export default function ArchivedClients() {
           // If filter is 'open' (which we treat as 'cancelled'), check for 'cancelled'
           else if (filterValue === "open") {
              if (status !== "cancelled" && status !== "open") return false;
+          }
+        }
+
+        // Allocated User Filter
+        if (activeFilters.allocatedUser) {
+          const user = client.allocatedUser || client.dataEntryBy;
+          if (!user || user !== activeFilters.allocatedUser) {
+            return false;
           }
         }
 
@@ -566,16 +586,67 @@ export default function ArchivedClients() {
       ];
     } else if (currentModule === "print media") {
       return [
-        { key: "orderId", title: "Order ID" },
-        { key: "clientName", title: "Client Name" },
-        { key: "unitNumber", title: "Unit" },
-        { key: "propertyAddress", title: "Billing Address" },
-        { key: "state", title: "State" },
-        { key: "ordertype", title: "Client Type" },
-        { key: "order_details", title: "Order Details" },
-        { key: "orderDate", title: "Order Date" },
-        { key: "deliveryDate", title: "Delivery Date" },
-        { key: "status", title: "Status" },
+        { key: "orderId", title: "Order ID", width: "7%" },
+        { key: "clientName", title: "Client Name", width: "9%" },
+        { key: "client_type", title: "Order Type", width: "8%" },
+        { key: "orderSubType", title: "Work Type", width: "8.5%" },
+        { key: "allocatedUser", title: "Allocated User", width: "10.5%" },
+        { key: "orderDate", title: "Order Date", width: "9.5%" },
+        { key: "deliveryDate", title: "Delivery Date", width: "9.5%" },
+        { key: "order_details", title: "Order Details", width: "8.5%" },
+        {
+          key: "unitDeliveryAddress",
+          title: "Delivery Address",
+          width: "11%",
+          render: (item) => {
+            const address = item.propertyAddress || item.deliveryAddress || item.businessAddress;
+            const unit = item.unitNumber || item.unit;
+            if (!address) return <span className="font-bold text-gray-500">—</span>;
+            const combined = unit && unit !== "-" && unit !== "N/A" ? `${unit}/ ${address}` : address;
+            return (
+              <a
+                href={`https://www.google.com/maps?q=${encodeURIComponent(address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {combined}
+              </a>
+            );
+          },
+        },
+        { key: "distance", title: "Distance", width: "6%" },
+        { key: "postcode", title: "Post Code", width: "4.5%" },
+        {
+          key: "status",
+          title: "Overall Status",
+          width: "9%",
+          render: (client) => {
+            let bgColor = "bg-gray-100 text-gray-700";
+            let displayValue = client.status || "N/A";
+            const lowerVal = displayValue.toLowerCase();
+            
+            if (lowerVal === "completed") {
+              bgColor = "bg-emerald-100 text-emerald-700";
+            } else if (lowerVal === "inprogress" || lowerVal === "in progress") {
+              bgColor = "bg-amber-100 text-amber-700";
+              displayValue = "In Progress";
+            } else if (lowerVal === "notcompleted" || lowerVal === "not completed") {
+              bgColor = "bg-red-100 text-red-700";
+              displayValue = "Not Completed";
+            } else if (lowerVal === "booked") {
+              bgColor = "bg-amber-100 text-amber-700";
+            } else if (lowerVal === "cancelled") {
+              bgColor = "bg-red-100 text-red-700";
+            }
+
+            return (
+              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${bgColor}`}>
+                {displayValue}
+              </span>
+            );
+          }
+        },
       ];
     } else if (currentModule === "vocat") {
       return [
@@ -1056,6 +1127,25 @@ export default function ArchivedClients() {
                         <option value="">All Clients</option>
                         {printMediaClientList.map((name, index) => (
                           <option key={`${name}-${index}`} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        name="AllocatedUser"
+                        className="block w-full px-2.5 py-1.5 lg:py-1.5 xl:py-2 border border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D99] focus:border-[#2E3D99] transition-all text-xs lg:text-xs xl:text-sm text-gray-700"
+                        value={activeFilters.allocatedUser}
+                        onChange={(e) =>
+                          setActiveFilters((prev) => ({
+                            ...prev,
+                            allocatedUser: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">All Users</option>
+                        {printMediaUserList.map((name, index) => (
+                          <option key={`${name}-user-${index}`} value={name}>
                             {name}
                           </option>
                         ))}
