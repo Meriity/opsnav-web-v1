@@ -659,6 +659,34 @@ const ViewClients = () => {
         },
         {key: "distance", title: "Distance", width: "6%"},
         {key: "postcode", title: "Post Code", width: "4.5%"},
+        {
+          key: "overallStatus",
+          title: "Overall Status",
+          width: "9%",
+          render: (item) => {
+            let bgColor = "bg-gray-100 text-gray-700";
+            let displayValue = item.overallStatus || "N/A";
+            const lowerVal = displayValue.toLowerCase();
+            
+            if (lowerVal === "completed") {
+              bgColor = "bg-emerald-100 text-emerald-700";
+            } else if (lowerVal === "inprogress" || lowerVal === "in progress") {
+              bgColor = "bg-amber-100 text-amber-700";
+              displayValue = "In Progress";
+            } else if (lowerVal === "notcompleted" || lowerVal === "not completed") {
+              bgColor = "bg-red-100 text-red-700";
+              displayValue = "Not Completed";
+            } else if (lowerVal === "booked") {
+              bgColor = "bg-amber-100 text-amber-700";
+            }
+
+            return (
+              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${bgColor}`}>
+                {displayValue === "N/A" ? displayValue : displayValue}
+              </span>
+            );
+          }
+        },
       ];
     }
   }
@@ -1574,7 +1602,7 @@ const ViewClients = () => {
                   isDraggingMode={isDraggingMode}
                   setDraggedData={setDraggedData}
                   isMyJobsView={isMyJobsView}
-                  showStages={!(isMyJobsView && currentModule === "print media")}
+                  showStages={currentModule !== "print media"}
                 />
               </div>
             )}
