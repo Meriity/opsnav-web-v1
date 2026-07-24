@@ -796,6 +796,7 @@ const ViewClients = () => {
   const getCreateButtonLabel = () => {
     if (currentModule === "commercial") return "Create Project";
     if (currentModule === "print media") return "Create Order";
+    if (currentModule === "conveyancing") return "Create Matter";
     return "Create Client";
   };
 
@@ -1437,9 +1438,7 @@ const ViewClients = () => {
                                 className="flex items-center gap-1.5 lg:gap-1 sm:gap-2 px-2 lg:px-2.5 xl:px-4 py-2 lg:py-1.5 xl:py-3 bg-linear-to-r from-[#2E3D99] to-[#1D97D7] text-white rounded-lg hover:shadow-lg transition-all text-[10px] lg:text-[9px] xl:text-sm font-medium"
                               >
                                 <UserPlus className="w-3 h-3 sm:w-5 sm:h-5" />
-                                {currentModule === "commercial"
-                                  ? "Create Project"
-                                  : "Create Client"}
+                                {getCreateButtonLabel()}
                               </motion.button>
                             )}
 
